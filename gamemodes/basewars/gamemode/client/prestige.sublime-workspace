@@ -1,0 +1,2573 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"DrawTexturedRe",
+				"surface.DrawTexturedRect"
+			],
+			[
+				"IsDown",
+				"input.IsKeyDown"
+			],
+			[
+				"SizeTo",
+				"SizeTo"
+			],
+			[
+				"Center",
+				"CenterHorizontal"
+			],
+			[
+				"Rounded",
+				"draw.RoundedBox"
+			],
+			[
+				"Broadca",
+				"net.Broadcast"
+			],
+			[
+				"RoundedBox",
+				"draw.RoundedBoxEx"
+			],
+			[
+				"RoundedBo",
+				"draw.RoundedBox"
+			],
+			[
+				"ShadowMateri",
+				"ShadowMaterialColor"
+			],
+			[
+				"End3D",
+				"cam.End3D"
+			],
+			[
+				"CreateClient",
+				"ents.CreateClientProp"
+			],
+			[
+				"vgui",
+				"vgui.Register"
+			],
+			[
+				"MouseInpu",
+				"SetMouseInputEnabled"
+			],
+			[
+				"inventory",
+				"InventoryToDB"
+			],
+			[
+				"DrawText",
+				"DrawTexturedRect"
+			],
+			[
+				"Rota",
+				"RotateAroundAxis"
+			],
+			[
+				"player_",
+				"player_equip_perks"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "/C/_gm_dedicated/garrysmod/addons/panellib/lua/autorun/client/moarpanels.lua",
+			"settings":
+			{
+				"buffer_size": 35858,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/addons/safezones/lua/autorun/client/cl_safezones.lua",
+			"settings":
+			{
+				"buffer_size": 2544,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/addons/safezones/lua/entities/bw_safezone_brush/init.lua",
+			"settings":
+			{
+				"buffer_size": 2127,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/addons/panellib/lua/autorun/client/_panelstuff.lua",
+			"settings":
+			{
+				"buffer_size": 3998,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/addons/inventory/lua/inventory/shared/crafts.lua",
+			"settings":
+			{
+				"buffer_size": 3503,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/addons/hdl/lua/autorun/_hdl.lua",
+			"settings":
+			{
+				"buffer_size": 1950,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "cl_font_disaster.lua",
+			"settings":
+			{
+				"buffer_size": 1603,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "cl_prestige.lua",
+			"settings":
+			{
+				"buffer_size": 5104,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/entities/weapons/bw_blowtorch_t1.lua",
+			"settings":
+			{
+				"buffer_size": 556,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/entities/weapons/bw_base_blowtorch.lua",
+			"settings":
+			{
+				"buffer_size": 6151,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/entities/entities/bw_base.lua",
+			"settings":
+			{
+				"buffer_size": 3588,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/addons/epic_miningaddon/lua/weapons/epicpickax/cl_init.lua",
+			"settings":
+			{
+				"buffer_size": 2271,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "cl_perks.lua",
+			"settings":
+			{
+				"buffer_size": 7975,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/addons/MFsiNC/lua/hexlib/hx_Bench.lua",
+			"settings":
+			{
+				"buffer_size": 2300,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/addons/partizones/lua/autorun/partizone_points.lua",
+			"settings":
+			{
+				"buffer_size": 4944,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/lua/autorun/server/workshop.lua",
+			"settings":
+			{
+				"buffer_size": 2502,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/money.lua",
+			"settings":
+			{
+				"buffer_size": 3110,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/notify.lua",
+			"settings":
+			{
+				"buffer_size": 2310,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/server/commands.lua",
+			"settings":
+			{
+				"buffer_size": 7535,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/lua/notagain/misc/autorun/player_chataddtext.lua",
+			"settings":
+			{
+				"buffer_size": 898,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/addons/memes/lua/autorun/server/phoon.lua",
+			"settings":
+			{
+				"buffer_size": 970,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/addons/memes/lua/autorun/server/sv_meme1.lua",
+			"settings":
+			{
+				"buffer_size": 330,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/lua/autorun/server/sql_extension.lua",
+			"settings":
+			{
+				"buffer_size": 2326,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules.lua",
+			"settings":
+			{
+				"buffer_size": 1513,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/include.lua",
+			"settings":
+			{
+				"buffer_size": 2041,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/config.lua",
+			"settings":
+			{
+				"buffer_size": 23569,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/afk.lua",
+			"settings":
+			{
+				"buffer_size": 3336,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/events.lua",
+			"settings":
+			{
+				"buffer_size": 23,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/playtime_money.lua",
+			"settings":
+			{
+				"buffer_size": 3986,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/gamemodes/sandbox/gamemode/spawnmenu/contextmenu.lua",
+			"settings":
+			{
+				"buffer_size": 5411,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/server/raids_sv.lua",
+			"settings":
+			{
+				"buffer_size": 11390,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/client/raids_cl.lua",
+			"settings":
+			{
+				"buffer_size": 7253,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/raid.lua",
+			"settings":
+			{
+				"buffer_size": 244,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/player_util.lua",
+			"settings":
+			{
+				"buffer_size": 3863,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/server/morelang.lua",
+			"settings":
+			{
+				"buffer_size": 427,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/language.lua",
+			"settings":
+			{
+				"buffer_size": 5375,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/client/factions_cl.lua",
+			"settings":
+			{
+				"buffer_size": 2712,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/server/factions_sv.lua",
+			"settings":
+			{
+				"buffer_size": 7601,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/shared/spawnmenu.lua",
+			"settings":
+			{
+				"buffer_size": 22996,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/server/hooks.lua",
+			"settings":
+			{
+				"buffer_size": 2717,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/D/Resources/GContent/falcos_prop_protection_(fpp)_133537219/lua/fpp/sh_cppi.lua",
+			"settings":
+			{
+				"buffer_size": 2940,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/D/Resources/GContent/falcos_prop_protection_(fpp)_133537219/lua/fpp/server/ownability.lua",
+			"settings":
+			{
+				"buffer_size": 18935,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "cl_bwmenu.lua",
+			"settings":
+			{
+				"buffer_size": 20733,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/addons/MFsiNC/lua/hexlib/hx_Table.lua",
+			"settings":
+			{
+				"buffer_size": 1352,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/addons/MFsiNC/lua/hexlib/hx_Player.lua",
+			"settings":
+			{
+				"buffer_size": 2687,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/server/perks_sv.lua",
+			"settings":
+			{
+				"buffer_size": 3831,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/init.lua",
+			"settings":
+			{
+				"buffer_size": 9344,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/server/prestige_sv.lua",
+			"settings":
+			{
+				"buffer_size": 7041,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/lua/includes/extensions/net.lua",
+			"settings":
+			{
+				"buffer_size": 3886,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/addons/titles/lua/autorun/client/cl_nametitle.lua",
+			"settings":
+			{
+				"buffer_size": 21404,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/C/Users/gachi_rmx/Desktop/LUvit/bot.lua",
+			"settings":
+			{
+				"buffer_size": 12900,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/shared.lua",
+			"settings":
+			{
+				"buffer_size": 13402,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/cl_init.lua",
+			"settings":
+			{
+				"buffer_size": 6584,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/playerlevel.lua",
+			"settings":
+			{
+				"buffer_size": 4212,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/C/Users/gachi_rmx/Desktop/snippets.lua",
+			"settings":
+			{
+				"buffer_size": 4327,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		}
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"Package Control: ",
+				"Package Control: Disable Package"
+			],
+			[
+				"install",
+				"Package Control: Install Package"
+			],
+			[
+				"package",
+				"Install Package Control"
+			]
+		],
+		"width": 0.0
+	},
+	"console":
+	{
+		"height": 0.0,
+		"history":
+		[
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules"
+	],
+	"file_history":
+	[
+		"/D/Games/Serious Sam HD The First Encounter/Bin/SamHD.exe.4136.STEAMSTART",
+		"/C/_gm_dedicated/garrysmod/addons/luadev-master/lua/autorun/server/luadev_chatcmds.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/npcs.lua",
+		"/G/Users/gachi_rmx/Videos/Downloads/a8k7.lua",
+		"/C/Users/gachi_rmx/Desktop/LUvit/bot.lua",
+		"/G/Users/gachi_rmx/Videos/Downloads/sv_antiskid.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/entities/entities/bw_printer_mobius.lua",
+		"/C/_gm_dedicated/garrysmod/addons/gcompute-master/lua/gcompute/execution/remote/remoteexecutionservice.lua",
+		"/C/_gm_dedicated/garrysmod/addons/inventory/lua/inventory/server/items/guns.lua",
+		"/C/_gm_dedicated/garrysmod/addons/gcompute-master/lua/gcompute/execution/executionservice.lua",
+		"/C/_gm_dedicated/garrysmod/addons/gcompute-master/lua/gcompute/execution/luadev/luadevexecutionservice.lua",
+		"/C/_gm_dedicated/garrysmod/addons/gcompute-master/lua/gcompute/execution/luadev/luadevexecutioninstance.lua",
+		"/C/_gm_dedicated/garrysmod/addons/gcompute-master/lua/gcompute/execution/luadev/luadevexecutioncontext.lua",
+		"/C/_gm_dedicated/garrysmod/addons/gcompute-master/lua/gcompute/gcompute.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/entities/entities/bw_printer_copper.lua",
+		"/G/Users/gachi_rmx/Downloads/g1y7.lua",
+		"/G/Users/gachi_rmx/Downloads/v435.lua",
+		"/G/Users/gachi_rmx/Downloads/s3hl.lua",
+		"/C/_gm_dedicated/garrysmod/lua/vgui/contextbase.lua",
+		"/C/_gm_dedicated/garrysmod/addons/panellib/lua/autorun/server/dlfonts.lua",
+		"/C/_gm_dedicated/garrysmod/addons/threebow/lua/autorun/client/tdlib.lua",
+		"/C/_gm_dedicated/garrysmod/addons/spectre_hud/lua/autorun/spectre_load.lua",
+		"/C/_gm_dedicated/garrysmod/addons/threebow/lua/threebow/sh_language.lua",
+		"/C/_gm_dedicated/garrysmod/addons/threebow/lua/threebow/cl_icons.lua",
+		"/C/_gm_dedicated/garrysmod/addons/threebow/lua/threebow/sh_download.lua",
+		"/C/_gm_dedicated/garrysmod/addons/spectre_hud/lua/spectre/cl_fonts.lua",
+		"/C/_gm_dedicated/garrysmod/addons/spectre_hud/lua/spectre/config.lua",
+		"/C/_gm_dedicated/garrysmod/addons/spectre_hud/lua/spectre/cl_init.lua",
+		"/C/_gm_dedicated/garrysmod/addons/spectre_hud/lua/spectre/sv_init.lua",
+		"/C/_gm_dedicated/garrysmod/addons/spectre_hud/lua/spectre/cl_util.lua",
+		"/C/_gm_dedicated/garrysmod/addons/dashswep/lua/weapons/dash/cl_init.lua",
+		"/C/_gm_dedicated/garrysmod/addons/wiremod_160250458/lua/wire/client/customspawnmenu.lua",
+		"/D/Resources/GContent/wiremod_160250458/lua/wire/client/customspawnmenu.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/client/cl_minimap.lua",
+		"/C/Users/gachi_rmx/Desktop/snippets.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/client/factions.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/server/antifaggot.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/karma.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/minventory.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/hud.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/ents.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/antirdm.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/init.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/shared/playuhr.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/shared/chitchat.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/shared/admin.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/shared/spawnmenu.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/language.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/factions.lua",
+		"/C/_gm_dedicated/garrysmod/addons/skinnyskins/lua/autorun/skinny.lua",
+		"/C/_gm_dedicated/garrysmod/addons/partizones/lua/entities/partizone_dummy/cl_init.lua",
+		"/C/_gm_dedicated/garrysmod/addons/partizones/lua/entities/partizone_brush/init.lua",
+		"/C/_gm_dedicated/garrysmod/addons/safezones/lua/autorun/client/cl_safezones.lua",
+		"/C/_gm_dedicated/garrysmod/addons/safezones/lua/entities/bw_safezone_brush/init.lua",
+		"/C/_gm_dedicated/garrysmod/addons/safezones/lua/entities/bw_safezone_dummy/cl_init.lua",
+		"/C/_gm_dedicated/garrysmod/materials/deception/clock.vmt",
+		"/C/_gm_dedicated/garrysmod/materials/stalkerexperience/sausage_meter.vmt",
+		"/C/_gm_dedicated/garrysmod/materials/round2.vmt",
+		"/C/GOG Games/Enter the Gungeon/EtG_Data/StreamingAssets/Audio/GeneratedSoundBanks/Windows/SoundbanksInfo.xml",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/client/prestige_cl.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/factions_sv.lua",
+		"/C/_gm_dedicated/garrysmod/lua/includes/util.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/inventory_sv.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/perks_sv.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/shared/sh_perks.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/perks_cl.lua",
+		"/C/_gm_dedicated/garrysmod/lua/includes/extensions/net.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/prestige_sv.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/prop_remover.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/player_util.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/prestige_cl.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/include.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/drugs.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/cosmetics_sv.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/cosmetics_cl.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/bounty.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/adverts.lua",
+		"/C/_gm_dedicated/garrysmod/lua/includes/extensions/weapon.lua",
+		"/C/_gm_dedicated/garrysmod/addons/titles/lua/autorun/client/cl_nametitle.lua",
+		"/C/_gm_dedicated/garrysmod/addons/spectre_hud/lua/spectre/cl_overhead.lua",
+		"/C/_gm_dedicated/garrysmod/addons/epic_miningaddon/lua/entities/orevein/shared.lua",
+		"/C/_gm_dedicated/garrysmod/addons/epic_miningaddon/lua/entities/orevein/cl_init.lua",
+		"/C/_gm_dedicated/garrysmod/lua/xp3/chathud.lua",
+		"/C/_gm_dedicated/garrysmod/addons/inventory/lua/inventory/client/cl_invcontext.lua",
+		"/C/_gm_dedicated/garrysmod/addons/inventory/lua/inventory/client/cl_invfuncs.lua",
+		"/C/_gm_dedicated/garrysmod/addons/inventory/lua/inventory/client/cl_invpanels.lua",
+		"/D/Steam/steamapps/common/GarrysMod/garrysmod/materials/lava.vmt",
+		"/C/_gm_dedicated/garrysmod/materials/skins/glock/urawesomeskin.vmt",
+		"/C/_gm_dedicated/garrysmod/addons/zeros_retrominingsystem/lua/zrmine/sv/zrmine_download.lua",
+		"/C/_gm_dedicated/garrysmod/addons/zeros_retrominingsystem/lua/autorun/zrms_load.lua",
+		"/C/_gm_dedicated/garrysmod/addons/partizones/lua/autorun/client/cl_partizones.lua",
+		"/C/_gm_dedicated/garrysmod/addons/hudmus/lua/hudmus/client/hud.lua",
+		"/G/_gm_dedicated/garrysmod/addons/hdl/lua/autorun/client/hdl.lua",
+		"/G/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/init.lua",
+		"/G/_gm_dedicated/garrysmod/addons/panellib/lua/autorun/client/moarpanels.lua",
+		"/G/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/shared.lua",
+		"/G/_gm_dedicated/garrysmod/lua/xp3/chathud.lua",
+		"/G/_gm_dedicated/garrysmod/addons/memes/lua/autorun/server/phoon.lua",
+		"/G/_gm_dedicated/garrysmod/addons/luadev-master/lua/autorun/server/luadev_chatcmds.lua",
+		"/G/_gm_dedicated/garrysmod/addons/hudmus/lua/hudmus/client/hud.lua",
+		"/G/_gm_dedicated/garrysmod/addons/panellib/lua/autorun/client/_panelstuff.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/client/cl_playmus.lua",
+		"/C/_gm_dedicated/garrysmod/addons/hudmus/lua/hudmus/client/funcsandstuff.lua",
+		"/C/_gm_dedicated/garrysmod/addons/hudmus/lua/autorun/hudmus_include.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules.lua",
+		"/C/Users/gachi_rmx/Desktop/GContent/fading_door_tool_115753588/lua/weapons/gmod_tool/stools/fading_door.lua",
+		"/C/Users/gachi_rmx/Desktop/GContent/improved_stacker_264467687/lua/weapons/gmod_tool/stools/stacker_improved.lua",
+		"/C/_gm_dedicated/garrysmod/addons/advdupe2-master/lua/weapons/gmod_tool/stools/advdupe2.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/tarky/gamemode/libs/items_sv.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/tarky/gamemode/libs/items_cl.lua",
+		"/C/_gm_dedicated/garrysmod/lua/notagain/essential/autorun/client/chathud_image_url.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/tarky/gamemode/client/inventory.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/tarky/gamemode/libs/inventory_sv.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/tarky/gamemode/shared/items.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/tarky/gamemode/libs/sql_sv.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/tarky/gamemode/libs/inventory_cl.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/tarky/gamemode/shared.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/tarky/gamemode/libs/inventory_sql_sv.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/tarky/gamemode/cl_init.lua",
+		"/C/_gm_dedicated/garrysmod/gamemodes/tarky/gamemode/include.lua",
+		"/C/_gm_dedicated/garrysmod/cfg/autoexec.cfg",
+		"/D/Steam/steamapps/common/GarrysMod/garrysmod/data/tobecontinued.dat",
+		"/C/_gm_dedicated/garrysmod/addons/blues-unboxing-2/lua/autorun/server/sv_unboxing_sql.lua",
+		"/C/_gm_dedicated/garrysmod/addons/blues-unboxing-2/lua/autorun/server/sv_unboxing_2.lua",
+		"/C/_gm_dedicated/garrysmod/addons/blues-unboxing-2/lua/autorun/client/cl_unboxing_2.lua",
+		"/C/_gm_dedicated/garrysmod/addons/blues-unboxing-2/lua/uc2_subconfig.lua",
+		"/C/_gm_dedicated/garrysmod/addons/blues-unboxing-2/lua/unbox_config_2.lua",
+		"/C/_gm_dedicated/garrysmod/addons/sh_pointshop/lua/pointshop_config.lua"
+	],
+	"find":
+	{
+		"height": 22.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"25",
+			"Raids.Frame",
+			"Raids =",
+			".Steamid",
+			"damage",
+			"net.start",
+			"stop(",
+			":Stop()",
+			"_",
+			"stop",
+			"part",
+			"parti",
+			"getfaction",
+			"hook.",
+			"join f",
+			"60",
+			"title",
+			"fbutton",
+			"scale =",
+			"close",
+			"writeui",
+			"net.write",
+			"draw.",
+			"members[",
+			"validfact",
+			"= nil",
+			"leave",
+			"start ra",
+			"getfaction",
+			"Valid",
+			"Notificat",
+			"join(",
+			"draw.si",
+			"raid",
+			"getfaction",
+			"ply.perks",
+			"own =",
+			"tooltbl",
+			"weapons.",
+			"avatar",
+			"paintover",
+			"print(",
+			"math.rad",
+			"math.cos",
+			"math.sin",
+			"setsize",
+			"self.RBEx",
+			"Color(80",
+			"50",
+			"mask",
+			"towheel",
+			"scroll",
+			"fbutton",
+			"6",
+			"setfont",
+			"valg",
+			"Init",
+			"team",
+			"basewars",
+			"self:",
+			"drug",
+			"print(",
+			"self",
+			"valgoto",
+			"L(offx, 20)",
+			"self:",
+			"BaseWars.Ents",
+			"Module:",
+			"Curry",
+			"self:",
+			"valid",
+			"MODULE:",
+			"Curry",
+			"MODULE:",
+			"Curry(",
+			"Curry",
+			"Curry(",
+			"MODULE:",
+			"Curry",
+			"MODULE:",
+			"Curry",
+			"Valid",
+			"Valid(",
+			"isvalid",
+			"Curry",
+			"util.add",
+			"Curry",
+			"MODULE:",
+			"Curry",
+			"MODULE:",
+			"Curry",
+			"gameover",
+			"transition",
+			"lich",
+			"print",
+			".effect",
+			"insert",
+			"fetch",
+			"setalpha",
+			"local p ="
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"18",
+			"sts",
+			"nets",
+			"rad",
+			"cos",
+			"sin",
+			"r",
+			"MODULE."
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 50,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "/C/_gm_dedicated/garrysmod/addons/panellib/lua/autorun/client/moarpanels.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 35858,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								3853,
+								3697
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 1784.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "/C/_gm_dedicated/garrysmod/addons/safezones/lua/autorun/client/cl_safezones.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2544,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1271,
+								1271
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 351.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "/C/_gm_dedicated/garrysmod/addons/safezones/lua/entities/bw_safezone_brush/init.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2127,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 273.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 8,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "/C/_gm_dedicated/garrysmod/addons/panellib/lua/autorun/client/_panelstuff.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3998,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2215,
+								2315
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 429.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 9,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "/C/_gm_dedicated/garrysmod/addons/inventory/lua/inventory/shared/crafts.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3503,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 364.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 10,
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "/C/_gm_dedicated/garrysmod/addons/hdl/lua/autorun/_hdl.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1950,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								497,
+								497
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 195.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 11,
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"file": "cl_font_disaster.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1603,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								375,
+								375
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 13,
+					"type": "text"
+				},
+				{
+					"buffer": 7,
+					"file": "cl_prestige.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 5104,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								3935,
+								3935
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 2349.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 12,
+					"type": "text"
+				},
+				{
+					"buffer": 8,
+					"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/entities/weapons/bw_blowtorch_t1.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 556,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								15,
+								15
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 22,
+					"type": "text"
+				},
+				{
+					"buffer": 9,
+					"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/entities/weapons/bw_base_blowtorch.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 6151,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								6141,
+								6141
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 2541.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 21,
+					"type": "text"
+				},
+				{
+					"buffer": 10,
+					"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/entities/entities/bw_base.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3588,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								308,
+								308
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 78.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 31,
+					"type": "text"
+				},
+				{
+					"buffer": 11,
+					"file": "/C/_gm_dedicated/garrysmod/addons/epic_miningaddon/lua/weapons/epicpickax/cl_init.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2271,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1758,
+								1758
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 702.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 49,
+					"type": "text"
+				},
+				{
+					"buffer": 12,
+					"file": "cl_perks.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 7975,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								4579,
+								4579
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 2499.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 14,
+					"type": "text"
+				},
+				{
+					"buffer": 13,
+					"file": "/C/_gm_dedicated/garrysmod/addons/MFsiNC/lua/hexlib/hx_Bench.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2300,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 273.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 48,
+					"type": "text"
+				},
+				{
+					"buffer": 14,
+					"file": "/C/_gm_dedicated/garrysmod/addons/partizones/lua/autorun/partizone_points.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 4944,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1595,
+								1595
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 156.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 47,
+					"type": "text"
+				},
+				{
+					"buffer": 15,
+					"file": "/C/_gm_dedicated/garrysmod/lua/autorun/server/workshop.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2502,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 819.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 54,
+					"type": "text"
+				},
+				{
+					"buffer": 16,
+					"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/money.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3110,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1733,
+								1733
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 491.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 50,
+					"type": "text"
+				},
+				{
+					"buffer": 17,
+					"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/notify.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2310,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1130,
+								1130
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 468.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 52,
+					"type": "text"
+				},
+				{
+					"buffer": 18,
+					"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/server/commands.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 7535,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								4347,
+								4351
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 2532.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 19,
+					"file": "/C/_gm_dedicated/garrysmod/lua/notagain/misc/autorun/player_chataddtext.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 898,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 20,
+					"file": "/C/_gm_dedicated/garrysmod/addons/memes/lua/autorun/server/phoon.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 970,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 51,
+					"type": "text"
+				},
+				{
+					"buffer": 21,
+					"file": "/C/_gm_dedicated/garrysmod/addons/memes/lua/autorun/server/sv_meme1.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 330,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								330,
+								330
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 20,
+					"type": "text"
+				},
+				{
+					"buffer": 22,
+					"file": "/C/_gm_dedicated/garrysmod/lua/autorun/server/sql_extension.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2326,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								502,
+								502
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 156.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 7,
+					"type": "text"
+				},
+				{
+					"buffer": 23,
+					"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1513,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1465,
+								1465
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 34,
+					"type": "text"
+				},
+				{
+					"buffer": 24,
+					"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/include.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2041,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 633.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 30,
+					"type": "text"
+				},
+				{
+					"buffer": 25,
+					"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/config.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 23569,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								3001,
+								3001
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 3567.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 29,
+					"type": "text"
+				},
+				{
+					"buffer": 26,
+					"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/afk.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3336,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 1059.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 46,
+					"type": "text"
+				},
+				{
+					"buffer": 27,
+					"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/events.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 23,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								23,
+								23
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 45,
+					"type": "text"
+				},
+				{
+					"buffer": 28,
+					"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/playtime_money.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3986,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								3921,
+								3921
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 1608.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 33,
+					"type": "text"
+				},
+				{
+					"buffer": 29,
+					"file": "/C/_gm_dedicated/garrysmod/gamemodes/sandbox/gamemode/spawnmenu/contextmenu.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 5411,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1496,
+								1501
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 517.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 32,
+					"type": "text"
+				},
+				{
+					"buffer": 30,
+					"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/server/raids_sv.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 11390,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								9824,
+								9824
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 5470.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 18,
+					"type": "text"
+				},
+				{
+					"buffer": 31,
+					"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/client/raids_cl.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 7253,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								3251,
+								3262
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 1947.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 17,
+					"type": "text"
+				},
+				{
+					"buffer": 32,
+					"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/raid.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 244,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								231,
+								231
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 44,
+					"type": "text"
+				},
+				{
+					"buffer": 33,
+					"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/player_util.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3863,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								825,
+								825
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 234.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 43,
+					"type": "text"
+				},
+				{
+					"buffer": 34,
+					"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/server/morelang.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 427,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								426,
+								426
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 42,
+					"type": "text"
+				},
+				{
+					"buffer": 35,
+					"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/language.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 5375,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								243,
+								243
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 41,
+					"type": "text"
+				},
+				{
+					"buffer": 36,
+					"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/client/factions_cl.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2712,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2683,
+								2683
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 507.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 28,
+					"type": "text"
+				},
+				{
+					"buffer": 37,
+					"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/server/factions_sv.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 7601,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								366,
+								366
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 2431.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 26,
+					"type": "text"
+				},
+				{
+					"buffer": 38,
+					"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/shared/spawnmenu.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 22996,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								705,
+								705
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 624.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 39,
+					"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/server/hooks.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2717,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 659.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 19,
+					"type": "text"
+				},
+				{
+					"buffer": 40,
+					"file": "/D/Resources/GContent/falcos_prop_protection_(fpp)_133537219/lua/fpp/sh_cppi.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2940,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 390.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 24,
+					"type": "text"
+				},
+				{
+					"buffer": 41,
+					"file": "/D/Resources/GContent/falcos_prop_protection_(fpp)_133537219/lua/fpp/server/ownability.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 18935,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 4563.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 25,
+					"type": "text"
+				},
+				{
+					"buffer": 42,
+					"file": "cl_bwmenu.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 20733,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								15149,
+								15149
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 8764.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 16,
+					"type": "text"
+				},
+				{
+					"buffer": 43,
+					"file": "/C/_gm_dedicated/garrysmod/addons/MFsiNC/lua/hexlib/hx_Table.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1352,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 624.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 36,
+					"type": "text"
+				},
+				{
+					"buffer": 44,
+					"file": "/C/_gm_dedicated/garrysmod/addons/MFsiNC/lua/hexlib/hx_Player.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2687,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2441,
+								2441
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 1469.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 35,
+					"type": "text"
+				},
+				{
+					"buffer": 45,
+					"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/server/perks_sv.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3831,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								3296,
+								3296
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 946.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 37,
+					"type": "text"
+				},
+				{
+					"buffer": 46,
+					"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/init.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 9344,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								4555,
+								4555
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 2688.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 23,
+					"type": "text"
+				},
+				{
+					"buffer": 47,
+					"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/server/prestige_sv.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 7041,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								5105,
+								5105
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 2301.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 38,
+					"type": "text"
+				},
+				{
+					"buffer": 48,
+					"file": "/C/_gm_dedicated/garrysmod/lua/includes/extensions/net.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3886,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								670,
+								670
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 39,
+					"type": "text"
+				},
+				{
+					"buffer": 49,
+					"file": "/C/_gm_dedicated/garrysmod/addons/titles/lua/autorun/client/cl_nametitle.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 21404,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								12474,
+								12474
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 5886.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 6,
+					"type": "text"
+				},
+				{
+					"buffer": 50,
+					"file": "/C/Users/gachi_rmx/Desktop/LUvit/bot.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 12900,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								7255,
+								6916
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 4032.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 51,
+					"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/shared.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 13402,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1820,
+								1820
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 39.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 40,
+					"type": "text"
+				},
+				{
+					"buffer": 52,
+					"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/cl_init.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 6584,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2872,
+								2872
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 1061.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 15,
+					"type": "text"
+				},
+				{
+					"buffer": 53,
+					"file": "/C/_gm_dedicated/garrysmod/gamemodes/basewars_free/gamemode/modules/playerlevel.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 4212,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 1024.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 53,
+					"type": "text"
+				},
+				{
+					"buffer": 54,
+					"file": "/C/Users/gachi_rmx/Desktop/snippets.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 4327,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								4103,
+								4103
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/GMod Lua/Lua.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 1677.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 27,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 22.0
+	},
+	"input":
+	{
+		"height": 34.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.SublimeLinter":
+	{
+		"height": 0.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"output.unsaved_changes":
+	{
+		"height": 96.0
+	},
+	"pinned_build_system": "",
+	"project": "prestige.sublime-project",
+	"replace":
+	{
+		"height": 40.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": true,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 272.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

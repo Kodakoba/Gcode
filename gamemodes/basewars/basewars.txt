@@ -1,0 +1,9 @@
+"basewars"
+{
+	"base"		"sandbox"
+	"title"		"BaseWars"
+	"version"	"1337"
+	"description"	"vaguely based off hexahedronic's bw15"
+
+	"author_name"	"gachirmx"
+}
