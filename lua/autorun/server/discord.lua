@@ -1,5 +1,7 @@
 require("bromsock");
 
+discord = {}
+
 dissocket = dissocket or BromSock()
 
 local socket = dissocket
@@ -8,6 +10,12 @@ local port = 27020
 local pingport = 27025
 
 local silence = false 
+
+discord.APIKey = "-----"
+
+if discord.APIKey == "-----" then 
+	ErrorNoHalt("Discord requires an API key to be set! Go set it ya lazy bum\nIt's @ lua/autorun/server/discord.lua")
+end
 
 print("Initializing discord...")
 
@@ -90,9 +98,129 @@ hook.Add("PlayerSay", "Discord", function(ply, msg)
         if aowl.cmds[cmd] then return end 
     end 
 
-    http.Post("https://vaati.net/Gachi/shit.php", {
-    	p = msg, 
-    	name = ply:Nick()
-    }) 
+    discord.Send(ply:Nick(), msg)
 
+end)
+
+local quips = {
+	"ah shit here we go again",
+	"did i forget to do something there?",
+	"welp time to break another dozen features which were working perfectly fine...",
+	"probably just gonna stand afk for 20 minutes before deciding i don't wanna hop on after all",
+	"time to spend 3 days coding in some useless shit"
+}
+
+local offquips = {
+	"\"yup, i'm done\"",
+	"at least it wasn't a crash",
+
+	function()
+		local t = os.date("*t")
+
+		if t.hour > 21 or t.hour < 6 then 
+			return ("it's getting pretty late (%s:%s)"):format(t.hour, t.min)
+		end 
+
+	end, 
+
+	"another mechanic successfully ruined",
+	"now 20% more errors than the last time!"
+}
+
+Embed = {}
+
+EmbedMeta = {}
+EmbedMeta.IsEmbed = true
+
+EmbedMeta.__index = EmbedMeta 
+
+ChainAccessor(EmbedMeta, "title", "Title")
+
+ChainAccessor(EmbedMeta, "description", "Description")
+ChainAccessor(EmbedMeta, "description", "Text")
+
+function EmbedMeta:SetColor(col, g2, b2)
+	local r, g, b 
+
+	if IsColor(col) then 
+		r, g, b = col.r, col.g, col.b
+	else
+		r, g, b = col, g2, b2 
+	end
+
+	self.color = bit.lshift(r, 16) + bit.lshift(g, 8) + b
+
+	return self
+end
+
+function EmbedMeta:GetColor()
+	return Color(bit.rshift(self.color, 16), bit.rshift(self.color % 2^16, 8), self.color % 2^8)
+end
+function Embed:new()
+	local t = {}
+	setmetatable(t, EmbedMeta)
+
+	return t
+end
+
+
+Embed.__call = Embed.new
+
+setmetatable(Embed, Embed)
+
+function discord.Send(name, txt)
+	
+	http.Post("https://vaati.net/Gachi/shit.php", { 
+		name = name or "GachiRP",
+		api = discord.APIKey,
+		p = txt,
+	})
+
+end 
+
+function discord.SendEmbed(name, t)
+	local em
+
+	if t.IsEmbed then
+		em = {t} 
+	else 
+		em = t 
+	end
+
+
+	http.Post("https://vaati.net/Gachi/shit.php", { 
+		name = name or "GachiRP",
+		api = discord.APIKey,
+		embeds = util.TableToJSON(em)
+	})
+
+end
+
+hook.Add("InitPostEntity", "ServerNotify", function()
+
+	local quip 
+	
+	while quip == nil do 
+		quip = eval(quips[math.random(#quips)])
+	end
+
+	local em = Embed()
+	em:SetTitle("Server is now online!"):SetDescription(quip .. "\n\nJoin @ steam://connect/" .. game.GetIPAddress() .. " !"):SetColor(Color(100, 230, 100))
+
+	discord.SetEmbed(nil, em)
+
+end)
+
+hook.Add("ShutDown", "ServerNotify", function()
+
+	local quip 
+
+	while quip == nil do 
+		quip = eval(offquips[math.random(#offquips)])
+	end
+
+	local em = Embed()
+	em:SetTitle("Server is now offline."):SetDescription(quip):SetColor(Color(230, 70, 70))
+
+	discord.SetEmbed(nil, em)
 end)
