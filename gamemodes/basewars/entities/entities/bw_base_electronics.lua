@@ -49,15 +49,19 @@ if SERVER then
 		local me = self:GetTable()
 		local bwe = BWEnts[self]
 
+		bwe.PowerDrain = self.PowerRequired 
+
 		local pow = self:DrainPower()
 
-		local dmgd = (me.PresetMaxHealth / self:Health()) < 0.2
+		local dmgd = (self:GetMaxHealth() / self:Health()) < 0.2
 
 		if pow and dmgd and math.random(0, 11) == 0 then
 
+			print("ew", me.PresetMaxHealth)
 			self:Spark()
 
 		end
+
 		if BaseWars.Watery then 
 
 			if self:WaterLevel() > 0 and not me.GetWaterProof(self) then

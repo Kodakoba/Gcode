@@ -12,7 +12,9 @@ function ENT:Init(me)
 	me.GeneratorEnts = {}
 	me.Generators = {}
 
-	me.Electronics = {}
+	me.Electronics = ValidSeqIterable()
+
+	me.LastTransfer = CurTime()
 
 	poles[#poles + 1] = self
 
@@ -50,9 +52,15 @@ function ENT:PhysicsUpdate(pos, ang)
 
 	local me = BWEnts[self]
 
-	for k,v in pairs(me.Generators) do 
+	for k,v in pairs(me.GeneratorEnts) do 
 		if not BWEnts[k] then continue end
-		BWEnts[k].CheckDist = CurTime()
+		BWEnts[k].CheckDist = true
+	end
+
+	for k,v in me.Electronics:pairs() do 
+		if not BWEnts[v] then continue end
+
+		BWEnts[v].CheckDist = true
 	end
 
 end
@@ -60,14 +68,16 @@ end
 function ENT:OnConnected(gen)
 	local me = BWEnts[self]
 
-	local gens = me.Generators
+	local gens = me.GeneratorEnts
 	local id = 0
 
-	for k,v in ipairs(gens) do 
-		id = k
+	for k,v in pairs(gens) do 
+		id = math.max(id, v + 1)
 	end
 
 	if id >= self.MaxGenerators - 1 then print("max generators reached", id, self.MaxGenerators) return end 
+
+	print("connected to id", id)
 
 	me.Generators[id] = gen
 	me.GeneratorEnts[gen] = id
@@ -88,7 +98,7 @@ end
 function ENT:OnDisconnect(gen)
 	local me = BWEnts[self]
 
-	me.Generators[me.GeneratorsEnts[gen]] = nil
+	me.Generators[me.GeneratorEnts[gen]] = nil
 	me.GeneratorEnts[gen] = nil 
 
 	self:NetworkEnts()
@@ -99,36 +109,110 @@ function ENT:NetworkEnts()
 	
 	local setDT = self.SetDTEntity 
 
-	--default: loop 0 to 7
+	--default: loop 0 to MaxGenerators (max. 8)
+
+	local null = Entity(0)
 
 	for i=0, self.MaxGenerators - 1 do 
-		print("checking generator #" .. i)
 
 		if me.Generators[i] then 
 			setDT(self, i, me.Generators[i])
+		else 
+			setDT(self, i, null)
 		end
+
 	end
 
-	--default: loop 8 to (8 + 16 - 1) = loop 8 to 23
+	--loop 1 to MaxElecronics and, if ent exists, network as ID with i + MaxGenerators	(max. 16)
 
-	for i=self.MaxGenerators, self.MaxGenerators + self.MaxElectronics - 1 do 
+	for i=0, self.MaxElectronics - 1 do 
 
-		print("checking electronic #" .. i - self.MaxGenerators, "(but networking as", i .. ")" )
-
-		if me.Electronics[i - self.MaxGenerators] then 
-			setDT(self, i, me.Electronics[i])
+		if me.Electronics[i] then 
+			setDT(self, i + self.MaxGenerators, me.Electronics[i])
+		else 
+			setDT(self, i + self.MaxGenerators, null)
 		end
+
 	end
 
 end
 
 function ENT:Think()
 
+	local me = BWEnts[self]
+
+	--[[
+		Power transfer
+	]]
+
+	if CurTime() - me.LastTransfer < 0.5 then return end 
+
+	me.LastTransfer = CurTime()
+
+	local pw_in = 0
+
+	local pw_stored = {}
+	local sum_stored = 0
+
+	local pw_out = 0
+
+	for k,v in pairs(me.Generators) do 
+		local ent = BWEnts[v]
+		pw_in = pw_in + ent.PowerGenerated 
+
+		pw_stored[k] = ent.PowerCapacity
+		sum_stored = sum_stored + ent.PowerCapacity
+	end
+
+	local was_stored = sum_stored 
+
+	for k,v in me.Electronics:pairs() do 
+		local ent = BWEnts[v]
+
+		local rate = math.max(250, ent.PowerDrain + 50, ent.PowerCapacity / 10)
+		rate = math.min(rate, ent.PowerCapacity - ent.Power)
+
+		local from_gen = math.min(pw_in, rate)
+		local from_stored = math.min(rate - from_gen, sum_stored)
+
+		pw_in = pw_in - from_gen
+		rate = from_gen + from_stored
+
+		sum_stored = sum_stored - from_stored 
+
+		ent.Power = ent.Power + rate
+	end
+
+	if was_stored > sum_stored then
+		local diff = was_stored - sum_stored
+
+		for k,v in pairs(me.Generators) do 
+			local ent = BWEnts[v]
+
+			local was = ent.PowerCapacity
+
+			ent.PowerCapacity = math.max(was - diff, 0)
+
+			diff = diff - was
+			if diff <= 0 then break end
+		end
+
+	end
 
 end
 
 function ENT:ConnectTo(ent)
 	print("connecting to", ent)
+
+	local me = BWEnts[self]
+
+	local key = #me.Electronics + 1
+
+	if key <= self.MaxElectronics then 
+		me.Electronics:add(ent)
+	end
+
+	self:NetworkEnts()
 end
 
 hook.Add("BaseWars_PlayerBuyEntity", "PoleAddPowerGrid", function(ply, ent)

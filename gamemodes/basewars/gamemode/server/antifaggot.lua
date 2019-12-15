@@ -15,7 +15,29 @@ end)
 
 hook.Add("PrePACConfigApply", "PACDust", function(ply) 
 	if not table.HasValue(BaseWars.Config.VIPRanks,ply:GetUserGroup()) and not ply:IsAdmin() and not ply:IsSuperAdmin() then return false,"Not enough privileges!" end
-end)
+	end)
 hook.Add("CanWearParts", "PACStop", function(ply)
 	if not table.HasValue(BaseWars.Config.VIPRanks,ply:GetUserGroup()) and not ply:IsAdmin() and not ply:IsSuperAdmin() then return false,"Not enough privileges!" end
+	end)
+
+--[[
+	Adv. Dupe 2 Fix
+	Log trash when people use "inf" or beyond reasonable ModelScale on dupes.
+]]
+
+local function AntiDupeTrash()
+
+	net.Receivers["armdupe"] = function(len,ply) 
+ 		if ply:IsAdmin() or ply:IsSuperAdmin() then return  --you don't need it anyways
+
+ 		else 
+ 			print(tostring(ply).. " tried to arm a dupe despite lacking admin privileges.") 
+ 		end 
+
+	end
+
+end
+
+hook.Add("InitPostEntity", "AntiDupeCrash",function() 
+	AntiDupeTrash()  
 end)

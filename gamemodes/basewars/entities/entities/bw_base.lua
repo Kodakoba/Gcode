@@ -123,6 +123,8 @@ if SERVER then
 		local me = BWEnts[self]
 
 		me.Power = 0
+		me.PowerCapacity = self.PowerCapacity 
+
 		me.MaxPower = self.PowerCapacity
 		me.LastDrain = 0 
 
@@ -139,7 +141,7 @@ if SERVER then
 		self:PhysWake()
 		self:Activate()
 		
-		self:SetHealth(self.PresetMaxHealth)
+		self:SetHealth(self.PresetMaxHealth or self.MaxHealth)
 		self:SetMaxPower(self.PowerCapacity)
 		self.rtb = 0
 		
