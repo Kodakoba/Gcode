@@ -17,14 +17,11 @@ if discord.APIKey == "-----" then
 	ErrorNoHalt("Discord requires an API key to be set! Go set it ya lazy bum\nIt's @ lua/autorun/server/discord.lua")
 end
 
-print("Initializing discord...")
 
 local function writeline(line)
 	local packet = BromPacket()
 	packet:WriteLine(line)
 	socket:Send(packet, true)
-	
-	print("IRC WROTE: " .. line)
 end
 
 local function socketConnect(sock, connected, ip, port)
