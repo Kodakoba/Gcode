@@ -57,10 +57,26 @@ local function Download(url, name, func, fail)
 	end)
 
 end
+
+local exts = {
+	["txt"] = true,
+	["jpg"] = true,
+	["png"] = true,
+	["dat"] = true,
+	["json"] = true,
+	["vtf"] = true,
+}
+
 function hdl.DownloadFile(url, name, func, fail, ovwrite)
 	if not url then return end 
 	func = func or BlankFunc 
 	fail = fail or BlankFunc
+
+	--[[
+
+		Scanning for folders & finding them
+
+	]]
 
 	if name[1] ~= "-" then
 		name = "hdl/" .. name
@@ -78,11 +94,23 @@ function hdl.DownloadFile(url, name, func, fail, ovwrite)
 
 			if not v:find("%.") and not file.IsDir("hdl/"..v, "DATA") then 
 				file.CreateDir("hdl/"..v)
-				print('created dir', "hdl/"..v)
 			end
 
 		end
 
+	end
+
+	--[[
+		Checking for extension
+	]]
+
+	local filename, ext = name:match("(.+)%.(.+)")
+
+	if not ext then 
+		MsgC(Color(220, 220, 50), "[HDL] ", color_white, ("File name (%s) does not have an extension; appending .dat\n"):format(name))
+	elseif not exts[ext] then 
+		MsgC(Color(220, 220, 50), "[HDL] ", color_white, ("Extension (%s) in file name (%s) is not whitelisted; replacing it with .dat\n"):format(ext, name))
+		name = filename .. ".dat"
 	end
 
 	local size = file.Size(name, "DATA")
@@ -92,9 +120,8 @@ function hdl.DownloadFile(url, name, func, fail, ovwrite)
 		local url2 = sql.Query("SELECT url FROM hdl_Data WHERE name == " .. SQLStr(name))
 
 		if istable(url2) then 
-			PrintTable(url2)
 			url2 = url2[1] 
-			if url~=url2 then print('URLs differ! old: ' .. url2.url .. ' vs. new: ' .. url .. "\ndownloading newer one...") Download(url, name, func, fail) return end
+			if url~=url2 then Download(url, name, func, fail) return end
 		end 
 
 		func("data/" .. name, file.Read("data/" .. name, "DATA"))
@@ -154,7 +181,7 @@ end)
 function hdl.PlayURL(url, name, flags, func, fail, ovwrite)
 
 	hdl.DownloadFile(url, name, function(n) 
-		sound.PlayFile(n, flags, func)
+		sound.PlayFile(n, flags or "", func or BlankFunc)
 
 	end, function(err, str)
 		error("Failed HDL PlayURL! Error: " .. err .. " " .. str)
@@ -174,3 +201,27 @@ function workshop.Download(id)
 	end)
 
 end
+--[[
+well it's been about 5 months i think
+
+reworked inventory networking
+added a whole bunch of rendering shtuff to panels
+added outfitter
+rewrote dash
+added research
+rewrote printers
+added printer rack
+added printer overclocker
+todo whcih uses sqlite for storing shit
+equipment which uses mysql
+discord relay back&forth using bromsocket
+partizones structured
+unimenu dumped
+HeX's lib added & improved with various table objects(CommunistTable, ProxyTable, etc.)
+chathud with animated emote support added
+mySQL one connection for everything plus hook calling
+and more...
+
+(in progress; not functional) rewriting power system: generators & power poles
+CUM: a WIP admin mod for personal use
+inventory needs actual content]]
