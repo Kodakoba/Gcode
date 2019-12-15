@@ -96,11 +96,20 @@ function IIterMeta:clean()
 	for i=0, #self-1 do 
 		local key, ent = next(self, i)
 
-		if not IsValid(ent) then
+		if not IsValid(ent) and ent then
 			table.remove(self, key)
 		end 
 	end
 
+end
+
+function IIterMeta:add(v)
+	self:clean()
+	local key = #self + 1
+
+	self[key] = v
+
+	return key
 end
 
 IIterMeta.__newindex = NewIndex

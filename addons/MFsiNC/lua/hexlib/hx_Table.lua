@@ -237,3 +237,15 @@ function CommunistTable:new()
 end
 CommunistTable.__call = CommunistTable.new
 setmetatable(CommunistTable, CommunistTable)
+
+
+function ChainAccessor(t, key, func)
+    t["Get" .. func] = function(self)
+        return self[key]
+    end 
+
+    t["Set" .. func] = function(self, val)
+        self[key] = val 
+        return self 
+    end
+end
