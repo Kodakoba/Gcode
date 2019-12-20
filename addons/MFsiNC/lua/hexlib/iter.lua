@@ -1,6 +1,6 @@
 
 --[[
-	what's the point in just plain iterable classes that don't do anything special? 
+	what's the point in just plain iterable classes that don't do anything special or don't have convenient methods? 
 ]]
 
 
@@ -124,6 +124,41 @@ function ValidSeqIterable:new(t)
 end
 
 ValidSeqIterable.__call = ValidSeqIterable.new 
+
+
+local seqMeta = {}
+
+SeqIterable = {}
+SeqIterable.__index = seqMeta
+
+function seqMeta:filter(func)
+
+	for i=0, #self-1 do 
+		local key, val = next(self, i)
+
+		if val and func(key, val) == false then
+			table.remove(self, key)
+		end 
+	end
+
+end
+
+function seqMeta:add(v)
+
+	local key = #self + 1
+
+	self[key] = v
+
+	return key
+end
+
+function SeqIterable:__call()
+	local t = {}
+	return setmetatable(t, self)
+end
+
+
+setmetatable(SeqIterable, SeqIterable)
 
 
 setmetatable(ValidSeqIterable, ValidSeqIterable)
