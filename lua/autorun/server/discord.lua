@@ -11,17 +11,12 @@ local pingport = 27025
 
 local silence = false 
 
-discord.APIKey = "-----"
-
-if discord.APIKey == "-----" then 
-	ErrorNoHalt("Discord requires an API key to be set! Go set it ya lazy bum\nIt's @ lua/autorun/server/discord.lua")
-end
-
-
 local function writeline(line)
 	local packet = BromPacket()
 	packet:WriteLine(line)
 	socket:Send(packet, true)
+	
+	print("IRC WROTE: " .. line)
 end
 
 local function socketConnect(sock, connected, ip, port)
@@ -169,7 +164,7 @@ function discord.Send(name, txt)
 	
 	http.Post("https://vaati.net/Gachi/shit.php", { 
 		name = name or "GachiRP",
-		api = discord.APIKey,
+		api = "disrelay",
 		p = txt,
 	})
 
@@ -184,27 +179,38 @@ function discord.SendEmbed(name, t)
 		em = t 
 	end
 
+	print("send eet")
 
 	http.Post("https://vaati.net/Gachi/shit.php", { 
 		name = name or "GachiRP",
-		api = discord.APIKey,
+		api = "disrelay",
 		embeds = util.TableToJSON(em)
 	})
 
 end
 
-hook.Add("InitPostEntity", "ServerNotify", function()
+discord.Notified = false 
+
+hook.Add("OnGamemodeLoaded", "ServerNotify", function()
+
+	if discord.Notified then return end 
 
 	local quip 
 	
 	while quip == nil do 
 		quip = eval(quips[math.random(#quips)])
 	end
+	discord.Notified = true
 
-	local em = Embed()
-	em:SetTitle("Server is now online!"):SetDescription(quip .. "\n\nJoin @ steam://connect/" .. game.GetIPAddress() .. " !"):SetColor(Color(100, 230, 100))
+	timer.Simple(15, function()
+		local em = Embed()
 
-	discord.SetEmbed(nil, em)
+		em:SetTitle("Server is now online!")
+		:SetDescription(quip .. "\n\nJoin @ steam://connect/" .. game.GetIPAddress() .. " !")
+		:SetColor(Color(100, 230, 100))
+
+		discord.SendEmbed(nil, em)
+	end)
 
 end)
 
@@ -219,5 +225,13 @@ hook.Add("ShutDown", "ServerNotify", function()
 	local em = Embed()
 	em:SetTitle("Server is now offline."):SetDescription(quip):SetColor(Color(230, 70, 70))
 
-	discord.SetEmbed(nil, em)
+	discord.SendEmbed(nil, em)
 end)
+
+
+--https://discordapp.com/api/webhooks/625254274342977546/6BQv2nJ5wz8g0bHWQIkVTmC64t9uBBqFIbHVFGBbdtL6fJ0T7BtbD4rt9j_tao6Sc2xs
+
+function discord.SendTo(chan, name, text, embeds)
+
+
+end
