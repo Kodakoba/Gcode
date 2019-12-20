@@ -57,7 +57,6 @@ if SERVER then
 
 		if pow and dmgd and math.random(0, 11) == 0 then
 
-			print("ew", me.PresetMaxHealth)
 			self:Spark()
 
 		end
@@ -96,6 +95,18 @@ if SERVER then
 
 		local State = Res ~= false
 
+		if bwe.CheckDist and bwe.ConnectedTo then 
+			local pos = self:GetPos()
+
+			local cto = me.ConnectedTo
+			local pos2 = cto:GetPos()
+
+			if pos:DistToSqr(pos2) > bwe.CableLength then 
+				self:StartBitching()
+			else 
+				me.CheckDist = nil 
+			end
+		end
 
 		me.ThinkFunc(self)
 

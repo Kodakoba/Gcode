@@ -9,10 +9,11 @@ ENT.Author 				= "Q2F2"
 ENT.Model 				= "models/props_lab/reciever_cart.mdl"
 ENT.Sound				= Sound("HL1/fvox/blip.wav")
 
+ENT.MaxHealth = 1500
+
 function ENT:Init()
 
 	self:SetModel(self.Model)
-	self:SetHealth(1500)
 	self:SetColor(Color(70,70,200))
 	self:SetUseType(CONTINUOUS_USE)
 	
