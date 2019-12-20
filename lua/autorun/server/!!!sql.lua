@@ -12,6 +12,9 @@ rsDB:connect()
 function mysqloo.GetDB()
 	return rsDB
 end
+
+mysqloo.HookName = "OnMySQLReady"
+
 mysqloo.GetDatabase = mysqloo.GetDB 
 mysqloo.GetDataBase = mysqloo.GetDB
 
