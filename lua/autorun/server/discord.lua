@@ -1,8 +1,30 @@
 require("bromsock");
 
-discord = {}
+discord = discord or {}
 
 dissocket = dissocket or BromSock()
+
+
+local log
+local logtbl = {name = "Discord Relay", col = Color(40, 135, 255)}
+
+if Modules and Modules.Log then 
+	log = function(str, ...)
+		Modules.Log(logtbl, str:format(...))
+	end
+
+	discord.Log = log 
+end
+
+hook.Add("PostGamemodeLoaded", "inventory_log", function()
+
+	log = function(str, ...)
+		Modules.Log(logtbl, str:format(...))
+	end
+
+	discord.Log = log 
+
+end)
 
 local socket = dissocket
 
@@ -15,8 +37,7 @@ local function writeline(line)
 	local packet = BromPacket()
 	packet:WriteLine(line)
 	socket:Send(packet, true)
-	
-	print("IRC WROTE: " .. line)
+
 end
 
 local function socketConnect(sock, connected, ip, port)
@@ -90,7 +111,7 @@ hook.Add("PlayerSay", "Discord", function(ply, msg)
         if aowl.cmds[cmd] then return end 
     end 
 
-    discord.Send(ply:Nick(), msg)
+    discord.Send("chat", ply:Nick(), msg)
 
 end)
 
@@ -127,9 +148,14 @@ EmbedMeta.IsEmbed = true
 EmbedMeta.__index = EmbedMeta 
 
 ChainAccessor(EmbedMeta, "title", "Title")
+ChainAccessor(EmbedMeta, "title", "Name")
 
-ChainAccessor(EmbedMeta, "description", "Description")
-ChainAccessor(EmbedMeta, "description", "Text")
+function EmbedMeta:SetText(txt, ...)
+	self.description = txt:format(...)
+	return self
+end
+
+EmbedMeta.SetDescription = EmbedMeta.SetText
 
 function EmbedMeta:SetColor(col, g2, b2)
 	local r, g, b 
@@ -160,17 +186,61 @@ Embed.__call = Embed.new
 
 setmetatable(Embed, Embed)
 
-function discord.Send(name, txt)
+
+
+local db = mysqloo and mysqloo.GetDB()
+
+hook.Add("OnMySQLReady", "Discord", function()
+	db = mysqloo.GetDB() 
+end)
+
+
+
+function discord.GetChannels(mode, cb)
+	local q = "SELECT whook_url FROM `botto`.`relays` WHERE json_search(`modes`, 'one', '%s') IS NOT NULL"
+	q = q:format(db:escape(mode))
+
+	local q = db:query(q)
+
+	q.onSuccess = function(self, dat)
+		local urls = {}
+
+		if not dat[1] then return end --no relays listening for this mode 
+
+		for k,v in pairs(dat) do 
+			urls[#urls + 1] = v.whook_url
+		end
+
+		cb(urls)
+	end
+
+	q.onError = function(self, err, sql)
+		log("Error on attempting to get channels.\nError: %s\nSQL: %s", err, sql)
+	end
+
+	q:start()
+end
+function discord.Send(mode, name, txt)
 	
-	http.Post("https://vaati.net/Gachi/shit.php", { 
-		name = name or "GachiRP",
-		api = "disrelay",
-		p = txt,
-	})
+	local function callback(urls)
+
+		http.Post("https://vaati.net/Gachi/shit.php", { 
+			name = name or "GachiRP",
+			api = "disrelay",
+			p = txt,
+			json = "y",
+			chan = util.TableToJSON(urls),
+		})
+
+	end
+
+	discord.GetChannels(mode, callback)
 
 end 
 
-function discord.SendEmbed(name, t)
+BlankFunc = function(...) end 
+
+function discord.SendEmbed(mode, name, t, cb, fail)
 	local em
 
 	if t.IsEmbed then
@@ -179,37 +249,49 @@ function discord.SendEmbed(name, t)
 		em = t 
 	end
 
-	print("send eet")
+	local function callback(urls)
+		http.Post("https://vaati.net/Gachi/shit.php", { 
+			name = name or "GachiRP",
+			api = "disrelay",
+			json = "y",
+			chan = util.TableToJSON(urls),
+			embeds = util.TableToJSON(em),
+		}, cb or BlankFunc, fail or BlankFunc)
+	end
 
-	http.Post("https://vaati.net/Gachi/shit.php", { 
-		name = name or "GachiRP",
-		api = "disrelay",
-		embeds = util.TableToJSON(em)
-	})
-
+	discord.GetChannels(mode, callback)
 end
 
-discord.Notified = false 
 
-hook.Add("OnGamemodeLoaded", "ServerNotify", function()
+discord.Notified = discord.Notified or false 
+
+hook.Add("Tick", "ServerNotify", function()
 
 	if discord.Notified then return end 
+	print("LULW NO")
+	RunConsoleCommand("sv_hibernate_think", 1)
 
 	local quip 
 	
 	while quip == nil do 
 		quip = eval(quips[math.random(#quips)])
 	end
+
 	discord.Notified = true
 
-	timer.Simple(15, function()
+	timer.Simple(1, function()
 		local em = Embed()
 
 		em:SetTitle("Server is now online!")
 		:SetDescription(quip .. "\n\nJoin @ steam://connect/" .. game.GetIPAddress() .. " !")
 		:SetColor(Color(100, 230, 100))
 
-		discord.SendEmbed(nil, em)
+		discord.SendEmbed("status", nil, em, function(...)
+			RunConsoleCommand("sv_hibernate_think", 0)
+		end, function(...)
+			RunConsoleCommand("sv_hibernate_think", 0)
+		end)
+		
 	end)
 
 end)
@@ -225,7 +307,7 @@ hook.Add("ShutDown", "ServerNotify", function()
 	local em = Embed()
 	em:SetTitle("Server is now offline."):SetDescription(quip):SetColor(Color(230, 70, 70))
 
-	discord.SendEmbed(nil, em)
+	discord.SendEmbed("status", nil, em)
 end)
 
 
