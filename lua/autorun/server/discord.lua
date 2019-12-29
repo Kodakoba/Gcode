@@ -147,8 +147,12 @@ EmbedMeta.IsEmbed = true
 
 EmbedMeta.__index = EmbedMeta 
 
-ChainAccessor(EmbedMeta, "title", "Title")
-ChainAccessor(EmbedMeta, "title", "Name")
+function EmbedMeta:SetTitle(txt, ...)
+	self.title = txt:format(...)
+	return self
+end
+
+EmbedMeta.SetName = EmbedMeta.SetTitle
 
 function EmbedMeta:SetText(txt, ...)
 	self.description = txt:format(...)
@@ -268,7 +272,7 @@ discord.Notified = discord.Notified or false
 hook.Add("Tick", "ServerNotify", function()
 
 	if discord.Notified then return end 
-	print("LULW NO")
+
 	RunConsoleCommand("sv_hibernate_think", 1)
 
 	local quip 
@@ -279,7 +283,7 @@ hook.Add("Tick", "ServerNotify", function()
 
 	discord.Notified = true
 
-	timer.Simple(1, function()
+	timer.Simple(10, function()
 		local em = Embed()
 
 		em:SetTitle("Server is now online!")

@@ -3,11 +3,22 @@ require("mysqloo")
 
 __MYSQL_INFO = {"127.0.0.1", "root", "31415", "master"}
 
-mysql = mysqloo
+local Database = FindMetaTable("MySQLOO table")
 
+
+
+mysql = mysqloo
+mysqloo.Info = __MYSQL_INFO
 
 rsDB = mysqloo.connect(unpack(__MYSQL_INFO))
+
+rsDB.onConnected = function(self)
+	hook.Run("OnMySQLReady", self)
+end
+
 rsDB:connect()
+
+
 
 function mysqloo.GetDB()
 	return rsDB
@@ -18,7 +29,13 @@ mysqloo.HookName = "OnMySQLReady"
 mysqloo.GetDatabase = mysqloo.GetDB 
 mysqloo.GetDataBase = mysqloo.GetDB
 
-function mysqloo.CreateTable(name, ...)
+function mysqloo.CreateTable(db, name, ...)
+
+	if isstring(db) then 	--database is optional; it'll just use default
+		name = db 
+		db = rsDB 
+	end
+
 	local q = "CREATE TABLE IF NOT EXISTS `%s` (%s)"
 	local args = {...}
 
@@ -31,7 +48,7 @@ function mysqloo.CreateTable(name, ...)
 
 	q = q:format(name, qargs)	--i just hope i'll escape it properly...
 
-	local query = rsDB:query(q)
+	local query = db:query(q)
 
 	query.onError = function(self, err)
 		print("Error while creating table!", err)
@@ -46,8 +63,16 @@ concommand.Add("reconnect_mysql", function(p)
 
 	if IsValid(ply) and not ply:IsSuperAdmin() then return end
 	rsDB = mysqloo.connect(unpack(__MYSQL_INFO))
+
+	rsDB.onConnected = function(self)
+		hook.Run("OnMySQLReady", self)
+	end
+
 	rsDB:connect()
-	print("Reconnecting to MySQL...")
 
 end)
-hook.Run("OnMySQLReady")
+
+
+function mysql.quote(db, str)
+	return "'" .. db:escape(str) .. "'"
+end
