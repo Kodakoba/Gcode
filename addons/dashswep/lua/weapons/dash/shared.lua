@@ -9,6 +9,8 @@ SWEP.Spawnable			= true
 SWEP.ViewModel			= "models/weapons/v_pistol.mdl"
 SWEP.WorldModel		= "models/weapons/w_pistol.mdl"
 SWEP.DrawAmmo = false
+
+SWEP.IsDash = true
 SWEP.Primary.Automatic = false
 SWEP.DashTime = 0.3
 
@@ -17,6 +19,7 @@ function SWEP:SetupDataTables()
 	self:NetworkVar("Int", 0, "DashCharges")
 
 	self:NetworkVar("Bool", 0, "Dashing")
+	self:NetworkVar("Bool", 1, "SuperMoving")
 
 	self:NetworkVar("Float", 0, "DashEndTime")
 
@@ -77,7 +80,7 @@ function SWEP:CheckMoves(owner, mv, dir)
 			mask = MASK_SOLID
 		})
 
-		if tr.Hit then--owner:IsOnGround() then 
+		if tr.Hit then
 			
 			local vel = dir * 1000
 
@@ -92,6 +95,7 @@ function SWEP:CheckMoves(owner, mv, dir)
 			end
 
 			
+			self:SetSuperMoving(true)
 
 			if SERVER then
 				self:StopDash()
@@ -141,6 +145,7 @@ function SWEP:PrimaryAttack()
 	
 
 	if SERVER then self:SetDashEndTime(CurTime() + self.DashTime) end
+	self:SetDashing(true)
 	local dir = owner:EyeAngles():Forward()
 	local z = dir.z
 
@@ -178,8 +183,19 @@ end
 hook.Remove("Move", "Dash")
 
 hook.Add("FinishMove", "Dash", function(ply, mv, cmd)
+	local dash = ply:GetWeapon("dash")
+	if not IsValid(dash) then return end 
+
+	if dash.EndSuperMove and SERVER then 
+		if mv:GetVelocity():Length() < 800 or ply:IsOnGround() then 
+			dash:SetSuperMoving(false)
+		end
+	end
 	if not DashTable[ply] then return end 
-	if CLIENT and ply~=LocalPlayer() then return end
+
+	if CLIENT and ply~=LocalPlayer() then 
+		return 
+	end
 
 	local t =  DashTable[ply]
 	local self = t.wep
@@ -200,9 +216,14 @@ hook.Add("FinishMove", "Dash", function(ply, mv, cmd)
 
 		if OverrideDashFinalVel then 
 			mv:SetVelocity(OverrideDashFinalVel)
+			self:SetSuperMoving(false)
 		end
 
-		if SERVER then self:SetDashEndTime(0)  end
+		if SERVER then 
+			self:SetDashEndTime(0) 
+			self:SetDashing(false) 
+			self.EndSuperMove = true 
+		end
 
 		DashTable[ply] = nil 
 		OverrideDashEnd = nil 
@@ -220,16 +241,74 @@ hook.Add("FinishMove", "Dash", function(ply, mv, cmd)
 			return 
 		end
 
-		local _ = (changed or t.newvel) and print("applied modified vel", changed or t.newvel)
-
 		mv:SetVelocity(changed or newvel) 
 	end
 
 end)
 
-hook.Add("StartCommand", "Dash", function(ply, cmd)
+local trails = {}
 
+local st = 0
+local two = math.pi/2 
+local fin = math.pi
+
+local trail = Material("models/props_combine/stasisshield_sheet")
+trail:SetFloat("$refractamount", 0.05)
+
+trail:SetFloat("$alpha", 1)
+
+hook.Add("PostPlayerDraw", "Dash", function(ply)
+	local t = trails[ply]
+	local dash = ply:GetWeapon("dash")
+
+	if IsValid(dash) and (dash:GetDashing() or dash:GetSuperMoving()) then 
+
+		local lenmul = dash:GetDashing() and 15 or 8
+
+		local len = math.min(ply:GetVelocity():Length() / 50, lenmul)
+		t = t or {}
+
+		trails[ply] = t
+
+		local pos = ply:GetPos()
+		local cent = ply:OBBCenter()
+		cent:Mul(1.5)
+		pos:Add(cent)
+
+		t[#t + 1] = {pos, CurTime(), len}
+	elseif t then
+		if #t == 0 or CurTime() - t[#t][2] > 1 then trails[ply] = nil return end 
+	end
+
+	if not t then return end 
+
+	local rems = {}
+
+	render.StartBeam(#t)
+
+		for i=1, #t do
+			local time = (CurTime() - t[i][2])
+	
+			local one = Lerp(time, two, fin)
+			local two = Lerp((time - 0.3)*2, fin, two)
+
+
+			local sin = math.sin(two)
+			local wid = math.abs(1 - sin) * t[i][3]
+
+			render.SetMaterial(trail)
+
+			render.AddBeam(t[i][1], wid, 1/i, Color(255, 255, 255))
+			if wid < 0.5 then rems[#rems + 1] = i end
+		end
+
+	render.EndBeam()
+
+	for k,v in ipairs(rems) do
+		table.remove(t, v) 
+	end
 end)
+
 function SWEP:Holster(wep)
 		local owner = self:GetOwner()
 
@@ -253,8 +332,10 @@ function SWEP:StopDash()
 
 	self:SetDashing(false)
 
+
 	self:SetDashEndTime(0)
 	self.Moved = false
+	self.EndSuperMove = true
 
 	DashTable[owner] = nil
 
