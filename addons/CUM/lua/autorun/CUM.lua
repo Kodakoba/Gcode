@@ -8,6 +8,10 @@ local _SV = 3
 
 CUM = CUM or {}
 
+CUM.Log = function(...)
+	Log({name = "CUM", col = Color(220, 190, 50)}, ...)
+end
+
 CUM.cmds = CUM.cmds or {}
 CUM.Cats = CUM.Cats or {}
 local function IncludeFolder(name, realm)
@@ -77,6 +81,17 @@ hook.Add("OnMySQLReady", "CUM", function()
 	IncludeFolder("CUM/misc/*.lua", _SH)
 
 	IncludeCommands()
+
+	for k,v in pairs(CUM.cmds) do 
+		aowl.cmds[k] = nil
+	end
 end)
 
+hook.Add("AowlCommandAdded", function(name)
+	if CUM.cmds[name] then aowl.cmds[name] = nil end
+end)
+
+for k,v in pairs(CUM.cmds) do 
+	aowl.cmds[k] = nil
+end
 --IncludeFolder("CUM/commands/*", _SV)

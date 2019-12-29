@@ -1,5 +1,7 @@
 CUM.CurCat = "Fun"
 
+local log = CUM.Log 
+
 local function GuessPlayer(cur, ply, arg)
 	print("AAAAAAAAA", ply, arg, cur)
 	if not ply and not arg then return "^", cur end 
@@ -54,6 +56,7 @@ end)
 CUM.AddCommand({"hp", "health"}, function(ply, amt, ...) 
 	if not ply then return end 
 	print(ply, amt, ...)
+	log("Setting for %s to %d", ply, amt)
 	ply:SetHealth(amt or ply:GetMaxHealth())
 end)
 	:AddPlayerArg(true, GuessPlayer, "Player whose health to set", true)
@@ -64,7 +67,6 @@ end)
 	end, "Health to set to")
 
 	:SetReportFunc(function(self, rply, caller, ply, amt)
-		print("Aeiou", rply, caller, ply, amt)
 		return "{1} set {2}'s health to {3}.", {[3] = "<col=100,220,100>" .. tostring(amt)}
 	end)
 

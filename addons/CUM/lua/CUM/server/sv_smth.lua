@@ -11,6 +11,8 @@ CUM = CUM or {}
 CUM.Receipts = CUM.Receipts or {}
 CUM.Cats = {}
 
+local log = CUM.Log
+
 function CUM.UpdateRanks()
 	local adms = {}
 	for k,v in pairs(player.GetAll()) do 
