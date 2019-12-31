@@ -96,21 +96,22 @@ WeakTables.__mode = "kv"
 
 ProxyTable = {}
 
-ProxyTable.__call = function(self, func)
+ProxyTable.__call = function(self, t, func)
 
-	local t = {
-		IsProxy = true, 
-	}
+	t = t or {}	--the actual table
 
-	local ud = newproxy(true)
-	local mtud = getmetatable(ud)
+	local ud = {}	--what's returned
+	local mtud = {}	--metatable for what's returned
 	local what = {}
 
+	mtud.IsProxy = true
 	mtud.__index = function(self, key)
+
 		if key=="Table" then print("No stop that wtf\n", debug.traceback()) return t end
 		
 		return t[key] or what[key]
 	end
+
 	function what.__pairs(self)
 		return _pairs(t)
 	end
@@ -146,7 +147,7 @@ ProxyTable.__call = function(self, func)
 	end
 
 	--mtud.__metatable = "Don't set the ProxyTable's metatable itself! Set it on ProxyTable.Table!"
-
+	setmetatable(ud, mtud)
 	setmetatable(mtud, what)
 	return ud
 end
@@ -190,8 +191,10 @@ function ValidiPairs(t)
 
 	return ipairs(ret)
 end
+
 ValidIPairs = ValidiPairs 
 ValidIpairs = ValidiPairs
+Validipairs = ValidiPairs
 
 
 CommunistTable = {}
@@ -249,3 +252,43 @@ function ChainAccessor(t, key, func)
         return self 
     end
 end
+
+
+--[[
+	Idea shamelessly stolen from Luvit
+]]
+
+Class = {}
+Class.Meta = {__index = Class}
+
+
+function Class:extend()
+	local new = {}
+	new.Meta = table.Copy(self.Meta)	-- copy the parent's meta...
+	new.Meta.__index = new 			-- ...but this time, __index points to the copied meta
+
+	new.__index = new.Meta
+	new.__parent = self 
+
+	return setmetatable(new, new)
+end
+
+function Class:new(...)
+	local obj = {}
+
+	setmetatable(obj, self)
+
+	if isfunction(self.Initialize) then 
+		local new = self.Initialize(obj, ...)
+		if new then return new end --overwrite?
+	end
+
+	return obj
+end
+
+Class.Meta.extend = Class.extend 
+Class.Meta.Extend = Class.extend 
+
+Class.Meta.new = Class.new
+
+Object = Class

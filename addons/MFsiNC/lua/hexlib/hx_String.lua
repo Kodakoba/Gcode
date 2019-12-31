@@ -276,4 +276,6 @@ function string.IsVowel(char)
 	return (not not vowels[string.lower(char)])
 end
 
-
+function printf(s, ...)
+	print(s:format(...))
+end

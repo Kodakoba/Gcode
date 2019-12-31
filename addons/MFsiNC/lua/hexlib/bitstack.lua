@@ -1,4 +1,3 @@
---scrap this it dont work
 
 netstack_meta = {}
 local nsm = netstack_meta 
@@ -31,19 +30,45 @@ function net.WriteNetStack(ns)
 			end 
 			str = str:sub(1, #str - 2)
 
-			error("Error while writing netstack.\nOperation #" .. k .. "\nType: " .. v.type .. "\nArgs: " .. str .. "\nCaller traceback: " .. v.trace .. "\n\n\n")
+			local errs = "Error while writing netstack: \"%s\"\nError while writing op #%d\nType: %s\nArgs: %s\nCaller traceback: \n\n\n"
+
+			errs = errs:format(err, k, v.type, str, v.trace)
+			error(errs)
 		end
 	end
 end
 
 netstack = {}
 netstack.__index = netstack_meta
+netstack.__call = net.WriteNetStack
 
-function netstack:new(s)
+function netstack:new()
 	local ret = {}
 	ret.Ops = {}
 	setmetatable(ret, netstack)
 	return ret
+end
+
+netstack.__tostring = function(self)
+	local s = "NetStack: %d ops:"
+	s = s:format(#self.Ops)
+	local s2 = ""
+
+	for k,v in ipairs(self.Ops) do 
+		local argsstr = ""
+
+		for k, arg in ipairs(v.args) do 
+			argsstr = argsstr .. tostring(arg) .. ", "
+		end 
+
+		argsstr = argsstr:sub(1, #argsstr - 2)
+
+		s2 = s2 .. ("%d: %s - %s\n"):format(k, v.type, argsstr)
+	end 
+
+	s2 = s2:sub(1, #s2 - 1)
+
+	return s .. "\n" .. s2
 end
 
 function bit.GetLast(num, n)
@@ -59,6 +84,8 @@ end
 function bit.GetLen(num)
 	return (num==0 and 1) or math.ceil(math.log(math.abs(num), 2))
 end
+
+--i gave up on bitstack
 
 --[[
 local maxbits = 31 
