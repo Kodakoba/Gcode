@@ -3,14 +3,14 @@ CUM.CurCat = "Fun"
 local log = CUM.Log 
 
 local function GuessPlayer(cur, ply, arg)
-	print("AAAAAAAAA", ply, arg, cur)
+
 	if not ply and not arg then return "^", cur end 
 
 	local plyr = CUM.ParsePlayer(ply)
-	print("plyr:", plyr)
+
 	if not plyr and arg then 
 		local plyr2 = CUM.ParsePlayer(arg)
-		print("plyr2:", plyr2)
+
 		if plyr2 then 
 			plyr = plyr2 
 
@@ -21,8 +21,6 @@ local function GuessPlayer(cur, ply, arg)
 	end
 
 	if not plyr and not arg then return "err" end
-
-	print(plyr, ply, arg)
 
 	local num = tonumber(arg or cur)
 
@@ -62,8 +60,8 @@ end)
 	:AddPlayerArg(true, GuessPlayer, "Player whose health to set", true)
 
 	:AddNumberArg(true, function(ply, num, ...)
-
-		return num or (IsValid(ply) and ply:GetMaxHealth()) or nil
+		print(num, ply)
+		return tonumber(num) or tonumber(ply) or (IsValid(ply) and ply:GetMaxHealth()) or 100
 	end, "Health to set to")
 
 	:SetReportFunc(function(self, rply, caller, ply, amt)
@@ -107,9 +105,13 @@ local urlps = {
 	["q2f2laugh"] = "https://b.vaati.net/aruc.mp3"
 }
 
+local failed = false 
+
 CUM.AddCommand("ps", function(ply, line)
 	if not GachiRP then return end
  	if not IsValid(ply) then return false, "Console?" end
+
+ 	failed = false 
 
  	if ply.psCoolDown and CurTime() - ply.psCoolDown < 0.5 then return end
 
@@ -158,6 +160,7 @@ CUM.AddCommand("ps", function(ply, line)
 
 	    if not played then 
 	    	ply:PrintMessage(3,"sound '"..line..".ogg' not found")
+	    	failed = true
 	    end
 
 
@@ -165,11 +168,11 @@ end)
 :SetSilent(true)
 :SetDescription("Play one of the predefined sounds.")
 :SetReportFunc(function(self, rply, caller, caller2, snd)
-	if not snd or snd=="" then return end 
-	print(rply, caller)
+	if not snd or snd=="" or failed then return end 
+
 	if rply:Distance(caller) < 768 or rply == caller then 
 		return "{1} played sound {2}.", {[2] = "<color=100,230,100>"..snd..".ogg"}
 	end
 end)
-:AddFullArg()
+:AddStringArg(false, "Sound to play.")
 :AddCallerArg()

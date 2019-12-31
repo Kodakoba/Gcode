@@ -168,7 +168,10 @@ function cmdfuncs:AddNumberArg(opt, def, desc)
 	if isnumber(opt) then def = opt opt = true end
 	local opt = opt or false 
 
-	self.Args[#self.Args + 1] = {type = "number", opt = opt, nicetype = "Number", parse = function(s, ...) return tonumber(s) or eval(def, ...) or 0 end, desc = desc}
+	self.Args[#self.Args + 1] = {type = "number", opt = opt, nicetype = "Number", parse = function(s, ...) 
+		return tonumber(s) or tonumber(eval(def, ...)) or 0 
+	end, desc = desc}
+
 	SortArgs(self)
 	return self
 end
@@ -615,7 +618,7 @@ hook.Add("PlayerSay", "CUM.Commands", function(ply, str)
 
 			table.Merge(cmdtbl.ReportArgs, cmdtbl.ExecArgs)
 			table.insert(cmdtbl.ReportArgs, 1, ply)
-
+			
 			local ok, err = pcall(cmdtbl.reportfunc, cmdtbl, unpack(cmdtbl.ReportArgs))
 
 			if not ok then 
