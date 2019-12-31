@@ -329,7 +329,7 @@ function chathud.CreateTwitchShortcuts(update)
 		if not d then return ErrorNoHalt("ChatHUD: Failed to read existing Twitch Emote cache.\n") end
 
 		for name, v in pairs(d) do
-			if not chathud.Shortcuts[name] and not blacklist[name] then chathud.Shortcuts[name] = "<te=" .. v.id .. ">" end
+			if not chathud.Shortcuts[name] and not blacklist[name] then chathud.Shortcuts[name] = "<te=" .. (isstring(v) and v) or v.id .. ">" .. ">" end
 		end
 	else
 		http.Fetch("https://twitchemotes.com/api_cache/v3/global.json", function(b)
@@ -337,7 +337,7 @@ function chathud.CreateTwitchShortcuts(update)
 			if not d then return ErrorNoHalt("ChatHUD: Failed to updated Twitch Emote cache.\n") end
 
 			for name, v in pairs(d) do
-				if not chathud.Shortcuts[name] and not blacklist[name] then chathud.Shortcuts[name] = "<te=" .. v.id .. ">" end
+				if not chathud.Shortcuts[name] and not blacklist[name] then chathud.Shortcuts[name] = "<te=" .. (isstring(v) and v) or v.id .. ">" end
 			end
 
 			file.Write(latest, b)
@@ -370,25 +370,42 @@ local function env(msg)
 			tick = tick + 1
 			return o / 100
 		end,
-		st = msg.SendTime
+		st = msg.SendTime,
 	}
 end
+
+local badlua = {
+	["while"] = true,
+	["for"] = true,
+	["do"] = true,
+	["end"] = true,
+	["if"] = true
+}
 
 local function CompileExpression(str, msg)
 	local env = env(msg)
 
 	local ch = str:match("[^=1234567890%-%+%*/%%%^%(%)%.A-z%s]")
-	if ch then
-		return "expression:1: invalid character " .. ch
+	
+	if ch then 	--disallow strings and string methods ( e.g. ("Stinky poopy"):rep(999) )
+				--fun fact; the string library may not be in the envinroment but string methods will still work!
+		return "expression: invalid character " .. ch
+	end
+
+	for word in str:gmatch("(.-)%s") do 
+		if badlua[word] then return "simple expressions please" end
 	end
 
 	local compiled = CompileString("return (" .. str .. ")", "expression", false)
+	
 	if isstring(compiled) then
 		compiled = CompileString(str, "expression", false)
 	end
+
 	if isstring(compiled) then
 		return compiled
 	end
+
 	if not isfunction(compiled) then
 		return "expression:1: unknown error"
 	end
@@ -512,7 +529,9 @@ function ParseTags(str)
 			local typ = chTag.args[num].type
 			if not chathud.TagTypes[typ] then print("Unknown argument type! ", typ) break end 
 
-			args[#args + 1] = chathud.TagTypes[typ](arg)
+			local ret = chathud.TagTypes[typ](arg)	
+
+			if ret then args[#args + 1] = ret end --if conversion to type succeeded
 		end 
 
 		local key = #tags + 1
@@ -971,41 +990,45 @@ function chathud:Draw()
 						local chTag = chathud.Tags[v.tag]
 						if not chTag then continue end --???
 
-						local getargs = function()
+						local function getargs()
+
 							local args = {}
 							v.errs = v.errs or {}
 
 							for key, val in pairs(v.args) do 
 								if v.errs[key] then continue end 
 
+								local default = chTag.args[key].default
+								local typ = chTag.args[key].type
+
 								if isfunction(val) then 
 									local ok, ret = pcall(val)
 									if not ok then print("Tag error!", ret) v.errs[key] = true continue end 
 
-									
-
 									if not ret then 
-										local val = chTag.args[key].default
 
 										if not tag.ComplainedAboutReturning then
 											print("Tag function must return a value! Defaulting to", val)
 											tag.ComplainedAboutReturning = true
 										end
 
-										args[key] = val
+										args[key] = default
 
 									elseif ret then
+										ret = chathud.TagTypes[typ](ret) or default
 
 										args[key] = ret 
 
 									end
 
 								else 
+									val = chathud.TagTypes[typ](val) or default
 
 									args[key] = val 
 
 								end
 							end 
+
 							return args
 						end
 
