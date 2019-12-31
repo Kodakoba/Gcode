@@ -1,5 +1,5 @@
 
-SWEP.Author			= "1488khz gachi remix"
+SWEP.Author			= "grmx"
 SWEP.Contact			= ""
 SWEP.Purpose			= ""
 
@@ -261,11 +261,12 @@ hook.Add("PostPlayerDraw", "Dash", function(ply)
 	local t = trails[ply]
 	local dash = ply:GetWeapon("dash")
 
-	if IsValid(dash) and (dash:GetDashing() or dash:GetSuperMoving()) then 
+	if IsValid(dash) and (dash:GetDashing() or dash:GetSuperMoving()) or DashTable[ply] then 
 
-		local lenmul = dash:GetDashing() and 15 or 8
+		local widmul = (dash:GetDashing() or DashTable[ply]) and 15 or 8
 
-		local len = math.min(ply:GetVelocity():Length() / 50, lenmul)
+		local wid = math.min(ply:GetVelocity():Length() / 50, widmul)
+		
 		t = t or {}
 
 		trails[ply] = t
@@ -275,7 +276,7 @@ hook.Add("PostPlayerDraw", "Dash", function(ply)
 		cent:Mul(1.5)
 		pos:Add(cent)
 
-		t[#t + 1] = {pos, CurTime(), len}
+		t[#t + 1] = {pos, CurTime(), wid}
 	elseif t then
 		if #t == 0 or CurTime() - t[#t][2] > 1 then trails[ply] = nil return end 
 	end
@@ -310,21 +311,22 @@ hook.Add("PostPlayerDraw", "Dash", function(ply)
 end)
 
 function SWEP:Holster(wep)
-		local owner = self:GetOwner()
+	local owner = self:GetOwner()
 
-		if string.find(wep.Base or "", "cw_") then
-        wep.DrawSpeed=wep.DrawSpeed*3
-        wep.GlobalDelay = 0
-	        timer.Simple(0.2, function()  
-	        	if not wep then return end
+	if string.find(wep.Base or "", "cw_") then
+
+	    wep.DrawSpeed=wep.DrawSpeed*3
+	    wep.GlobalDelay = 0
+
+        timer.Simple(0.2, function()  
+        	if not IsValid(wep) then return end
 	        wep.DrawSpeed=wep.DrawSpeed/3
 	        wep.GlobalDelay = 0
-	        end)
-        end
+        end)
         
-		--self.PreJumpPower = nil
-		--self:StopDash()
-		return true
+    end
+
+	return true
 end
 
 function SWEP:StopDash()
