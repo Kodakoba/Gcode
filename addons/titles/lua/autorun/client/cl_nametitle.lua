@@ -236,58 +236,71 @@ end
 local ModColor = TitleColor
 local TextTranslate = {0,0}
 
--- Taken from ChatHUD V V V
-	local function env(self)
-		local tick = 0
-		return {
-			sin = math.sin,
-			cos = math.cos,
-			tan = math.tan,
-			sinh = math.sinh,
-			cosh = math.cosh,
-			tanh = math.tanh,
-			rand = math.random,
-			min = math.min,
-			abs = math.abs,
-			max = math.max,
-			pi = math.pi,
-			log = math.log,
-			log10 = math.log10,
-			time = CurTime,
-			t = CurTime,
-			realtime = RealTime,
-			rt = RealTime,
-			tick = function()
-				local o = tick
-				tick = tick + 1
-				return o / 100
-			end,
-		}
+
+local function env()
+	local tick = 0
+	return {
+		sin = math.sin,
+		cos = math.cos,
+		tan = math.tan,
+		sinh = math.sinh,
+		cosh = math.cosh,
+		tanh = math.tanh,
+		rand = math.random,
+		min = math.min,
+		abs = math.abs,
+		max = math.max,
+		pi = math.pi,
+		log = math.log,
+		log10 = math.log10,
+		time = CurTime,
+		t = CurTime,
+		realtime = RealTime,
+		rt = RealTime,
+		tick = function()
+			local o = tick
+			tick = tick + 1
+			return o / 100
+		end,
+	}
+end
+
+local badlua = {
+	["while"] = true,
+	["for"] = true,
+	["do"] = true,
+	["end"] = true,
+	["if"] = true
+}
+
+function Title:CompileExpression(expression)
+	local env = env()
+	local ch = expression:match("[^=1234567890%-%+%*/%%%^%(%)%.A-z%s]")	--match anything that is not a letter, a math symbol(+, -, %, /, ^, etc.) or a number
+
+	if ch then 	--disallow strings and string methods ( e.g. ("Stinky poopy"):rep(999) )
+				--fun fact; the string library may not be in the envinroment but string methods will still work!
+		return "expression: invalid character " .. ch
 	end
 
+	for word in expression:gmatch("(.-)%s") do 
+		if badlua[word] then return "simple expressions please" end
+	end
 
-	function Title:CompileExpression(expression)
-		local env = env(self)
-		local ch = expression:match("[^=1234567890%-%+%*/%%%^%(%)%.A-z%s]")
-		if ch then
-			return "expression:1: invalid character " .. ch
-		end
-
-		local compiled = CompileString("return (" .. expression .. ")", "expression", false)
-		if isstring(compiled) then
-			compiled = CompileString(expression, "expression", false)
-		end
-		if isstring(compiled) then
-			return compiled
-		end
-		if not isfunction(compiled) then
-			return "expression:1: unknown error"
-		end
-		setfenv(compiled, env)
+	local compiled = CompileString("return (" .. expression .. ")", "expression", false)
+	if isstring(compiled) then
+		compiled = CompileString(expression, "expression", false)
+	end
+	if isstring(compiled) then
 		return compiled
 	end
+	if not isfunction(compiled) then
+		return "expression:1: unknown error"
+	end
+	setfenv(compiled, env)
+	return compiled
+end
 
---/ChatHUD 
+
 
 function Title:TextPos(tbl)
 	local x = tonumber(tbl[1]) or 0
@@ -327,7 +340,10 @@ end
 function Title.TextColor(self, col)
 	local curc = self.TextColorMod or {}
 	if col then 
-		local c = Color(tonumber(col[1]) or 0, tonumber(col[2]) or 0, tonumber(col[3]) or 0, tonumber(col[4]) or curc.a or 255)
+		local r, g, b = tonumber(col[1]), tonumber(col[2]), tonumber(col[3])
+		r, g, b = math.Clamp(r or 0, 0, 255), math.Clamp(g or 0, 0, 255), math.Clamp(b or 0, 0, 255)		--so the user doesn't have to deal with wrapping
+
+		local c = Color(r, g, b, tonumber(col[4]) or curc.a or 255)
 		self.TextColorMod = c or Color(205,205,205, curc.a or 255)
 	else 
 		self.TextColorMod = Color(205,205,205, curc.a or 255)
@@ -369,6 +385,8 @@ end)
 
 
 local ErroredTitles = {}
+local ErroredTitlesStr = {}
+
 local cra = {}  --crouch alpha, yes, very explanatory and obvious
 local afk = {}
 local hps = {}
@@ -644,8 +662,9 @@ function Titles.Draw(ply)
 					local endpos = v[3] or 0
 
 						for k,v in pairs(args) do
-						local exp = string.match(v, "%b[]")
-							if exp then 	
+							local exp = string.match(v, "%b[]")
+
+							if exp and #exp > 2 then 	
 								exp = string.sub(exp, 2, #exp-1)
 								local compiled = Title.CompileExpression(self, exp)
 								local ok, ret 
@@ -654,13 +673,14 @@ function Titles.Draw(ply)
 									ok, ret = pcall(compiled)
 								end
 
-								if ok then args[k] = ret end
+								if ok and tonumber(ret) then args[k] = tonumber(ret) end
 
 								if not ok then 
 									if ply==LocalPlayer() then 
-									    if not ErroredTitles[playertitles[sid]] then
+									    if not ErroredTitles[playertitles[sid]] or not ErroredTitlesStr[exp] then
 										    print('Your title is erroring out.\n', ret) 
 										    ErroredTitles[playertitles[sid]] = true
+										    ErroredTitlesStr[exp] = true
 										end
 									end
 								end
@@ -823,8 +843,10 @@ function Titles.DrawNonPlayer(title, color, name, pnl, x, y, font1)
 					local endpos = v[3] or 0
 
 						for k,v in pairs(args) do
-						local exp = string.match(v, "%b[]")
-							if exp then 	
+
+							local exp = string.match(v, "%b[]")
+
+							if exp and #exp > 2 then 	
 								exp = string.sub(exp, 2, #exp-1)
 								local compiled = Title.CompileExpression(self, exp)
 								local ok, ret 
@@ -834,13 +856,18 @@ function Titles.DrawNonPlayer(title, color, name, pnl, x, y, font1)
 								end
 								--print(compiled, ok, ret)
 
-								if ok then args[k] = ret end
+								if ok and tonumber(ret) then args[k] = tonumber(ret) end
+
 								if not ok then 
 									local errstr = ""
 
 									if isstring(compiled) then errstr=compiled else errstr=ret end
 
-									print('Your title is erroring out.\n', errstr)
+									if not ErroredTitlesStr[exp] then
+										print('Your title is erroring out.\n', errstr)
+										ErroredTitlesStr[exp] = true
+									end
+
 									err = errstr
 									return fullx, err
 
