@@ -72,3 +72,5 @@ function IncludeModules()
 
 	MsgC(Color(40, 140, 255), "[Modules]", Color(255, 255, 255), " Loaded " .. modules .. " modules " .. ((CLIENT and "clientside") or "serverside") .. " in " .. math.Round(s, 3) .. "s! \n" )
 end
+
+Modules.Log = Log --e.
