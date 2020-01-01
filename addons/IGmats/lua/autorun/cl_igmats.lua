@@ -2,11 +2,9 @@ if SERVER then return end
 
 local mats = {
 	["spawn"] = Material(""),
-	--["perilous"] = Material("")
 }
 local vecs = {
 	["spawn"] = {pos = Vector(428.8, 4526, 442), ang = Angle(0,0,0), size = {w = 1105, h = 575}}
-	--["perilous"] = {pos = Vector(69.378227, -621.031250, 110.143677), ang = Angle(0,90,0), size = {w = 1105, h = 575}}
 }
 IGMatHTML = IGMatHTML or {}
 local frames = IGMatHTML
