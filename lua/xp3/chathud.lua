@@ -162,8 +162,8 @@ chathud.Tags = {
 	},
 	["scale"] = {
 		args = {
-			[1] = {type = "number", default = 1, max = 3},	-- x
-			[2] = {type = "number", default = 1, max = 3},	-- y
+			[1] = {type = "number", default = 1, max = 3, min = -3},	-- x
+			[2] = {type = "number", default = 1, max = 3, min = -3},	-- y
 		},
 		TagStart = function(self, markup, buffer, args)
 			self.mtrx = Matrix()
@@ -662,7 +662,7 @@ function chathud:AddText(...)
 
 		if isentity(v) then 
 			local col = GAMEMODE.GetTeamColor and GAMEMODE:GetTeamColor(v)
-			--cont[k] = col 
+
 			merged[#merged + 1] = col 
 
 			local n = (v.Nick and v:Nick()) or "Console"
@@ -997,9 +997,14 @@ function chathud:Draw()
 
 							for key, val in pairs(v.args) do 
 								if v.errs[key] then continue end 
+								if not chTag.args[key] then continue end 
 
-								local default = chTag.args[key].default
-								local typ = chTag.args[key].type
+								local arg = chTag.args[key]
+
+								local default = arg.default
+								local typ = arg.type
+
+								local min, max = arg.min, arg.max
 
 								if isfunction(val) then 
 									local ok, ret = pcall(val)
@@ -1017,12 +1022,28 @@ function chathud:Draw()
 									elseif ret then
 										ret = chathud.TagTypes[typ](ret) or default
 
+										if min then 
+											ret = math.max(min, ret)
+										end 
+
+										if max then 
+											ret = math.min(max, ret)
+										end
+
 										args[key] = ret 
 
 									end
 
 								else 
 									val = chathud.TagTypes[typ](val) or default
+
+									if min then 
+										val = math.max(min, val)
+									end 
+
+									if max then 
+										val = math.min(max, val)
+									end
 
 									args[key] = val 
 
