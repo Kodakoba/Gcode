@@ -15,6 +15,7 @@ function ENT:Init(me)
 	me.Electronics = ValidSeqIterable()
 
 	me.LastTransfer = CurTime()
+	me.CableLength = self.CableLength ^ 2
 
 	poles[#poles + 1] = self
 
@@ -33,14 +34,17 @@ function ENT:Init(me)
 		for k,v in pairs(cons) do 
 
 			if v.IsGenerator then 
-				local range = math.min(v.ConnectDistance, self.CableRange)
-				if pos:Distance(v:GetPos()) > range then print("too far", range) continue end 
+				local range = math.min(v.ConnectDistance^2, me.CableLength)
+				if pos:DistToSqr(v:GetPos()) > range then continue end 
 				v:ConnectTo(self)
 
 				continue
 			end
 
 			if v.IsElectronic then 
+				local range = me.CableLength	--electronics don't have a cable range
+				if pos:DistToSqr(v:GetPos()) > range then continue end 
+
 				self:ConnectTo(v)
 			end
 		end
@@ -160,8 +164,8 @@ function ENT:Think()
 		local ent = BWEnts[v]
 		pw_in = pw_in + ent.PowerGenerated 
 
-		pw_stored[k] = ent.PowerCapacity
-		sum_stored = sum_stored + ent.PowerCapacity
+		pw_stored[k] = ent.Power
+		sum_stored = sum_stored + ent.Power
 	end
 
 	local was_stored = sum_stored 
@@ -189,9 +193,9 @@ function ENT:Think()
 		for k,v in pairs(me.Generators) do 
 			local ent = BWEnts[v]
 
-			local was = ent.PowerCapacity
+			local was = ent.Power
 
-			ent.PowerCapacity = math.max(was - diff, 0)
+			ent.Power = math.max(was - diff, 0)
 
 			diff = diff - was
 			if diff <= 0 then break end
@@ -205,11 +209,33 @@ function ENT:ConnectTo(ent)
 	print("connecting to", ent)
 
 	local me = BWEnts[self]
+	local them = BWEnts[ent]
+
+	if not them then print("did not find them bwents table") return false end
+
+	them.ConnectedTo = self
 
 	local key = #me.Electronics + 1
 
 	if key <= self.MaxElectronics then 
 		me.Electronics:add(ent)
+	end
+
+	self:NetworkEnts()
+end
+
+function ENT:Disconnect(ent)
+	local key
+	local me = BWEnts[self]
+
+	for k,v in ipairs(me.Electronics) do 
+		if v==ent then key = k break end 
+	end
+
+	table.remove(me.Electronics, key)
+
+	if BWEnts[ent] and BWEnts[ent].ConnectedTo == self then 
+		BWEnts[ent].ConnectedTo = nil 
 	end
 
 	self:NetworkEnts()
@@ -236,10 +262,13 @@ hook.Add("BaseWars_PlayerBuyEntity", "PoleAddPowerGrid", function(ply, ent)
 
 
 	for k,v in pairs(owpoles) do 
-		local pdist = pos:Distance(v:GetPos())
-		local range = math.min(v.CableRange, (ent.ConnectDistance or math.huge))
+		local et = BWEnts[v]
+		if not et then continue end 
 
-		if pdist > range then continue end 
+		local pdist = pos:DistToSqr(v:GetPos())
+		local range = math.min(et.CableLength, (ent.ConnectDistance or math.huge)^2)
+
+		if pdist > range then print("too much range", pdist, range) continue end 
 
 		if dist > pdist then 
 			chosen = v 

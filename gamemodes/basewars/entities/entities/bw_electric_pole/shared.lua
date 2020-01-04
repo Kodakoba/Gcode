@@ -9,7 +9,7 @@ ENT.Skin = 0
 
 ENT.IsPole = true
 
-ENT.CableRange = 3000
+ENT.CableLength = 1500
 
 ENT.Connectable = true 
 ENT.Cableable = true
