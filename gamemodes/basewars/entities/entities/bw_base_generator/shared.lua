@@ -29,7 +29,8 @@ function ENT:DerivedDataTables()
 
 	if CLIENT then 
 		self:NetworkVarNotify("ConnectedTo", function(self, name, old, new)
-		 	if new==Entity(0) and old ~= Entity(0) then 
+		 	if new==Entity(0) and old ~= Entity(0) and IsValid(old) then 
+		 		print(old, new)
 		 		self:OnDisconnect(old)
 		 	end
 		 	if new~=Entity(0) and IsValid(new) then 

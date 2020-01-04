@@ -24,6 +24,9 @@ function ENT:ConnectTo(ent)
 	if ent:Distance(self) >= self.ConnectDistance then return end 
 
 	local me = BWEnts[self]
+	local them = BWEnts[ent]
+
+	if not them then print("didnt find them") return end 
 
 	if me.ConnectedTo ~= ent and me.ConnectedTo then 
 		if me.ConnectedTo.OnDisconnect then 
@@ -36,7 +39,7 @@ function ENT:ConnectTo(ent)
 		if go==false then return end 
 	end
 
-	
+	them.ConnectedTo = self
 	me.ConnectedTo = ent 
 
 	self:SetConnectedTo(ent)
@@ -72,9 +75,11 @@ end
 
 function ENT:Disconnect()
 	local me = BWEnts[self]
+
 	if me.ConnectedTo.OnDisconnect then 
 		me.ConnectedTo:OnDisconnect(self)
 	end
+
 	me.ConnectedTo = nil 
 
 	self:SetConnectedTo(Entity(0))

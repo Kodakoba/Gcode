@@ -33,6 +33,299 @@ DrawCable = DrawCable or false
 DrawCableDist = DrawCableDist or nil
 DrawCableEntity = DrawCableEntity or nil 
 
+local function OpenShit(qm, self, pnl)
+
+	local tim = 0
+
+	local size = 64
+	local pad = 6
+
+	local active = false 
+
+	local ent = self
+
+	if ent.GenerateOptions then 
+
+		if pnl.Panels then 
+
+			local valid = true
+
+			for k, pnl in ipairs(pnl.Panels) do 
+				if not IsValid(pnl) then valid = false break end
+			end
+
+			if valid then return end 
+
+		end
+
+		local pnls = {ent:GenerateOptions(qm, pnl)}
+
+		pnl.Panels = pnls
+	end
+
+
+	local con = vgui.Create("FButton", pnl)
+	con:SetSize(128, 48)
+
+	con:Center()
+	con:CenterHorizontal(0.7)
+
+	con:SetMouseInputEnabled(true)
+	con.AlwaysDrawShadow = true 
+	con:SetLabel("Connect to...")
+
+	pnl.HookUp = con
+
+	qm:AddPopIn(con, con.X, con.Y, 64, 0)
+
+	function con:DoClick()
+		print("set dc to", usingwho)
+		DrawCable = usingwho 
+	end
+
+	if IsValid(self:GetConnectedTo()) then 
+
+		local disc = vgui.Create("FButton", pnl)
+		disc:SetSize(128, 48)
+
+		disc:Center()
+		disc:CenterHorizontal(0.3)
+		disc:PopIn()
+		disc.AlwaysDrawShadow = true 
+		disc:SetLabel("Disconnect")
+		pnl.Disconnect = disc
+
+		function disc:DoClick()
+			net.Start("ConnectGenerator")
+				net.WriteBool(true)
+				net.WriteEntity(ent)
+			net.SendToServer()
+
+			sound.PlayFile("data/hdl/sfx/wire_disconnect.dat", "noplay", function(ch)
+				if not IsValid(ch) then return end 
+
+				ch:SetPos(ent:GetPos())
+				ch:Set3DFadeDistance(500, 1200)
+				ch:SetVolume(3)
+				ch:Play()
+			end)
+
+			self:PopOut()
+
+			PreviewCable = false
+			PreviewFinalCablePoint = nil
+
+			pnl.Disconnect = nil
+			ent.ExpectedDisconnect = true
+
+		end
+
+		qm:AddPopIn(disc, disc.X, disc.Y, -64, 0)
+	end
+
+	function pnl:OnActive()
+
+		if not IsValid(self.Disconnect) and IsValid(ent:GetConnectedTo()) then 
+			--[[
+				Disconnect button
+			]]
+
+			
+		end
+
+	end 
+
+	function pnl:OnUnactive()
+
+	end
+
+	local al
+
+	local offX = 0
+	local hilite = 0
+
+	function pnl:OnRemove()
+		PreviewCable = false
+		PreviewFinalCablePoint = nil
+		FinalCablePoint = nil
+	end
+
+	function pnl:Refuse()
+		
+		sound.PlayFile("data/hdl/sfx/wire_refuse.dat", "noplay", function(ch)
+			if not IsValid(ch) then return end 
+
+			ch:SetVolume(3)
+			ch:Play()
+		end)
+		
+		if self.Shake then table.RemoveByValue(self.m_AnimList, self.Shake) end 
+
+
+		self.Shake = self:NewAnimation(1, 0, 0.6, function() offX = 0 hilite = 0 self.Shake = nil end)
+		self.Shake.Think = function(_, self, f)
+			local fr = f
+			offX = math.sin(fr*math.pi*4)*10
+			hilite = 1 - f
+		end
+	end
+
+	function pnl:GeneratorPaint(w, h)
+
+		tim = usingtime
+		if not IsValid(ent) then self:Remove() return end 
+
+		local perc = 100 * (math.min(tim * 1/TimeToOpenPanel, 1))^2
+
+		if perc >= 100 and not DrawCable then 
+			size = L(size, 32, 25, true)
+
+			if not active then 
+				self:OnActive()
+			end
+			active = true 
+
+		else 
+			size = L(size, 64, 25)
+			if active then 
+				self:OnUnactive()
+			end
+			active = false
+		end
+
+	end
+
+	local txfrac = 0
+	local toofar = 0
+
+	local rndto = 5	--rounding for lerping the text/box sizes in V
+	local rndmul = 10^rndto 
+
+	function pnl:ConnectPaint(w, h)
+		self:SetMouseInputEnabled(false)
+		--[[
+		if self.HookUp then 
+			al = 255
+			self.HookUp:PopOut()
+			self.HookUp = nil 
+		end
+
+		if self.Disconnect then 
+			self.Disconnect:PopOut()
+			self.Disconnect = nil 
+		end
+
+		if self.Panels then
+			for k,v in ValidIPairs(self.Panels) do 
+				v:PopOut()
+			end
+		end
+		]]
+		self:GeneratorPaint(w, h)
+
+		al = L(al, 0, 15, true)
+
+		local basestr = (DrawCableClass and ("Connect to ")) or "Connect to..."
+		local str = (DrawCableClass and basestr .. DrawCableClass) or "Connect to..."
+		
+		
+
+		if DrawCableClass then 
+			txfrac = L(txfrac*rndmul, rndmul, 15, true) / rndmul 	--so to 1
+		else 
+			txfrac = L(txfrac*rndmul, 0, 25, true) / rndmul
+		end
+
+		if DrawCableDist and DrawCableDist > ent.ConnectDistance then 
+			toofar = L(toofar*rndmul, rndmul, 15, true) / rndmul
+		else 
+			toofar = L(toofar*rndmul, 0, 25, true) / rndmul
+		end
+
+		surface.SetFont("OSB32")
+
+		local btw, bth = surface.GetTextSize(basestr)
+		local ctw, cth = surface.GetTextSize(DrawCableClass or str)
+
+		local rbx = w/2 - btw/2 - ctw*txfrac/2 - 8
+		local rbw = btw + ctw*txfrac + 16
+
+		local bgcol = Color(50 + (70*toofar), 50, 50, 220)
+
+		draw.RoundedBox(8, rbx, h/2 + 16, rbw, bth + 4, bgcol)
+
+		local txa = txfrac^3 * 255 
+
+		surface.SetTextColor(color_white)
+
+		local basex = rbx + 8
+
+		surface.SetTextPos(basex, h/2 + bth/2)
+		surface.DrawText(basestr)
+
+		surface.SetTextColor(ColorAlpha(Color(50, 150, 250), txa))
+
+		surface.SetTextPos(rbx + btw*(txfrac^0.9) + (surface.GetTextSize(" ")), h/2 + cth/2)
+		surface.DrawText(DrawCableClass or "")
+
+		draw.SimpleText("Too far!", "OSB32", offX + w/2 + 1, h/2 + 40 + 12*toofar + 1, Color(0, 0, 0, 205*toofar - hilite*20), 1, 5)
+		draw.SimpleText("Too far!", "OSB32", offX + w/2, h/2 + 40 + 12*toofar, Color(210 + hilite*40, 30 + hilite*50, 30 + hilite*50, 255*toofar), 1, 5)
+		
+	end
+	
+
+	function qm:Paint(ent)
+		if not IsValid(pnl) then return end 
+
+		local w, h = pnl:GetSize()
+
+		if DrawCable then 
+			pnl:ConnectPaint(w, h)
+			self:SetKeepAlive(true)
+
+			if pnl.HookUp then 
+				pnl.HookUp:AlphaTo(50, 0.2, 0)
+			end
+
+			if pnl.Disconnect then 
+				pnl.Disconnect:AlphaTo(50, 0.2, 0)
+			end
+
+			if self.Panels then
+				for k,v in ValidIPairs(self.Panels) do 
+					v:AlphaTo(50, 0.2, 0)
+				end
+			end
+
+		else
+			pnl:GeneratorPaint(w, h)
+			self:SetKeepAlive(false)
+		end
+
+	end
+
+	local ent = self:GetConnectedTo()
+
+	if IsValid(ent) then 
+		if ent.DontPreview then return end 
+		
+		PreviewFinalCablePoint = ent
+
+		if ent.UseSpline~=nil then 
+			NoSpline = not ent.UseSpline 
+		end
+
+		PreviewCable = self 
+	end
+
+end
+
+function ENT:CLInit()
+	local qm = self:SetQuickInteractable()
+	qm.OnOpen = OpenShit
+	--qm.OnReopen = OpenShit
+end
+
 function ENT:Think()
 	local p = LocalPlayer()
 	local ent = self
@@ -59,275 +352,10 @@ function ENT:Think()
 
 	if not IsValid(GeneratorPanel) then 
 		GeneratorPanel = vgui.Create("InvisPanel")
+
 		local pnl = GeneratorPanel
 		pnl:SetSize(600, 400)
 		pnl:Center()
-
-		if ent.GenerateOptions then 
-			ent:GenerateOptions(pnl)
-		end
-
-		local tim = 0
-
-		local size = 64
-		local pad = 6
-
-		local active = false 
-
-		
-		function pnl:OnActive()
-			input.SetCursorPos( ScrW()/2, ScrH()/2 )
-			self:MakePopup()
-			self:SetKeyBoardInputEnabled(false)
-
-			if not IsValid(self.HookUp) then 
-				local b = vgui.Create("FButton", self)
-				b:SetSize(128, 48)
-
-				b:Center()
-				b:CenterHorizontal(0.7)
-				b:PopIn()
-				b.AlwaysDrawShadow = true 
-				b:SetLabel("Connect to...")
-				self.HookUp = b
-
-				function b:DoClick()
-					print("set dc to", usingwho)
-					DrawCable = usingwho 
-				end
-			end
-
-			if not IsValid(self.Disconnect) and IsValid(ent:GetConnectedTo()) then 
-				--[[
-					Disconnect button
-				]]
-
-				local b = vgui.Create("FButton", self)
-				b:SetSize(128, 48)
-
-				b:Center()
-				b:CenterHorizontal(0.3)
-				b:PopIn()
-				b.AlwaysDrawShadow = true 
-				b:SetLabel("Disconnect")
-				self.Disconnect = b
-
-				function b:DoClick()
-					net.Start("ConnectGenerator")
-						net.WriteBool(true)
-						net.WriteEntity(ent)
-					net.SendToServer()
-
-					sound.PlayFile("data/hdl/sfx/wire_disconnect.dat", "noplay", function(ch)
-						if not IsValid(ch) then return end 
-
-						ch:SetPos(ent:GetPos())
-						ch:Set3DFadeDistance(500, 1200)
-						ch:SetVolume(3)
-						ch:Play()
-					end)
-
-					self:PopOut()
-
-					PreviewCable = false
-					PreviewFinalCablePoint = nil
-
-					pnl.Disconnect = nil
-					ent.ExpectedDisconnect = true
-
-				end
-			end
-
-		end 
-
-		function pnl:OnUnactive()
-			self:SetMouseInputEnabled(false)
-			if IsValid(self.HookUp) then
-				self.HookUp:PopOut()
-				self.HookUp = nil
-			end
-			if IsValid(self.Disconnect) then
-				self.Disconnect:PopOut()
-				self.Disconnect = nil
-			end
-		end
-
-		local al
-
-		local offX = 0
-		local hilite = 0
-
-		function pnl:OnRemove()
-			PreviewCable = false
-			PreviewFinalCablePoint = nil
-			FinalCablePoint = nil
-		end
-
-		function pnl:Refuse()
-			
-			sound.PlayFile("data/hdl/sfx/wire_refuse.dat", "noplay", function(ch)
-				if not IsValid(ch) then return end 
-
-				ch:SetVolume(3)
-				ch:Play()
-			end)
-			
-			if self.Shake then table.RemoveByValue(self.m_AnimList, self.Shake) end 
-
-
-			self.Shake = self:NewAnimation(1, 0, 0.6, function() offX = 0 hilite = 0 self.Shake = nil end)
-			self.Shake.Think = function(_, self, f)
-				local fr = f
-				offX = math.sin(fr*math.pi*4)*10
-				hilite = 1 - f
-			end
-		end
-
-		function pnl:GeneratorPaint(w, h)
-
-			tim = usingtime
-			if not IsValid(ent) then self:Remove() return end 
-
-			local perc = 100 * (math.min(tim * 1/TimeToOpenPanel, 1))^2
-
-			local mask = function()
-				draw.Circle(w/2, h/2, size+6, 32, perc)
-			end
-
-
-			local a = (DrawCable and al) or perc
-
-			local op = function()
-				surface.SetDrawColor(Color(250, 250, 250, a*3))
-				draw.MaterialCircle(w/2, h/2, (size-pad)*2 )
-			end
-		
-			surface.SetDrawColor(Color(10, 10, 10, math.min(a*5, 150)))
-			draw.MaterialCircle(w/2, h/2, size*2)
-
-			draw.Masked(mask, op)
-
-			if perc >= 100 and not DrawCable then 
-				size = L(size, 32, 25, true)
-
-				if not active then 
-					self:OnActive()
-				end
-				active = true 
-
-			else 
-				size = L(size, 64, 25)
-				if active then 
-					self:OnUnactive()
-				end
-				active = false
-			end
-
-		end
-
-		local txfrac = 0
-		local toofar = 0
-
-		local rndto = 5	--rounding for lerping the text/box sizes in V
-		local rndmul = 10^rndto 
-
-		function pnl:ConnectPaint(w, h)
-			self:SetMouseInputEnabled(false)
-
-			if self.HookUp then 
-				al = 255
-				self.HookUp:PopOut()
-				self.HookUp = nil 
-			end
-
-			if self.Disconnect then 
-				self.Disconnect:PopOut()
-				self.Disconnect = nil 
-			end
-
-
-			self:GeneratorPaint(w, h)
-
-			al = L(al, 0, 15, true)
-
-			local basestr = (DrawCableClass and ("Connect to ")) or "Connect to..."
-			local str = (DrawCableClass and basestr .. DrawCableClass) or "Connect to..."
-			
-			
-
-			if DrawCableClass then 
-				txfrac = L(txfrac*rndmul, rndmul, 15, true) / rndmul 	--so to 1
-			else 
-				txfrac = L(txfrac*rndmul, 0, 25, true) / rndmul
-			end
-
-			if DrawCableDist and DrawCableDist > ent.ConnectDistance then 
-				toofar = L(toofar*rndmul, rndmul, 15, true) / rndmul
-			else 
-				toofar = L(toofar*rndmul, 0, 25, true) / rndmul
-			end
-
-			surface.SetFont("OSB32")
-
-			local btw, bth = surface.GetTextSize(basestr)
-			local ctw, cth = surface.GetTextSize(DrawCableClass or str)
-
-			local rbx = w/2 - btw/2 - ctw*txfrac/2 - 8
-			local rbw = btw + ctw*txfrac + 16
-
-			local bgcol = Color(50 + (70*toofar), 50, 50, 220)
-
-			draw.RoundedBox(8, rbx, h/2 + 16, rbw, bth + 4, bgcol)
-
-			local txa = txfrac^3 * 255 
-
-			surface.SetTextColor(color_white)
-
-			local basex = rbx + 8
-
-			surface.SetTextPos(basex, h/2 + bth/2)
-			surface.DrawText(basestr)
-
-			surface.SetTextColor(ColorAlpha(Color(50, 150, 250), txa))
-
-			surface.SetTextPos(rbx + btw*(txfrac^0.9) + (surface.GetTextSize(" ")), h/2 + cth/2)
-			surface.DrawText(DrawCableClass or "")
-
-			draw.SimpleText("Too far!", "OSB32", offX + w/2 + 1, h/2 + 40 + 12*toofar + 1, Color(0, 0, 0, 205*toofar - hilite*20), 1, 5)
-			draw.SimpleText("Too far!", "OSB32", offX + w/2, h/2 + 40 + 12*toofar, Color(210 + hilite*40, 30 + hilite*50, 30 + hilite*50, 255*toofar), 1, 5)
-			
-
-			--draw.SimpleText(str, "OSB32", w/2, h/2 + 12, color_white, 1, 5)
-
-		end
-		
-
-		function pnl:Paint(w, h)
-
-			if DrawCable then 
-				self:ConnectPaint(w, h)
-			else
-				self:GeneratorPaint(w, h)
-
-			end
-				
-			if GeneratorPanel ~= self then self:Remove() end
-		end
-
-		local ent = self:GetConnectedTo()
-
-		if IsValid(ent) then 
-			if ent.DontPreview then return end 
-			
-			PreviewFinalCablePoint = ent
-
-			if ent.UseSpline~=nil then 
-				NoSpline = not ent.UseSpline 
-			end
-
-			PreviewCable = self 
-		end
-		
 		
 	end
 
@@ -340,7 +368,7 @@ hook.Add("Think", "gennies", function()
 		usingtime = math.max(usingtime - FrameTime(), 0)
 		drawoptions = false
 		if usingtime == 0 and IsValid(GeneratorPanel) then 
-			GeneratorPanel:Remove()
+			--GeneratorPanel:Remove()
 
 			PreviewCable = false
 			PreviewFinalCablePoint = nil
@@ -466,7 +494,7 @@ hook.Add("PostDrawTranslucentRenderables", "DrawCables", function(d, sb)
 	local beams = {}
 
 	if not NoSpline then
-		print("generating for", pos)
+
 		beams = GenerateCable(pos, hp, h, qual)
 
 		--[[
@@ -527,6 +555,7 @@ end)
 function ENT:OnDisconnect(was)
 	
 	if self.ExpectedDisconnect then self.ExpectedDisconnect = false return end 
+	if not IsValid(was) then return end --?
 
 	sound.PlayFile("data/hdl/sfx/wire_disconnect.dat", "noplay 3d", function(ch)
 		if not IsValid(ch) then return end 
@@ -611,6 +640,7 @@ hook.Add("StartCommand", "StopConnectingCable", function(ply, cmd)
 
 	if (DrawCable or (preventRMBs and (CurTime() - preventRMBs < dur))) and cmd:KeyDown(IN_ATTACK2) and not wasRMB then 
 		cmd:RemoveKey(IN_ATTACK2)
+		print('removed dc')
 		DrawCable = false
 		PreviewCable = false
 		FinalCablePoint = nil
@@ -649,16 +679,16 @@ hook.Add("StartCommand", "StopConnectingCable", function(ply, cmd)
 			ch:SetVolume(3) --its real fuckin quiet
 			ch:Play()
 		end)
-
+		print("removed dc")
 		DrawCable = nil 
 		PreviewCable = false
 		DrawCableEntity = nil 
 		FinalCablePoint = nil
 
 		preventLMBs = preventLMBs or CurTime()
-		if IsValid(GeneratorPanel) then 
-			GeneratorPanel:Remove()
-		end
+		--if IsValid(GeneratorPanel) then 
+		--	GeneratorPanel:Remove()
+		--end
 
 	elseif preventLMBs and (wasLMB or (CurTime() - preventLMBs < dur)) then
 		cmd:RemoveKey(IN_ATTACK) 
