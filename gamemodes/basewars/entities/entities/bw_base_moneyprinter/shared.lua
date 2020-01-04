@@ -19,7 +19,7 @@ ENT.IsValidRaidable = false
 
 local Clamp = math.Clamp
 
-local slot = 1
+local slot = 2
 
 function ENT:MakeFloat(name)
 
@@ -30,6 +30,8 @@ end
 
 function ENT:DerivedDataTables()
 
+	slot = 2
+	
 	self:MakeFloat("Capacity")
 	self:SetCapacity(self.Capacity)
 
@@ -48,6 +50,7 @@ function ENT:DerivedDataTables()
 
 	self:NetworkVar("String", 1, "Mods")
 
+	slot = 2
 end
 
 local mults = {

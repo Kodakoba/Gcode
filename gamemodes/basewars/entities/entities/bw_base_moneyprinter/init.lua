@@ -4,9 +4,13 @@ include("shared.lua")
 
 
 function ENT:Init()
+    print("init called")
+
     local me = BWEnts[self]
+    
     me.Power = 0 
     me.MaxPower = self.PowerCapacity
+
     self.time = CurTime()
     self.time_p = CurTime()
 
