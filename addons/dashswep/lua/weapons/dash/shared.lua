@@ -87,11 +87,11 @@ function SWEP:CheckMoves(owner, mv, dir)
 
 			if ducked then 
 
-				vel = dir * 2000
-				vel.z = 2000
+				vel = dir * 1500
+				vel.z = 1500
 
 			else 
-				vel.z = 3500
+				vel.z = 2500
 			end
 
 			
@@ -128,6 +128,8 @@ function SWEP:CheckMoves(owner, mv, dir)
 
 end
 
+hdl.DownloadFile("http://vaati.net/Gachi/shared/whoosh.ogg", "whoosh.dat", function(a) print("ok",a) end, function(...) print("what", ...) end)
+
 function SWEP:PrimaryAttack()
 	local owner = self:GetOwner()
 
@@ -139,7 +141,8 @@ function SWEP:PrimaryAttack()
 
 	if CLIENT then 
 		self.Dashed = true 
-		self:EmitSound("dash/whoosh.ogg", 45)
+		--self:EmitSound("dash/whoosh.ogg", 45)
+		sound.PlayFile("data/hdl/whoosh.dat", "", function() end)
 	end
 
 	
@@ -154,12 +157,22 @@ function SWEP:PrimaryAttack()
 		dir.z = 0.1
 	end
 
-	DashTable[owner] = {
-		t = CurTime(), 
-		dir = dir, 
-		wep = self,
-		ground = owner:IsOnGround(),
-	}
+	if CLIENT then 
+
+			DashTable[owner] = {
+				t = CurTime(), 
+				dir = dir, 
+				wep = self,
+				ground = owner:IsOnGround(),
+			}
+	else
+		DashTable[owner] = {
+			t = CurTime(), 
+			dir = dir, 
+			wep = self,
+			ground = owner:IsOnGround(),
+		}
+	end
 	local dt = DashTable[owner]
 
 	
@@ -179,8 +192,6 @@ end
 function Realm()
 	return (CLIENT and "Client") or (SERVER and "Server") or "wat"	--for debugging prediction
 end
-
-hook.Remove("Move", "Dash")
 
 hook.Add("FinishMove", "Dash", function(ply, mv, cmd)
 	local dash = ply:GetWeapon("dash")
@@ -202,7 +213,7 @@ hook.Add("FinishMove", "Dash", function(ply, mv, cmd)
 	if not IsValid(self) then DashTable[ply] = nil return end 
 	
 	local time = t.t
-	local endtime = OverrideDashEnd or (self:GetDashEndTime()~=0 and self:GetDashEndTime() + (CLIENT and ply:Ping()/1000 or 0)) or t.t+self.DashTime
+	local endtime = OverrideDashEnd or (self:GetDashEndTime()~=0 and self:GetDashEndTime() + 0.2) or t.t+self.DashTime
 	local ping = (SERVER and 0) or ply:Ping()/500
 	local d = t.dir
 	local vel = mv:GetVelocity()
@@ -260,8 +271,8 @@ trail:SetFloat("$alpha", 1)
 hook.Add("PostPlayerDraw", "Dash", function(ply)
 	local t = trails[ply]
 	local dash = ply:GetWeapon("dash")
-
-	if IsValid(dash) and (dash:GetDashing() or dash:GetSuperMoving()) or DashTable[ply] then 
+	local dasht = (IsValid(dash) and dash:GetTable())
+	if dasht and (dasht.GetDashing and dasht.GetSuperMoving) and (dash:GetDashing() or dash:GetSuperMoving()) or DashTable[ply] then 
 
 		local widmul = (dash:GetDashing() or DashTable[ply]) and 15 or 8
 

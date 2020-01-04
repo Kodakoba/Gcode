@@ -194,12 +194,16 @@ function button:Init()
 	self.Color = Color(70, 70, 70)
 	self.drawColor = self.Color
 	self:SetText("")
-	self.ShadowMaxSpread = 0.6
-	self.ShadowIntensity = 2
+
 	self.Font = "PanelLabel"
 	self.DrawShadow = true
 	self.HovMult = 1.2
-	self.Disabled = false
+
+	self.Shadow = {
+		MaxSpread = 0.6,
+		Intensity = 2,
+		OnHover = true,	--should the internal shadow logic be applied when the button gets hovered?
+	}
 
 	self.LabelColor = Color(255, 255, 255)
 	self.RBRadius = 8
@@ -246,7 +250,10 @@ function button:Draw(w, h)
 
 	local rad = self.RBRadius or 8
 	local bg = self.drawColor or self.Color
-	self.drawColor = self.drawColor or bg --real consistent lowerCamelCase, me
+
+	local shadow = self.Shadow 
+
+	self.drawColor = self.drawColor or bg
 	local hov = false 
 	
 	local x, y = 0, 0
@@ -261,7 +268,7 @@ function button:Draw(w, h)
 		local fg = bg.g*hovmult
 		local fb = bg.b*hovmult
 		self.drawColor = LC(self.drawColor, Color(fr,fg,fb))
-		self.ShadowSpread = L(self.ShadowSpread, self.ShadowMaxSpread, 20)
+		if shadow.OnHover then shadow.Spread = L(shadow.Spread, shadow.MaxSpread, 20) end
 
 		if not self._IsHovered then 
 			self._IsHovered = true 
@@ -272,7 +279,7 @@ function button:Draw(w, h)
 
 		local bg = self.Color or Color(70,70,70)
 		self.drawColor = LC(self.drawColor, bg)
-		self.ShadowSpread = L(self.ShadowSpread, 0, 50)
+		if shadow.OnHover then shadow.Spread = L(shadow.Spread, 0, 50) end 
 
 		if self._IsHovered then 
 			self._IsHovered = false 
@@ -280,7 +287,8 @@ function button:Draw(w, h)
 		end
 	end
 
-	local spr = self.ShadowSpread or 0
+	local spr = shadow.Spread or 0
+
 	if not self.NoDraw then
 		if (self.DrawShadow and spr>0.01) or self.AlwaysDrawShadow then 
 			BSHADOWS.BeginShadow()
@@ -305,7 +313,8 @@ function button:Draw(w, h)
 		
 
 		if (self.DrawShadow and spr>0.01) or self.AlwaysDrawShadow then 
-			local int = self.ShadowIntensity
+			local int = shadow.Intensity
+			local blur = shadow.Blur
 
 			if self.AlwaysDrawShadow then
 				int = 3
@@ -313,7 +322,7 @@ function button:Draw(w, h)
 				blur = 1
 			end
 
-			BSHADOWS.EndShadow(int, spr, blur or 2)
+			BSHADOWS.EndShadow(int, spr, blur or 2, self.Shadow.Alpha, self.Shadow.Dir, self.Shadow.Distance, nil, self.Shadow.Color)
 		end
 
 		

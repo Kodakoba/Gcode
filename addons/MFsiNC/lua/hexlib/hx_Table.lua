@@ -278,8 +278,10 @@ function Class:new(...)
 
 	setmetatable(obj, self)
 
-	if isfunction(self.Initialize) then 
-		local new = self.Initialize(obj, ...)
+	local func = self.Initialize or self.initialize 
+
+	if isfunction(func) then 
+		local new = func(obj, ...)
 		if new then return new end --overwrite?
 	end
 

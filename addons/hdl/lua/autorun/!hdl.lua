@@ -157,7 +157,7 @@ function hdl.DownloadFile(url, name, func, fail, ovwrite)
 
 end
 
-httpReady = httpReady or false 
+httpReady = httpReady or Perilous_Perks or false
 
 hook.Add("Think", "HDL", function()
 	if not httpReady then return end 
@@ -190,7 +190,7 @@ function hdl.PlayURL(url, name, flags, func, fail, ovwrite)
 	
 end
 
-workshop = {}
+workshop = workshop or {}
 
 function workshop.Download(id)
 
@@ -201,27 +201,3 @@ function workshop.Download(id)
 	end)
 
 end
---[[
-well it's been about 5 months i think
-
-reworked inventory networking
-added a whole bunch of rendering shtuff to panels
-added outfitter
-rewrote dash
-added research
-rewrote printers
-added printer rack
-added printer overclocker
-todo whcih uses sqlite for storing shit
-equipment which uses mysql
-discord relay back&forth using bromsocket
-partizones structured
-unimenu dumped
-HeX's lib added & improved with various table objects(CommunistTable, ProxyTable, etc.)
-chathud with animated emote support added
-mySQL one connection for everything plus hook calling
-and more...
-
-(in progress; not functional) rewriting power system: generators & power poles
-CUM: a WIP admin mod for personal use
-inventory needs actual content]]

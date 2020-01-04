@@ -1,20 +1,22 @@
 
 --credits to <CODE BLUE>
+BSHADOWS_ID = BSHADOWS_ID or 0 
+BSHADOWS_ID = BSHADOWS_ID + 1
 
-BSHADOWS = BSHADOWS or {}
+BSHADOWS = {}
 local render = render 
 
 	BSHADOWS.RenderTarget = GetRenderTarget("bshadows_original", ScrW(), ScrH())
 	 
 	BSHADOWS.RenderTarget2 = GetRenderTarget("bshadows_shadow",  ScrW(), ScrH())
 	 
-	BSHADOWS.ShadowMaterial = BSHADOWS.ShadowMaterial or CreateMaterial("bshadows","UnlitGeneric",{
+	BSHADOWS.ShadowMaterial = BSHADOWS.ShadowMaterial or CreateMaterial("bshadows" .. BSHADOWS_ID,"UnlitGeneric",{
 	    ["$translucent"] = 1,
 	    ["$vertexalpha"] = 1,
 	    ["alpha"] = 1
 	})
 	 
-	BSHADOWS.ShadowMaterialGrayscale = BSHADOWS.ShadowMaterialGrayscale or CreateMaterial("bshadows_grayscale","UnlitGeneric",{
+	BSHADOWS.ShadowMaterialGrayscale = BSHADOWS.ShadowMaterialGrayscale or CreateMaterial("bshadows_grayscale" .. BSHADOWS_ID,"UnlitGeneric",{
 	    ["$translucent"] = 1,
 	    ["$vertexalpha"] = 1,
 	    ["$alpha"] = 1,
@@ -22,23 +24,22 @@ local render = render
 	    ["$color"] = "[0 0 0]",
 	})
 
-	BSHADOWS.ShadowMaterialColorscale = BSHADOWS.ShadowMaterialColorscale or CreateMaterial("bshadows_colorscale","UnlitGeneric",{
+	BSHADOWS.ShadowMaterialColorscale = BSHADOWS.ShadowMaterialColorscale or CreateMaterial("bshadows_colorscale" .. BSHADOWS_ID,"UnlitGeneric",{
 	    ["$translucent"] = 1,
 
 	    ["$vertexalpha"] = 1,
 
 	    ["$alpha"] = 1,
-	    ["$color"] = "[255 0 0]",
+	    ["$color"] = "[255 255 255]",
 	})
 
-	BSHADOWS.ShadowMaterialColor = BSHADOWS.ShadowMaterialColor or CreateMaterial("bshadows_color","UnlitGeneric",{
+	BSHADOWS.ShadowMaterialColor = BSHADOWS.ShadowMaterialColor or CreateMaterial("bshadows_color" .. BSHADOWS_ID,"UnlitGeneric",{
 	    ["$translucent"] = 1,
 	    
 	    ["$vertexalpha"] = 1,
-	   
 
 	    ["$alpha"] = 1,
-	    ["$color"] = "[255 0 0]",
+	    ["$color"] = "[255 255 255]",
 	})
 	--Call this to begin drawing a shadow
 	BSHADOWS.BeginShadow = function()
@@ -87,7 +88,7 @@ local render = render
 	    	local vc = Vector(color.r, color.g, color.b) --nO cOloR mEtatAblE
 	    	mat:SetVector("$color", vc)
 	    	--mat:SetVector("$color2", vc)
-	    	mat:Recompute()
+	    	--mat:Recompute()
 	    end
 
 	    --Now update the material to what was drawn

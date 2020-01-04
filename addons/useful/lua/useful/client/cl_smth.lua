@@ -10,7 +10,7 @@ setmetatable(qmregistered, qmregistered)
 
 local iqmr = QuickMenus.IRegistered			
 
-local openedQM
+openedQM = nil
 
 local ENTITY = FindMetaTable("Entity")
 local QMObj = {}
@@ -22,7 +22,7 @@ setmetatable(QMObj, QMMeta)
 AccessorFunc(QMMeta, "progress", "Progress")
 AccessorFunc(QMMeta, "dist", "UseDistance")
 AccessorFunc(QMMeta, "time", "Time")
-
+AccessorFunc(QMMeta, "KeepAlive", "KeepAlive")
 AccessorFunc(QMMeta, "ent", "Entity")
 
 --[[
@@ -119,7 +119,6 @@ end
 --quick function for making fancy button pop-in & out animations without much hassle
 
 function QMMeta:AddPopIn(pnl, x, y, offx, offy)
-	if not self.PopIns then self.PopIns = {} end
 
 	self.PopIns[#self.PopIns + 1] = {}
 
@@ -143,7 +142,7 @@ function QMMeta:AddPopIn(pnl, x, y, offx, offy)
 end
 
 function ENTITY:SetQuickInteractable(b)
-	print("called x2")
+
 	if b==nil or b then 
 
 		local key = #iqmr + 1
@@ -158,6 +157,7 @@ function ENTITY:SetQuickInteractable(b)
 
 			progress = 0,
 			active = false,
+			PopIns = {}
 		}
 		setmetatable(tbl, QMObj)
 
@@ -349,7 +349,9 @@ hook.Add("Think", "QuickMenus", function()
 	end
 
 	for k,v in ipairs(iqmr) do 
-		v.active = false	
+		if not v.KeepAlive then 
+			v.active = false
+		end	
 	end
 
 	local lp = LocalPlayer()
@@ -394,7 +396,7 @@ hook.Add("Think", "QuickMenus", function()
 	
 	DoTimer()
 
-	if not openedQM then 
+	if not IsValid(openedQM) then 
 		openedQM = CreateQuickMenu()
 	end
 

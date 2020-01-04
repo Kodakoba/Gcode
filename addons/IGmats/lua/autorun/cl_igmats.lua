@@ -3,6 +3,7 @@ if SERVER then return end
 local mats = {
 	["spawn"] = Material(""),
 }
+
 local vecs = {
 	["spawn"] = {pos = Vector(428.8, 4526, 442), ang = Angle(0,0,0), size = {w = 1105, h = 575}}
 }

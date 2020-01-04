@@ -242,13 +242,12 @@ local function AnimationsThink()
 					Frac = 1 - ( ( 1 - Fraction ) ^ ( 1 / anim.Ease ) )
 				end
 
-				anim.Animate( Frac )
+				anim.Animate( Frac, anim )
 			end
 
 			if ( Fraction == 1 ) then
 
 				if ( anim.OnEnd ) then anim:OnEnd( self ) end
-
 				anims[k] = nil  
 
 			end

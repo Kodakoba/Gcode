@@ -1,3 +1,4 @@
+
 include('shared.lua')
  
  SWEP.PrintName        = "Dash SWEP"			
@@ -93,4 +94,3 @@ function SWEP:DrawHUD()
 
 	draw.DrawMaterialCircle(ScrW()/2, ScrH() * 0.9 - 64, size*2)
 end
-

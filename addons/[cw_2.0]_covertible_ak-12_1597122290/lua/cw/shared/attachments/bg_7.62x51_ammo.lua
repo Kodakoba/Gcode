@@ -8,6 +8,7 @@ att.statModifiers = {
 DamageMult = 0.65,
 RecoilMult = 0.4,
 FireDelayMult = 0.4,
+
 ClipSize = 20,}
 
 if CLIENT then
