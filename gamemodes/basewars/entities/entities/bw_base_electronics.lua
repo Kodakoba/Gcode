@@ -93,23 +93,32 @@ if SERVER then
 
 		end
 
-		local State = Res ~= false
-
-		if bwe.CheckDist and bwe.ConnectedTo then 
+		if bwe.CheckDist and IsValid(bwe.ConnectedTo) then 
 			local pos = self:GetPos()
 
-			local cto = me.ConnectedTo
+			local cto = bwe.ConnectedTo
+			if not IsValid(cto) then print("ConnectedTo invalid, say what") bwe.ConnectedTo = nil bwe.CheckDist = nil return end
+
 			local pos2 = cto:GetPos()
 
-			if pos:DistToSqr(pos2) > bwe.CableLength then 
+			if pos:DistToSqr(pos2) > BWEnts[cto].CableLength then 
 				self:StartBitching()
 			else 
-				me.CheckDist = nil 
+				print("OK range", pos:DistToSqr(pos2), BWEnts[cto].CableLength) 
+				bwe.CheckDist = nil 
 			end
 		end
 
 		me.ThinkFunc(self)
 
+	end
+
+	function ENT:StartBitching()
+		local me = BWEnts[self]
+		if IsValid(me.ConnectedTo) and me.ConnectedTo.Disconnect then 
+			me.ConnectedTo:Disconnect(self)
+		end
+		me.ConnectedTo = nil
 	end
 
 	function ENT:CheckUsable()
@@ -130,6 +139,17 @@ if SERVER then
 
 		self:UseFunc(activator, caller, usetype, value)
 
+	end
+
+	function ENT:OnPhysicsUpdate()
+
+	end
+
+	function ENT:PhysicsUpdate(...)
+		local me = BWEnts[self]
+		me.CheckDist = true
+
+		self:OnPhysicsUpdate(...)
 	end
 
 end
