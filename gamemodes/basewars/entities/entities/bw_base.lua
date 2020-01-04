@@ -77,6 +77,10 @@ function ENT:UseFunc()
 
 end
 
+function ENT:CLInit()
+
+end
+
 function ENT:DerivedDataTables()
 
 end
@@ -146,7 +150,7 @@ if SERVER then
 		self.rtb = 0
 		
 		self:Init(me)
-		
+		if CLIENT then self:CLInit() end
 		self:SetMaxHealth(self:Health())
 
 		timer.Simple(0, function() 
