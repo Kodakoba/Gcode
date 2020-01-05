@@ -18,6 +18,7 @@ local function Download(url, name, func, fail)
 	local timed_out = false 
 
 	http.Fetch(url, function(body)
+
 		if timed_out then return end 
 		
 		file.Write(name, body)
@@ -27,12 +28,16 @@ local function Download(url, name, func, fail)
 		func("data/" .. name, body)
 
 		local q = [[INSERT INTO hdl_Data(name, url) VALUES('%s', '%s')
-  		ON CONFLICT(name) DO UPDATE SET url=excluded.url;]]
+  		ON CONFLICT(name) DO UPDATE SET url = excluded.url;]]
+
 		q = q:format(SQLStr(name, true), SQLStr(url, true))
+
 		local ok = sql.Query(q)
-		if ok == false then ErrorNoHalt("Failed HDL query! ", q) end
+		if ok == false then ErrorNoHalt("Failed HDL query! " .. q .. ", " .. sql.LastError()) end
+
 	end, 
 	function(a) 
+
 		if timed_out then return end 
 
 		if fail then 
@@ -43,7 +48,7 @@ local function Download(url, name, func, fail)
 		downloading[name] = nil 
 	end)
 
-	timer.Simple(10, function()
+	timer.Simple(15, function()
 		if downloading[name] then  
 			downloading[name] = nil 
 			if fail then 
@@ -68,7 +73,7 @@ local exts = {
 }
 
 function hdl.DownloadFile(url, name, func, fail, ovwrite)
-	if not url then return end 
+	if not url then print("NO YOU DUMB SHIT") return end 
 	func = func or BlankFunc 
 	fail = fail or BlankFunc
 
@@ -120,12 +125,17 @@ function hdl.DownloadFile(url, name, func, fail, ovwrite)
 		local url2 = sql.Query("SELECT url FROM hdl_Data WHERE name == " .. SQLStr(name))
 
 		if istable(url2) then 
-			url2 = url2[1] 
-			if url~=url2 then Download(url, name, func, fail) return end
+			url2 = url2[1].url
+
+			if url~=url2 then 
+				Download(url, name, func, fail) 
+				return 
+			end
 		end 
 
 		func("data/" .. name, file.Read("data/" .. name, "DATA"))
-	return end 
+		return 
+	end 
 
 	if not name then 
 
@@ -141,6 +151,7 @@ function hdl.DownloadFile(url, name, func, fail, ovwrite)
 		name = n .. max .. ".txt"
 
 	end 	
+
 	local t = {url = url, name = name, func = func, fail = fail}
 	local key = #queued + 1
 
