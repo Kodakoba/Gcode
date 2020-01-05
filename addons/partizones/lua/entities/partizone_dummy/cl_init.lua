@@ -6,6 +6,9 @@ ENT.Type = "anim"
 ENT.Model 		= "models/hunter/blocks/cube025x025x025.mdl"
 ENT.RenderGroup = RENDERGROUP_TRANSLUCENT
 
+
+PZVolume = PZVolume or 1
+
 local function LC(col, dest, vel)
 	local v = 10
 	if not IsColor(col) or not IsColor(dest) then return end
@@ -101,14 +104,14 @@ net.Receive("Partizone", function()
 	if not info.url[1] then error('default track doesnt exist!') return end
 
 	if PZStreams[id] and IsValid(PZStreams[id].str) and on then 
-		PZStreams[id].fad = false
+		PZStreams[id].fade = false
 		return
 	end
 
 	if not on then 
 
 		if PZStreams[id] and IsValid(PZStreams[id].str) then 
-			PZStreams[id].fad = true 
+			PZStreams[id].fade = true 
 		end 
 
 		return 
@@ -121,7 +124,7 @@ net.Receive("Partizone", function()
 		if PZBackupTime[id] then str:SetTime(PZBackupTime[id]) end
 		caching = false
 		str:SetVolume(0)
-		PZStreams[id] = {ID = id, str = str, fad = false, maxvol = (info.maxvol or 0.6)}
+		PZStreams[id] = {ID = id, str = str, fade = false, maxvol = (info.maxvol or 0.6), vol = 0}
 		str:Play()
 		str:SetPos(info.pos)
 		str:Set3DFadeDistance(info.fademin or 512,info.fademax or 1024)
@@ -133,6 +136,7 @@ end)
 
 hook.Add("Think", "PartizoneStreams", function()
 	if caching then return end
+
 	for k,v in pairs(PZStreams) do 
 		local str = v.str
 		local id = v.ID
@@ -147,50 +151,54 @@ hook.Add("Think", "PartizoneStreams", function()
 			end
 
 		end
-		if IsValid(str) and str:GetState() == 0 then 
+		if IsValid(str) and str:GetState() == 0 and v.vol > 0.01 then 
 
-				local max = #PartizoneMusic[v.ID].url
-				local cur = (PZLists[v.ID] or 0)
-				local new = (cur+1 <= max and cur+1) or 1
-				PZBackupTime[v.ID] = nil
-				PZLists[v.ID] = new
+			local max = #PartizoneMusic[v.ID].url
+			local cur = (PZLists[v.ID] or 0)
+			local new = (cur+1 <= max and cur+1) or 1
+			PZBackupTime[v.ID] = nil
+			PZLists[v.ID] = new
 
-				local info = PartizoneMusic[v.ID]
+			local info = PartizoneMusic[v.ID]
 
 
-				caching = true 
+			caching = true 
 
-				hdl.PlayURL(info.url[ PZLists[v.ID] ], "mus/" .. info.name[ PZLists[v.ID] ] .. ".dat", "3d noblock noplay", function(str, eid, estr)
-					if eid and estr then error('Failed to play pzMus! Error: ' .. eid .. " " .. estr) return end 
-					if PZBackupTime[id] then str:SetTime(PZBackupTime[id]) end
-					caching = false
-					str:SetVolume(0)
-					PZStreams[id] = {ID = id, str = str, fad = false, maxvol = (info.maxvol or 0.6)}
-					str:Play()
-					str:SetPos(info.pos)
-					str:Set3DFadeDistance(info.fademin or 512,info.fademax or 1024)
-				end)
+			hdl.PlayURL(info.url[ PZLists[v.ID] ], "mus/" .. info.name[ PZLists[v.ID] ] .. ".dat", "3d noblock noplay", function(str, eid, estr)
+
+				if eid and estr then error('Failed to play pzMus! Error: ' .. eid .. " " .. estr) return end 
+				if PZBackupTime[id] then str:SetTime(PZBackupTime[id]) end
+				caching = false
+				str:SetVolume(0)
+				PZStreams[id] = {ID = id, str = str, fade = v.fade, maxvol = (info.maxvol or 0.6), vol = 0}
+				str:Play()
+				str:SetPos(info.pos)
+				str:Set3DFadeDistance(info.fademin or 512,info.fademax or 1024)
+			end)
+
 			return
 		end
 
-		if v.fad and IsValid(str) then
+		if v.fade and IsValid(str) then
 
-
-			str:SetVolume(math.max(str:GetVolume() - FrameTime()/4, 0))
+			v.vol = math.max(v.vol - FrameTime()/4, 0)
+			str:SetVolume(v.vol)
 
 			if str:GetVolume() <= 0 then 
 				PZBackupTime[v.ID] = str:GetTime()
 				str:Pause()	--dont stop because it'll drop performance each time it resumes
-				timer.Create("PZStream" .. k, 5, 1, function()
+				timer.Create("PZStream" .. k, 5, 1, function()	--...unless 5 seconds have passed
 					if str:GetState() == GMOD_CHANNEL_PAUSED then 
 						str:Stop()
 					end 
 				end)
 			end
 
-		elseif not v.fad and IsValid(str) then
-			str:SetVolume(math.min(str:GetVolume() + FrameTime()*4, v.maxvol))
-			if str:GetState() == GMOD_CHANNEL_PAUSED then 
+		elseif not v.fade and IsValid(str) then
+			
+			v.vol = math.min(v.vol + FrameTime()*4, v.maxvol * PZVolume)
+			str:SetVolume(v.vol)
+			if str:GetState() == GMOD_CHANNEL_PAUSED and v.vol > 0 then 
 				str:Play()
 			end
 		end

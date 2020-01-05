@@ -62,8 +62,21 @@ end
 
 PartizoneMusic = {
 	[1] = {
-		url = {"https://b.vaati.net/a1f7.mp3", "http://vaati.net/Gachi/shared/DropItLikeItsGachi.mp3"}, 
-		name = {"Mystery", "DropItLikeItsSuction"}, 
+		url = {
+			"http://vaati.net/Gachi/shared/DropItLikeItsGachi.mp3", 
+			"http://vaati.net/Gachi/shared/MALDING%20MANOR.mp3", 
+			"http://vaati.net/Gachi/shared/Gachimuchi%20-%20Usual%20Pantsking%20%5BKusomisoka%5D%20Reuploaded-wtHMvoX25zY.mp3",
+			"http://vaati.net/Gachi/shared/%E2%99%82GACHILLMUCHI%E2%99%82-BaMcFghlVEU.mp3",
+			"http://vaati.net/Gachi/shared/Deep%20%E2%99%82%20Dark%20%E2%99%82%20Housemusic%20%E2%99%82-3435DrNH21k.mp3"
+		}, 
+
+		name = {
+			"DropItLikeItsSuction",
+			"MaldingManor",
+			"AerachMadeMeDoThis",
+			"GaCHILLmuchi",
+			"HouseMusic"
+		}, 
 		pos = Vector(-4543.2329101563, -4843.0903320313, 250.4676361084), 
 		maxvol = 0.6, 
 		fademin = 512, 
