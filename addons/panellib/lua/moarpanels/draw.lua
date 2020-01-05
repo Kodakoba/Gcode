@@ -787,9 +787,7 @@ function DownloadGIF(url, name)
 
 			end, function(...)
 				print("Failed to download! URL:", url, "\nError:", ...)
-				MoarPanelsMats[name] = false--.mat = Material("materials/icon16/cancel.png")
-				--MoarPanelsMats[name].failed = url
-				--MoarPanelsMats[name].downloading = false
+				MoarPanelsMats[name] = false
 			end)
 
 		else 
@@ -831,18 +829,20 @@ function draw.DrawGIF(url, name, x, y, dw, dh, frw, frh, start)
 
 	local t = ((ct - start) % mat.dur) * 100
 
-	local frame = table.maxn(mat.timings) - 1
+	local frame = 0
 
-	for i=1, #mat.timings-1 do 
+	for i=1, #mat.timings do 
 
 		if t < mat.timings[i] then 
-			frame = i
+			frame = i - 1
 			break 
 		end 
 	end
 
+	local frames = math.min(mat.i.amt, 5)	--frames on a row
+	local totalframes = mat.i.amt 
 
-	local row, col = frame % 5, math.floor(frame / 5)
+	local row, col = (frame % 5), math.floor(frame / 5)
 	
 	local xpad, ypad = 4, 4
 
@@ -851,8 +851,9 @@ function draw.DrawGIF(url, name, x, y, dw, dh, frw, frh, start)
 	local xo, yo = xpad, ypad
 
 
-	local u1, v1 = (1 * row) / 5, (1 * col) / cols
-	local u2, v2 = u1 + (112)/w, v1 + (112)/h
+	local u1, v1 = row / frames , col / cols
+	local u2, v2 = u1 + 112/w, v1 + (112)/h
 
+	print(frame, row, frames, u1, u2, v1, v2)
 	surface.DrawTexturedRectUV(x, y, dw, dh, u1, v1, u2, v2)
 end
