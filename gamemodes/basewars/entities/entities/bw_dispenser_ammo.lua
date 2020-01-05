@@ -30,17 +30,17 @@ end
 
 function ENT:UseFunc(ply)
 	
-	if not BaseWars.Ents:ValidPlayer(ply) then return end
+	if not IsPlayer(ply) then return end
 	
 	self.Time = CurTime()
 	
-	local PlyGun = ply:GetActiveWeapon()
-	if not BaseWars.Ents:Valid(PlyGun) then return end
+	local gun = ply:GetActiveWeapon()
+	if not IsValid(gun) then return end
 	
-	local Ammo = PlyGun:GetPrimaryAmmoType()
-	if not Ammo then return end
+	local ammo = gun:GetPrimaryAmmoType()
+	if not ammo then return end
 	
-	ply:GiveAmmo(15, Ammo)
+	ply:GiveAmmo(math.min(15, gun:GetMaxClip1()), ammo)
 	self:EmitSound(self.Sound, 100, 60)
 	
 end

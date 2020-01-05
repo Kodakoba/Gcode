@@ -46,6 +46,27 @@ function ENT:GenerateOptions(qm, pnl)
 		net.SendToServer()
 	end
 
+	local pw = vgui.Create("InvisPanel", pnl)
+	
+	pw:SetSize(200, 40)
+
+	pw:Center()
+	pw.Y = pw.Y + pnl.CircleSize
+
+	local w, h = pw:GetContentSize()
+	local ent = self 
+
+	function pw:Paint(w, h)
+		surface.SetDrawColor(60, 60, 60, 150)
+		surface.DrawRect(0, 0, w, h)
+
+		draw.SimpleText(("Power: %d/%d"):format(ent:GetPower(), ent.PowerCapacity), "OSB24", w/2, h/2, Color(50, 160, 250), 1, 1)
+
+		surface.SetDrawColor(0, 0, 0)
+		self:DrawGradientBorder(w, h, 3, 3)
+	end
+
+	qm:AddPopIn(pw, pw.X, pw.Y, 0, -32)
 	qm:AddPopIn(gen, gen.X, gen.Y - pnl.CircleSize - 8, 0, -32)
 end
 

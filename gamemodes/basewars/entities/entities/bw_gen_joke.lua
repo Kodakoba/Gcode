@@ -21,13 +21,15 @@ function ENT:Use(act,cal)
 end
 
 
-function ENT:UseFunc(activator,caller)
+function ENT:UseFunc(act, call)
 
-    if activator:IsPlayer()&&activator==caller then
-        if BaseWars.Money:GetMoney(activator) < 2000000 then return end
+    if act:IsPlayer() and act==call then
+        if act:GetMoney() < 2000000 then return end
         if self:GetMoney() > 5000000 then return end
-        BaseWars.Money:TakeMoney(activator, 2000000)
-        self:SetMoney(self:GetMoney()+2000000)
+
+        act:TakeMoney(2000000)
+
+        self:SetMoney(self:GetMoney() + 2000000)
         self.ents =  ents.FindInSphere(self:GetPos(), self.TransmitRadius)
     end 
 

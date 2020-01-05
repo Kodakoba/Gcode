@@ -99,12 +99,14 @@ function ENT:ThinkFunc()
 	local find = ents.FindInCone(self.EyePosOffset, Forward, self.Radius, self.Angle)
 	if not find then return end 
 
+	local Owner = self:CPPIGetOwner()
+	if not IsPlayer(Owner) then return end
+	
 	for k, v in next, find do
 	
 		if not IsPlayer(v) then continue end
-		
-		local Owner = IsPlayer(self:CPPIGetOwner())
-		if Owner and not Owner:IsEnemy(v) then continue end
+
+		if not Owner:IsEnemy(v) then continue end
 		
 		local Data = {
 			ply = v,
@@ -144,13 +146,15 @@ function ENT:Draw()
 	self.EyePosOffset = SelfPos + (self:GetUp() * 58 + Forward * 7 + self:GetRight() * 2)
 	
 	local find = ents.FindInCone(self.EyePosOffset, Forward, self.Radius, self.Angle)
-	
+		
+	local Owner = self:CPPIGetOwner()
+	if not IsPlayer(Owner) then return end
+
 	for k, v in next, find do
 	
 		if not IsPlayer(v) then continue end
-		
-		local Owner = IsPlayer(self:CPPIGetOwner())
-		if Owner and not Owner:IsEnemy(v) then continue end
+
+		if not Owner:IsEnemy(v) then continue end
 		
 		local Pos = v:LocalToWorld(v:OBBCenter()) + Vector(0, 0, 10)
 	

@@ -79,7 +79,6 @@ local function OpenShit(qm, self, pnl)
 	qm:AddPopIn(con, con.X, con.Y, 64, 0)
 
 	function con:DoClick()
-		print("set dc to", usingwho)
 		DrawCable = usingwho 
 	end
 
