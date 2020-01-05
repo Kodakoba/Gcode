@@ -32,7 +32,7 @@ function GM:PlayerInitialSpawn(ply)
 
 		if not AuthTbl[ply:SteamID()] then
 
-			ply:ChatPrint(BaseWars.LANG.FailedToAuth)
+			ply:ChatPrint(Language("FailedToAuth"))
 
 			ply.UnAuthed = true
 
@@ -88,9 +88,11 @@ function GM:OnEntityCreated(ent)
 
 			ent.MaxHealth = math.Round(HP)
 			ent.DestructableProp = true
-			ent:SetNWInt("MaxHealth",ent.MaxHealth)
+
+			ent:SetNW2Int("MaxHealth", ent.MaxHealth)
+
 			ent:SetMaxHealth(ent.MaxHealth)
-				timer.Create("prop"..ent:EntIndex(),1,0,function() if !(ent:IsValid()) then return end ent:SetNWInt("MaxHealth",ent.MaxHealth) end)
+				timer.Create("prop"..ent:EntIndex(),1,0,function() if !(ent:IsValid()) then return end ent:SetNW2Int("MaxHealth",ent.MaxHealth) end)
 
 				function ent:OnRemove()
 					timer.Remove("prop"..self:EntIndex())
@@ -179,7 +181,7 @@ function GM:EntityTakeDamage(ent, dmginfo)
 	local Attacker 	= dmginfo:GetAttacker()
 	local Damage 	= dmginfo:GetDamage()
 
-	local Scale = 1
+	local PropDamageScale = 0.2
 
 	if Owner then
 		if not IsPlayer(Attacker) then return false end 
@@ -206,7 +208,6 @@ function GM:EntityTakeDamage(ent, dmginfo)
 		if sid64 then 
 
 			if BaseWars.Raid.WasInRaid(sid64) then --ononono you aint escaping the shame 
-
 				local sids = BaseWars.Raid.WasInRaid(sid64).SteamIDs
 
 				local atk = Attacker 
@@ -229,13 +230,36 @@ function GM:EntityTakeDamage(ent, dmginfo)
 
 				if not (owside==2 and atkside==1) then --only (owner: raided, attacker: raider) gets a pass
 					dmginfo:ScaleDamage(0)
-					dmginfo:SetDamage(0)							 
+					dmginfo:SetDamage(0)						 
 					return false
 				end
 
+				if ent.DestructableProp then
+					local hp = ent:Health()
+					local ActualDmg = Damage * PropDamageScale
+					hp = hp - ActualDmg 
+
+					if hp < 0 then 
+						ent:Remove()
+						return 
+					end
+
+					ent:SetHealth(hp)
+
+					local M 		= hp / ent.MaxHealth
+					local OldCol 	= ent:GetColor()
+					local Color 	= Color(255 * M, 255 * M, 255 * M, OldCol.a)
+
+					ent:SetColor(Color)
+
+					return 
+				end
+
 			else 
+
 				dmginfo:ScaleDamage(0)
-				dmginfo:SetDamage(0)							 
+				dmginfo:SetDamage(0)	
+
 				return false
 			end
 
@@ -253,22 +277,20 @@ function GM:EntityTakeDamage(ent, dmginfo)
 		local Cant1 = IsOwner and Owner:InRaid()
 		local Cant2 = not Enemy 
 		
-		if Cant1 or Cant2 then 
+		if Cant1 or Cant2 then return false end 
 
-		return false end 
+		local hp = ent:Health()
+		local ActualDmg = Damage * PropDamageScale
+		hp = hp - ActualDmg 
 
-		ent.PropHP = ent.PropHP or ent:Health()
-		local ActualDmg = Damage * Scale
-		ent.PropHP=ent.PropHP-(ActualDmg/5)
-
-		ent:SetHealth(ent.PropHP)
-		if ent:Health() <= 0 or ent.PropHP <= 0 then
-
+		if hp < 0 then 
 			ent:Remove()
+			return 
+		end
 
-		return end
+		ent:SetHealth(hp)
 
-		local M 		= ent.PropHP / ent.MaxHealth
+		local M 		= hp / ent.MaxHealth
 		local OldCol 	= ent:GetColor()
 		local Color 	= Color(255 * M, 255 * M, 255 * M, OldCol.a)
 
@@ -297,11 +319,7 @@ function GM:EntityTakeDamage(ent, dmginfo)
 
 		end
 
-		local TakeDamage = Damage * Scale
-
 	end
-
-	dmginfo:ScaleDamage(Scale)
 
 end
 
