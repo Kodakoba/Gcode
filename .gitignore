@@ -13,3 +13,4 @@ addons/pLogs-2-master/lua/plogs_hooks/printers.sublime-workspace
 addons/pLogs-2-master/lua/plogs_hooks/printers.sublime-project
 addons/pLogs-2-master/lua/plogs_hooks/printers.sublime-workspace
 addons/titles/lua/autorun/fuckssake.zip
+lua/autorun/server/lanes.lua
