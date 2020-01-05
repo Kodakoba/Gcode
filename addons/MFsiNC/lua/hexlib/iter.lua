@@ -97,11 +97,32 @@ function IIterMeta:clean()
 		local key, ent = next(self, i)
 
 		if not IsValid(ent) and ent then
-			table.remove(self, key)
+			self[key] = nil
 		end 
 	end
 
+	self:sequential()
 end
+
+function IIterMeta:sequential()
+	local len = table.maxn(self)
+	local shift = 0
+
+	for i=1, len do 
+
+		local v = self[i]
+
+		if v == nil then 
+
+			while shift < len and self[i + shift] == nil do
+			 	shift = shift + 1
+			end
+
+			self[i] = self[i+shift]
+			self[i+shift] = nil
+		end
+	end
+end 
 
 function IIterMeta:add(v)
 	self:clean()
