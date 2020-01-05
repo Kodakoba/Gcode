@@ -1,5 +1,5 @@
-local scale = 0.84
-local hsc = 0.84
+local scale = 0.75
+local hsc = 0.85
 
 DarkHUD = DarkHUD or {}
 local wasvalid = false 
@@ -167,6 +167,9 @@ function DarkHUD.Create()
 	local lvCol = Color(250, 250, 250)
 	local xpCol = Color(250, 250, 250)
 
+	local green = Color(20, 255, 20)
+	local red = Color(255, 50, 50)
+
 	function f:Think()
 		local lvl = LocalPlayer():GetLevel()
 		local mon = LocalPlayer():GetMoney()
@@ -182,12 +185,28 @@ function DarkHUD.Create()
 			PopupMoney = CurTime() 
 
 			if pm < mon then -- + money
-				mCol = Color(20, 255, 20)
+				mCol = green
 			else 
-				mCol = Color(255, 50, 50)
+				mCol = red
 			end
 
-			pmd[#pmd+1] = {amt = mon - pm, y = 0, ct = CurTime(), col = mCol}
+			if #pmd < 7 then
+				pmd[#pmd+1] = {amt = mon - pm, y = 0, ct = CurTime(), col = mCol}
+			else 
+				local cur = pmd[1]
+
+				cur.amt = cur.amt + (mon - pm)
+				cur.ct = CurTime()
+
+				if cur.amt < 0 then 
+					mCol = red 
+				else 
+					mCol = green 
+				end 
+
+				cur.col = mCol 
+			end
+
 		end 
 
 		if pe ~= exp then 
@@ -252,7 +271,7 @@ function DarkHUD.Create()
 
 
 			if monY > 2 then 
-				local mtxt = BaseWars.LANG.Currency .. BaseWars.NumberFormat(LocalPlayer():GetMoney())
+				local mtxt = Language.Currency .. BaseWars.NumberFormat(LocalPlayer():GetMoney())
 				
 				surface.SetFont("OSB28")
 				local mw, mh = surface.GetTextSize(mtxt)
@@ -266,7 +285,7 @@ function DarkHUD.Create()
 
 				local i = 0
 
-				for k,v in pairs(pmd) do 
+				for k,v in pairs(pmd) do 	--money popups
 
 					if v.a and v.a > 10 then 
 						i = i + 1 
@@ -274,7 +293,7 @@ function DarkHUD.Create()
 
 					local amt = v.amt 
 
-					local difftxt = BaseWars.LANG.Currency .. BaseWars.NumberFormat(math.abs(amt))
+					local difftxt = Language.Currency .. BaseWars.NumberFormat(math.abs(amt))
 
 					if amt < 0 then 
 						difftxt = "-" .. difftxt 
@@ -503,11 +522,15 @@ function DarkHUD.Create()
 		surface.SetDrawColor(255, 255, 255)
 		surface.DrawMaterial("https://i.imgur.com/8b0nZI7.png", "moneybag.png", x + 18, y + 48, 25, 24)
 
-		draw.SimpleText(BaseWars.LANG.Currency .. BaseWars.NumberFormat(LocalPlayer():GetMoney()), "OS24", x + 50, y + 48 + 12, color_white, 0, 1)
+		draw.SimpleText(Language.Currency .. BaseWars.NumberFormat(LocalPlayer():GetMoney()), "OS24", x + 50, y + 48 + 12, color_white, 0, 1)
 
 		surface.DrawMaterial("https://i.imgur.com/YYXglpb.png", "star.png", x + 18, y + 80, 24, 24)
 
 		draw.SimpleText(LocalPlayer():GetLevel(), "OS24", x + 50, y + 80 + 12, color_white, 0, 1)
+
+
+		draw.RoundedBox(8, w - 204, y + 82, 128, 16, Color(75, 75, 75))
+		draw.RoundedBox(8, w - 204, y + 82, (128) * (LocalPlayer():GetXP() / LocalPlayer():GetXPNextLevel()), 16, Color(140, 80, 220))
 	end
 end
 
