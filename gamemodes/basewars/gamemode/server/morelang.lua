@@ -1,7 +1,4 @@
-BaseWars.LANG = BaseWars.LANG or {}
-
-BaseWars.LANG.Shorts = BaseWars.LANG.Shorts or {}
-local s = BaseWars.LANG.Shorts 
+local s = Language
 
 --[[
 	Raids.

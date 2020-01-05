@@ -1,13 +1,7 @@
 
 
-local url = "http://google.com"
 
 local loaded = false 
-
-local header = Color(46, 141, 222)
-local buttoncolor = Color(40, 121, 190)
-local bg = Color(59, 67, 87) 
-
 
 function ulx.showMotdMenu( steamid )
 	loaded = false
@@ -39,16 +33,5 @@ function ulx.showMotdMenu( steamid )
 end
 
 function ulx.rcvMotd( mode_, data )
-	mode = mode_
-	if mode == "1" then -- file
-		ULib.fileWrite( "data/ulx_motd.txt", data )
-	elseif mode == "2" then -- generator
-		ulx.motdSettings = data
-	else -- URL
-		if data:find( "://", 1, true ) then
-			url = data
-		else
-			url = "http://" .. data
-		end
-	end
+	--fuck off ulx
 end

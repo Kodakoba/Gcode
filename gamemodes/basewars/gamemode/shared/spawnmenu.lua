@@ -51,7 +51,7 @@ if SERVER then
 
 		if ply.IsBanned and ply:IsBanned() then return end
 
-		if not ply:Alive() then ply:Notify(BaseWars.LANG.DeadBuy, BASEWARS_NOTIFICATION_ERROR) return end
+		if not ply:Alive() then ply:Notify(Language.DeadBuy, BASEWARS_NOTIFICATION_ERROR) return end
 
 		local l = SpawnList and SpawnList.Models
 
@@ -115,7 +115,7 @@ if SERVER then
 
 		if not gun and not drug and not raidpurchase and ply:InRaid() then
 
-			ply:Notify(BaseWars.LANG.CannotPurchaseRaid, BASEWARS_NOTIFICATION_ERROR)
+			ply:Notify(Language.CannotPurchaseRaid, BASEWARS_NOTIFICATION_ERROR)
 
 		return end
 
@@ -126,7 +126,7 @@ if SERVER then
 
 			if lim and lim <= Amount then
 
-				ply:Notify(string.format(BaseWars.LANG.EntLimitReached, item), BASEWARS_NOTIFICATION_ERROR)
+				ply:Notify(string.format(Language.EntLimitReached, item), BASEWARS_NOTIFICATION_ERROR)
 
 			return end
 
@@ -156,14 +156,14 @@ if SERVER then
 
 			if plyMoney < price then
 
-				ply:Notify(BaseWars.LANG.SpawnMenuMoney, BASEWARS_NOTIFICATION_ERROR)
+				ply:Notify(Language.SpawnMenuMoney, BASEWARS_NOTIFICATION_ERROR)
 
 			return end
 
 			ply:SetMoney(plyMoney - price)
 			ply:EmitSound("mvm/mvm_money_pickup.wav")
 
-			ply:Notify(string.format(BaseWars.LANG.SpawnMenuBuy, item, BaseWars.NumberFormat(price)), BASEWARS_NOTIFICATION_MONEY)
+			ply:Notify(string.format(Language.SpawnMenuBuy, item, BaseWars.NumberFormat(price)), BASEWARS_NOTIFICATION_MONEY)
 
 		end
 
@@ -314,7 +314,7 @@ if SERVER then
 
 		if not ply:IsAdmin()  then
 
-			ply:Notify(BaseWars.LANG.UseSpawnMenu, BASEWARS_NOTIFICATION_ERROR)
+			ply:Notify(Language.UseSpawnMenu, BASEWARS_NOTIFICATION_ERROR)
 			return false
 
 		end
@@ -440,7 +440,7 @@ local function MakeTab(type)
 
 			p:AddSeperator(nil, 8, 4)
 
-			local mstr = BaseWars.LANG.Currency .. BaseWars.NumberFormat(money)
+			local mstr = Language.Currency .. BaseWars.NumberFormat(money)
 
 			local _, mon = p:AddFormattedText(mstr, mcol, "OS24", 20, 1)
 			local _, lv = p:AddFormattedText("LV" .. tostring(level), lvcol, "OS24", 20, 2)
@@ -496,7 +496,7 @@ local function MakeTab(type)
 
 			local icon = vgui.Create("SpawnIcon", fr)
 			icon:SetModel(model)
-			icon:SetTooltip(name .. (money > 0 and " (" .. BaseWars.LANG.CURRENCY .. BaseWars.NumberFormat(money) .. ")" or "") ..  tooltip)
+			icon:SetTooltip(name .. (money > 0 and " (" .. Language.CURRENCY .. BaseWars.NumberFormat(money) .. ")" or "") ..  tooltip)
 			icon:SetSize(64, 64)
 			icon:SetPos(8, fh/2 - 32)
 			icon:SetMouseInputEnabled(false)
@@ -528,12 +528,12 @@ local function MakeTab(type)
 
 					if myMoney < money then
 
-						Derma_Message(BaseWars.LANG.SpawnMenuMoney, "Error")
+						Derma_Message(Language.SpawnMenuMoney, "Error")
 
 					return end
 
-					Derma_Query(string.format(BaseWars.LANG.SpawnMenuBuyConfirm, name, BaseWars.NumberFormat(money)),
-						BaseWars.LANG.SpawnMenuConf, "   " .. BaseWars.LANG.Yes .. "   ", DoIt, "   " .. BaseWars.LANG.No .. "   ")
+					Derma_Query(string.format(Language.SpawnMenuBuyConfirm, name, BaseWars.NumberFormat(money)),
+						Language.SpawnMenuConf, "   " .. Language.Yes .. "   ", DoIt, "   " .. Language.No .. "   ")
 
 				else
 

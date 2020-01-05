@@ -1,5 +1,5 @@
--- can't leak the menu if it works like fucking shit
--- and looks like it as well :weSmart:
+-- i need to rewrite this this is trash
+
 local OpenPlayerSuggestions 
 local OpenSuggestion 
 local OpeningMy

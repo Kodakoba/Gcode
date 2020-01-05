@@ -173,10 +173,10 @@ local function CreateFactionRaidButton(fs, v)
 		function bj:DoClick()
 			if self.Disabled then return end 
 
-			hook.Add("OnRaid", self, function(self, ok, two)	--first arg in the function is the button, somehow????????
-				print("onraid called", self, ok, two)
+			hook.Add("OnRaid", self, function(self, ok, two)
+
 				if ok then 
-					if IsValid(BWFrame) then print("dicknigga", ok, two) BWFrame:Remove() return end 
+					if IsValid(BWFrame) then BWFrame:PopOut() return end 
 				end
 
 				if not IsValid(BWFrame) then return end 
@@ -204,8 +204,7 @@ local function CreateFactionRaidButton(fs, v)
 			end)
 
 			Raids.CallRaid(v.id, true) --faction raid
-			print("creating OnRaid hook")
-			
+
 		end
 
 	end

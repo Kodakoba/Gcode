@@ -76,12 +76,11 @@ function MODULE.InitMoney(ply)
 	return puid
 	
 end
+
 PLAYER.InitMoney = MODULE.InitMoney
 
-for k, v in next,player.GetAll() do
-	
+for k, v in ipairs(player.GetAll()) do
 	v:InitMoney()
-
 end
 
 function MODULE.SaveMoney(ply, amount)

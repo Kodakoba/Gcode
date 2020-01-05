@@ -194,7 +194,8 @@ function BaseWars.PrinterCheck(ply)
 
 	if Raids >= BaseWars.Config.Raid.NeededPrinters then return true end
 
-return false, BaseWars.LANG.NoPrinters end
+	return false, Language.NoPrinters 
+end
 
 BaseWars.PrinterCheck = Deprecated
 
@@ -236,7 +237,7 @@ BaseWars.UTIL.TimerAdvDestroy = Deprecated
 
 local function Pay(ply, amt, name, own)
 
-	ply:Notify(string.format(own and BaseWars.LANG.PayOutOwner or BaseWars.LANG.PayOut, BaseWars.NumberFormat(amt), name), BASEWARS_NOTIFICATION_GENRL)
+	ply:Notify(string.format(own and Language.PayOutOwner or Language.PayOut, BaseWars.NumberFormat(amt), name), BASEWARS_NOTIFICATION_GENRL)
 
 	ply:GiveMoney(amt)
 
@@ -262,7 +263,7 @@ function BaseWars.UTIL.PayOut(ent, attacker, full, ret)
 
 	local Name = ent.PrintName or ent:GetClass()
 
-	if ent.IsPrinter then Name = BaseWars.LANG.Level .. " " .. ent:GetLevel() .. " " .. Name end
+	if ent.IsPrinter then Name = Language.Level .. " " .. ent:GetLevel() .. " " .. Name end
 
 	if attacker == Owner then
 
@@ -394,8 +395,8 @@ function BaseWars.UTIL.RefundFromCrash(ply)
 		local Money = file.Read(FileName, "DATA")
 		Money = tonumber(Money)
 		if not Money then file.Delete(FileName) return end 
-		ply:ChatPrint(BaseWars.LANG.WelcomeBackCrash)
-		ply:ChatPrint(string.format(BaseWars.LANG.Refunded, BaseWars.NumberFormat(Money)))
+		ply:ChatPrint(Language.WelcomeBackCrash)
+		ply:ChatPrint(Language("Refunded", BaseWars.NumberFormat(Money)))
 
 		print("Refunding ", ply, " for server crash previously.")
 		ply:GiveMoney(Money)

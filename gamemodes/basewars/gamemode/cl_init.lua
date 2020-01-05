@@ -280,7 +280,7 @@ function CreatePlayerFrame(sb, ply)
 		av:SetSize(88 - size, 88 - size)
 
 		draw.SimpleText(lastnick .. " ", "TW32", 88, 2, color_white)
-		draw.SimpleText(BaseWars.LANG.Currency .. mon, "OS20", w - 32, 8, color_white, 2, 5)
+		draw.SimpleText(Language.Currency .. mon, "OS20", w - 32, 8, color_white, 2, 5)
 		draw.SimpleText("Level " .. lv, "OS20", w - 32, 28, color_white, 2, 5)
 
 		local time = string.FormattedTime(time)

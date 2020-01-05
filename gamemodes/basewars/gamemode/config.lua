@@ -355,7 +355,7 @@ BaseWars.SpawnList.Models.Entities["Consumables (T1)"] = {
 BaseWars.SpawnList.Models.Printers["Printers - Misc."] = {
 
 	["Printer Paper"]				= BaseWars.GSL{Model = "models/props_junk/garbage_newspaper001a.mdl", Price = 300, ClassName = "bw_printerpaper", UseSpawnFunc = true},
-	["Printer Rack"] 				= BaseWars.GSL{Model = "models/grp/rack/rack.mdl", Price = 25000, ClassName = "bw_printerrack", Level = 5, Limit = 1},
+	["Printer Rack"] 				= BaseWars.GSL{Model = "models/grp/rack/rack.mdl", Price = 25000, ClassName = "bw_printerrack", Level = 5, Limit = 3},
 	["Capacity Kit"]				= BaseWars.GSL{Model = "models/props_junk/cardboard_box004a.mdl", Price = 1000000, ClassName = "bw_printercap", UseSpawnFunc = true},
 	["Heavy Capacity Kit"]			= BaseWars.GSL{Model = "models/props_junk/cardboard_box004a.mdl", Price = 125000000, ClassName = "bw_printercap2", UseSpawnFunc = true},
 
