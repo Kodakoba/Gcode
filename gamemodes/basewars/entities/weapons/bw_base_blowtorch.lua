@@ -58,6 +58,19 @@ function SWEP:Initialize()
 	self:SetHoldType(self.HoldType)
 end
 
+local function GetHP(prop)
+	return prop:Health()
+end 
+
+local function SetHP(prop, hp)
+	if hp <= 0 then 
+		prop:Remove()
+		return
+	end 
+
+	prop:SetHealth(hp)
+end
+
 function SWEP:PrimaryAttack()
 	local ply = self:GetOwner()
 	local tr = ply:GetEyeTrace()
@@ -116,10 +129,7 @@ function SWEP:PrimaryAttack()
 	table.remove(trents, 1)
 
 	for k,v in pairs(trents) do 
-		v:SetHealth(v:Health() - self.TorchDamage)
-		if v:Health() <= 0 then 
-			v:Remove()
-		end
+		SetHP(v, GetHP(v) - self.TorchDamage)
 	end
 
 
@@ -212,8 +222,9 @@ function SWEP:DrawHUD()
 	draw.RoundedBox(6, x, y, 200, 50, Color(50, 50, 50, a - 15))
 
 	local hp, max = 0, 0
+
 	if lastent and IsValid(lastent) then 
-		hp = lastent:Health()
+		hp = GetHP(lastent)
 		max = lastent:GetMaxHealth()
 		hpfrac = L(hpfrac, hp/max, 15)
 	end
@@ -231,13 +242,11 @@ function SWEP:DrawHUD()
 		strX = (strX + FrameTime()/32)%0.5
 		strY = (strY + FrameTime()/16)%0.5
 
-		--surface.SetMaterial(stripes)
 		surface.SetDrawColor(Color(0, 0, 0, math.min(a, 100)))
 
 		render.SetScissorRect(x + 20, y + 12, x + hpfrac*160 + 20, y + 12 + 16, true)
 
 			surface.DrawUVMaterial("https://www.sccpre.cat/mypng/full/11-113784_transparent-stripes-tumblr-huge-freebie-download-for-transparent.png", "stripes.png", x, y, 200, 80, 0.1 - strX, 0.1 - strY, 0.6 - strX, 0.4 - strY)
-			--surface.DrawTexturedRectUV(x, y, 200, 80, 0.1 - strX, 0.1 - strY, 0.6 - strX, 0.4 - strY)
 
 		render.SetScissorRect(0,0,0,0, false)
 	end

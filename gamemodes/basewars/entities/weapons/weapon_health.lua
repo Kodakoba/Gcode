@@ -36,7 +36,7 @@ SWEP.Primary.Spread 		= 0.25
 SWEP.Primary.NumberofShots 	= 1
 SWEP.Primary.Automatic 		= true
 SWEP.Primary.Recoil 		= 0.01
-SWEP.Primary.Delay 			= 0.05
+SWEP.Primary.Delay 			= 0.15
 SWEP.Primary.Force 			= 1
 
 SWEP.Secondary.ClipSize 	= -1
@@ -52,12 +52,29 @@ function SWEP:Initialize()
 
 end
 
+function GenBullet(self)
+	local bullet = {}
+	bullet.Num = self.Primary.NumberofShots
+	bullet.Src = self.Owner:GetShootPos()
+	bullet.Dir = self.Owner:GetAimVector()
+	bullet.Spread = self.Primary.Spread
+	bullet.Tracer = 1
+	bullet.TracerName = "ToolTracer"
+	bullet.Force = self.Primary.Force
+	bullet.Damage = self.Primary.Damage
+	bullet.AmmoType = self.Primary.Ammo
+
+	return bullet
+end
+
+
 function SWEP:PrimaryAttack()
 
 	self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
 
 	if not IsFirstTimePredicted() then return end
-	if self.Owner:InRaid() then return end
+	--if self.Owner:InRaid() then return end
+
 	local tr = util.TraceLine({
 		start = self.Owner:GetShootPos(),
 		endpos = self.Owner:GetShootPos() + self.Owner:GetAimVector() * self.Range,
@@ -66,59 +83,35 @@ function SWEP:PrimaryAttack()
 
 	local ent = tr.Entity
 
-	if (ent.GetMaxHealth and ent:GetMaxHealth() > 0) or (ent.MaxHealth && ent:GetClass()=="prop_physics") then
+	if not IsValid(ent) then return end 
 
-	if ent:GetClass()=="prop_physics" then 
-		if ent.MaxHealth && ent:Health() >= ent.MaxHealth then return end
-		ent.MaxHealth = ent.MaxHealth or ent:GetNWInt("MaxHealth", 1)
-			local bullet = {}
-			bullet.Num = self.Primary.NumberofShots
-			bullet.Src = self.Owner:GetShootPos()
-			bullet.Dir = self.Owner:GetAimVector()
-			bullet.Spread = self.Primary.Spread
-			bullet.Tracer = 1
-			bullet.TracerName = "ToolTracer"
-			bullet.Force = self.Primary.Force
-			bullet.Damage = self.Primary.Damage
-			bullet.AmmoType = self.Primary.Ammo
-			if ent.MaxHealth && ent:Health() >= ent.MaxHealth then bullet={} return end
-			self.Owner:FireBullets(bullet)
+	local maxHP = ent:GetMaxHealth()
+	if maxHP <= 0 then return end 
 
-	
+	if ent:Health() >= ent:GetMaxHealth() then return end
 
-			if SERVER then
+	local bullet = GenBullet(self)
 
-			ent:SetHealth(math.min(ent.MaxHealth, ent:Health() + self.HealAmount/5))
-			 local color=ent:Health()/ent.MaxHealth*255
-            ent:SetColor(Color(color,color,color))
-
-			end
-
-
-			return
-	end
-
-		if ent:Health() >= ent:GetMaxHealth() then return end
-
-		local Armor = ent.Armor and ent:Armor()
-
-		local bullet = {}
-			bullet.Num = self.Primary.NumberofShots
-			bullet.Src = self.Owner:GetShootPos()
-			bullet.Dir = self.Owner:GetAimVector()
-			bullet.Spread = self.Primary.Spread
-			bullet.Tracer = 1
-			bullet.TracerName = "ToolTracer"
-			bullet.Force = self.Primary.Force
-			bullet.Damage = self.Primary.Damage
-			bullet.AmmoType = self.Primary.Ammo
+	if ent:GetClass()=="prop_physics" or ent.IsBaseWars then
 
 		self.Owner:FireBullets(bullet)
 
 		if SERVER then
 
 			ent:SetHealth(math.min(ent:GetMaxHealth(), ent:Health() + self.HealAmount))
-			if Armor then ent:SetArmor(Armor) end
+
+			local color = ent:Health() / ent:GetMaxHealth()*255
+            ent:SetColor(Color(color,color,color))
+
+		end
+
+	elseif IsPlayer(ent) then
+
+		self.Owner:FireBullets(bullet)
+
+		if SERVER then
+
+			ent:SetHealth(30, math.min(ent:GetMaxHealth(), ent:Health() + self.HealAmount))
 
 		end
 
