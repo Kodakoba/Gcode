@@ -173,7 +173,7 @@ function GM:EntityTakeDamage(ent, dmginfo)
 
 	local Player = ((IsValid(ent) and ent:IsPlayer()) and ent) or false
 	local Owner = IsValid(ent) and ent.CPPIGetOwner and ent:CPPIGetOwner()
-	Owner = (IsValid(Owner) and Owner) or false
+	Owner = (IsPlayer(Owner) and Owner) or false
 
 	self.BaseClass:EntityTakeDamage(ent, dmginfo)
 
@@ -183,6 +183,8 @@ function GM:EntityTakeDamage(ent, dmginfo)
 
 	local PropDamageScale = 0.2
 
+	local IsProp = ent:GetClass() == "prop_physics"
+
 	if Owner then
 		if not IsPlayer(Attacker) then return false end 
 
@@ -190,7 +192,7 @@ function GM:EntityTakeDamage(ent, dmginfo)
 
 		local Enemy = IsOwner or Owner:IsEnemy(Attacker)
 
-		local Cant1 = IsOwner and Owner:InRaid()
+		local Cant1 = IsOwner and (Owner:InRaid() or IsProp)
 		local Cant2 = not Enemy 
 
 		if not ent.AllwaysRaidable and (Cant1 or Cant2) then

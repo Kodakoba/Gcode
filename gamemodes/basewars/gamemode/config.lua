@@ -230,6 +230,7 @@ if CustomizableWeaponry then
 		["VSS/AS VAL"] 					= BaseWars.GSL{Gun = true, Model = "models/cw2/rifles/w_vss.mdl", Price = 200000, ClassName = "cw_vss"},
 		["M3"] 							= BaseWars.GSL{Gun = true, Model = "models/weapons/w_shot_m3super90.mdl", Price = 200000, ClassName = "cw_m3super90"},
 		["Spartan"] 					= BaseWars.GSL{Gun = true, Model = "models/loyalists/blackops3/spartan/w_shot_spartan.mdl", Price = 300000, ClassName = "cw_blackops3_spartan"},
+		["M4A1"] 						= BaseWars.GSL{Gun = true, Model = "models/weapons/w_rif_m4a1.mdl", Price = 300000, ClassName = "cw_g4p_m4a1"},
 		["XM8"] 						= BaseWars.GSL{Gun = true, Model = "models/weapons/w_rif_m4a1.mdl", Price = 400000, ClassName = "cw_g4p_xm8"},
 		["AWM"] 						= BaseWars.GSL{Gun = true, Model = "models/weapons/w_snip_awp.mdl", Price = 500000, ClassName = "cw_g4p_awm"},
 		["Sheiva"] 					= BaseWars.GSL{Gun = true, Model = "models/loyalists/blackops3/shva/w_ar_shva.mdl", Price = 500000, ClassName = "cw_blackops3_dlc2_shva"},
@@ -311,8 +312,12 @@ BaseWars.SpawnList.Models.Entities["Dispensers (T1)"] = {
 	["Weapons Crafter"]	= BaseWars.GSL{Model = "models/props_combine/combine_mortar01b.mdl", Price = 500000, ClassName = "bw_weaponcrafter", Limit=4, Level = 10, ShortName = "WepCrafter."},
 	["Ammo Dispenser"]				= BaseWars.GSL{Raid=true, Model = "models/props_lab/reciever_cart.mdl", Price = 55000, ClassName = "bw_dispenser_ammo", Tooltip="Can be purchased in a raid.", Level = 30, ShortName = "AmmoDisp."},
     ["Ammo Dispenser T2"]              = BaseWars.GSL{Raid=true, Model = "models/props_lab/reciever_cart.mdl", Price = 10000000, ClassName = "bw_dispenser_ammo2", Tooltip="Can be purchased in a raid.", Level = 750, ShortName = "AmmoDispT2"},
-	["Armor Dispenser"]			= BaseWars.GSL{Model = "models/props_combine/suit_charger001.mdl", Price = 35000, ClassName = "bw_dispenser_armor", Level = 50, ShortName = "ArmorDisp."},
+
+	["Armor Dispenser"]			= BaseWars.GSL{Model = "models/props_combine/suit_charger001.mdl", Price = 50000, ClassName = "bw_dispenser_armor", Level = 50, ShortName = "ArmorDisp."},
     ["Armor Dispenser T2"]         = BaseWars.GSL{Model = "models/props_combine/suit_charger001.mdl", Price = 15000000, ClassName = "bw_dispenser_armor2", Level = 1000, ShortName = "ArmorDispT2"},
+
+    ["Armor Dispenser"]			= BaseWars.GSL{Model = "models/props_combine/health_charger001.mdl", Price = 25000, ClassName = "bw_dispenser_health", Level = 50, ShortName = "HealthDisp."},
+
 	["Health Pad"]					= BaseWars.GSL{Model = "models/props_lab/teleplatform.mdl", Price = 10000000, ClassName = "bw_healthpad", UseSpawnFunc = true, Level = 150},
     ["Health Pad T2"]                   = BaseWars.GSL{Model = "models/props_lab/teleplatform.mdl", Price = 150000000, ClassName = "bw_healthpad2", UseSpawnFunc = true, Level = 1500},
 
@@ -404,9 +409,15 @@ BaseWars.SpawnList.Models.Printers["Printers (T3)"] = {
 
 BaseWars.SpawnList.Models.Loadout["Weapons - Misc"] = {
 
-	["Heal Gun"]					= BaseWars.GSL{Gun = true, Model = "models/weapons/w_physics.mdl", Price = 1500000, ClassName = "weapon_health", Level = 20},
-	["Blowtorch"]					= BaseWars.GSL{Gun = true, Model = "models/weapons/w_irifle.mdl", Price = 500000, ClassName = "bw_blowtorch_t1", Level = 20},
-	["Pickaxe"] 					= BaseWars.GSL{Gun = true, Model = "models/weapons/w_irifle.mdl", Price = 500000, ClassName = "epicpickax", Level = 50}, 
+	["Heal Gun"]				= BaseWars.GSL{Gun = true, Model = "models/weapons/w_physics.mdl", Price = 500000, ClassName = "weapon_health", Level = 20},
+
+	["Blowtorch T1"]			= BaseWars.GSL{Gun = true, Model = "models/weapons/w_irifle.mdl", Price = 1000000, ClassName = "bw_blowtorch_t1", Level = 20},
+	["Blowtorch T2"]			= BaseWars.GSL{Gun = true, Model = "models/weapons/w_irifle.mdl", Price = 2500000, ClassName = "bw_blowtorch_t2", Level = 75},
+	["Blowtorch T3"]			= BaseWars.GSL{Gun = true, Model = "models/weapons/w_irifle.mdl", Price = 5000000, ClassName = "bw_blowtorch_t3", Level = 250},
+	["Blowtorch T4"]			= BaseWars.GSL{Gun = true, Model = "models/weapons/w_irifle.mdl", Price = 250000000, ClassName = "bw_blowtorch_t4", Level = 1000},
+	["Blowtorch T5"]			= BaseWars.GSL{Gun = true, Model = "models/weapons/w_irifle.mdl", Price = 5000000000, ClassName = "bw_blowtorch_t5", Level = 2500},
+
+	["Pickaxe"] 				= BaseWars.GSL{Gun = true, Model = "models/weapons/w_irifle.mdl", Price = 200000, ClassName = "epicpickax", Level = 50}, 
 }
 
 
