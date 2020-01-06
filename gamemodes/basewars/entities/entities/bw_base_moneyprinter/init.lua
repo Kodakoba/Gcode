@@ -129,8 +129,10 @@ function ENT:Upgrade(ply)
 end
 
 function ENT:NetworkVars()
+    
     local me = BWEnts[self]
     local t = self:GetTable()
+
     t.SetNWMoney(self, t.Money)
     t.SetMultiplier(self, t.Multiplier)
     t.SetPower(self, me.Power)

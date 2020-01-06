@@ -1,4 +1,4 @@
-
+easylua.StartEntity("bw_territorymarker")
 AddCSLuaFile()
 ENT.Base = "base_gmodentity"
 ENT.Type = "anim"
@@ -59,7 +59,6 @@ if SERVER then
 	function ENT:ResetCapture()
 		if self:GetTaken() then 
 			local fac = factbl[self:GetControllingFac()]
-			PrintTable(fac)
 
 			if fac then 
 				fac.XPMult = (fac.XPMult or 0) - 0.1
@@ -73,7 +72,7 @@ if SERVER then
 		self.Capturer = nil
 	end
 	function ENT:Capture(ply, fac)
-		print('Capturing')
+
 		if self:GetTaken() then 
 			self:ResetCapture()
 			return
@@ -103,7 +102,7 @@ if SERVER then
 	end
 
 	function ENT:Use(act, call, usetype, value)
-		print('AUTISM')
+
 		if not (act:IsPlayer() and call:IsPlayer() and act==call) then return end
 		if not act:InFaction() then act:ChatPrint("You have to be in a faction to capture territories!") return end
 		if self:GetControllingFac() == act:GetFaction() then return end
@@ -438,3 +437,4 @@ else
 	end)
 
 end
+easylua.EndEntity()

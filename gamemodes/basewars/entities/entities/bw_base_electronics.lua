@@ -104,7 +104,6 @@ if SERVER then
 			if pos:DistToSqr(pos2) > BWEnts[cto].CableLength then 
 				self:StartBitching()
 			else 
-				print("OK range", pos:DistToSqr(pos2), BWEnts[cto].CableLength) 
 				bwe.CheckDist = nil 
 			end
 		end

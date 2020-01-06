@@ -38,7 +38,9 @@ local UpgradeCost = {500000, 2500000, 12500000, 500000000, 0}
 
 
 	function ENT:ThinkFunc()
+
 		local me = self:GetTable()
+
 		if me.Time + me.Delay > CurTime() then return end
 		if me.GetPower(self) < 500 then return end
 
@@ -48,14 +50,16 @@ local UpgradeCost = {500000, 2500000, 12500000, 500000000, 0}
 		  
 		me.Power = me.GetPower(me)
 		me.Time=CurTime()
-		local Upgrades=me.GetUpgrades(me)
+
+		local Upgrades = me.GetUpgrades(me)
+		local money = self:GetMoney()
 
 		for k,v in pairs( ents.FindInSphere(self:GetPos(), me.Radius) ) do
 			if not v.IsPrinter then continue end
 
 			if v:CPPIGetOwner() == owner then 
 
-				me.SetMoney(self, me.GetMoney(self) + v:GetMoney())
+				money = money + v:GetNWMoney()
 
 				if v.Money then v.Money = 0 end
 
@@ -65,9 +69,9 @@ local UpgradeCost = {500000, 2500000, 12500000, 500000000, 0}
 
 			end
 
-		 end
+		end
 
-
+		self:SetMoney(money)
 
 		if not owner:InRaid() then me.Exhausted = false end
 
