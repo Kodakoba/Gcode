@@ -5,8 +5,6 @@ QuickMenus.Registered = QuickMenus.Registered or {} --table that holds ents that
 QuickMenus.IRegistered = QuickMenus.IRegistered or {} --table that holds same shit but sequential for fast ipairs, yes its microoptimization stfu
 
 local qmregistered = QuickMenus.Registered	
-qmregistered.__mode = "v"
-setmetatable(qmregistered, qmregistered)
 
 local iqmr = QuickMenus.IRegistered			
 
@@ -183,16 +181,16 @@ function ENTITY:SetQuickMenuEase(num)
 	qmregistered[self].ease = num
 end
 
-local function DoTimer(qm)
+local function DoTimer(qm, slow)
 
 	if not qm then 
 		for k,v in ipairs(iqmr) do 
-			DoTimer(v)
+			DoTimer(v, slow)
 		end 
 		return
 	end
 
-	local mult = qm.active and 1 or -1
+	local mult = (qm.active and 1 or -1) * (slow and 0.5 or 1)
 	qm.progress = math.Clamp(qm.progress + (FrameTime()/qm.time) * mult, 0, 1)
 end
 
@@ -381,7 +379,7 @@ hook.Add("Think", "QuickMenus", function()
 	local ent = tr.Entity
 	local qm = qmregistered[ent]
 
-	if not qm then  return end --??
+	if not qm then DoTimer(nil, using) return end --??
 
 	if tr.Fraction*32768 > qm.dist then DoTimer(qm) return end 
 

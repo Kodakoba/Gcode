@@ -160,7 +160,7 @@ function pairs(t)
 	--sorry not sorry
 
 	if not istable(t) then error(("pairs: expected table, got %s instead"):format(type(t))) end
-	if t.IsProxy then return _pairs(t:GetTable()) end 
+	if t.IsProxy and t.GetTable then return _pairs(t:GetTable()) end 
 
 	return _pairs(t)
 end
