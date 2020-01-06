@@ -34,7 +34,7 @@ SWEP.Primary.DefaultClip = -1
 SWEP.Primary.Spread = 0.25
 SWEP.Primary.NumberofShots = 1
 SWEP.Primary.Automatic = true
-SWEP.Primary.Delay 	= 0.5
+SWEP.Primary.Delay 	= 0.25
 SWEP.Primary.Force 	= 1
 
 SWEP.Secondary.ClipSize = -1
@@ -129,7 +129,15 @@ function SWEP:PrimaryAttack()
 	table.remove(trents, 1)
 
 	for k,v in pairs(trents) do 
-		SetHP(v, GetHP(v) - self.TorchDamage)
+		local hp = GetHP(v)
+		hp = hp - self.TorchDamage
+
+		SetHP(v, hp)
+
+		local frac = hp / v:GetMaxHealth()
+
+		v:SetColor(Color(255*frac, 255*frac, 255*frac))
+
 	end
 
 
