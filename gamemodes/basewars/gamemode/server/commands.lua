@@ -260,8 +260,8 @@ BaseWars.Commands.AddCommand({"sell", "destroy", "remove"}, function(ply)
 
 	local trace = ply:GetEyeTrace()
 
-	local Ent = trace.Entity
-	if not Ent.CurrentValue then return false end
+	local ent = trace.Entity
+	if not ent.CurrentValue then return false end
 
 	local Owner = IsValid(Ent) and Ent.CPPIGetOwner and Ent:CPPIGetOwner()
 	if Owner ~= ply then return false end
@@ -269,7 +269,29 @@ BaseWars.Commands.AddCommand({"sell", "destroy", "remove"}, function(ply)
 	if ply:InRaid() then return false end
 
 	BaseWars.UTIL.PayOut(Ent, ply)
-	Ent:Remove()
+	ent:Remove()
+
+end, false)
+
+BaseWars.Commands.AddCommand({"sellall"}, function(ply, line, who, amount)
+
+	timer.Simple(15, function()
+		
+		if not IsPlayer(ply) then return end
+		if not BWOwners[ply] then ply:ChatAddText("Something went... wrong?") return end 
+		if ply:InRaid() then ply:ChatAddText(Color(50, 150, 250), "Your /sellall command was cancelled because you were raided.") return end
+		 
+
+		for k,v in ValidPairs(BWOwners[ply]) do 
+			if not v.CurrentValue then continue end
+
+			BaseWars.UTIL.PayOut(v, ply)
+			v:Remove()
+		end
+
+	end)
+
+	ChatAddText(Color(230, 80, 80), ply:Nick() .. "'s entities will be sold in 15 seconds!")
 
 end, false)
 
