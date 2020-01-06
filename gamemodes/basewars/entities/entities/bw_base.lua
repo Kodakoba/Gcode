@@ -25,17 +25,24 @@ hook.Add("PlayerInitialSpawn", "RefreshOwner", function(ply)
 	
 	local sid64 = ply:SteamID64()
 
-	print("PLAYER SPAWNED", ply, sid64)
+	local t = BWOwners[sid64]
 
-	for k,v in pairs(BWOwners) do 
-		if sid64==k then 
-			BWOwners[ply] = v 
-			for k,v in v:pairs() do 
-				v.BWOwner = ply
+	if t then 
+		t:clean()
+		for k,v in ipairs(t) do 
+			if v:CPPIGetOwner() == ply then
+				v.CPPIOwner = ply
+			else 
+				t[k] = nil 
 			end
-			BWOwners[k] = nil 
-		end
+		end 
+
+		t:sequential()
+	else
+		t = ValidSeqIterable()
 	end
+
+	BWOwners[ply] = t
 
 end)
 
@@ -59,9 +66,26 @@ end)
 
 hook.Add("CPPIAssignOwnership", "BWRecalculateOwner", function(ply, ent)
 	if not IsValid(ply) then print("Attempted to re-assign ownership to invalid player from", ply, "for", ent) return end 
-	if not BWEnts[ent] or not ent.CPPIOwner then return end 	--not a bw ent or owner not assigned yet
+	if not BWEnts[ent] or not ent.CPPIOwner then print("not a bw ent") return end 	--not a bw ent or owner not assigned yet
 
-	BWOwners[ent.CPPIOwner][ent] = nil 
+	print("recalculating")
+
+	local prev = ent:CPPIGetOwner()
+	print("previous owner:", prev)
+	if IsPlayer(prev) then 
+		BWOwners[prev]:sequential()
+		for k,v in ipairs(BWOwners[prev]) do
+			if v==ent then 
+				BWOwners[prev][k] = nil 
+			end 
+		end
+	end
+
+	if IsPlayer(ply) then
+		local t = BWOwners[ply] 
+		t:add(ent) 
+	end
+
 	ent.CPPIOwner = ply
 end)
 

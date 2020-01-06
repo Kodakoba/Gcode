@@ -95,12 +95,12 @@ local function DrawStructureInfo()
 		local class = (IsValid(wep) and wep:GetClass())
 
 		local to = (class == "weapon_physgun" and ((input.IsMouseDown(MOUSE_LEFT) and 140) or 240) ) or 250
-		lastpos = ent:GetPos() + Vector(0, 0, 8)
+		lastpos = ent:LocalToWorld(ent:OBBCenter())
 
 		dist = math.max(lastpos:Distance(trace.StartPos) - 96, 0)
 
 		EntHP = ent:Health()
-		EntMaxHP = ent:GetMaxHealth()
+		EntMaxHP = math.max(ent:GetMaxHealth(), 0)
 
 		EntPW = ent:GetPower()
 		EntMaxPW = ent:GetMaxPower()

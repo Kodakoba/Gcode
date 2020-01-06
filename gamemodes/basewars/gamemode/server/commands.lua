@@ -263,12 +263,12 @@ BaseWars.Commands.AddCommand({"sell", "destroy", "remove"}, function(ply)
 	local ent = trace.Entity
 	if not ent.CurrentValue then return false end
 
-	local Owner = IsValid(Ent) and Ent.CPPIGetOwner and Ent:CPPIGetOwner()
-	if Owner ~= ply then return false end
+	local own = IsValid(ent) and ent.CPPIGetOwner and ent:CPPIGetOwner()
+	if own ~= ply then return false end
 
 	if ply:InRaid() then return false end
 
-	BaseWars.UTIL.PayOut(Ent, ply)
+	BaseWars.UTIL.PayOut(ent, ply)
 	ent:Remove()
 
 end, false)

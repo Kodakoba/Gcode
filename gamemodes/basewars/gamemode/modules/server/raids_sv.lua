@@ -439,15 +439,18 @@ end)
 
 function PLAYER:IsRaidable()
 	local sid = self:SteamID64()
-	if not BaseWars.Purchased[sid] then return end 
+
+	if not BWOwners[self] then return end 
+
 	if self:GetLevel() < 75 then return false end 
 	
-	for k,v in pairs(BaseWars.Purchased[sid]) do 
-		--if isentity(k) and not IsValid(k) then BaseWars.Purchased[sid][k] = nil continue end 
+	BWOwners[self]:clean()
 
-		local class = (isentity(k) and k:GetClass()) or k
+	for k,v in ipairs(BWOwners[self]) do 
+
+		local class = (isentity(v) and v:GetClass()) or v
 		local e = scripted_ents.Get(class)
-		if not e then print('didnt find', k, "; raids sv") continue end --??
+		if not e then print('didnt find', v, "; raids sv") continue end --??
 
 		if e.IsValidRaidable then return true end
 	end
