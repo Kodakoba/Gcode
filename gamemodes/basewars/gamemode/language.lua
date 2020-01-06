@@ -7,7 +7,7 @@ Language = Language or {}
 Language.Currency = "£"
 Language.CURRENCY = Language.Currency 
 
-Language.eval = function(key, ...)
+Language.eval = function(self, key, ...)
 	if Language[key] then 
 		return Language[key]:format(...)
 	end
@@ -33,6 +33,9 @@ Language.WelcomeBackCrash = "Welcome back!"
 Language.Refunded		= "You were refunded %s after a crash."
 
 Language.RaidStart 		= "%s has started a raid against %s!"
+
+Language.Health = "Health: %s/%s"
+Language.Power = "Power: %s/%s"
 setmetatable(Language, Language)
 --[[
 	Raids.
