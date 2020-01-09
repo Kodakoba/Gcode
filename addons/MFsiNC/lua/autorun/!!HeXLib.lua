@@ -5,6 +5,12 @@
 
 AddCSLuaFile()
 
+PLAYER = FindMetaTable("Player")
+ENTITY = FindMetaTable("Entity")
+PANEL = FindMetaTable("Panel")
+WEAPON = FindMetaTable("Weapon")
+
+
 HEX = {
 	VERSION	= "HX002",
 	
@@ -29,17 +35,18 @@ MsgC(
 )
 
 //Load
-local Plug = file.Find("hexlib/*.lua", "LUA")
-for k,v in pairs(Plug) do
-	include("hexlib/"..v)
-	AddCSLuaFile("hexlib/"..v)
+local files = file.Find("hexlib/*.lua", "LUA")
+
+for k, v in pairs(files) do
+	include("hexlib/" .. v)
+	AddCSLuaFile("hexlib/" .. v)
 	
-	v = v:sub(4):sub(0,-5)
+	v = v:gsub("hx_", ""):sub(0, -5)
 	MsgC(HEX.YELLOW, "\n  "..v.."\t")
 end
 
-include("_readme_first.lua")
-AddCSLuaFile("_readme_first.lua")
+include("readme_dumdum.lua")
+AddCSLuaFile("readme_dumdum.lua")
 
 //Done
 MsgC(
