@@ -321,7 +321,6 @@ function ebutton:Init()
 
 	self:SetMinimumSize(60, 30)
 
-	self.FakeW = 60 
 	self.FakeH = 30
 
 	self.FakeResize = false
@@ -351,6 +350,7 @@ function ebutton:CreateExpandPanel(w, h)
 
 	function self.ExpandPanel.Paint(me, w, h)
 		self.ExpandPaint(me, w, h)
+		me:SetSize(self:GetWide(), h)
 	end
 
 end
@@ -372,7 +372,6 @@ function ebutton:OnSizeChanged(w, h)
 	if not self.FakeResize then
 		if CurTime() - self.CT > 0.1 then return end 	-- this is to prevent fucking dock resize
 														-- i honestly dont know where it comes from and how to prevent it
-		self.FakeW = w
 		self.FakeH = h 
 
 		self.ExpandPanel:SetPos(0, self.FakeH)
@@ -435,10 +434,11 @@ function ebutton:DoClick()
 end
 
 function ebutton:Paint(w, h)
-	local w2, h2 = self.FakeW, self.FakeH
-	self:PrePaint(w2,h2)
-	self:Draw(w2, h2)
-	self:PostPaint(w2, h2)
+	local h2 = self.FakeH
+
+	self:PrePaint(w, h2)
+	self:Draw(w, h2)
+	self:PostPaint(w, h2)
 end
 
 vgui.Register("EButton", ebutton, "FButton")
@@ -1200,7 +1200,7 @@ end
 vgui.Register("FIconLayout", FIC, "Panel")
 
 
-local Testing = true
+local Testing = false
 
 if not Testing then return end 
 
@@ -1244,7 +1244,7 @@ function btn:Paint(x, y, w, h)
 	draw.RoundedBox(4, x, y, w, h, Color(50, 150, 250, 100))
 end
 
-tx:AddText(" neggor", Color(255, 120, 120), "OS24")
+tx:AddText(" help", Color(255, 120, 120), "OS24")
 
 local btn2 = tx:AddClickableText(" wow another clickable!!!", Color(40, 140, 250), "OS24")
 

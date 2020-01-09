@@ -142,16 +142,23 @@ function draw.DrawCircle(x, y, rad, seg, perc, reverse, matsize)
 	local key = "reg"
 
 	if circles[key][seg] then 
-		local st = circles[key][seg]
+
+		local st = circles[key][seg]	--st = pre-generated cached circle
+
 		local segfull, segdec = math.modf(segs)
+		segfull = segfull + 2
 		segdec = (segdec~=0 and segdec) or nil 
 
-		for k,w in pairs(st) do 	--CURSED VAR NAME
+		for k,w in ipairs(st) do 	--CURSED VAR NAME
 
-			if not reverse and (k > segs+2) then 
+			--[[
+				Generate sub-segment (for percentage)
+			]]
+
+			if not reverse and (k > segfull) then --the current segment will be the sub-segment
 				if segdec then 
 
-					local a = mrad( ( (k-2+segdec) / seg ) * degoff)
+					local a = mrad( ( (segs) / seg ) * degoff)
 
 					local s = sin(a)
 					local c = cos(a)
@@ -183,13 +190,13 @@ function draw.DrawCircle(x, y, rad, seg, perc, reverse, matsize)
 
 			continue end
 
-
 			circ[#circ+1] = {
-				x = w.x*rad + x, --XwX
-				y = w.y*rad + y, --YwY
-				u = w.u/uvdiv + 0.5,		 --UwU
-				v = w.v/uvdiv + 0.5 	 --VwV
+				x=w.x*rad + x, 			--XwX
+				y=w.y*rad + y, 			--YwY
+				u=w.u/uvdiv + 0.5,		--UwU
+				v=w.v/uvdiv + 0.5 	 	--VwV
 			}
+	
 			if k==1 then circ[#circ].u = 0.5 circ[#circ].v = 0.5 end
 		end
 
@@ -559,7 +566,7 @@ end
 
 draw.MaterialCircle = draw.DrawMaterialCircle
 
-function draw.Masked(mask, op, demask)
+function draw.Masked(mask, op, demask, deop)
 
 	render.SetStencilPassOperation( STENCIL_KEEP )
 
@@ -567,7 +574,9 @@ function draw.Masked(mask, op, demask)
 
 		render.ClearStencil()
 		
-		
+		render.SetStencilTestMask(0xFF)
+		render.SetStencilWriteMask(0xFF)
+
 		render.SetStencilCompareFunction( STENCIL_NEVER )
 		render.SetStencilFailOperation( STENCIL_REPLACE )
 
@@ -587,6 +596,12 @@ function draw.Masked(mask, op, demask)
 		render.SetStencilFailOperation( STENCIL_KEEP )
 
 		op()	--actual draw op
+
+		if deop then
+			render.SetStencilCompareFunction( STENCIL_EQUAL )
+
+			deop()
+		end
 
 	render.SetStencilEnable(false)
 
@@ -853,7 +868,6 @@ function draw.DrawGIF(url, name, x, y, dw, dh, frw, frh, start)
 
 	local u1, v1 = row / frames , col / cols
 	local u2, v2 = u1 + 112/w, v1 + (112)/h
-
-	print(frame, row, frames, u1, u2, v1, v2)
+	
 	surface.DrawTexturedRectUV(x, y, dw, dh, u1, v1, u2, v2)
 end

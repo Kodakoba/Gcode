@@ -200,6 +200,25 @@ function Animations.SpringOut(accel, strength, len, ease, func, callback)
 	return anim
 end
 
+function Animations.InElastic(dur, del, func, funcend, ease, int, dist)
+	local anim = NewAnimation(dur or 0.5, del or 0, ease or -1, funcend or function() end)
+
+	dist = dist or 1
+	int = int or 1 
+
+	local from = math.pi*3/2
+	local to = from/3
+
+	anim.Animate = function(frac)
+		
+		local var = math.sin(Lerp(frac^int*int, from, to)) * (dist-frac*(dist-1)) * frac
+		if istable(func) then PrintTable(func) end
+		func(var)
+	end
+
+	return anim
+end
+
 function NewAnimation(len, del, ease, callback)
 	if ( del == nil ) then del = 0 end
 	if ( ease == nil ) then ease = -1 end
