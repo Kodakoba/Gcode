@@ -21,16 +21,18 @@ BWEnts = BWEnts or {}
 
 BWOwners = BWOwners or {}
 
-hook.Add("PlayerInitialSpawn", "RefreshOwner", function(ply)
+hook.Add("PlayerAuthed", "RefreshOwner", function(ply, sid, uid)
 	
-	local sid64 = ply:SteamID64()
+	local sid64 = util.SteamIDTo64(sid) --ply:SteamID64()
 
 	local t = BWOwners[sid64]
 
 	if t then 
 		t:clean()
-		for k,v in ipairs(t) do 
-			if v:CPPIGetOwner() == ply then
+		for k,v in ipairs(t) do
+			local _, entsid = v:CPPIGetOwner()
+
+			if entsid == sid then
 				v.CPPIOwner = ply
 			else 
 				t[k] = nil 
@@ -71,7 +73,7 @@ hook.Add("CPPIAssignOwnership", "BWRecalculateOwner", function(ply, ent)
 	print("recalculating")
 
 	local prev = ent:CPPIGetOwner()
-	print("previous owner:", prev)
+
 	if IsPlayer(prev) then 
 		BWOwners[prev]:sequential()
 		for k,v in ipairs(BWOwners[prev]) do
@@ -83,6 +85,7 @@ hook.Add("CPPIAssignOwnership", "BWRecalculateOwner", function(ply, ent)
 
 	if IsPlayer(ply) then
 		local t = BWOwners[ply] 
+		if not t then print("what", ply, ent, prev) return end 
 		t:add(ent) 
 	end
 

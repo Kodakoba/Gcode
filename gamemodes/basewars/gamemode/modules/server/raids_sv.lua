@@ -297,6 +297,10 @@ function PLAYER:IsRaider()
 	return part._Raiders==self or part._Raiders[self] or false
 end
 
+function PLAYER:GetSide()
+	return self:InRaid() and (self:IsRaided() and 2 or 1)
+end
+
 function PLAYER:GetRaid()
 	return raid.Participants[self]
 end
@@ -339,9 +343,9 @@ function raid.Start(rder, rded, fac)
 
 	if part[rder] then return false, "You are in a raid already!" end--print("Stopped on start: rder") raid.Stop(part[rder]) end
 	if part[rded] then return false, "Target is in a raid already!" end--print("Stopped on start: rded") raid.Stop(part[rded]) end
-	if not rder:IsRaidable() or not rded:IsRaidable() then 
-		print(rder:IsRaidable(), rded:IsRaidable(), "not raidable") 
-	return false, "Target is not raidable!" end 
+
+	if not rder:IsRaidable() then return false, "You are not raidable!" end 
+	if not rded:IsRaidable() then return false, "Target is not raidable!" end
 
 	if fac then 
 		local rtbl = raidmeta:new(rder, rded, fac)
@@ -509,10 +513,12 @@ net.Receive("Raid", function(_, ply)
 		if fac1:InRaid() or fac2:InRaid() then print('Fac is in raid already') ReportFail(ply, "That faction is in a raid already!") return end
 		print("Mode 2; starting raid(?)")
 		local ok, err = raid.Start(ply:GetFaction(), Factions.GetFaction(fac), true)
+
 		if not ok then 
 			print("returning no")
 			ReportFail(ply, err)
 		end
+
 	elseif mode==3 then
 		if not raid.Participants[ply] then print("Ply is not participating in raid") return false end 
 		if ply:IsRaided() then print("Not stopping raid from raided") return false end --do not accept concedes from raided
@@ -530,5 +536,20 @@ hook.Add("Think", "RaidsThink", function()
 			raid.Stop(v)
 		end
 	end
+end)
+
+hook.Add("PlayerDeath", "RaidsDeath", function(ply, by, atk)
+	local side = ply:GetSide()
+
+	if side then 
+
+		local delay = side * 5 + 5	--raided get (2*5) + 5 = 15s
+		ply:SetRespawnTime(delay)
+		
+	end
 
 end)
+
+
+hook.Remove("PlayerSpawn", "RaidsSpawn")
+hook.Remove("PlayerDeathThink", "RaidsDeath")

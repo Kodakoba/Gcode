@@ -140,13 +140,14 @@ local function DrawStructureInfo()
 
 	local bary = sy + headerH*scale + 8*scale
 
-	local hpW = math.max(hpw, 8)*scale			--for nice rounding
+	local hpW = math.floor(math.max(hpw, 8)*scale)			--for nice rounding
 
 	local hph = math.ceil(14*scale)
 
 	render.PushFilterMin(TEXFILTER.ANISOTROPIC)
 
 	local ok, err = pcall(function()
+
 		cam.PushModelMatrix(vm)
 
 			local ok, err = pcall(function() 
@@ -166,6 +167,9 @@ local function DrawStructureInfo()
 
 			end) 
 
+			if not ok then 
+				print("err #1 >:(", err)
+			end
 
 		cam.PopModelMatrix()
 
@@ -173,9 +177,9 @@ local function DrawStructureInfo()
 
 		DrawScalingBox(6, sx + 6, bary - 1, w*scale - 13, hph, HPBG)
 
-		render.SetScissorRect(sx + 6, bary - 1, sx + 6 + hpw, bary + hph + 1, true)
+		render.SetScissorRect(sx + 6, bary - 1, sx + 6 + hpw - (1 - scale) * 4, bary + hph + 1, true)
 
-			DrawScalingBox(6, sx + 6, bary - 1, hpW, hph, HPFG) --HP Bar
+			DrawScalingBox(6, sx + 6, bary - 1, hpW , hph, HPFG) --HP Bar
 
 		render.SetScissorRect(0, 0, 0, 0, false)
 		
@@ -229,41 +233,120 @@ local function DrawStructureInfo()
 
 		cam.PopModelMatrix()
 		if not ok then 
-			print("err >:(", err)
+			print("err #2 >:(", err)
 		end
 
 	end)
 	
 	if not ok then 
-		print("Err >:(", err)
+		print("Err #3 >:(", err)
 	end
 	render.PopFilterMin()
 end
 
+local vm2 = Matrix()
+local ela
 
-local StuckTime
+local CreateElastic
 
-function MODULE:Paint()
+CreateElastic = function(func)
+	ela = Animations.InElastic(1, 0, func, function() CreateElastic(func) end)
+end
 
+local rot = 0
+
+local function DrawDeathCoolDown()
 	local me = LocalPlayer()
-	if not me:IsPlayer() or not IsValid(me) then return end
+	if me:Alive() then return end
+
+	local t = me:GetRespawnTime()
+	if not t then return end 
+
+	local dt = me:GetDeathTime()
+	if not dt then return end 
+
+	local left = t - CurTime()
+
+	local frac = left / (t - dt)
+	frac = math.min(1, frac)
+
+	local leftfrac = 1 - frac
+
+	draw.NoTexture()
+	surface.SetDrawColor(60, 60, 60)
+
+	render.SetStencilEnable(true)
+
+		render.ClearStencil()
+
+		render.SetStencilWriteMask(0xFF)
+		render.SetStencilTestMask(0xFF)
+
+		render.SetStencilPassOperation(STENCIL_KEEP)
+		render.SetStencilZFailOperation(STENCIL_KEEP)
+
+		render.SetStencilCompareFunction(STENCIL_NEVER)
+		render.SetStencilFailOperation(STENCIL_REPLACE)
+
+		render.SetStencilReferenceValue(1)
+
+			draw.Circle(ScrW()/2, ScrH() - 192, 56, 32, leftfrac*100)
+
+		render.SetStencilReferenceValue(2) 
+
+			draw.Circle(ScrW()/2, ScrH() - 192, 36, 32)
+
+		render.SetStencilCompareFunction(STENCIL_NOTEQUAL)
+	
+			draw.MaterialCircle(ScrW()/2, ScrH() - 192, 92)	
+
+		render.SetStencilReferenceValue(1)
+
+		render.SetStencilCompareFunction(STENCIL_EQUAL)
+
+			surface.SetDrawColor(color_white)
+			draw.MaterialCircle(ScrW()/2, ScrH() - 192, 92)
+
+	render.SetStencilEnable(false)
+
+	if not ela then 
+		CreateElastic(function(self, fr)
+			rot = fr*360
+		end)
+	end
+
+	surface.SetFont("OSB32")
+	local tw, th = surface.GetTextSize(tostring(math.floor(left)))
+	surface.SetTextPos(0, 0)
+	vm2:SetAngles(Angle(0, rot, 0))
+	vm2:SetTranslation(Vector(ScrW()/2, ScrH() - 192))
+	vm2:Translate(Vector(-tw/2, -th/2, 0))
 
 	
+
+	cam.PushModelMatrix(vm2)
+		local ok, err = pcall(function()
+			surface.SetTextColor(color_white)
+			surface.DrawText(math.floor(left))
+		end)
+	cam.PopModelMatrix()
 end
 
-hook.Add("HUDPaint", "StructureInfoPaint", DrawStructureInfo)
 
-function HideHUD(name)
+local function PaintStuff()
+	DrawStructureInfo()
 
-    for k, v in next, {"CHudHealth", "CHudBattery", --[["CHudAmmo", "CHudSecondaryAmmo"]]} do
-
-        if name == v then
-
-			return false
-
-		end
-
-    end
-
+	DrawDeathCoolDown()
 end
-hook.Add("HUDShouldDraw", tag .. ".HideOldHUD", HideHUD)
+
+hook.Add("HUDPaint", "StructureInfoPaint", PaintStuff)
+
+local hide = {
+	["CHudHealth"] = true,
+	["CHudBattery"] = true
+}
+
+hook.Add( "HUDShouldDraw", "HideHUD", function(name)	--wiki example copypasting gang rise up
+	if hide[name] then return false end
+
+end )
