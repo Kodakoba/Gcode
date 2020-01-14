@@ -212,7 +212,7 @@ function Animations.InElastic(dur, del, func, funcend, ease, int, dist)
 	anim.Animate = function(frac)
 		
 		local var = math.sin(Lerp(frac^int*int, from, to)) * (dist-frac*(dist-1)) * frac
-		if istable(func) then PrintTable(func) end
+
 		func(var)
 	end
 

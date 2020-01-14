@@ -533,6 +533,8 @@ function FScrollPanel:Init()
 		end
 	end
 
+	scroll:SetWide(10)
+
 	local grip = scroll.btnGrip
 	local up = scroll.btnUp 
 	local down = scroll.btnDown
@@ -542,16 +544,18 @@ function FScrollPanel:Init()
 	end
 
 	function up:Paint(w,h)
-		
+		draw.RoundedBoxEx(4, 0, 0, w, h, Color(80,80,80), true, true)
 	end
 
 	function down:Paint(w,h)
-		
+		draw.RoundedBoxEx(4, 0, 0, w, h, Color(80,80,80), false, false, true, true)
 	end
- 
+ 	
+ 	self.Shadow = false --if used as a stand-alone panel 
+
 	self.GradBorder = false 
 
-	self.BorderColor = Color(30, 30, 30)
+	self.BorderColor = Color(20, 20, 20)
 	self.RBRadius = 0
 
 	self.BorderTH = 4
@@ -576,6 +580,12 @@ function FScrollPanel:Draw(w, h)
 	local ebh, eth = 0, 0
 
 	local expw = 0
+	local x, y = 0, 0
+
+	if self.Shadow then 
+		BSHADOWS.BeginShadow()
+		x, y = self:LocalToScreen(0, 0)
+	end
 
 	if self.Expand then 
 		expw, ebh, eth = self.ExpandW, self.ExpandBH, self.ExpandTH
@@ -583,12 +593,30 @@ function FScrollPanel:Draw(w, h)
 		surface.DisableClipping(true)
 	end
 
-	draw.RoundedBox(self.RBRadius or 0, -expw, -eth, w + expw*2, h + ebh*2, self.BackgroundColor)
+	draw.RoundedBox(self.RBRadius or 0, x - expw, y - eth, w + expw*2, h + ebh*2, self.BackgroundColor)
 
 	if self.Expand then 
 		surface.DisableClipping(false)
 	end
 	
+	if self.Shadow then 
+
+		local int = 2
+		local spr = 2 
+		local blur = 2 
+		local alpha = 255
+		local color
+
+		if istable(self.Shadow) then
+			int = self.Shadow.intensity or 2
+			spr = self.Shadow.spread or 2
+			blur = self.Shadow.blur or 2
+			alpha = self.Shadow.alpha or self.Shadow.opacity or 255
+			color = self.Shadow.color or nil
+		end
+
+		BSHADOWS.EndShadow(int, spr, blur, alpha, nil, nil, nil, color)
+	end
 	
 end
 

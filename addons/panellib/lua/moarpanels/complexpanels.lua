@@ -730,7 +730,28 @@ vgui.Register("FMenu", FM, "DMenu")
 
 	Cloud:FullInit()
 	Cloud:Popup(bool)
+	
 
+	Stuff you can modify:
+
+		Cloud.Font
+		Cloud.DescFont
+
+		Cloud.Label
+		Cloud.HOffset
+		Cloud.Speed -- popup speed
+		Cloud.Color 
+		Cloud.TextColor 
+
+		Cloud.XAlign
+		Cloud.YAlign	--like text aligns
+
+		Cloud.Middle 	-- 0-1 (or less/more for full zane)
+
+		Cloud.Shadow = {}
+
+		Cloud.Min/MaxW
+		
 ---------------------------------------------------------------------------]]
 
 local Cloud = {}

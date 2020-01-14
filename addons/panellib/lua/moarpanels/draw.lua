@@ -501,6 +501,8 @@ local function GetOrDownload(url, name, flags)
 	return mat
 end
 
+draw.GetMaterial = GetOrDownload 
+
 draw.Rect = surface.DrawRect
 draw.DrawRect = surface.DrawRect 
 
@@ -703,6 +705,7 @@ local function ParseGIF(fn)
 
 		local frame = f:ReadUShort()
 		local time = f:ReadUShort()
+
 		frame, time = bit.ror(frame, 16 / 2), bit.ror(time, 16 / 2)
 
 		info[frame] = time
@@ -782,7 +785,7 @@ function DownloadGIF(url, name)
 			MoarPanelsMats[name].downloading = true
 
 			hdl.DownloadFile(url, "temp.dat", function(fn, body)
-				
+				if body:find("404 Not Found") then return end
 
 				local info, gifdata = ParseGIF(fn)
 
