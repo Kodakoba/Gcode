@@ -67,7 +67,9 @@ local function OpenShit(qm, self, pnl)
 	local con = vgui.Create("FButton", pnl)
 	con:SetSize(128, 48)
 
-	con:Center()
+	con.X = pnl.CircleX + pnl.CircleSize + 64
+	con.Y = pnl.CircleY - 24
+
 	con:CenterHorizontal(0.7)
 
 	con:SetMouseInputEnabled(true)
@@ -79,7 +81,7 @@ local function OpenShit(qm, self, pnl)
 	qm:AddPopIn(con, con.X, con.Y, 64, 0)
 
 	function con:DoClick()
-		DrawCable = usingwho 
+		DrawCable = ent 
 	end
 
 	if IsValid(self:GetConnectedTo()) then 
@@ -87,8 +89,9 @@ local function OpenShit(qm, self, pnl)
 		local disc = vgui.Create("FButton", pnl)
 		disc:SetSize(128, 48)
 
-		disc:Center()
-		disc:CenterHorizontal(0.3)
+		disc.X = pnl.CircleX - pnl.CircleSize - 64 - 64
+		disc.Y = pnl.CircleY - 24
+
 		disc:PopIn()
 		disc.AlwaysDrawShadow = true 
 		disc:SetLabel("Disconnect")
@@ -396,13 +399,17 @@ local NoSpline = false
 
 local cache = muldim()
 
-function GenerateCable(from, to, h, qual)
+function GenerateCable(from, to, h, qual, ignorecache)
 
-	local s1, s2 = tostring(from), tostring(to)
+	local s1, s2 
 
-	local cached = cache:Get(s1, s2, h, qual)
-	if cached then 
-		return cached 
+	if not ignorecache then
+		s1, s2 = tostring(from), tostring(to)
+		local cached = cache:Get(s1, s2, h, qual)
+
+		if cached then 
+			return cached 
+		end
 	end
 
 	h = h or 10 
@@ -440,7 +447,9 @@ function GenerateCable(from, to, h, qual)
 	for i=0, 1, div do 
 		beams[#beams + 1] = math.BSplinePoint(i, points, 1)
 	end
-	cache:Set(beams, s1, s2, h, qual)
+
+	if not ignorecache then cache:Set(beams, s1, s2, h, qual) end
+
 	return beams
 end
 
