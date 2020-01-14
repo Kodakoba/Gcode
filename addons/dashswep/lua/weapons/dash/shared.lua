@@ -47,7 +47,8 @@ end
 
 function SWEP:Think()	
 
-	if self:GetOwner():IsOnGround() and not DashTable[self:GetOwner()] and self:GetDashCharges() ~= 1 then 
+	if self:GetOwner():IsOnGround() and not DashTable[self:GetOwner()] and self:GetDashCharges() ~= 1 and not (CLIENT and self:GetDashing()) then --hmmmmmmmmmmmmmmmm
+
 		self:SetDashCharges(1) 
 		if CLIENT then 
 			self.Dashed = false 
@@ -55,7 +56,7 @@ function SWEP:Think()
 	end
 	
 end
- 
+
 local OverrideDashEnd 
 local OverrideDashFinalVel
 function SWEP:CheckMoves(owner, mv, dir)
@@ -128,7 +129,7 @@ function SWEP:CheckMoves(owner, mv, dir)
 
 end
 
-hdl.DownloadFile("http://vaati.net/Gachi/shared/whoosh.ogg", "whoosh.dat", function(a) print("ok",a) end, function(...) print("what", ...) end)
+hdl.DownloadFile("http://vaati.net/Gachi/shared/whoosh.ogg", "whoosh.dat")
 
 function SWEP:PrimaryAttack()
 	local owner = self:GetOwner()
@@ -213,7 +214,7 @@ hook.Add("FinishMove", "Dash", function(ply, mv, cmd)
 	if not IsValid(self) then DashTable[ply] = nil return end 
 	
 	local time = t.t
-	local endtime = OverrideDashEnd or (self:GetDashEndTime()~=0 and self:GetDashEndTime() + 0.2) or t.t+self.DashTime
+	local endtime = OverrideDashEnd or (CLIENT and self:GetDashEndTime()~=0 and self:GetDashEndTime() + 0.6) or t.t+self.DashTime
 	local ping = (SERVER and 0) or ply:Ping()/500
 	local d = t.dir
 	local vel = mv:GetVelocity()

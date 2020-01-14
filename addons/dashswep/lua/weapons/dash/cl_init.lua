@@ -23,11 +23,6 @@ local snapCols = {
 
 local snapTo = 0
 
-function SWEP:Initialize()
-
-end
-
-
 local oldCharges=0
 local newCharges=0
 
