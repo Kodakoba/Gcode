@@ -159,8 +159,8 @@ _pairs = _pairs or pairs
 function pairs(t)
 	--sorry not sorry
 
-	if not istable(t) then error(("pairs: expected table, got %s instead"):format(type(t))) end
-	if t.IsProxy and t.GetTable then return _pairs(t:GetTable()) end 
+	--if not istable(t) then error(("pairs: expected table, got %s instead"):format(type(t))) end
+	if t.IsProxy and isfunction(t.GetTable) then return _pairs(t:GetTable()) end 
 
 	return _pairs(t)
 end
@@ -252,45 +252,3 @@ function ChainAccessor(t, key, func)
         return self 
     end
 end
-
-
---[[
-	Idea shamelessly stolen from Luvit
-]]
-
-Class = {}
-Class.Meta = {__index = Class}
-
-
-function Class:extend()
-	local new = {}
-	new.Meta = table.Copy(self.Meta)	-- copy the parent's meta...
-	new.Meta.__index = new 			-- ...but this time, __index points to the copied meta
-
-	new.__index = new.Meta
-	new.__parent = self 
-
-	return setmetatable(new, new)
-end
-
-function Class:new(...)
-	local obj = {}
-
-	setmetatable(obj, self)
-
-	local func = self.Initialize or self.initialize 
-
-	if isfunction(func) then 
-		local new = func(obj, ...)
-		if new then return new end --overwrite?
-	end
-
-	return obj
-end
-
-Class.Meta.extend = Class.extend 
-Class.Meta.Extend = Class.extend 
-
-Class.Meta.new = Class.new
-
-Object = Class

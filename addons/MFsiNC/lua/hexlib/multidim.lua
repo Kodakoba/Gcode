@@ -2,6 +2,7 @@ muldim = {}
 
 mdimobj = {}
 mdimobj.__index = mdimobj
+mdimobj.__mode = "kv"
 
 function mdimobj:Get(...)
 	local ks = {...}
