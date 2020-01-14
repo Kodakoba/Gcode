@@ -25,9 +25,9 @@ local smug
 local wc
 
 
-hdl.DownloadFile("http://vaati.net/Gachi/shared/smug.png", "smug.png", function(fn) smug = Material(fn) end)
-hdl.DownloadFile("https://i.imgur.com/q59nmL2.png", "ricardoFlick.png", function(fn) ricardo = Material(fn) end)
-hdl.DownloadFile("http://vaati.net/Gachi/shared/forsenWC2.png", "forsenWC2.png", function(fn) wc = Material(fn) end)
+--hdl.DownloadFile("http://vaati.net/Gachi/shared/smug.png", "smug.png", function(fn) smug = Material(fn) end)
+--hdl.DownloadFile("https://i.imgur.com/q59nmL2.png", "ricardoFlick.png", function(fn) ricardo = Material(fn) end)
+--hdl.DownloadFile("http://vaati.net/Gachi/shared/forsenWC2.png", "forsenWC2.png", function(fn) wc = Material(fn) end)
 
 local rows = 1
 local cols = 58--26
