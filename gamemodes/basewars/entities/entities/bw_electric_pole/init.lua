@@ -2,6 +2,9 @@ include("shared.lua")
 AddCSLuaFile("shared.lua")
 
 AddCSLuaFile("cl_init.lua")
+
+util.AddNetworkString("Pole")
+
 local m_min = math.min
 
 PowerPoles = PowerPoles or {}
@@ -10,7 +13,7 @@ poles = PowerPoles
 
 function ENT:Init(me)
 	me.GeneratorEnts = {}
-	me.Generators = {}
+	me.Generators = ValidSeqIterable()
 
 	me.Electronics = ValidSeqIterable()
 
@@ -41,7 +44,12 @@ function ENT:Init(me)
 				continue
 			end
 
-			if v.IsElectronic then 
+			if v.IsElectronic then
+
+				local them = BWEnts[v]
+				if not them then print("???", v) return end 
+				if IsValid(them.ConnectedTo) then return end 
+
 				local range = me.CableLength	--electronics don't have a cable range
 				if pos:DistToSqr(v:GetPos()) > range then continue end 
 
@@ -73,17 +81,13 @@ function ENT:OnConnected(gen)
 	local me = BWEnts[self]
 
 	local gens = me.GeneratorEnts
-	local id = 0
-
-	for k,v in pairs(gens) do 
-		id = math.max(id, v + 1)
-	end
+	local id = #me.Generators
 
 	if id >= self.MaxGenerators - 1 then print("max generators reached", id, self.MaxGenerators) return end 
 
 	print("connected to id", id)
 
-	me.Generators[id] = gen
+	local id = me.Generators:add(gen)
 	me.GeneratorEnts[gen] = id
 
 	gen:CallOnRemove("DisconnectFrom" .. self:GetCreationID(), function(gen)
@@ -116,6 +120,9 @@ function ENT:NetworkEnts()
 	--default: loop 0 to MaxGenerators (max. 8)
 
 	local null = Entity(0)
+
+	me.Generators:clean()
+	me.Electronics:clean()
 
 	for i=0, self.MaxGenerators - 1 do 
 
@@ -160,7 +167,7 @@ function ENT:Think()
 
 	local pw_out = 0
 
-	for k,v in pairs(me.Generators) do 
+	for k,v in me.Generators:pairs() do 
 		local ent = BWEnts[v]
 		pw_in = pw_in + ent.PowerGenerated 
 
@@ -190,7 +197,7 @@ function ENT:Think()
 	if was_stored > sum_stored then
 		local diff = was_stored - sum_stored
 
-		for k,v in pairs(me.Generators) do 
+		for k,v in me.Generators:pairs() do 
 			local ent = BWEnts[v]
 
 			local was = ent.Power
