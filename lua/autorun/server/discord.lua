@@ -115,13 +115,13 @@ hook.Add("PlayerSay", "Discord", function(ply, msg)
 
 end)
 
+local quipchance = 5
+
 local quips = {
-	"ah shit here we go again",
-	"did i forget to do something there?",
-	"welp time to break another dozen features which were working perfectly fine...",
-	"probably just gonna stand afk for 20 minutes before deciding i don't wanna hop on after all",
-	"time to spend 3 days coding in some useless shit"
+	[["since you've awakened me again..."]],
 }
+
+
 
 local offquips = {
 	"\"yup, i'm done\"",
@@ -277,23 +277,43 @@ hook.Add("Tick", "ServerNotify", function()
 
 	local quip 
 	
-	while quip == nil do 
-		quip = eval(quips[math.random(#quips)])
+	local pass = math.random(0, 100) < quipchance
+
+	if pass then
+
+		while quip == nil do 
+			quip = eval(quips[math.random(#quips)])
+		end
+
+		quip = quip .. "\n\n"	--if we should generate a quip, add newlines
+	else 
+		quip = ""
 	end
+
+	local desc = quip .. "Join @ steam://connect/" .. game.GetIPAddress() .. " !"
+
+	print("sending description", desc)
 
 	discord.Notified = true
 
 	timer.Simple(10, function()
 		local em = Embed()
+		print("timer ran")
 
-		em:SetTitle("Server is now online!")
-		:SetDescription(quip .. "\n\nJoin @ steam://connect/" .. game.GetIPAddress() .. " !")
-		:SetColor(Color(100, 230, 100))
+		  em:SetTitle("Server is now online!")
+			:SetDescription(desc)
+			:SetColor(Color(100, 230, 100))
 
 		discord.SendEmbed("status", nil, em, function(...)
+			print("sent!")
 			RunConsoleCommand("sv_hibernate_think", 0)
+
+			hook.Remove("Tick", "ServerNotify")
 		end, function(...)
+			print('failed!!!!')
 			RunConsoleCommand("sv_hibernate_think", 0)
+
+			hook.Remove("Tick", "ServerNotify")
 		end)
 		
 	end)
@@ -313,11 +333,3 @@ hook.Add("ShutDown", "ServerNotify", function()
 
 	discord.SendEmbed("status", nil, em)
 end)
-
-
---https://discordapp.com/api/webhooks/625254274342977546/6BQv2nJ5wz8g0bHWQIkVTmC64t9uBBqFIbHVFGBbdtL6fJ0T7BtbD4rt9j_tao6Sc2xs
-
-function discord.SendTo(chan, name, text, embeds)
-
-
-end
