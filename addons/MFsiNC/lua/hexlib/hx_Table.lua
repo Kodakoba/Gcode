@@ -100,11 +100,10 @@ ProxyTable.__call = function(self, t, func)
 
 	t = t or {}	--the actual table
 
-	local ud = {}	--what's returned
+	local ud = {IsProxy = true}	--what's returned
 	local mtud = {}	--metatable for what's returned
 	local what = {}
 
-	mtud.IsProxy = true
 	mtud.__index = function(self, key)
 
 		if key=="Table" then print("No stop that wtf\n", debug.traceback()) return t end
@@ -160,7 +159,7 @@ function pairs(t)
 	--sorry not sorry
 
 	--if not istable(t) then error(("pairs: expected table, got %s instead"):format(type(t))) end
-	if t.IsProxy and isfunction(t.GetTable) then return _pairs(t:GetTable()) end 
+	if rawget(t, "IsProxy") and isfunction(t.GetTable) then return _pairs(t:GetTable()) end 
 
 	return _pairs(t)
 end
