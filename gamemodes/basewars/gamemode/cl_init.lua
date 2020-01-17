@@ -384,11 +384,13 @@ function GM:ScoreboardShow()
 
 	local function NewPlayerFrame(ply, col)
 		local f = CreatePlayerFrame(scr, ply)
-		
+
+		f:InvalidateParent(true)
+
 		f.TeamColor = col --if col isnt provided it'll update
 
 		f:Dock(TOP)
-		f:DockMargin(16, 6, 0, 6)
+		f:DockMargin(16, 6, 24, 6)
 
 		--py = py + f:GetTall() + 8
 

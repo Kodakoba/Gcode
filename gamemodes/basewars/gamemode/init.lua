@@ -172,6 +172,8 @@ end
 function GM:EntityTakeDamage(ent, dmginfo)
 
 	local Player = ((IsValid(ent) and ent:IsPlayer()) and ent) or false
+	if dmginfo:IsDamageType(DMG_BURN) and not Player then return false end 
+
 	local Owner = IsValid(ent) and ent.CPPIGetOwner and ent:CPPIGetOwner()
 	Owner = (IsPlayer(Owner) and Owner) or false
 

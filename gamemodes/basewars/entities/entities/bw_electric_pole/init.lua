@@ -85,10 +85,10 @@ function ENT:OnConnected(gen)
 
 	if id >= self.MaxGenerators - 1 then print("max generators reached", id, self.MaxGenerators) return end 
 
-	print("connected to id", id)
-
 	local id = me.Generators:add(gen)
 	me.GeneratorEnts[gen] = id
+
+	gen:PreventGenerating(true)
 
 	gen:CallOnRemove("DisconnectFrom" .. self:GetCreationID(), function(gen)
 		if not IsValid(self) then return end 
@@ -108,6 +108,8 @@ function ENT:OnDisconnect(gen)
 
 	me.Generators[me.GeneratorEnts[gen]] = nil
 	me.GeneratorEnts[gen] = nil 
+
+	gen:PreventGenerating(false)
 
 	self:NetworkEnts()
 end
@@ -169,7 +171,7 @@ function ENT:Think()
 
 	for k,v in me.Generators:pairs() do 
 		local ent = BWEnts[v]
-		pw_in = pw_in + ent.PowerGenerated 
+		pw_in = pw_in + ent.PowerGenerated + ent.Power
 
 		pw_stored[k] = ent.Power
 		sum_stored = sum_stored + ent.Power
@@ -177,35 +179,72 @@ function ENT:Think()
 
 	local was_stored = sum_stored 
 
-	for k,v in me.Electronics:pairs() do 
-		local ent = BWEnts[v]
+	me.Electronics:clean()
+	me.Generators:clean()
 
-		local rate = math.max(250, ent.PowerDrain + 50, ent.PowerCapacity / 10)
-		rate = math.min(rate, ent.PowerCapacity - ent.Power)
+	local els = 0
 
-		local from_gen = math.min(pw_in, rate)
-		local from_stored = math.min(rate - from_gen, sum_stored)
-
-		pw_in = pw_in - from_gen
-		rate = from_gen + from_stored
-
-		sum_stored = sum_stored - from_stored 
-
-		ent.Power = ent.Power + rate
+	for k,v in ipairs(me.Electronics) do 
+		if not BWEnts[v].DontPower then els = els + 1 end
 	end
 
-	if was_stored > sum_stored then
-		local diff = was_stored - sum_stored
+	for k,v in ipairs(me.Electronics) do 
+		local ent = BWEnts[v]
+		if ent.DontPower then continue end 
+
+
+		local rate = math.max(ent.PowerDrain + 10, 150, pw_in / els)
+
+		rate = math.min(rate, pw_in / els) 						--if rate has to be more than what would be evenly distributed, so be it
+		
+		rate = math.min(rate, ent.PowerCapacity - ent.Power) 	--rate won't be more than required to max power
+
+		local from_gen = math.min(pw_in, rate)
+
+		pw_in = pw_in - from_gen
+		rate = from_gen 
+
+		els = els - 1 
+
+		ent.Power = ent.Power + rate
+
+		if pw_in <= 0 and sum_stored <= 0 then break end
+	end
+
+	if was_stored > pw_in then 	--stored power was drained
+
+		local spent = was_stored - pw_in 	--how much power was spent?
 
 		for k,v in me.Generators:pairs() do 
 			local ent = BWEnts[v]
 
 			local was = ent.Power
 
-			ent.Power = math.max(was - diff, 0)
+			ent.Power = math.max(was - spent, 0)
 
-			diff = diff - was
-			if diff <= 0 then break end
+			spent = spent - was
+			if spent <= 0 then break end
+		end
+
+	elseif pw_in > 0 then 				--stored power wasn't drained; there are leftovers
+
+		local gens = #me.Generators
+
+		for k,v in me.Generators:pairs() do 
+			local ent = BWEnts[v]
+
+			local was = ent.Power
+
+			local add = pw_in / gens 	--the added power is distributed evenly between gens
+
+			ent.Power = math.min(was + add, ent.PowerCapacity)
+
+			pw_in = pw_in - add
+
+			gens = gens - 1
+
+			v:SetPower(ent.Power)		--because generators connected to the pole don't generate power, and thus, don't network their own vars
+
 		end
 
 	end

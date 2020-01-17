@@ -66,7 +66,7 @@ local function CreateFrame(ent)
         if ScrH() < 800 then
             local str = "(%s < %s)"
             str = str:format(ScrH(), 800)
-            draw.DrawText("This rack may have bugs\nbecause your resolution is too low.\nSorry :(\n" .. str, "OS24", w/2, h - 250, Color(230, 100, 100), 1, 1)
+            draw.DrawText("This rack may be bugged\nbecause your resolution is too low.\nSorry :(\n" .. str, "OS24", w/2, h - 250, Color(230, 100, 100), 1, 1)
         end
 
     end
@@ -94,7 +94,7 @@ function ENT:Draw()
 
     local i = 0
 
-    for k,v in pairs(t) do 
+    for k,v in ipairs(t) do 
 
         i = i + 1
 
@@ -103,7 +103,7 @@ function ENT:Draw()
 
         local ent = Entity(v)
 
-        if not IsValid(ent) then print('INVALID ENT SO HELL NAW') continue end
+        if not IsValid(ent) then continue end
 
         f.Buttons[k] = vgui.Create("EButton", f)
         local fr = f.Buttons[k]

@@ -36,6 +36,13 @@ Language.RaidStart 		= "%s has started a raid against %s!"
 
 Language.Health = "Health: %s/%s"
 Language.Power = "Power: %s/%s"
+
+Language.SpawnMenuConf = "Confirm Purchase"
+Language.SpawnMenuBuyConfirm = "Are you sure you want to purchase %s for " .. Language.Currency .. "%s?"
+
+Language.Yes = "Yes"
+Language.No = "No"
+
 setmetatable(Language, Language)
 --[[
 	Raids.

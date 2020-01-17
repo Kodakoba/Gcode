@@ -33,7 +33,7 @@ hook.Add("BaseWars_PlayerEmptyPrinter", "XPRewards", function(ply, ent, money)
 	local xp = (money / div)
 
 	if ply:InFaction() then 
-		local fac = BaseWars.Factions.FactionTable[ply:GetFaction()]
+		local fac = BaseWars.Factions.Factions
 		if fac and fac.XPMult then 
 			mult = math.max(1, mult+fac.XPMult)
 		end

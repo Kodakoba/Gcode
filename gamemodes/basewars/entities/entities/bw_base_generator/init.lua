@@ -20,6 +20,10 @@ function ENT:Init()
 	Generators[#Generators + 1] = self
 end
 
+function ENT:PreventGenerating(b)
+	BWEnts[self].DontGenerate = (b==nil and true) or b
+end
+
 function ENT:ConnectTo(ent)
 	if ent:Distance(self) >= self.ConnectDistance then return end 
 
@@ -85,6 +89,7 @@ function ENT:Disconnect()
 	self:SetConnectedTo(Entity(0))
 
 end
+
 function ENT:TransmitPower(amt)
 	local me = BWEnts[self]
 	if not me.ConnectedTo or not IsValid(me.ConnectedTo) then return end
@@ -105,6 +110,10 @@ function ENT:Think()
 	local ct = CurTime()
 	local me = BWEnts[self]
 
+	self:NextThink(CurTime() + 0.5)
+
+	if me.DontGenerate then return true end 
+
 	if me.CheckDist and me.ConnectedTo then 
 		local pos = self:GetPos()
 
@@ -121,7 +130,6 @@ function ENT:Think()
 	me.Power = math.min(me.Power + me.PowerGenerated, me.PowerCapacity)
 
 	self:SetPower(me.Power)
-	self:NextThink(CurTime() + 0.5)
 
 	me.Power = self:TransmitPower(me.Power) or me.Power
 

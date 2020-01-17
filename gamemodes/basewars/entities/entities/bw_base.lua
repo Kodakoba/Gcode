@@ -131,8 +131,8 @@ function ENT:DrainPower(val)
 
 	local me = BWEnts[self]
 
-	--BWEnts[self].Power = 0
 	me.Power = math.max(me.Power-val, 0)
+	
 	self:SetPower(me.Power)
 	
 	me.LastDrain = CurTime()
@@ -154,6 +154,7 @@ if SERVER then
 		local me = BWEnts[self]
 
 		me.Power = 0
+		me.PowerDrain = self.PowerRequired or self.PowerDrain
 		me.PowerCapacity = self.PowerCapacity 
 
 		me.MaxPower = self.PowerCapacity
@@ -177,7 +178,9 @@ if SERVER then
 		self.rtb = 0
 		
 		self:Init(me)
+
 		if CLIENT then self:CLInit() end
+
 		self:SetMaxHealth(self:Health())
 
 		timer.Simple(0, function() 

@@ -245,19 +245,29 @@ local function DrawStructureInfo()
 end
 
 local vm2 = Matrix()
+
 local ela
+local dead = false 
+
+local left
 
 local CreateElastic
 
-CreateElastic = function(func)
-	ela = Animations.InElastic(1, 0, func, function() CreateElastic(func) end)
+CreateElastic = function(func, off)
+	ela = Animations.InElastic(0.8, off, func, function() 
+		if not dead then ela = nil return end 
+		CreateElastic(func, 0.2) 
+	end, 0.7, 1.4, 2)
 end
 
 local rot = 0
+local txw
 
 local function DrawDeathCoolDown()
 	local me = LocalPlayer()
-	if me:Alive() then return end
+	if me:Alive() then dead = false return end
+
+	dead = true
 
 	local t = me:GetRespawnTime()
 	if not t then return end 
@@ -265,7 +275,7 @@ local function DrawDeathCoolDown()
 	local dt = me:GetDeathTime()
 	if not dt then return end 
 
-	local left = t - CurTime()
+	left = t - CurTime()
 
 	local frac = left / (t - dt)
 	frac = math.min(1, frac)
@@ -294,7 +304,7 @@ local function DrawDeathCoolDown()
 
 		render.SetStencilReferenceValue(2) 
 
-			draw.Circle(ScrW()/2, ScrH() - 192, 36, 32)
+			draw.Circle(ScrW()/2, ScrH() - 192, 32, 32)
 
 		render.SetStencilCompareFunction(STENCIL_NOTEQUAL)
 	
@@ -310,23 +320,33 @@ local function DrawDeathCoolDown()
 	render.SetStencilEnable(false)
 
 	if not ela then 
-		CreateElastic(function(self, fr)
+		CreateElastic(function(fr)
 			rot = fr*360
-		end)
+		end, math.abs(left)%1 - 0.1)
 	end
+
+	local a = 255
+
+	if left-1 <= 0 then 
+		a = (math.max(left, 0)^4)*255
+	end
+
+	print(a)
 
 	surface.SetFont("OSB32")
 	local tw, th = surface.GetTextSize(tostring(math.floor(left)))
+	txw = L(txw, tw, 5)
+
 	surface.SetTextPos(0, 0)
 	vm2:SetAngles(Angle(0, rot, 0))
 	vm2:SetTranslation(Vector(ScrW()/2, ScrH() - 192))
-	vm2:Translate(Vector(-tw/2, -th/2, 0))
+	vm2:Translate(Vector((tw-txw)/2 - tw/2, -th/2, 0))
 
 	
 
 	cam.PushModelMatrix(vm2)
 		local ok, err = pcall(function()
-			surface.SetTextColor(color_white)
+			surface.SetTextColor(255, 255, 255, a)
 			surface.DrawText(math.floor(left))
 		end)
 	cam.PopModelMatrix()

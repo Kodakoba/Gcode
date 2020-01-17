@@ -2,7 +2,6 @@ AddCSLuaFile("cl_init.lua")
 AddCSLuaFile("shared.lua")
 include("shared.lua")
 
-
 function ENT:Init()
     print("init called")
 
@@ -45,11 +44,10 @@ function ENT:Init()
 end
 
 function ENT:SetUpgradeCost(val)
-
     self.UpgradeCost = val
     self:SetUpgradeValue(val)
-
 end
+
 function ENT:NetworkMods()
     local m = self.Mods
     self:SetMods(util.TableToJSON(m))
@@ -68,6 +66,7 @@ function ENT:Overclock(lv, mult)
     self:NetworkMods()
     return true
 end
+
 util.AddNetworkString("OverclockPrinter")
 
 net.Receive("OverclockPrinter", function(_, ply)
@@ -144,36 +143,34 @@ function ENT:PlayerTakeMoney(ply, suppress)
 
     local money = self.Money
 
-    local Res, Msg = hook.Run("BaseWars_PlayerCanEmptyPrinter", ply, self, money)
-    if Res == false then
+    local can, msg = hook.Run("BaseWars_PlayerCanEmptyPrinter", ply, self, money)
 
-        if Msg then
-
-            ply:Notify(Msg, BASEWARS_NOTIFICATION_ERROR)
-
-        end
-
-    return end
+    if can == false then
+            if msg then ply:Notify(msg, BASEWARS_NOTIFICATION_ERROR) end
+        return 
+    end
 
     self:SetNWMoney(0)
+
     self.Money = 0
+
     ply:GiveMoney(money)
+
     if not suppress then
         ply:EmitSound("mvm/mvm_money_pickup.wav")
     end
 
     hook.Run("BaseWars_PlayerEmptyPrinter", ply, self, money)
 
+    return money 
 end
 
 function ENT:UseFunc(activator, caller, usetype, value, suppress)
 
-    if self.Disabled then return end
+    if self.Disabled then print('no') return end
 
     if activator:IsPlayer() and caller:IsPlayer() and self:GetNWMoney() > 0 then
-
-        self:PlayerTakeMoney(activator, suppress)
-
+        return self:PlayerTakeMoney(activator, suppress)
     end
 
 end

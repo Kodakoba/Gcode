@@ -2,7 +2,7 @@ AddCSLuaFile("cl_init.lua")
 AddCSLuaFile("shared.lua")
 include("shared.lua")
 
-local max = 9 --max printers
+local max = 8 --max printers
 
 function ENT:Init()
     local me = BWEnts[self]
@@ -33,6 +33,15 @@ local pos = {
     Vector (0.912353515625, -0.44677734375, 13.148170471191 + 6.25*10 - 1.1),
 }
 
+local pos = {}
+
+
+for i=1, 8 do 
+    local off = (i>=5 and i*5.9 + 13) or i*5.9
+
+    pos[#pos + 1] = Vector(3, -0.5, 8 + off)
+end
+
 local function ParsePrintersOut(str)
     local t = string.Explode(" ", str)
     return t
@@ -58,23 +67,15 @@ function ENT:NetworkPrinters()
     self:SetPrinters(str)
 end
 
-function ENT:Touch(ent)
+function ENT:AddPrinter(slot, ent)
+        
+    if not pos[slot] then error('attempted adding a printer to a slot which doesnt have a pos (' .. slot .. ")") return end
 
-    if not ent.IsPrinter or ent.IsInRack or self.Printers[ent] or ent:CPPIGetOwner() ~= self:CPPIGetOwner() then return end 
-    if table.Count(self.Printers) >= max then return end 
+    self.Printers[slot] = ent
 
-    local fr = 0
 
-    for i=1, max do 
-        if not self.Printers[i] then fr = i break end 
-    end
-    if fr==0 then error('no free key for printer!') end 
+    local off = pos[slot]
 
-    self.Printers[fr] = ent
-
-    if not pos[fr] then error('wtf!!!') end
-
-    local off = pos[fr]
     local pos = self:GetPos()
     local ang = self:GetAngles()
     
@@ -88,29 +89,58 @@ function ENT:Touch(ent)
     ent:SetMoveType(MOVETYPE_NONE)
     ent:SetParent(self)
     ent.IsInRack = true
-    BWEnts[ent].DontPower = true
+
+    ent:SetUnpowerable(true)
+
     self:NetworkPrinters()
     self.CurrentValue = 15000
+
     for k,v in pairs(self.Printers) do 
         if v.CurrentValue then self.CurrentValue = self.CurrentValue + v.CurrentValue end
     end
+
+end
+
+function ENT:Touch(ent)
+
+    if not ent.IsPrinter or ent.IsInRack or self.Printers[ent] or ent:CPPIGetOwner() ~= self:CPPIGetOwner() then return end 
+    if table.Count(self.Printers) >= max then return end 
+
+    local fr = 0
+
+    for i=1, max do 
+        if not self.Printers[i] then fr = i break end 
+    end
+    if fr==0 then error('no free key for printer!') end 
+
+    self:AddPrinter(fr, ent)
 end
 
 function ENT:ThinkFunc()
     local me = self:GetTable()
+
+    local mebw = BWEnts[self]
+
+    local pw = mebw.Power
+
     for k,v in pairs(me.Printers) do 
 
         if not IsValid(v) then me.Printers[k] = nil continue end 
 
-        local pw = BWEnts[self].Power
-        local req = v.PowerRequired
- 
-        if pw <= req then break end 
+        local them = BWEnts[v]
+
+        local req = them.PowerDrain
+
+        if not req or pw <= req then break end 
+            
+        local gave = v:AddPower( math.min(pw, them.PowerDrain + 10), true )--math.min(pw, them.PowerCapacity - them.Power, them.PowerDrain + 10)
         
-        BWEnts[v].Power =  math.min(BWEnts[v].Power + (req + 5), BWEnts[v].MaxPower or 1000)
-        BWEnts[self].Power = math.max(pw - (req), 0)
+        pw = pw - gave
 
     end
+
+    me.Power = pw 
+
     self:NetworkPrinters()
 end
 
@@ -146,6 +176,7 @@ function ENT:Eject(num)
         mins = mins,
         filter = ignore
     } )
+
     if not tr.Hit then 
         me.Printers[num] = nil 
         ent.IsInRack = false
@@ -155,13 +186,16 @@ function ENT:Eject(num)
         ent:SetPos(ent:GetPos() + ang:Forward() * 56)
         ent:SetGravity(1)
 
-        ent:GetPhysicsObject():EnableGravity(true)
+        ent:GetPhysicsObject():EnableGravity(true) --???
         ent:SetAbsVelocity(Vector(0, 0, 0))
+        ent:SetUnpowerable(false)
+
         self.CurrentValue = 15000
         for k,v in pairs(self.Printers) do 
             if v.CurrentValue then self.CurrentValue = self.CurrentValue + v.CurrentValue end
         end
     end
+
 end 
 util.AddNetworkString("EjectPrinter")
 
@@ -174,9 +208,16 @@ net.Receive("EjectPrinter", function(_, ply)
 end)
 
 function ENT:Use(ply)
+
+    local moneys = 0
+
     for k,v in pairs(self.Printers) do 
         if not IsValid(v) then continue end 
-        local _ = v.UseFunc and v:UseFunc(ply, ply, _, _, true)
+        print("using", ply, v)
+        local mon = v.UseFunc and v:UseFunc(ply, ply, _, _, true)
+
+        if mon then moneys = moneys + mon end
     end
-    ply:EmitSound("mvm/mvm_money_pickup.wav")
+
+    if moneys > 0 then ply:EmitSound("mvm/mvm_money_pickup.wav") end
 end
