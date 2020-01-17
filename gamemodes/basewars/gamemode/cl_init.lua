@@ -3,42 +3,8 @@ include("modules.lua")
 
 GM.Name 		= "BaseWars"
 
-GM.Author 		= "Original: Q2F2, Ghosty, Liquid, Tenrys, Trixter, User4992\nModded: gachirmx"
+GM.Author 		= "gachirmx"
 
-GM.Credits		= [[
-Original:
-
-	Thanks to the following people:
-		Q2F2			- Main backend dev.
-		Ghosty			- Main frontent dev.
-		Trixter			- Frontend + Several entities.
-		Liquid			- Misc dev, good friend.
-		Tenrys			- Misc dev, good friend also.
-		Pyro-Fire		- Owner of LagNation, ideas ect.
-		Devenger		- Twitch Weaponry 2
-		User4992		- Fixes for random stuff.
-
-	This GM has been built from scratch with almost no traces of the original BaseWars existing.
-	2017 Re-released MIT version.
-]]
-
-GM.License = [[
-
-basewars_free:
-	Copyright (c) 2015-2017 Hexahedronic, Q2F2, Ghosty, Liquid, Tenrys, Trixter, User4992.
-
-	Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-	The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-
-Credits:
-	]] .. GM.Credits
-local license = GM.License 
-
-IncludeModules()
 
 local PLAYER = debug.getregistry().Player
 
@@ -238,17 +204,77 @@ function CreatePlayerFrame(sb, ply)
 	av:SetPlayer(ply, 64)
 	av:SetSize(64, 64)
 	av:SetPos(12, 72/2-32)
-	local size = 24
+
+	local size = 20
 
 	local op = av.Paint
 	av:SetPaintedManually(true)
-	av:SetMouseInputEnabled(false)
+	av:SetMouseInputEnabled(true)
+
+	local avbtn = vgui.Create("FButton", av)
+	avbtn:Dock(FILL)
+	avbtn.NoDraw = true
+
+	function avbtn:DoClick()
+		ply:ShowProfile()
+	end
 
 	local lastnick = ply:Nick()
 	local lv = ply:GetLevel()
 	local mon = ply:GetMoney()
 	local time = ply:GetPlayTime()
 	local col = f.TeamColor
+
+	local anim
+
+	local function newanim(from, by)
+
+		if IsValid(anim) then 
+			anim:Swap(0.1, 0, 1)
+		else 
+			anim = f:NewAnimation(0.1, 0, 1)
+		end
+
+		anim.Think = function(anim, self, fr)
+			size = from + by * fr
+		end
+
+	end
+
+	local cloud = vgui.Create("Cloud")
+
+	cloud:Bond(f)
+	cloud:SetText("View Profile")
+	cloud:Popup(false)
+	
+
+	function avbtn:OnHover()
+
+		f.ForceHovered = true
+
+		local start = size
+		local left = 28 - start
+
+		newanim(start, left)
+
+		cloud:Popup(true)
+		
+		cloud:MoveAbove(self)
+
+	end
+
+	function avbtn:OnUnhover()
+
+		f.ForceHovered = false
+
+ 		local start = size
+		local left = 20 - start
+
+		newanim(start, left)
+
+		cloud:Popup(false)
+
+	end
 
 	function f:PostPaint(w, h)
 		
@@ -268,12 +294,6 @@ function CreatePlayerFrame(sb, ply)
 			time = ply:GetPlayTime()
 			col = col or team.GetColor(ply:Team())
 		end 
-
-		if self:IsHovered() then 
-			size = L(size, 28, 5, true)
-		else 
-			size = L(size, 20, 5, true)
-		end
 
 		av.X = 46 - 44 + size*0.5
 		av.Y = 36 - 44 + size*0.5
@@ -476,33 +496,37 @@ function GM:ScoreboardHide()
 	
 end
 
-local function copyright()
-	print(license)
-
-	print("Also, admins:")
-	for k, v in pairs(player.GetAll()) do
-		if v:IsAdmin() then print(v) end
-	end
-end
-
-concommand.Add("bw_copyright", copyright)
-
 local Lerp = Lerp 
 local math = math
 
 function LC(col, dest, vel)
-    local v = 10
+    local v = vel or 10
     if not IsColor(col) or not IsColor(dest) then return end
-    if isnumber(vel) then v = vel end
-    local r = Lerp(FrameTime()*v, col.r, dest.r)
-    local g = Lerp(FrameTime()*v, col.g, dest.g)
-    local b = Lerp(FrameTime()*v, col.b, dest.b)
-    local a = col.a
-    if dest.a then
-    	a = Lerp(FrameTime()*v, col.a, dest.a)
+
+    col.r = Lerp(FrameTime()*v, col.r, dest.r)
+    col.g = Lerp(FrameTime()*v, col.g, dest.g)
+    col.b = Lerp(FrameTime()*v, col.b, dest.b)
+
+    if dest.a ~= col.a then
+    	col.a = Lerp(FrameTime()*v, col.a, dest.a)
     end
 
-    return Color(r, g, b, a)
+    return col
+end
+
+function LCC(col, r, g, b, a, vel)
+	local v = vel or 10
+
+
+    col.r = Lerp(FrameTime()*v, col.r, r)
+    col.g = Lerp(FrameTime()*v, col.g, g)
+    col.b = Lerp(FrameTime()*v, col.b, b)
+
+    if a and a ~= col.a then
+    	col.a = Lerp(FrameTime()*v, col.a, a)
+    end
+
+    return col
 end
 
 function L(s,d,v,pnl)
