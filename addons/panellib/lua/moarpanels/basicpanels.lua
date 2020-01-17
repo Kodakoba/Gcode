@@ -14,6 +14,12 @@ local gl = Material("vgui/gradient-l")
 -- 	FPanel
 ---------------------------------------------------------------------------]]
 
+local greyed = Color(80, 80, 80)
+local close_hov = Color(235, 90, 90)
+local close_unhov = Color(205, 50, 50)
+
+local RED = Color(255, 0, 0)
+local DIM = Color(30, 30, 30, 210)
 
 function PANEL:Init()
 
@@ -29,10 +35,12 @@ function PANEL:Init()
 	b:SetSize(64, 24)
 	b:SetText("")
 	b.Color = Color(205, 50, 50)
+
 	function b:Paint(w,h)
-		b.Color = LC(b.Color, (self.PreventClosing and Color(80, 80, 80)) or (self:IsHovered() and Color(235, 90, 90)) or Color(205, 50, 50), 15)
+		b.Color = LC(b.Color, (self.PreventClosing and greyed) or (self:IsHovered() and close_hov) or close_unhov, 15)
 		draw.RoundedBox(4, 0, 0, w, h, b.Color)
 	end
+
 	b.DoClick = function()
 		if self.PreventClosing then return end 
 		
@@ -49,6 +57,8 @@ function PANEL:Init()
 	self.BackgroundColor = Color(50, 50, 50)
 	self.HeaderColor = Color(40, 40, 40)
 
+	self.DimColor = Color(0, 0, 0, 220)
+
 	self:DockPadding(4, 32, 4, 4)
 end
 
@@ -60,9 +70,13 @@ function PANEL:SetColor(r, g, b)
 		local h, s, v = ColorToHSV(r)
 		self.HeaderColor = HSVToColor(h, s*0.9, v*0.8)
 	else
-		local col = Color(r, g, b)
-		self.BackgroundColor = col
-		local h, s, v = ColorToHSV(col)
+
+		local bgc = self.BackgroundColor
+		bgc.r = r
+		bgc.g = g
+		bgc.b = b 
+
+		local h, s, v = ColorToHSV(bgc)
 		self.HeaderColor = HSVToColor(h, s*0.9, v*0.8)
 
 	end
@@ -106,8 +120,9 @@ end
 function PANEL.DrawHeaderPanel(self, w, h)
 
 	local rad = self.RBRadius or 8
-	local hc = self.HeaderColor or Color(255, 40, 40)
-	local bg = self.BackgroundColor or Color(255, 50, 50)
+
+	local hc = self.HeaderColor
+	local bg = self.BackgroundColor
 
 	local label = self.Label or self.Title or nil
 
@@ -142,7 +157,7 @@ function PANEL.DrawHeaderPanel(self, w, h)
 
 		end
 
-		draw.SimpleText(label, "PanelLabel", x+xoff, y, Color(255,255,255), 0, 2)
+		draw.SimpleText(label, "PanelLabel", x+xoff, y, color_white, 0, 2)
 	end
 
 	if self.Shadow then 
@@ -178,7 +193,10 @@ function PANEL:PaintOver(w,h)
 
 	if self.Dim then 
 		local rad = self.RBRadius or 8
-		draw.RoundedBox(rad, 0, 0, w, h, Color(0, 0, 0, self.DimAlpha or 220))
+
+		self.DimColor.a = self.DimAlpha or 220
+
+		draw.RoundedBox(rad, 0, 0, w, h, self.DimColor)
 	end
 
 end
@@ -192,7 +210,8 @@ local button = {}
 
 function button:Init()
 	self.Color = Color(70, 70, 70)
-	self.drawColor = self.Color
+	self.drawColor = Color(70, 70, 70)
+
 	self:SetText("")
 
 	self.Font = "PanelLabel"
@@ -210,15 +229,61 @@ function button:Init()
 end
 
 function button:SetColor(col, g, b, a)
-	if IsColor(col) then self.Color = col self.drawColor = self.Color return end 
-	self.Color = Color(col or 70, g or col or 70, b or col or 70, a or 255)
-	--self.drawColor = self.Color
+	if IsColor(col) then self.Color = col self.drawColor = Color(col.r, col.g, col.b, col.a) return end 
+
+	local c = self.Color
+	c.r = col or 70
+	c.g = g or 70
+	c.b = b or 70
+	c.a = a or 255
 end
+
+function button:HoverLogic()
+	local shadow = self.Shadow
+
+	if self:IsHovered() or self.ForceHovered then
+
+		hov = true 
+		local hm = self.HovMult 
+
+		local bg = self.Color
+
+		local fr = math.min(bg.r*hm, 255)
+		local fg = math.min(bg.g*hm, 255)
+		local fb = math.min(bg.b*hm, 255)
+
+		LCC(self.drawColor, fr, fg, fb)
+
+		if shadow.OnHover then shadow.Spread = L(shadow.Spread, shadow.MaxSpread, 20) end
+
+		if not self._IsHovered then 
+			self._IsHovered = true 
+			self:OnHover()
+		end
+
+		self:ThinkHovered()
+	else
+
+		local bg = self.Color
+		self.Color = bg
+
+		LC(self.drawColor, bg)
+
+		if shadow.OnHover then shadow.Spread = L(shadow.Spread, 0, 50) end 
+
+		if self._IsHovered then 
+			self._IsHovered = false 
+			self:OnUnhover()
+		end
+	end
+
+end
+
 function button:SetLabel(txt)
 	self.Label = txt
 end
 
-function button:Hovered()
+function button:ThinkHovered()
 
 end
 
@@ -229,6 +294,7 @@ end
 function button:OnUnhover()
 
 end
+
 local function dRB(rad, x, y, w, h, dc, ex)
 
 	if ex then 
@@ -246,6 +312,9 @@ local function dRB(rad, x, y, w, h, dc, ex)
 	end
 
 end
+
+
+
 function button:Draw(w, h)
 
 	local rad = self.RBRadius or 8
@@ -253,39 +322,13 @@ function button:Draw(w, h)
 
 	local shadow = self.Shadow 
 
-	self.drawColor = self.drawColor or bg
+	self.drawColor = self.drawColor
+
 	local hov = false 
 	
 	local x, y = 0, 0
 
-	if self:IsHovered() then
-
-		hov = true 
-		local hovmult = self.HovMult 
-
-		local bg = self.Color or Color(70,70,70)
-		local fr = bg.r*hovmult
-		local fg = bg.g*hovmult
-		local fb = bg.b*hovmult
-		self.drawColor = LC(self.drawColor, Color(fr,fg,fb))
-		if shadow.OnHover then shadow.Spread = L(shadow.Spread, shadow.MaxSpread, 20) end
-
-		if not self._IsHovered then 
-			self._IsHovered = true 
-			self:OnHover()
-		end
-
-	else
-
-		local bg = self.Color or Color(70,70,70)
-		self.drawColor = LC(self.drawColor, bg)
-		if shadow.OnHover then shadow.Spread = L(shadow.Spread, 0, 50) end 
-
-		if self._IsHovered then 
-			self._IsHovered = false 
-			self:OnUnhover()
-		end
-	end
+	self:HoverLogic()
 
 	local spr = shadow.Spread or 0
 
@@ -301,13 +344,13 @@ function button:Draw(w, h)
 		local x2, y2 = x, y
 
 		if self.Border then 
-			dRB(rad, x, y, w, h, self.borderColor or self.Color or Color(255,0,0), self.RBEx)
+			dRB(rad, x, y, w, h, self.borderColor or self.Color or RED, self.RBEx)
 			local bw, bh = self.Border.w or 2, self.Border.h or 2
 			w2, h2 = w - bw*2, h - bh*2
 			x2, y2 = x + bw, y + bh
 		end
 
-		dRB(rad, x2, y2, w2, h2, self.drawColor or self.Color or Color(255,0,0), self.RBEx)
+		dRB(rad, x2, y2, w2, h2, self.drawColor or self.Color or RED, self.RBEx)
 
 
 		
@@ -348,10 +391,13 @@ function button:PrePaint(w,h)
 
 end
 function button:PaintOver(w, h)
+
 	if self.Dim then 
-		draw.RoundedBox(self.RBRadius, 0, 0, w, h, Color(30, 30, 30, 180))
+		draw.RoundedBox(self.RBRadius, 0, 0, w, h, DIM)
 	end
+
 end
+
 function button:Paint(w, h)
 	self:PrePaint(w,h)
 	self:Draw(w, h)
@@ -963,7 +1009,12 @@ end
 
 function FCB:SetColor(col, g, b, a)
 	if IsColor(col) then self.Color = col self.drawColor = self.Color return end 
-	self.Color = Color(col or 60, g or col or 60, b or col or 60, a or 255)
+
+	local c = self.Color
+	c.r = col or 60
+	c.g = g or 60
+	c.b = b or 60
+	c.a = a or 255
 end
 
 function FCB:Paint(w,h)

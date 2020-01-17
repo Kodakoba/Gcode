@@ -491,10 +491,12 @@ function FM:Init()
 	end
 
 	RegisterDermaMenuForClose( self )
+
 	timer.Simple(0, function() 
 		if not IsValid(self) then return end 
 		self:CreateDescription()
 	end)
+
 end
 function FMO:Init()
 	self.Color = Color(40, 40, 40)
@@ -507,13 +509,23 @@ function FMO:Init()
 end
 
 function FMO:SetColor(col, g, b, a)
-	if IsColor(col) then self.Color = col self.drawColor = self.Color return end 
-	self.Color = Color(col or 60, g or col or 60, b or col or 60, a or 255)
+	if IsColor(col) then self.Color = col self.drawColor = col:Copy() return end 
+
+	local c = self.Color
+	c.r = col or 60
+	c.g = g or 60
+	c.b = b or 60
+	c.a = a or 255
 end
 
 function FMO:SetHoverColor(col, g, b, a)
 	if IsColor(col) then self.HoverColor = col return end 
-	self.HoverColor = Color(col or 60, g or col or 60, b or col or 60, a or 255)
+
+	local c = self.HoverColor
+	c.r = col or 60
+	c.g = g or 60
+	c.b = b or 60
+	c.a = a or 255
 end
 
 function FMO:OnHover()
@@ -536,7 +548,7 @@ function FMO:Paint(w,h)
 	self.Hovered = self:IsHovered() --This is so fucking retarded but menu has issues of registering clicks because of default dlabel behavior
 	if self:IsHovered() then 
 
-		local bg = self.Color or Color(60,60,60)
+		local bg = self.Color
 
 		if self.HoverColor then 
 
@@ -545,12 +557,12 @@ function FMO:Paint(w,h)
 		else
 
 			local hm = self.HovMult
-			local fr = bg.r*hm
-			local fg = bg.g*hm
-			local fb = bg.b*hm
 
+			local fr = math.min(bg.r*hm, 255)
+			local fg = math.min(bg.g*hm, 255)
+			local fb = math.min(bg.b*hm, 255)
 
-			self.drawColor = LC(self.drawColor, Color(fr,fg,fb))
+			self.drawColor = LCC(self.drawColor, fr, fg, fb)
 		end
 
 		if not self.WasHovered then 
@@ -560,7 +572,7 @@ function FMO:Paint(w,h)
 
 		if self.DescPanel then self.DescPanel.Uncover = true end
 	else
-		local bg = self.Color or Color(60,60,60)
+		local bg = self.Color
 		self.drawColor = LC(self.drawColor, bg)
 		if self.DescPanel then self.DescPanel.Uncover = false end
 
@@ -580,7 +592,7 @@ function FMO:Paint(w,h)
 	if self.Icon then 
 		surface.SetMaterial(self.Icon)
 		local iw, ih = self.IconW or h-4, self.IconH or h-4
-		surface.SetDrawColor(Color(255,255,255))
+		surface.SetDrawColor(color_white)
 		surface.DrawTexturedRect(2, h/2-ih/2, iw, ih)
 		txo = iw + (self.IconPad or 8)
 	end
@@ -731,6 +743,7 @@ vgui.Register("FMenu", FM, "DMenu")
 	Cloud:FullInit()
 	Cloud:Popup(bool)
 	
+	Cloud:Bond(pnl) 	--if the panel is gone, so is the cloud
 
 	Stuff you can modify:
 
@@ -754,6 +767,13 @@ vgui.Register("FMenu", FM, "DMenu")
 		
 ---------------------------------------------------------------------------]]
 
+CLOUDS = CLOUDS or {}
+function CLOUDS:RemoveAll()
+	for k,v in ipairs(self) do 
+		if IsValid(v) then v:Remove() end 
+		self[k] = nil
+	end
+end
 local Cloud = {}
 
 function Cloud:Init()
@@ -800,8 +820,16 @@ function Cloud:Init()
 	self.Shadow = {}
 	self.DrawShadow = true
 
+	CLOUDS[#CLOUDS + 1] = self
 end
 
+function Cloud:MoveAbove(pnl, px)
+	local x, y = pnl:LocalToScreen(pnl:GetWide() / 2, 0)
+
+	print("called cloud moveabove")
+	self:SetAbsPos(x, y - (px or 8))
+	print(x, y - (px or 8))
+end
 
 function Cloud:SetLabel(txt)
 	self.Label = txt
@@ -833,6 +861,7 @@ local max = math.max
 function Cloud:Paint()
 
 	if not self.FullInitted then return end 
+	if self.Bonded and not IsValid(self.Bonded) then self:Remove() return end 
 
 	local prevent = self:PrePaint()
 	if prevent==true then return end 
@@ -1039,6 +1068,10 @@ function Cloud:Popup(bool)
 
 	self.Active = bool
 
+end
+
+function Cloud:Bond(pnl)
+	self.Bonded = pnl
 end
 
 vgui.Register("Cloud", Cloud, "Panel")

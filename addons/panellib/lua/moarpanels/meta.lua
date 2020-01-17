@@ -1,4 +1,5 @@
 local META = FindMetaTable("Panel")
+local COLOR = FindMetaTable("Color")
 
 function META:GetCenter(xfrac, yfrac)
 	xfrac = xfrac or 0.5 
@@ -17,6 +18,30 @@ function META:GetCenter(xfrac, yfrac)
 	return x, y
 end
 
+function META:Lerp(key, val, dur, del, ease)
+	local anims = self.__Animations or {}
+	self.__Animations = anims 
+
+	local anim
+	local from = self[key]
+
+	if anims[key] then 
+		local anim = anims[key]
+		if anim.ToVal == val then return end --don't re-create animation if we're already lerping to that anyways
+
+		anim:Swap(dur, del, ease)
+
+	else 
+		local anim = self:NewAnimation(dur, del, ease)
+	end
+
+	anim.Think = function(anim, self, fr)
+		self[key] = Lerp(fr, from, val)
+	end
+
+end
+
+META.To = META.Lerp
 
 function META:PopIn(dur, del, func)
 	self:SetAlpha(0)
@@ -280,3 +305,23 @@ end
 hook.Add("Think", "Animations", AnimationsThink)
 
 
+
+function COLOR:Set(col, g, b, a)
+
+	if IsColor(col) then 
+		self.r = col.r 
+		self.g = col.g 
+		self.b = col.b 
+		self.a = col.a 
+	else 
+		self.r = col or self.r
+		self.g = g or self.g
+		self.b = b or self.b 
+		self.a = a or self.a 
+	end
+
+end
+
+function COLOR:Copy()
+	return Color(self.r, self.g, self.b, self.a)
+end
