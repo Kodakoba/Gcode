@@ -589,9 +589,10 @@ function ENT:OnConnect(who)
 
 	sound.PlayFile("data/hdl/sfx/wire_connect.dat", "noplay 3d", function(ch)
 		if not IsValid(ch) then return end 
+		if LocalPlayer():GetPos():Distance(who:GetPos()) > 900 then return end 
 
 		ch:SetPos(who:GetPos())
-		ch:Set3DFadeDistance(500, 1200)
+		ch:Set3DFadeDistance(300, 1000)
 		ch:SetVolume(3)
 		ch:Play()
 	end)

@@ -32,12 +32,16 @@ function ENT:ConnectTo(ent)
 
 	if not them then print("didnt find them") return end 
 
-	if me.ConnectedTo ~= ent and me.ConnectedTo then 
+	if me.ConnectedTo ~= ent and IsValid(me.ConnectedTo) then 
 		if me.ConnectedTo.OnDisconnect then 
 			me.ConnectedTo:OnDisconnect(self)
 		end
 	end
 	
+	if IsValid(them.ConnectedTo) and them.ConnectedTo ~= self then 
+		them.ConnectedTo:Disconnect(ent)
+	end
+
 	if ent.OnConnected then 
 		local go = ent:OnConnected(self)
 		if go==false then return end 
@@ -80,7 +84,7 @@ end
 function ENT:Disconnect()
 	local me = BWEnts[self]
 
-	if me.ConnectedTo.OnDisconnect then 
+	if me.ConnectedTo and me.ConnectedTo.OnDisconnect then 
 		me.ConnectedTo:OnDisconnect(self)
 	end
 

@@ -30,10 +30,7 @@ function ENT:DerivedDataTables()
 	if CLIENT then 
 
 		self:NetworkVarNotify("ConnectedTo", function(self, name, old, new)
-			str = ("%s changed DTVar '%s': %s -> %s"):format(self, name, old, new)
-
-			print(str)
-
+			
 		 	if new==Entity(0) and old ~= Entity(0) and IsValid(old) then 
 		 		self:OnDisconnect(old)
 		 	end
@@ -45,14 +42,6 @@ function ENT:DerivedDataTables()
 
 	end
 
-	hook.Add("NotifyShouldTransmit", self, function(self, self2, started)
-		if self ~= self2 then return end 
-
-		local str = (started and "entered") or "exited"
-		str = ("%s %s PVS"):format(self2, str)
-
-		print(str)
-	end)
 
 	self:DerivedGenDataTables()
 end
