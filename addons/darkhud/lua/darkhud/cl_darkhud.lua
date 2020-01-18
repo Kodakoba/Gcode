@@ -102,6 +102,19 @@ surface.CreateFont("FactionFont", {
 local padx, pady = dh.PaddingX, dh.PaddingY
 
 
+local green = Color(60, 235, 60)
+local red = Color(255, 70, 70)
+
+Colors = Colors or {}
+
+Colors.Green = green 
+Colors.Red = red 
+
+Colors.Gray = Color(50, 50, 50)
+Colors.DarkGray = Color(35, 35, 35)
+Colors.LightGray = Color(65, 65, 65)
+Colors.LighterGray = Color(75, 75, 75)
+
 function DarkHUD.Create()
 	if DarkHUD.Essentials then DarkHUD.Essentials:Remove() DarkHUD.Essentials = nil end
 	DarkHUD.Essentials = vgui.Create("FFrame")
@@ -118,8 +131,9 @@ function DarkHUD.Create()
 
 	f:SetPos(padx, ScrH() - fh - pady)
 	f:SetCloseable(false, true)
-	f.BackgroundColor = ColorAlpha(f.BackgroundColor, 254)
-	f.HeaderColor = ColorAlpha(f.HeaderColor, 255)
+
+	f.BackgroundColor.a = 255
+	f.HeaderColor.a = 255
 
 	f.Vitals = vgui.Create("InvisFrame", f)
 	local vls = f.Vitals 
@@ -155,43 +169,39 @@ function DarkHUD.Create()
 
 	local contextopen = false 
 
-	local pl, pm, pe = LocalPlayer():GetLevel(), LocalPlayer():GetMoney(), LocalPlayer():GetXP()
+	local pl, pm, pe = LocalPlayer():GetLevel(), LocalPlayer():GetMoney()
 
 	local PopupLevel = 0 
-	local PopupEXP = 0 
 	local PopupMoney = 0 
 
 	local pld, pmd, ped = {}, {}, {} --differences 
 
 	local mCol = Color(250, 250, 250)
 	local lvCol = Color(250, 250, 250)
-	local xpCol = Color(250, 250, 250)
 
-	local green = Color(20, 255, 20)
-	local red = Color(255, 50, 50)
+	local boxcol = Color(50, 50, 50, 253)
 
 	function f:Think()
 		local lvl = LocalPlayer():GetLevel()
 		local mon = LocalPlayer():GetMoney()
-		local exp = LocalPlayer():GetXP()
 
 		if pl ~= lvl then 
 			PopupLevel = CurTime()
-			lvCol = Color(20, 255, 20) 
-			pld = {amt = lvl - pl, y = 0, ct = CurTime()}
+			lvCol:Set(Colors.Green)
+			pld = {amt = lvl - pl, y = 0, ct = CurTime(), boxcol = boxcol:Copy()}
 		end
 
 		if pm ~= mon then 
 			PopupMoney = CurTime() 
 
 			if pm < mon then -- + money
-				mCol = green
+				mCol:Set(green)
 			else 
-				mCol = red
+				mCol:Set(red)
 			end
 
 			if #pmd < 7 then
-				pmd[#pmd+1] = {amt = mon - pm, y = 0, ct = CurTime(), col = mCol}
+				pmd[#pmd+1] = {amt = mon - pm, y = 0, ct = CurTime(), col = mCol:Copy(), boxcol = boxcol:Copy()}
 			else 
 				local cur = pmd[1]
 
@@ -199,27 +209,20 @@ function DarkHUD.Create()
 				cur.ct = CurTime()
 
 				if cur.amt < 0 then 
-					mCol = red 
+					cur.col:Set(red)
 				else 
-					mCol = green 
+					cur.col:Set(green) 
 				end 
 
-				cur.col = mCol 
 			end
 
 		end 
 
-		if pe ~= exp then 
-			PopupEXP = CurTime()
-			xpCol = Color(20, 255, 20) 
-			ped = exp - pe
-		end 
-		pl, pm, pe = lvl, mon, exp
+		pl, pm, pe = lvl, mon
 	end
 
 	local lvX = 0
 	local monY = 0
-	local xpX = 0
 
 	local helpa = 0
 
@@ -232,6 +235,10 @@ function DarkHUD.Create()
 	local lvYMax = 36 
 	local lvYMin = 0
 
+
+	local hintbox = color_white:Copy()
+	local lvbox = Color(50, 50, 50)
+
 	function f:PrePaint(w,h)
 		local ct = CurTime()
 
@@ -242,17 +249,7 @@ function DarkHUD.Create()
 		end
 
 		if ct - PopupLevel > 0.5 then 
-			lvCol = LC(lvCol, color_white, 15)
-		end
-
-		if ct - PopupEXP < 4 then 
-			xpX = L(xpX, 24, 8, true)
-		else 
-			xpX = L(xpX, -10, 15)
-		end
-
-		if ct - PopupEXP > 0.5 then 
-			xpCol = LC(xpCol, color_white, 15)
+			LC(lvCol, color_white, 15)
 		end
 
 		if ct - PopupMoney < 4 then 
@@ -262,7 +259,7 @@ function DarkHUD.Create()
 		end
 
 		if ct - PopupMoney > 1 then 
-			mCol = LC(mCol, color_white, 15)
+			LC(mCol, color_white, 15)
 		end
 
 		surface.SetDrawColor(255, 255, 255)
@@ -271,12 +268,13 @@ function DarkHUD.Create()
 
 
 			if monY > 2 then 
+
 				local mtxt = Language.Currency .. BaseWars.NumberFormat(LocalPlayer():GetMoney())
 				
 				surface.SetFont("OSB28")
 				local mw, mh = surface.GetTextSize(mtxt)
 				
-				draw.RoundedBox(6, 12, -monY - lvY, mw + 24 + 24, 32, Color(50, 50, 50, 250))
+				draw.RoundedBox(6, 12, -monY - lvY, mw + 24 + 24, 32, boxcol)
 
 				surface.SetDrawColor(255, 255, 255)
 				surface.DrawMaterial("https://i.imgur.com/8b0nZI7.png", "moneybag.png", 20, 4 - monY - lvY, 25, 24)
@@ -321,7 +319,9 @@ function DarkHUD.Create()
 					surface.SetFont("OSB24")
 					local tw, th = surface.GetTextSize(difftxt)
 
-					draw.RoundedBox(4, 48 + 4, -monY - lvY - v.y, tw + 8, th , Color(50, 50, 50, v.a / 1.4))
+					v.boxcol.a = v.a / 1.2
+
+					draw.RoundedBox(4, 48 + 4, -monY - lvY - v.y, tw + 8, th , v.boxcol)
 					draw.SimpleText(difftxt, "OSB24", 48 + 8,  -monY - lvY - v.y, ColorAlpha(v.col, v.a), 0, 5)
 				end
 
@@ -335,10 +335,13 @@ function DarkHUD.Create()
 				surface.SetFont("OSB28")
 				local mw, mh = surface.GetTextSize(lv)
 
-				draw.RoundedBox(6, 12, -lvY, mw + 24 + 24, 32, Color(50, 50, 50, lvY * (255/24)))
+				lvbox.a = lvY * (255/24)
+
+				draw.RoundedBox(6, 12, -lvY, mw + 24 + 24, 32, lvbox)
 
 				surface.SetDrawColor(255, 255, 255)
 				surface.DrawMaterial("https://i.imgur.com/YYXglpb.png", "star.png", 20, 4 - lvY, 24, 24)
+
 				local col = ColorAlpha(lvCol, lvY * (255/24) )
 				draw.SimpleText(lv, "OSB28", 48, -lvY + 16, col, 0, 1)
 			else 
@@ -353,7 +356,10 @@ function DarkHUD.Create()
 			if helpa > 0 then
 				local key = input.LookupBinding("+menu_context") or "UNBOUND"
 				local str = ("Hold [%s] to see your money and level."):format(string.upper(key))
-				draw.SimpleText(str, "OS24", w/2, -8, Color(255, 255, 255, helpa), 1, TEXT_ALIGN_BOTTOM)
+
+				hintbox.a = helpa
+
+				draw.SimpleText(str, "OS24", w/2, -8, Color(255, 255, 255, hintbox), 1, TEXT_ALIGN_BOTTOM)
 			end
 
 		surface.DisableClipping(false)
