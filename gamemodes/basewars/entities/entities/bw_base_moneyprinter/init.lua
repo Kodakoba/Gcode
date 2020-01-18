@@ -34,7 +34,9 @@ function ENT:Init()
     self.Overclocker = false    
     self.Mods = {}
 
-    if self.TTR and self.CurrentValue then self.PrintAmount = math.Round(self.CurrentValue / self.TTR) end
+    if self.TTR and self.CurrentValue then 
+        self.PrintAmount = math.Round(self.CurrentValue / self.TTR) 
+    end
 
     self:SetPrintAmount(self.PrintAmount) 
 
