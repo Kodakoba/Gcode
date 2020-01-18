@@ -4,13 +4,29 @@ BaseWars.PlayerLevel = {}
 local MODULE = BaseWars.PlayerLevel
 
 local startEXP = 10
+
 local reqs = {}
+local moneyreqs = {}
 
 for i=1, 5000 do 
+	--[[
+		calculate EXP to lv i
+	]]
 
-	local diff = math.Clamp(math.Round(math.sqrt(i)), 1, 20)
+	local exp = startEXP + math.min(i*50, i^3)
+	reqs[i] = exp
 
-	reqs[i] = startEXP + math.max(diff * i*10, diff^(i/1000))
+	--[[
+		calculate money to next lv starting from this lv
+	]]
+
+	local div = 300
+	local pad = math.max(20 - i, 0) * 14
+	div = div - pad 
+
+	local money = exp * div / BaseWars.Config.EXPMult
+
+	moneyreqs[i] = money
 end
 
 local prt = {}
@@ -18,7 +34,42 @@ local prt = {}
 for i=1, 20 do 
 	prt[i] = reqs[i]
 end
+
 reqs[5001] = math.huge
+
+BaseWars.LevelXP = reqs 
+
+function GetEXPAtLevel(lv)
+	return reqs[lv]
+end 
+
+function GetMoneyAtLevel(lv)
+
+	local money = 0 
+
+	for i=1, lv do 
+		money = money + moneyreqs[i]
+	end 
+
+	return money
+end 
+
+function MODULE.RegenerateEXPReqs(func)
+	for i=1, 5000 do 
+		local exp = func(i)
+
+		reqs[i] = exp
+
+		local div = 300
+		local pad = math.max(50 - i, 0) * 3
+		div = div - pad 
+
+		local money = exp * div / BaseWars.Config.EXPMult
+
+		moneyreqs[i] = money
+
+	end
+end
 
 local function isPlayer(ply)
 
