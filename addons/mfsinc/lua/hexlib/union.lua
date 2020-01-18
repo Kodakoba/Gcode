@@ -35,7 +35,7 @@ function meta.__index(self, key)
 
 		if args_orig[1] == self then 
 			useself = true 
-			table.remove(args)
+			table.remove(args, 1)
 		end 
 
 		for k,v in pairs(self) do 
