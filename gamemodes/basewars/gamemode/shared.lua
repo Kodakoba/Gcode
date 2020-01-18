@@ -166,34 +166,14 @@ end
 
 BaseWars.IsXmasTime = Deprecated
 
-local DefaultData = {
+function BaseWars.AddToSpawn(t)
 
-	__index = {
-
-		Model = "models/props_c17/FurnitureToilet001a.mdl",
-		Price = 0,
-		ClassName = "prop_physics",
-		ShouldFreeze = true,
-
-	}
-
-}
-
-function BaseWars.GSL(t)
-
-	if t.Drug then
-
-		t.Model = "models/props_junk/PopCan01a.mdl"
-
-	end
-
-	if not t.Limit then
-
-		t.Limit = BaseWars.Config.DefaultLimit
-
-	end
-
-	return setmetatable(t, DefaultData)
+	t.Limit = t.Limit or BaseWars.Config.DefaultLimit
+	t.Price = t.Price or 420
+	t.Model = t.Model or "models/Humans/Group01/Male_Cheaple.mdl"
+	if not t.ClassName then error("look i'd put up with your shit like not setting limits or price but NOT CLASS NAME???") return end 
+	
+	return t
 
 end
 
@@ -204,33 +184,6 @@ BASEWARS_NOTIFICATION_RAID 	= Color(255, 255, 0, 255)
 BASEWARS_NOTIFICATION_GENRL = Color(255, 0, 255, 255)
 BASEWARS_NOTIFICATION_DRUG	= Color(0, 255, 255, 255)
 
-function BaseWars.PrinterCheck(ply)
-
-	local Ents = ents.GetAll()
-
-	local Raids = 0
-	for k, v in next, Ents do
-
-		if not IsValid(v) or not v.CPPIGetOwner then continue end
-
-		local Owner = v:CPPIGetOwner()
-		if not IsPlayer(Owner) or Owner ~= ply then continue end
-
-		local Raidable = v.IsValidRaidable
-
-		if Raidable then Raids = Raids + 1 end
-
-	end
-
-	if Raids >= BaseWars.Config.Raid.NeededPrinters then return true end
-
-	return false, Language.NoPrinters 
-end
-
-BaseWars.PrinterCheck = Deprecated
-
-hook.Add("PlayerIsRaidable", "BaseWars.Raidability.PrinterCheck", BaseWars.PrinterCheck)
-
 local tag = "BaseWars.UTIL"
 
 BaseWars.UTIL = {}
@@ -238,32 +191,6 @@ BaseWars.UTIL = {}
 local colorRed 		= Color(255, 0, 0)
 local colorBlue 	= Color(0, 0, 255)
 local colorWhite 	= Color(255, 255, 255)
-
-function BaseWars.UTIL.Log(...)
-	if !BaseWars.Config.LogShit then return end
-	MsgC(SERVER and colorRed or colorBlue, "[BaseWars] ", colorWhite, ..., "\n")
-	MsgN("")
-end
-
-BaseWars.UTIL.Log = Deprecated
-
-function BaseWars.UTIL.TimerAdv(name, spacing, reps, tickf, endf)
-
-	timer.Create(name, spacing * reps, 1, endf)
-	timer.Create(name .. ".Tick", spacing, reps, tickf)
-
-end
-
-BaseWars.UTIL.TimerAdv = Deprecated
-
-function BaseWars.UTIL.TimerAdvDestroy(name)
-
-	timer.Destroy(name)
-	timer.Destroy(name .. ".Tick")
-
-end
-
-BaseWars.UTIL.TimerAdvDestroy = Deprecated
 
 local function Pay(ply, amt, name, own)
 
