@@ -354,6 +354,12 @@ local red	= Color(200, 0, 20, 180)
 
 local shade = Color(0, 0, 0, 200)
 
+local blueEnough = Color(80, 110, 220, 180)
+local greenEnough = Color(120, 200, 120, 200)
+local lvlLocked = Color(80, 80, 80, 220)
+local notEnough = Color(200, 100, 100)
+
+
 local SpawnList = BaseWars.SpawnList
 
 if not SpawnList then return end
@@ -459,14 +465,27 @@ local function MakeTab(type)
 				p:Popup(false)
 			end
 
+			-- https://i.imgur.com/CNRTtIj.png
+
+			local frcol = Color(0, 0, 0)
+			local set = false
 			function fr:PrePaint()
-				local enuff = ((LocalPlayer():GetMoney() >= money) and (LocalPlayer():GetLevel() >= level)) or false
-				local wayenuff = (enuff and LocalPlayer():GetMoney() >= money*50)
 
-				local col = (wayenuff and {80, 110, 220, 180}) or (enuff and {120, 200, 120, 200}) or {200, 100, 100}
+				local haslv = LocalPlayer():GetLevel() >= level
 
-				self:SetColor(unpack(col))
-				self.borderColor = LC(self.borderColor, Color(80, 80, 80), 5)
+				local enuff = LocalPlayer():GetMoney() >= money
+				local wayenuff = enuff and LocalPlayer():GetMoney() >= money*50
+
+				local col = (not haslv and lvlLocked) or (wayenuff and blueEnough) or (enuff and greenEnough) or notEnough
+
+				if not set then 
+					frcol:Set(col)
+				else 
+					LC(frcol, col)
+				end
+				
+
+				self:SetColor(frcol.r, frcol.g, frcol.b, frcol.a)
 
 				local mcol = (LocalPlayer():GetMoney() >= money and Color(100, 220, 100)) or Color(240, 70, 70)
 				local lvcol = (LocalPlayer():GetLevel() >= level and Color(100, 130, 250)) or Color(240, 70, 70)
