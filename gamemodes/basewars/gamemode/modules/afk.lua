@@ -119,7 +119,8 @@ local ta = 0
 local gone = 0
 local back = 0
 
-local col = trans 
+local col = (CLIENT and trans:Copy())
+
 local time = 0
 
 function MODULE.Paint()
@@ -135,30 +136,36 @@ function MODULE.Paint()
 		end 
 
 		if CurTime() - back < 1.5 then 
-			col = LC(col, green, 30)
-		else
-			
+			LC(col, green)
+		elseif ta > 1 then
+
 			ta = L(ta, 0, 20)
+
 			if ta<=1 then 
 				back = 0 
-				col = trans
+				col:Set(trans)
 			end 
 		end
 
 	else
+
 		gone = CurTime()
 		time = ply:AFKTime()
 		ta = L(ta, 255, 3)
+
 	end
 
 	local AFKTime = string.TimeParse(time)
 	local str = "You have been AFK for"
 	
-	draw.SimpleText(str, "AFKTimeBlur", ScrW()/2+1, ScrH()/4+1, ColorAlpha(shade, ta), 1, 1)
-	draw.SimpleText(str, "AFKTime", ScrW()/2, ScrH()/4, ColorAlpha(col, ta), 1, 1)
+	shade.a = ta
+	col.a = ta 
 
-	draw.SimpleText(AFKTime, "AFKTimeBlur", ScrW()/2+1, ScrH()/4+53, ColorAlpha(shade, ta), 1, 1)
-	draw.SimpleText(AFKTime, "AFKTime", ScrW()/2, ScrH()/4+52, ColorAlpha(col, ta), 1, 1)
+	draw.SimpleText(str, "AFKTimeBlur", ScrW()/2+1, ScrH()/4+1, shade, 1, 1)
+	draw.SimpleText(str, "AFKTime", ScrW()/2, ScrH()/4, col, 1, 1)
+
+	draw.SimpleText(AFKTime, "AFKTimeBlur", ScrW()/2+1, ScrH()/4+53, shade, 1, 1)
+	draw.SimpleText(AFKTime, "AFKTime", ScrW()/2, ScrH()/4+52, col, 1, 1)
 
 end
 hook.Add("HUDPaint", "PaintAFK", MODULE.Paint)
