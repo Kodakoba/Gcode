@@ -1,37 +1,6 @@
 --it's so fuckin' big
 local fontName = "BaseWars.MoneyPrinter"
 
-local families = {
-    ["Roboto"] = "R",
-    ["Roboto Light"] = "RL",
-
-    ["Titillium Web"] = "TW",
-    ["Titillium Web SemiBold"] = "TWB",
-
-    ["Open Sans"] = "OS",
-    ["Open Sans SemiBold"] = "OSB",
-    ["Open Sans Light"] = "OSL",
-
-    ["Arial"] = "A",
-    ["Helvetica"] = "HL",
-    ["Montserrat"] = "MR"
-}
-
-FontFamilies = families
-local sizes = {12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 64, 72, 128}
-
-for k,v in pairs(families) do 
-
-    for _, size in pairs(sizes) do
-        surface.CreateFont(v .. size, {
-            font = k,
-            size = size,
-            weight = 400,
-        })
-    end
-
-end
-
 surface.CreateFont(fontName, {
 
         font = "Roboto",
