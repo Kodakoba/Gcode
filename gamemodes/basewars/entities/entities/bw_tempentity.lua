@@ -1,6 +1,6 @@
---  This addon needs FPP plugin (falcos prop protection)
-easylua.StartEntity("bw_bank_update")
-local fontName = "BaseWars.MoneyPrinter"
+
+easylua.StartEntity("bw_blueprint_maker")
+
 ENT.Base = "bw_base_electronics"
 
 ENT.Model = "models/props_vtmb/safe.mdl" --Model.

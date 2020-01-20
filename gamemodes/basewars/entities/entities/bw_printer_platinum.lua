@@ -12,7 +12,7 @@ ENT.PrintName = "Platinum Printer"
 ENT.FontColor = Color(229, 228, 226)
 ENT.BackColor = Color(79, 78, 76)
 
-ENT.TTR = 300
+ENT.TTR = 240
 
 ENT.IsValidRaidable = true
 

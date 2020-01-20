@@ -1,34 +1,12 @@
 hook.Add("BaseWars_PlayerBuyEntity", "XPRewards", function(ply, ent)
-	print('hi', ply, ent)
-	if ply:GetLevel() > 20 then return end
-
-	local isent = IsValid(ent)
-	if not isent then return end
-
-	local class = ent:GetClass()
-
-	if class:match("bw_printer_") or class == "bw_base_moneyprinter" then
-
-		local lvl = (ent.CurrentValue or 1000) / 1000
-		ply:AddXP(25 * lvl)	--there are clever ways
-
-	elseif class:match("bw_gen_") and not class:match("bw_gen_manual") then
-
-		ply:AddXP(125)	--this one particularly
-
-	elseif class == "bw_printerpaper" then
-
-		ply:AddXP(25)
-
-	end
 
 end)
 
 hook.Add("BaseWars_PlayerEmptyPrinter", "XPRewards", function(ply, ent, money)
 	local mult = 1
 
-	local div = 175
-	local pad = math.max(50 - ply:GetLevel(), 5) * 3
+	local div = 300
+	local pad = math.max(50 - ply:GetLevel(), 0) * 3
 	div = math.max(div - pad, 1)
 	local xp = (money / div)
 
@@ -39,14 +17,9 @@ hook.Add("BaseWars_PlayerEmptyPrinter", "XPRewards", function(ply, ent, money)
 		end
 	end
 
-	ply:AddXP(math.max(0, (money/300) * BaseWars.Config.EXPMult * mult ))
+	ply:AddXP(math.max(0, (money/div) * BaseWars.Config.EXPMult * mult ))
 
 end)
-
-timer.Create("BaseWars_KarmaRecover", 5 * 60, 0, function()
-
-end)
-
 
 util.AddNetworkString("StartConnect")
 

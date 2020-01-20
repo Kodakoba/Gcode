@@ -12,6 +12,6 @@ ENT.PrintName = "Copper Printer"
 ENT.FontColor = Color(200, 117, 51)
 ENT.BackColor = color_black
 
-ENT.TTR = 180
+ENT.TTR = 100
 
 ENT.IsValidRaidable = false

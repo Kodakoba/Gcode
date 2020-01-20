@@ -12,7 +12,7 @@ ENT.PrintName = "Nuclear Printer"
 ENT.FontColor = Color(0, 255, 0)
 ENT.BackColor = color_black
 
-ENT.TTR = 420 --lmfao blaze it xdDDDDDDDDDDDDD
+ENT.TTR = 400
 
 ENT.IsValidRaidable = true
 

@@ -67,10 +67,9 @@ hook.Add("PlayerDisconnected", "SaveOwners", function(ply)
 end)
 
 hook.Add("CPPIAssignOwnership", "BWRecalculateOwner", function(ply, ent)
-	if not IsValid(ply) then print("Attempted to re-assign ownership to invalid player from", ply, "for", ent) return end 
-	if not BWEnts[ent] or not ent.CPPIOwner then print("not a bw ent") return end 	--not a bw ent or owner not assigned yet
+	if not IsValid(ply) then return end 
+	if not BWEnts[ent] or not ent.CPPIOwner then return end 	--not a bw ent or owner not assigned yet
 
-	print("recalculating")
 
 	local prev = ent:CPPIGetOwner()
 
@@ -85,7 +84,7 @@ hook.Add("CPPIAssignOwnership", "BWRecalculateOwner", function(ply, ent)
 
 	if IsPlayer(ply) then
 		local t = BWOwners[ply] 
-		if not t then print("what", ply, ent, prev) return end 
+		if not t then return end 
 		t:add(ent) 
 	end
 

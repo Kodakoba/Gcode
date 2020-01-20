@@ -396,8 +396,8 @@ AddLoadout("Pistols", "cw_g4p_mp412_rex", "MP412", 50*k, 25, "models/weapons/w_p
 
 ----
 
-AddLoadout("SMGs", "cw_mac11", "MAC-11", 50*k, 30, "")
-AddLoadout("SMGs", "cw_mp5", "HK MP5", 75*k, 35, "")
+AddLoadout("SMGs", "cw_mac11", "MAC-11", 50*k, 30, "models/weapons/w_smg_p90.mdl")
+AddLoadout("SMGs", "cw_mp5", "HK MP5", 75*k, 35, "models/weapons/w_smg_p90.mdl")
 
 ----
 

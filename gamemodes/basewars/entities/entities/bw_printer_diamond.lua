@@ -12,7 +12,7 @@ ENT.PrintName = "Diamond Printer"
 ENT.FontColor = Color(185, 242, 255)
 ENT.BackColor = Color(69, 68, 96)
 
-ENT.TTR = 350
+ENT.TTR = 300
 
 ENT.IsValidRaidable = true
 

@@ -12,7 +12,7 @@ ENT.PrintName = "Gold Printer"
 ENT.FontColor = Color(204, 153, 0)
 ENT.BackColor = color_black
 
-ENT.TTR = 240
+ENT.TTR = 180
 
 ENT.IsValidRaidable = true
 

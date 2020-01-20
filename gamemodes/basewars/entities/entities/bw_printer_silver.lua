@@ -12,7 +12,7 @@ ENT.PrintName = "Silver Printer"
 
 ENT.FontColor = Color(180, 180, 195)
 ENT.BackColor = Color(32, 32, 32)
-ENT.TTR = 210
+ENT.TTR = 110
 ENT.IsValidRaidable = false
 
 ENT.PresetMaxHealth = 150
