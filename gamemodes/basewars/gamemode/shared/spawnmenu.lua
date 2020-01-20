@@ -47,7 +47,7 @@ end
 
 if SERVER then
 
-	function BWSpawn(ply, cat, subcat, item)
+	function BWSpawn(ply, cat, subcat, num)
 
 		if ply.IsBanned and ply:IsBanned() then return end
 
@@ -67,10 +67,13 @@ if SERVER then
 
 		if not i then return end
 
-		i = i[item]
+		num = tonumber(num)
+
+		i = i[num]
 
 		if not i then return end
 
+		local item = i.Name
 		local model, price, ent, sf, lim, vip, trust = i.Model, i.Price, i.ClassName, i.UseSpawnFunc, i.Limit, i.vip, i.trust
 		local gun, drug, raidpurchase = i.Gun, i.Drug, i.Raid
 
@@ -399,16 +402,29 @@ local function MakeTab(type)
 
 
 		local topair = {}
+
 		for k,v in pairs(subT) do 
-			v.Name = k
+			v.Key = k
 			topair[#topair + 1] = v 
 		end
 
 		table.sort(topair, function(a, b)
-			return a.Price < b.Price
+			local ret = false
+
+			local lv = a.Level < b.Level 
+
+			if not lv and a.Level == b.Level then 
+				ret = a.Price < b.Price 
+			else 
+				ret = lv 
+			end
+
+			return ret
 		end)
 
-		for _, tab in ipairs(topair) do
+		--creating item buttons
+
+		for id, tab in ipairs(topair) do
 
 
 			local model = tab.Model
@@ -417,7 +433,7 @@ local function MakeTab(type)
             local tooltip = tab.Tooltip or ""
             local vip = tab.vip 
             local trust = tab.trust
-            local name = tab.Name 
+            local name = tab.Name or tostring(v.Key)
 
             if tooltip~="" then tooltip="\n" .. tooltip end
 			if tab.Gun and (not level or level < BaseWars.Config.LevelSettings.BuyWeapons) then level = BaseWars.Config.LevelSettings.BuyWeapons end
@@ -425,18 +441,23 @@ local function MakeTab(type)
 			if not IsValid(iLayout) then return end
 
 			local fr = iLayout:Add("FButton")
+
 			fr:SetSize(80, 80)
-			--fr:ShowCloseButton(false)
-			--fr:SetDraggable(false)
 			fr:SetText("")
+
 			fr.Border = {w=2, h=2}
-			fr.borderColor = Color(80, 80, 80)
+
+			fr.borderColor = Colors.LighterGray:Copy()
+
 			fr:SetDoubleClickingEnabled(false)
 			local fw, fh = 80, 80
 
 			local p = vgui.Create("Cloud", fr)
+			p.MaxW = 256
+
 			p:SetLabel(name)
 			p:SetPos(40, 1)
+
 			tohide[#tohide+1] = p
 			p:SetAbsPos(0, -16)
 			p.key = #tohide
@@ -444,7 +465,7 @@ local function MakeTab(type)
 			local mcol = (LocalPlayer():GetMoney() >= money and Color(100, 220, 100)) or Color(240, 70, 70)
 			local lvcol = (LocalPlayer():GetLevel() >= level and Color(100, 130, 250)) or Color(240, 70, 70)
 
-			p:AddSeperator(nil, 8, 4)
+			--p:AddSeperator(nil, 8, 4)
 
 			local mstr = Language.Currency .. BaseWars.NumberFormat(money)
 
@@ -492,7 +513,7 @@ local function MakeTab(type)
 
 				p.DoneText[1].Color = LC(p.DoneText[1].Color, mcol, 15) 
 				p.DoneText[2].Color = LC(p.DoneText[2].Color, lvcol, 15) 
-
+				LC(fr.borderColor, Colors.LighterGray, 5)
 			end
 
 			local ty = 0
@@ -503,7 +524,10 @@ local function MakeTab(type)
 				else 
 					ty = L(ty, -32, 15)
 				end
+				
 				local name = tab.ShortName or name 
+
+				if not isstring(name) then name = "no_str" .. (tostring(name)) end
 				local len = utf8.len(name)
 
 				if len >= 12 then 
@@ -522,7 +546,7 @@ local function MakeTab(type)
 
 			local function Clicc()
 
-				fr.borderColor = Color(255, 255, 255)
+				fr.borderColor:Set(color_white)
 
 				local HasLevel = not level or LocalPlayer():HasLevel(level)
 				if not HasLevel then
@@ -535,11 +559,9 @@ local function MakeTab(type)
 
 				surface.PlaySound("ui/buttonclickrelease.wav")
 
-				local a1, a2, a3 = type, catName, name
-
 				local function DoIt()
 
-					RunConsoleCommand("basewars_spawn", type, catName, name)
+					RunConsoleCommand("basewars_spawn", type, catName, tab.Key)
 
 				end
 

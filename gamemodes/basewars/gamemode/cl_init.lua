@@ -13,6 +13,8 @@ function GM:GetGameDescription()
 end
 ScoreBoard = ScoreBoard or nil
 
+IncludeModules()
+
 surface.CreateFont("SB_TeamName", {
         font = "Roboto",
         size = 48,

@@ -169,8 +169,13 @@ BaseWars.IsXmasTime = Deprecated
 function BaseWars.AddToSpawn(t)
 
 	t.Limit = t.Limit or BaseWars.Config.DefaultLimit
+	
 	t.Price = t.Price or 420
+	t.Level = t.Level or 0 
+
 	t.Model = t.Model or "models/Humans/Group01/Male_Cheaple.mdl"
+	t.ShouldFreeze = (t.Gun and false) or (t.ShouldFreeze == nil and true) or t.ShouldFreeze
+	t.Name = t.Name or "???"
 	if not t.ClassName then error("look i'd put up with your shit like not setting limits or price but NOT CLASS NAME???") return end 
 	
 	return t
