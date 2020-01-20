@@ -126,6 +126,28 @@ function draw.DrawLoading(pnl, x, y, w, h)
 	render.PopFilterMag()
 end
 
+--eclipse gave me this V
+
+function draw.DrawSine(x, y, height, length, speed, frequency)
+    local time = CurTime()
+
+    local y1 = y
+
+    frequency = frequency or 20
+
+    for x=x, x+length do
+        local y = math.sin((x + time * speed) / frequency or 20) * height / 2 + y
+        local lastX = x - 5
+        local lastY = math.sin((lastX + time * speed) / frequency) * height / 2 + y1
+        
+        surface.DrawLine(lastX, lastY, x, y)
+        
+    end
+    
+end
+
+--eclipse gave me this ^
+
 function draw.DrawCircle(x, y, rad, seg, perc, reverse, matsize)
 	local circ = {}
 

@@ -70,10 +70,49 @@ end
 
 IncludeFolder("*", _CL)
 
---[[-------------------------------------------------------------------------
--- 	FCategoryPanel (not finished)
----------------------------------------------------------------------------]]
-local FCP = {}
-function FCP:Init()
+if CLIENT then 
+
+	local families = {
+	    ["Roboto"] = "R",
+	    ["Roboto Light"] = "RL",
+
+	    ["Titillium Web"] = "TW",
+	    ["Titillium Web SemiBold"] = "TWB",
+
+	    ["Open Sans"] = "OS",
+	    ["Open Sans SemiBold"] = "OSB",
+	    ["Open Sans Light"] = "OSL",
+
+	    ["Arial"] = "A",
+	    ["Helvetica"] = "HL",
+
+	    ["Montserrat"] = "MR",
+	    ["Monsterrat Medium"] = "MRM",
+	    ["Monsterrat Bold"] = "MRB",
+	    ["Monsterrat SemiBold"] = "MRSB",
+
+	    ["SnareDrum Zero NBP"] = "SDZ",
+	    ["SnareDrum Two NBP"] = "SDT",
+
+	    ["BreezeSans"] = "BS",
+	    ["BreezeSans Medium"] = "BSSB",
+	    ["BreezeSans Light"] = "BSL",
+	    ["BreezeSans Bold"] = "BSB",
+	}
+
+	FontFamilies = families
+	local sizes = {12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 64, 72, 128}
+
+	for k,v in pairs(families) do 
+
+	    for _, size in pairs(sizes) do
+	        surface.CreateFont(v .. size, {
+	            font = k,
+	            size = size,
+	            weight = 400,
+	        })
+	    end
+
+	end
 
 end
