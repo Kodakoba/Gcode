@@ -10,6 +10,7 @@ ENTITY = FindMetaTable("Entity")
 PANEL = FindMetaTable("Panel")
 WEAPON = FindMetaTable("Weapon")
 
+HexLib = true
 
 HEX = {
 	VERSION	= "HX002",
@@ -56,7 +57,7 @@ MsgC(
 	HEX.GREEN,	"Ready\n"
 )
 
-
+hook.Run("HexlibLoaded")
 
 
 
