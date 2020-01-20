@@ -1,19 +1,32 @@
 ENT.Base = "base_brush"
 ENT.Type = "brush"
 
-Partizones = Partizones or {}
-
 function ENT:Initialize()
 	self:SetSolid(SOLID_BBOX)
 	self.Created = CurTime()
 
 	Partizones[#Partizones+1] = self
 
+	self:ReloadDummy()
+
+	if self.Partizone.OnSpawn then self.Partizone.OnSpawn(self) end
+
+end
+
+function ENT:ReloadDummy()
+	if IsValid(self.Dummy) then self.Dummy:Remove() end 
+
 	local d = ents.Create("partizone_dummy")
+
 	d.ZoneName = self.ZoneName
 	d:Spawn()
 
+	d:SetPos(self:GetPos())
+
+	d:SetParent(self)
+
 	self.Dummy = d
+
 
 end
 
@@ -24,20 +37,25 @@ end
 
 function ENT:SetBrushBounds(p1, p2)
 	if not isvector(p1) or not isvector(p2) then error('Trying to set an invalid brush vector!') return end 
+
 	self:SetCollisionBoundsWS(p1, p2)
+
 	self.P1 = p1 
 	self.P2 = p2
 
-	if PartizonePoints[self.ZoneName].OnSpawn then PartizonePoints[self.ZoneName].OnSpawn(self) end
-
 	local mid = (p1 + p2) / 2
+
+	self:SetPos(mid)
 
 	local d = self.Dummy
 	if not IsValid(d) then return end 
 
 	d:SetPos(mid)
+
 	d.P1 = p1 
 	d.P2 = p2 
+
+
 end
 
 --[[---------------------------------------------------------
@@ -46,7 +64,8 @@ end
 function ENT:StartTouch(ent)
 	if not self:CheckCoolDown() then return end 
 
-	if self.StartTouchFunc then self:StartTouchFunc(ent) end
+	local me = self.Partizone
+	if me.StartTouchFunc then me.StartTouchFunc(self, ent) end
 
 end
 
@@ -56,7 +75,8 @@ end
 function ENT:EndTouch(ent)
 	if not self:CheckCoolDown() then return end 
 
-	if self.EndTouchFunc then self:EndTouchFunc(ent) end
+	local me = self.Partizone
+	if me.EndTouchFunc then me.EndTouchFunc(self, ent) end
 
 end
 
@@ -66,7 +86,48 @@ end
 function ENT:Touch(ent)
 	if not self:CheckCoolDown() then return end 
 
-	if self.TouchFunc then self:TouchFunc(ent) end
+	local me = self.Partizone
+	if me.TouchFunc then me.TouchFunc(self, ent) end
+end
+
+function AddPartizone(tab)
+	if not tab.IsPartizone then error("AddPartizone attempted to add a non-partizone object!") return end 
+	local name = tab.Name 
+	
+	if not IsValid(Partizones[name]) then
+		local me = ents.Create("partizone_brush")
+
+		me.ZoneName = name
+
+		me.TouchFunc = tab.TouchFunc 
+		me.EndTouchFunc = tab.EndTouchFunc 
+		me.StartTouchFunc = tab.StartTouchFunc 
+
+		me.Partizone = tab 
+
+		Partizones[me.ZoneName] = me
+
+		me:Spawn()
+
+		me:SetBrushBounds(tab[1], tab[2])
+
+	else 
+
+		local me = Partizones[name]
+
+		me:SetBrushBounds(tab[1], tab[2])
+
+		me.TouchFunc = tab.TouchFunc 
+		me.EndTouchFunc = tab.EndTouchFunc 
+		me.StartTouchFunc = tab.StartTouchFunc
+
+		me:ReloadDummy()
+
+		me.Partizone = tab 
+
+	end
+
+
 end
 
 function ReloadPartizones()
@@ -87,15 +148,20 @@ function ReloadPartizones()
 
 	for k,v in pairs(PartizonePoints) do 
 		local me = ents.Create("partizone_brush")
-		me.ZoneName = k
-		me:Spawn()
 
-		me:SetBrushBounds(v[1], v[2])
+		me.ZoneName = k
+
 		me.TouchFunc = v.TouchFunc 
 		me.EndTouchFunc = v.EndTouchFunc 
 		me.StartTouchFunc = v.StartTouchFunc 
 
+		me.Partizone = v 
+
 		Partizones[me.ZoneName] = me
+
+		me:Spawn()
+
+		me:SetBrushBounds(v[1], v[2])
 	end
 end
 

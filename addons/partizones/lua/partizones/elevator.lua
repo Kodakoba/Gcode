@@ -1,11 +1,10 @@
-local zone = {}
+local zone = Partizone("elevator")
 
 
-zone[1] = Vector(-7275.4965820313, -9253.8486328125, 60)
-zone[2] = Vector (-7104.03125, -9434.9052734375, 2745)
+zone:SetBounds(Vector(-7275.4965820313, -9253.8486328125, 60), Vector (-7104.03125, -9434.9052734375, 2745))
 
 zone.OnSpawn = function(self)
-	local p1, p2 = self.P1, self.P2
+	local p1, p2 = zone:GetBounds()
 
 	for k,v in pairs(ents.FindInBox(p1,p2)) do 
 
@@ -45,4 +44,4 @@ zone.EndTouchFunc = function(self, ent)
 
 end
 
-PartizonePoints.Elevator = zone 
+AddPartizone(zone)

@@ -1,7 +1,4 @@
 
-
-
-local ip = function(ent) return IsValid(ent) and ent:IsPlayer() end
 if SERVER then
 	util.AddNetworkString("Partizone")
 	util.AddNetworkString("NoBasingDumbass")
@@ -109,6 +106,7 @@ PartizoneMusic = {
 	}
 }
 
+
 local function ParentZone(name, vec1, vec2)
 	local tbl = istable(PartizonePoints[name]) and table.Copy(PartizonePoints[name])
 	if not tbl then error('cant parent to ' .. name) return end 
@@ -117,24 +115,109 @@ local function ParentZone(name, vec1, vec2)
 	return tbl
 end
 
-
-PartizonePoints = PartizonePoints or {}
-
-IncludeLuaFolder("*.lua", _SH)
-IncludeLuaFolder("server/*.lua", _SV)
-IncludeLuaFolder("client/*.lua", _CL)
-
-for k,v in pairs(PartizonePoints) do 
-	OrderVectors(v[1], v[2])
+if CLIENT then 
+	AddPartizone = function() end 
 end
 
+PartizonePoints = PartizonePoints or {}
+Partizones = Partizones or {}
+
+local function HexLibLoaded( ... )
+
+	Partizone = Object:extend()
+	PartizoneMethods = Partizone.Meta
+
+	getmetatable(Partizone).__call = Partizone.new
+
+	PartizoneMethods.initialize = function(self, name, pos1, pos2)
+	    self.IsPartizone = true
+
+	    self[1] = pos1
+	    self[2] = pos2
+
+	    self.Name = name 
+
+	    PartizonePoints[name] = self
+	end
+
+	PartizoneMethods.SetBounds = function(self, pos1, pos2)
+		self[1] = pos1
+		self[2] = pos2
+
+		local ent = Partizones[self.Name]
+
+		if IsValid(ent) then 
+			ent:SetBrushBounds(pos1, pos2)
+		end 
+
+		return self
+	end
+
+	function PartizoneMethods:GetBounds()
+		return self[1], self[2]
+	end
+
+	function PartizoneMethods:GetEntity()
+		return Partizones[self.Name]
+	end
+
+	PartizoneMethods.SetOnSpawn = function(self, func)
+	    self.OnSpawn = func
+	    return self
+	end
+
+	PartizoneMethods.SetStartTouchFunc = function(self, func)
+	    self.StartTouchFunc = func
+	    return self
+	end
+
+	PartizoneMethods.SetEndTouchFunc = function(self, func)
+	    self.EndTouchFunc = func
+	    return self
+	end
+
+	PartizoneMethods.SetTouchFunc = function(self, func)
+	    self.Touch = func
+	    return self
+	end
+
+	function PartizoneMethods:Inherit(name)
+		local t = Partizone(name)
+
+		for k,v in pairs(self) do 
+			t[k] = v 
+		end
+		t.Name = name
+		return t
+	end
+
+	IncludeLuaFolder("*.lua", _SH)
+	IncludeLuaFolder("server/*.lua", _SV)
+	IncludeLuaFolder("client/*.lua", _CL)
+
+
+	for k,v in pairs(PartizonePoints) do 
+		OrderVectors(v[1], v[2])
+	end
+
+	hook.Run("PartizoneLoad")
+
+end
+
+if HexLib then 
+	HexLibLoaded()
+else 
+	hook.Add("HexlibLoaded", "Partizones", HexLibLoaded)
+end
 
 if SERVER then
 
 	hook.Add("InitPostEntity", "Parti", function()
 		ReloadPartizones()
 	end)
+
 	if CurTime() > 20 then 
 		ReloadPartizones()
 	end
+
 end

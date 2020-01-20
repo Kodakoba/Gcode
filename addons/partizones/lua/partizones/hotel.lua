@@ -1,8 +1,6 @@
-local zone = {}
+local zone = Partizone("hotel")
+
 local ip = IsPlayer
-
-
-
 
 local inhotel = {}	--holds players and amt of hotel zones they're touching
 
@@ -22,13 +20,11 @@ local function owner(ent)
 	return ip(ow) and ow
 end
 
-zone[1] = Vector(-5450.03125, -4352.2109375, 64.359680175781)
-zone[2] = Vector(-3657.7392578125, -5111.96875, 450.96875)
+zone:SetBounds(Vector(-5450.03125, -4352.2109375, 64.359680175781), Vector(-3657.7392578125, -5111.96875, 450.96875))
 
+zone:SetOnSpawn(function(self)
 
-
-zone.OnSpawn = function(self)
-	local p1, p2 = self.P1, self.P2
+	local p1, p2 = zone:GetBounds()
 
 	for k,v in pairs(ents.FindInBox(p1,p2)) do 
 
@@ -38,25 +34,21 @@ zone.OnSpawn = function(self)
 
 	end
 
+end)
 
-end
-
-zone.StartTouchFunc = function(self, ent)	--Started touch
+zone:SetStartTouchFunc(function(self, ent)	--Started touch
 
 	if not ip(ent) then 
-		print(ent, "not player")
+
 		local ow = owner(ent)
 		if not ow then return end
-		print(ent, "has owner")
+
 
 		local t = bwents[ow] or ValidSeqIterable()
 
-		if not BWEnts[ent] then print("not a bw ent") return end 
+		if not BWEnts[ent] then return end 
 
 		t:clean()
-
-		print(#t, "ents in hotel")
-
 		if #t == 0 then 	--0 because we haven't added the entity yet; not >= because we don't want to disable multiple times
 			ow:ChatPrint("Disabling music in area... ")
 			net.Start("Partizone")
@@ -70,7 +62,7 @@ zone.StartTouchFunc = function(self, ent)	--Started touch
 		bwents[ow] = t
 		return
 	end 
-	print(ent, "player")
+
 	--entity entered is a player
 
 
@@ -82,7 +74,6 @@ zone.StartTouchFunc = function(self, ent)	--Started touch
 	inhotel[ply] = info
 
 	if bwents[ply] then 
-		print(#bwents[ply], "uh oh?")
 		-- check validity of entities
 		-- if any of them are still here, bail
 
@@ -95,10 +86,10 @@ zone.StartTouchFunc = function(self, ent)	--Started touch
 		net.WriteBool(true)
 		net.WriteUInt(1, 8)
 	net.Send(ply)
-end
+end)
 
 
-zone.EndTouchFunc = function(self, ent)
+zone:SetEndTouchFunc(function(self, ent)
 
 	if not ip(ent) then 
 
@@ -152,7 +143,7 @@ zone.EndTouchFunc = function(self, ent)
 		end
 
 	end)
-end
+end)
 
-PartizonePoints.Hotel = zone 
 
+AddPartizone(zone)

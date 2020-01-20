@@ -9,33 +9,24 @@ ENT.RenderGroup = RENDERGROUP_TRANSLUCENT
 
 PZVolume = PZVolume or 1
 
-local function LC(col, dest, vel)
-	local v = 10
-	if not IsColor(col) or not IsColor(dest) then return end
-	if isnumber(vel) then v = vel end
-	local r = Lerp(FrameTime()*v, col.r, dest.r)
-	local g = Lerp(FrameTime()*v, col.g, dest.g)
-	local b = Lerp(FrameTime()*v, col.b, dest.b)
-	local a = Lerp(FrameTime()*v, col.a or 255, dest.a or 255)
-	return Color(r,g,b,a)
-end
-
-local function L(s,d,v)
-	if not v then v = 5 end
-	if not s then s = 0 end
-	return Lerp(FrameTime()*v, s, d)
-end
-
 function ENT:Initialize()
+	local name = self:GetZoneName()
+
+	if not PartizonePoints[name] then 	--wait until proper lua scripts are executed
+		hook.Add("PartizoneLoad", self, self.Initialize)
+		return
+	end
+
+	hook.Remove("PartizoneLoad", self)
+
 
 	self:SetModel(self.Model)
-	local name = self:GetZoneName()
+	
 	local pos = PartizonePoints[name]
 
 	self:SetRenderBoundsWS(pos[1], pos[2], Vector(2,2,2))
 
-	self.min = pos[1]
-	self.max = pos[2]
+	self.Partizone = PartizonePoints[name]
 
 	self.BoxCol = Color(25,225,25,0)
 end
@@ -45,16 +36,20 @@ local ba = 0
 
 local drawDist = 2048
 function ENT:Draw()		--shhhh sneaky workaround
+
 	local pos = self:GetPos()
 
-	local min = self.min
-	local max = self.max
+	local pz = self.Partizone
+	if not pz then return end 
+
+	local min = pz[1]
+	local max = pz[2]
 
 	local mepos = EyePos()
 
 	local bmin = min - pos
 	local bmax = max - pos
-
+	OrderVectors(bmin, bmax)
 
 	local rbmin, rbmax = self:GetRenderBounds()
 
@@ -141,6 +136,7 @@ hook.Add("Think", "PartizoneStreams", function()
 		local str = v.str
 		local id = v.ID
 		local info = PartizoneMusic[id]
+		if not info then continue end 
 
 		if IsValid(str) and info.think then 
 
