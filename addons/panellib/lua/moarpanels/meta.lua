@@ -57,7 +57,6 @@ function META:SpringIn(accel, dist, x, y, len, ease, func)
 	if x==-1 then x = self.X end 
 	if y==-1 then y = self.Y end
 	
-									--easeOutElastic: function (t) { return .04 * t / (--t) * Math.sin(25 * t) },
 	local px, py = self.X, self.Y
 	local dx, dy = px - x, py - y
 
@@ -123,50 +122,35 @@ end
 
 Animations = {}
 
+local latest = 0
 anims = {}
 
 
 
 animmeta = {}
 
-local function AnimationThink(self, ab)
-
-	local systime = SysTime()
-	if self.Finished then return false end 
-	
-	if ( systime >= self.StartTime ) then
-
-		local Fraction = math.TimeFraction( self.StartTime, self.EndTime, systime )
-		Fraction = math.Clamp( Fraction, 0, 1 )
-
-		if ( self.Think ) then
-
-			local Frac = Fraction ^ self.Ease
-
-			-- Ease of -1 == ease in out
-			if ( self.Ease < 0 ) then
-				Frac = Fraction ^ ( 1.0 - ( ( Fraction - 0.5 ) ) )
-			elseif ( self.Ease > 0 && self.Ease < 1 ) then
-				Frac = 1 - ( ( 1 - Fraction ) ^ ( 1 / self.Ease ) )
-			end
-
-			self.Animate( Frac )
-		end
-
-		if ( Fraction == 1 ) then
-
-			if ( self.OnEnd ) then self:OnEnd( self ) end
-
-			anims[k] = nil  
-			self.Finished = true
-
-		end
-
-	end
-
+function animmeta:Stop()
+	anims[self.AnimIndex] = nil
+	self.Finished = true
 end
 
-animmeta.Think = AnimationThink 
+function animmeta:Swap(len, del, ease, cb)
+
+	del = del or self.Delay 
+	len = len or self.Length 
+
+	self.EndTime = SysTime() + del + len 
+	self.StartTime = SysTime() + del 
+
+	self.Ease = self.Ease or ease
+	self.OnEnd = self.OnEnd or cb
+
+	self.Finished = false
+
+	if not anims[self.AnimIndex] then 
+		anims[self.AnimIndex] = self --back in town bby
+	end
+end
 
 function animmeta:SetThinkManually(b)
 	b = (b==nil and true) or b
@@ -247,18 +231,27 @@ function NewAnimation(len, del, ease, callback)
 	if ( del == nil ) then del = 0 end
 	if ( ease == nil ) then ease = -1 end
 
+	latest = latest + 1 
+
 	del = del + SysTime()
 	
 	local anim = {
 		EndTime = del + len,
 		StartTime = del,
+
+		Length = len, 
+		Delay = del, 
+
 		Ease = ease,
 		OnEnd = callback,
 		ThinkManually = false
 	}
 
 	setmetatable(anim, animobj)
-	anim.AnimIndex = table.insert( anims, anim )
+
+	anim.AnimIndex = latest
+	anims[latest] = anim 
+
 	return anim
 end
 

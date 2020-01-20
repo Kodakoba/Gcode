@@ -68,7 +68,7 @@ function IncludeFolder(name, realm, nofold)
 end
 
 
-IncludeFolder("*", _CL)
+IncludeFolder("*", _CL, true)
 
 if CLIENT then 
 
@@ -87,9 +87,9 @@ if CLIENT then
 	    ["Helvetica"] = "HL",
 
 	    ["Montserrat"] = "MR",
-	    ["Monsterrat Medium"] = "MRM",
-	    ["Monsterrat Bold"] = "MRB",
-	    ["Monsterrat SemiBold"] = "MRSB",
+	    ["Montserrat Medium"] = "MRM",
+	    ["Montserrat-Bold"] = "MRB",	--bruh.....
+	    --["Montserrat SemiBold"] = "MRSB",
 
 	    ["SnareDrum Zero NBP"] = "SDZ",
 	    ["SnareDrum Two NBP"] = "SDT",
@@ -115,4 +115,13 @@ if CLIENT then
 
 	end
 
+	local MakeDeltaText = function()
+		IncludeFolder("deltatext/*.lua", _CL)
+	end
+
+	if HexLib then 
+		MakeDeltaText()
+	else 
+		hook.Add("HexlibLoaded", "DeltaText", MakeDeltaText)
+	end
 end
