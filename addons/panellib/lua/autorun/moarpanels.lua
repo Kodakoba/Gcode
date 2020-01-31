@@ -24,13 +24,14 @@ local _SH = 2
 local _SV = 3
 
 function IncludeFolder(name, realm, nofold)
+	print("searching", path .. "/" .. name)
 	local file, folder = file.Find( path .. "/" .. name, "LUA" )
 	local tbl = string.Explode("/", name)
 	tbl[#tbl] = ""
 	local fname = table.concat(tbl,"/")
 
 	for k,v in pairs(file) do
-		local name = path .. "/"
+		local name = path .. "/" .. fname
 
 		if realm==_CL then 
 
@@ -115,13 +116,14 @@ if CLIENT then
 
 	end
 
-	local MakeDeltaText = function()
-		IncludeFolder("deltatext/*.lua", _CL)
-	end
+end
 
-	if HexLib then 
-		MakeDeltaText()
-	else 
-		hook.Add("HexlibLoaded", "DeltaText", MakeDeltaText)
-	end
+local MakeDeltaText = function()
+	IncludeFolder("deltatext/*", _CL)
+end
+
+if HexLib then 
+	MakeDeltaText()
+else 
+	hook.Add("HexlibLoaded", "DeltaText", MakeDeltaText)
 end

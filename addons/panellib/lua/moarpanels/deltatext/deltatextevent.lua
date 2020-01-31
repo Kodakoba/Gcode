@@ -7,8 +7,9 @@
 DeltaTextEvent = DeltaTextEvent or Object:extend()
 local emeta = DeltaTextEvent.Meta 
 
-function emeta:Initialize()
+function emeta:Initialize(key)
 	self.IsEvent = true
+	self.Key = key
 end 
 
 function emeta:OnActive()

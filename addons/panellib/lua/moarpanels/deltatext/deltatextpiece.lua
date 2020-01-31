@@ -31,7 +31,6 @@ function pmeta:Initialize(par, tx, font, key, rep)
 	self.Offsets.XDisappear = 0
 	self.Offsets.YDisappear = 24
 
-
 	--[[
 		Default animation data; if you don't provide length and delay
 		to :CreateAnimation, this will be used
@@ -180,9 +179,12 @@ function pmeta:Paint(x, y)
 
 	if self.Fragmented then
 
-		local x = 0
+		local x = x
+		local lastw = 0
 
 		for k,v in pairs(self.Fragments) do 
+			if v.Text == "" then continue end 
+
 			v.Color.a = math.min(v.Alpha or 255, self.Alpha)
 
 			surface.SetTextPos(x + v.OffsetX + self.Offsets.X, y + v.OffsetY + self.Offsets.Y)
@@ -192,12 +194,20 @@ function pmeta:Paint(x, y)
 			surface.DrawText(v.Text)
 
 			local tw, th = surface.GetTextSize(v.Text)
-			if not v.RewindTextPos then x = x + tw end
+			
+			if not v.RewindTextPos then 
+				if v.LerpFromLast then 
+					x = x + Lerp(Ease(v.LerpFromLast, v.Ease or 0.6), lastw, tw)
+				else 
+					x = x + tw
+				end 
+			end
+
+			lastw = tw
 		end
 
 		return 
 	end
-
 	surface.SetTextPos(x + self.Offsets.X, y + self.Offsets.Y)
 	surface.SetTextColor(self.Color)
 
@@ -227,7 +237,7 @@ end
 --[[
 	TODO: Return fragment object.
 ]]
-function pmeta:AddFragment(from, to)
+function pmeta:FragmentText(from, to)
 
 	if not self.Fragmented then 
 
@@ -235,56 +245,117 @@ function pmeta:AddFragment(from, to)
 
 		local t = {}
 
-		t[1] = {
-			Text = self.Text:sub(0, from-1),
-			OffsetX = 0,
-			OffsetY = 0,
-			Color = self.Color,
-		}
+		if from then
+			to = to or from --same char
 
-		t[2] = {
-			Text = self.Text:sub(from, to),
-			OffsetX = 0,
-			OffsetY = 0,
-			Color = self.Color,
-		}
+			local t1, t2, t3 = self.Text:sub(0, from-1), self.Text:sub(from, to), self.Text:sub(to+1, #self.Text)
 
-		t[3] = {
-			Text = self.Text:sub(to+1, #self.Text),
-			OffsetX = 0,
-			OffsetY = 0,
-			Color = self.Color,
-		}
-		self.Fragments = t
+			t[1] = {
+				Text = t1,
+				OffsetX = 0,
+				OffsetY = 0,
+				Color = self.Color,
+			}
+
+			t[2] = {
+				Text = t2,
+				OffsetX = 0,
+				OffsetY = 0,
+				Color = self.Color,
+			}
+
+			t[3] = {
+				Text = t3,
+				OffsetX = 0,
+				OffsetY = 0,
+				Color = self.Color,
+			}
+			self.Fragments = t
+		else 
+			t[1] = {
+				Text = self.Text,
+				OffsetX = 0,
+				OffsetY = 0,
+				Color = self.Color
+			}
+			self.Fragments = t
+		end 
+
+		
+
 		return t
 	else 
+		
 		local len = 0
 
+		if from < 0 then 
+			from = #self.Text + from 
+		end
+
 		for k,v in pairs(self.Fragments) do 
+
 			local txt = v.Text
 
 			len = len + #txt
 
-			if from < len and to <= len then 
+			print("frag", k, v.Text, len, "text len is", #self.Text)
+			print("thinkin:", from, len, to)
+			if from < len and to <= len then
+				print("replacing this one")
 				local frag = {
-					Text = txt:sub(from - len + #txt, to - len + #txt),
+					Text = txt:sub(from - len + #txt + 1, to - len + #txt),
 					OffsetX = 0,
 					OffsetY = 0,
 					Color = self.Color,
 				}
 
-				v.Text = txt:sub(0, from - len + #txt - 1)
-				table.insert(self.Fragments, k+1, frag)
-				break
+				local newtext = from - len + #txt --new text for the old frag length
+
+				if newtext == 0 then --they didn't leave any text; just remove the frag
+					table.remove(self.Fragments, k)
+				else 
+					v.Text = txt:sub(0, newtext)
+				end
+
+				return table.insert(self.Fragments, k+1, frag)
+				
 			end
 		end
 
 	end
 end
 
---[[
-	TODO: Have a callback for OnReset as well.
 
+function pmeta:AddFragment(text, num, onend)	--adds a fragment on top 
+	local newfrag = {
+		Text = text, 
+		OffsetY = 0, 
+		OffsetX = 0, 
+		Alpha = 0,
+		Color = self.Color,
+	}
+
+	if not self.Fragmented then 
+		self:FragmentText()
+	end
+
+	self:CreateAnimation("AddFragText" .. newfrag.Text, function(fr)
+		newfrag.OffsetY = 24 - (fr * 24)
+		newfrag.Alpha = fr*255
+	end, function() 
+		if onend then onend() end
+	end, nil, 0.1)
+
+	if num then 
+		table.insert(self.Fragments, num , newfrag)
+	else 
+		table.insert(self.Fragments, newfrag)
+	end
+
+	return newfrag
+end
+
+--[[
 	Having fragmented text isn't really nice, especially since it doesn't need to be after a reset(probably...)
 	Either way, just re-fragment it if you really need it.
 
@@ -292,6 +363,12 @@ end
 ]]
 
 function pmeta:OnReset()
+
+end
+
+function pmeta:Reset()
+	if self:OnReset() then return end 
+
 	if self.Fragmented then 
 		local tx = self.Text
 		self:CollectFragments()
@@ -315,7 +392,8 @@ function pmeta:ReplaceText(num, rep, onend)
 		OffsetY = 0, 
 		OffsetX = 0, 
 		Alpha = 0,
-		Color = self.Color,}
+		Color = self.Color,
+		LerpFromLast = 0}
 		--RewindTextPos = true}
 	local frag = self.Fragments[num]
 	if not frag then return false end 
@@ -324,17 +402,26 @@ function pmeta:ReplaceText(num, rep, onend)
 
 	frag.RewindTextPos = true	--to prevent the new fragment's X pos being impacted by the one we're removing.
 
+	local tx = ""
 
-	self:CreateAnimation("SubText" .. frag.Text, function(fr)
+	for k,v in pairs(self.Fragments) do 
+		if k==num then tx = tx .. rep continue end 
+		tx = tx .. v.Text
+	end
+
+	self.Text = tx
+
+	self:CreateAnimation(num .. "SubText" .. frag.Text, function(fr)
 		frag.OffsetY = fr * self:GetDropStrength()
 		frag.Alpha = 255 - fr*255
 	end, function()
 		table.remove(self.Fragments, num)
 	end)
 
-	self:CreateAnimation("AddText" .. newfrag.Text, function(fr)
+	self:CreateAnimation(num .. "AddText" .. newfrag.Text, function(fr)
 		newfrag.OffsetY = 24 - (fr * 24)
 		newfrag.Alpha = fr*255
+		newfrag.LerpFromLast = fr
 	end, function() 
 		if onend then onend() end
 	end, nil, 0.1)

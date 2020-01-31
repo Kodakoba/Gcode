@@ -12,27 +12,88 @@ DeltaText.__call = DeltaText.new
 
 
 function dmeta:Initialize()
-	self.Texts = {}
+	self.Elements = {}
 	self.Active = {}
+
 	self.Disappearing = {}
+
+	self.Timings = {}
+	self.LastTiming = 0
+
+	self.LastActive = 0		--last active element
+	self.LastActiveText = 0 --last active text element
+
+	self.LastAddedText = 0
+
+	self.ActiveWhen = CurTime()
 
 	self.Font = "SDZ20"
 end
 
-function dmeta:AddText(tx, rep)
-	local key = #self.Texts + 1
+ChainAccessor(dmeta, "Font", "Font")
 
-	local t = DeltaTextPiece:new(self, tx, self.Font, key, rep)
-	self.Texts[key] = t
+function dmeta:AddText(tx, rep, timing)
+
+	local key = #self.Elements + 1
+	local t
+
+	if not rep then 
+
+		t = DeltaTextPiece:new(self, tx, self.Font, key, rep)
+
+		self.Elements[key] = t
+		self.LastAddedText = key
+
+	else 
+		local txel = self.Elements[self.LastAddedText] --grab last text
+		if not txel then PrintTable(self.Elements) print(self.LastAddedText) error("can't add a text replacer if there's no textpieces!") return end 
+
+		t = DeltaTextEvent:new(key)
+
+		function t:OnActive()
+			print(-rep, #tx)
+			local frag = txel:FragmentText(#txel.Text - rep, #txel.Text)
+			txel:ReplaceText(frag, tx)
+		end
+
+		self.Elements[key] = t
+	end
+
+	if timing then 
+
+		self.Timings[key] = {
+			time = timing, 
+			elem = t, 
+			key = key, 
+
+			OnActive = function(self, dt)
+				dt:ActivateElement(key)
+			end
+		} 
+	end
 
 	return t 
 end
 
-function dmeta:AddEvent(tx, rep)
-	local key = #self.Texts + 1
+function dmeta:AddEvent(timing)
+	local key = #self.Elements + 1
 
-	local t = DeltaTextEvent:new()
-	self.Texts[key] = t 	--it's not really a text
+	local t = DeltaTextEvent:new(key)
+
+	self.Elements[key] = t 	--it's not really a text
+
+	if timing then 
+
+		self.Timings[key] = {
+			time = timing, 
+			elem = t, 
+			key = key, 
+
+			OnActive = function(self, dt)
+				dt:ActivateElement(key)
+			end
+		} 
+	end
 
 	return t 
 end
@@ -43,34 +104,43 @@ function dmeta:CycleReset()
 	for i=1, #self.Active do 
 		local elem = self.Active[i]
 		if elem and not elem.IsEvent then 
-			elem:OnReset() 
+			elem:Reset() 
 			last = elem 
 		end
 	end
 
 	self.LastActive = 0
+	self.LastTiming = 0 
+
 	table.Empty(self.Active)
 
-	last:Disappear()
-
+	if last then last:Disappear() end
+	for k,v in pairs(self.Timings) do 
+		v.Activated = false 
+	end
 end
 
-function dmeta:GetCurrentText()
-	return self.Active[#self.Active]
+function dmeta:GetPreviousElement()
+	return self.Active[#self.LastActive - 1]
+end
+
+function dmeta:GetCurrentElement()
+	return self.Active[#self.LastActive]
 end
 
 function dmeta:CycleNext()
 	
 	local key = self.LastActive or #self.Active
-	local tx = self.Texts[key + 1] --new object to activate
+	local tx = self.Elements[key + 1] --new object to activate
 
-	local lasttx = self.LastElement
+	local lasttx = self.LastActiveText
 
 	if tx then 
 
 		if tx.IsEvent then 
 			self.Active[key + 1] = tx
 			self.LastActive = key + 1
+			self.ActiveWhen = CurTime()
 
 			tx:OnActive()		
 			return tx
@@ -81,8 +151,11 @@ function dmeta:CycleNext()
 
 		self.Active[key + 1] = tx
 
+		self.LastActiveText = key + 1
 		self.LastActive = key + 1
-		self.LastElement = key + 1
+
+
+		self.ActiveWhen = CurTime()
 
 		local ac = self.Active[lasttx]	--current text, make it disappear
 		if ac and not ac.IsEvent then key = ac.Key ac:Disappear() end
@@ -103,10 +176,41 @@ function dmeta:GetSize()
 
 end
 
+function dmeta:ActivateElement(num) 	--this skips certain elements from the cycle
+
+	local tx = self.Elements[num] --new object to activate
+
+	if tx then 
+
+		if tx.IsEvent then 
+			self.Active[num] = tx
+			self.LastActive = num
+			self.ActiveWhen = CurTime()
+
+			tx:OnActive()		
+			return tx
+		end
+
+		tx:Appear()
+		tx:OnAppear()
+
+		self.Active[num] = tx
+
+		self.LastActiveText = num
+		self.LastActive = num
+
+		self.ActiveWhen = CurTime()
+
+		local ac = self.Active[lasttx]	--current text, make it disappear
+		if ac and not ac.IsEvent and not tx.PreventDisappear then key = ac.Key ac:Disappear() end
+
+		return self.Active[num]
+	end
+end
+
 function dmeta:Paint(x, y)
 
 	for k, tp in pairs(self.Active) do 
-
 		if not tp or not tp.Paint then continue end
 		tp:Paint(x, y)
 	end
@@ -114,5 +218,19 @@ function dmeta:Paint(x, y)
 	for k, tp in pairs(self.Disappearing) do 
 		if not tp or not tp.Paint then continue end
 		tp:Paint(x, y)
+	end
+
+
+	local timing = self.Timings[self.LastActive + 1]
+	--print("last active", self.LastActive, (timing and "has timing") or "no timings")
+	if timing then 
+		local when = self.ActiveWhen
+
+		if not timing.Activated and when + timing.time < CurTime() then 
+			--activate 
+			timing:OnActive(self)
+			timing.Activated = true
+			--self:ActivateElement(timing.key)
+		end
 	end
 end
