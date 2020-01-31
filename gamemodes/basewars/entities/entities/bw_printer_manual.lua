@@ -18,7 +18,7 @@ ENT.MaxLevel = 5
 ENT.BypassMaster = true 
 
 function ENT:UseFunc(act, call)
-    if not (act==call && act:IsPlayer() && self:CPPIGetOwner()==act) then print(act, call) return end
+   
     if self:GetPower() < 5 then return end
 
     local printed = self.PrintAmount*self:GetLevel()

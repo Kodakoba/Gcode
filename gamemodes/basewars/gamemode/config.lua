@@ -198,7 +198,7 @@ local function AddCat(cat, typ, class, name, price, lv, mdl)
 	return t
 end
 
-local function AddLoadout(typ, class, name, price, lv, mdl)
+local function AddLoadout(typ, class, name, price, lv, mdl, nongun)
 
 	local wep = weapons.Get(class)
 
@@ -210,7 +210,7 @@ local function AddLoadout(typ, class, name, price, lv, mdl)
 
 	local t = AddCat("Loadout", typ, class, name, price, lv, mdl)
 
-	t.Gun = true 
+	if not nongun then t.Gun = true end
 end
 
 
@@ -237,26 +237,16 @@ local function GSL(t)
 	return add(t)
 end
 
--- Weapons - T3--
+--[[
+	models/weapons/killdrix/w_acre.mdl
+	models/weapons/scorpion/w_ev03.mdl
+	models/weapons/w_rif_m4a1.mdl
 
-AddLoadout("Weapons - T3", "cw_blackops3_dlc1_locus", "Locus", m * 5, 0, "models/loyalists/blackops3/locus/w_sr_locus.mdl")
-AddLoadout("Weapons - T3", "cw_blackops3_dlc2_arak", "KN-44", m * 3.5, 0, "models/loyalists/blackops3/arak/w_ar_arak.mdl")
-AddLoadout("Weapons - T3", "cw_blackops3_xr2", "XR-2", m * 5, 0, "models/loyalists/blackops3/xr2/w_ar_xr2.mdl")
 
 
--- Weapons - T2--
+]]
 
-AddLoadout("Weapons - T2", "cw_vss", "VSS/AS VAL", k * 200, 0, "models/cw2/rifles/w_vss.mdl")
-AddLoadout("Weapons - T2", "cw_blackops3_dlc3_mp400", "HG 40", k * 1000, 0, "models/loyalists/blackops3/dlc_mp400/w_smg_mp400.mdl")
-AddLoadout("Weapons - T2", "cw_blackops3_dlc2_shva", "Sheiva", k * 500, 0, "models/loyalists/blackops3/shva/w_ar_shva.mdl")
-AddLoadout("Weapons - T2", "cw_blackops3_dlc2_isr27", "ICR-1", m * 1.5, 0, "models/loyalists/blackops3/isr27/w_ar_isr27.mdl")
-AddLoadout("Weapons - T2", "cw_blackops3_dlc3_peacekeeper", "PeaceKeeper", k * 1000, 0, "models/loyalists/blackops3/dlc_peacekeeper/w_ar_peacekeeper.mdl")
-AddLoadout("Weapons - T2", "cw_m3super90", "M3", k * 200, 0, "models/weapons/w_shot_m3super90.mdl")
-AddLoadout("Weapons - T2", "cw_blackops3_spartan", "Spartan", k * 300, 0, "models/loyalists/blackops3/spartan/w_shot_spartan.mdl")
-AddLoadout("Weapons - T2", "cw_g4p_m4a1", "M4A1", k * 300, 0, "models/weapons/w_rif_m4a1.mdl")
-AddLoadout("Weapons - T2", "cw_g4p_awm", "AWM", k * 500, 0, "models/weapons/w_snip_awp.mdl")
-AddLoadout("Weapons - T2", "cw_blackops3_dlc4_mnwr", "Man o' War", k * 200, 0, "models/loyalists/blackops3/mnwr/w_ar_mnwr.mdl")
-AddLoadout("Weapons - T2", "cw_g4p_xm8", "XM8", k * 400, 0, "models/weapons/w_rif_m4a1.mdl")
+
 
 -- Weapons - Misc--
 
@@ -374,101 +364,88 @@ AddEntities("Dispensers (T1)", "bw_dispenser_ammo", "Ammo Dispenser", k * 55, 30
 AddEntities("Dispensers (T1)", "bw_dispenser_armor2", "Armor Dispenser T2", m * 15, 1000, "models/props_combine/suit_charger001.mdl")
 AddEntities("Dispensers (T1)", "bw_dispenser_ammo2", "Ammo Dispenser T2", m * 10, 750, "models/props_lab/reciever_cart.mdl")
 
+----
 
-AddLoadout("Ammo Kits", "cw_ammo_kit_small", "Box", 5*k, 30, "models/items/boxsrounds.mdl")
-AddLoadout("Ammo Kits", "cw_ammo_crate_small", "Crate", 35*k, 25, "models/Items/item_item_crate.mdl")
+AddLoadout("Ammo Kits", "cw_ammo_kit_small", "Box", 5*k, 30, "models/items/boxsrounds.mdl", true)
+AddLoadout("Ammo Kits", "cw_ammo_crate_small", "Crate", 35*k, 25, "models/Items/item_item_crate.mdl", true)
 
 ----
 
 AddLoadout("Melee", "weapon_crowbar", "Crowbar", 2.5*k, 3, "models/weapons/w_crowbar.mdl")
 AddLoadout("Melee", "csgo_default_knife", "Knife", 10*k, 5, "models/weapons/w_csgo_default.mdl")
 
-----
+-- Shit-tier --
 
+AddLoadout("Pistols", "cw_g4p_glock17", "Glock 17", 10*k, 5, "models/weapons/w_pist_glock18.mdl")
 AddLoadout("Pistols", "cw_g4p_usp40", "USP", 12.5*k, 5, "models/weapons/w_pist_usp.mdl")
 AddLoadout("Pistols", "cw_m1911", "M1911", 15*k, 7, "models/weapons/cw_pist_m1911.mdl")
 
 AddLoadout("Pistols", "cw_g4p_fiveseven", "FiveSeven", 25*k, 10, "models/weapons/w_pist_fiveseven.mdl")
 
+AddLoadout("Shotguns", "cw_shorty", "Serbu Shorty", 25 * k, 10, "models/weapons/cw2_super_shorty.mdl")
+
 AddLoadout("Pistols", "cw_deagle", "Deagle", 25*k, 15, "models/weapons/w_pist_deagle.mdl")
 AddLoadout("Pistols", "cw_mr96", "MR96", 35*k, 20, "models/weapons/w_pist_deagle.mdl")
+AddLoadout("Pistols", "weapon_bf4_44rt", ".44 Magnum", 35*k, 25, "models/weapons/w_4ist_deagle.mdl")
 AddLoadout("Pistols", "cw_g4p_mp412_rex", "MP412", 50*k, 25, "models/weapons/w_pist_deagle.mdl")
 
+AddLoadout("SMGs", "cw_mac11", "MAC-11", 50*k, 20, "models/weapons/w_smg_mp5.mdl")
+
+AddLoadout("SMGs", "cw_mp5", "HK MP5", 75*k, 25, "models/weapons/w_smg_p90.mdl")
+AddLoadout("Shotguns", "cw_m3super90", "M3", 75 * k, 25, "models/weapons/w_shot_m3super90.mdl")
+AddLoadout("Sniper Rifles", "cw_g4p_g2contender", "G2 Contender", k * 50, 25, "models/weapons/w_snip_scout.mdl")
+
+-- Low-Mid tier --
+
+AddLoadout("Pistols", "cw_blackops3_38", "BloodHound", 65*k, 30, "models/loyalists/blackops3/38/w_pistol_38.mdl")
+AddLoadout("Pistols", "cw_blackops3_mr6", "MR6", 75*k, 35, "models/loyalists/blackops3/mr6/w_pistol_mr6.mdl")
+
+AddLoadout("SMGs", "cw_g4p_magpul_masada", "Magpul Masada", 100*k, 30, "models/weapons/w_smg_p90.mdl")
+
+AddLoadout("Assault Rifles", "cw_g3a3", "G3A3", 100*k, 30, "models/weapons/w_rif_ak47.mdl")
+
+AddLoadout("Assault Rifles", "cw_ak74", "AK-74", 125*k, 35, "models/weapons/w_rif_ak47.mdl")
+AddLoadout("Assault Rifles", "cw_g4p_g36c", "G36", 125*k, 35, "models/weapons/w_rif_ak47.mdl")
+
+AddLoadout("Assault Rifles", "cw_vss", "VSS/AS VAL", 150*k, 40, "models/cw2/rifles/w_vss.mdl")
+AddLoadout("SMGs", "cw_killdrix_acre", "ACR-E", 125*k, 40, "models/weapons/killdrix/w_acre.mdl")
+
+AddLoadout("SMGs", "cw_aacgsm", "Honey Badger", 125*k, 45, "models/cw2/gsm/w_gsm_aac.mdl")
+
+AddLoadout("Assault Rifles", "cw_sg55x", "SG552", 125*k, 50, "models/weapons/w_rif_sg552.mdl")
+AddLoadout("Assault Rifles", "cw_g4p_fn_fal", "FN FAL", 125*k, 50, "models/weapons/w_rif_m4a1.mdl")
+AddLoadout("Assault Rifles", "cw_m14", "M14", 125*k, 50, "models/weapons/w_cstm_m14.mdl")
+
+
+-- Mid tier --
+
+AddLoadout("Sniper Rifles", "cw_g4p_awm", "AWM", 250 * k, 60, "models/weapons/w_snip_awp.mdl")
+AddLoadout("Sniper Rifles", "cw_g4p_m98b", "Barett M98B", 350 * k, 60, "models/weapons/w_snip_awp.mdl")
+
+AddLoadout("Assault Rifles", "cw_g4p_an94", "G36", 200*k, 65, "models/weapons/w_rif_ak47.mdl")
+AddLoadout("Assault Rifles", "cw_tr09_tar21", "TAR-21", 300*k, 65, "models/weapons/therambotnic09/w_cw2_tar21.mdl")
+
+AddLoadout("Assault Rifles", "cw_g4p_m16a2", "M16A2", 350*k, 80, "models/weapons/w_rif_m4a1.mdl")
+AddLoadout("Assault Rifles", "cw_tr09_qbz97", "QBZ-97", 350*k, 80, "models/weapons/therambotnic09/w_cw2_qbz97.mdl")
+
+AddLoadout("Assault Rifles", "cw_g4p_masada_acr", "ACR", 350*k, 100, "models/weapons/therambotnic09/w_cw2_qbz97.mdl")
+
+-- Mid-Top tier --
+
+AddLoadout("Assault Rifles", "cw_tr09_auga3", "AUG A3", 350*k, 125, "models/weapons/therambotnic09/w_cw2_auga3.mdl")
+
+AddLoadout("Assault Rifles", "cw_g4p_xm8", "XM8", 500*k, 150, "models/weapons/w_rif_m4a1.mdl")
+AddLoadout("Assault Rifles", "cw_g4p_m4a1", "M4A1", 750*k, 175, "models/weapons/w_rif_m4a1.mdl")
+
+
+-- Top-tier --
+
+AddLoadout("SMGs", "cw_scorpin_evo3", "Scorpion Evo", 750*k, 200, "models/weapons/scorpion/w_ev03.mdl")
+
+AddLoadout("Assault Rifles", "cw_ar15", "AR15", 1250*k, 220, "models/weapons/w_rif_m4a1.mdl") --the AR15 is somehow better than M4A1
+AddLoadout("Assault Rifles", "cw_tr09_mk18", "MK18", 1.5*m, 220, "models/weapons/therambotnic09/w_cw2_mk18.mdl") 
+AddLoadout("Assault Rifles", "cw_kk_hk416", "HK416", 1.5*m, 260, "models/weapons/w_cwkk_hk416.mdl") 
+AddLoadout("Assault Rifles", "cw_covertible_ak12", "AK-12", 2.5*m, 300, "models/weapons/w_rif_covertible_ak12.mdl") 
+
+
 ----
-
-AddLoadout("SMGs", "cw_mac11", "MAC-11", 50*k, 30, "models/weapons/w_smg_p90.mdl")
-AddLoadout("SMGs", "cw_mp5", "HK MP5", 75*k, 35, "models/weapons/w_smg_p90.mdl")
-
-----
-
-AddLoadout("Pistols", "cw_blackops3_38", "BloodHound", 65*k, 40, "models/loyalists/blackops3/38/w_pistol_38.mdl")
-AddLoadout("Pistols", "cw_blackops3_mr6", "MR6", 100*k, 50, "models/loyalists/blackops3/mr6/w_pistol_mr6.mdl")
-
-----
-
-AddLoadout("SMGs", "cw_g4p_magpul_masada", "Magpul Masada", 150*k, 40, "models/weapons/w_smg_p90.mdl")
-
-AddLoadout("SMGs", "cw_killdrix_acre", "ACR-E", 200*k, 50, "models/weapons/killdrix/w_acre.mdl")
-
-----
-
-AddLoadout("Assault Rifles", "cw_sg55x", "SG552", 225*k, 50, "")
-AddLoadout("Assault Rifles", "cw_blackops3_dlc4_mnwr", "Man o' War", 500*k, 50, "")
-
-----
-
-
---AddLoadout("SMGs", "", "", 100*k, 30, "")
---[[
-
-BaseWars.SpawnList.Models.Loadout["Weapons - T2"] = {
-
-	["Man o' War"] 					= GSL{Gun = true, Model = "models/loyalists/blackops3/mnwr/w_ar_mnwr.mdl", Price = 200000, ClassName = "cw_blackops3_dlc4_mnwr"},
-	["VSS/AS VAL"] 					= GSL{Gun = true, Model = "models/cw2/rifles/w_vss.mdl", Price = 200000, ClassName = "cw_vss"},
-	["M3"] 							= GSL{Gun = true, Model = "models/weapons/w_shot_m3super90.mdl", Price = 200000, ClassName = "cw_m3super90"},
-	["Spartan"] 					= GSL{Gun = true, Model = "models/loyalists/blackops3/spartan/w_shot_spartan.mdl", Price = 300000, ClassName = "cw_blackops3_spartan"},
-	["M4A1"] 						= GSL{Gun = true, Model = "models/weapons/w_rif_m4a1.mdl", Price = 300000, ClassName = "cw_g4p_m4a1"},
-	["XM8"] 						= GSL{Gun = true, Model = "models/weapons/w_rif_m4a1.mdl", Price = 400000, ClassName = "cw_g4p_xm8"},
-	["AWM"] 						= GSL{Gun = true, Model = "models/weapons/w_snip_awp.mdl", Price = 500000, ClassName = "cw_g4p_awm"},
-	["Sheiva"] 					= GSL{Gun = true, Model = "models/loyalists/blackops3/shva/w_ar_shva.mdl", Price = 500000, ClassName = "cw_blackops3_dlc2_shva"},
-	["PeaceKeeper"] 				= GSL{Gun = true, Model = "models/loyalists/blackops3/dlc_peacekeeper/w_ar_peacekeeper.mdl", Price = 1000000, ClassName = "cw_blackops3_dlc3_peacekeeper"},
-	["HG 40"] 					= GSL{Gun = true, Model = "models/loyalists/blackops3/dlc_mp400/w_smg_mp400.mdl", Price = 1000000, ClassName = "cw_blackops3_dlc3_mp400"},
-	["ICR-1"] 					= GSL{Gun = true, Model = "models/loyalists/blackops3/isr27/w_ar_isr27.mdl", Price = 1500000, ClassName = "cw_blackops3_dlc2_isr27"},
-
-
-
-}
-
-BaseWars.SpawnList.Models.Loadout["Weapons - T3"] = {
-	["KN-44"] 					= GSL{Gun = true, Model = "models/loyalists/blackops3/arak/w_ar_arak.mdl", Price = 3500000, ClassName = "cw_blackops3_dlc2_arak"},
-	["XR-2"] 					= GSL{Gun = true, Model = "models/loyalists/blackops3/xr2/w_ar_xr2.mdl", Price = 5000000, ClassName = "cw_blackops3_xr2"},
-	["Locus"] 					= GSL{Gun = true, Model = "models/loyalists/blackops3/locus/w_sr_locus.mdl", Price = 5000000, ClassName = "cw_blackops3_dlc1_locus"},
-}
-
-
-BaseWars.SpawnList.Models.Loadout["Weapons - Misc"] = {
-
-	["Heal Gun"]				= GSL{Gun = true, Model = "models/weapons/w_physics.mdl", Price = 500000, ClassName = "weapon_health", Level = 20},
-
-	["Blowtorch T1"]			= GSL{Gun = true, Model = "models/weapons/w_irifle.mdl", Price = 1000000, ClassName = "bw_blowtorch_t1", Level = 20},
-	["Blowtorch T2"]			= GSL{Gun = true, Model = "models/weapons/w_irifle.mdl", Price = 2500000, ClassName = "bw_blowtorch_t2", Level = 75},
-	["Blowtorch T3"]			= GSL{Gun = true, Model = "models/weapons/w_irifle.mdl", Price = 5000000, ClassName = "bw_blowtorch_t3", Level = 250},
-	["Blowtorch T4"]			= GSL{Gun = true, Model = "models/weapons/w_irifle.mdl", Price = 250000000, ClassName = "bw_blowtorch_t4", Level = 1000},
-	["Blowtorch T5"]			= GSL{Gun = true, Model = "models/weapons/w_irifle.mdl", Price = 5000000000, ClassName = "bw_blowtorch_t5", Level = 2500},
-
-	["Pickaxe"] 				= GSL{Gun = true, Model = "models/weapons/w_irifle.mdl", Price = 200000, ClassName = "epicpickax", Level = 50}, 
-}--e
-
-
-BaseWars.SpawnList.Models.Recreational["Misc."] = {
-
-	["Synthesizer - Piano"]					= GSL{Model = "models/tnf/synth.mdl", Price = 350000, ClassName = "synthesizer_piano", Level = 2},
-	["Synthesizer - Accordion"]					= GSL{Model = "models/tnf/synth.mdl", Price = 350000, ClassName = "synthesizer_accordion", Level = 2},
-	["Synthesizer - Electric Guitar"]					= GSL{Model = "models/tnf/synth.mdl", Price = 350000, ClassName = "synthesizer_electric_guitar", Level = 2},
-	["Synthesizer - Guitar"]					= GSL{Model = "models/tnf/synth.mdl", Price = 350000, ClassName = "synthesizer_guitar", Level = 2},
-	["Synthesizer - Harp"]					= GSL{Model = "models/tnf/synth.mdl", Price = 350000, ClassName = "synthesizer_harp", Level = 2},
-	["Synthesizer - Organ"]					= GSL{Model = "models/tnf/synth.mdl", Price = 350000, ClassName = "synthesizer_organ", Level = 2},
-	["Synthesizer - Saxophone"]					= GSL{Model = "models/tnf/synth.mdl", Price = 350000, ClassName = "synthesizer_sax", Level = 2, trust = true},
-	["Synthesizer - Violin"]					= GSL{Model = "models/tnf/synth.mdl", Price = 350000, ClassName = "synthesizer_violin", Level = 2, vip = true},
-}--e
-]]

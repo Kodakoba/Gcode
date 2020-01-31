@@ -12,7 +12,6 @@ ENT.Cableable = true
 
 function ENT:DerivedDataTables()
 
-	self:NetworkVar("Int", i, "Connection")
-
+	self:NetworkVar("Float", 0, "NextFinish")
 
 end
