@@ -141,6 +141,8 @@ local function HexLibLoaded( ... )
 	end
 
 	PartizoneMethods.SetBounds = function(self, pos1, pos2)
+		OrderVectors(pos1, pos2)
+
 		self[1] = pos1
 		self[2] = pos2
 
@@ -191,33 +193,42 @@ local function HexLibLoaded( ... )
 		return t
 	end
 
-	IncludeLuaFolder("*.lua", _SH)
-	IncludeLuaFolder("server/*.lua", _SV)
-	IncludeLuaFolder("client/*.lua", _CL)
+	if CLIENT then 
 
+		IncludeLuaFolder("*.lua", _SH)
+		IncludeLuaFolder("client/*.lua", _CL)
 
-	for k,v in pairs(PartizonePoints) do 
-		OrderVectors(v[1], v[2])
+		for k,v in pairs(PartizonePoints) do 
+			OrderVectors(v[1], v[2])
+		end
+	else 
+
+		hook.Add("PartizoneLoaded", "AddPartizones", function()
+			IncludeLuaFolder("*.lua", _SH)
+			IncludeLuaFolder("server/*.lua", _SV)
+			IncludeLuaFolder("client/*.lua", _CL)
+
+			for k,v in pairs(PartizonePoints) do 
+				OrderVectors(v[1], v[2])
+			end
+		end)
+
 	end
 
-	hook.Run("PartizoneLoad")
-
 end
 
-if HexLib then 
-	HexLibLoaded()
-else 
-	hook.Add("HexlibLoaded", "Partizones", HexLibLoaded)
-end
 
 if SERVER then
 
 	hook.Add("InitPostEntity", "Parti", function()
 		ReloadPartizones()
+		HexLibLoaded()
 	end)
 
 	if CurTime() > 20 then 
 		ReloadPartizones()
 	end
 
+else 
+	HexLibLoaded()
 end

@@ -10,7 +10,6 @@ function ENT:Initialize()
 	self:ReloadDummy()
 
 	if self.Partizone.OnSpawn then self.Partizone.OnSpawn(self) end
-
 end
 
 function ENT:ReloadDummy()
@@ -36,16 +35,17 @@ function ENT:CheckCoolDown()
 end
 
 function ENT:SetBrushBounds(p1, p2)
-	if not isvector(p1) or not isvector(p2) then error('Trying to set an invalid brush vector!') return end 
-
-	self:SetCollisionBoundsWS(p1, p2)
-
-	self.P1 = p1 
-	self.P2 = p2
+	if not isvector(p1) or not isvector(p2) then error('Trying to set an invalid brush vector!') return end
 
 	local mid = (p1 + p2) / 2
 
-	self:SetPos(mid)
+	self:SetPos(mid) 
+
+	self:SetCollisionBoundsWS(p1, p2)	--seems like even though the coordinates are in world,
+										--it still depends on the entity's position, so you gotta setpos first
+
+	self.P1 = p1 
+	self.P2 = p2
 
 	local d = self.Dummy
 	if not IsValid(d) then return end 
@@ -63,7 +63,6 @@ end
 -----------------------------------------------------------]]
 function ENT:StartTouch(ent)
 	if not self:CheckCoolDown() then return end 
-
 	local me = self.Partizone
 	if me.StartTouchFunc then me.StartTouchFunc(self, ent) end
 
@@ -105,7 +104,7 @@ function AddPartizone(tab)
 
 		me.Partizone = tab 
 
-		Partizones[me.ZoneName] = me
+		Partizones[name] = me
 
 		me:Spawn()
 
@@ -126,7 +125,6 @@ function AddPartizone(tab)
 		me.Partizone = tab 
 
 	end
-
 
 end
 
@@ -161,14 +159,12 @@ function ReloadPartizones()
 
 		me:Spawn()
 
+		me.Dummy.ZoneName = k
 		me:SetBrushBounds(v[1], v[2])
 	end
 end
 
 hook.Add("InitPostEntity", "PartizonesSpawn", ReloadPartizones)
-hook.Add("OnReloaded", "PartizonesSpawn", ReloadPartizones)
 hook.Add("PostCleanupMap", "PartizonesSpawn", ReloadPartizones)
 
-if CurTime() > 30 then 
-	ReloadPartizones()
-end
+hook.Run("PartizoneLoaded")

@@ -3,6 +3,7 @@ local zone = Partizone("hotel")
 local ip = IsPlayer
 
 local inhotel = {}	--holds players and amt of hotel zones they're touching
+zone.InHotel = inhotel 
 
 local bwents = {
 	--Player: {
@@ -13,6 +14,8 @@ local bwents = {
 	--...
 }
 
+zone.BWOwners = bwents 
+
 local chatcd = {}
 
 local function owner(ent)
@@ -20,7 +23,10 @@ local function owner(ent)
 	return ip(ow) and ow
 end
 
-zone:SetBounds(Vector(-5450.03125, -4352.2109375, 64.359680175781), Vector(-3657.7392578125, -5111.96875, 450.96875))
+zone:SetBounds(
+	Vector(-5450.03125, -4352.2109375, 64.359680175781), 
+	Vector(-3657.7392578125, -5111.96875, 450.96875)
+)
 
 zone:SetOnSpawn(function(self)
 
