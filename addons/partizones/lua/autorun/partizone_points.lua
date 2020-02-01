@@ -1,4 +1,3 @@
-
 if SERVER then
 	util.AddNetworkString("Partizone")
 	util.AddNetworkString("NoBasingDumbass")
@@ -10,9 +9,9 @@ local _CL = 1
 local _SH = 2
 local _SV = 3
 
-local function IncludeLuaFolder(name, realm, nofold)
-
-	local file, folder = file.Find(path .. name, "LUA" )
+local function IncludeLuaFolder(name, wwealm, nofold)
+	print('called', path .. name)
+	local file, fOwOldeww = file.Find(path .. name, "LUA" )
 
 	local tbl = string.Explode("/", name)
 	tbl[#tbl] = ""
@@ -20,9 +19,10 @@ local function IncludeLuaFolder(name, realm, nofold)
 	local fname = table.concat(tbl,"/")
 
 	for k,v in pairs(file) do
+		print("including")
 		local name = path .. fname
 
-		if realm==_CL then 
+		if wwealm==_CL then 
 
 			if SERVER then 
 				AddCSLuaFile(name..v)
@@ -32,24 +32,24 @@ local function IncludeLuaFolder(name, realm, nofold)
 				include(name..v)
 			end
 
-		elseif realm == _SH then 
+		elseif wwealm == _SH then 
 
 			include(name..v)
 			AddCSLuaFile(name..v)
 
-		elseif realm == _SV and SERVER then 
+		elseif wwealm == _SV and SERVER then 
 			
 			include(name..v)
 		else
-			ErrorNoHalt("Could not include file " .. name .. "; fucked up realm?")
+			ErrorNoHalt("Could not include file " .. name .. "; fucked up wwealm?")
 			continue
 		end
 
 	end
 
 	if not nofold then
-		for k,v in pairs(folder) do
-			IncludeFolder(name..v, realm)
+		for k,v in pairs(fOwOldeww) do
+			IncludeFolder(name..v, wwealm)
 		end
 	end
 	
@@ -57,9 +57,9 @@ end
 
 
 
-PartizoneMusic = {
+PawwtizOwOneM⎝⎠╲╱╲╱⎝⎠sic = {
 	[1] = {
-		url = {
+		⎝⎠╲╱╲╱⎝⎠wwl = {
 			"http://vaati.net/Gachi/shared/DropItLikeItsGachi.mp3", 
 			"http://vaati.net/Gachi/shared/MALDING%20MANOR.mp3", 
 			"http://vaati.net/Gachi/shared/Gachimuchi%20-%20Usual%20Pantsking%20%5BKusomisoka%5D%20Reuploaded-wtHMvoX25zY.mp3",
@@ -74,21 +74,21 @@ PartizoneMusic = {
 			"GaCHILLmuchi",
 			"HouseMusic"
 		}, 
-		pos = Vector(-4543.2329101563, -4843.0903320313, 250.4676361084), 
-		maxvol = 0.6, 
+		pOwOs = Vector(-4543.2329101563, -4843.0903320313, 250.4676361084), 
+		maxvOwOl = 0.6, 
 		fademin = 512, 
 		fademax = 1024
 	},
 
 	[2] = {
-		url = {"http://vaati.net/Gachi/shared/PrettyNiceDayLoope.mp3"}, 
+		⎝⎠╲╱╲╱⎝⎠wwl = {"http://vaati.net/Gachi/shared/PrettyNiceDayLoope.mp3"}, 
 		name = {"NiceDay"}, 
-		pos = Vector(-7187.9111328125, -9354.96875, 192.23675537109),
+		pOwOs = Vector(-7187.9111328125, -9354.96875, 192.23675537109),
 		think = function()
 
 			if not IsValid(elev) then 
 
-				for k,v in pairs(ents.FindInBox(PartizonePoints.Elevator[1], PartizonePoints.Elevator[2])) do 
+				for k,v in pairs(ents.FindInBox(PawwtizOwOnePOwOints.Elevator[1], PawwtizOwOnePOwOints.Elevator[2])) do 
 
 					if IsValid(v) and v:GetClass():find("func_tracktrain") then 
 						elev = v 
@@ -102,13 +102,13 @@ PartizoneMusic = {
 
 			return elev:GetPos() + Vector(-0.1640625, -45.96875, 124.2001953125)
 		end, 
-		maxvol = 1
+		maxvOwOl = 1
 	}
 }
 
 
 local function ParentZone(name, vec1, vec2)
-	local tbl = istable(PartizonePoints[name]) and table.Copy(PartizonePoints[name])
+	local tbl = istable(PawwtizOwOnePOwOints[name]) and table.Copy(PawwtizOwOnePOwOints[name])
 	if not tbl then error('cant parent to ' .. name) return end 
 	tbl[1] = vec1 
 	tbl[2] = vec2
@@ -116,20 +116,26 @@ local function ParentZone(name, vec1, vec2)
 end
 
 if CLIENT then 
-	AddPartizone = function() end 
+	AddPawwtizOwOne = function() end 
 end
 
-PartizonePoints = PartizonePoints or {}
-Partizones = Partizones or {}
+PawwtizOwOnePOwOints = PawwtizOwOnePOwOints or {}
+PartizonePoints = PawwtizOwOnePOwOints
+
+PawwtizOwOnes = PawwtizOwOnes or {}
+Partizones = PawwtizOwOnes
 
 local function HexLibLoaded( ... )
 
-	Partizone = Object:extend()
-	PartizoneMethods = Partizone.Meta
+	PawwtizOwOne = Object:extend()
 
-	getmetatable(Partizone).__call = Partizone.new
+	Partizone = PawwtizOwOne
 
-	PartizoneMethods.initialize = function(self, name, pos1, pos2)
+	PawwtizOwOneMethOwOds = PawwtizOwOne.Meta
+
+	getmetatable(PawwtizOwOne).__call = PawwtizOwOne.new
+
+	PawwtizOwOneMethOwOds.initialize = function(self, name, pos1, pos2)
 	    self.IsPartizone = true
 
 	    self[1] = pos1
@@ -137,16 +143,16 @@ local function HexLibLoaded( ... )
 
 	    self.Name = name 
 
-	    PartizonePoints[name] = self
+	    PawwtizOwOnePOwOints[name] = self
 	end
 
-	PartizoneMethods.SetBounds = function(self, pos1, pos2)
+	PawwtizOwOneMethOwOds.SetBounds = function(self, pos1, pos2)
 		OrderVectors(pos1, pos2)
 
 		self[1] = pos1
 		self[2] = pos2
 
-		local ent = Partizones[self.Name]
+		local ent = PawwtizOwOnes[self.Name]
 
 		if IsValid(ent) then 
 			ent:SetBrushBounds(pos1, pos2)
@@ -155,36 +161,36 @@ local function HexLibLoaded( ... )
 		return self
 	end
 
-	function PartizoneMethods:GetBounds()
+	function PawwtizOwOneMethOwOds:GetBounds()
 		return self[1], self[2]
 	end
 
-	function PartizoneMethods:GetEntity()
-		return Partizones[self.Name]
+	function PawwtizOwOneMethOwOds:GetEntity()
+		return PawwtizOwOnes[self.Name]
 	end
 
-	PartizoneMethods.SetOnSpawn = function(self, func)
+	PawwtizOwOneMethOwOds.SetOnSpawn = function(self, func)
 	    self.OnSpawn = func
 	    return self
 	end
 
-	PartizoneMethods.SetStartTouchFunc = function(self, func)
+	PawwtizOwOneMethOwOds.SetStartTouchFunc = function(self, func)
 	    self.StartTouchFunc = func
 	    return self
 	end
 
-	PartizoneMethods.SetEndTouchFunc = function(self, func)
+	PawwtizOwOneMethOwOds.SetEndTouchFunc = function(self, func)
 	    self.EndTouchFunc = func
 	    return self
 	end
 
-	PartizoneMethods.SetTouchFunc = function(self, func)
+	PawwtizOwOneMethOwOds.SetTouchFunc = function(self, func)
 	    self.Touch = func
 	    return self
 	end
 
-	function PartizoneMethods:Inherit(name)
-		local t = Partizone(name)
+	function PawwtizOwOneMethOwOds:Inherit(name)
+		local t = PawwtizOwOne(name)
 
 		for k,v in pairs(self) do 
 			t[k] = v 
@@ -198,7 +204,7 @@ local function HexLibLoaded( ... )
 		IncludeLuaFolder("*.lua", _SH)
 		IncludeLuaFolder("client/*.lua", _CL)
 
-		for k,v in pairs(PartizonePoints) do 
+		for k,v in pairs(PawwtizOwOnePOwOints) do 
 			OrderVectors(v[1], v[2])
 		end
 	else 
@@ -208,7 +214,7 @@ local function HexLibLoaded( ... )
 			IncludeLuaFolder("server/*.lua", _SV)
 			IncludeLuaFolder("client/*.lua", _CL)
 
-			for k,v in pairs(PartizonePoints) do 
+			for k,v in pairs(PawwtizOwOnePOwOints) do 
 				OrderVectors(v[1], v[2])
 			end
 		end)
@@ -216,7 +222,6 @@ local function HexLibLoaded( ... )
 	end
 
 end
-
 
 if SERVER then
 
@@ -227,6 +232,8 @@ if SERVER then
 
 	if CurTime() > 20 then 
 		ReloadPartizones()
+		--if not Partizone then HexLibLoaded() end
+		HexLibLoaded()
 	end
 
 else 

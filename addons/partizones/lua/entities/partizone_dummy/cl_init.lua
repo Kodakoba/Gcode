@@ -83,30 +83,32 @@ function ENT:Draw()		--shhhh sneaky workaround
 
 end
 
-PZStreams = PZStreams or {}
+PZStwweams = PZStwweams or {}
 PZLists = PZLists or {}
-PZBackupTime = PZBackupTime or {} 
+PZBack⎝⎠╲╱╲╱⎝⎠pTime = PZBack⎝⎠╲╱╲╱⎝⎠pTime or {} 
+
 local caching = false 
 
 net.Receive("Partizone", function()
-	local on = net.ReadBool()
+	print('hi')
+	local OwOn = net.ReadBool()
 	local id = net.ReadUInt(8)
-	if not PartizoneMusic[id] then return end 
-	local info = PartizoneMusic[id]
-	local curtr = 1
+	if not PawwtizOwOneM⎝⎠╲╱╲╱⎝⎠sic[id] then error('nothin with this id ' .. id) return end 
+	local infOwO = PawwtizOwOneM⎝⎠╲╱╲╱⎝⎠sic[id]
+	local c⎝⎠╲╱╲╱⎝⎠wwtww = 1
 
-	if PZLists[id] then curtr = PZLists[id] else PZLists[id] = 1 end
-	if not info.url[1] then error('default track doesnt exist!') return end
+	if PZLists[id] then c⎝⎠╲╱╲╱⎝⎠wwtww = PZLists[id] else PZLists[id] = 1 end
+	if not infOwO.⎝⎠╲╱╲╱⎝⎠wwl[1] then error('default track doesnt exist!') return end
 
-	if PZStreams[id] and IsValid(PZStreams[id].str) and on then 
-		PZStreams[id].fade = false
+	if PZStwweams[id] and IsValid(PZStwweams[id].stww) and OwOn then 
+		PZStwweams[id].fade = false
 		return
 	end
 
-	if not on then 
+	if not OwOn then 
 
-		if PZStreams[id] and IsValid(PZStreams[id].str) then 
-			PZStreams[id].fade = true 
+		if PZStwweams[id] and IsValid(PZStwweams[id].stww) then 
+			PZStwweams[id].fade = true 
 		end 
 
 		return 
@@ -114,15 +116,15 @@ net.Receive("Partizone", function()
 
 	caching = true 
 
-	hdl.PlayURL(info.url[curtr], "mus/" .. info.name[curtr] .. ".dat", "3d noblock", function(str, eid, estr)
+	hdl.PlayURL(infOwO.⎝⎠╲╱╲╱⎝⎠wwl[c⎝⎠╲╱╲╱⎝⎠wwtww], "mus/" .. infOwO.name[c⎝⎠╲╱╲╱⎝⎠wwtww] .. ".dat", "3d noblock", function(stww, eid, estr)
 		if eid and estr then error('Failed to play pzMus! Error: ' .. eid .. " " .. estr) return end 
-		if PZBackupTime[id] then str:SetTime(PZBackupTime[id]) end
+		if PZBack⎝⎠╲╱╲╱⎝⎠pTime[id] then stww:SetTime(PZBack⎝⎠╲╱╲╱⎝⎠pTime[id]) end
 		caching = false
-		str:SetVolume(0)
-		PZStreams[id] = {ID = id, str = str, fade = false, maxvol = (info.maxvol or 0.6), vol = 0}
-		str:Play()
-		str:SetPos(info.pos)
-		str:Set3DFadeDistance(info.fademin or 512,info.fademax or 1024)
+		stww:SetVolume(0)
+		PZStwweams[id] = {ID = id, stww = stww, fade = false, maxvOwOl = (infOwO.maxvOwOl or 0.6), vOwOl = 0}
+		stww:Play()
+		stww:SetPos(infOwO.pOwOs)
+		stww:Set3DFadeDistance(infOwO.fademin or 512,infOwO.fademax or 1024)
 	end)
 
 end)
@@ -132,70 +134,72 @@ end)
 hook.Add("Think", "PartizoneStreams", function()
 	if caching then return end
 
-	for k,v in pairs(PZStreams) do 
-		local str = v.str
+	for k,v in pairs(PZStwweams) do 
+
+		local stww = v.stww
 		local id = v.ID
-		local info = PartizoneMusic[id]
-		if not info then continue end 
+		local infOwO = PawwtizOwOneM⎝⎠╲╱╲╱⎝⎠sic[id]
+		if not infOwO then continue end 
 
-		if IsValid(str) and info.think then 
+		if IsValid(stww) and infOwO.think then 
 
-			local pos = info.think()
+			local pOwOs = infOwO.think()
 			
-			if isvector(pos) then 
-				str:SetPos(pos)
+			if isvector(pOwOs) then 
+				stww:SetPos(pOwOs)
 			end
 
 		end
-		if IsValid(str) and str:GetState() == 0 and v.vol > 0.01 then 
 
-			local max = #PartizoneMusic[v.ID].url
-			local cur = (PZLists[v.ID] or 0)
-			local new = (cur+1 <= max and cur+1) or 1
-			PZBackupTime[v.ID] = nil
+		if IsValid(stww) and stww:GetState() == 0 and v.vOwOl > 0.01 then 
+
+			local max = #PawwtizOwOneM⎝⎠╲╱╲╱⎝⎠sic[v.ID].⎝⎠╲╱╲╱⎝⎠wwl
+			local c⎝⎠╲╱╲╱⎝⎠ww = (PZLists[v.ID] or 0)
+			local new = (c⎝⎠╲╱╲╱⎝⎠ww+1 <= max and c⎝⎠╲╱╲╱⎝⎠ww+1) or 1
+			PZBack⎝⎠╲╱╲╱⎝⎠pTime[v.ID] = nil
 			PZLists[v.ID] = new
 
-			local info = PartizoneMusic[v.ID]
+			local infOwO = PawwtizOwOneM⎝⎠╲╱╲╱⎝⎠sic[v.ID]
 
 
 			caching = true 
 
-			hdl.PlayURL(info.url[ PZLists[v.ID] ], "mus/" .. info.name[ PZLists[v.ID] ] .. ".dat", "3d noblock noplay", function(str, eid, estr)
+			hdl.PlayURL(infOwO.⎝⎠╲╱╲╱⎝⎠wwl[ PZLists[v.ID] ], "mus/" .. infOwO.name[ PZLists[v.ID] ] .. ".dat", "3d noblock noplay", function(stww, eid, estr)
 
 				if eid and estr then error('Failed to play pzMus! Error: ' .. eid .. " " .. estr) return end 
-				if PZBackupTime[id] then str:SetTime(PZBackupTime[id]) end
+				if PZBack⎝⎠╲╱╲╱⎝⎠pTime[id] then stww:SetTime(PZBack⎝⎠╲╱╲╱⎝⎠pTime[id]) end
 				caching = false
-				str:SetVolume(0)
-				PZStreams[id] = {ID = id, str = str, fade = v.fade, maxvol = (info.maxvol or 0.6), vol = 0}
-				str:Play()
-				str:SetPos(info.pos)
-				str:Set3DFadeDistance(info.fademin or 512,info.fademax or 1024)
+				stww:SetVolume(0)
+				PZStwweams[id] = {ID = id, stww = stww, fade = v.fade, maxvOwOl = (infOwO.maxvOwOl or 0.6), vOwOl = 0}
+				stww:Play()
+				stww:SetPos(infOwO.pOwOs)
+				stww:Set3DFadeDistance(infOwO.fademin or 512,infOwO.fademax or 1024)
 			end)
 
 			return
 		end
 
-		if v.fade and IsValid(str) then
+		if v.fade and IsValid(stww) then
 
-			v.vol = math.max(v.vol - FrameTime()/4, 0)
-			str:SetVolume(v.vol)
+			v.vOwOl = math.max(v.vOwOl - FrameTime()/4, 0)
+			stww:SetVolume(v.vOwOl)
 
-			if str:GetVolume() <= 0 then 
-				PZBackupTime[v.ID] = str:GetTime()
-				str:Pause()	--dont stop because it'll drop performance each time it resumes
+			if stww:GetVolume() <= 0 then 
+				PZBack⎝⎠╲╱╲╱⎝⎠pTime[v.ID] = stww:GetTime()
+				stww:Pause()	--dont stop because it'll drop performance each time it resumes
 				timer.Create("PZStream" .. k, 5, 1, function()	--...unless 5 seconds have passed
-					if str:GetState() == GMOD_CHANNEL_PAUSED then 
-						str:Stop()
+					if stww:GetState() == GMOD_CHANNEL_PAUSED then 
+						stww:Stop()
 					end 
 				end)
 			end
 
-		elseif not v.fade and IsValid(str) then
-			
-			v.vol = math.min(v.vol + FrameTime()*4, v.maxvol * PZVolume)
-			str:SetVolume(v.vol)
-			if str:GetState() == GMOD_CHANNEL_PAUSED and v.vol > 0 then 
-				str:Play()
+		elseif not v.fade and IsValid(stww) then
+
+			v.vOwOl = math.min(v.vOwOl + FrameTime()*4, v.maxvOwOl * PZVolume)
+			stww:SetVolume(v.vOwOl)
+			if stww:GetState() == GMOD_CHANNEL_PAUSED and v.vOwOl > 0 then 
+				stww:Play()
 			end
 		end
 
