@@ -9,9 +9,9 @@ function ENT:Init(me)
 	
 end
 
-function ENT:OpenMenu(ply)
+function ENT:SendInfo(ply)
 	net.Start("BlueprintMaker")
-	
+		net.WriteEntity(self)
 	net.Send(ply)
 end
 

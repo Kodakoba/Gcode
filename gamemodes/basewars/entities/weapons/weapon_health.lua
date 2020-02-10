@@ -27,6 +27,8 @@ SWEP.DrawAmmo 				= false
 SWEP.Base 					= "weapon_base"
 
 SWEP.HealAmount 			= 2
+SWEP.PlayerHealMult 		= 5	--players get 5x more heals than props 
+
 
 SWEP.Primary.Damage     	= 0
 SWEP.Primary.ClipSize 		= -1
@@ -111,7 +113,7 @@ function SWEP:PrimaryAttack()
 
 		if SERVER then
 
-			ent:SetHealth(30, math.min(ent:GetMaxHealth(), ent:Health() + self.HealAmount))
+			ent:SetHealth(math.min(ent:GetMaxHealth(), ent:Health() + self.HealAmount * self.PlayerHealMult))
 
 		end
 

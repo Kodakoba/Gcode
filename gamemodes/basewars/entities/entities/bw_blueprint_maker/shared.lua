@@ -9,6 +9,7 @@ ENT.Skin = 0
 
 ENT.Connectable = true 
 ENT.Cableable = true
+ENT.BlueprintMaker = true 
 
 function ENT:DerivedDataTables()
 
