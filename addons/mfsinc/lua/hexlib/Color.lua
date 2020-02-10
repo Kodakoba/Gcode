@@ -19,3 +19,7 @@ end
 function COLOR:Copy()
 	return Color(self.r, self.g, self.b, self.a)
 end
+
+function IsMaterial(m)
+	return type(m) == "IMaterial"	--fun fact, you can do m.MetaName == "IMaterial", but we can't know if we can __index without throwing errors
+end
