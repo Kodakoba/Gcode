@@ -32,6 +32,11 @@ local flashDur = 0.2
 local dir = 0
 local size = 64 
 
+
+local dbgFr = 0
+
+local col = color_white:Copy()
+
 function SWEP:DrawHUD()
 
 	oldCharges = newCharges
@@ -88,4 +93,26 @@ function SWEP:DrawHUD()
 	end
 
 	draw.DrawMaterialCircle(ScrW()/2, ScrH() * 0.9 - 64, size*2)
+
+	--[[
+	if LocalPlayer():KeyDown(IN_JUMP) then 
+		dbgFr = L(dbgFr, 1, 25)
+	else 
+		dbgFr = L(dbgFr, -0.01, 10)
+	end
+	col.a = dbgFr * 255
+
+	
+	local time = ((self.StoppedDash or 0) - CurTime())
+	local str
+
+	if time > 0 then 
+		str = ("in: %.2fs"):format(time)
+	else 
+		str = "now!"
+	end
+
+	draw.SimpleText("SPACE pressed", "MR64", ScrW() / 2, ScrH() * 0.9 - 192, col, 1, 4)
+	draw.SimpleText("Dash will happen " .. str, "MR64", ScrW() / 2, ScrH() * 0.9 - 128, col, 1, 4)
+	]]
 end
