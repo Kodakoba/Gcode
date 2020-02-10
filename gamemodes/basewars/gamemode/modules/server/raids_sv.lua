@@ -306,13 +306,14 @@ function PLAYER:GetRaid()
 end
 
 function PLAYER:IsEnemy(ply2)
+
 	local part = raid.Participants[self]
-	if not part then print('self not participant') return false end
+	if not part then return false end
 
 	local part2 = raid.Participants[ply2]
-	if not part2 then print('ply2 not participant') return false end 
+	if not part2 then return false end 
 
-	if part ~= part2 then print('not same raid')  return false end --not in the same raid 
+	if part ~= part2 then  return false end --not in the same raid 
 
 	local enemies = (self:IsRaided() and not ply2:IsRaided()) or (ply2:IsRaided() and not self:IsRaided())
 
