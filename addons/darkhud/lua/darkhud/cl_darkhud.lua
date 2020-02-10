@@ -236,7 +236,7 @@ function DarkHUD.Create()
 	local lvYMin = 0
 
 
-	local hintbox = color_white:Copy()
+	local hintbox = Color(255, 255, 255)
 	local lvbox = Color(50, 50, 50)
 
 	function f:PrePaint(w,h)
