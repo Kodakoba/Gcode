@@ -50,10 +50,12 @@ function pmeta:Initialize(par, tx, font, key, rep)
 
 	self.Fragmented = false 
 	self.Fragments = {}
+
 end
 
 function pmeta:SetColor(col, g, b, a)
 	self.Color:Set(col, g, b, a)
+	return self
 end
 
 function pmeta:StopAnimation(name)
@@ -68,7 +70,7 @@ end
 ChainAccessor(pmeta, "DropStrength", "DropStrength")
 ChainAccessor(pmeta, "LiftStrength", "LiftStrength")
 
-ChainAccessor(pmeta, "Text", "Text")
+--ChainAccessor(pmeta, "Text", "Text") --custom GetText implemented
 ChainAccessor(pmeta, "Font", "Font")
 ChainAccessor(pmeta, "Parent", "Parent")
 
@@ -175,12 +177,13 @@ end
 function pmeta:Paint(x, y)
 	self.Color.a = self.Alpha
 
-	surface.SetFont(self.Font)
+	if self.Font ~= self.Parent.LastFont then self.Parent.LastFont = self.Font surface.SetFont(self.Font) end
 
 	if self.Fragmented then
 
 		local x = x
 		local lastw = 0
+		local lasttx = ""
 
 		for k,v in pairs(self.Fragments) do 
 			if v.Text == "" then continue end 
@@ -194,16 +197,20 @@ function pmeta:Paint(x, y)
 			surface.DrawText(v.Text)
 
 			local tw, th = surface.GetTextSize(v.Text)
-			
+				
+
 			if not v.RewindTextPos then 
+
 				if v.LerpFromLast then 
-					x = x + Lerp(Ease(v.LerpFromLast, v.Ease or 0.6), lastw, tw)
+					x = x + Lerp(Ease(v.LerpFromLast, v.Ease or 0.6), lastw or tw, tw)
 				else 
 					x = x + tw
 				end 
+
 			end
 
-			lastw = tw
+			lastw = v.Fading and tw
+			lasttx = v.Text
 		end
 
 		return 
@@ -215,6 +222,18 @@ function pmeta:Paint(x, y)
 
 end
 
+function pmeta:GetText(ignore_fading)
+	if not self.Fragments then 
+		return self.Text
+	else 
+		local s = ""
+		for k,v in pairs(self.Fragments) do 
+			if ignore_fading and v.RewindTextPos then continue end
+			s = s .. v.Text 
+		end 
+		return s 
+	end
+end
 function pmeta:OnAppear()	--for override
 
 end
@@ -298,10 +317,7 @@ function pmeta:FragmentText(from, to)
 
 			len = len + #txt
 
-			print("frag", k, v.Text, len, "text len is", #self.Text)
-			print("thinkin:", from, len, to)
 			if from < len and to <= len then
-				print("replacing this one")
 				local frag = {
 					Text = txt:sub(from - len + #txt + 1, to - len + #txt),
 					OffsetX = 0,
@@ -317,7 +333,10 @@ function pmeta:FragmentText(from, to)
 					v.Text = txt:sub(0, newtext)
 				end
 
-				return table.insert(self.Fragments, k+1, frag)
+				local where = table.insert(self.Fragments, k+1, frag)
+				frag.ID = where
+
+				return where
 				
 			end
 		end
@@ -326,12 +345,12 @@ function pmeta:FragmentText(from, to)
 end
 
 
-function pmeta:AddFragment(text, num, onend)	--adds a fragment on top 
+function pmeta:AddFragment(text, num, anim, onend)	--adds a fragment on top 
 	local newfrag = {
 		Text = text, 
 		OffsetY = 0, 
 		OffsetX = 0, 
-		Alpha = 0,
+		Alpha = anim and 0 or 255,
 		Color = self.Color,
 	}
 
@@ -339,20 +358,27 @@ function pmeta:AddFragment(text, num, onend)	--adds a fragment on top
 		self:FragmentText()
 	end
 
-	self:CreateAnimation("AddFragText" .. newfrag.Text, function(fr)
-		newfrag.OffsetY = 24 - (fr * 24)
-		newfrag.Alpha = fr*255
-	end, function() 
-		if onend then onend() end
-	end, nil, 0.1)
+	if anim then 
 
-	if num then 
-		table.insert(self.Fragments, num , newfrag)
-	else 
-		table.insert(self.Fragments, newfrag)
+		self:CreateAnimation("AddFragText" .. newfrag.Text, function(fr)
+			newfrag.OffsetY = 24 - (fr * 24)
+			newfrag.Alpha = fr*255
+		end, function() 
+			if onend then onend() end
+		end, nil, 0.1)
+
 	end
 
-	return newfrag
+	local where
+
+	if num then 
+		where = table.insert(self.Fragments, num, newfrag)
+	else 
+		where = table.insert(self.Fragments, newfrag)
+	end
+	newfrag.ID = where 
+
+	return where, newfrag
 end
 
 --[[
@@ -388,45 +414,75 @@ end
 
 function pmeta:ReplaceText(num, rep, onend)
 	local newfrag = {
+		ID = num,
 		Text = rep, 
 		OffsetY = 0, 
 		OffsetX = 0, 
 		Alpha = 0,
 		Color = self.Color,
-		LerpFromLast = 0}
-		--RewindTextPos = true}
-	local frag = self.Fragments[num]
-	if not frag then return false end 
+		LerpFromLast = 0,
+		RewindTextPos = true,
+		}
 
-	if frag.Text == rep then return false end 
 
-	frag.RewindTextPos = true	--to prevent the new fragment's X pos being impacted by the one we're removing.
-
-	local tx = ""
-
+	local frag 
 	for k,v in pairs(self.Fragments) do 
-		if k==num then tx = tx .. rep continue end 
-		tx = tx .. v.Text
+		if not v.Fading and v.ID == num then 
+			frag = v 
+			break 
+		end
 	end
+	if not frag then print("no such fragment", num) return false end 
 
-	self.Text = tx
+	if frag.Text == rep then print("replacing fragment with same shit", frag.Text, rep) return false end 
+	--frag.RewindTextPos = true
+	frag.Fading = true
+
+	self:StopAnimation(frag.ID .. "AddText" .. frag.Text)	--in case it existed
 
 	self:CreateAnimation(num .. "SubText" .. frag.Text, function(fr)
 		frag.OffsetY = fr * self:GetDropStrength()
 		frag.Alpha = 255 - fr*255
+
+		newfrag.LerpFromLast = fr 	--doing it in the fading _out_ looks better, for some reason, than doing it on fading _in_
 	end, function()
-		table.remove(self.Fragments, num)
+
+		local found = false
+
+		for k,v in pairs(self.Fragments) do 	--this is done like this because the keys might change by the time the animation finishes
+			if v == frag then 
+				table.remove(self.Fragments, k)
+				return
+			end 
+		end
+
+		newfrag.Finished = true
 	end)
 
 	self:CreateAnimation(num .. "AddText" .. newfrag.Text, function(fr)
+		frag.RewindTextPos = true	--to prevent the new fragment's X pos being impacted by the one we're removing.
+		newfrag.RewindTextPos = false
+
+		
 		newfrag.OffsetY = 24 - (fr * 24)
 		newfrag.Alpha = fr*255
-		newfrag.LerpFromLast = fr
-	end, function() 
-		if onend then onend() end
-	end, nil, 0.1)
 
-	table.insert(self.Fragments, num+1, newfrag)
+	end, 
+	function() 
+		if onend then onend() end
+	end, 
+	nil, 
+	0.1)	--delay		
+
+	local inswhere = num+1
+
+	for k,v in pairs(self.Fragments) do 	--find latest fragment with this ID which is fading, to put the new frag after it 
+		if v.Fading and v.ID == num then 	--this is done for text X rewinding to work properly(ORDERRR!)
+			inswhere = k+1 
+		end
+	end
+
+	table.insert(self.Fragments, inswhere, newfrag)
 
 	return newfrag
 end

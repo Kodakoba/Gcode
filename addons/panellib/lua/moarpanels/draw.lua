@@ -2,6 +2,7 @@ MoarPanelsMats = MoarPanelsMats or {
 
 }
 
+
 MoarPanelsMats.gu = Material("vgui/gradient-u")
 MoarPanelsMats.gd = Material("vgui/gradient-d")
 MoarPanelsMats.gr = Material("vgui/gradient-r")
@@ -16,8 +17,6 @@ local bad = Material("materials/icon16/cancel.png")
 hook.Add("InitPostEntity", "MoarPanels", function()
 
 	local _ = spinner:IsError() and hdl.DownloadFile("https://i.imgur.com/KHvsQ4u.png", "spinner.png", function(fn) spinner = Material(fn) end)
-
-	--source is not good at scaling.
 
 	_ = cout:IsError() and hdl.DownloadFile("https://i.imgur.com/huBY9vo.png", "circle_outline256.png", function(fn) cout = Material(fn) end)
 	_ = cout128:IsError() and hdl.DownloadFile("https://i.imgur.com/mLZEMpW.png", "circle_outline128.png", function(fn) cout128 = Material(fn) end)
@@ -479,7 +478,7 @@ function draw.RotatedBox(x, y, x2, y2, w)
 	surface.DrawPoly(poly)
 end
 
-local function GetOrDownload(url, name, flags)
+local function GetOrDownload(url, name, flags, cb)	--callback: 1st arg is material, 2nd arg is boolean: was the material loaded from cache?
 	if url == "-" or name == "-" then return false end 
 
 	local mat = MoarPanelsMats[name]
@@ -494,7 +493,6 @@ local function GetOrDownload(url, name, flags)
 		MoarPanelsMats[name].h = cmat:Height()
 
 		MoarPanelsMats[name].fromurl = url
-		print('peepee', url, name)
 
 		if MoarPanelsMats[name].mat:IsError() or (MoarPanelsMats[name].failed and (MoarPanelsMats[name].failed~=url)) then 
 			MoarPanelsMats[name].downloading = true
@@ -506,6 +504,7 @@ local function GetOrDownload(url, name, flags)
 
 				MoarPanelsMats[name].w = cmat:Width()
 				MoarPanelsMats[name].h = cmat:Height()
+				if cb then cb(MoarPanelsMats[name].mat, false) end
 
 			end, function(...)
 				print("Failed to download! URL:", url, "\nError:", ...)
@@ -516,8 +515,8 @@ local function GetOrDownload(url, name, flags)
 
 		end
 		mat = MoarPanelsMats[name]
-	elseif mat and mat.failed then 
-		print(mat.failed, url)
+	else 
+		if cb then cb(MoarPanelsMats[name].mat, true) end
 	end
 
 	return mat
@@ -563,20 +562,7 @@ function surface.DrawUVMaterial(url, name, x, y, w, h, u1, v1, u2, v2)
 
 end
 
-function surface.PaintMaterial(url, name, draw)
-	local mat = GetOrDownload(url, name)
-	if not mat then return end 
-
-	if mat and mat.downloading or mat.mat:IsError() then 
-		draw = function()
-			draw.DrawLoading(x + w/2, y + h/2, w, h)
-		end
-	else
-		surface.SetMaterial(mat.mat)
-	end
-
-	draw()
-end
+surface.PaintMaterial = Deprecated or function() print("surface.PaintMaterial is deprecated", debug.traceback()) end
 
 function draw.DrawMaterialCircle(x, y, rad)	--i hate it but its the only way to make an antialiased circle on clients with no antialiasing set
 	if rad < 64 then 
@@ -631,6 +617,150 @@ function draw.Masked(mask, op, demask, deop)
 
 end
 
+
+local RTs = MoarPanelsRTs or {}
+MoarPanelsRTs = RTs
+
+local mats = MoarPanelsRTMats or {}
+MoarPanelsRTMats = mats
+	
+local function CreateRT(name, w, h)
+
+	return GetRenderTargetEx(
+		name, 
+		w, 
+		h, 
+		RT_SIZE_LITERAL,			--the wiki claims rendertargets change sizes to powers of 2 and clamp it to screen size; lets prevent that
+		MATERIAL_RT_DEPTH_SHARED, 	--idfk?
+		2, 	--texture filtering, the enum doesn't work..?
+		CREATERENDERTARGETFLAGS_HDR,--wtf
+		IMAGE_FORMAT_RGBA8888		--huh
+	)
+
+end
+
+function draw.GetRT(name, w, h)
+	local rt
+	if not w or not h then error("error #2 or #3: expected width and height, received nothin'") return end 
+
+	if not RTs[name] then	
+
+		rt = CreateRT(name, w, h)
+
+		local m = muldim()
+		RTs[name] = m
+
+		m:Set(rt, w, h)
+		m:Set(1, "Number")
+
+	else 
+		local rtm = RTs[name]
+		local cached = rtm:Get(w, h)
+
+		if cached then
+			rt = cached
+		else --new W and H aren't equal, so recreate the RT
+
+			local id = rtm:Get("Number")
+			rtm:Set(id + 1, "Number")
+
+			rt = CreateRT(name .. id, w, h)
+			rtm:Set(rt, w, h)
+		end
+
+	end
+
+	return rt
+end
+
+function draw.RenderOntoMaterial(name, w, h, func, rtfunc, matfunc, pre_rt, pre_mat)
+
+	local rt
+	local mat
+
+	if not RTs[name] then	
+		print("new rt!")
+
+		rt = CreateRT(name, w, h)
+
+		mat = CreateMaterial(name, "UnlitGeneric", {
+		    ["$translucent"] = 1,
+		    ["$vertexalpha"] = 1,
+
+		    ["$alpha"] = 1,
+		})
+
+		local m = muldim()
+		RTs[name] = m
+		m:Set(rt, w, h)
+		m:Set(1, "Number")
+
+		mats[name] = mat
+
+	else 
+		local rtm = RTs[name]
+		local cached = rtm:Get(w, h)
+
+		if cached then
+			print("found cached rt")
+			rt = cached
+		else --new W and H aren't equal, so recreate the RT
+			print("new W,H arent equal to old, recreating")
+			local id = rtm:Get("Number")
+			rtm:Set(id + 1, "Number")
+
+			rt = CreateRT(name .. id, w, h)
+			rtm:Set(rt, w, h)
+		end
+
+		mat = mats[name]
+	end
+
+	rt = pre_rt or rt 
+	mat = pre_mat or mat
+
+	render.PushRenderTarget(rt)
+
+	render.OverrideAlphaWriteEnable(true, true)
+		render.Clear(0, 0, 0, 0, true, true)
+	render.OverrideAlphaWriteEnable(false, false)
+
+	local sw, sh = ScrW(), ScrH()
+
+	render.SetViewPort(0, 0, w, h)
+
+	surface.DisableClipping(true)
+
+	cam.Start2D()
+		local ok, err = pcall(func, w, h)
+	cam.End2D()
+
+	surface.DisableClipping(false)
+
+	render.SetViewPort(0, 0, sw, sh)
+
+	if rtfunc and ok then 
+		local keep = rtfunc(rt)
+		if keep == false then render.PopRenderTarget() return end
+	end
+
+	render.PopRenderTarget()
+
+	mat:SetTexture("$basetexture", rt)
+
+	if matfunc and ok then 
+		matfunc(mat)
+	end
+
+	if not ok then 
+		error("RenderOntoMaterial got an error while drawing!\n" .. err)
+		return
+	end
+
+	return mat
+
+end
+
 local mdls = {}
 
 if IsValid(MoarPanelsSpawnIcon) then MoarPanelsSpawnIcon:Remove() end
@@ -658,13 +788,12 @@ function draw.DrawOrRender(pnl, mdl, x, y, w, h)
 	end
 
 	if not mdls[mdl] then 
-		print("new attempt")
+
 		mdls[mdl] = Material("spawnicons/" .. icname)
-		print("spawnicons/" .. icname)
 
 		if mdls[mdl]:IsError() then 
 			local spic = GetSpawnIcon()
-			print("rendering", mdl, spic)
+
 			spic:SetModel(mdl)
 			spic:RebuildSpawnIcon()
 			mdls[mdl] = true

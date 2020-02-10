@@ -50,11 +50,17 @@ function L(s,d,v,pnl)
     return res
 end
 
+Colors = Colors or {}
+
 --[[-------------------------------------------------------------------------
 -- 	FPanel
 ---------------------------------------------------------------------------]]
 
 local greyed = Color(80, 80, 80)
+local btngrey = Color(70, 70, 70)
+
+Colors.Button = btngrey
+
 local close_hov = Color(235, 90, 90)
 local close_unhov = Color(205, 50, 50)
 
@@ -205,9 +211,11 @@ function PANEL.DrawHeaderPanel(self, w, h)
 		local spr = self.Shadow.spread or 2
 		local blur = self.Shadow.blur or 2
 		local alpha = self.Shadow.alpha or self.Shadow.opacity or 255
-		local color = self.Shadow.color or nil
 
-		BSHADOWS.EndShadow(int, spr, blur, alpha, nil, nil, nil, color)
+		local color = self.Shadow.color or nil
+		local color2 = self.Shadow.color2 or nil
+
+		BSHADOWS.EndShadow(int, spr, blur, alpha, nil, nil, nil, color, color2)
 		--surface.DisableClipping(true)
 	end
 
@@ -932,13 +940,21 @@ local FCB = {}
 
 function FCB:Init()
 	self:SetSize(160, 24)
-	self.Color = Color(50, 50, 50)
+
+	self.Color = Color(70, 70, 70)
+
 
 	self.Options = {}
 
 	self:SetValue("")
+
 	self.Font = "TWB24"
+	self:SetFont(self.Font)
+
+	self:SetTextColor(color_white)
+
 	self.OptionsFont = "TW24"
+
 	self.OnCreateFuncs = {}
 	self.Text = "self.Text = ???"
 
@@ -953,11 +969,11 @@ function FCB:AddChoice( value, data, select, icon, oncreate )
 	local i = table.insert( self.Choices, value )
 
 	if ( data ) then
-		self.Data[ i ] = data --this data shit is useless
+		self.Data[ i ] = data
 	end
 	
 	if ( icon ) then
-		self.ChoiceIcons[ i ] = icon
+		self.ChoiceIcons[ i ] = (isstring(icon) and Material(icon)) or (IsMaterial(icon) and icon) or nil
 	end
 
 	if ( select ) then
@@ -975,6 +991,48 @@ function FCB:AddChoice( value, data, select, icon, oncreate )
 	return i
 
 end
+
+
+local AlphabetSort = function(self)
+
+	local sorted = {}
+	local i = 0
+
+	for k, v in pairs(self.Choices) do
+		i = i + 1
+		local val = tostring( v )
+
+		if #val > 1 and val[1] == "#" then 
+			val = language.GetPhrase(val:sub(2)) 
+		end
+
+		sorted[i] = { id = k, data = v, label = val }
+	end
+
+	table.sort(sorted, function(a, b)
+		return a.label < b.label
+	end)
+
+	return ipairs(sorted)
+end
+
+local FuckingGarry = function(self)
+	local omg = {}
+	local i = 0
+
+	for k,v in pairs(self.Choices) do 
+		i = i + 1
+		omg[i] = {id = k, data = v, label = v}
+	end
+
+	return ipairs(omg)
+end
+
+function FCB:SetChoiceIcon(key, icon)
+	self.ChoiceIcons[key] = (isstring(icon) and Material(icon)) or (IsMaterial(icon) and icon) or nil
+end
+
+FCB.SetChoiceMaterial = FCB.SetChoiceIcon 
 
 function FCB:OpenMenu( pControlOpener )
 
@@ -994,41 +1052,28 @@ function FCB:OpenMenu( pControlOpener )
 	local m = self.Menu 
 	m:SetAlpha(0)
 
-	if ( self:GetSortItems() ) then
-		local sorted = {}
+	local alphasort = self:GetSortItems()
+	local iter = (alphasort and AlphabetSort or FuckingGarry)
 
-		for k, v in pairs( self.Choices ) do
-			local val = tostring( v )
-			if ( string.len( val ) > 1 && !tonumber( val ) && val:StartWith( "#" ) ) then val = language.GetPhrase( val:sub( 2 ) ) end
-			table.insert( sorted, { id = k, data = v, label = val } )
+	for k, v in iter(self) do
+
+		local option = self.Menu:AddOption( v.data, function() self:ChooseOption( v.data, v.id ) end )
+		option.DesHeight = 32
+
+		if ( self.ChoiceIcons[ v.id ] ) then
+			option.Icon = self.ChoiceIcons[ v.id ] 
+			option.IconW = 24
+			option.IconH = 24
+			option.IconPad = 4
+			option.Font = "TW24"
 		end
 
-		for k, v in SortedPairsByMemberValue( sorted, "label" ) do
-			local option = self.Menu:AddOption( v.data, function() self:ChooseOption( v.data, v.id ) end )
-			option.DesHeight = 32
-			if ( self.ChoiceIcons[ v.id ] ) then
-				option.Icon = self.ChoiceIcons[ v.id ] 
-				option.IconW = 24
-				option.IconH = 24
-				option.IconPad = 10
-				option.Font = "TW24"
-			end
-
-			if self.OnCreateFuncs[v.id] then 
-
-				self.OnCreateFuncs[v.id](self, option)
-			
-			end
-
+		if self.OnCreateFuncs[v.id] then
+			self.OnCreateFuncs[v.id](self, option)
 		end
-	else
-		for k, v in pairs( self.Choices ) do
-			local option = self.Menu:AddOption( v, function() self:ChooseOption( v, k ) end )
-			if ( self.ChoiceIcons[ k ] ) then
-				option.Icon =  self.ChoiceIcons[ k ] 
-			end
-		end
+
 	end
+	
 
 	local x, y = self:LocalToScreen( 0, self:GetTall() )
 
@@ -1041,7 +1086,7 @@ function FCB:OpenMenu( pControlOpener )
 
 	self.Menu:Open( x, y - sy, nil, self )
 	m:SetPos(x, y-8)
-	m:MoveTo(x, y, 0.4, 0, 0.3)
+	m:MoveBy(0, 8, 0.2, 0, 0.3)
 
 	m:AlphaTo(255, 0.1)
 

@@ -22,6 +22,7 @@ function dmeta:Initialize()
 
 	self.LastActive = 0		--last active element
 	self.LastActiveText = 0 --last active text element
+	self.Alignment = 0
 
 	self.LastAddedText = 0
 
@@ -51,7 +52,6 @@ function dmeta:AddText(tx, rep, timing)
 		t = DeltaTextEvent:new(key)
 
 		function t:OnActive()
-			print(-rep, #tx)
 			local frag = txel:FragmentText(#txel.Text - rep, #txel.Text)
 			txel:ReplaceText(frag, tx)
 		end
@@ -73,6 +73,11 @@ function dmeta:AddText(tx, rep, timing)
 	end
 
 	return t 
+end
+
+function dmeta:SetAlignment(a)
+	self.Alignment = a
+	return self
 end
 
 function dmeta:AddEvent(timing)
@@ -118,6 +123,10 @@ function dmeta:CycleReset()
 	for k,v in pairs(self.Timings) do 
 		v.Activated = false 
 	end
+end
+
+function dmeta:GetElements()
+	return self.Elements 
 end
 
 function dmeta:GetPreviousElement()
@@ -210,13 +219,32 @@ end
 
 function dmeta:Paint(x, y)
 
+	--[[
+		Grab text full width
+	]]
+	local tw = 0
+
+	surface.SetFont(self.Font)
+	self.LastFont = self.Font 
+
 	for k, tp in pairs(self.Active) do 
-		if not tp or not tp.Paint then continue end
-		tp:Paint(x, y)
+		if not tp.Paint then continue end
+
+		if tp.Font ~= self.LastFont then self.LastFont = tp.Font surface.SetFont(self.Font) end
+		tw = tw + (surface.GetTextSize(tp:GetText(true)))
+	end
+
+	self.TextWidth = tw
+
+	local offx = -self.Alignment / 2 * tw
+
+	for k, tp in pairs(self.Active) do 
+		if not tp.Paint then continue end
+		tp:Paint(x + offx, y)
 	end
 
 	for k, tp in pairs(self.Disappearing) do 
-		if not tp or not tp.Paint then continue end
+		if not tp.Paint then continue end
 		tp:Paint(x, y)
 	end
 
