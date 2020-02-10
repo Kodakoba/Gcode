@@ -174,5 +174,5 @@ end)
 		return "{1} played sound {2}.", {[2] = "<color=100,230,100>"..snd..".ogg"}
 	end
 end)
-:AddStringArg(false, "Sound to play.")
+:AddStringArg(true, "Sound to play.")
 :AddCallerArg()
