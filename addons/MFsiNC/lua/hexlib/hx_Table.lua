@@ -100,15 +100,15 @@ ProxyTable.__call = function(self, t, func)
 
 	t = t or {}	--the actual table
 
-	local ud = {IsProxy = true}	--what's returned
-	local mtud = {}	--metatable for what's returned
+	local ud = {}	--what's returned
+	local mtud = {IsProxy = true}	--metatable for what's returned
 	local what = {}
 
 	mtud.__index = function(self, key)
 
 		if key=="Table" then print("No stop that wtf\n", debug.traceback()) return t end
 		
-		return t[key] or what[key]
+		return rawget(mtud, key) or t[key] or what[key]
 	end
 
 	function what.__pairs(self)
