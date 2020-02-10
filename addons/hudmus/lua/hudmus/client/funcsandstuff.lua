@@ -42,9 +42,9 @@ hudmus.ConvertingURL = hudmus.ConvertingURL or false
 function hudmus.ParseMusicURL(url)
 
 	local url1 = string.gsub(url, "http%a://", "")
-	print(url1)
+
 	url1 = string.gsub(url1, "www.", "")
-	print(url1)
+
 	local p = "youtu.be" 
 	local p2 = "youtube.com" 
 
@@ -82,7 +82,7 @@ function hudmus.ParseMusicURL(url)
 		hudmus.ConvertingURL = true
 
 		hdl.DownloadFile(url, "hudmus_temp.txt", function(name) 
-			print('DLd from URL') 
+
 			file.Rename("hdl/hudmus_temp.txt", "hdl/"..util.CRC(url) .. ".txt")
 			hudmus.ConvertingURL = false 
 			hook.Run("HUDMusOnDLFinish", util.CRC(url) .. ".txt")
@@ -99,7 +99,7 @@ function hudmus.DLFromYoutube(url)
 	local curl = string.format(convert_url, url)
 	local ret = "-"
 	hudmus.ConvertingURL = true
-	print('droppin a', curl)
+
 	http.Fetch(curl,function(b, s)
 
 		result = util.JSONToTable(b)
@@ -156,11 +156,8 @@ function hudmus.CreatePlaylist(tbl)
 	if decomp then ex = decomp end 
 
 	local prev = util.JSONToTable(ex) 
-	if not prev then print('whot in the fok') prev = {} end 
-	print('-------')
-	PrintTable(prev)
-	PrintTable(tbl)
-	print('-------')
+	if not prev then prev = {} end 
+
 	local merge = table.Merge(prev, tbl)
 
 	local json = util.TableToJSON(merge)
@@ -217,6 +214,8 @@ function hudmus.RestoreSettings()
 end
 
 function hudmus:PlayURL(url, name, ply, client)
+	if true then return end 
+	
 	if IsValid(s) and s:GetState() == GMOD_CHANNEL_PLAYING then 
 		print('Cannot play a new stream on top of an existing one; queueing it up instead..')
 		hudmus:Enqueue(name)
