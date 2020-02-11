@@ -19,7 +19,8 @@ function ENT:Init(me)
 
 	me.LastTransfer = CurTime()
 	me.CableLength = self.CableLength ^ 2
-
+	me.MultipleGenerators = true 
+	
 	poles[#poles + 1] = self
 
 	timer.Simple(0.2, function()

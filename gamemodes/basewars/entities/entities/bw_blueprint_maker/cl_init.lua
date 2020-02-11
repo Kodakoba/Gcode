@@ -263,22 +263,21 @@ function ENT:OpenMenu()
 					elseif icon.IconName then
 
 						mat = draw.GetMaterial(icon.IconURL, icon.IconName, icon.IconFlags, function(mat, cache)
-							if cache then return end
+							if cache then print("oh shit oh fuck") return end
 
 							if IsValid(cType) then 
-								print("setting web to", mat)
 								cType:SetChoiceMaterial(name, mat)
 							end
+
 							mats[icon.IconName] = mat
 						end)
 
-						if mat.mat then 
-							print("setting cached to", mat.mat)
+						if not mat.downloading and not mat.failed then 
 							mat = mat.mat
 							cType:SetChoiceMaterial(name, mat)
+							mats[icon.IconName] = mat
 						end
-
-						mats[icon.IconName] = mat
+						
 					end 
 
 				end

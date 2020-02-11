@@ -945,17 +945,19 @@ function chathud:Draw()
 
 					if drawq[#drawq] and drawq[#drawq].string then 
 
-						drawq[#drawq].cont = drawq[#drawq].cont .. v
+						local str = v
 
 						if drawq[#drawq].san then 
 
-							local sub = drawq[#drawq].cont:sub(2)
+							str = v:sub(2)
 
 							if language.GetPhrase(sub) == sub then 
 								drawq[#drawq].san = nil 
 							end 
 
 						end
+
+						drawq[#drawq].cont = drawq[#drawq].cont .. str
 
 					else 
 
@@ -966,7 +968,12 @@ function chathud:Draw()
 							san = true
 						end
 
-						drawq[#drawq+1] = {cont = v, string = true, san = true}
+						if san then
+							drawq[#drawq+1] = {cont = "#", string = true, san = true}
+							drawq[#drawq+1] = {cont = sub, string = true, san = true}
+						else 
+							drawq[#drawq+1] = {cont = v, string = true}
+						end
 					
 					end
 

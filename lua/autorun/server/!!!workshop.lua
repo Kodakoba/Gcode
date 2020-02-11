@@ -68,6 +68,7 @@ local BWAddons={
     506283460, --csgo kneivs
     546392647, --media players
     284266415,
+    507707748, --whitesnow attachment pack
     757604550, --wos anim base
     876487668, --tfa ksg
     434019312, --bf4 #2
@@ -81,6 +82,15 @@ local BWAddons={
     157173896, --mp5k
     605564693, --acr-e
 
+    --TESTING NEW WEAPONS:
+    374453458, --honey badger
+    374790957, --aug
+    631698506, --mk18
+    657241323, --insurgency 2
+    1166282010, --sg552
+    838920776, --bullpup arsenal
+    1106736515, --khris hcar
+    255763250, --kriss vector
 }
 
 
@@ -92,8 +102,8 @@ local function indent(t)
     return string.rep("    ", t)
 end
 
-local function DownloadFolder(str)
-    local files, folders=file.Find(str .. "/*","MOD","namedesc")
+local function DownloadFolder(str, mask)
+    local files, folders=file.Find(str .. (mask and "/" .. mask or "/*"),"MOD","namedesc")
 
     local root = false 
 
@@ -195,6 +205,8 @@ timer.Simple(0, function()
 
         DownloadFolder("models/grp")
         DownloadFolder("models/zerochain")
+
+        DownloadFolder("resource/fonts", "*.ttf")
 
         DownloadFolder("sound/mus")
         

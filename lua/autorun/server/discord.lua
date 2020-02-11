@@ -118,7 +118,8 @@ end)
 local quipchance = 5
 
 local quips = {
-	[["since you've awakened me again..."]],
+	[[♂ COME ♂ ON ♂ LET'S ♂ GO ♂]],
+	"give life to a world\nthat's our own",
 }
 
 
@@ -290,29 +291,27 @@ hook.Add("Tick", "ServerNotify", function()
 		quip = ""
 	end
 
-	local desc = quip .. "Join @ steam://connect/" .. game.GetIPAddress() .. " !"
+	
 
-	print("sending description", desc)
 
 	discord.Notified = true
 
 	timer.Simple(10, function()
 		local em = Embed()
-		print("timer ran")
+		local desc = quip .. "Join @ steam://connect/" .. game.GetIPAddress() .. " !"	--gmod pls
 
 		  em:SetTitle("Server is now online!")
 			:SetDescription(desc)
 			:SetColor(Color(100, 230, 100))
 
 		discord.SendEmbed("status", nil, em, function(...)
-			print("sent!")
-			RunConsoleCommand("sv_hibernate_think", 0)
 
+			RunConsoleCommand("sv_hibernate_think", 0)
 			hook.Remove("Tick", "ServerNotify")
-		end, function(...)
-			print('failed!!!!')
-			RunConsoleCommand("sv_hibernate_think", 0)
 
+		end, function(...)
+
+			RunConsoleCommand("sv_hibernate_think", 0)
 			hook.Remove("Tick", "ServerNotify")
 		end)
 		

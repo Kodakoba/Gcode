@@ -73,6 +73,8 @@ end
 
 function SWEP:PrimaryAttack()
 	local ply = self:GetOwner()
+	if not IsPlayer(ply) then return end 
+
 	local tr = ply:GetEyeTrace()
 
 	if not IsFirstTimePredicted() then self:SetNextPrimaryFire(CurTime() + self.Primary.Delay) return end --wtf?
@@ -88,9 +90,9 @@ function SWEP:PrimaryAttack()
 	self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
 	
 
-	if not IsPlayer(self:GetOwner()) then return end 
 	if not ply:InRaid() then return end 
-	if not IsProp(tr.Entity) then return end 
+
+	if not IsProp(tr.Entity) or tr.Fraction * 32768 > self.Range then return end 
 
 	self:SendWeaponAnim(ACT_VM_PRIMARYATTACK) 
 	ply:SetAnimation(PLAYER_ATTACK1)

@@ -57,7 +57,6 @@ local function IncludeCategories()
 
 	for k,v in pairs(cats) do 
 		local incpath = path .. "/cats/" .. v 
-		print("Including cat", incpath)
 		include(incpath)
 		AddCSLuaFile(incpath)
 	end
@@ -70,7 +69,6 @@ local function IncludePerks()
 
 	for k,v in pairs(cats) do 
 		local incpath = path .. "/perks/" .. v 
-		print("Including perk", incpath)
 		include(incpath)
 		AddCSLuaFile(incpath)
 	end

@@ -37,9 +37,12 @@ function ENT:ConnectTo(ent)
 			me.ConnectedTo:OnDisconnect(self)
 		end
 	end
-	
-	if IsValid(them.ConnectedTo) and them.ConnectedTo ~= self then 
+
+	print(ent.MultipleGenerators)
+
+	if IsValid(them.ConnectedTo) and them.ConnectedTo ~= self and not them.MultipleGenerators then 
 		them.ConnectedTo:Disconnect(ent)
+		print("disconnected them.connectedto")
 	end
 
 	if ent.OnConnected then 

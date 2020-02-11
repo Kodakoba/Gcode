@@ -95,9 +95,10 @@ end)
 function ENT:Upgrade(ply)
 
     if ply then
-            if ply~=self:CPPIGetOwner() then 
-                ply:Notify("You can't upgrade others' printers!", BASEWARS_NOTIFICATION_ERROR)
-            return end
+        if ply~=self:CPPIGetOwner() then 
+            ply:Notify("You can't upgrade others' printers!", BASEWARS_NOTIFICATION_ERROR)
+            return false 
+        end
 
         local lvl = self:GetLevel()
 
@@ -106,16 +107,17 @@ function ENT:Upgrade(ply)
         local calcM = self:GetUpgradeValue() * lvl
 
         if plyM < calcM then
-
             ply:Notify(BaseWars.LANG.UpgradeNoMoney, BASEWARS_NOTIFICATION_ERROR)
 
-        return false end
+            return false 
+        end
 
         if lvl >= self.MaxLevel then
 
             ply:Notify(BaseWars.LANG.UpgradeMaxLevel, BASEWARS_NOTIFICATION_ERROR)
 
-        return false end
+            return false
+        end
 
         ply:TakeMoney(calcM)
         self.CurrentValue = (self.CurrentValue or 0) + calcM

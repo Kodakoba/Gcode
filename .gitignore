@@ -1,16 +1,39 @@
 
 lua/autorun/server/lanes.lua
-lua/autorun/server/lanes.lua
+
 lua/xp3/chathud-stable_5-to-1.lua
-lua/xp3/chathud-stable_5-to-1.lua
-addons/titles/lua/autorun/FUCKYOU/cl_nametitle.lua
-addons/titles/lua/autorun/FUCKYOU/cl_status.lua
+
 *.sublime-project
 *.sublime-workspace
-addons/pLogs-2-master/lua/plogs_hooks/printers.sublime-project
-addons/pLogs-2-master/lua/plogs_hooks/printers.sublime-workspace
 *.sublime-project
-addons/pLogs-2-master/lua/plogs_hooks/printers.sublime-project
-addons/pLogs-2-master/lua/plogs_hooks/printers.sublime-workspace
-addons/titles/lua/autorun/fuckssake.zip
-lua/autorun/server/lanes.lua
+
+addons/pLogs*
+
+*.zip
+
+# do not track anything with GDCW or CW in the name
+addons/*gdcw*
+addons/*cw*
+addons/*customizable*
+
+#do not track advdupe
+addons/advdupe2-master*
+
+#do not track inventory; thats a separate repo
+addons/*mining*
+addons/*inventory*
+addons/*research*
+
+#anything thats not a lua file >:(
+*.*
+!*.lua
+
+# Ignore everything in repository root 
+/*
+
+# Files to not ignore
+!/.gitignore
+!/addons
+
+# Folder to not ignore
+!/gamemodes/basewars

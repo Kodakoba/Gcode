@@ -139,7 +139,7 @@ function ENT:ThinkFunc()
 
     end
 
-    me.Power = pw 
+    mebw.Power = pw 
 
     self:NetworkPrinters()
 end
@@ -213,7 +213,7 @@ function ENT:Use(ply)
 
     for k,v in pairs(self.Printers) do 
         if not IsValid(v) then continue end 
-        print("using", ply, v)
+
         local mon = v.UseFunc and v:UseFunc(ply, ply, _, _, true)
 
         if mon then moneys = moneys + mon end

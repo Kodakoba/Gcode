@@ -183,7 +183,7 @@ function GM:EntityTakeDamage(ent, dmginfo)
 	local Attacker 	= dmginfo:GetAttacker()
 	local Damage 	= dmginfo:GetDamage()
 
-	local PropDamageScale = 0.2
+	local PropDamageScale = 0.5
 
 	local IsProp = ent:GetClass() == "prop_physics"
 
