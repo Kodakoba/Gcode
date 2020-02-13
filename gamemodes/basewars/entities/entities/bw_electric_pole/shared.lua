@@ -23,6 +23,8 @@ ENT.DontPreview = true
 ENT.MaxGenerators = 8
 ENT.MaxElectronics = 16
 
+ENT.MultipleGenerators = true 
+
 function ENT:DerivedDataTables()
 
 	for i=0, 31 do 
