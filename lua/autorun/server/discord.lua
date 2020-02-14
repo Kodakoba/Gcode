@@ -119,26 +119,8 @@ local quipchance = 5
 
 local quips = {
 	[[♂ COME ♂ ON ♂ LET'S ♂ GO ♂]],
-	"give life to a world\nthat's our own",
-}
-
-
-
-local offquips = {
-	"\"yup, i'm done\"",
-	"at least it wasn't a crash",
-
-	function()
-		local t = os.date("*t")
-
-		if t.hour > 21 or t.hour < 6 then 
-			return ("it's getting pretty late (%s:%s)"):format(t.hour, t.min)
-		end 
-
-	end, 
-
-	"another mechanic successfully ruined",
-	"now 20% more errors than the last time!"
+	"Oh shit, I'm sorry",
+	"Sorry for what?"
 }
 
 Embed = {}
@@ -317,18 +299,4 @@ hook.Add("Tick", "ServerNotify", function()
 		
 	end)
 
-end)
-
-hook.Add("ShutDown", "ServerNotify", function()
-
-	local quip 
-
-	while quip == nil do 
-		quip = eval(offquips[math.random(#offquips)])
-	end
-
-	local em = Embed()
-	em:SetTitle("Server is now offline."):SetDescription(quip):SetColor(Color(230, 70, 70))
-
-	discord.SendEmbed("status", nil, em)
 end)
