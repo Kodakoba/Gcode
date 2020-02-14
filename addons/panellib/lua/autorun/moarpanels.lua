@@ -19,59 +19,9 @@ function eval(var, ...)
 end
 
 
-local path = "moarpanels"
-
-local _CL = 1 
-local _SH = 2
-local _SV = 3
-
-function IncludeFolder(name, realm, nofold)
-	print("searching", path .. "/" .. name)
-	local file, folder = file.Find( path .. "/" .. name, "LUA" )
-	local tbl = string.Explode("/", name)
-	tbl[#tbl] = ""
-	local fname = table.concat(tbl,"/")
-
-	for k,v in pairs(file) do
-		local name = path .. "/" .. fname
-
-		if realm==_CL then 
-
-			if SERVER then 
-				AddCSLuaFile(name..v)
-			end
-
-			if CLIENT then 
-				include(name..v)
-			end
-
-		elseif realm == _SH then 
-
-			include(name..v)
-			AddCSLuaFile(name..v)
-
-		elseif realm == _SV and SERVER then 
-			
-			include(name..v)
-		else
-			ErrorNoHalt("Could not include file " .. fname .. "; fucked up realm?")
-			continue
-		end
-
-		local rstr = (realm==_CL and "Client") or (realm==_SH and 'Shared') or (realm==_SV and 'Server') or "WHAT THE FUCK?"
-
-	end
-	
-	if not nofold then
-		for k,v in pairs(folder) do
-			IncludeFolder(name..v, realm)
-		end
-	end
-	
-end
+local path = "moarpanels/"
 
 
-IncludeFolder("*", _CL, true)
 
 if CLIENT then 
 
@@ -120,12 +70,13 @@ if CLIENT then
 
 end
 
-local MakeDeltaText = function()
-	IncludeFolder("deltatext/*", _CL)
+local Load = function()
+	IncludeFolder(path .. "*", _CL, true)
+	IncludeFolder("moarpanels/deltatext/*", _CL)
 end
 
 if HexLib then 
-	MakeDeltaText()
+	Load()
 else 
-	hook.Add("HexlibLoaded", "DeltaText", MakeDeltaText)
+	hook.Add("HexlibLoaded", "LoadMorePanels", Load)
 end

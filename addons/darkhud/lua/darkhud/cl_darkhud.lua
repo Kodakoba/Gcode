@@ -581,7 +581,11 @@ end)
 
 hook.Add("HUDPaint", "DarkHUD", function()
 	local f = DarkHUD.Essentials 
-	if not IsValid(f) then return end 
+	if not IsValid(f) then 
+		DarkHUD.Create()
+		f = DarkHUD.Essentials
+		if not IsValid(DarkHUD.Essentials) then return end
+	end 
 
 	f:PaintManual()
 
