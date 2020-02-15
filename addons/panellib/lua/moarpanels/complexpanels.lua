@@ -812,7 +812,9 @@ function Cloud:Init()
 	self.XAlign = 0
 	self.YAlign = 0
 	self.wwrapped = {}
+
 	self.Seperators = {}
+	self.SepH = 0
 
 	self.MinW = 0
 	self.MaxW = 192
@@ -893,7 +895,7 @@ function Cloud:Paint()
 
 	local frmtd = false 
 
-	local boxh = ch
+	local boxh = ch + 4 + self.SepH
 
 	local lasttext = ""
 
@@ -947,7 +949,7 @@ function Cloud:Paint()
 			--surface.DisableClipping(true)
 		end
 
-		draw.DrawText(lab, self.Font, xoff + 8 - cw*self.Middle,  finY + 4, self.TextColor, 0)
+		draw.DrawText(lab, self.Font, xoff + 8 - cw*self.Middle,  finY + 2, self.TextColor, 0)
 
 		local offy = finY + ch + 4
 
@@ -988,11 +990,10 @@ function Cloud:AddFormattedText(txt, col, font, overy, num) --if you're updating
 	local yo = 0
 	if not overy then 
 		surface.SetFont(font or self.Font)
-		print("setting font", font)
-		local _, chary = surface.GetTextSize(txt)
 
-		local _,amt = nd:gsub("\n", "")
-		yo = (chary + chary*amt)
+		local _, chary = surface.GetTextSize(nd)
+
+		yo = chary
 	else
 		yo = overy 
 	end
@@ -1031,7 +1032,7 @@ function Cloud:AddFormattedText(txt, col, font, overy, num) --if you're updating
 
 		return (p1 and not p2) or (p1 and p2 and p1 < p2)
 	end)
-	PrintTable(self.DoneText)
+
 	self.LatestKey = key
 
 	return #self.DoneText, tbl
@@ -1039,8 +1040,11 @@ function Cloud:AddFormattedText(txt, col, font, overy, num) --if you're updating
 end
 
 function Cloud:AddSeperator(col, offx, offy, num)
-	print("added at", #self.DoneText, self.DoneText[#self.DoneText].Text)
-	self.Seperators[#self.DoneText] = {col = col or Color(70, 70, 70), offx = offx or 4, offy = offy or 2}
+	offx = offx or 4 
+	offy = offy or 2 
+
+	self.Seperators[#self.DoneText] = {col = col or Color(70, 70, 70), offx = offx, offy = offy}
+	self.SepH = self.SepH + offy*2
 end
 
 function Cloud:ClearFormattedText()

@@ -146,6 +146,88 @@ function string.WordWrap(name, w, font)	-- not hex's necessarily, also stolen fr
 	return text, widths, height
 end
 
+
+local function WrapByLetters(txt, curwid, fullwid)
+	local ret = ""
+
+	print("wrapping", txt, curwid, fullwid)
+
+	for i, code in utf8.codes(txt) do 
+		local char = utf8.char(code)
+		local charw = (surface.GetTextSize(char))
+
+		if charw > curwid then 
+			print("too big charw", char, curwid)
+			ret = ret .. "-\n" .. char
+			curwid = fullwid - charw
+		else 
+			print("adding charw", char, curwid, charw)
+			ret = ret .. char 
+			curwid = curwid - charw 
+		end
+	end
+
+	return ret, (fullwid - curwid)
+end
+
+local function WrapWord(word, curwid, fullwid)
+
+	local tw, th = surface.GetTextSize(word)
+	local ret = ""
+	print("WrapWord:", word, curwid)
+	if curwid + tw > fullwid then 
+
+		local too_wide = tw > fullwid
+
+		if not too_wide then 
+			ret = ret .. "\n" .. word
+			curwid = tw
+		else 
+			local newtx, newwid = WrapByLetters(word, fullwid - curwid, fullwid)
+			print("wrapped by letters", newtx, newwid)
+			ret = ret .. "\n" .. newtx
+			curwid = newwid
+		end
+	else 
+		ret = ret .. " " .. word
+		curwid = curwid + tw
+	end
+
+	return ret, curwid
+end
+
+function string.WordWrap2(txt, wid, font)
+	surface.SetFont(font or "RL24")
+
+	if istable(wid) then 
+
+
+	else 
+		local widths = {}
+		local ret = ""
+
+		local needwid = wid
+		local curwid = 0
+
+		for word in string.gmatch(txt, "(.-)%s") do 
+			
+			local r2, w2 = WrapWord(word, curwid, needwid)
+			ret = ret .. r2
+			curwid = w2
+
+		end
+
+		local lastword = txt:match(".+%s(.+)")
+		local r2, w2 = WrapWord(lastword, curwid, needwid)
+
+		ret = ret .. r2
+		curwid = w2
+
+		return ret
+		
+	end
+end
+
 function string.GetBetween(str, tag, num)
 	local pat = "%b" .. tag 
 	local pat2 = tag[1] .. "(.+)" .. tag[2]

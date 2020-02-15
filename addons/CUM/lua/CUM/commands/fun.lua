@@ -109,7 +109,6 @@ CUM.AddCommand("ps", function(ply, line)
 	if not GachiRP then return end
  	if not IsValid(ply) then return false, "Console?" end
 
- 	print("Cooldown", CurTime() - ply.psCoolDown)
  	if ply.psCoolDown and CurTime() - ply.psCoolDown < 2 then return false end
 
 	if not line or line=="" then 
