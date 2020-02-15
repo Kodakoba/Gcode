@@ -614,7 +614,7 @@ hook.Add("PlayerSay", "CUM.Commands", function(ply, str)
 			print("[CUM] Error! :", err)
 		end
 
-		if cmdtbl.reportfunc then
+		if cmdtbl.reportfunc and err ~= false then
 
 			table.Merge(cmdtbl.ReportArgs, cmdtbl.ExecArgs)
 			table.insert(cmdtbl.ReportArgs, 1, ply)

@@ -14,6 +14,7 @@ end
 
 CUM.cmds = CUM.cmds or {}
 CUM.Cats = CUM.Cats or {}
+
 local function IncludeFolder(name, realm)
 	local file, folder = file.Find( name, "LUA" )
 	local tbl = string.Explode("/", name)

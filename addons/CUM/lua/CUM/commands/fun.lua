@@ -105,15 +105,12 @@ local urlps = {
 	["q2f2laugh"] = "https://b.vaati.net/aruc.mp3"
 }
 
-local failed = false 
-
 CUM.AddCommand("ps", function(ply, line)
 	if not GachiRP then return end
  	if not IsValid(ply) then return false, "Console?" end
 
- 	failed = false 
-
- 	if ply.psCoolDown and CurTime() - ply.psCoolDown < 0.5 then return end
+ 	print("Cooldown", CurTime() - ply.psCoolDown)
+ 	if ply.psCoolDown and CurTime() - ply.psCoolDown < 2 then return false end
 
 	if not line or line=="" then 
 
@@ -126,49 +123,50 @@ CUM.AddCommand("ps", function(ply, line)
 
 		end
 		
+		ply:ChatPrint("All sounds are printed to console.")
 
-	ply:ChatPrint("All sounds are printed to console.")
+		return false 
+	end
 
-	return end
+	local played = false
 
-	local played = false 
-	    for k,v in pairs(f) do
-	    	local snds=file.Find("sound/"..v.."/*.ogg","MOD","namedesc")
+    for k,v in pairs(f) do
+    	local snds=file.Find("sound/"..v.."/*.ogg","MOD","namedesc")
 
-	    	for k, file in pairs(snds) do
-	        	if line..".ogg"==file then 
-	        		played = true 
-	        		ply.psCoolDown = CurTime()
-					ply:EmitSound(v.."/"..line..'.ogg', 120, 100, 1, CHAN_AUTO )
-	        	break end
-	        end
+    	for k, file in pairs(snds) do
+        	if line..".ogg"==file then 
+        		played = true 
+        		ply.psCoolDown = CurTime()
+				ply:EmitSound(v.."/"..line..'.ogg', 120, 100, 1, CHAN_AUTO )
+        	break end
+        end
 
-	    end
+    end
 
-	    for k,v in pairs(urlps) do
+    for k,v in pairs(urlps) do
 
-			if line==k then 
-				played=true
-				net.Start("playsound")
-					net.WriteString(v)
-					net.WriteEntity(ply)
-				net.Broadcast()
-				ply.psCoolDown = CurTime()
-			end
-
+		if line==k then 
+			played=true
+			net.Start("playsound")
+				net.WriteString(v)
+				net.WriteEntity(ply)
+			net.Broadcast()
+			ply.psCoolDown = CurTime()
 		end
 
-	    if not played then 
-	    	ply:PrintMessage(3,"sound '"..line..".ogg' not found")
-	    	failed = true
-	    end
+	end
+
+    if not played then 
+    	ply:PrintMessage(3,"sound '"..line..".ogg' not found")
+    	return false 
+    end
 
 
 end)
 :SetSilent(true)
 :SetDescription("Play one of the predefined sounds.")
 :SetReportFunc(function(self, rply, caller, caller2, snd)
-	if not snd or snd=="" or failed then return end 
+	if not snd or snd=="" then return end 
 
 	if rply:Distance(caller) < 768 or rply == caller then 
 		return "{1} played sound {2}.", {[2] = "<color=100,230,100>"..snd..".ogg"}

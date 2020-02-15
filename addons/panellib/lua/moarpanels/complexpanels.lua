@@ -876,24 +876,12 @@ function Cloud:Paint()
 
 	surface.SetFont(self.Font)
 
-	if not lab:find('\n') then 
-		cw = (surface.GetTextSize(lab))+16
-	end
-
-	
-
 	local ch = 0
-	local _, ty = surface.GetTextSize("l")
 
-	if not self.HOverride then 
+	local tw, th = surface.GetTextSize(lab)
 
-		local _, amt = string.gsub(lab, "\n", "")
-		ch = ty * (amt+1)
-
-	else 
-		ch=self.HOverride 
-	end
-
+	cw = tw + 16
+	ch = self.HOverride or th
 	
 	local xoff = self.XShit or 4
 	local yoff = self.YShit or 0
@@ -903,15 +891,13 @@ function Cloud:Paint()
 
 	local aY = math.Clamp(self.YAlign, 0, 2)
 
-	
-
 	local frmtd = false 
 
-	local boxh = ch + 4
+	local boxh = ch
 
 	local lasttext = ""
 
-	for k,v in SortedPairs(self.DoneText) do 
+	for k,v in ipairs(self.DoneText) do 
 		if not v.Continuation then 
 			lasttext = v.Text 
 		else 
@@ -928,15 +914,9 @@ function Cloud:Paint()
 		end
 
 		if not v.Text:find('\n') then 
-			cw = math.max(cw, surface.GetTextSize(lasttext) + 16)
+			cw = math.max(cw, (surface.GetTextSize(lasttext)) + 16)
 		end
 
-	end
-
-	
-
-	if frmtd then 
-		boxh = boxh + 5
 	end
 
 	finY = yoff + boxh*(aY-1)
@@ -971,19 +951,22 @@ function Cloud:Paint()
 
 		local offy = finY + ch + 4
 
-		for k,v in SortedPairs(self.DoneText) do 
+		for k,v in ipairs(self.DoneText) do 
 			local font = v.Font or self.DescFont
 			local tx = xoff + 8 - cw*self.Middle
 
-			surface.SetFont(font)
-			if not v.Continuation then surface.SetTextPos(tx, offy) end
-			surface.SetTextColor(v.Color)
-			surface.DrawText(v.Text)
+			--surface.SetFont(font)
+			--if not v.Continuation then surface.SetTextPos(tx, offy) end
+			--surface.SetTextColor(v.Color)
+			--surface.DrawText(v.Text)
 
-			--draw.DrawText(v.Text, font, xoff + 8 - cw*self.Middle,  offy, v.Color, 0)
+			draw.DrawText(v.Text, font, xoff + 8 - cw*self.Middle,  offy, v.Color, 0)
+
 			offy = offy + v.YOff
+
 			if self.Seperators[k] then 
 				local sep = self.Seperators[k]
+
 				surface.SetDrawColor(sep.col)
 
 				local sx = sep.offx
@@ -1004,8 +987,9 @@ function Cloud:AddFormattedText(txt, col, font, overy, num) --if you're updating
 	local nd = string.WordWrap(txt, (self.MaxW or 192) - 16, (font or self.Font))
 	local yo = 0
 	if not overy then 
-		surface.SetFont((font or self.Font))
-		local _, chary = surface.GetTextSize("l")
+		surface.SetFont(font or self.Font)
+		print("setting font", font)
+		local _, chary = surface.GetTextSize(txt)
 
 		local _,amt = nd:gsub("\n", "")
 		yo = (chary + chary*amt)
@@ -1013,21 +997,50 @@ function Cloud:AddFormattedText(txt, col, font, overy, num) --if you're updating
 		yo = overy 
 	end
 	
-	local tbl = {Text = nd, Color = col, YOff = yo, Font = font}
+	local key = #self.DoneText + 1 
+	local tbl
+
+	if num then 
+		for k,v in pairs(self.DoneText) do 
+			if v.prio == num then
+				key = k
+				tbl = v
+				break 
+			end 
+		end 
+		tbl = tbl or {}
+	else 
+		tbl = {}
+	end
+
+	tbl.Text = nd
+	tbl.Color = col
+	tbl.YOff = yo
+	tbl.Font = font 
+	tbl.prio = num
 
 	if yo == 0 then 
 		tbl.Continuation = true 
 	end
 
-	self.DoneText[(num or #self.DoneText+1)] = tbl
-	self.LatestKey = (num or #self.DoneText)
+
+	self.DoneText[key] = tbl
+
+	table.sort(self.DoneText, function(a, b)
+		local p1, p2 = a.prio, b.prio
+
+		return (p1 and not p2) or (p1 and p2 and p1 < p2)
+	end)
+	PrintTable(self.DoneText)
+	self.LatestKey = key
 
 	return #self.DoneText, tbl
 
 end
 
-function Cloud:AddSeperator(col, offx, offy)
-	self.Seperators[self.LatestKey or "??"] = {col = col or Color(70, 70, 70), offx = offx or 4, offy = offy or 2}
+function Cloud:AddSeperator(col, offx, offy, num)
+	print("added at", #self.DoneText, self.DoneText[#self.DoneText].Text)
+	self.Seperators[#self.DoneText] = {col = col or Color(70, 70, 70), offx = offx or 4, offy = offy or 2}
 end
 
 function Cloud:ClearFormattedText()
