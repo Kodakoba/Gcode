@@ -623,7 +623,7 @@ MoarPanelsRTs = RTs
 
 local mats = MoarPanelsRTMats or {}
 MoarPanelsRTMats = mats
-	
+
 local function CreateRT(name, w, h)
 
 	return GetRenderTargetEx(
@@ -645,7 +645,7 @@ function draw.GetRT(name, w, h)
 
 	if not RTs[name] then	
 
-		rt = CreateRT(name, w, h)
+		rt = CreateRT(name .. w .. h, w, h)
 
 		local m = muldim()
 		RTs[name] = m
@@ -664,7 +664,7 @@ function draw.GetRT(name, w, h)
 			local id = rtm:Get("Number")
 			rtm:Set(id + 1, "Number")
 
-			rt = CreateRT(name .. id, w, h)
+			rt = CreateRT(name .. w .. h .. id, w, h)
 			rtm:Set(rt, w, h)
 		end
 

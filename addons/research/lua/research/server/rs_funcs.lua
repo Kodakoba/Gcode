@@ -32,9 +32,8 @@ function Research.BeginResearch(ply, perk, ent)
 	for k,v in pairs(reqs) do 
 		if not Inventory.EnoughItem(ply, k, v) then enough = false break end 
 	end 
-	print(enough, "poop")
+
 	if enough then 
-		print("starting research on ent")
 		ent:QueueResearch(ply, perk, lv+1)
 	end
 

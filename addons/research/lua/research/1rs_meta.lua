@@ -3,7 +3,7 @@ Research.Categories = Research.Categories or {}
 Research.SubCategories = Research.SubCategories or {}
 
 Research.Perks = Research.Perks or {}
-
+print("Included research")
 rescatmeta = {}
 
 	function rescatmeta:SetName(str)
@@ -240,7 +240,7 @@ function perkmeta:AddYield(typ, what, lv)
 		local yld = {}
 
 		for k, val in pairs(yield) do 
-			print(k, val, aliases[k], v)
+
 			local key = aliases[k] or k
 
 			yld[key] = val

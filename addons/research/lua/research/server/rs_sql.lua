@@ -11,12 +11,11 @@ function PLAYER:FetchResearch()
 	local query = db:query(q)
 
 	query.onSuccess = function(self, data)
-		print("cool got research data:")
-		PrintTable(data)
+
 	end
 
 	query.onError = function(self, err)
-		print("research SQL failed:", err, "\nquery:", q)
+
 	end
 
 	query:start()
