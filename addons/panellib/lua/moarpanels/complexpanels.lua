@@ -1007,7 +1007,7 @@ function Cloud:AddFormattedText(txt, col, font, overy, num) --if you're updating
 
 	local wid, chary = surface.GetTextSize(nd)
 	self.MaxWidth = math.Clamp(wid + 16, math.max(self.MinW, self.MaxWidth), self.MaxW)
-	print("maxwidth is now", self.MaxWidth, font, txt)
+
 	--overy allows you to override the Y offset
 	yo = overy or chary
 	
