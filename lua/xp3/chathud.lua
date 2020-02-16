@@ -198,7 +198,7 @@ chathud.x = 0.84 * 64
 local ChatHUDYPos = ScrH() - (0.84 * 200) - (0.84 * 140)
 chathud.y = ChatHUDYPos
 
-chathud.W = 400
+chathud.W = 500
 
 local blacklist = {
 	["0"] = true,
@@ -666,9 +666,8 @@ function chathud:AddText(...)
 			merged[#merged + 1] = col 
 
 			local n = (v.Nick and v:Nick()) or "Console"
-			names[v], nw = string.WordWrap(n, chathud.W, "CH_Name")
-
-			nw = nw[1]
+			names[v], nw = string.WordWrap2(n, chathud.W, "CH_Name")
+			curwidth = curwidth + nw
 			merged[#merged + 1] = n --table.insert(cont, k+1, n)
 
 			name = name .. names[v]
@@ -696,9 +695,11 @@ function chathud:AddText(...)
 
 				if isstring(tg) then
 					local tw, th = surface.GetTextSize(tg)
+	
+					local str, newwid = string.WordWrap2(tg, {chathud.W - curwidth, chathud.W})
 
-					local str, wds = string.WordWrap(tg, {chathud.W - curwidth, chathud.W})
-					curwidth = wds[#wds] or tw
+					curwidth = curwidth + (newwid or tw)
+
 					wrappedtxt = wrappedtxt .. str
 					merged[#merged + 1] = str
 					continue 

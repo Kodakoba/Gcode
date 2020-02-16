@@ -785,6 +785,7 @@ function Cloud:Init()
 	self:SetAlpha(0)
 	self:SetMouseInputEnabled(false)
 	self.Label = "No label!"
+
 	timer.Simple(0, function()
 		if not IsValid(self) or self.FullInitted then return end
 		self:FullInit()
@@ -819,6 +820,8 @@ function Cloud:Init()
 	self.MinW = 0
 	self.MaxW = 192
 
+	self.MaxWidth = 0 --internal; the maximum registered width
+
 	self.Shadow = {}
 	self.DrawShadow = true
 
@@ -828,13 +831,15 @@ end
 function Cloud:MoveAbove(pnl, px)
 	local x, y = pnl:LocalToScreen(pnl:GetWide() / 2, 0)
 
-	print("called cloud moveabove")
 	self:SetAbsPos(x, y - (px or 8))
-	print(x, y - (px or 8))
 end
 
 function Cloud:SetLabel(txt)
 	self.Label = txt
+
+	surface.SetFont(self.Font)
+	self.LabelWidth = (surface.GetTextSize(txt))
+
 end
 
 Cloud.SetText = Cloud.SetLabel
@@ -847,6 +852,14 @@ end
 function Cloud:SetTextColor(col, g, b, a)
 	if IsColor(col) then self.TextColor = col return end 
 	self.TextColor = Color(col or 70, g or col or 70, b or col or 70, a or 255)
+end
+
+function Cloud:SetFont(font)
+	self.Font = font 
+
+	surface.SetFont(self.Font)
+	self.LabelWidth = (surface.GetTextSize(self.Label))
+
 end
 
 local wwrapped = {}
@@ -870,10 +883,10 @@ function Cloud:Paint()
 
 	if self:GetAlpha() <= 1 then return end 
 
-	local cw = self.MaxW or 192
+	local cw = math.min(math.max(self.MaxWidth, self.LabelWidth + 16, self.MinW), self.MaxW)
 
+	local lab = self.wwrapped[self.Label] or string.WordWrap(self.Label, cw, self.Font)
 
-	local lab = self.wwrapped[self.Label] or string.WordWrap(self.Label, cw - 16, self.Font)
 	self.wwrapped[self.Label] = lab 
 
 	surface.SetFont(self.Font)
@@ -882,7 +895,6 @@ function Cloud:Paint()
 
 	local tw, th = surface.GetTextSize(lab)
 
-	cw = tw + 16
 	ch = self.HOverride or th
 	
 	local xoff = self.XShit or 4
@@ -915,14 +927,12 @@ function Cloud:Paint()
 			surface.SetFont(self.DescFont)
 		end
 
-		if not v.Text:find('\n') then 
-			cw = math.max(cw, (surface.GetTextSize(lasttext)) + 16)
+		if not self.DoneText[k + 1] then 
+			boxh = boxh + 4 
 		end
-
 	end
 
 	finY = yoff + boxh*(aY-1)
-	cw = math.Clamp(cw, self.MinW, self.MaxW)
 
 	local oldX, oldY = xoff, finY 
 
@@ -954,6 +964,7 @@ function Cloud:Paint()
 		local offy = finY + ch + 4
 
 		for k,v in ipairs(self.DoneText) do 
+
 			local font = v.Font or self.DescFont
 			local tx = xoff + 8 - cw*self.Middle
 
@@ -986,17 +997,19 @@ end
 
 function Cloud:AddFormattedText(txt, col, font, overy, num) --if you're updating the text, for example, you can use "num" to position it where you want it
 
-	local nd = string.WordWrap(txt, (self.MaxW or 192) - 16, (font or self.Font))
+	local wid = (self.MaxW or self.MaxWidth or self.MinW) - 16
+	local nd = string.WordWrap2(txt, wid, font or self.Font)
+
 	local yo = 0
-	if not overy then 
-		surface.SetFont(font or self.Font)
+	
 
-		local _, chary = surface.GetTextSize(nd)
+	surface.SetFont(font or self.Font)
 
-		yo = chary
-	else
-		yo = overy 
-	end
+	local wid, chary = surface.GetTextSize(nd)
+	self.MaxWidth = math.Clamp(wid + 16, math.max(self.MinW, self.MaxWidth), self.MaxW)
+	print("maxwidth is now", self.MaxWidth, font, txt)
+	--overy allows you to override the Y offset
+	yo = overy or chary
 	
 	local key = #self.DoneText + 1 
 	local tbl
@@ -1020,7 +1033,7 @@ function Cloud:AddFormattedText(txt, col, font, overy, num) --if you're updating
 	tbl.Font = font 
 	tbl.prio = num
 
-	if yo == 0 then 
+	if yo == 0 then --different colors but same string, happens
 		tbl.Continuation = true 
 	end
 

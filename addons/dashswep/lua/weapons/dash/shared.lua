@@ -106,11 +106,11 @@ function SWEP:CheckMoves(owner, mv, dir)
 				--self.Owner:SetNetworkOrigin(mv:GetOrigin())
 				--mv:SetVelocity(vel)
 				owner:SetPos(mv:GetOrigin())
-				--print(Realm(), "supajump at", self.Owner:GetPos(), mv:GetOrigin())
+
 				return vel
 
 			elseif not self.StoppedDash then
-				print(Realm(), "supajump at", self.Owner:GetPos(), mv:GetOrigin())
+
 				--owner:SetVelocity(vel)
 				dt.newvel = vel/2
 
@@ -146,8 +146,6 @@ function SWEP:CheckMoves(owner, mv, dir)
 
 			local ang = dir:Angle()
 			local strength = ang.p --the lower they aimed their dash, the more it will be
-
-			print(strength)
 
 			if true then
 				vel = dir * 1500
@@ -302,8 +300,6 @@ hook.Add("FinishMove", "Dash", function(ply, mv, cmd)
 
 	if isvector(changed) then --return bool to prevent mv
 		--if not IsFirstTimePredicted() and CLIENT then return end
-
-		print("Changed", Realm(), changed)
 
 		ply:SetVelocity(-ply:GetVelocity() + changed) 
 

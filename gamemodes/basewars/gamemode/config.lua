@@ -366,7 +366,7 @@ AddEntities("Dispensers (T1)", "bw_dispenser_ammo2", "Ammo Dispenser T2", m * 10
 
 ----
 
-AddLoadout("Ammo Kits", "cw_ammo_kit_small", "Box", 5*k, 30, "models/items/boxsrounds.mdl", true)
+AddLoadout("Ammo Kits", "cw_ammo_kit_small", "Kit", 5*k, 10, "models/items/boxsrounds.mdl", true)
 AddLoadout("Ammo Kits", "cw_ammo_crate_small", "Crate", 35*k, 25, "models/Items/item_item_crate.mdl", true)
 
 ----

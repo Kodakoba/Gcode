@@ -147,53 +147,71 @@ function string.WordWrap(name, w, font)	-- not hex's necessarily, also stolen fr
 end
 
 
-local function WrapByLetters(txt, curwid, fullwid)
+local function WrapByLetters(txt, curwid, fullwid, wids, line)
 	local ret = ""
 
-	print("wrapping", txt, curwid, fullwid)
+	local line = line or 0
 
 	for i, code in utf8.codes(txt) do 
 		local char = utf8.char(code)
 		local charw = (surface.GetTextSize(char))
 
 		if charw > curwid then 
-			print("too big charw", char, curwid)
 			ret = ret .. "-\n" .. char
+
+			if wids then 
+				fullwid = wids[line + 1] or wids[#wids]
+				line = line + 1 
+			end
+
 			curwid = fullwid - charw
+
 		else 
-			print("adding charw", char, curwid, charw)
 			ret = ret .. char 
 			curwid = curwid - charw 
 		end
 	end
 
-	return ret, (fullwid - curwid)
+	return ret, (fullwid - curwid), line
 end
 
-local function WrapWord(word, curwid, fullwid)
+local function WrapWord(word, curwid, fullwid, widtbl, line)
 
 	local tw, th = surface.GetTextSize(word)
 	local ret = ""
-	print("WrapWord:", word, curwid)
-	if curwid + tw > fullwid then 
 
-		local too_wide = tw > fullwid
+	line = line or 1
+	fullwid = fullwid or widtbl[line] or widtbl[#widtbl]
+
+	local wrapped = false --did word wrap?
+
+	if curwid + tw > fullwid - 8 then --have to wrap
+
+		local too_wide = tw > fullwid * 0.75 --very wide word; wrap by letters if true
 
 		if not too_wide then 
+
 			ret = ret .. "\n" .. word
 			curwid = tw
+			wrapped = true
+
+			line = line + 1
 		else 
-			local newtx, newwid = WrapByLetters(word, fullwid - curwid, fullwid)
-			print("wrapped by letters", newtx, newwid)
-			ret = ret .. "\n" .. newtx
+			local newtx, newwid, lines = WrapByLetters(word, fullwid - curwid, fullwid, widtbl, line)
+			--if widtbl was provided, WrapByLetters'll figure out what to do
+
+			--lines is the amount of times the word has wrapped
+
+			ret = ret .. newtx
 			curwid = newwid
+			line = lines
 		end
 	else 
-		ret = ret .. " " .. word
+		ret = ret .. word
 		curwid = curwid + tw
 	end
 
-	return ret, curwid
+	return ret, curwid, line
 end
 
 function string.WordWrap2(txt, wid, font)
@@ -201,7 +219,32 @@ function string.WordWrap2(txt, wid, font)
 
 	if istable(wid) then 
 
+		local ret = ""
 
+		local needwid = wid[1]
+		local curwid = 0
+		local line = 1
+
+		for word in string.gmatch(txt, "(.-)%s") do 
+			
+			local r2, w2, lines = WrapWord(word .. " ", curwid, nil, wid, line)
+			ret = ret .. r2
+			curwid = w2
+
+			line = lines
+
+		end
+
+		local lastword = txt:match("[^%s]+$")
+
+		if lastword then
+			local r2, w2 = WrapWord(lastword, curwid, wid[#wid])
+
+			ret = ret .. r2
+			curwid = w2
+		end
+
+		return ret, curwid
 	else 
 		local widths = {}
 		local ret = ""
@@ -211,21 +254,25 @@ function string.WordWrap2(txt, wid, font)
 
 		for word in string.gmatch(txt, "(.-)%s") do 
 			
-			local r2, w2 = WrapWord(word, curwid, needwid)
+			local r2, w2, wrapped = WrapWord(word .. " ", curwid, needwid)
 			ret = ret .. r2
 			curwid = w2
 
 		end
 
-		local lastword = txt:match(".+%s(.+)")
-		local r2, w2 = WrapWord(lastword, curwid, needwid)
+		local lastword = txt:match("[^%s]+$")
 
-		ret = ret .. r2
-		curwid = w2
+		if lastword then
+			local r2, w2 = WrapWord(lastword, curwid, needwid)
 
-		return ret
+			ret = ret .. r2
+			curwid = w2
+		end
+
+		return ret, curwid
 		
 	end
+
 end
 
 function string.GetBetween(str, tag, num)
