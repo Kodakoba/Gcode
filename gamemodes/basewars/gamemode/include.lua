@@ -92,7 +92,10 @@ do
 	LoadFileCS("client/cl_playmus.lua")
 
 	LoadFileCS("client/cl_prestige.lua")
-
+	LoadFileCS("client/cl_prestige_anim.lua")
+	for k,v in pairs(file.Find("basewars/gamemode/client/*.lua", "LUA")) do 
+		LoadFileCS("basewars/gamemode/client/" .. v)
+	end
 end
 
 do

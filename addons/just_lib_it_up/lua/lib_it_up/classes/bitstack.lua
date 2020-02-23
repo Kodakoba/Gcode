@@ -9,7 +9,7 @@ for k,v in pairs(net) do
 			self.Ops[#self.Ops + 1] = {
 				type = k,
 				args = aeiou,
-				trace = debug.traceback(),
+				--trace = debug.traceback(),	--not worth it
 				func = function()
 					net[k](unpack(aeiou))
 				end

@@ -702,7 +702,6 @@ function draw.RenderOntoMaterial(name, w, h, func, rtfunc, matfunc, pre_rt, pre_
 		local cached = rtm:Get(w, h)
 
 		if cached then
-			print("found cached rt")
 			rt = cached
 		else --new W and H aren't equal, so recreate the RT
 			print("new W,H arent equal to old, recreating")
@@ -713,6 +712,13 @@ function draw.RenderOntoMaterial(name, w, h, func, rtfunc, matfunc, pre_rt, pre_
 			rtm:Set(rt, w, h)
 		end
 
+		mats[name] = mats[name] or CreateMaterial(name, "UnlitGeneric", {
+		    ["$translucent"] = 1,
+		    ["$vertexalpha"] = 1,
+
+		    ["$alpha"] = 1,
+		})
+		
 		mat = mats[name]
 	end
 
@@ -831,7 +837,10 @@ local function ParseGIF(fn)
 
 	local hdsize = f:ReadUShort()
 
+	print("read hdsize:", hdsize)
 	hdsize = bit.ror(hdsize, 16 / 2)
+	print("new hdsize:", hdsize)
+
 	f:Skip(-hdsize - 2)
 
 	local where = f:Tell()
@@ -845,20 +854,24 @@ local function ParseGIF(fn)
 	local time = f:ReadUShort()
 	info[1] = bit.ror(time, 16 / 2)
 
-	local fr_amt = f:ReadUShort()
+	print('current time:', info[1], time)
 
+	local fr_amt = f:ReadUShort()
 
 	fr_amt = bit.ror(fr_amt, 8)
 
 	info.amt = fr_amt
 
+	print("left is", left)
+
 	while left > 0 do 
 
 		local frame = f:ReadUShort()
 		local time = f:ReadUShort()
-
+		
 		frame, time = bit.ror(frame, 16 / 2), bit.ror(time, 16 / 2)
 
+		--print("Frame, time:", frame, time)
 		info[frame] = time
 
 		left = left - 4
@@ -957,7 +970,7 @@ function DownloadGIF(url, name)
 			end, function(...)
 				print("Failed to download! URL:", url, "\nError:", ...)
 				MoarPanelsMats[name] = false
-			end)
+			end, true)
 
 		else 
 			local info = file.Read(path:format(name .. "_info.dat"), "DATA")
@@ -1012,7 +1025,7 @@ function draw.DrawGIF(url, name, x, y, dw, dh, frw, frh, start)
 	local totalframes = mat.i.amt 
 
 	local row, col = (frame % 5), math.floor(frame / 5)
-	
+	--print("cur frame", row, col)
 	local xpad, ypad = 4, 4
 
 	local cols = h/116

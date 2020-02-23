@@ -120,15 +120,16 @@ local mats = {	-- "random" will be rendered from an RT as soon as the menu opens
 }
 
 function ENT:OpenMenu()
-	if IsValid(menu) then print("bro") return end
+	if IsValid(menu) then return end
 
-	mats.random = mats.random or draw.RenderOntoMaterial("bprandem", 48, 48, function(w, h)
+	mats.random = mats.random or draw.RenderOntoMaterial("bp_random", 48, 48, function(w, h)
 		draw.SimpleText("?", "MRB72", w/2, h/2, color_white, 1, 1)
 	end)
 
 	menu = vgui.Create("FFrame")
-	menu:SetSize(700, 500)
-	menu:Center()
+	menu:SetSize(650, 500)
+
+	menu:SetPos(ScrW() / 2 - (menu:GetWide() + 350) / 2, ScrH() / 2 - menu:GetTall() / 2)
 
 	menu.Shadow = {}
 
@@ -136,6 +137,21 @@ function ENT:OpenMenu()
 	menu:PopIn()
 
 	menu.Delta = DeltaText()
+
+	menu.Inventory = Inventory.CreateFrame(Inventory.Data.Temp)
+
+	function menu:OnRemove()
+		if IsValid(self.Inventory) then 
+			self.Inventory:Remove()
+		end
+	end
+
+	local inv = menu.Inventory 
+	inv:SetSize(342, menu:GetTall())
+	inv:MoveRightOf(menu, 8)
+	inv.Y = menu.Y
+
+	inv:CreateItems()
 
 	local basecost = 0
 
@@ -161,8 +177,8 @@ function ENT:OpenMenu()
 
 		if self.Cost then 
 			surface.SetDrawColor(color_white)
-			surface.DrawMaterial("https://i.imgur.com/zhejG17.png", "bp128.png", w/2 - 72, h - 72, 64, 64)
-			self.Cost:Paint(w/2, h - 64)
+			surface.DrawMaterial("https://i.imgur.com/zhejG17.png", "bp128.png", w/2 - 72, h - 158, 64, 64)
+			self.Cost:Paint(w/2, h - 150)
 		end
 
 	end
@@ -186,33 +202,64 @@ function ENT:OpenMenu()
 		Tier selection
 	]]
 
-	local lbl = vgui.Create("DLabel", menu)
-	
-	local tiers = vgui.Create("InvisPanel", menu)
-	tiers:SetPos(50, 80)
-	tiers:SetSize(menu:GetWide() - tiers:GetPos()*2, 120)
+	local icons = vgui.Create("FIconLayout", menu)
+	icons.CenterX = true 
 
-	lbl:SetPos(0, tiers.Y - 40)
+	icons:SetPos(80, 80)
+	icons:SetSize(menu:GetWide() - icons:GetPos()*2, 120)
+	icons:SetColor(Color(0, 0, 0, 0))
+	icons.MarginX = 16
+
+	local tw = icons:GetWide()
+
+	local lbl = vgui.Create("DLabel", menu)
+
+	lbl:SetPos(0, icons.Y - 40)
 	lbl:SetFont("MR36")
 	lbl:SetText("Select Blueprint Tier")
 
 	lbl:SizeToContents()
 	lbl:CenterHorizontal()
 
-	local tw = tiers:GetWide()
+	local btns = 4
 
-	local btns = 5
-
-	local pad = 24
-	local marg = 16
-
-	local btnW = (tw - marg*btns - pad*2) / btns
 	local sel
 
 	local text = "Tier %d Blueprint"
 	local cycled = false
 
 	local cType
+
+	for i=0, btns - 1 do 
+		local num = i+1
+
+		local tier = icons:Add("FButton")
+
+		tier:SetSize(96, 120 - 16)
+
+		function tier:PostPaint(w, h)
+			if BlueprintPaints[i+1] then 
+				BlueprintPaints[i+1] (self, w, h) 
+			end
+		end
+
+		function tier:DoClick()
+			if sel then 
+				sel:SetColor(70, 70, 70)
+			end
+
+			self:SetColor(30, 130, 190)
+
+			sel = self
+
+			basecost = Inventory.BlueprintCosts[i + 1]
+
+			menu:UpdateCost()
+			menu:MakeTier(i + 1)
+		end
+	end
+
+	icons:AutoCenter()
 
 	function menu:MakeTier(t)
 
@@ -228,9 +275,12 @@ function ENT:OpenMenu()
 
 			cType = vgui.Create("FComboBox", menu)
 			cType:SetSortItems(false)
+			cType:CenterHorizontal()
 
-			cType:SetPos(24, 300)
-			cType:SetSize(160, 26)
+			cType.Y = 280
+			cType:SetSize(160, 40)
+			cType:SetFont("TWB32")
+			cType:SetContentAlignment(5)
 			cType:SetColor(Color(70, 70, 70))
 
 			local t = {} 
@@ -301,45 +351,39 @@ function ENT:OpenMenu()
 			menu.Cost = DeltaText():SetFont("MR48")
 
 			menu.CostPiece = menu.Cost:AddText("x"):SetColor(Colors.Blue)
-			menu.CostFragmentInd = menu.CostPiece:AddFragment("", nil, false)
+			menu.CostFragmentInd = menu.CostPiece:AddFragment(curcost, nil, false)
 
 			menu.Cost:CycleNext()
 
+
+			menu.Begin = vgui.Create("FButton", menu)
+			local btn = menu.Begin 
+			btn:SetSize(192, 56)
+			btn:Center()
+			btn.Y = menu:GetTall() - 72
+
+			btn.Font = "MR36"
+			btn.Label = "Begin!"
+
+			function btn:Think()
+				menu.HasBlueprintsAmt = Inventory.Data.Temp:GetItemCount("blank_bp")
+				menu.HasEnough = menu.HasBlueprintsAmt >= curcost
+
+				print("cur cost:", curcost, menu.HasEnough)
+
+				if menu.HasEnough then 
+					print("enuff")
+					self:SetColor(50, 150, 250)
+				else 
+					print("not enuff")
+					local grey = Colors.Button
+					self:SetColor()
+				end
+			end
 		end
 		
 	end
 
-	for i=0, btns - 1 do 
-		local num = i+1
-
-		local tier = vgui.Create("FButton", tiers)
-
-		local x = pad + btnW*i + marg*i
-
-		tier:SetPos(x, 8)
-		tier:SetSize(btnW, 120 - 16)
-
-		function tier:PostPaint(w, h)
-			if BlueprintPaints[i+1] then 
-				BlueprintPaints[i+1] (self, w, h) 
-			end
-		end
-
-		function tier:DoClick()
-			if sel then 
-				sel:SetColor(70, 70, 70)
-			end
-
-			self:SetColor(30, 130, 190)
-
-			sel = self
-
-			basecost = Inventory.BlueprintCosts[i + 1]
-
-			menu:UpdateCost()
-			menu:MakeTier(i + 1)
-		end
-	end
 end
 
 function ENT:Draw()

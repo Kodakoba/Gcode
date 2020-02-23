@@ -162,7 +162,7 @@ function CreatePlayerFrame(sb, ply)
 					shy = L(shy, 35, 7)
 				end
 			end
-			local col = color_white
+			local col = color_white:Copy()
 			
 			local te = vgui.Create("FTextEntry", pf)
 			te:SetFont("OS24")

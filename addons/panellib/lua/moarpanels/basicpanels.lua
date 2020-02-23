@@ -164,6 +164,7 @@ end
 
 
 function PANEL.DrawHeaderPanel(self, w, h)
+	self.DraggableH = self.HeaderSize
 
 	local rad = self.RBRadius or 8
 
@@ -277,7 +278,13 @@ function button:Init()
 end
 
 function button:SetColor(col, g, b, a)
-	if IsColor(col) then self.Color = col self.drawColor = Color(col.r, col.g, col.b, col.a) return end 
+	if IsColor(col) then 
+		self.Color = col 
+		if g then 	--if 2nd arg, that means apply now
+			self.drawColor = col:Copy()
+		end
+		return 
+	end 
 
 	local c = self.Color
 	c.r = col or 70
@@ -1115,7 +1122,6 @@ function FCB:Paint(w,h)
 		txo = iw + self.IconPad or 8
 	end
 
-	--draw.SimpleText(self.Text, self.Font, txo, h/2, Color(255,255,255), 0, 1)
 end
 
 vgui.Register("FComboBox", FCB, "DComboBox")

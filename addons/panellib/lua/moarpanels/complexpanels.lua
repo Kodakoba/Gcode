@@ -784,7 +784,9 @@ function Cloud:Init()
 	self:SetPos(2,2)
 	self:SetAlpha(0)
 	self:SetMouseInputEnabled(false)
+
 	self.Label = "No label!"
+	self.LabelWidth = 64
 
 	timer.Simple(0, function()
 		if not IsValid(self) or self.FullInitted then return end
@@ -1146,6 +1148,20 @@ function FIC:Init()
 
 	self.CurRow = 1
 	self.CurColumn = 1
+
+	self.Color = Color(40, 40, 40)
+	self.drawColor = self.Color:Copy()
+
+end
+
+function FIC:SetColor(col, g, b, a)
+	if IsColor(col) then self.Color = col return end 
+
+	local c = self.Color
+	c.r = col or 70
+	c.g = g or 70
+	c.b = b or 70
+	c.a = a or 255
 end
 
 function FIC:Paint(w, h)
@@ -1156,7 +1172,9 @@ function FIC:Paint(w, h)
 		self.CurX = self.PadX
 		self.CurY = self.PadY
 	end
-	draw.RoundedBox(8, 0, 0, w, h, Color(30, 30, 30))
+
+	draw.RoundedBox(8, 0, 0, w, h, self.Color)
+	
 end
 
 
@@ -1194,12 +1212,6 @@ function FIC:UpdateSize(p, currow, w, h)
 	if self.CenterNotFull then 
 		self:AutoCenter()
 	end
-end
-
-function FIC:FitsRow(p, rownum)
-
-	local w, h = p:GetSize()
-
 end
 
 function FIC:AutoCenter(w, h)	--w, h = workaround for panel not updating GetWide
@@ -1259,23 +1271,17 @@ function FIC:Add(name)
 	self.MaxH = math.max(self.MaxH, lh)
 	self.MaxW = math.max(self.MaxW, lw)
 
-	self:FitsRow(p, rownum)
-
 	currow[#currow + 1] = p
 
 	function p.OnSizeChanged(p, w, h)
 		self.MaxH = math.max(self.MaxH, h)
 		self.MaxW = math.max(self.MaxW, w)
 
-		
-
 		self.CurX = self.CurX + w - lw 
 
 		lw, lh = w, h
 
 		self:UpdateSize(p, currow, w, h)
-		self:FitsRow(p, rownum)
-
 	end
 
 	return p

@@ -73,7 +73,7 @@ local exts = {
 }
 
 function hdl.DownloadFile(url, name, func, fail, ovwrite)
-	if not url then print("NO YOU DUMB SHIT") return end 
+	if not url then return end 
 	func = func or BlankFunc 
 	fail = fail or BlankFunc
 
@@ -120,7 +120,7 @@ function hdl.DownloadFile(url, name, func, fail, ovwrite)
 
 	local size = file.Size(name, "DATA")
 
-	if size~=-1 and file.Size(name, "DATA")~=0 and not ovwrite then 
+	if size ~= -1 and size ~= 0 and not ovwrite then --if file exists and not overwriting, check URLs
 
 		local url2 = sql.Query("SELECT url FROM hdl_Data WHERE name == " .. SQLStr(name))
 

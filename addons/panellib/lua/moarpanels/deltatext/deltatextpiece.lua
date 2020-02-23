@@ -432,9 +432,9 @@ function pmeta:ReplaceText(num, rep, onend)
 			break 
 		end
 	end
-	if not frag then print("no such fragment", num) return false end 
+	if not frag then return false end 
 
-	if frag.Text == rep then print("replacing fragment with same shit", frag.Text, rep) return false end 
+	if frag.Text == rep then return false end 
 	--frag.RewindTextPos = true
 	frag.Fading = true
 

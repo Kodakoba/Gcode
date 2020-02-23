@@ -1,4 +1,12 @@
-require("bromsock");
+require("bromsock")
+
+local quipchance = 5
+
+local quips = {
+	[[♂ COME ♂ ON ♂ LET'S ♂ GO ♂]],
+	"Oh shit, I'm sorry",
+	"Sorry for what?"
+}
 
 discord = discord or {}
 
@@ -114,14 +122,6 @@ hook.Add("PlayerSay", "Discord", function(ply, msg)
     discord.Send("chat", ply:Nick(), msg)
 
 end)
-
-local quipchance = 5
-
-local quips = {
-	[[♂ COME ♂ ON ♂ LET'S ♂ GO ♂]],
-	"Oh shit, I'm sorry",
-	"Sorry for what?"
-}
 
 Embed = {}
 

@@ -10,7 +10,8 @@ function Log(mod, str, ...)
 	local tbl = {
 		col, 
 		("[%s] "):format(n), 
-		Color(255, 255, 255)}
+		Color(255, 255, 255)
+	}
 
 	local str2 = str 
 
