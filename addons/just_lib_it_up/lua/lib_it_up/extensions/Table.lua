@@ -1,6 +1,4 @@
 
---- === Table === ---
-
 function table.LowestSequential(t)
 
 	for k,v in ipairs(t) do
@@ -29,68 +27,94 @@ function table.KeysToValue(tbl)
 end
 table.KeysToValues = table.KeysToValue
 
+--[[
+	Weak tables
+]]
 
-WeakTables = {}
-WeakTables.__mode = "kv"
+	--Keep weaktable constructors
 
-ProxyTable = {}
+	local weakctors = {
+		["k"] = function() return setmetatable({}, {__mode = "k"}) end,
+		["v"] = function() return setmetatable({}, {__mode = "v"}) end,
+		["kv"] = function() return setmetatable({}, {__mode = "kv"}) end,
+	}
 
-ProxyTable.__call = function(self, t, func)
+	--Keep weaktable metatables
 
-	t = t or {}	--the actual table
+	local weaks = {}
 
-	local ud = {}	--what's returned
-	local mtud = {IsProxy = true}	--metatable for what's returned
-	local what = {}
-
-	mtud.__index = function(self, key)
-
-		if key=="Table" then print("No stop that wtf\n", debug.traceback()) return t end
-		
-		return rawget(mtud, key) or t[key] or what[key]
+	for k,v in pairs(weakctors) do 
+		weaks[k] = v()
 	end
 
-	function what.__pairs(self)
-		return _pairs(t)
+	WeakTable = Object:callable()
+
+	function WeakTable:Initialize(mode, sepmeta)
+		return setmetatable({}, weaks[mode or "kv"])
 	end
-	function what:GetTable()
-		return t
-	end
 
-	mtud.__newindex = function(self, key, value) 
+--[[
+	Proxy tables
+]]
 
-		if t[key] then
+	ProxyTable = {}
 
-			if t.__modindex then 
-				local no = t.__modindex(t, key, value) == false 
-				if no then return end 
-				t[key] = value
+	ProxyTable.__call = function(self, t, func)
 
-			elseif func then 
-				local no = func(t, key, value) == false 
-				if no then return end 
-				t[key] = value
-			else 
-				t[key] = value
-			end
-		else
-			if t.__newindex then 
-				local no = t.__newindex(t, key, value)
-				if no then return end 
-				t[key] = value 
-			else 
-				t[key] = value 
+		t = t or {}	--the actual table
+
+		local ud = {}	--what's returned
+		local mtud = {IsProxy = true}	--metatable for what's returned
+		local what = {}
+
+		mtud.__index = function(self, key)
+
+			if key=="Table" then print("No stop that wtf\n", debug.traceback()) return t end
+			
+			return rawget(mtud, key) or t[key] or what[key]
+		end
+
+		function what.__pairs(self)
+			return _pairs(t)
+		end
+		function what:GetTable()
+			return t
+		end
+
+		mtud.__newindex = function(self, key, value) 
+
+			if t[key] then
+
+				if t.__modindex then 
+					local no = t.__modindex(t, key, value) == false 
+					if no then return end 
+					t[key] = value
+
+				elseif func then 
+					local no = func(t, key, value) == false 
+					if no then return end 
+					t[key] = value
+				else 
+					t[key] = value
+				end
+			else
+				if t.__newindex then 
+					local no = t.__newindex(t, key, value)
+					if no then return end 
+					t[key] = value 
+				else 
+					t[key] = value 
+				end
 			end
 		end
+
+		--mtud.__metatable = "Don't set the ProxyTable's metatable itself! Set it on ProxyTable.Table!"
+		setmetatable(ud, mtud)
+		setmetatable(mtud, what)
+		return ud
 	end
 
-	--mtud.__metatable = "Don't set the ProxyTable's metatable itself! Set it on ProxyTable.Table!"
-	setmetatable(ud, mtud)
-	setmetatable(mtud, what)
-	return ud
-end
-
-setmetatable(ProxyTable, ProxyTable)
+	setmetatable(ProxyTable, ProxyTable)
 
 _pairs = _pairs or pairs
 
@@ -134,6 +158,10 @@ ValidIPairs = ValidiPairs
 ValidIpairs = ValidiPairs
 Validipairs = ValidiPairs
 
+
+--[[
+	Meme
+]]
 
 CommunistTable = {}
 CommunistMeta = {}

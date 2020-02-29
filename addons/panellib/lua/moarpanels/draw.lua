@@ -630,7 +630,7 @@ local function CreateRT(name, w, h)
 		name, 
 		w, 
 		h, 
-		RT_SIZE_LITERAL,			--the wiki claims rendertargets change sizes to powers of 2 and clamp it to screen size; lets prevent that
+		RT_SIZE_OFFSCREEN,			--the wiki claims rendertargets change sizes to powers of 2 and clamp it to screen size; lets prevent that
 		MATERIAL_RT_DEPTH_SHARED, 	--idfk?
 		2, 	--texture filtering, the enum doesn't work..?
 		CREATERENDERTARGETFLAGS_HDR,--wtf
@@ -837,9 +837,12 @@ local function ParseGIF(fn)
 
 	local hdsize = f:ReadUShort()
 
-	print("read hdsize:", hdsize)
 	hdsize = bit.ror(hdsize, 16 / 2)
-	print("new hdsize:", hdsize)
+
+	if hdsize > 512 then --ridiculous header size = gg
+		error("GIF broke as hell; header size is " .. fr_amt)
+		return 
+	end
 
 	f:Skip(-hdsize - 2)
 
@@ -854,15 +857,11 @@ local function ParseGIF(fn)
 	local time = f:ReadUShort()
 	info[1] = bit.ror(time, 16 / 2)
 
-	print('current time:', info[1], time)
-
 	local fr_amt = f:ReadUShort()
 
 	fr_amt = bit.ror(fr_amt, 8)
 
 	info.amt = fr_amt
-
-	print("left is", left)
 
 	while left > 0 do 
 
@@ -878,7 +877,7 @@ local function ParseGIF(fn)
 	end
 
 	if left ~= 0 then 
-		ErrorNoHalt("GIFS header parsed incorrectly! Name: " .. name .. ", left bytes: " .. left .. "\n")
+		ErrorNoHalt("GIF's header parsed incorrectly! Name: " .. name .. ", left bytes: " .. left .. "\n")
 	end 
 
 	f:Close()
@@ -965,6 +964,8 @@ function DownloadGIF(url, name)
 				MoarPanelsMats[name].downloading = false 
 
 				local tbl = ParseGIFInfo(path, name, info)
+				
+				tbl.fromurl = url
 				MoarPanelsMats[name] = tbl
 
 			end, function(...)

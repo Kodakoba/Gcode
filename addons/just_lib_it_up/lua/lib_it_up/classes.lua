@@ -44,19 +44,25 @@ function Class:callable()
 	return new
 end
 
+--[[
+	For override:
+		Class:(I/i)nitialize:
+			Called when a new instance of the object is constructed with a pre-created object.
+]]
 function Class:new(...)
-	local obj = {}
-
-	setmetatable(obj, self)
 
 	local func = self.Initialize or self.initialize 
 
+	local obj = {}
+	setmetatable(obj, self)
+
 	if isfunction(func) then 
 		local new = func(obj, ...)
-		if new then return new end --overwrite?
+		if new then return new end
 	end
 
 	return obj
+	
 end
 
 Class.extend = Class.extend 
