@@ -340,3 +340,7 @@ end
 function printf(s, ...)
 	print(s:format(...))
 end
+
+function errorf(s, ...)
+	return error(s:format(...))
+end

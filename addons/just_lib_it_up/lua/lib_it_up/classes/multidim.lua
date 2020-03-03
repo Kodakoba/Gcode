@@ -1,10 +1,11 @@
-muldim = {}
+muldim = Class:Callable()
+local mmeta = muldim.Meta 
 
-mdimobj = {}
-mdimobj.__index = mdimobj
-mdimobj.__mode = "kv"
+local weak = muldim:Callable()
+weak.Meta.__mode = "kv"
+weak.__mode = "kv"
 
-function mdimobj:Get(...)
+function mmeta:Get(...)
 	local ks = {...}
 	local curvar = self
 
@@ -16,7 +17,19 @@ function mdimobj:Get(...)
 	return curvar
 end
 
-function mdimobj:Set(val, ...)
+function mmeta:GetOrSet(...)
+	local ks = {...}
+	local curvar = self
+
+	for k,v in ipairs(ks) do 
+		if not curvar[v] then curvar[v] = muldim:new() end 
+		curvar = curvar[v]
+	end
+
+	return curvar
+end
+
+function mmeta:Set(val, ...)
 	local ks = {...}
 	local curvar = self
 
@@ -43,13 +56,8 @@ function mdimobj:Set(val, ...)
 	return val
 end
 
-function muldim:new()
-	local tbl = {}
-
-	setmetatable(tbl, mdimobj)
-	return tbl
+function muldim:Initialize(mode)
+	if mode then 
+		return weak()
+	end
 end
-
-muldim.__call = muldim.new
-
-setmetatable(muldim, muldim)

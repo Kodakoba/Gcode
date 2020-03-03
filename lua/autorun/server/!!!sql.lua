@@ -3,10 +3,6 @@ require("mysqloo")
 
 __MYSQL_INFO = {"127.0.0.1", "root", "31415", "master"}
 
-local Database = FindMetaTable("MySQLOO table")
-
-
-
 mysql = mysqloo
 mysqloo.Info = __MYSQL_INFO
 

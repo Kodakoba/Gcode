@@ -43,7 +43,7 @@ function Class:callable()
 	new.__call = new.new
 	return new
 end
-
+Class.Callable = Class.callable
 --[[
 	For override:
 		Class:(I/i)nitialize:
