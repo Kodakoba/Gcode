@@ -10,6 +10,11 @@ local quips = {
 
 discord = discord or {}
 
+--if discord.Enabled wasn't set, gets set to true
+--otherwise, keeps value
+
+discord.Enabled = (discord.Enabled == nil and true) or discord.Enabled
+
 dissocket = dissocket or BromSock()
 
 
@@ -112,12 +117,19 @@ concommand.Add("discord_reconnect", function(ply)
 	DiscordReconnect()
 end)
 
-hook.Add("PlayerSay", "Discord", function(ply, msg) 
+--matches everything after a !, ., / until a first space
+local cmdptrn = "^[%./!](%w+)%s?"
 
-    if msg[1]=="." then 
-        local cmd = msg:match("%.(.-)[%s]") 
-        if aowl.cmds[cmd] then return end 
-    end 
+hook.Add("PlayerSay", "Discord", function(ply, msg) 
+	if not discord.Enabled then return end 
+
+    local cmd = msg:match(cmdptrn) 
+
+    if 	aowl.cmds[cmd] or 
+    	CUM.cmds[cmd] or 
+    	BaseWars.Commands.cmds[cmd] or
+    	isfunction(ULib[cmd]) --ulib has a very gay method of storing commands
+    then return end 
 
     discord.Send("chat", ply:Nick(), msg)
 
