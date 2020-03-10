@@ -250,7 +250,7 @@ function dmeta:Paint(x, y)
 
 
 	local timing = self.Timings[self.LastActive + 1]
-	--print("last active", self.LastActive, (timing and "has timing") or "no timings")
+
 	if timing then 
 		local when = self.ActiveWhen
 
