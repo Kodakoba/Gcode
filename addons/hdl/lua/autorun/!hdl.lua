@@ -72,10 +72,29 @@ local exts = {
 	["vtf"] = true,
 }
 
-function hdl.DownloadFile(url, name, func, fail, ovwrite)
+--[[
+	hdl.DownloadFile: downloads a file from url, and places it in hdl/[name]
+		If name is preceded by -, it will place it in data/[name] instead 
+
+		func: Callback when the file is finished downloading
+			Args:
+				1. Filename
+				2. File contents
+
+		fail: Callback if the file failed to download.
+			1 arg: Fail reason (passed from http.Fetch)
+
+		ovwrite: If true, ignores cache in data/ and downloads file anew.
+
+		onqueue: Callback for when the file begins downloading. 
+			If the queue isn't busy, this will be called instantly. No args.
+
+]]
+function hdl.DownloadFile(url, name, func, fail, ovwrite, onqueue)
 	if not url then return end 
 	func = func or BlankFunc 
 	fail = fail or BlankFunc
+	onqueue = onqueue or BlankFunc 
 
 	--[[
 
@@ -129,6 +148,7 @@ function hdl.DownloadFile(url, name, func, fail, ovwrite)
 
 			if url~=url2 then 
 				Download(url, name, func, fail) 
+				onqueue()
 				return 
 			end
 		end 
@@ -152,7 +172,7 @@ function hdl.DownloadFile(url, name, func, fail, ovwrite)
 
 	end 	
 
-	local t = {url = url, name = name, func = func, fail = fail}
+	local t = {url = url, name = name, func = func, fail = fail, onqueue = onqueue}
 	local key = #queued + 1
 
 	queued[key] = t
@@ -171,6 +191,7 @@ hook.Add("Think", "HDL", function()
 
 		downloading[v.name] = true
 		Download(v.url, v.name, v.func, v.fail)
+		v.onqueue()
 		table.remove(queued, k)
 	end
 
