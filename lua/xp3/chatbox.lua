@@ -1,10 +1,11 @@
-local chatbox = {}
+chatbox = chatbox or {}
+
+if IsValid(chatbox.frame) then 
+	chatbox.frame:Remove()
+end
 
 chatbox.settings = {
-	--[[test = {
-		["Wake me up"] = {ty = "Bool", get = function() return false end, set = print},
-		["Wake ur mom up"] = {ty = "string", get = function() return "cock" end, set = print}
-	}]]
+
 }
 
 local box_font = CreateClientConVar("xp_chat_box_font","DermaDefaultBold",true,false,"Changes the Fonts of the chatbox itself.")
@@ -18,20 +19,6 @@ chatbox.back_color   = Color(0, 0, 0, 200)
 chatbox.input_color  = Color(0, 0, 0, 150)
 chatbox.feed_font    = feed_font:GetString()
 
-local CONFIG_FILE = "xp_chat_config.lua"
-do
-	local config = file.Read(CONFIG_FILE, "DATA")
-
-	if config and luadata then
-		local data = luadata.Decode(config)
-
-		if data then
-			for k, v in next, data do
-				chatbox[k] = v
-			end
-		end
-	end
-end
 
 function chatbox.WriteConfig()
 	if luadata then
@@ -121,7 +108,7 @@ local function AppendTextLink(a, callback)
 end
 
 local function quick_parse(txt)
-	return txt--markup_quickParse(txt, chatexp.LastPlayer)
+	return txt
 end
 
 function chatbox.ParseInto(feed, ...)
@@ -188,8 +175,187 @@ function chatbox.ParseInto(feed, ...)
 	--chathud:AddText(...)
 end
 
-local function tab_paint(w, h)
-	-- Looks better without
+function chatbox.OpenEmotesMenu(btn)
+	if IsValid(chatbox.EmoteMenu) then chatbox.EmoteMenu:StartClosing() chatbox.EmoteMenu = nil return end 
+
+	local emotes = vgui.Create("TabbedFrame")
+	chatbox.EmoteMenu = emotes 
+	emotes.Shadow = {intensity = 3, blur = 1, spread = 0.7}
+	
+
+	emotes.TabColor = Color(65, 65, 65)
+
+	emotes:SetCloseable(false, true)
+	emotes:SetDraggable(false)
+	emotes:SetSizable(true)
+	emotes:SetSizablePos(2)
+
+	emotes:PopIn()
+
+	emotes:SetCookieName("ChatHUDEmoteMenuW")
+	emotes:SetCookieName("ChatHUDEmoteMenuH")
+
+	local ew, eh = emotes:GetCookie("ChatHUDEmoteMenuW", 300), emotes:GetCookie("ChatHUDEmoteMenuH", 180)
+
+	emotes:SetSize(ew, eh)
+
+	local x = chatbox.frame:LocalToScreen(chatbox.frame:GetWide(), 0) - 8
+	local _, y = btn:LocalToScreen(0, 0)
+
+	chatbox.frame:On("OnSizeChanged", emotes, function(self, w)
+		x = (chatbox.frame:LocalToScreen(w, 0)) + 16
+		_, y = btn:LocalToScreen(0, 0)
+
+		emotes:SetPos(x, y + btn:GetTall() - eh)
+	end)
+
+
+	emotes:SetPos(x, y - eh + btn:GetTall())
+	emotes:MoveBy(16, 0, 0.3, 0.05, 0.4)
+
+	chatbox.frame:On("OnClose", emotes, function(self)
+		emotes:PopOut()
+	end)
+
+
+	function emotes:StartClosing()
+		emotes:MoveBy(0, 8, 0.07, 0, 0.4)
+		emotes:PopOut(0.07)
+	end
+
+	function emotes:OnMouseReleased()
+
+		self.Dragging = nil
+		self.Sizing = nil
+
+		self:MoveTo(x + 16, y - self:GetTall() + btn:GetTall(), 0.3, 0, 0.5)
+
+		self:MouseCapture( false )
+
+		self:SetCookie("ChatHUDEmoteMenuW", self:GetWide())
+		self:SetCookie("ChatHUDEmoteMenuH", self:GetTall())
+
+		ew, eh = self:GetWide(), self:GetTall()
+	end
+
+	emotes.TabFont = "OS20"
+	emotes.HeaderSize = 20
+
+	emotes:SetTabSize(18)
+	emotes:DockPadding(0, 0, 0, 0)
+	emotes:On("OnSizeChanged", emotes.OnSizeChanged)
+
+	function emotes:OnSizeChanged(w, h)
+		self:Emit("OnSizeChanged", w, h)
+	end	
+
+	for name, coll in pairs(Emotes.Collections) do 
+		local tab = emotes:AddTab(name, function()
+			local list = vgui.Create("FScrollPanel", emotes)
+			list:Dock(FILL)
+
+			--apply filters to all children (emotes)
+
+			list.Paint = function()
+				render.PushFilterMag( TEXFILTER.ANISOTROPIC )
+				render.PushFilterMin( TEXFILTER.ANISOTROPIC )
+			end
+
+			list.PaintOver = function()
+				render.PopFilterMag()
+				render.PopFilterMin()
+			end
+
+			emotes:AlignPanel(list)
+
+			local size = 40
+
+			local il = list:Add("DIconLayout")
+			il:Dock(FILL)	
+			local minspace = 6
+			il:SetSpaceX(6)
+			il:SetSpaceY(4)
+			il:SetBorder(2)
+
+			il:Layout()
+
+			emotes:On("OnSizeChanged", il, function(self, w)
+				local odd = (il:GetWide() - il:GetBorder()) % (size + minspace)
+				il:SetSpaceX(minspace + odd / (w / size) )
+			end)
+
+			for k,v in pairs(coll:GetEmotes()) do 
+				local b = il:Add("DButton")
+				b:SetSize(size, size)
+				b:SetText("")
+				b.Emote = v
+				function b:Paint(w, h)
+					surface.SetDrawColor(color_white)
+					self.Emote:Paint(0, 0, w, h, self)
+				end
+
+				function b:OnCursorEntered()
+					if not IsValid(self.Cloud) then 
+						self.Cloud = vgui.Create("Cloud", self)
+						self.Cloud:SetText(self.Emote:GetName())
+						self.Cloud.MaxW = 300
+						self.Cloud.Middle = 0.5
+						self.Cloud:SetAbsPos(size/2, 0)
+						self.Cloud.RemoveWhenDone = true
+					end
+					self.Cloud:Popup(true)
+				end 
+
+				function b:OnCursorExited()
+					if not IsValid(self.Cloud) then return end 
+					self.Cloud:Popup(false)
+				end
+
+				function b:DoClick()
+					if IsValid(chatbox.frame.chat.input) then 
+						chatbox.frame.chat.input:SetValue(chatbox.frame.chat.input:GetValue() .. ":" .. self.Emote:GetShortcut() .. ":")
+					end
+				end
+			end
+
+			return list
+		end)
+
+		function tab:OnCursorEntered()
+			if not coll:GetNiceName() then return end 
+
+			if not IsValid(self.Cloud) then 
+				self.Cloud = vgui.Create("Cloud", self)
+				self.Cloud:SetText(coll:GetNiceName())
+				self.Cloud.MaxW = 550
+
+				if coll:GetDescription() then 
+					local desc = coll:GetDescription()
+
+					if isstring(desc) then
+						self.Cloud:AddFormattedText(desc, Color(150, 150, 150), "OS18") 
+					elseif istable(desc) then 
+						for k,v in pairs(desc) do 
+							self.Cloud:AddFormattedText(v.txt, v.col or Color(150, 150, 150), v.font or "OS18") 
+						end
+					end
+
+				end
+
+				
+				self.Cloud.Middle = 0.5
+				self.Cloud:SetAbsPos(self:GetWide() / 2, -24)
+				self.Cloud.RemoveWhenDone = true
+			end
+
+			self.Cloud:Popup(true)
+		end 
+
+		function tab:OnCursorExited()
+			if not IsValid(self.Cloud) then return end 
+			self.Cloud:Popup(false)
+		end
+	end
 end
 
 local function input_type(enter, tab, all)
@@ -229,11 +395,6 @@ local function input_type(enter, tab, all)
 	end
 end
 
-local function paint_back(pan, w, h, a)
-	surface.SetDrawColor(a and chatbox.input_color or chatbox.back_color)
-	surface.DrawRect(0, 0, w, h)
-end
-
 local function input_paint(pan, w, h)
 	paint_back(pan, w, h, true)
 
@@ -250,25 +411,49 @@ end
 
 function chatbox.BuildTabChat(self, a)
 	self.chat = vgui.Create("DPanel", self.tabs)
+	self:DockPadding(0, 24, 0, 0)
+
 		function self.chat:Paint(w, h) end
 		self.chat:Dock(FILL)
 
 		self.chat.text_feed = vgui.Create("RichText", self.chat)
-			if not IsValid(self.chat.text_feed) then error(">:(") return end
 			self.chat.text_feed:Dock(FILL)
-
+			self.chat.text_feed:DockMargin(4, 0, 4, 0)
+			
 			self.chat.text_feed.PerformLayout = feed_layout
 
 		self.chat.input_base = vgui.Create("DPanel", self.chat)
-			function self.chat.input_base:Paint(w, h) end
+		self.chat.input_base:Dock(BOTTOM)
 
-			self.chat.input_base:Dock(BOTTOM)
-			self.chat.input_base:SetHeight(32)
-			self.chat.input_base:SetAlpha(220)
+		function self.chat.input_base:Paint(w, h) 
+			draw.RoundedBoxEx(8, 0, 0, w, h, Color(30, 30, 30, 230), false, false, true, true) 
+		end
+
+			
+		self.chat.input_base:SetHeight(40)
+		self.chat.input_base:SetAlpha(220)
+
+			self.chat.emotes = vgui.Create("FButton", self.chat.input_base)
+			local emote = self.chat.emotes
+			emote:SetSize(32, 32)
+
+			emote:Dock(RIGHT)
+			emote:SetColor(Color(40, 140, 250))
+			emote:DockMargin(4, 4, 4, 4)
+
+			emote.DoClick = function(self)
+				chatbox.OpenEmotesMenu(self)
+			end
+
+			function self.chat.emotes:PostPaint(w, h)
+				surface.SetDrawColor(color_white)
+				surface.DrawMaterial("https://i.imgur.com/4J6pfR0.png", "emotes64.png", 4, 4, w-8, h-8)
+			end
 
 			self.chat.input = vgui.Create("FTextEntry", self.chat.input_base)
 				self.chat.input:SetFont("OSB18")
 				self.chat.input:Dock(FILL)
+				self.chat.input:DockMargin(4, 4, 0, 4)
 
 				self.chat.input:SetHistoryEnabled(true)
 				self.chat.input.HistoryPos = 0
@@ -310,15 +495,13 @@ function chatbox.BuildTabChat(self, a)
 
 				function self.chat.input.Think(pan) pan:SetFont(chatbox.box_font) end
 
-			self.chat.mode = vgui.Create("DPanel", self.chat.input_base)
+			self.chat.mode = vgui.Create("Panel", self.chat.input_base)
 				self.chat.mode:Dock(LEFT)
-				self.chat.mode:SetWide(48)
+				self.chat.mode:SetWide(32)
 
-				function self.chat.mode.Paint(pan, w, h)
-					paint_back(pan, w, h, true)
-
+				function self.chat.mode:Paint(w, h)
 					local text = chatbox.GetModeString()
-					draw.SimpleText(text, chatbox.box_font, w/2, h/2, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+					draw.SimpleText(text, chatbox.box_font, w/2, h/2, color_white, 1, 1)
 				end
 
 end
@@ -332,52 +515,6 @@ local function get_player(sid)
 	end
 
 	return NULL
-end
-
-local function build_settings_from_table(self, tbl)
-	for cat, i in next, tbl do
-		local c_pan = vgui.Create("DLabel", self)
-			--self:AddItem(c_pan)
-
-			c_pan:SetText("Cuntagory:" .. cat)
-
-		for item, data in next, i do
-			local pan = vgui.Create("Panel", self)
-			pan:Dock(TOP)
-			pan:DockMargin(0, 8, 0, 8)
-
-			local tag = vgui.Create("DLabel", pan)
-			tag:Dock(LEFT)
-
-			tag:SetText(item)
-
-			if data.ty == "Number" then
-				local slide = vgui.Create("DNumberScratch", pan)
-
-				slide:SetValue(data.get())
-				slide:SetMin(data.min)
-				slide:SetMax(data.max)
-
-				slide.OnValueChanged = data.set
-			elseif data.ty == "Color" then
-				local color = vgui.Create("DColorMixer", pan)
-
-				color.ValueChanged = data.set
-			elseif data.ty == "String" then
-				local text = vgui.Create("DTextEntry", pan)
-				text:Dock(LEFT)
-
-				text.OnEnter = function() data.set(text:GetValue()) end
-			elseif data.ty == "Bool" then
-				local check = vgui.Create("DCheckBox", pan)
-				check:Dock(LEFT)
-
-				check:SetChecked(data.get())
-
-				check.OnChange = data.set
-			end
-		end
-	end
 end
 
 function chatbox.BuildTabSettings(self, a)
@@ -400,7 +537,7 @@ function chatbox.Build()
 	local self = chatbox.frame
 		self:PopIn()
 		self:SetVisible(true)
-		self:SetCookieName("qchat") -- Backwards/alt compatability
+		self:SetCookieName("chathud")
 
 		self.BackgroundColor.a = 170
 		self.HeaderColor.a = 250
@@ -414,6 +551,12 @@ function chatbox.Build()
 		self:SetSize(w, h)
 
 		self:SetSizable(true)
+		self:SetSizablePos(2)
+
+		function self:OnSizeChanged(w, h)
+			self:Emit("OnSizeChanged", w, h)
+		end
+
 		self:SetMinHeight(145)
 		self:SetMinWidth(275)
 
@@ -490,8 +633,13 @@ function chatbox.Close(no_hook)
 
 	chatbox.frame:SetMouseInputEnabled(false)
 	chatbox.frame:SetKeyboardInputEnabled(false)
+	chatbox.frame:SetCloseable(false, true)
+	chatbox.Shadow = {intensity = 3}
+
 	chatbox.frame:PopOut(nil, nil, function(_, self) self:SetVisible(false) end)
-	
+
+	chatbox.frame:Emit("OnClose")
+
 	if IsValid(chatbox.frame.dmSelector) then
 		chatbox.frame.dmSelector:Remove()
 	end
@@ -511,6 +659,10 @@ function chatbox.Open(t)
 	chatbox.frame:SetVisible(true)
 	chatbox.frame:PopIn()
 	chatbox.frame:MakePopup()
+
+	chatbox.frame.OnRemove = function()
+		chatbox.frame:Emit("OnClose", true)
+	end
 
 	chatbox.GiveChatFocus()
 
