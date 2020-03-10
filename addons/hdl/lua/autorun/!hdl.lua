@@ -9,11 +9,11 @@ sql.Query("CREATE TABLE IF NOT EXISTS hdl_Data(name TEXT UNIQUE, url TEXT)")
 
 local BlankFunc = function() end
 
-local queued = {}
-hdl.queued = queued 
+hdl.queued = hdl.queued or {}
+local queued = hdl.queued 
 
-local downloading = {}
-hdl.downloading = downloading 
+hdl.downloading = hdl.downloading or {}
+local downloading = hdl.downloading 
 local function Download(url, name, func, fail)
 	local timed_out = false 
 
@@ -48,7 +48,7 @@ local function Download(url, name, func, fail)
 		downloading[name] = nil 
 	end)
 
-	timer.Simple(15, function()
+	timer.Simple(25, function()
 		if downloading[name] then  
 			downloading[name] = nil 
 			if fail then 
@@ -157,15 +157,6 @@ function hdl.DownloadFile(url, name, func, fail, ovwrite)
 
 	queued[key] = t
 
-	timer.Simple(10, function()
-		for k,v in pairs(queued) do 
-			if v == t then 
-				table.remove(queued, k)
-				break
-			end 
-		end
-	end)
-
 end
 
 httpReady = httpReady or Perilous_Perks or false
@@ -176,7 +167,7 @@ hook.Add("Think", "HDL", function()
 	for k,v in pairs(queued) do 
 		if downloading[v.name] then continue end 
 
-		--if table.Count(downloading) >= 3 then break end --do not allow more than 3 downloads at a time
+		if table.Count(downloading) >= 7 then break end --do not allow more than 7 downloads at a time
 
 		downloading[v.name] = true
 		Download(v.url, v.name, v.func, v.fail)
