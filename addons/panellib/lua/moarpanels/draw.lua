@@ -889,8 +889,8 @@ local function ParseGIF(fn, realname)
 		local frame = f:ReadUShort()
 		local time = f:ReadUShort()
 
-		frame, time = bit.ror(frame, 16 / 2), bit.ror(time, 16 / 2)
-
+		--frame, time = bit.ror(frame, 16 / 2), bit.ror(time, 16 / 2)
+		print("read frame, time:", frame, time)
 		info[frame] = time
 
 		left = left - 4
