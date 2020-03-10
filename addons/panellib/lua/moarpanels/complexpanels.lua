@@ -1000,6 +1000,7 @@ end
 function Cloud:AddFormattedText(txt, col, font, overy, num) --if you're updating the text, for example, you can use "num" to position it where you want it
 
 	local wid = (self.MaxW or self.MaxWidth or self.MinW) - 16
+
 	local nd = string.WordWrap2(txt, wid, font or self.Font)
 
 	local yo = 0
@@ -1085,7 +1086,7 @@ function Cloud:Think()
 
 	else 
 		self:SetAlpha(L(self:GetAlpha(), 0, self.Speed, true))
-
+		if self:GetAlpha() == 0 and self.RemoveWhenDone then self:Remove() return end
 	end
 
 end
@@ -1102,7 +1103,7 @@ function Cloud:Popup(bool)
 
 end
 
-function Cloud:Bond(pnl)
+function Cloud:Bond--[[age]](pnl)
 	self.Bonded = pnl
 end
 
@@ -1111,7 +1112,7 @@ vgui.Register("Cloud", Cloud, "Panel")
 --[[
 
 FIconLayout
-
+	this barely works; don't use it
 ]]
 local FIC = {}
 
@@ -1260,6 +1261,7 @@ function FIC:Add(name)
 		p = vgui.Create(name, self)
 	elseif ispanel(name) then
 		p = name 
+		p:SetParent(self)
 	end
 
 	p:SetPos(self.CurX, self.CurY)
