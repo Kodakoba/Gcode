@@ -14,12 +14,13 @@ local Run = function(func, ...)	--kinda like eval
 	end
 end
 
-chathud = chathud or {}
+local Emote = chathud.Emote 
+
 chathud.oldShadow = chathud.oldShadow or false
 
 --[[
-	This chat is a piece of shit, so I removed every comment. So you don't poke around for too long and gouge your fucking eyes out.
-	Enjoy.
+	This chat is a piece of shit. Don't poke around for too long or you'll gouge your fucking eyes out.
+	Good luck.
 ]]
 
 chathud.FFZChannels = {
@@ -30,166 +31,6 @@ chathud.FFZChannels = {
 	"clay0m"
 }
 
-chathud.TagTypes = {
-	["number"] = tonumber,
-	["string"] = tostring,
-}
-chathud.PreTags = {
-	["rep"] = {
-		args = {
-			[1] = {type = "number", min = 0, max = 10, default = 1},
-		},
-		func = function(text, args)
-			return text:rep(args[1])
-		end
-	},
-}
-
-if string.anime then
-	chathud.PreTags["anime"] = {
-		args = {
-			-- no args
-		},
-		func = string.anime
-	}
-end
-
-chathud.Tags = {
-	["color"] = {
-		args = {
-			[1] = {type = "number", min = 0, max = 255, default = 255}, -- r
-			[2] = {type = "number", min = 0, max = 255, default = 255}, -- g
-			[3] = {type = "number", min = 0, max = 255, default = 255}, -- b
-			[4] = {type = "number", min = 0, max = 255, default = 255}, -- a
-		},
-		TagStart = function(self, markup, buffer, args)
-			self._fgColor = buffer.fgColor
-		end,
-		ModifyBuffer = function(self, markup, buffer, args)
-			buffer.fgColor = Color(args[1] or 255, args[2] or 255, args[3] or 255, args[4] or 255)
-		end,
-		TagEnd = function(self, markup, buffer, args)
-			buffer.fgColor = self._fgColor or Color(255, 255, 255, 255)
-			self._fgColor = nil
-		end,
-	},
-	["bgcolor"] = {
-		args = {
-			[1] = {type = "number", min = 0, max = 255, default = 255}, -- r
-			[2] = {type = "number", min = 0, max = 255, default = 255}, -- g
-			[3] = {type = "number", min = 0, max = 255, default = 255}, -- b
-			[4] = {type = "number", min = 0, max = 255, default = 0}, -- a
-		},
-		TagStart = function(self, markup, buffer, args)
-			self._bgColor = buffer.bgColor
-		end,
-		ModifyBuffer = function(self, markup, buffer, args)
-			buffer.bgColor = Color(args[1] or 255, args[2] or 255, args[3] or 255, args[4] or 255)
-		end,
-		TagEnd = function(self, markup, buffer, args)
-			buffer.bgColor = self._bgColor or Color(255, 255, 255, 0)
-		end,
-	},
-	
-	["hsv"] = {
-		args = {
-			[1] = {type = "number", default = 0},					--h
-			[2] = {type = "number", min = 0, max = 1, default = 1},	--s
-			[3] = {type = "number", min = 0, max = 1, default = 1},	--v
-		},
-		TagStart = function(self, markup, buffer, args)
-			self._fgColor = buffer.fgColor
-		end,
-		ModifyBuffer = function(self, markup, buffer, args)
-			if not self._fgColor then self._fgColor = buffer.fgColor end
-			buffer.fgColor = HSVToColor(args[1] % 360, args[2] or 1, args[3] or 1)
-		end,
-		TagEnd = function(self, markup, buffer, args)
-			buffer.fgColor = self._fgColor or Color(255, 255, 255, 255)
-		end,
-	},
-	["dev_hsvbg"] = {
-		args = {
-			[1] = {type = "number", default = 0},					--h
-			[2] = {type = "number", min = 0, max = 1, default = 1},	--s
-			[3] = {type = "number", min = 0, max = 1, default = 1},	--v
-		},
-		TagStart = function(self, markup, buffer, args)
-			self._bgColor = buffer.bgColor
-		end,
-		ModifyBuffer = function(self, markup, buffer, args)
-			buffer.bgColor = HSVToColor(args[1] % 360, args[2], args[3])
-		end,
-		TagEnd = function(self, markup, buffer, args)
-			buffer.bgColor = self._bgColor or Color(255, 255, 255, 0)
-		end,
-	},
-	["translate"] = {
-		args = {
-			[1] = {type = "number", default = 0},	-- x
-			[2] = {type = "number", default = 0},	-- y
-		},
-		TagStart = function(self, markup, buffer, args)
-			self.mtrx = Matrix()
-		end,
-		Draw = function(self, markup, buffer, args)
-			self.mtrx:SetTranslation(Vector(args[1], args[2]))
-			cam.PushModelMatrix(self.mtrx)
-
-		end,
-		TagEnd = function(self)
-			cam.PopModelMatrix()
-		end,
-	},
-	["rotate"] = {
-		args = {
-			[1] = {type = "number", default = 0},	-- y
-		},
-		TagStart = function(self, markup, buffer, args)
-			self.mtrx = Matrix()
-		end,
-		Draw = function(self, markup, buffer, args)
-			--self.mtrx:SetTranslation(Vector(0, 0))
-
-			self.mtrx:Translate(Vector(buffer.x, buffer.y + (buffer.h * 0.5)))
-				self.mtrx:SetAngles(Angle(0, args[1], 0))
-			self.mtrx:Translate(-Vector(buffer.x, buffer.y + (buffer.h * 0.5)))
-			cam.PushModelMatrix(self.mtrx)
-		end,
-		TagEnd = function(self)
-			cam.PopModelMatrix()
-		end,
-	},
-	["scale"] = {
-		args = {
-			[1] = {type = "number", default = 1, max = 3, min = -3},	-- x
-			[2] = {type = "number", default = 1, max = 3, min = -3},	-- y
-		},
-		TagStart = function(self, markup, buffer, args)
-			self.mtrx = Matrix()
-			self._bufferx = buffer.x
-			self._buffery = buffer.y
-		end,
-		Draw = function(self, markup, buffer, args)
-			--self.mtrx:SetTranslation(Vector(0, 0))
-
-			self.mtrx:Translate(Vector(buffer.x, buffer.y + (buffer.h * 0.5)))
-				self.mtrx:Scale(Vector(args[1], args[2]))
-			self.mtrx:Translate(-Vector(buffer.x, buffer.y + (buffer.h * 0.5)))
-			
-			cam.PushModelMatrix(self.mtrx)
-
-		end,
-		TagEnd = function(self, markup, buffer, args)
-			cam.PopModelMatrix()
-			local xdif = buffer.x - self._bufferx
-			local ydif = buffer.y - self._buffery 
-			if ydif==0 then 
-				buffer.x = buffer.x + xdif * (args[1] - 1)
-			end
-		end,
-	},
-}
 chathud.Shortcuts = {}
 chathud.Items = chathud.Items or {}
 
@@ -208,143 +49,123 @@ file.CreateDir("emoticon_cache")
 file.CreateDir("emoticon_cache/twitch")
 file.CreateDir("emoticon_cache/ffz")
 
+--This is shitcode written when i was starting out lua, pls skip
+
 function chathud.CreateFFZShortcuts(update)
-chathud.FFZ = {}
 
-for k,v in pairs(chathud.FFZChannels) do
-	_G["chathud"]["FFZ"][v] = {} or _G["chathud"]["FFZ"][v]
-end
 
-local function ReadChannelInfo(filename, chan)
-_G["chathud"]["FFZ"][chan] = {}
-filename = string.lower(filename)
-Msg("[ChatHUD]: FFZ data file found! Creating shortcuts... \n")
-	if file.Exists(filename, "DATA") and not update then
-		local data = file.Read(filename, "DATA")
-		local d = util.JSONToTable(data)
-		if not d then print(#data) return ErrorNoHalt("ChatHUD: Failed to read existing FFZ Emote cache.\n") end
-		local name
-		for name1, v in pairs(d) do
-			--if isnumber(v) then continue end
-			if name1=="sets" then
-				for k,_ in pairs(v) do --i hate it as much as you do
-					name=_
+	local function ReadChannelInfo(filename, chan)
+
+		filename = string.lower(filename)
+		Msg("[ChatHUD]: FFZ data file found! Creating shortcuts... \n")
+
+		if file.Exists(filename, "DATA") and not update then
+
+			local data = file.Read(filename, "DATA")
+			local d = util.JSONToTable(data)
+			if not d then print(#data) return ErrorNoHalt("ChatHUD: Failed to read existing FFZ Emote cache.\n") end
+
+			local name
+
+			for name1, v in pairs(d) do
+				--if isnumber(v) then continue end
+				if name1=="sets" then
+					for k,_ in pairs(v) do --i hate it as much as you do
+						name=_
+					end
+				continue
+				end 
+			end
+			if not name then return end
+
+			if istable(name["emoticons"]) then
+				for num, cont in pairs(name["emoticons"]) do
+					if (cont.name) and not chathud.Shortcuts[cont.name] and not blacklist[cont.name] then 
+						local url
+						if cont.urls[4] then url=cont.urls[4] elseif cont.urls[2] then url=cont.urls[2] else url=cont.urls[1] end
+
+						chathud.Emotes[cont.display_name or cont.name] = Emote(cont.display_name or cont.name, "https:" .. url)
+																			:AddToCollection("FFZ")
+																			:SetStatic(true)
+																			:AddShortcut()
+					end
+
 				end
-			continue
-			end 
-		end
-		if not name then return end
-
-		if istable(name["emoticons"]) then
-		for num, cont in pairs(name["emoticons"]) do
-				if (cont.name) and not chathud.Shortcuts[cont.name] and not blacklist[cont.name] then 
-					local url
-					if cont.urls[4] then url=cont.urls[4] elseif cont.urls[2] then url=cont.urls[2] else url=cont.urls[1] end
-					chathud.Shortcuts[cont.display_name or cont.name] = "<ffz=" .. string.Replace( url, "//cdn.frankerfacez.com/", "" ) .. ","..tostring(cont.height*1.5 or 32)..", "..tostring(cont.width*1.5 or 32)..">" 
-					table.insert(_G["chathud"]["FFZ"][chan], cont.display_name or cont.name)
-				end
-
-				end
+			end
 		end
 	end
-end
 
-local function DownloadChannelInfo(chan)
- 	local chan = string.lower(chan)
-	local filename = "emoticon_cache/ffz_global_emotes_" .. chan .. ".dat"
-Msg("[ChatHUD]: FFZ data for channel "..chan.." not found! Downloading... \n")
+	local function DownloadChannelInfo(chan)
+
+	 	local chan = string.lower(chan)
+		local filename = "emoticon_cache/ffz_global_emotes_" .. chan .. ".dat"
+		Msg("[ChatHUD]: FFZ data for channel "..chan.." not found! Downloading... \n")
 
 		http.Fetch("https://api.frankerfacez.com/v1/room/"..tostring(chan), function(b)
-			local d = util.JSONToTable(b)
-			if not d then return ErrorNoHalt("ChatHUD: Failed to updated FFZ Emote cache.\n") end
+				local d = util.JSONToTable(b)
+				if not d then return ErrorNoHalt("ChatHUD: Failed to updated FFZ Emote cache.\n") end
 
-		for name1, v in pairs(d) do
-			--if isnumber(v) then continue end
+				for name1, v in pairs(d) do
+					--if isnumber(v) then continue end
 
-			if name1=="sets" then
-				for k,_ in pairs(v) do --i hate it as much as you do
-					name=_
-				end
-			continue
-			end 
-		end
-
-		if istable(name["emoticons"]) then
-		for num, cont in pairs(name["emoticons"]) do
-				if (cont.name) and not chathud.Shortcuts[cont.name] and not blacklist[cont.name] then 
-					local url
-					if cont.urls[4] then url=cont.urls[4] elseif cont.urls[2] then url=cont.urls[2] else url=cont.urls[1] end
-					chathud.Shortcuts[cont.display_name or cont.name] = "<ffz=" .. string.Replace( url, "//cdn.frankerfacez.com/", "" ) .. ","..tostring(cont.height*1.5 or 32)..", "..tostring(cont.width*1.5 or 32)..">" 
-					table.insert(_G["chathud"]["FFZ"][chan], cont.display_name or cont.name)
+					if name1=="sets" then
+						for k,_ in pairs(v) do --i hate it as much as you do
+							name=_
+						end
+						continue
+					end 
 				end
 
-				end
-		end
+				if istable(name["emoticons"]) then
+					for num, cont in pairs(name["emoticons"]) do
+						if (cont.name) and not chathud.Shortcuts[cont.name] and not blacklist[cont.name] then 
+							local url
 
-				if !file.Exists(filename, "DATA") then
-				file.Write(filename, "")
-				file.Append(filename, b .. " " )
+							if cont.urls[4] then url=cont.urls[4] elseif cont.urls[2] then url=cont.urls[2] else url=cont.urls[1] end
+							chathud.Emotes[cont.display_name or cont.name] = Emote(cont.display_name or cont.name, "https:" .. url)
+																				:AddToCollection("FFZ")
+																				:SetStatic(true)
+																				:AddShortcut()
+						end
+
+					end
+				end
+
+				if not file.Exists(filename, "DATA") then
+					file.Write(filename, b .. " ")
 				else
 					file.Append(filename, b .. " " )
 				end
 
-		end, function() print("send help") end)
-		
-	
-end
+			end, 
 
-
-
-local found = file.Find("emoticon_cache/ffz_global_emotes_*.dat", "DATA")
-
-for k,chan in pairs(chathud.FFZChannels) do
-	if table.HasValue(found,"ffz_global_emotes_"..string.lower(chan)..".dat") then 
-		ReadChannelInfo("emoticon_cache/ffz_global_emotes_"..string.lower(chan)..".dat", string.lower(chan))
-	else
-		DownloadChannelInfo(string.lower(chan))
-	end
-
-end
-
-end
-chathud.CreateFFZShortcuts()
-
-
-
-function chathud.CreateTwitchShortcuts(update)
-	local tag = os.date("%Y%m%d")
-	local latest = "twitch_global_emotes_" .. tag .. ".dat"
-
-	local found = file.Find("emoticon_cache/twitch_global_emotes_*.dat", "DATA")
-	for k, v in next,found do
-		if v ~= latest then file.Delete("emoticon_cache/" .. v) end
-	end
-
-	latest = "emoticon_cache/" .. latest
-
-	if file.Exists(latest, "DATA") and not update then
-		local data = file.Read(latest, "DATA")
-
-		local d = util.JSONToTable(data)
-		if not d then return ErrorNoHalt("ChatHUD: Failed to read existing Twitch Emote cache.\n") end
-
-		for name, v in pairs(d) do
-			if not chathud.Shortcuts[name] and not blacklist[name] then chathud.Shortcuts[name] = "<te=" .. (isstring(v) and v) or v.id .. ">" .. ">" end
-		end
-	else
-		http.Fetch("https://twitchemotes.com/api_cache/v3/global.json", function(b)
-			local d = util.JSONToTable(b)
-			if not d then return ErrorNoHalt("ChatHUD: Failed to updated Twitch Emote cache.\n") end
-
-			for name, v in pairs(d) do
-				if not chathud.Shortcuts[name] and not blacklist[name] then chathud.Shortcuts[name] = "<te=" .. (isstring(v) and v) or v.id .. ">" end
-			end
-
-			file.Write(latest, b)
+		function() 
+			print("send help") 
 		end)
+		
 	end
+
+
+
+	local found = file.Find("emoticon_cache/ffz_global_emotes_*.dat", "DATA")
+
+	for k,chan in pairs(chathud.FFZChannels) do
+		if table.HasValue(found,"ffz_global_emotes_"..string.lower(chan)..".dat") then 
+			ReadChannelInfo("emoticon_cache/ffz_global_emotes_"..string.lower(chan)..".dat", string.lower(chan))
+		else
+			DownloadChannelInfo(string.lower(chan))
+		end
+	end
+
 end
-chathud.CreateTwitchShortcuts()
+
+
+--[[
+	Twitch emotes shortcuts scrapped because Twitch changed API versions and i CBA to rewrite it.
+	All of those emotes mostly suck anyways.
+
+	"This api version is gone."
+]]
 
 chathud.markups = {}
 
@@ -457,11 +278,11 @@ function ParseTags(str)
 
 		local tag, argsstr = tagcont:match(tagptrn)
 
-		local chTag = chathud.Tags[tag]
+		local chTag = chathud.TagTable[tag]
 
 		if not chTag then 
 			local isend = tagcont:match(tagendptrn)
-			if not isend or not chathud.Tags[isend] then print("no such tag:", tag, isend) continue end
+			if not isend or not chathud.TagTable[isend] then print("no such tag:", tag, isend) continue end
 
 			for k,v in ipairs(table.Reverse(tags)) do
 				if not istable(v) then continue end  
@@ -536,21 +357,26 @@ function ParseTags(str)
 
 		local key = #tags + 1
 
-		local lastarg = argsstr:match(lastarg) 
-		local exp = lastarg:match("%[(.+)%]") 
+		local lastarg = argsstr:match(lastarg)
 
-		if exp then 
+		if lastarg then  
 
-			local func = CompileExpression(exp, info)
+			local exp = lastarg:match("%[(.+)%]") 
 
-			if isstring(func) then 
-				print("Expression error: " .. func)
-			end 
+			if exp then 
 
-			args[#args + 1] = func 
-			
-		else
-			args[#args + 1] = lastarg 
+				local func = CompileExpression(exp, info)
+
+				if isstring(func) then 
+					print("Expression error: " .. func)
+				end 
+
+				args[#args + 1] = func 
+				
+			else
+				args[#args + 1] = lastarg 
+			end
+
 		end
 
 		str = str:gsub(s1:PatternSafe(), "", 1)
@@ -616,20 +442,23 @@ function chathud:AddText(...)
 	local time = CurTime()
 	local nw = 0
 
-	local contents = "" --actual msg
+	
 
 	local msgstarted = false 
 	local entparsed = false 
+	local hasentity = false 
 
 	local name = ""	--sender name
 
 	local retcont = {}
 
 	local fulltxt = ""
-	local wrappedtxt = "" --duh
+	local curtext = ""
+
+	local wrappedtxt = ""
 
 
-	for k,v in ipairs(cont) do --preparse tags
+	for k,v in ipairs(cont) do
 
 		--[[ 
 			Parse entity name. 
@@ -638,6 +467,7 @@ function chathud:AddText(...)
 
 		if isentity(v) then 
 			fulltxt = fulltxt .. ((v.Nick and v:Nick()) or "Console")
+			hasentity = true
 			continue
 		end
 
@@ -646,8 +476,6 @@ function chathud:AddText(...)
 		fulltxt = fulltxt .. v
 	end
 
-	local tags = {}
-	--local untagged, tags, buffer = ParseTags(fulltxt)
 
 	local curwidth = 0
 
@@ -656,8 +484,7 @@ function chathud:AddText(...)
 	for k,v in ipairs(cont) do 
 
 		--[[ 
-			Parse entity name and color. 
-			Usually the sender, except on very rare occasions. 
+			Parse entity name and color.  
 		]]
 
 		if isentity(v) then 
@@ -665,15 +492,32 @@ function chathud:AddText(...)
 
 			merged[#merged + 1] = col 
 
-			local n = (v.Nick and v:Nick()) or "Console"
+			local n = (v.Nick and v:Nick()) or 
+			(IsValid(v) and 
+				(v.GetName and v:GetName()) or 
+				(v.GetClass and v:GetClass())
+			) 
+			or "Console"
+
 			names[v], nw = string.WordWrap2(n, chathud.W, "CH_Name")
 			curwidth = curwidth + nw
-			merged[#merged + 1] = n --table.insert(cont, k+1, n)
+			merged[#merged + 1] = n
 
 			name = name .. names[v]
 			entparsed = true 
 
 			continue
+		end
+
+		if IsTag(v) then 
+			local tag = {}
+
+			tag.tag = v.Name
+			tag.args = v.Args 
+			tag.starts = #curtext
+			tag.realkey = #merged + 1
+
+			merged[#merged + 1] = tag
 		end
 
 		--[[
@@ -682,9 +526,7 @@ function chathud:AddText(...)
 
 		if isstring(v) then
 
-			if msgstarted then 
-				contents = contents .. v
-			end
+			curtext = curtext .. v
 
 			local untagged, tags = ParseTags(v)
 
@@ -710,9 +552,9 @@ function chathud:AddText(...)
 				end
 			end
 
-			if v==": " and entparsed then entparsed = false msgstarted = true end
 				
 		end
+
 		if IsColor(v) then 
 			merged[#merged + 1] = v 
 		end
@@ -721,12 +563,12 @@ function chathud:AddText(...)
 	local ignore = {}
 
 	contents = untagged
-	cont.tags = tags or {}
+
 	local key = #self.History + 1
 	self.History[key] = {
 		t = time,	--time(for history time tracking)
 		a = 255,	--alpha(for history fadeout)
-		c = merged,	--contents(text+colors to show)
+		c = merged,	--contents(text+colors+tags to show)
 
 		name = name,	--sender name
 		namelen = utf8.len(name),
@@ -734,19 +576,16 @@ function chathud:AddText(...)
 		fulltxt = fulltxt,	--just the text
 		wrappedtxt = wrappedtxt,
 
-		tags = tags,		--tags parsed
+		tags = {},		--tags tbl which will be filled in
 		buffer = buffer,	--buffer to use
 		realkey = key,
 	}
 
+	return self.History[key]
 end
 
 function chathud:Think()
 
-end
-
-function chathud:Invalidate(now)
-	
 end
 
 function chathud:PerformLayout()
@@ -848,7 +687,7 @@ local function DrawText(txt, buffer, y, x, a)
 		end
 	end
 
-	local tx, ty = (surface.GetTextSize(txt))
+	local tx, ty = surface.GetTextSize(txt)
 
 	surface.SetFont(font)
 	
@@ -867,298 +706,321 @@ end
 local frstY = 0
 local frstnum = 0
 
+chathud.Filter = true 
+
 function chathud:Draw()
 	local x, y = self.x, self.y 
 	local chh = chathud.CharH 
-	local lasth = 0
 
 	local isfirst = true 
 
-	for histnum,dat in SortedPairs(self.History, true) do
+	if chathud.Filter then 
+		render.PushFilterMag( TEXFILTER.ANISOTROPIC )
+		render.PushFilterMin( TEXFILTER.ANISOTROPIC )
+	end
 
-		if dat.t - CurTime() < -5 or y < (self.y-220) then 
-			local mult = 120
 
-			if y < (self.y-220) then 
-				mult = 500
+	local ok, err = pcall(function()
+		for histnum,dat in SortedPairs(self.History, true) do
+
+			if dat.t - CurTime() < -5 or y < (self.y-220) then 
+				local mult = 120
+
+				if y < (self.y-220) then 
+					mult = 500
+				end
+
+				dat.a = dat.a - FrameTime() * mult
+				if dat.a <= 0 or y < 0 or (histnum < 20 and #self.History > 20) then 
+
+					table.remove(self.History, histnum)
+					return
+				end
 			end
 
-			dat.a = dat.a - FrameTime() * mult
-			if dat.a <= 0 or y < 0 or (histnum < 20 and #self.History > 20) then 
+			local tags = dat.tags
 
-				table.remove(self.History, histnum)
-				return
-			end
-		end
+			local name = dat.name
+			local nlen = dat.namelen
 
-		local tags = dat.tags
-
-		local name = dat.name
-		local nlen = dat.namelen
-
-		local text = dat.text
-		
-
-		local cols = {}
+			local text = dat.text
 			
-		if isfirst then 
-			--if frstnum == histnum then 
-				--frstY = L(frstY, 0,)
-			--else 
-				frstnum = histnum 
-				frstY = 0 
-			--end 
-		end
-		--[[
 
-			DrawQueue types:
-
-			Text: {string = true, cont = "I am the content.", san = true/false} // san means if the string should be sanitized("#VAC_ConnectionRefusedDetail")
-			Tag: {tag = true, args = {}, TagStart = func, ModifyBuffer = func, TagEnd = func}
-			Color: {color = true, cont = Color}
-
-		]]
-
-		local drawq = {}
-		local tagfuncs = {}
-		if not dat.DrawQ then
-
+			local cols = {}
+				
+			if isfirst then 
+				--if frstnum == histnum then 
+					--frstY = L(frstY, 0,)
+				--else 
+					frstnum = histnum 
+					frstY = 0 
+				--end 
+			end
 			--[[
-				Create a Draw Queue table, which will define & parse objects and the order they will be executed in.
-				This includes tags, texts, colors and entities.
+
+				DrawQueue types:
+
+				Text: {string = true, cont = "I am the content.", san = true/false} // san means if the string should be sanitized("#VAC_ConnectionRefusedDetail")
+				Tag: {tag = true, args = {}, TagStart = func, ModifyBuffer = func, TagEnd = func}
+				Color: {color = true, cont = Color}
+
 			]]
 
-			for k,v in ipairs(dat.c) do 
-
-				--Parse color in data:
-
-				if IsColor(v) then 
-					drawq[#drawq+1] = {color = true, cont = v}
-					continue
-				end
+			local drawq = {}
+			local tagfuncs = {}
+			if not dat.DrawQ then
 
 				--[[
-					Parse string in data.
-					Handles shitty language exploits("#VAC_ConnectionRefusedDetail")
+					Create a Draw Queue table, which will define & parse objects and the order they will be executed in.
+					This includes tags, texts, colors and entities.
 				]]
 
-				if isstring(v) then 
+				for k,v in ipairs(dat.c) do 
 
-					if drawq[#drawq] and drawq[#drawq].string then 
+					--Parse color in data:
 
-						local str = v
-
-						if drawq[#drawq].san then 
-
-							str = v:sub(2)
-
-							if language.GetPhrase(sub) == sub then 
-								drawq[#drawq].san = nil 
-							end 
-
-						end
-
-						drawq[#drawq].cont = drawq[#drawq].cont .. str
-
-					else 
-
-						local sub = string.sub(v, 2)
-						local san = false
-
-						if v[1] == "#" and language.GetPhrase(sub) ~= sub then
-							san = true
-						end
-
-						if san then
-							drawq[#drawq+1] = {cont = "#", string = true, san = true}
-							drawq[#drawq+1] = {cont = sub, string = true, san = true}
-						else 
-							drawq[#drawq+1] = {cont = v, string = true}
-						end
-					
+					if IsColor(v) then 
+						drawq[#drawq+1] = {color = true, cont = v}
+						continue
 					end
 
-					continue
-				end
+					--[[
+						Parse string in data.
+						Handles shitty language exploits("#VAC_ConnectionRefusedDetail")
+					]]
 
-				
-				if istable(v) then 
+					if isstring(v) then 
 
-					--TODO: Tag add to draw 
-					local func
-					local tag = {} --for storing data within the tag's function
+						if drawq[#drawq] and drawq[#drawq].string then 
 
-					if v.ender then 
-						func = function(buf)
-							Run(tagfuncs[v.ends].TagEnd, tag, tag, buf, Run(tagfuncs[v.ends].getargs))
+							local str = v
+
+							if drawq[#drawq].san then 
+
+								str = v:sub(2)
+
+								if language.GetPhrase(sub) == sub then 
+									drawq[#drawq].san = nil 
+								end 
+
+							end
+
+							drawq[#drawq].cont = drawq[#drawq].cont .. str
+
+						else 
+
+							local sub = string.sub(v, 2)
+							local san = false
+
+							if v[1] == "#" and language.GetPhrase(sub) ~= sub then
+								san = true
+							end
+
+							if san then
+								drawq[#drawq+1] = {cont = "#", string = true, san = true}
+								drawq[#drawq+1] = {cont = sub, string = true, san = true}
+							else 
+								drawq[#drawq+1] = {cont = v, string = true}
+							end
+						
 						end
 
-						drawq[#drawq+1] = {name = v.tag, func = func, ender = v.ends}
-					else 
-						local chTag = chathud.Tags[v.tag]
-						if not chTag then continue end --???
+						continue
+					end
 
-						local function getargs()
+					
+					if istable(v) then 
 
-							local args = {}
-							v.errs = v.errs or {}
+						--TODO: Tag add to draw 
+						local func
+						local tag = {} --for storing data within the tag's function
 
-							for key, val in pairs(v.args) do 
-								if v.errs[key] then continue end 
-								if not chTag.args[key] then continue end 
+						if v.ender then 
+							func = function(buf)
+								Run(tagfuncs[v.ends].TagEnd, tag, tag, buf, Run(tagfuncs[v.ends].getargs))
+							end
 
-								local arg = chTag.args[key]
+							drawq[#drawq+1] = {name = v.tag, func = func, ender = v.ends}
+						else 
+							local chTag = chathud.TagTable[v.tag]
+							if not chTag then print("no such tag", v.tag) continue end --???
 
-								local default = arg.default
-								local typ = arg.type
+							local function getargs()
 
-								local min, max = arg.min, arg.max
+								local args = {}
+								v.errs = v.errs or {}
 
-								if isfunction(val) then 
-									local ok, ret = pcall(val)
-									if not ok then print("Tag error!", ret) v.errs[key] = true continue end 
+								for key, val in pairs(v.args) do 
+									if v.errs[key] then continue end 
+									if not chTag.args[key] then continue end 
 
-									if not ret then 
+									local arg = chTag.args[key]
 
-										if not tag.ComplainedAboutReturning then
-											print("Tag function must return a value! Defaulting to", val)
-											tag.ComplainedAboutReturning = true
+									local default = arg.default
+									local typ = arg.type
+
+									local min, max = arg.min, arg.max
+
+									if isfunction(val) then 
+										local ok, ret = pcall(val)
+										if not ok then print("Tag error!", ret) v.errs[key] = true continue end 
+
+										if not ret then 
+
+											if not tag.ComplainedAboutReturning then
+												print("Tag function must return a value! Defaulting to", val)
+												tag.ComplainedAboutReturning = true
+											end
+
+											args[key] = default
+
+										elseif ret then
+											ret = chathud.TagTypes[typ](ret) or default
+
+											if min then 
+												ret = math.max(min, ret)
+											end 
+
+											if max then 
+												ret = math.min(max, ret)
+											end
+
+											args[key] = ret 
+
 										end
 
-										args[key] = default
-
-									elseif ret then
-										ret = chathud.TagTypes[typ](ret) or default
+									else 
+										val = chathud.TagTypes[typ](val) or default
 
 										if min then 
-											ret = math.max(min, ret)
+											val = math.max(min, val)
 										end 
 
 										if max then 
-											ret = math.min(max, ret)
+											val = math.min(max, val)
 										end
 
-										args[key] = ret 
+										args[key] = val 
 
 									end
+								end 
 
-								else 
-									val = chathud.TagTypes[typ](val) or default
+								return args
+							end
 
-									if min then 
-										val = math.max(min, val)
-									end 
+							func = function(buf)
+								local args = getargs()
 
-									if max then 
-										val = math.min(max, val)
-									end
+								local tagbuf = {}	--buffer for the tag to store vars in
 
-									args[key] = val 
+								Run(chTag.TagStart, tagbuf, buf, buf, args)
+								Run(chTag.Draw, tagbuf, buf, buf, args)
+								Run(chTag.ModifyBuffer, tagbuf, buf, buf, args)
+								
 
-								end
 							end 
 
-							return args
+							drawq[#drawq+1] = {name = v.tag, func = func, ModifyBuffer = chTag.ModifyBuffer, TagEnd = chTag.TagEnd, ends = v.ends, taginfo = tag, getargs = getargs}
+							tagfuncs[v.realkey] = {TagStart = chTag.TagStart, ModifyBuffer = chTag.ModifyBuffer, TagEnd = chTag.TagEnd}
 						end
-
-						func = function(buf)
-							local args = getargs()
-
-							Run(chTag.TagStart, buf, buf, buf, args)
-							Run(chTag.Draw, buf, buf, buf, args)
-							Run(chTag.ModifyBuffer, buf, buf, buf, args)
-							
-
-						end 
-
-						drawq[#drawq+1] = {name = v.tag, func = func, ModifyBuffer = chTag.ModifyBuffer, TagEnd = chTag.TagEnd, ends = v.ends, taginfo = tag, getargs = getargs}
-						tagfuncs[v.realkey] = {TagStart = chTag.TagStart, ModifyBuffer = chTag.ModifyBuffer, TagEnd = chTag.TagEnd}
+						--drawq[#drawq+1] = v
+						continue
 					end
-					--drawq[#drawq+1] = v
+
+					--functions are ignored
+
+				end
+				dat.DrawQ = drawq 
+			end
+
+			--[[
+				Draw queue was created; now actually paint
+			]]
+			drawq = table.Copy(dat.DrawQ)
+
+			local lastseg = 0
+			
+
+			local a = dat.a
+
+			local buffer = {}
+
+			local amtoflines = 0
+
+			for s in string.gmatch(dat.wrappedtxt, "(.-)\n") do 
+				amtoflines = amtoflines + 1 
+			end
+
+			local txh = chh + amtoflines * chh 
+
+			buffer.y = y - txh
+			buffer.x = x 
+			buffer.h = txh 
+			buffer.w = 0
+			
+			local buf = buffer
+
+			local fakebuf = {}
+
+			fakebuf.y = buffer.y
+			fakebuf.x = buffer.x
+			fakebuf.h = buffer.h 
+			fakebuf.w = buffer.w
+
+			for k,v in ipairs(drawq) do 
+				if v.func and v.ModifyBuffer then 
+
+					local needh = v.ModifyBuffer(v.taginfo, fakebuf, fakebuf, v.getargs(), true)
+
+				end 
+			end
+
+			local yoff = 0	--offset for the next msg, in case thats ever needed
+
+			if fakebuf.h ~= buffer.h then 
+				buffer.h = math.max(buffer.h, fakebuf.h)
+				buffer.y = fakebuf.y - buffer.h/2
+			end
+
+			buffer.y = buffer.y
+			local oldh = buffer.h
+			for k,v in ipairs(drawq) do 
+
+				if v.string then 
+					DrawText(v.cont, buf, y, x, a)
 					continue
 				end
 
-				--functions are ignored
+				if v.color then 
+					buffer.fgColor = v.cont 
+					continue
+				end
 
-			end
-			dat.DrawQ = drawq 
-		end
-
-		drawq = table.Copy(dat.DrawQ)
-
-		local lastseg = 0
-		
-
-		local a = dat.a
-		local col = Color(255,255,255)
-
-		
-		local buffer = {}
-
-		local amtoflines = 0
-
-		for s in string.gmatch(dat.wrappedtxt, "(.-)\n") do 
-			amtoflines = amtoflines + 1 
-		end
-
-		local txh = chh + amtoflines * chh 
-
-		buffer.y = y - txh
-		buffer.x = x 
-		buffer.h = txh 
-		buffer.w = 0
-		
-		local buf = buffer
-
-		local fakebuf = {}
-
-		fakebuf.y = y - txh
-		fakebuf.x = x
-		fakebuf.h = buffer.h 
-		fakebuf.w = 0
-
-		for k,v in ipairs(drawq) do 
-			if v.func and v.ModifyBuffer then 
-
-				v.ModifyBuffer(v.taginfo, fakebuf, fakebuf, v.getargs())
-			end 
-		end
-
-		local yoff = 0	--offset for the next msg, in case thats ever needed
-
-		if fakebuf.h ~= buffer.h then 
-			buffer.h = math.max(buffer.h, fakebuf.h) - chh
-			buffer.y = buffer.y - buffer.h/2
-		end
-
-		buffer.y = buffer.y
-		local oldh = buffer.h
-		for k,v in ipairs(drawq) do 
-
-			if v.string then 
-				DrawText(v.cont, buf, y, x, a)
-				continue
+				if v.func then
+					buffer.fgColor = ColorAlpha(buffer.fgColor, a)
+					v.func(buffer)
+				end
 			end
 
-			if v.color then 
-				buffer.fgColor = v.cont 
-				continue
+			for k,v in ipairs(drawq) do 
+				if not v.ender and not v.ends and v.func and v.TagEnd then 
+					v.TagEnd(buf, buf, buffer, v.getargs and v.getargs())
+				end
 			end
 
-			if v.func then
-				buffer.fgColor = ColorAlpha(buffer.fgColor, a)
-				v.func(buffer)
-			end
+			y = y - buffer.h
+
 		end
 
-		for k,v in ipairs(drawq) do 
-			if not v.ender and not v.ends and v.func and v.TagEnd then 
-				v.TagEnd(buf, buf, buffer, v.getargs and v.getargs())
-			end
-		end
+	end) --End PCall
+	
+	if chathud.Filter then 
+		render.PopFilterMag()
+		render.PopFilterMin()
+	end
 
-		y = y - buffer.h - yoff
-		lasth = buffer.h
+	if not ok then 
+		errorf("[ChatHUD] Error during rendering! %s", err)
 	end
 
 end
@@ -1265,48 +1127,99 @@ function chathud:GetFFZEmoticon(emoticon)
 	return false
 end
 
-bttv_json = bttv_json
-bttv_data = bttv_data
+emote_json = emote_json
+emote_data = emote_data
 
 local failed = false 
 local forced = false 
 
-local function ParseBTTV(js)
-	bttv_json = js
-	bttv_data = util.JSONToTable(bttv_json)
 
-	if forced then
-		for k,v in pairs(bttv_data) do 
-			MoarPanelsMats[k] = nil 
+local function ParseEmotes(js)
+	emote_json = js
+	emote_data = util.JSONToTable(emote_json)
+
+	--[[
+	collections:
+		{	
+			collection = "collection name",
+			emote_data = {
+				1. names of animated emotes
+				2. names of static emotes
+			}
+		},
+		{
+			...
+		}
+	]]
+
+	local url = "https://vaati.net/Gachi/emotes/%s.png"
+
+	for _, collection in pairs(emote_data) do
+		local colname = collection.collection
+
+		local coldesc = collection.collectiondescription or chathud.CollectionDescriptions[colname]
+		local colnicename = collection.collectionname or chathud.CollectionNames[colname]
+
+		Emotes.Collections[colname] = Emotes.Collections[colname] or Emotes.Collection(colname, coldesc)
+		local col = Emotes.Collections[colname]
+
+		col	:SetDescription(coldesc)
+			:SetNiceName(colnicename)
+
+		local data = collection.data
+
+		for k,v in ipairs(data[1]) do 
+			chathud.Emotes[v] = Emote(v, url:format(v))
+									:SetAnimated(true)
+									:AddToCollection("Animated")
+									:AddToCollection(colname)
+									:AddShortcut()
 		end
-		MsgC(Color(100, 220, 100), "[ChatHUD] Loaded BTTV data successfully! Also unloaded cached emotes.\n")
-	elseif failed then 
-		MsgC(Color(100, 220, 100), "[ChatHUD] Loaded cached BTTV data successfully!\n\n")
-	else
-		MsgC(Color(100, 220, 100), "[ChatHUD] Loaded BTTV data successfully!\n")
+
+		for k,v in ipairs(data[2]) do 
+			chathud.Emotes[v] = Emote(v, url:format(v))
+									:SetStatic(true)
+									:AddToCollection("Static")
+									:AddToCollection(colname)
+									:AddShortcut()
+		end
+
 	end
 
-	return bttv_data
+	if forced then
+		for k,v in pairs(emote_data) do 
+			MoarPanelsMats[k] = nil 
+		end
+		MsgC(Color(100, 220, 100), "[ChatHUD] Loaded emote data successfully! Also unloaded cached emotes.\n")
+	elseif failed then 
+		MsgC(Color(100, 220, 100), "[ChatHUD] Loaded cached emote data successfully!\n\n")
+	else
+		MsgC(Color(100, 220, 100), "[ChatHUD] Loaded emote data successfully!\n")
+	end
+
+	
+	
+	return emote_data
 end
 
-function UpdateBttv()
-	if failed and not file.Exists("emoticon_cache/bttv_info.dat", "DATA") then 
-		MsgC(Color(200, 50, 50), "[ChatHUD] Failed to update BTTV data and failed to load cached BTTV data, since it doesn't exist.\n") 
+function UpdateEmotes()
+	if failed and not file.Exists("emoticon_cache/emote_info.dat", "DATA") and not forced then 
+		MsgC(Color(200, 50, 50), "[ChatHUD] Failed to update emote data and failed to load cached emote data, since it doesn't exist.\n") 
 		return 
 	end 
 
-	if failed then 
-		local data = file.Read("emoticon_cache/bttv_info.dat", "DATA")
-		ParseBTTV(js)
-		MsgC(Color(220, 220, 10), "[ChatHUD] Loaded cached BTTV data. Keep in mind it may be outdated.\n")
+	if failed and file.Exists("emoticon_cache/emote_info.dat", "DATA") then 
+		local data = file.Read("emoticon_cache/emote_info.dat", "DATA")
+		ParseEmotes(js)
+		MsgC(Color(220, 220, 10), "[ChatHUD] Loaded cached emote data. Keep in mind it may be outdated.\n")
 		return
 	end
 	
-	MsgC(Color(100, 220, 100), "\n[ChatHUD] Loading new BTTV data...\n")
+	MsgC(Color(100, 220, 100), "\n[ChatHUD] Loading new emote data...\n")
 
-	hdl.DownloadFile("http://play.vaati.net:6996/gifs/info.dat", "-emoticon_cache/bttv_info.dat", function(fn, body)
-		print("got new")
-		ParseBTTV(body)
+	hdl.DownloadFile("https://vaati.net/Gachi/emotes/emotes_list.dat", "-emoticon_cache/emote_info.dat", function(fn, body)
+		if body:find("404 -") then error("Emotes list 404'd!") return end
+		ParseEmotes(body)
 
 		forced = false	
 		failed = false
@@ -1314,46 +1227,55 @@ function UpdateBttv()
 	end, function() 
 		failed = true 
 		forced = false
-		MsgC(Color(250, 55, 55), "\n[ChatHUD] Failed to get BTTV data!\n")
+		MsgC(Color(250, 55, 55), "\n[ChatHUD] Failed to get emote data!\n")
 
-		if file.Exists("emoticon_cache/bttv_info.dat", "DATA") then 
-			local data = file.Read("emoticon_cache/bttv_info.dat", "DATA")
-			MsgC(Color(220, 220, 10), "[ChatHUD] We'll use cached BTTV data. Keep in mind, it may be outdated.\n")
-			ParseBTTV(data)
+		if file.Exists("emoticon_cache/emote_info.dat", "DATA") then 
+			local data = file.Read("emoticon_cache/emote_info.dat", "DATA")
+			MsgC(Color(220, 220, 10), "[ChatHUD] We'll use cached emote data. Keep in mind, it may be outdated.\n")
+			ParseEmotes(data)
 		else
-			MsgC(Color(200, 50, 50), "[ChatHUD] You don't have any cached BTTV data, so BTTV functionality will be pretty much disabled.\nYou can try doing bttv_update to re-attempt fetching data.\n") 
+			MsgC(Color(200, 50, 50), "[ChatHUD] You don't have any cached emote data, so emotes will be pretty much disabled.\nYou can try doing emotes_update to re-attempt fetching data.\n") 
 		end 
 
 
 	end, true)
 end
 
-hook.Add("InitPostEntity", "BTTV", function() timer.Simple(10, UpdateBttv) end)
+hook.Add("HUDPaint", "ChatHUDEmotes", function() 
+	hook.Remove("HUDPaint", "ChatHUDEmotes")
+
+	timer.Simple(10, UpdateEmotes) 
+	chathud.CreateFFZShortcuts()
+end)
 
 function DeleteEmotes()
-	if not bttv_data then print("No BTTV data to use!") return end 
-	for k,v in pairs(bttv_data) do 
-		local name = ("hdl/%s"):format(k:lower())
+	if not emote_data then print("No emotes data to use!") return end 
+	for k,v in pairs(chathud.Emotes) do 
+		if not v:GetName() then continue end
+
+		local name = ("hdl/%s"):format(v:GetName())
+		
+
 		if file.Exists(name .. ".png", "DATA") then 
 			file.Delete(name .. ".png")
 			file.Delete(name .. "_info.png")
 		end
+
+		MoarPanelsMats[v:GetName() .. ".png"] = nil
+		MoarPanelsMats[v:GetName()] = nil
 	end
+
 end
-concommand.Add("bttv_update", function() failed = false forced = true UpdateBttv() end)
-concommand.Add("bttv_clearemotes", function() DeleteEmotes() end)
+concommand.Add("emotes_update", function() failed = false forced = true UpdateEmotes() end)
+concommand.Add("emotes_clearemotes", function() DeleteEmotes() end)
 
-function chathud:GetBTTVEmoticon(emoticon)
-	if not bttv_data then return false end 
+function chathud:GetEmoticon(emoticon)
+	if not chathud.Emotes then return false end 
 
-	local id = bttv_data[emoticon]
-	if not id then return false end --emote doesnt exist 
+	local emote = chathud.Emotes[emoticon]
+	if not emote then return false end --emote doesnt exist 
 
-	local url = "http://play.vaati.net:6996/gifs/%s.png"
-	url = url:format(emoticon)
-
-	return url
-
+	return emote:GetURL()
 end
 
 function chathud:GetTwitchEmoticon(emoticon)
@@ -1383,179 +1305,10 @@ function chathud:GetTwitchEmoticon(emoticon)
 	return false
 end
 
-chathud.Tags["se"] = {
-	args = {
-		[1] = {type = "string", default = "error"},
-		[2] = {type = "number", min = 8, max = 128, default = 40},
-	},
-	Draw = function(self, markup, buffer, args)
-		local image, size = args[1], args[2]
-		image = chathud:GetSteamEmoticon(image)
-		if image == false then image = MaterialCache("error") end
-		surface.SetDrawColor(buffer.fgColor)
-		surface.SetMaterial(image)
-		surface.DrawTexturedRect(buffer.x, buffer.y + 11 - size/2, size, size)
-	end,
-	ModifyBuffer = function(self, markup, buffer, args)
-		local size = args[2]
-		buffer.h = math.max(buffer.h, size)
-		buffer.x = buffer.x + size
-	end,
-}
-
-chathud.Tags["ffz"] = {
-	args = {
-		[1] = {type = "string", default = "error"},
-		[2] = {type = "number", min = 8, max = 128, default = 40},
-		[3] = {type = "number", min = 8, max = 128, default = 40},
-	},
-	Draw = function(self, markup, buffer, args)
-		local image, size, width = args[1], args[2], args[3]
-		image = chathud:GetFFZEmoticon(image)
-		if image == false then image = MaterialCache("error") end
-		surface.SetDrawColor(buffer.fgColor)
-		surface.SetMaterial(image)
-		surface.DrawTexturedRect(buffer.x, buffer.y - size/2 + 11, width, size)
-	end,
-	ModifyBuffer = function(self, markup, buffer, args)
-		local size, width = args[2], args[3]
-		buffer.h = math.max(buffer.h, size)
-		buffer.x = buffer.x + width
-	end,
-}
-
-chathud.Tags["bttv"] = {
-	args = {
-		[1] = {type = "string", default = "error"},
-	},
-	Draw = function(self, markup, buffer, args)
-		local name, size, width = args[1], 64, 64
-		local url = chathud:GetBTTVEmoticon(name)
-		if not url then return false end 
-
-		surface.SetDrawColor(buffer.fgColor)
-		draw.DrawGIF(url, name, buffer.x, buffer.y - size/2 + 11, width, size, 112, 112)
-
-		--surface.SetMaterial(image)
-		--surface.DrawTexturedRect(buffer.x, buffer.y - size/2 + 11, width, size)
-	end,
-	ModifyBuffer = function(self, markup, buffer, args)
-		local size, width = 64, 64
-		buffer.h = math.max(buffer.h, size)
-		buffer.x = buffer.x + width
-	end,
-}
-
-
-
-chathud.Tags["item"] = {
-	args = {
-		[1] = {type = "number", default = "error"},
-	},
-	Draw = function(self, markup, buffer, args)
-		local uid = args[1]
-		uid = tonumber(uid)
-		if not uid or not chathud.Items[uid] then 
-
-			surface.SetFont("CH_TextShadow")
-			surface.SetTextColor(0, 0, 0)
-			for i=1, 2 do
-				surface.SetTextPos(buffer.x+1, buffer.y)
-				surface.DrawText("invalid item")
-			end
-
-			surface.SetFont("CH_Text")
-			local w, h = surface.GetTextSize("invalid item")
-
-			surface.SetTextPos(buffer.x, buffer.y)
-			surface.SetTextColor(200, 100, 100)
-			surface.DrawText("invalid item")
-
-
-
-			buffer.w = w
-		return end 
-		local it = chathud.Items[uid]
-		local name = it:GetName()
-
-		draw.SimpleText(name, "CH_Text", buffer.x, buffer.y, Color(255, 0, 0))
-
-		--surface.SetMaterial(image)
-		--surface.DrawTexturedRect(buffer.x, buffer.y - size/2 + 11, width, size)
-	end,
-	ModifyBuffer = function(self, markup, buffer, args)
-		local size, width = 64, buffer.w
-		buffer.h = math.max(buffer.h, size)
-		buffer.x = buffer.x + width
-	end,
-}
-
-chathud.Tags["te"] = {
-	args = {
-		[1] = {type = "string", default = "error"},
-		[2] = {type = "number", min = 8, max = 128, default = 48},
-	},
-	Draw = function(self, markup, buffer, args)
-		local image, size = args[1], args[2]
-		image = chathud:GetTwitchEmoticon(image)
-		if image == false then image = MaterialCache("error") end
-		surface.SetDrawColor(buffer.fgColor)
-		surface.SetMaterial(image)
-		surface.DrawTexturedRect(buffer.x, buffer.y - size/2 + 11, size, size)
-	end,
-	ModifyBuffer = function(self, markup, buffer, args)
-		local size = args[2]
-		buffer.h = math.max(buffer.h, size)
-		buffer.x = buffer.x + size
-	end,
-}
 
 -------------------------
 
 
-function chathud:DoArgs(str, argfilter)
-	local argtb = str:Split(",")
-	if argtb[1] == "" then argtb = {} end
-	local t = {}
-	for i = 1, #argfilter do
-		local f = argfilter[i]
-		local value
-		local m = argtb[i]
-		if m and m:match("%[.+%]") then
-			local exp = class:new("Expression", m:sub(2, -2), function(res)
-				if f.type == "number" then
-					return number(res, f.min, f.max, f.default)
-				else
-					return res or f.default or ""
-				end
-			end)
-			local res = exp:Compile()
-			if res then
-				Msg"ChatHUD " print("Expression error: " .. res)
-				value = f.type == "number" and number(nil, f.min, f.max, f.default) or (f.default or "")
-			else
-				exp.altfilter = f
-				value = function()
-					return exp:Run()
-				end
-			end
-		else
-			if f.type == "number" then
-				value = number(m, f.min, f.max, f.default)
-			else
-				value = m or f.default or ""
-			end
-		end
-		t[i] = function()
-			local a, b = _f(value)
-			if a == false and isstring(b) then
-				Msg"ChatHUD " print("Expression error: " .. b)
-				return f.type == "number" and number(nil, f.min, f.max, f.default) or (f.default or "")
-			end
-			return a
-		end
-	end
-	return t
-end
 ChatHUDEmoticonCache = emoticon_cache
+
 return chathud
