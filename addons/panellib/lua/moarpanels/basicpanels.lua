@@ -106,6 +106,12 @@ function PANEL:Init()
 	self.DimColor = Color(0, 0, 0, 220)
 
 	self:DockPadding(4, 32, 4, 4)
+
+
+	self.SizableNum = 3
+
+	self.SizableBoxX = 1
+	self.SizableBoxY = 1 	--bottom right, like the default
 end
 
 
@@ -163,6 +169,13 @@ function PANEL:OnSizeChanged(w,h)
 end
 
 
+local rots = {
+	180,
+	90,
+	0,
+	270
+}
+
 function PANEL.DrawHeaderPanel(self, w, h)
 	self.DraggableH = self.HeaderSize
 
@@ -207,6 +220,32 @@ function PANEL.DrawHeaderPanel(self, w, h)
 		draw.SimpleText(label, "PanelLabel", x+xoff, y, color_white, 0, 2)
 	end
 
+	if self:GetSizable() then 	--i spent like 3 hours on sizable support for FPanels from any corner, holy shit
+		local sx, sy, sw, sh = self:GetSizableBounds()
+
+		local nx, ny = x + self.SizableBoxX * self:GetWide(), y + self.SizableBoxY * self:GetTall()
+		
+		local rot = rots[self.SizableNum]
+
+		local c = math.cos( math.rad( rot ) )
+		local s = math.sin( math.rad( rot ) )	--:pensive:
+
+		
+
+		local x0, y0 = sw/2, -sh/2
+		local newx = y0 * s - x0 * c
+		local newy = y0 * c + x0 * s
+
+		sw, sh = sw - 2, sh - 2
+
+		surface.DisableClipping(true)
+		surface.SetDrawColor(Colors.LighterGray)
+
+		surface.DrawMaterial("https://i.imgur.com/v87KhLv.png", "draglines.png", nx + newx, ny + newy, sw - 2, sh - 2, rot)
+
+		surface.DisableClipping(false)
+	end
+
 	if self.Shadow then 
 		local int = self.Shadow.intensity or 2
 		local spr = self.Shadow.spread or 2
@@ -220,6 +259,228 @@ function PANEL.DrawHeaderPanel(self, w, h)
 		--surface.DisableClipping(true)
 	end
 
+
+
+end
+
+
+--[[
+
+	1		2
+
+
+	4		3
+
+]]
+
+function PANEL:SetSizablePos(num)
+
+	local XPos = (math.ceil((num - 1) / 2) == 1 and 1) or 0
+
+	local YPos = math.ceil(num / 2) - 1
+
+	self.SizableNum = num 
+
+	self.SizableBoxX = XPos 
+	self.SizableBoxY = YPos
+end
+
+function PANEL:SetSizableSize(w, h)
+	self.SizableW, self.SizableH = w, h
+end
+
+function PANEL:GetSizableBounds()
+	local boxX, boxY = self.SizableBoxX * self:GetWide(), self.SizableBoxY * self:GetTall()
+
+	local boxW, boxH = 20, 20
+
+	if self.SizableBoxX > 0 then 
+		boxX = boxX - boxW 
+	end
+
+	if self.SizableBoxY > 0 then 
+		boxY = boxY - boxH 
+	end
+
+	return boxX, boxY, boxW, boxH
+end
+
+function PANEL:GetSizableSize()
+	return self.SizableW, self.SizableH
+end
+
+local cursors = {
+	[0] = {[0] = "sizenwse", [1] = "sizenesw"},
+	[1] = {[0] = "sizenesw", [1] = "sizenwse"}
+}
+
+function PANEL:Think()
+
+	local mousex = math.Clamp( gui.MouseX(), 1, ScrW() - 1 )
+	local mousey = math.Clamp( gui.MouseY(), 1, ScrH() - 1 )
+
+	local screenX, screenY = self:LocalToScreen( 0, 0 )
+
+	if ( self.Dragging ) then
+
+		local x = mousex - self.Dragging[1]
+		local y = mousey - self.Dragging[2]
+
+		-- Lock to screen bounds if screenlock is enabled
+		if ( self:GetScreenLock() ) then
+
+			x = math.Clamp( x, 0, ScrW() - self:GetWide() )
+			y = math.Clamp( y, 0, ScrH() - self:GetTall() )
+
+		end
+
+		self:SetPos( x, y )
+
+	end
+
+	local boxX, boxY = self.SizableBoxX * self:GetWide(), self.SizableBoxY * self:GetTall()
+	local boxW, boxH = 20, 20
+
+	if self.SizableBoxX > 0 then 
+		boxX = boxX - boxW 
+	end
+
+	if self.SizableBoxY > 0 then 
+		boxY = boxY - boxH 
+	end
+
+	local sbX, sbY = self:LocalToScreen(boxX, boxY)
+	local mX, mY = self:ScreenToLocal(mousex, mousey)
+
+	self:On("Think")
+
+	if ( self.Sizing ) then
+
+		local otherX, otherY = bit.band(self.SizableBoxX + 1, 1), bit.band(self.SizableBoxY + 1, 1) 
+
+		local mulX, mulY = -self.SizableBoxX, -self.SizableBoxY
+
+		local anchorX, anchorY = self:GetWide() * otherX, self:GetTall() * otherY 
+		anchorX, anchorY = self:LocalToScreen(anchorX, anchorY)
+
+		local x = mousex - self.Sizing[1]
+		local y = mousey - self.Sizing[2]
+
+		if self.SizableBoxX > 0 then 
+			x = self.Sizing[1] - mousex
+		end
+
+		if self.SizableBoxY > 0 then 
+			y = mousey - self.Sizing[2]
+		end
+
+		local px, py = self:GetPos()
+
+		
+
+		local oldsizeX, oldsizeY = self:GetSize()
+		local newsizeX, newsizeY = 0, 0
+
+		if self.SizableBoxY == 0 then 
+			newsizeY = self:GetTall() - mY
+		else 
+			newsizeY = mY
+		end
+
+		if self.SizableBoxX == 0 then 
+			newsizeX = self:GetWide() - mX
+		else 
+			newsizeX = mX
+		end
+
+		if ( newsizeX < self.m_iMinWidth ) then newsizeX = self.m_iMinWidth elseif ( newsizeX > ScrW() - px && self:GetScreenLock() ) then newsizeX = ScrW() - px end
+		if ( newsizeY < self.m_iMinHeight ) then newsizeY = self.m_iMinHeight elseif ( newsizeY > ScrH() - py && self:GetScreenLock() ) then newsizeY = ScrH() - py end
+
+		local sizediffX, sizediffY = newsizeX - oldsizeX, newsizeY - oldsizeY
+
+		self:SetSize(newsizeX, newsizeY)
+
+		if self.SizableBoxY == 0 then --size handle is at the top; need to shift downwards
+			self.Y = self.Y - sizediffY
+		end
+
+		if self.SizableBoxX == 0 then --size handle is on the left; need to shift to the left (yes thank you XY)
+			self.X = self.X - sizediffX
+		end
+
+		self:SetCursor(cursors[self.SizableBoxX][self.SizableBoxY])
+		return
+
+	end
+
+	
+	
+
+	if ( self.Hovered && self.m_bSizable && math.PointIn2DBox(mX, mY, boxX, boxY, boxW, boxH) ) then
+
+		self:SetCursor(cursors[self.SizableBoxX][self.SizableBoxY])
+		return
+	end
+
+	if ( self.Hovered && self:GetDraggable() && mousey < ( screenY + 24 ) ) then
+		self:SetCursor( "sizeall" )
+		return
+	end
+
+	self:SetCursor( "arrow" )
+
+	-- Don't allow the frame to go higher than 0
+	if ( self.y < 0 ) then
+		self:SetPos( self.x, 0 )
+	end
+
+
+
+end
+
+function PANEL:OnMousePressed()
+
+	local screenX, screenY = self:LocalToScreen( 0, 0 )
+	if not self:GetSizable() then return end --w/e
+
+	local boxX, boxY = self.SizableBoxX * self:GetWide(), self.SizableBoxY * self:GetTall()
+
+	local boxW, boxH = 20, 20
+
+	if self.SizableBoxX > 0 then 
+		boxX = boxX - boxW 
+	end
+
+	if self.SizableBoxY > 0 then 
+		boxY = boxY - boxH 
+	end
+
+	local mX, mY = gui.MouseX(), gui.MouseY()
+	mX, mY = self:ScreenToLocal(mX, mY)
+
+	if math.PointIn2DBox(mX, mY, boxX, boxY, boxW, boxH) then
+		self.Sizing = { gui.MouseX() - self:GetWide(), gui.MouseY() - self:GetTall() }
+		self:MouseCapture( true )
+		self:Emit("OnResize")
+		return
+	end
+
+	if ( self:GetDraggable() && gui.MouseY() < ( screenY + 24 ) ) then
+		self.Dragging = { gui.MouseX() - self.x, gui.MouseY() - self.y }
+		self:MouseCapture( true )
+		self:Emit("OnDrag")
+		return
+	end
+
+	self:Emit("OnMousePressed")
+end
+
+function PANEL:OnMouseReleased()
+
+	self.Dragging = nil
+	self.Sizing = nil
+	self:MouseCapture( false )
+	self:Emit("OnMouseReleased")
 end
 
 PANEL.Draw = PANEL.DrawHeaderPanel
@@ -484,7 +745,16 @@ function TabbedPanel:Init()
 	self.TabColor = Color(54, 54, 54)
 	self.TabFont = "OS24"
 	self.Tabs = {}
-	self:DockPadding(4, 30 + self.HeaderSize, 4, 4)
+
+	self.TabSize = 26
+
+	self:DockPadding(4, 26 + self.HeaderSize, 4, 4)
+end
+
+function TabbedPanel:SetTabSize(size)
+	self.TabSize = size
+	local l, t, r, b = self:GetDockPadding()
+	self:DockPadding(l, size + self.HeaderSize, r, b)
 end
 
 function TabbedPanel:AddTab(name, onopen, onclose)
@@ -499,8 +769,8 @@ function TabbedPanel:AddTab(name, onopen, onclose)
 	local tx, ty = surface.GetTextSize(name or "")
 	local x = (self.TabX or 0)
 
-	tab:SetPos(x, 32)
-	tab:SetSize(tx+24, 26)
+	tab:SetPos(x, self.HeaderSize)
+	tab:SetSize(tx+24, self.TabSize)
 	tab:SetText("")
 
 	self.TabX = x + tx + 24
@@ -526,17 +796,32 @@ function TabbedPanel:AddTab(name, onopen, onclose)
 	end
 
 	function tab.DoClick()
-		local curtab = self.ActiveTab
-		if curtab==name then return end
+		local curtab = self.ActiveTab 	--tab name, not button
+		if curtab == name then return end
+
+		local tabbtn = self.Tabs[curtab]
+
 		if isfunction(self.OpenTabs[name]) then 
 
-			if curtab~="" and isfunction(self.CloseTabs[curtab]) then 	--if there was a tab open and close func is valid
+			if curtab~="" then 	--if there was a tab open,
 
-				self.CloseTabs[curtab](self.OpenTabs[name])				--do that
+				if isfunction(self.CloseTabs[curtab])  then --if there's a close function registered,
+					self.CloseTabs[curtab](self.OpenTabs[name])				--exec that
+				end
+
+				if tabbtn.ReturnedPanel then --if there's a panel registered for auto-close,
+					local pnl = tabbtn.ReturnedPanel
+					local _ = (pnl.TabClose and pnl:TabClose()) or (pnl.__InstaRemove and pnl:Remove()) or pnl:PopOut()	--ambiguous syntax (function call x new statement) near '('
+																														--that's a new one lol
+				end
 			end 
 
-			self.OpenTabs[name]()	--otherwise just run the open func
+			local pnl, instaremove = self.OpenTabs[name]()	--otherwise just run the open func
 
+			if ispanel(pnl) then --if open func returned a panel then assume they want to auto-close it when tab switches
+				pnl.__InstaRemove = instaremove
+				tab.ReturnedPanel = pnl
+			end
 		end
 
 		self.WentFrom = (self.Tabs[curtab] and self.Tabs[curtab].X) or 0
@@ -545,6 +830,8 @@ function TabbedPanel:AddTab(name, onopen, onclose)
 	end
 
 	self:DockPadding(4, 30 + self.HeaderSize, 4, 4)
+
+	return tab
 end
 
 function TabbedPanel:SelectTab(name, dontanim)
@@ -559,11 +846,11 @@ end
 
 function TabbedPanel:GetWorkSize()
 	local w,h = self:GetSize()
-	return w, h - 26 - self.HeaderSize
+	return w, h - self.TabSize - self.HeaderSize
 end
 
 function TabbedPanel:GetWorkY()
-	return 26+self.HeaderSize
+	return self.TabSize + self.HeaderSize
 end
 
 function TabbedPanel:AlignPanel(pnl)
@@ -572,30 +859,36 @@ function TabbedPanel:AlignPanel(pnl)
 end
 
 function TabbedPanel:Paint(w,h)
+
+	self:PrePaint(w, h)
+
 	self:DrawHeaderPanel(w, h)
 
 	surface.SetDrawColor(self.TabColor)
-	surface.DrawRect(0, self.HeaderSize, w, 26)
+	surface.DrawRect(0, self.HeaderSize, w, self.TabSize)
 
 	local sel = self.Tabs[self.ActiveTab]
-	if not sel then return end 
-	
-	local x, tw = sel.X, sel:GetWide()
 
-	local dist = math.max(self.SelX or 0, x) - math.min(self.SelX or 0, x)
-	
-	local origdist = math.max(self.WentFrom or 0, self.SelX or 0) - math.min(self.WentFrom or 0, self.SelX or 0)
+	if sel then
+		local x, tw = sel.X, sel:GetWide()
 
-	local far = dist/origdist > 0.6
+		local dist = math.max(self.SelX or 0, x) - math.min(self.SelX or 0, x)
+		
+		local origdist = math.max(self.WentFrom or 0, self.SelX or 0) - math.min(self.WentFrom or 0, self.SelX or 0)
 
-	self.SelW = L(self.SelW, (far and tw*0.8) or tw, 15, true)
+		local far = dist/origdist > 0.6
 
-	self.SelX = L(self.SelX, x, 15)
+		self.SelW = L(self.SelW, (far and tw*0.8) or tw, 15, true)
 
-	surface.SetDrawColor(40, 140, 220)
-	surface.DrawRect(self.SelX, self.HeaderSize + 23, self.SelW, 3)
+		self.SelX = L(self.SelX, x, 15)
 
+		surface.SetDrawColor(40, 140, 220)
+		surface.DrawRect(self.SelX, self.HeaderSize + self.TabSize - 3, self.SelW, 3)
+	end
+
+	self:PostPaint(w, h)
 end
+
 vgui.Register("TabbedFrame", TabbedPanel, "FFrame")
 vgui.Register("TabbedPanel", BLANK, "TabbedFrame")
 
@@ -1152,44 +1445,50 @@ local testing = false
 if not testing then return end 
 
 
-if IsValid(TestingFrame) then TestingFrame:Remove() end 
+if IsValid(TestingFrame1) then TestingFrame1:Remove() end 
+if IsValid(TestingFrame2) then TestingFrame2:Remove() end 
+if IsValid(TestingFrame3) then TestingFrame3:Remove() end 
+if IsValid(TestingFrame4) then TestingFrame4:Remove() end 
 
-TestingFrame = vgui.Create("FFrame")
+TestingFrame1 = vgui.Create("FFrame")
 
-local f = TestingFrame
-f:SetSize(600, 400)
+local f = TestingFrame1
+f:SetSize(200, 100)
 f:Center()
 f:MakePopup()
 
-local b1 = vgui.Create("FButton", f)
-b1:SetPos(200, 300 - 64)
-b1:SetSize(128, 128)
+f:SetSizable(true)
 
-local b2 = vgui.Create("FButton", f)
-b2:SetPos(400, 200 - 64)
-b2:SetSize(128, 128)
+f:SetSizablePos(1)
 
-function b2:Think()
-	self:SetPos(200 + math.sin(CurTime()*2)*250, 200 + math.cos(CurTime()*2)*250)
-end
+TestingFrame2 = vgui.Create("FFrame")
 
-b1:SetColor(Color(50, 50, 50, 50))
-function b1:PrePaint(w, h)
+local f2 = TestingFrame2
+f2:SetSize(200, 100)
+f2:Center()
+f2:MakePopup()
+f2:MoveRightOf(f, 8)
 
-	local x, y = 0, 0
-	local x2, y2 = b2.X - b1.X, b2.Y - b1.Y
+f2:SetSizable(true)
+f2:SetSizablePos(2)
 
-	local dx, dy = x2 - x, y2 - y
+TestingFrame3 = vgui.Create("FFrame")
 
+local f3 = TestingFrame3
+f3:SetSize(200, 100)
+f3:Center()
+f3:MakePopup()
+f3:MoveBelow(f2, 8)
 
-	local rad = -math.atan2(dy, dx)
-	local deg = math.deg(rad)
-    
-	surface.SetDrawColor(200, 100, 100)
-	draw.NoTexture()
+f3:SetSizable(true)
+f3:SetSizablePos(3)
 
-	surface.DisableClipping(true)
-		draw.RotatedBox(x+64, y+64, x2+64, y2+64, 5)
-	surface.DisableClipping(false)
-	--surface.DrawPoly(poly)
-end
+TestingFrame4 = vgui.Create("FFrame")
+
+local f4 = TestingFrame4
+f4:SetSize(200, 100)
+f4:MoveLeftOf(f3, 8)
+f4:MakePopup()
+
+f4:SetSizable(true)
+f4:SetSizablePos(4)
