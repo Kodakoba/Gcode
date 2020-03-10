@@ -1,36 +1,29 @@
-local disable = CreateConVar("xp_chat_disable", "0", {FCVAR_REPLICATED, FCVAR_ARCHIVE})
-if disable:GetBool() then return end
-
 color_white = Color(255,255,255,255)
 
-local function includec(...) AddCSLuaFile(...) return include(...) end
-class	= includec"xp3/class.lua"
-luadata	= includec"xp3/luadata.lua"
+chathud = chathud or {}
 
-function _f(d)
-	return isfunction(d) and d() or d
+chathud.CollectionDescriptions = {
+	["MadeInAbyss"] = {
+		{txt = "Emotes from Made in Abyss discord."},
+		{txt = "https://discord.gg/madeinabyss", col = Color(60, 130, 170)}
+	}
+}
+chathud.CollectionNames = {
+	["MadeInAbyss"] = "Made in Abyss emotes",
+}
+
+chathud.Emotes = chathud.Emotes or {}
+
+function clinclude(f)
+	if SERVER then AddCSLuaFile(f) else return include(f) end
 end
 
-function number(d, min, max, default)
-	local m = tonumber(_f(d)) or tonumber(default) or 0
-	if tonumber(min) then
-		m = math.max(min, m)
-	end
-	if tonumber(max) then
-		m = math.min(max, m)
-	end
-	return m
+function shinclude(f)
+	include(f)
+	AddCSLuaFile(f)
 end
 
-function utf_totable(str)
-	local tbl = {}
-	for uchar in string.gmatch(str, "([%z\1-\127\194-\244][\128-\191]*)") do
-		tbl[#tbl + 1] = uchar
-	end
-	return tbl
-end
 
-includec"xp3/chatexp.lua"
 
 local convar_custom_handle = CreateConVar("xp_chat_force_source_handle", "0", {FCVAR_REPLICATED, FCVAR_ARCHIVE})
 local convar_limited_tags  = CreateConVar("xp_chat_limited_tags",        "0", {FCVAR_REPLICATED, FCVAR_ARCHIVE})
@@ -40,19 +33,29 @@ hook.Add("ChatShouldHandle", "chatexp.compat", function(handler, msg, mode)
 	if convar_custom_handle:GetBool() then return false end
 end)
 
-if SERVER then
-	AddCSLuaFile"xp3/basewars_compat.lua"
-	AddCSLuaFile"xp3/markup.lua"
-	AddCSLuaFile"xp3/chathud.lua"
-	AddCSLuaFile"xp3/chatbox.lua"
-return end
 
---hook.Add("CanPlayerUseTag", "chathud.restrict", function(ply, tag, args)
---	if not IsValid(ply) then return true end -- chat.addtext, console and such
---
---	if tag:StartWith("dev_") and not ply:IsAdmin() then return false end
-	--if convar_limited_tags:GetBool() and tag ~= "color" then return ply:IsAdmin() end
---end)
+shinclude("xp3/chattags.lua")
+shinclude("xp3/emotes.lua")
+
+
+clinclude("xp3/chathud.lua")
+clinclude("xp3/chatbox.lua")
+clinclude("xp3/cl_emote_request.lua")
+
+
+shinclude("xp3/chatexp.lua")
+
+
+if SERVER then 
+	include("xp3/sv_emote_request.lua")
+	return 
+end 
+
+
+
+--[[
+	CLIENTSIDE :
+]]
 
 local showTs = CreateConVar("xp_chat_timestamp_show",    "0", FCVAR_ARCHIVE, "Show timestamps in chat")
 local hour24 = CreateConVar("xp_chat_timestamp_24h",     "1", FCVAR_ARCHIVE, "Display timestamps in a 24-hour format")
@@ -87,10 +90,6 @@ end
 local function do_hook()
 	local gm = GM or GAMEMODE
 	if not gm then return end
-
-	if BaseWars and not chatexp.Devs then
-		include"xp3/basewars_compat.lua"
-	end
 
 	chatexp._oldGamemodeHook = chatexp._oldGamemodeHook or gm.OnPlayerChat
 	function gm:OnPlayerChat(ply, msg, mode, dead, mode_data)
@@ -148,9 +147,6 @@ hook.Add("OnReloaded", "xp.do_hook", do_hook)
 
 if chatbox and IsValid(chatbox.frame) then chatbox.frame:Close() end
 
-include"xp3/markup.lua"
-chathud	= include"xp3/chathud.lua"
-
 local fontSize = CreateClientConVar("xp_chathud_font_size", "22", true, false, "Changes the Fonts of the chathud (not the chatbox).")
 
 local function doFonts()
@@ -186,16 +182,10 @@ do -- chathud
 	end)
 end
 
-chatbox	= include"xp3/chatbox.lua"
-chatgui = setmetatable({}, {__index = chatbox})
-
 do -- chatbox
 	hook.Add("PreRender", "chatbox.close", function()
 		if (gui.IsGameUIVisible() or input.IsKeyDown(KEY_ESCAPE)) and chatbox.IsOpen() then
-			if input.IsKeyDown(KEY_ESCAPE) then
-				gui.HideGameUI()
-			end
-
+			gui.HideGameUI()
 			chatbox.Close()
 		end
 	end)
@@ -213,12 +203,12 @@ do -- chatbox
 		chatbox.AddDMTab(ply)
 		chatbox.ParseInto(chatbox.GetDMFeed(ply), ply, color_white, ": ", text)
 	end)
-	hook.Add("HUDPaint", "chathud", function()
-		
-		chathud:Think()
-		chathud:Draw()
 
+	hook.Add("HUDPaint", "chathud", function()
+		if not chathud.Draw then return end --?
+		chathud:Draw()
 	end)
+
 	hook.Add("PlayerBindPress", "chatbox.bind", function(ply, bind, down)
 		if not down then return end
 		if not IsValid(chatbox.frame) then chatbox.Build() end
