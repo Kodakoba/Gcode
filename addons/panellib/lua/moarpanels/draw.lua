@@ -51,6 +51,8 @@ function draw.DrawLoading(pnl, x, y, w, h)
 	local ct = CurTime()
 	local sx, sy
 
+	local clipping = true 
+
 	if not ispanel(pnl) and pnl ~= nil then 	--backwards compat
 
 
@@ -76,6 +78,9 @@ function draw.DrawLoading(pnl, x, y, w, h)
 		sx, sy = x, y
 		x, y = x, y
 
+	elseif ispanel(pnl) then 
+		sx, sy = pnl:LocalToScreen(w/2, h/2)
+		clipping = false
 	end
 
 
@@ -89,7 +94,7 @@ function draw.DrawLoading(pnl, x, y, w, h)
 	local dur = 2 --seconds
 	local vm = Matrix()
 
-	surface.DisableClipping(true)
+	if clipping then surface.DisableClipping(true) end
 
 	render.PushFilterMag( TEXFILTER.ANISOTROPIC )
 	render.PushFilterMin( TEXFILTER.ANISOTROPIC )
@@ -120,7 +125,7 @@ function draw.DrawLoading(pnl, x, y, w, h)
 
 		cam.PopModelMatrix(vm)
 	end
-	surface.DisableClipping(false)
+	if clipping then surface.DisableClipping(false) end
 	render.PopFilterMin()
 	render.PopFilterMag()
 end
@@ -478,6 +483,8 @@ function draw.RotatedBox(x, y, x2, y2, w)
 	surface.DrawPoly(poly)
 end
 
+draw.Line = draw.RotatedBox 
+
 local function GetOrDownload(url, name, flags, cb)	--callback: 1st arg is material, 2nd arg is boolean: was the material loaded from cache?
 	if url == "-" or name == "-" then return false end 
 
@@ -825,8 +832,17 @@ function draw.DrawOrRender(pnl, mdl, x, y, w, h)
 
 end
 
-local function ParseGIF(fn)
-	local path = "hdl/%s"
+--[[
+	GIF header (tailer? it's last):
+		2 bytes: first frame delay time (in centiseconds)
+		2 bytes: amt of frames
+
+		2 bytes: max width in the gif
+		2 bytes: max height in the gif
+
+	i swapped them to little byte order so i don't think i need to rotate anymore
+]]
+local function ParseGIF(fn, realname)
 
 	local f = file.Open(fn, "rb", "GAME")
 
@@ -836,11 +852,10 @@ local function ParseGIF(fn)
 	f:Seek(fs - 2)
 
 	local hdsize = f:ReadUShort()
-
-	hdsize = bit.ror(hdsize, 16 / 2)
+	--hdsize = bit.ror(hdsize, 8)
 
 	if hdsize > 512 then --ridiculous header size = gg
-		error("GIF broke as hell; header size is " .. fr_amt)
+		errorf("GIF %s broke as hell; header size is apparently '%d'", realname, hdsize)
 		return 
 	end
 
@@ -852,25 +867,30 @@ local function ParseGIF(fn)
 
 	local gifdata = f:Read(where)
 
-	local left = hdsize - 4
+	
 
 	local time = f:ReadUShort()
-	info[1] = bit.ror(time, 16 / 2)
+	info[1] = time
 
 	local fr_amt = f:ReadUShort()
 
-	fr_amt = bit.ror(fr_amt, 8)
+	local fr_wid, fr_hgt = f:ReadUShort(), f:ReadUShort()
 
+
+	info.wid, info.hgt = fr_wid, fr_hgt
+	
 	info.amt = fr_amt
+
+
+	local left = hdsize - 8	--8 bytes were already read
 
 	while left > 0 do 
 
 		local frame = f:ReadUShort()
 		local time = f:ReadUShort()
-		
+
 		frame, time = bit.ror(frame, 16 / 2), bit.ror(time, 16 / 2)
 
-		--print("Frame, time:", frame, time)
 		info[frame] = time
 
 		left = left - 4
@@ -884,6 +904,8 @@ local function ParseGIF(fn)
 
 	return info, gifdata
 end
+
+draw.ParseGIF = ParseGIF
 
 local function ParseGIFInfo(path, name, info)
 
@@ -899,6 +921,8 @@ local function ParseGIFInfo(path, name, info)
 	tbl.h = cmat:Height()
 	tbl.i = info
 
+	tbl.frw = info.wid 
+	tbl.frh = info.hgt
 
 	local dur = 0
 	local time = 0
@@ -947,10 +971,19 @@ function DownloadGIF(url, name)
 		if not file.Exists(path:format(name) .. ".png", "DATA") then--MoarPanelsMats[name].mat:IsError() or (MoarPanelsMats[name].failed and (MoarPanelsMats[name].failed~=url)) then 
 			MoarPanelsMats[name].downloading = true
 
-			hdl.DownloadFile(url, "temp.dat", function(fn, body)
+			hdl.DownloadFile(url, ("temp_gif%s.dat"):format(name), function(fn, body)
 				if body:find("404 Not Found") then return end
+				local bytes = {}
 
-				local info, gifdata = ParseGIF(fn)
+				local chunk = body:sub(#body - 20, #body)
+
+				for s in chunk:gmatch(".") do 
+					bytes[#bytes + 1] = bit.tohex(string.byte(s)):sub(7)
+				end
+
+				--print("last 20 bytes:", table.concat(bytes, " "))
+
+				local info, gifdata = draw.ParseGIF(fn, name)
 
 				local gif_file = file.Open(path:format(name) .. ".png", "wb", "DATA")
 
@@ -959,7 +992,7 @@ function DownloadGIF(url, name)
 
 				file.Write(path:format(name .. "_info")  .. ".dat", util.TableToJSON(info))
 
-				file.Delete("hdl/temp.dat")
+				file.Delete(("hdl/temp_gif%s.dat"):format(name))
 				
 				MoarPanelsMats[name].downloading = false 
 
@@ -990,7 +1023,7 @@ function DownloadGIF(url, name)
 	return MoarPanelsMats[name]
 end
 
-function draw.DrawGIF(url, name, x, y, dw, dh, frw, frh, start)
+function draw.DrawGIF(url, name, x, y, dw, dh, frw, frh, start, pnl)
 	local mat = DownloadGIF(url, name)--GetOrDownload(url, name)
 	if not mat then return end 
 	
@@ -999,13 +1032,16 @@ function draw.DrawGIF(url, name, x, y, dw, dh, frw, frh, start)
 			surface.SetMaterial(bad)
 			surface.DrawTexturedRect(x, y, dw, dh)
 		else
-			draw.DrawLoading(nil, x + dw/2, y + dh/2, dw, dh)
+			draw.DrawLoading(pnl, x + dw/2, y + dh/2, dw, dh)
 		end
 		return
 	end
 
 	surface.SetMaterial(mat.mat)
 	local w, h, i = mat.w, mat.h, mat.i 
+
+	frw = frw or mat.frw
+	frh = frh or mat.frh
 
 	if not start then start = 0 end 
 	local ct = CurTime()
@@ -1029,13 +1065,13 @@ function draw.DrawGIF(url, name, x, y, dw, dh, frw, frh, start)
 	--print("cur frame", row, col)
 	local xpad, ypad = 4, 4
 
-	local cols = h/116
+	local cols = h / (frh + 4)
 
 	local xo, yo = xpad, ypad
 
 
 	local u1, v1 = row / frames , col / cols
-	local u2, v2 = u1 + 112/w, v1 + (112)/h
+	local u2, v2 = u1 + frw/w, v1 + frh/h
 	
 	surface.DrawTexturedRectUV(x, y, dw, dh, u1, v1, u2, v2)
 end
