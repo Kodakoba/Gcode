@@ -42,6 +42,32 @@ end
 
 META.To = META.Lerp
 
+function META:On(event, name, cb)
+	self.__Events = self.__Events or muldim:new()
+	local events = self.__Events
+
+	if isfunction(name) then 
+		cb = name 
+		name = #events:GetOrSet(event)
+	end
+
+	events:Set(cb, event, name)
+end 
+
+function META:Emit(event, ...)
+	if not self.__Events then return end 
+	local events = self.__Events
+	local evs = events:Get(event)
+
+	if evs then 
+		for k,v in pairs(evs) do 
+			--if event name isn't a string, isn't a number and isn't valid then bail
+			if not (isstring(k) or isnumber(k) or IsValid(k)) then evs[k] = nil continue end
+			v(self, ...)
+		end 
+	end
+end
+
 function META:PopIn(dur, del, func)
 	self:SetAlpha(0)
 	return self:AlphaTo(255, dur or 0.1, del or 0, (isfunction(func) and func) or function() end)
