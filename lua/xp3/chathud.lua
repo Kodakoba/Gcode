@@ -710,10 +710,12 @@ local function DrawText(txt, buffer, a)
 		buffer.curh = math.max(th, buffer.curh) 	--pick whatever's taller: the text or whatever came before it (like emotes)
 
 		buffer.x = chathud.x + (dat.namewid * chathud.WrapStyle)
+		tx = buffer.x
+
 		buffer.h = buffer.h + buffer.curh
 		buffer.y = buffer.y + buffer.curh 			--add that 
 
-		ty = buffer.y + (dat.heights[buffer.curline] or buffer.curh)/2 - h/2
+		ty = buffer.y + (dat.heights[buffer.curline+1] or buffer.curh)/2 - h/2
 
 		dat.heights[buffer.curline + 1] = buffer.curh
 		buffer.curline = buffer.curline + 1
