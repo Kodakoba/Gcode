@@ -16,11 +16,11 @@ local bad = Material("materials/icon16/cancel.png")
 
 hook.Add("InitPostEntity", "MoarPanels", function()
 
-	local _ = spinner:IsError() and hdl.DownloadFile("https://i.imgur.com/KHvsQ4u.png", "spinner.png", function(fn) spinner = Material(fn) end)
+	local _ = spinner:IsError() and hdl.DownloadFile("https://i.imgur.com/KHvsQ4u.png", "spinner.png", function(fn) spinner = Material(fn, "mips") end)
 
-	_ = cout:IsError() and hdl.DownloadFile("https://i.imgur.com/huBY9vo.png", "circle_outline256.png", function(fn) cout = Material(fn) end)
-	_ = cout128:IsError() and hdl.DownloadFile("https://i.imgur.com/mLZEMpW.png", "circle_outline128.png", function(fn) cout128 = Material(fn) end)
-	_ = cout64:IsError() and hdl.DownloadFile("https://i.imgur.com/kY0Isiz.png", "circle_outline64.png", function(fn) cout64 = Material(fn) end)
+	_ = cout:IsError() and hdl.DownloadFile("https://i.imgur.com/huBY9vo.png", "circle_outline256.png", function(fn) cout = Material(fn, "mips") end)
+	_ = cout128:IsError() and hdl.DownloadFile("https://i.imgur.com/mLZEMpW.png", "circle_outline128.png", function(fn) cout128 = Material(fn, "mips") end)
+	_ = cout64:IsError() and hdl.DownloadFile("https://i.imgur.com/kY0Isiz.png", "circle_outline64.png", function(fn) cout64 = Material(fn, "mips") end)
 
 end)
 
@@ -488,42 +488,53 @@ draw.Line = draw.RotatedBox
 local function GetOrDownload(url, name, flags, cb)	--callback: 1st arg is material, 2nd arg is boolean: was the material loaded from cache?
 	if url == "-" or name == "-" then return false end 
 
-	local mat = MoarPanelsMats[name]
+	local key = name:gsub("%.png$", "")
+
+	local mat = MoarPanelsMats[key]
 	if not name then error("no name! disaster averting") return end
 
-	if not mat or (mat.failed and mat.failed ~= url) then 
-		MoarPanelsMats[name] = {}
-		local cmat = Material(name, flags or "smooth")
-		MoarPanelsMats[name].mat = cmat
+	if not mat or (mat.failed and mat.failed ~= url) then 	--mat was not loaded
 
-		MoarPanelsMats[name].w = cmat:Width()
-		MoarPanelsMats[name].h = cmat:Height()
+		MoarPanelsMats[key] = {}
 
-		MoarPanelsMats[name].fromurl = url
+		if file.Exists("hdl/" .. name, "DATA") then 		--mat existed on disk: load it in
 
-		if MoarPanelsMats[name].mat:IsError() or (MoarPanelsMats[name].failed and (MoarPanelsMats[name].failed~=url)) then 
-			MoarPanelsMats[name].downloading = true
+			local cmat = Material("data/hdl/" .. name, flags or "smooth")
+
+			MoarPanelsMats[key].mat = cmat
+
+			MoarPanelsMats[key].w = cmat:Width()
+			MoarPanelsMats[key].h = cmat:Height()
+
+			MoarPanelsMats[key].fromurl = url
+		else 												--mat did not exist on disk: download it then load it in
+
+			MoarPanelsMats[key].downloading = true
 
 			hdl.DownloadFile(url, name or "unnamed.dat", function(fn)
-				MoarPanelsMats[name].downloading = false 
+				MoarPanelsMats[key].downloading = false 
 				local cmat = Material(fn, flags or "smooth")
-				MoarPanelsMats[name].mat = cmat
+				MoarPanelsMats[key].mat = cmat
 
-				MoarPanelsMats[name].w = cmat:Width()
-				MoarPanelsMats[name].h = cmat:Height()
-				if cb then cb(MoarPanelsMats[name].mat, false) end
+				MoarPanelsMats[key].w = cmat:Width()
+				MoarPanelsMats[key].h = cmat:Height()
+				if cb then cb(MoarPanelsMats[key].mat, false) end
 
-			end, function(...)
-				print("Failed to download! URL:", url, "\nError:", ...)
+			end, function(err)
+
 				MoarPanelsMats[name].mat = Material("materials/icon16/cancel.png")
 				MoarPanelsMats[name].failed = url
 				MoarPanelsMats[name].downloading = false
+				errorf("Failed to download! URL: %s\n Error: %s", url, err)
 			end)
 
 		end
+
 		mat = MoarPanelsMats[name]
-	else 
-		if cb then cb(MoarPanelsMats[name].mat, true) end
+
+	else --mat was already preloaded
+
+		if cb then cb(MoarPanelsMats[name].mat, true) end 
 	end
 
 	return mat
@@ -555,10 +566,10 @@ function surface.DrawMaterial(url, name, x, y, w, h, rot)
 end
 
 function surface.DrawUVMaterial(url, name, x, y, w, h, u1, v1, u2, v2)
-	local mat = GetOrDownload(url, name, "noclamp mips smooth")
+	local mat = GetOrDownload(url, name, "smooth")
 	if not mat then return end 
 	
-	if mat and mat.downloading or mat.mat:IsError() then 
+	if mat and mat.downloading or not mat.mat or mat.mat:IsError() then 
 		draw.DrawLoading(x + w/2, y + h/2, w, h)
 		return
 	end
@@ -686,7 +697,6 @@ function draw.RenderOntoMaterial(name, w, h, func, rtfunc, matfunc, pre_rt, pre_
 	local mat
 
 	if not RTs[name] then	
-		print("new rt!")
 
 		rt = CreateRT(name, w, h)
 
@@ -711,7 +721,7 @@ function draw.RenderOntoMaterial(name, w, h, func, rtfunc, matfunc, pre_rt, pre_
 		if cached then
 			rt = cached
 		else --new W and H aren't equal, so recreate the RT
-			print("new W,H arent equal to old, recreating")
+
 			local id = rtm:Get("Number")
 			rtm:Set(id + 1, "Number")
 
@@ -889,8 +899,6 @@ local function ParseGIF(fn, realname)
 		local frame = f:ReadUShort()
 		local time = f:ReadUShort()
 
-		--frame, time = bit.ror(frame, 16 / 2), bit.ror(time, 16 / 2)
-		print("read frame, time:", frame, time)
 		info[frame] = time
 
 		left = left - 4
@@ -960,15 +968,39 @@ function DownloadGIF(url, name)
 	if not mat or (mat.failed and mat.failed ~= url) then 
 		MoarPanelsMats[name] = {}
 
-		local cmat = Material("data/hdl/" .. name, "smooth")
-		MoarPanelsMats[name].mat = cmat
+		local gifpath = path:format(name)
 
-		MoarPanelsMats[name].w = cmat:Width()
-		MoarPanelsMats[name].h = cmat:Height()
+		if file.Exists(gifpath .. ".png", "DATA") then
 
-		MoarPanelsMats[name].fromurl = url
+			local info = file.Read(gifpath .. "_info.dat", "DATA")
+			info = util.JSONToTable(info)
 
-		if not file.Exists(path:format(name) .. ".png", "DATA") then--MoarPanelsMats[name].mat:IsError() or (MoarPanelsMats[name].failed and (MoarPanelsMats[name].failed~=url)) then 
+			local tbl = ParseGIFInfo(path, name, info)	--ParseGIFInfo creates a table with this structure:
+														--[[
+															mat = IMaterial
+
+															w = mat:Width()
+															h = mat:Height()
+															i = info
+
+															frw = info.wid 
+															frh = info.hgt
+
+															dur = full duration in centiseconds
+															times = {}   - times since beginning for each frame
+															timings = {} - duration of each frame
+
+															---
+
+															we'll just merge it into MoarPanelsMats
+														]]
+			table.Merge(MoarPanelsMats[name], tbl)
+
+
+			mat = MoarPanelsMats[name]
+
+		else
+
 			MoarPanelsMats[name].downloading = true
 
 			hdl.DownloadFile(url, ("temp_gif%s.dat"):format(name), function(fn, body)
@@ -980,8 +1012,6 @@ function DownloadGIF(url, name)
 				for s in chunk:gmatch(".") do 
 					bytes[#bytes + 1] = bit.tohex(string.byte(s)):sub(7)
 				end
-
-				--print("last 20 bytes:", table.concat(bytes, " "))
 
 				local info, gifdata = draw.ParseGIF(fn, name)
 
@@ -1002,33 +1032,39 @@ function DownloadGIF(url, name)
 				MoarPanelsMats[name] = tbl
 
 			end, function(...)
-				print("Failed to download! URL:", url, "\nError:", ...)
+				errorf("Failed to download! URL: %s\n Error: %s", url, err)
 				MoarPanelsMats[name] = false
 			end, true)
 
-		else 
-			local info = file.Read(path:format(name .. "_info.dat"), "DATA")
-			info = util.JSONToTable(info)
-
-			local tbl = ParseGIFInfo(path, name, info)
-			table.Merge(MoarPanelsMats[name], tbl)
 		end
 
-		mat = MoarPanelsMats[name]
 
 	elseif mat and mat.failed then 
-		print(mat.failed, url)
+		return false
 	end
 
 	return MoarPanelsMats[name]
 end
+
+--[[
+	because source is poopoo it somehow fucks up with this
+	i double-checked my maths, i tried different values and making sure that U/V on emotes get calculated as small as possible(0.2 instead of 0.20001582061),
+	i tried bringing emotes to power of 2 before using and calculating uv shit, tried noclamp flag which also does that
+	but it didn't work, which leads me to believe it might be source fucking this
+
+	basically, emotes float off somehow
+	this is most visible with OzenWant, which isn't even a big emote
+	i really have no fucking clue what's up with that
+
+	give me a shout if you come up with a solution which isn't downloading 200 frames per emote as separate files
+]]
 
 function draw.DrawGIF(url, name, x, y, dw, dh, frw, frh, start, pnl)
 	local mat = DownloadGIF(url, name)--GetOrDownload(url, name)
 	if not mat then return end 
 	
 	if mat and mat.downloading or mat.mat:IsError() then 
-		if mat.mat:IsError() and not mat.downloading then 
+		if mat.mat and mat.mat:IsError() and not mat.downloading then 
 			surface.SetMaterial(bad)
 			surface.DrawTexturedRect(x, y, dw, dh)
 		else
@@ -1062,16 +1098,22 @@ function draw.DrawGIF(url, name, x, y, dw, dh, frw, frh, start, pnl)
 	local totalframes = mat.i.amt 
 
 	local row, col = (frame % 5), math.floor(frame / 5)
-	--print("cur frame", row, col)
+	
 	local xpad, ypad = 4, 4
 
-	local cols = h / (frh + 4)
+	local cols = h / (frh + ypad)
 
 	local xo, yo = xpad, ypad
 
+	local startX = row * frw + row * xo 	
+	local endX = startX + frw 
 
-	local u1, v1 = row / frames , col / cols
-	local u2, v2 = u1 + frw/w, v1 + frh/h
-	
+	local startY = col * frh + col * yo 
+	local endY = startY + frh 
+
+	local u1, v1 = startX / (w - 1) , startY / (h - 1)		--Before you ask where -1 came from, I DONT KNOW.
+	local u2, v2 = endX / (w - 1), endY / (h - 1)			--ALL OF THIS JUST WORKS
+
+															--i spent 4 days fixing this and turns out i just needed to sub 1 PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands 
 	surface.DrawTexturedRectUV(x, y, dw, dh, u1, v1, u2, v2)
 end
