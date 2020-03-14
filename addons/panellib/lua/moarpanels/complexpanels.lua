@@ -755,11 +755,11 @@ vgui.Register("FMenu", FM, "DMenu")
 		Cloud.Speed -- popup speed
 		Cloud.Color 
 		Cloud.TextColor 
-
-		Cloud.XAlign
-		Cloud.YAlign	--like text aligns
-
+	
 		Cloud.Middle 	-- 0-1 (or less/more for full zane)
+
+		Cloud.YAlign	--like text aligns, except the cloud aligns there : 0/1/2
+						--by default it's 2 which means align by bottom (because it's a cloud)
 
 		Cloud.Shadow = {}
 
@@ -812,8 +812,8 @@ function Cloud:Init()
 
 	self.Middle = 0.5
 
-	self.XAlign = 0
-	self.YAlign = 0
+	self.YAlign = 2
+
 	self.wwrapped = {}
 
 	self.Seperators = {}
@@ -905,7 +905,7 @@ function Cloud:Paint()
 	local finX = 0
 	local finY = 0
 
-	local aY = math.Clamp(self.YAlign, 0, 2)
+	local aY = -math.Clamp(self.YAlign, 0, 2) / 2
 
 	local frmtd = false 
 
@@ -934,7 +934,7 @@ function Cloud:Paint()
 		end
 	end
 
-	finY = yoff + boxh*(aY-1)
+	finY = yoff + boxh * aY
 
 	local oldX, oldY = xoff, finY 
 
@@ -958,7 +958,6 @@ function Cloud:Paint()
 			BSHADOWS.EndShadow(int, spr, blur, alpha, 0, 1, nil, color)
 
 			xoff, finY = oldX, oldY
-			--surface.DisableClipping(true)
 		end
 
 		draw.DrawText(lab, self.Font, xoff + 8 - cw*self.Middle,  finY + 2, self.TextColor, 0)
@@ -969,11 +968,6 @@ function Cloud:Paint()
 
 			local font = v.Font or self.DescFont
 			local tx = xoff + 8 - cw*self.Middle
-
-			--surface.SetFont(font)
-			--if not v.Continuation then surface.SetTextPos(tx, offy) end
-			--surface.SetTextColor(v.Color)
-			--surface.DrawText(v.Text)
 
 			draw.DrawText(v.Text, font, xoff + 8 - cw*self.Middle,  offy, v.Color, 0)
 
@@ -1006,12 +1000,13 @@ function Cloud:AddFormattedText(txt, col, font, overy, num) --if you're updating
 	local yo = 0
 	
 
-	surface.SetFont(font or self.Font)
+	surface.SetFont(font or self.DescFont)
 
 	local wid, chary = surface.GetTextSize(nd)
 	self.MaxWidth = math.Clamp(wid + 16, math.max(self.MinW, self.MaxWidth), self.MaxW)
 
 	--overy allows you to override the Y offset
+	print("chary is", chary)
 	yo = overy or chary
 	
 	local key = #self.DoneText + 1 
