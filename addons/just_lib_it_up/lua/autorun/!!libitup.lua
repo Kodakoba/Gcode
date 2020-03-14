@@ -33,6 +33,28 @@ local loading = true
 
 local files = 0
 
+local includes = {
+	[_CL] = function()
+		if SERVER then 
+			AddCSLuaFile(name)
+		else
+			include(name)
+		end
+	end,
+
+	[_SH] = function(name)
+		AddCSLuaFile(name)
+		include(name)
+	end,
+
+
+	[_SV] = function(name)
+		include(name)
+	end,
+
+}
+
+
 function IncludeFolder(name, realm, nofold)	--This function will be used both by addons and by LibItUp,
 											-- so we'll only count files when we're loading
 	local file, folder = file.Find( name, "LUA" )
@@ -40,8 +62,8 @@ function IncludeFolder(name, realm, nofold)	--This function will be used both by
 	local tbl = string.Explode("/", name)	
 	tbl[#tbl] = nil	--strip the last path
 
-	local fname = table.concat(tbl, "/")
-	if #tbl > 0 then fname = fname .. "/" end 	--if table length is > 0, then we are currently including a folder
+	local pathname = table.concat(tbl, "/")
+	if #tbl > 0 then pathname = pathname .. "/" end 	--if table length is > 0, then we are currently including a folder
 
 	--[[
 		Include all found lua files
@@ -50,28 +72,14 @@ function IncludeFolder(name, realm, nofold)	--This function will be used both by
 	for k,v in pairs(file) do
 		if not v:match(".+%.lua$") then continue end --if file doesn't end with .lua, ignore it
 
-
 		if loading then files = files + 1 end
 
-		local name = fname .. v
+		local name = pathname .. v
 
-		if realm==_CL then 
-
-			if SERVER then 
-				AddCSLuaFile(name)
-			else
-				include(name)
-			end
-
-		elseif realm == _SH then 
-
-			include(name)
-			AddCSLuaFile(name)
-
-		elseif realm == _SV and SERVER then 
-			include(name)
+		if includes[realm] then 
+			includes[realm] (name)
 		else
-			ErrorNoHalt("Could not include file " .. fname .. "; fucked up realm?\n")
+			ErrorNoHalt("Could not include file " .. name .. "; fucked up realm?\n")
 			continue
 		end
 
@@ -83,7 +91,7 @@ function IncludeFolder(name, realm, nofold)	--This function will be used both by
 
 	if not nofold then
 		for k,v in pairs(folder) do
-			IncludeFolder(fname .. v .. "/*", realm)
+			IncludeFolder(pathname .. v .. "/*", realm)
 		end
 	end
 	
