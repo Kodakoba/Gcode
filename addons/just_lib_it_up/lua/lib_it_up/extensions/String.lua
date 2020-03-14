@@ -238,7 +238,7 @@ function string.WordWrap2(txt, wid, font)
 		local lastword = txt:match("[^%s]+$")
 
 		if lastword then
-			local r2, w2 = WrapWord(lastword, curwid, wid[#wid])
+			local r2, w2 = WrapWord(lastword, curwid, nil, wid, line)
 
 			ret = ret .. r2
 			curwid = w2
