@@ -1,12 +1,10 @@
 --
-print('obama')
+
 local st = 0
 
 local mata = 0
 local txta = 0
 
-
-local mat = Material("data/hdl/stripes.png", "noclamp smooth")
 
 local gu = Material("vgui/gradient-u")
 local gd = Material("vgui/gradient-d")
@@ -80,7 +78,6 @@ hook.Add("HUDPaint", "SafeZone", function()
 		surface.DrawTexturedRect(x + w - 16, y - 18, 16, 18)
 		surface.DrawTexturedRect(x + w - 16, y + h, 16, 18)
 
-		surface.SetMaterial(mat)
 		surface.SetDrawColor(255, 255, 255, mata)
 		surface.DrawUVMaterial("https://i.imgur.com/GBGbyCn.png", "stripes.png", x, y - 18, w, 18, 0 - fr, 0, 1 - fr, 0.05)
 		surface.DrawUVMaterial("https://i.imgur.com/GBGbyCn.png", "stripes.png", x, y + h, w, 18, fr, 0, 1 + fr, 0.05)
