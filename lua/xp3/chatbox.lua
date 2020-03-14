@@ -11,7 +11,14 @@ chatbox.settings = {
 local box_font = CreateClientConVar("xp_chat_box_font","DermaDefaultBold",true,false,"Changes the Fonts of the chatbox itself.")
 cvars.AddChangeCallback("xp_chat_box_font",function(cv,_,new) chatbox.box_font = new end)
 
-local feed_font = CreateClientConVar("xp_chat_feed_font","ChatFont",true,false,"Changes the Font of the text displayed inside the chatbox.")
+surface.CreateFont("DefaultChatFont", {
+	font = "Roboto",
+	size = 18,
+	weight = 300,
+	shadow = true
+})
+
+local feed_font = CreateClientConVar("xp_chat_feed_font", "DefaultChatFont", true, false, "Changes the Font of the text displayed inside the chatbox.")
 cvars.AddChangeCallback("xp_chat_feed_font",function(cv,_,new) chatbox.feed_font = new end)
 
 chatbox.accent_color = Color(255, 192, 203, 255)
@@ -219,8 +226,9 @@ function chatbox.OpenEmotesMenu(btn)
 
 
 	function emotes:StartClosing()
-		emotes:MoveBy(0, 8, 0.07, 0, 0.4)
-		emotes:PopOut(0.07)
+		self:MoveBy(0, 8, 0.07, 0, 0.4)
+		self:PopOut(0.07)
+		self:Emit("OnClose")
 	end
 
 	function emotes:OnMouseReleased()
@@ -249,6 +257,66 @@ function chatbox.OpenEmotesMenu(btn)
 		self:Emit("OnSizeChanged", w, h)
 	end	
 
+	function emotes:OnRemove()
+		self:Emit("OnRemove")
+	end
+
+	local reload = vgui.Create("FButton")
+	reload:SetPos(emotes.X + 16, emotes.Y + emotes:GetTall() - 8)
+	reload:SetSize(32, 32)
+	reload:MoveBy(0, 16, 0.3, 0, 0.4)
+
+	reload.AlwaysDrawShadow = true
+
+	function reload:PostPaint(w, h)
+		surface.SetDrawColor(color_white)
+		surface.DrawMaterial("https://i.imgur.com/Kr2xpAj.png", "swap_inv.png", 4, 4, w-8, h-8)
+	end
+
+	function reload:OnHover()
+		if not IsValid(self.Cloud) then 
+			self.Cloud = vgui.Create("Cloud", self)
+			self.Cloud:SetText("Reload all emotes")
+
+			self.Cloud.YAlign = 0 --align by top
+			self.Cloud.MaxW = 400
+			self.Cloud.Middle = 0 --and by left
+
+			self.Cloud:SetAbsPos(0, self:GetTall() + 8)
+			self.Cloud:AddFormattedText("Use if all animated emotes look scuffed.")
+			self.Cloud.RemoveWhenDone = true
+		end
+
+		self.Cloud:Popup(true)
+	end 
+
+	function reload:OnUnhover()
+		if not IsValid(self.Cloud) then return end 
+		self.Cloud:Popup(false)
+	end
+
+	function reload:DoClick()
+
+		for k,v in pairs(Emotes.Collections.Animated:GetEmotes()) do 
+			RunConsoleCommand("mat_reloadmaterial", "data/hdl/" .. v:GetHDLPath())
+		end
+	end
+
+	emotes:On("OnClose", reload, function()
+		reload:PopOut()
+	end)
+
+	emotes:On("OnRemove", reload, function()
+		reload:Remove()
+	end)
+
+	local emotesLoading = false --if this is true, an emote button won't attempt to paint the emote and will instead display a loading animation
+								--if this is false and an emote material wasn't loaded this will switch to true
+
+								--this gets reset every frame by list:PostPaint
+
+								--this way, we're letting only 1 emote per frame to load
+										
 	for name, coll in pairs(Emotes.Collections) do 
 		local tab = emotes:AddTab(name, function()
 			local list = vgui.Create("FScrollPanel", emotes)
@@ -256,14 +324,18 @@ function chatbox.OpenEmotesMenu(btn)
 
 			--apply filters to all children (emotes)
 
+			
+
 			list.Paint = function()
 				render.PushFilterMag( TEXFILTER.ANISOTROPIC )
 				render.PushFilterMin( TEXFILTER.ANISOTROPIC )
 			end
 
-			list.PaintOver = function()
+			list.PaintOver = function(self, w, h)
 				render.PopFilterMag()
 				render.PopFilterMin()
+
+				emotesLoading = false
 			end
 
 			emotes:AlignPanel(list)
@@ -279,17 +351,36 @@ function chatbox.OpenEmotesMenu(btn)
 
 			il:Layout()
 
-			emotes:On("OnSizeChanged", il, function(self, w)
+			local toscrW, toscrH = emotes:LocalToScreen(emotes:GetWide(), emotes:GetTall())
+			local midX, midY = emotes:LocalToScreen(emotes:GetWide() / 2, emotes:GetTall() / 2)
+
+			emotes:On("OnSizeChanged", il, function(self, w, h)
 				local odd = (il:GetWide() - il:GetBorder()) % (size + minspace)
 				il:SetSpaceX(minspace + odd / (w / size) )
+
+				midX, midY = self:LocalToScreen(w/2, h/2)
+
+				toscrW = midX + w/2
+				toscrH = midY + h/2
 			end)
+
+			
 
 			for k,v in pairs(coll:GetEmotes()) do 
 				local b = il:Add("DButton")
 				b:SetSize(size, size)
 				b:SetText("")
+				b:SetDoubleClickingEnabled(false) 	--let 'em spam
 				b.Emote = v
+
 				function b:Paint(w, h)
+					if not MoarPanelsMats[self.Emote:GetHDLPath()] and not emotesLoading then 	-- emote material hasn't preloaded and we're not loading anything
+						emotesLoading = true													-- switch emotesLoading to true and allow 1 mat to load
+					elseif emotesLoading then 													-- emote material is loading and we're already loading something, don't do anything
+						draw.DrawLoading(self, w/2, h/2, w, h)
+						return 
+					end 
+
 					surface.SetDrawColor(color_white)
 					self.Emote:Paint(0, 0, w, h, self)
 				end
@@ -298,10 +389,14 @@ function chatbox.OpenEmotesMenu(btn)
 					if not IsValid(self.Cloud) then 
 						self.Cloud = vgui.Create("Cloud", self)
 						self.Cloud:SetText(self.Emote:GetName())
+						self.Cloud:SetSize(self:GetSize())	--makes cloud always paint even if 0,0 of the button is hidden
+
+						self.Cloud.YAlign = 0 --align by top cuz the cloud is at the bottom of the emotes panel
 						self.Cloud.MaxW = 300
 						self.Cloud.Middle = 0.5
-						self.Cloud:SetAbsPos(size/2, 0)
+						self.Cloud:SetAbsPos(size/2, -8)
 						self.Cloud.RemoveWhenDone = true
+
 					end
 					self.Cloud:Popup(true)
 				end 
@@ -327,7 +422,9 @@ function chatbox.OpenEmotesMenu(btn)
 			if not IsValid(self.Cloud) then 
 				self.Cloud = vgui.Create("Cloud", self)
 				self.Cloud:SetText(coll:GetNiceName())
-				self.Cloud.MaxW = 550
+
+				self.Cloud.MaxW = emotes:GetWide()
+				self.Cloud.Middle = 0.5
 
 				if coll:GetDescription() then 
 					local desc = coll:GetDescription()
@@ -341,10 +438,8 @@ function chatbox.OpenEmotesMenu(btn)
 					end
 
 				end
-
 				
-				self.Cloud.Middle = 0.5
-				self.Cloud:SetAbsPos(self:GetWide() / 2, -24)
+				self.Cloud:SetAbsPos(emotes:GetWide() / 2 - self.X, -32)	--i don't know why i had to subtract self.X tbh
 				self.Cloud.RemoveWhenDone = true
 			end
 

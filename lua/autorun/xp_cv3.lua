@@ -34,22 +34,32 @@ hook.Add("ChatShouldHandle", "chatexp.compat", function(handler, msg, mode)
 end)
 
 
-shinclude("xp3/chattags.lua")
-shinclude("xp3/emotes.lua")
+function chathud.Include()
+
+	shinclude("xp3/chattags.lua")
+	shinclude("xp3/emotes.lua")
 
 
-clinclude("xp3/chathud.lua")
-clinclude("xp3/chatbox.lua")
-clinclude("xp3/cl_emote_request.lua")
+	clinclude("xp3/chathud.lua")
+	clinclude("xp3/chatbox.lua")
+	clinclude("xp3/cl_emote_request.lua")
 
 
-shinclude("xp3/chatexp.lua")
+	shinclude("xp3/chatexp.lua")
 
+	if SERVER then 
+		include("xp3/sv_emote_request.lua")
+	end 
 
-if SERVER then 
-	include("xp3/sv_emote_request.lua")
-	return 
-end 
+end
+
+hook.Add("LibbedItUp", "ChatHUD", chathud.Include)
+
+if LibItUp then 
+	chathud.Include()
+end
+
+if SERVER then return end 
 
 
 

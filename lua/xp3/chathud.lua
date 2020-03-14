@@ -4,6 +4,8 @@ local col = Color(255, 200, 0, 255)
 local Msg = function(...) MsgC(col, ...)  end
 local surface = surface 
 
+local color_none = Color(0, 0, 0, 0)
+
 local utflen = function(s)
 	return (utf8.len(s:sub(#s, #s-1)) == 1 and #(s:sub(#s, #s-1) == 2)) and 2 or 1
 end
@@ -31,7 +33,7 @@ chathud.FFZChannels = {
 	"clay0m"
 }
 
-chathud.Shortcuts = {}
+chathud.Shortcuts = chathud.Shortcuts or {}
 chathud.Items = chathud.Items or {}
 
 chathud.x = 0.84 * 64
@@ -167,8 +169,6 @@ end
 	"This api version is gone."
 ]]
 
-chathud.markups = {}
-
 local function env(msg)
 	local tick = 0
 	return {
@@ -200,7 +200,10 @@ local badlua = {
 	["for"] = true,
 	["do"] = true,
 	["end"] = true,
-	["if"] = true
+	["if"] = true,
+	["function"] = true, 
+	["repeat"] = true, 
+	["until"] = true
 }
 
 local function CompileExpression(str, msg)
@@ -213,7 +216,11 @@ local function CompileExpression(str, msg)
 		return "expression: invalid character " .. ch
 	end
 
-	for word in str:gmatch("(.-)%s") do 
+	for word in str:gmatch("(.-)[%p%s]") do 
+		if badlua[word] then return "simple expressions please" end
+	end
+
+	for word in str:gmatch("[%p%s](.-)") do 
 		if badlua[word] then return "simple expressions please" end
 	end
 
@@ -270,7 +277,7 @@ function ParseTags(str)
 	for s1 in string.gmatch( str, "%b<>" ) do
 		local tagcont = s1:GetBetween("<>")
 
-		if not tagcont then continue end
+		if not tagcont then print("no continuation?") continue end
 
 		local starts = str:find(s1, 1, true)
 
@@ -430,7 +437,7 @@ function chathud:CleanupOldMarkups()
 end
 
 local consoleColor = Color(106, 90, 205, 255)
-chathud.History = {}
+chathud.History = chathud.History or {}	--don't reset history on updates; preserves text on HUD
 chathud.HistNum = 0
 
 local names = {}
@@ -492,12 +499,13 @@ function chathud:AddText(...)
 
 			merged[#merged + 1] = col 
 
-			local n = (v.Nick and v:Nick()) or 
-			(IsValid(v) and 
-				(v.GetName and v:GetName()) or 
-				(v.GetClass and v:GetClass())
-			) 
-			or "Console"
+			local n = IsValid(v) and (
+				(v.Nick and v:Nick()) or 
+
+				(	(v.GetName and v:GetName()) or 
+					(v.GetClass and v:GetClass())
+				)
+			) or "Console"
 
 			names[v], nw = string.WordWrap2(n, chathud.W, "CH_Name")
 			curwidth = curwidth + nw
@@ -564,14 +572,17 @@ function chathud:AddText(...)
 
 	contents = untagged
 
+	surface.SetFont("CH_Text")
+	local tw, th = surface.GetTextSize(name .. ": ")
+
 	local key = #self.History + 1
 	self.History[key] = {
 		t = time,	--time(for history time tracking)
-		a = 255,	--alpha(for history fadeout)
+		a = 50,	--alpha(for history fadeout)
 		c = merged,	--contents(text+colors+tags to show)
 
 		name = name,	--sender name
-		namelen = utf8.len(name),
+		namewid = tw,
 
 		fulltxt = fulltxt,	--just the text
 		wrappedtxt = wrappedtxt,
@@ -579,6 +590,8 @@ function chathud:AddText(...)
 		tags = {},		--tags tbl which will be filled in
 		buffer = buffer,	--buffer to use
 		realkey = key,
+
+		heights = {}
 	}
 
 	return self.History[key]
@@ -590,12 +603,6 @@ end
 
 function chathud:PerformLayout()
 	
-end
-
-function chathud:TagPanic()
-	for _, markup in pairs(self.markups) do
-		markup:TagPanic(false)
-	end
 end
 
 surface.CreateFont("CH_Text", {
@@ -628,12 +635,11 @@ surface.CreateFont("CH_TextShadow", {
 local matrix = Matrix()
 
 chathud.CharH = 22
+chathud.WrapStyle = 1  --1 = consider nickname, 0 = ignore nickname start from 0
 
+local shadowfont = "CH_TextShadow"
 
-local function DrawText(txt, buffer, y, x, a)
-	local y = y
-
-	local xo, yo = unpack(buffer.translate or {0, 0})
+local function DrawText(txt, buffer, a)
 
 	local font = buffer.font or "CH_Text"
 
@@ -643,62 +649,112 @@ local function DrawText(txt, buffer, y, x, a)
 	local lines = {}
 	local h = 22
 
+	local shouldpaint = not buffer.EvaluationPaint --oh lord
+
+	-- if text requires a rewrap then it's from a tag
+	-- if we get what tag made us require a rewrap, we can try to pull out cache
+	-- in case we re-wrapped text for this tag before
+
+	local dat = buffer.hist
+
+	if buffer.RequiresRewrap then 
+
+		if not (dat.cache and dat.cache[buffer.RequiresRewrap]) then 	
+
+			local tx, newlines = txt:gsub("-?\n", "")	--de-wrap text
+			txt = tx
+
+			dat.cache = dat.cache or {}
+			local newtx = string.WordWrap2(txt, {chathud.W - buffer.x, chathud.W}, font)	
+		
+			local newnewlines = select(2, newtx:gsub("%c", ""))
+
+			dat.newlines = dat.newlines - newlines + newnewlines 	--re-calculate amount of newlines for height calculation: only applies next frame :(
+
+			dat.cache[buffer.RequiresRewrap] = newtx --cache it
+		end
+
+		txt = dat.cache[buffer.RequiresRewrap]	--use cache or whatever we just wrapped
+
+	end
+
+
+	local tx, ty = buffer.x, buffer.y + (dat.heights[buffer.curline] or buffer.curh)/2 - h/2
+
 	for s in string.gmatch(txt, "(.-)\n") do 
-
-		surface.SetFont( font .. "Shadow")
-
-		surface.SetTextColor( ColorAlpha(Color(0,0,0), a) )
-
-		for i=1, 2 do
-			surface.SetTextPos(buffer.x + i, buffer.y + i )
-			surface.DrawText(s)
-			if addText then
-				surface.DrawText(addText)
-			end
-		end
-
-		local tx, ty = surface.GetTextSize(s)
-
-		surface.SetFont(font)
-
-		surface.SetTextColor(ColorAlpha(col, a))
-
-		surface.SetTextPos(buffer.x, buffer.y)
-
-		surface.DrawText(s)
-
-		buffer.y = buffer.y + ty
-		buffer.x = x
-		h = h + ty
-
-		txt = txt:gsub(s:PatternSafe() .. "\n", "", 1)
-
-	end
-
-	surface.SetFont( font .. "Shadow")
-
-	surface.SetTextColor( ColorAlpha(Color(0,0,0), a) )
-
-	for i=1, 2 do
-		surface.SetTextPos(buffer.x + i, buffer.y + i )
-		surface.DrawText(txt)
-		if addText then
-			surface.DrawText(addText)
-		end
-	end
-
-	local tx, ty = surface.GetTextSize(txt)
-
-	surface.SetFont(font)
 	
+		if shouldpaint then 
 
-	surface.SetTextColor(ColorAlpha(col, a))
+			surface.SetFont(shadowfont)
+			surface.SetTextColor( ColorAlpha(Color(0,0,0), a) )
 
-	surface.SetTextPos(buffer.x, buffer.y)
+			for i=1, 2 do
+				surface.SetTextPos(tx + i, ty + i )
 
-	surface.DrawText(txt)
+				surface.DrawText(s)
+				if addText then
+					surface.DrawText(addText)
+				end
+			end
 
-	buffer.x = buffer.x + tx
+			surface.SetFont(font)
+			surface.SetTextColor(ColorAlpha(col, a))
+			surface.SetTextPos(tx, ty)
+
+			surface.DrawText(s)
+		else 
+			surface.SetFont(font)
+		end
+
+		local tw, th = surface.GetTextSize(s)
+		buffer.curh = math.max(th, buffer.curh) 	--pick whatever's taller: the text or whatever came before it (like emotes)
+
+		buffer.x = chathud.x + (dat.namewid * chathud.WrapStyle)
+		buffer.h = buffer.h + buffer.curh
+		buffer.y = buffer.y + buffer.curh 			--add that 
+
+		ty = buffer.y + (dat.heights[buffer.curline] or buffer.curh)/2 - h/2
+
+		dat.heights[buffer.curline + 1] = buffer.curh
+		buffer.curline = buffer.curline + 1
+
+		buffer.curh = th 							--then reset
+
+	end
+
+	local lastword = txt:match("[^%c]+$")
+
+	if lastword then
+
+		if shouldpaint then 
+
+			surface.SetFont(shadowfont)
+			surface.SetTextColor( ColorAlpha(Color(0,0,0), a) )
+
+			for i=1, 2 do
+				surface.SetTextPos(tx + i, ty + i )
+				surface.DrawText(lastword)
+				if addText then
+					surface.DrawText(addText)
+				end
+			end
+
+			surface.SetFont(font)
+			surface.SetTextColor(ColorAlpha(col, a))
+			surface.SetTextPos(tx, ty)
+
+			surface.DrawText(lastword)
+		else 
+			surface.SetFont(font)
+		end
+
+		local tw, th = surface.GetTextSize(lastword)
+
+		buffer.x = buffer.x + tw
+		buffer.curh = math.max(th, buffer.curh)
+	end
+
+
 	return h
 end
 
@@ -707,8 +763,10 @@ local frstY = 0
 local frstnum = 0
 
 chathud.Filter = true 
+chathud.FadeTime = 5
 
 function chathud:Draw()
+
 	local x, y = self.x, self.y 
 	local chh = chathud.CharH 
 
@@ -723,25 +781,27 @@ function chathud:Draw()
 	local ok, err = pcall(function()
 		for histnum,dat in SortedPairs(self.History, true) do
 
-			if dat.t - CurTime() < -5 or y < (self.y-220) then 
-				local mult = 120
+			local mult = -2500
 
-				if y < (self.y-220) then 
-					mult = 500
-				end
-
-				dat.a = dat.a - FrameTime() * mult
-				if dat.a <= 0 or y < 0 or (histnum < 20 and #self.History > 20) then 
-
-					table.remove(self.History, histnum)
-					return
-				end
+			if CurTime() - dat.t > chathud.FadeTime then 
+				mult = 120 
 			end
+
+			if y < (self.y-220) then --if the message is too high up, start erasing it
+				mult = 500
+			end
+
+			dat.a = math.min(dat.a, 255) - FrameTime() * mult
+
+			if dat.a <= 0 or y < 0 or (histnum < 20 and #self.History > 20) then --if history is more than 20 messages long or alpha is 0,
+				table.remove(self.History, histnum)								 -- remove self
+				continue
+			end
+
 
 			local tags = dat.tags
 
 			local name = dat.name
-			local nlen = dat.namelen
 
 			local text = dat.text
 			
@@ -749,12 +809,8 @@ function chathud:Draw()
 			local cols = {}
 				
 			if isfirst then 
-				--if frstnum == histnum then 
-					--frstY = L(frstY, 0,)
-				--else 
-					frstnum = histnum 
-					frstY = 0 
-				--end 
+				frstnum = histnum 
+				frstY = 0  
 			end
 			--[[
 
@@ -833,11 +889,13 @@ function chathud:Draw()
 
 						--TODO: Tag add to draw 
 						local func
-						local tag = {} --for storing data within the tag's function
 
 						if v.ender then 
+							local tagbuf = {} --for storing data within the tag's function
+
 							func = function(buf)
-								Run(tagfuncs[v.ends].TagEnd, tag, tag, buf, Run(tagfuncs[v.ends].getargs))
+								local tg = tagfuncs[v.ends]
+								Run(tg.TagEnd, tg.tagbuf, tg.tagbuf, buf, Run(tg.getargs))
 							end
 
 							drawq[#drawq+1] = {name = v.tag, func = func, ender = v.ends}
@@ -867,9 +925,9 @@ function chathud:Draw()
 
 										if not ret then 
 
-											if not tag.ComplainedAboutReturning then
+											if not v.ComplainedAboutReturning then
 												print("Tag function must return a value! Defaulting to", val)
-												tag.ComplainedAboutReturning = true
+												v.ComplainedAboutReturning = true
 											end
 
 											args[key] = default
@@ -908,20 +966,36 @@ function chathud:Draw()
 								return args
 							end
 
-							func = function(buf)
-								local args = getargs()
+							local tagbuf = {}
 
-								local tagbuf = {}	--buffer for the tag to store vars in
+							func = function(buf, tagbuf)
+								local args = getargs()
 
 								Run(chTag.TagStart, tagbuf, buf, buf, args)
 								Run(chTag.Draw, tagbuf, buf, buf, args)
 								Run(chTag.ModifyBuffer, tagbuf, buf, buf, args)
-								
 
 							end 
 
-							drawq[#drawq+1] = {name = v.tag, func = func, ModifyBuffer = chTag.ModifyBuffer, TagEnd = chTag.TagEnd, ends = v.ends, taginfo = tag, getargs = getargs}
-							tagfuncs[v.realkey] = {TagStart = chTag.TagStart, ModifyBuffer = chTag.ModifyBuffer, TagEnd = chTag.TagEnd}
+							drawq[#drawq+1] = {
+								name = v.tag,
+								func = func,
+								ModifyBuffer = chTag.ModifyBuffer,
+								TagEnd = chTag.TagEnd,
+								ends = v.ends,
+								taginfo = v,
+								getargs = getargs,
+								tagbuf = tagbuf
+							}
+
+							tagfuncs[v.realkey] = {
+								TagStart = chTag.TagStart,
+								ModifyBuffer = chTag.ModifyBuffer,
+								TagEnd = chTag.TagEnd,
+
+								tagbuf = tagbuf
+							}
+
 						end
 						--drawq[#drawq+1] = v
 						continue
@@ -945,70 +1019,91 @@ function chathud:Draw()
 
 			local buffer = {}
 
-			local amtoflines = 0
+			local txh = dat.HOverride
 
-			for s in string.gmatch(dat.wrappedtxt, "(.-)\n") do 
-				amtoflines = amtoflines + 1 
+			if not txh then
+				local amtoflines = dat.newlines
+
+				if not amtoflines then 
+					amtoflines = 1 + select(2, string.gsub(dat.wrappedtxt, "%c", ""))
+					dat.newlines = amtoflines
+				end
+
+				txh = amtoflines * chh 
 			end
 
-			local txh = chh + amtoflines * chh 
+			
 
 			buffer.y = y - txh
 			buffer.x = x 
-			buffer.h = txh 
+			buffer.h = 0 
+			buffer.curh = chh 	--Current line H: useful for emotes and such
 			buffer.w = 0
-			
+			buffer.hist = dat
+			buffer.drawq = drawq --if we need to access draw queue from buffer
+			buffer.curline = 1
+
+			if not dat.Evaluated then 	
+				buffer.EvaluationPaint = true 
+				buffer.fgColor = color_none
+				dat.Evaluated = true 
+				a = 0
+			end
+
 			local buf = buffer
 
-			local fakebuf = {}
 
-			fakebuf.y = buffer.y
-			fakebuf.x = buffer.x
-			fakebuf.h = buffer.h 
-			fakebuf.w = buffer.w
+			local curH = 0
 
-			for k,v in ipairs(drawq) do 
-				if v.func and v.ModifyBuffer then 
-
-					local needh = v.ModifyBuffer(v.taginfo, fakebuf, fakebuf, v.getargs(), true)
-
-				end 
-			end
-
-			local yoff = 0	--offset for the next msg, in case thats ever needed
-
-			if fakebuf.h ~= buffer.h then 
-				buffer.h = math.max(buffer.h, fakebuf.h)
-				buffer.y = fakebuf.y - buffer.h/2
-			end
-
-			buffer.y = buffer.y
-			local oldh = buffer.h
 			for k,v in ipairs(drawq) do 
 
 				if v.string then 
-					DrawText(v.cont, buf, y, x, a)
+					DrawText(v.cont, buf, a)
 					continue
 				end
 
-				if v.color then 
+				if v.color and not buffer.EvaluationPaint then 
 					buffer.fgColor = v.cont 
 					continue
 				end
 
 				if v.func then
-					buffer.fgColor = ColorAlpha(buffer.fgColor, a)
-					v.func(buffer)
+					buffer.fgColor = ColorAlpha(buffer.fgColor, a) 		--apply fade-out alpha to fgColor if they're drawing
+					local x_before = buffer.x --if x changes due to tag drawing, we'll need to re-wrap text
+					v.func(buffer, v.tagbuf)
+
+					if buffer.x > chathud.W then 
+						buffer.x = x + (dat.namewid * chathud.WrapStyle)
+						buffer.y = buffer.y + buffer.curh
+						curH = curH + buffer.curh
+
+						dat.heights[buffer.curline] = buffer.curh
+						buffer.curline = 1
+
+						buffer.curh = chh 
+					end
+
+					if buffer.x ~= x_before then --fuck
+						buffer.RequiresRewrap = k 	--use tag number in draw queue as key for wordwrap cache
+					end
 				end
 			end
 
 			for k,v in ipairs(drawq) do 
+
+				-- not an ender, doesn't end later, has a run-func and end-func
+
 				if not v.ender and not v.ends and v.func and v.TagEnd then 
-					v.TagEnd(buf, buf, buffer, v.getargs and v.getargs())
+					v.TagEnd(v.tagbuf, v.tagbuf, buffer, v.getargs and v.getargs())
 				end
 			end
 
-			y = y - buffer.h
+			dat.heights[buffer.curline] = buffer.curh
+			curH = curH + buffer.curh + buffer.h	--add last line's H to current H
+
+			dat.HOverride = curH
+
+			y = y - dat.HOverride
 
 		end
 
@@ -1022,6 +1117,7 @@ function chathud:Draw()
 	if not ok then 
 		errorf("[ChatHUD] Error during rendering! %s", err)
 	end
+
 
 end
 
@@ -1133,6 +1229,7 @@ emote_data = emote_data
 local failed = false 
 local forced = false 
 
+file.CreateDir("hdl/emotes")
 
 local function ParseEmotes(js)
 	emote_json = js
@@ -1187,8 +1284,8 @@ local function ParseEmotes(js)
 	end
 
 	if forced then
-		for k,v in pairs(emote_data) do 
-			MoarPanelsMats[k] = nil 
+		for k,v in pairs(chathud.Emotes) do 
+			MoarPanelsMats[v:GetHDLPath()] = nil 
 		end
 		MsgC(Color(100, 220, 100), "[ChatHUD] Loaded emote data successfully! Also unloaded cached emotes.\n")
 	elseif failed then 
@@ -1253,7 +1350,7 @@ function DeleteEmotes()
 	for k,v in pairs(chathud.Emotes) do 
 		if not v:GetName() then continue end
 
-		local name = ("hdl/%s"):format(v:GetName())
+		local name = ("hdl/emotes/%s"):format(v:GetName())
 		
 
 		if file.Exists(name .. ".png", "DATA") then 
@@ -1261,8 +1358,7 @@ function DeleteEmotes()
 			file.Delete(name .. "_info.png")
 		end
 
-		MoarPanelsMats[v:GetName() .. ".png"] = nil
-		MoarPanelsMats[v:GetName()] = nil
+		MoarPanelsMats[v:GetHDLPath()] = nil
 	end
 
 end
