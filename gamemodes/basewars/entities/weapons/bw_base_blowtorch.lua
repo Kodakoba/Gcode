@@ -164,16 +164,6 @@ local x, y = 0, 0
 local lastent
 local stripes
 
-if CLIENT then 
-	--MoarPanelsMats["stripes"] = Material("data/hdl/stripes.png", "noclamp")
-
-	--stripes = MoarPanelsMats["stripes"]
-
-	--if MoarPanelsMats["stripes"]:IsError() then
-	--	hdl.DownloadFile("https://www.sccpre.cat/mypng/full/11-113784_transparent-stripes-tumblr-huge-freebie-download-for-transparent.png", "stripes.png", function(fn) MoarPanelsMats["stripes"] = Material(fn, "noclamp") stripes = MoarPanelsMats["stripes"] end) --lmao nerds
-	--end
-end
-
 local errmat = Material("__error")
 
 local strX, strY = 0, 0 --stripes

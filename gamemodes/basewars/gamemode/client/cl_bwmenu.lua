@@ -1,25 +1,18 @@
--- BaseWars Menu for things and shit
--- by Ghosty
 
-local me = LocalPlayer()
 BWFrame = nil
 FacErrorReceiver = nil
 
 local newPnl
 local maxFac = 4 
-MoarPanelsMats["stripes"] = Material("data/hdl/stripes.png", "noclamp")
 
-local stripes = MoarPanelsMats["stripes"]
-
-if MoarPanelsMats["stripes"]:IsError() then
-	hdl.DownloadFile("https://i.imgur.com/PJqjQyC.png", "stripes.png", function(fn) MoarPanelsMats["stripes"] = Material(fn, "noclamp") stripes = MoarPanelsMats["stripes"] end)
-end
+draw.GetMaterial("https://i.imgur.com/PJqjQyC.png", "stripes.png", "noclamp")
 
 local expanded = nil
 local rexpanded = nil 
 
 
 local justJoined = false 
+local stripes
 
 local function PaintFactionButton(self, w, h, v, glowa, neww, newcol, sU, sV, num, exp)
 	if v.id == LocalPlayer():Team() then 
@@ -72,9 +65,9 @@ local function PaintFactionButton(self, w, h, v, glowa, neww, newcol, sU, sV, nu
 		render.SetStencilFailOperation(STENCIL_REPLACE)
 		render.SetStencilZFailOperation(STENCIL_REPLACE)
 
-		surface.SetMaterial(stripes)
+		--surface.SetMaterial(stripes)
 
-		surface.SetDrawColor(255, 255, 255, 100)
+		
 		local membw = w/maxFac
 		local teamw = membw * num
 		local uvm = num
@@ -92,7 +85,8 @@ local function PaintFactionButton(self, w, h, v, glowa, neww, newcol, sU, sV, nu
 
 		uvs[3] = uvs[1] + 0.25*num
 
-		surface.DrawTexturedRectUV(0, -80, neww, 160, unpack(uvs))
+		surface.SetDrawColor(255, 255, 255, 100)
+		surface.DrawUVMaterial("https://i.imgur.com/PJqjQyC.png", "stripes.png", 0, -80, neww, 160, unpack(uvs)) --surface.DrawTexturedRectUV(0, -80, neww, 160, unpack(uvs))
 
 	render.SetStencilEnable(false)
 
@@ -415,6 +409,10 @@ local function CreateFactionButton(fs, v)
 	return b
 end
 function CreateBWFrame()
+	if not stripes then 
+		stripes = MoarPanelsMats["stripes"].mat 
+	end
+
 	local f = vgui.Create("TabbedFrame")
 	f:SetSize(700, 550)
 	f:SetPos(ScrW()/2 - 350, ScrH() - 1)
@@ -425,8 +423,6 @@ function CreateBWFrame()
 	f.Shadow = {}
 	f:PopIn()
 	f.Label = "BaseWars"
-
-	stripes = MoarPanelsMats["stripes"] --refresh
 
 	expanded = nil 
 
@@ -838,9 +834,7 @@ function CreateBWFrame()
 end
 hook.Add("Think", "BaseWars.Menu.Open", function()
 
-	me = LocalPlayer()
-
-    local wep = me:GetActiveWeapon()
+    local wep = LocalPlayer():GetActiveWeapon()
 	if wep ~= NULL and wep.CW20Weapon and wep.dt.State == (CW_CUSTOMIZE or 4) then return end
 
 	if input.IsKeyDown(KEY_F3) then
