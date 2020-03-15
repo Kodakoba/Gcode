@@ -28,24 +28,13 @@ chatbox.feed_font    = feed_font:GetString()
 
 
 function chatbox.WriteConfig()
-	if luadata then
-		local data = {
-			accent_color = chatbox.accent_color,
-			back_color = chatbox.back_color,
-			input_color = chatbox.input_color,
-			box_font = chatbox.box_font,
-			feed_font = chatbox.feed_font,
-		}
-
-		data = luadata.Encode(data)
-		file.Write(CONFIG_FILE, data)
-	end
 
 	local x, y, w, h = chatbox.frame:GetBounds()
 	chatbox.frame:SetCookie("x", x)
 	chatbox.frame:SetCookie("y", y)
 	chatbox.frame:SetCookie("w", w)
 	chatbox.frame:SetCookie("h", h)
+
 end
 
 function chatbox.IsOpen()
@@ -170,16 +159,6 @@ function chatbox.ParseInto(feed, ...)
 
 	feed:AppendText("\n")
 
-	--[[
-	local newpnl = vgui.Create("Panel", feed)
-	newpnl:Dock(TOP)
-	newpnl:SetWide(feed:GetWide())
-
-	for k,v in ipairs(tbl) do 
-
-	end
-	]]
-	--chathud:AddText(...)
 end
 
 function chatbox.OpenEmotesMenu(btn)
