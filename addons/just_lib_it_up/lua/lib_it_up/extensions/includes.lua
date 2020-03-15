@@ -5,19 +5,19 @@ local includes = {
 		if SERVER then 
 			AddCSLuaFile(name)
 		else
-			include(name)
+			return include(name)
 		end
 	end,
 
 	[_SH] = function(name)
 		AddCSLuaFile(name)
-		include(name)
+		return include(name)
 	end,
 
 
 	[_SV] = function(name)
 		if not SERVER then return end
-		include(name)
+		return include(name)
 	end,
 
 }
@@ -37,17 +37,16 @@ end
 
 FInc.IncludeRealms = includes 
 
-function FInc.Recursive(name, realm, nofold, searchpath)	--even though with "nofold" it's not really recursive
+local BlankFunc = function() end 
+
+function FInc.Recursive(name, realm, nofold, searchpath, callback)	--even though with "nofold" it's not really recursive
 	if not NeedToInclude(realm) then return end
+	callback = callback or BlankFunc 
 
 	local file, folder = file.Find( searchpath or name, "LUA" )
 
 	local path = name:match("(.+/).+$")
 	local wildcard = name:match(".+/(.+)$")
-
-	if #file < 1 then 
-		ErrorNoHalt("No files found in " .. searchpath or name .. "!\n")
-	end
 
 	for k,v in pairs(file) do
 		if not v:match(".+%.lua$") then continue end --if file doesn't end with .lua, ignore it
@@ -57,7 +56,7 @@ function FInc.Recursive(name, realm, nofold, searchpath)	--even though with "nof
 		local name = path .. v
 
 		if includes[realm] then 
-			includes[realm] (name)
+			callback (path, includes[realm] (name))
 		else
 			ErrorNoHalt("Could not include file " .. name .. "; fucked up realm?\n")
 			continue
@@ -71,7 +70,7 @@ function FInc.Recursive(name, realm, nofold, searchpath)	--even though with "nof
 
 			-- muhaddon/newfolder/*.lua
 
-			FInc.Recursive(path .. v .. "/" .. wildcard, realm)
+			FInc.Recursive(path .. v .. "/" .. wildcard, realm, nil, nil, callback)
 		end
 	end
 
