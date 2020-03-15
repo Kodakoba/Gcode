@@ -12,8 +12,12 @@ function file.Me(lv)
 	return source:match(".+/lua/.+/(.+%.lua)")
 end
 
-function file.ParsePath(path, level)
-	
+function file.GetFile(path)
+	return path:match(".+/(.+%.%w+)")
+end
+
+function file.GetPath(path)
+	return path:match("(.+/).+")
 end
 
 function file.ForEveryFile(path, where, func)
