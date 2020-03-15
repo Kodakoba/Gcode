@@ -8,6 +8,7 @@ local gd = Material("vgui/gradient-d")
 local gr = Material("vgui/gradient-r")
 local gl = Material("vgui/gradient-l")
 
+setfenv(0, _G)
 
 function LC(col, dest, vel)
     local v = vel or 10
@@ -712,6 +713,42 @@ function button:PaintOver(w, h)
 		draw.RoundedBox(self.RBRadius, 0, 0, w, h, DIM)
 	end
 
+end
+
+function button:AddCloud(name, text)
+	local cls = self.__Clouds or {}
+	self.__Clouds = cls 
+
+	if IsValid(cls[name]) then 
+		return cls[name]
+	else 
+		local cl = vgui.Create("Cloud", self)
+	
+		cls[name] = cl
+
+		cl:SetSize(self:GetSize())	--prevent cloud from disappearing when 0,0 of parent is not in view
+		if text then cl:SetText(text) end
+		cl.RemoveWhenDone = true
+		cl:Popup(true)
+
+		return cl 
+	end
+end
+
+function button:RemoveCloud(name)
+	local cls = self.__Clouds or {}
+	self.__Clouds = cls 
+
+	if IsValid(cls[name]) then 
+		cls[name]:Popup(false)
+	end
+end
+
+function button:GetCloud(name)
+	local cls = self.__Clouds or {}
+	self.__Clouds = cls 
+
+	return IsValid(cls[name]) and cls[name]
 end
 
 function button:Paint(w, h)
