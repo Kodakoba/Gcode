@@ -101,20 +101,6 @@ surface.CreateFont("FactionFont", {
 
 local padx, pady = dh.PaddingX, dh.PaddingY
 
-
-local green = Color(60, 235, 60)
-local red = Color(255, 70, 70)
-
-Colors = Colors or {}
-
-Colors.Green = green 
-Colors.Red = red 
-
-Colors.Gray = Color(50, 50, 50)
-Colors.DarkGray = Color(35, 35, 35)
-Colors.LightGray = Color(65, 65, 65)
-Colors.LighterGray = Color(75, 75, 75)
-
 function DarkHUD.Create()
 	if DarkHUD.Essentials then DarkHUD.Essentials:Remove() DarkHUD.Essentials = nil end
 	DarkHUD.Essentials = vgui.Create("FFrame")
