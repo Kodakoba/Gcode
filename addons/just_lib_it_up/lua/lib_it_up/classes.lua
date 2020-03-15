@@ -20,7 +20,7 @@ Class.Meta = {__index = Class}
 function Class:extend()
 	local new = {}
 
-	new.Meta = table.Copy(self.Meta)	-- copy the parent's meta...
+	new.Meta = {} --table.Copy(self.Meta)	-- copy the parent's meta...
 	new.Meta.__index = self 			-- ...but this time, __index points to the copied meta
 
 	setmetatable(new.Meta, new.Meta)
