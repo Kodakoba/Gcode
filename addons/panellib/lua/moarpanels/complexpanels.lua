@@ -899,8 +899,8 @@ function Cloud:Paint()
 
 	ch = self.HOverride or th
 	
-	local xoff = self.XShit or 4
-	local yoff = self.YShit or 0
+	local xoff = self.OffsetX or 4
+	local yoff = self.OffsetY or 0
 
 	local finX = 0
 	local finY = 0
@@ -1068,8 +1068,17 @@ end
 function Cloud:SetAbsPos(x, y)
 	local sx, sy = self:ScreenToLocal(x, y)--self:GetParent():ScreenToLocal(x,y)
 
-	self.XShit = sx
-	self.YShit = sy
+	self.OffsetX = sx
+	self.OffsetY = sy
+
+end
+
+function Cloud:SetRelPos(x, y)
+	local myx, myy = self:GetPos() 
+	local sx, sy = x - myx, y - myy
+
+	self.OffsetX = sx
+	self.OffsetY = sy
 
 end
 
