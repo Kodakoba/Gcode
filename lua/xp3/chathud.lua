@@ -621,15 +621,14 @@ surface.CreateFont("CH_NameShadow", {
     font = "Titillium Web SemiBold",
     size = 28,
     weight = 400,
-    blursize = 3
+    blursize = 2
 })
 
 surface.CreateFont("CH_TextShadow", {
-        font = "Roboto",
-        size = 22,
-        weight = 400,
-        blursize = 3,
-
+    font = "Roboto",
+    size = 22,
+    weight = 400,
+    blursize = 2,
 })
 
 local matrix = Matrix()
@@ -1343,7 +1342,7 @@ end
 hook.Add("HUDPaint", "ChatHUDEmotes", function() 
 	hook.Remove("HUDPaint", "ChatHUDEmotes")
 
-	timer.Simple(10, UpdateEmotes) 
+	timer.Simple(5, UpdateEmotes) 
 	chathud.CreateFFZShortcuts()
 end)
 
