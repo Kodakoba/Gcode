@@ -59,6 +59,7 @@ end
 
 local OverrideDashEnd 
 local OverrideDashFinalVel
+
 function SWEP:CheckMoves(owner, mv, dir)
 
 	local jumping = mv:KeyDown(IN_JUMP)
@@ -73,14 +74,18 @@ function SWEP:CheckMoves(owner, mv, dir)
 
 		if dt.jump or dt.down then return end 
 
+
 		local tr = util.TraceHull({
-			start = owner:GetPos(),
-			endpos = owner:GetPos() - Vector(0, 0, 4),
+			start = owner:GetPos() + Vector(0, 0, 8),
+			endpos = owner:GetPos() - Vector(0, 0, 16),
 			filter = owner,
-			mins = Vector( -16, -16, -16 ),
-			maxs = Vector( 16, 16, 16 ),
+			mins = Vector( -16, -16, -4 ),
+			maxs = Vector( 16, 16, 4 ),
 			mask = MASK_SOLID
 		})
+
+		local s = owner:GetPos()
+		local col = tr.Hit and Colors.Green or Colors.Red
 
 		if tr.Hit then
 			
