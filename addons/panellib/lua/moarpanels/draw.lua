@@ -522,19 +522,19 @@ local function GetOrDownload(url, name, flags, cb)	--callback: 1st arg is materi
 
 			end, function(err)
 
-				MoarPanelsMats[name].mat = Material("materials/icon16/cancel.png")
-				MoarPanelsMats[name].failed = url
-				MoarPanelsMats[name].downloading = false
+				MoarPanelsMats[key].mat = Material("materials/icon16/cancel.png")
+				MoarPanelsMats[key].failed = url
+				MoarPanelsMats[key].downloading = false
 				errorf("Failed to download! URL: %s\n Error: %s", url, err)
 			end)
 
 		end
 
-		mat = MoarPanelsMats[name]
+		mat = MoarPanelsMats[key]
 
 	else --mat was already preloaded
 
-		if cb then cb(MoarPanelsMats[name].mat, true) end 
+		if cb then cb(MoarPanelsMats[key].mat, true) end 
 	end
 
 	return mat
