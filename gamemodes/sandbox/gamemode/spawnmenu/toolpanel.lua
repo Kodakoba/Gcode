@@ -11,9 +11,10 @@ function PANEL:Init()
 	self.HorizontalDivider:Dock( FILL )
 	self.HorizontalDivider:SetLeftWidth( 130 )
 	self.HorizontalDivider:SetLeftMin( 130 )
-	self.HorizontalDivider:SetRightMin( 256 )
+	self.HorizontalDivider:SetRightMin( 200 )
+	if ( ScrW() >= 1024 ) then self.HorizontalDivider:SetRightMin( 256 ) end
 	self.HorizontalDivider:SetDividerWidth( 6 )
-	--self.HorizontalDivider:SetCookieName( "SpawnMenuToolMenuDiv" )
+	self.HorizontalDivider:SetCookieName( "SpawnMenuToolMenuDiv" )
 
 	local leftContainer = vgui.Create( "Panel", self.HorizontalDivider )
 
@@ -28,7 +29,7 @@ function PANEL:Init()
 			local count = 0
 			local category_matched = false
 
-			if ( string.find( category.Header:GetText():lower(), text:lower() ) ) then
+			if ( string.find( category.Header:GetText():lower(), text:lower(), nil, true ) ) then
 				category_matched = true
 			end
 
@@ -39,7 +40,7 @@ function PANEL:Init()
 				if ( str:StartWith( "#" ) ) then str = str:sub( 2 ) end
 				str = language.GetPhrase( str )
 
-				if ( !category_matched && !string.find( str:lower(), text:lower() ) ) then
+				if ( !category_matched && !string.find( str:lower(), text:lower(), nil, true ) ) then
 					item:SetVisible( false )
 				else
 					item:SetVisible( true )
@@ -101,8 +102,6 @@ function PANEL:AddCategory( name, lbl, tItems )
 
 	Category:SetCookieName( "ToolMenu." .. tostring( self:GetTabID() ) .. "." .. tostring( name ) )
 
-	local bAlt = true
-
 	local tools = {}
 	for k, v in pairs( tItems ) do
 		local str = v.Text
@@ -110,6 +109,7 @@ function PANEL:AddCategory( name, lbl, tItems )
 		tools[ language.GetPhrase( str ) ] = v
 	end
 
+	local currentMode = GetConVarString( "gmod_toolmode" )
 	for k, v in SortedPairs( tools ) do
 
 		local item = Category:Add( v.Text )
@@ -125,6 +125,13 @@ function PANEL:AddCategory( name, lbl, tItems )
 		item.Name						= v.ItemName
 		item.Controls					= v.Controls
 		item.Text						= v.Text
+
+		-- Mark this button as the one to select on first spawnmenu open
+		if ( currentMode == v.ItemName ) then
+			timer.Simple( 0, function() -- Have to wait a frame to get the g_SpawnMenu global, ew
+				g_SpawnMenu.StartupTool = item
+			end )
+		end
 
 	end
 
