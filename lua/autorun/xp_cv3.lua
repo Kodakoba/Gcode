@@ -102,11 +102,15 @@ local function do_hook()
 	if not gm then return end
 
 	chatexp._oldGamemodeHook = chatexp._oldGamemodeHook or gm.OnPlayerChat
-	function gm:OnPlayerChat(ply, msg, mode, dead, mode_data)
+	function gm:OnPlayerChat(ply, msg, mode, dead, special)
 		chatexp.LastPlayer = ply
 
 		if hook.Run("ChatShouldHandle", "chatexp", msg, mode) == false then
 			return chatexp._oldGamemodeHook(self, ply, msg, mode, dead)
+		end
+
+		if hook.Run("CheckChatCooldown", ply) == false then 
+			return false
 		end
 
 		if mode == true  then mode = CHATMODE_TEAM end
@@ -120,7 +124,7 @@ local function do_hook()
 		end
 
 		local ret
-		if msgmode.Handle then
+		if msgmode and msgmode.Handle then
 			ret = msgmode.Handle(tbl, ply, msg, dead, mode_data)
 		else -- Some modes may just be a filter
 			ret = chatexp.Modes[CHATMODE_DEFAULT].Handle(tbl, ply, msg, dead, mode_data)
@@ -187,15 +191,21 @@ do -- chathud
 		if ew[ch] then return false end
 	end)
 	
+	local panics = {
+		["sh"] = true, 
+		["stop"] = true, 
+		["shut"] = true
+	}
+
 	hook.Add("OnPlayerChat", "chathud.tagpanic", function(_,txt)
-		if txt:lower():Trim() == "shut" then chathud:TagPanic() end
+		if panics[txt:lower():Trim()] then chathud:TagPanic() end
 	end)
 end
 
 do -- chatbox
 	hook.Add("PreRender", "chatbox.close", function()
-		if (gui.IsGameUIVisible() or input.IsKeyDown(KEY_ESCAPE)) and chatbox.IsOpen() then
-			gui.HideGameUI()
+		if gui.IsGameUIVisible() and chatbox.IsOpen() then
+			if input.IsKeyDown(KEY_ESCAPE) then gui.HideGameUI() end
 			chatbox.Close()
 		end
 	end)
@@ -226,11 +236,16 @@ do -- chatbox
 		local team_chat = false
 
 		if bind == "messagemode2" then
-			team_chat = true
-		elseif bind ~= "messagemode" then return end
+			chatbox.Open(true)
+			return true
+		elseif bind == "messagemode" then 
+			chatbox.Open(false)
+			return true
+		elseif bind == "cancelselect" and chatbox.IsOpen() then 
+			chatbox.Close()
+			return true
+		end
 
-		chatbox.Open(team_chat)
-		return true
 	end)
 end
 

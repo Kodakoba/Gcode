@@ -496,6 +496,14 @@ function chatbox.BuildTabChat(self, a)
 			
 			self.chat.text_feed.PerformLayout = feed_layout
 
+			function self.chat.text_feed:ActionSignal(name, val)
+				if name == "TextClicked" then 
+					if val:match("https://(.+)") then 
+						gui.OpenURL(val)
+					end
+				end
+				print("signal", name, val)
+			end
 		self.chat.input_base = vgui.Create("DPanel", self.chat)
 		self.chat.input_base:Dock(BOTTOM)
 

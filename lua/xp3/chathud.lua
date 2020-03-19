@@ -38,10 +38,13 @@ chathud.Items = chathud.Items or {}
 
 chathud.x = 0.84 * 64
 
+
+
 local ChatHUDYPos = ScrH() - (0.84 * 200) - (0.84 * 140)
 chathud.y = ChatHUDYPos
 
-chathud.W = 500
+chathud.W = 600
+chathud.NameLeeway = chathud.W * 0.2
 
 local blacklist = {
 	["0"] = true,
@@ -94,6 +97,7 @@ function chathud.CreateFFZShortcuts(update)
 
 				end
 			end
+			hook.Run("ChatHUDFFZUpdated", Emotes.Collections.FFZ)
 		end
 	end
 
@@ -139,8 +143,8 @@ function chathud.CreateFFZShortcuts(update)
 					file.Append(filename, b .. " " )
 				end
 
-			end, 
-
+				hook.Run("ChatHUDFFZUpdated", Emotes.Collections.FFZ)
+			end,
 		function() 
 			print("send help") 
 		end)
@@ -169,9 +173,9 @@ end
 	"This api version is gone."
 ]]
 
-local function env(msg)
+local function env(msg, spec)
 	local tick = 0
-	return {
+	local env = {
 		sin = math.sin,
 		cos = math.cos,
 		tan = math.tan,
@@ -182,6 +186,10 @@ local function env(msg)
 		pi = math.pi,
 		log = math.log,
 		log10 = math.log10,
+
+		lt = function(a,b) return a < b end, 	--because string parsing
+		mt = function(a,b) return a > b end,
+
 		time = CurTime,
 		t = CurTime,
 		realtime = RealTime,
@@ -193,6 +201,14 @@ local function env(msg)
 		end,
 		st = msg.SendTime,
 	}
+
+	if spec then 
+		env.__index = _G 
+		env.env = env
+		setmetatable(env, env)
+	end
+
+	return env
 end
 
 local badlua = {
@@ -206,22 +222,26 @@ local badlua = {
 	["until"] = true
 }
 
-local function CompileExpression(str, msg)
-	local env = env(msg)
+local function CompileExpression(str, msg, special, preenv)
+	print("compiling expression within existing env?", preenv, str)
+	local env = preenv or env(msg, special)
 
-	local ch = str:match("[^=1234567890%-%+%*/%%%^%(%)%.A-z%s]")
+	if not special then --special messages don't get all the checks and can run unrestricted codez
+
+		local ch = str:match("[^=1234567890%-%+%*/%%%^%(%)%.A-z%s]")
 	
-	if ch then 	--disallow strings and string methods ( e.g. ("Stinky poopy"):rep(999) )
-				--fun fact; the string library may not be in the envinroment but string methods will still work!
-		return "expression: invalid character " .. ch
-	end
+		if ch then 	--disallow strings and string methods ( e.g. ("Stinky poopy"):rep(999) )
+					--fun fact; the string library may not be in the envinroment but string methods will still work!
+			return "expression: invalid character " .. ch
+		end
 
-	for word in str:gmatch("(.-)[%p%s]") do 
-		if badlua[word] then return "simple expressions please" end
-	end
+		for word in str:gmatch("(.-)[%p%s]") do 
+			if badlua[word] then return "simple expressions please" end
+		end
 
-	for word in str:gmatch("[%p%s](.-)") do 
-		if badlua[word] then return "simple expressions please" end
+		for word in str:gmatch("[%p%s](.-)") do 
+			if badlua[word] then return "simple expressions please" end
+		end
 	end
 
 	local compiled = CompileString("return (" .. str .. ")", "expression", false)
@@ -239,7 +259,7 @@ local function CompileExpression(str, msg)
 	end
 	setfenv(compiled, env)
 
-	return compiled
+	return compiled, env
 end
 
 
@@ -251,20 +271,23 @@ end
 
 ]]
 
-local tagptrn = "(.-)=(.+)"
+local tagptrn = "<(%w+)=?([^>]*)>"
 local tagendptrn = "/(.+)"
-local spacearg = "[%s]*(.-)[%s]*,"	--match arg from a tag and sanitize spaces and potential commas
-local lastarg = "[%s]*(.+)[%s]*,*"	--match last arg in a tag
+local expptrn = "(%b[]),?" 		--pattern that captures shit in []s and defines whether the arg is an expression
+local valptrn = "%s*(.-)%s*,"	--match arg from a tag without spaces and commas
+local lastarg = "([^,%s?]+)$"	--match last arg in a tag
+
 
 --[[
 	Returns a string without tags + draw queue for the tags (tag -> text -> tag -> text ...)
 ]]
 
-function ParseTags(str)
+function ParseTags(str, special)
 
-	local tags = {}
+	local tags = {} --this contains strings (regular text) and tables (tags)
 	
 	local prevtagwhere
+	local env 		--envinroment for expressions, it's shared for one message
 
 	for s1 in string.gmatch(str, ":(.-):") do --shortcuts, then tags 
 
@@ -274,22 +297,30 @@ function ParseTags(str)
 		
 	end
 
-	for s1 in string.gmatch( str, "%b<>" ) do
-		local tagcont = s1:GetBetween("<>")
-
-		if not tagcont then print("no continuation?") continue end
-
-		local starts = str:find(s1, 1, true)
-
-		
-
-		local tag, argsstr = tagcont:match(tagptrn)
+	for tag, argsstr in string.gmatch( str, tagptrn ) do
+		local OGargsstr = argsstr --argsstr will be changed
 
 		local chTag = chathud.TagTable[tag]
+		if chTag and chTag.NoRegularUse and not special then continue end 
 
-		if not chTag then 
-			local isend = tagcont:match(tagendptrn)
-			if not isend or not chathud.TagTable[isend] then print("no such tag:", tag, isend) continue end
+
+		local starts = str:find(tag, prevtagwhere or 1, true)
+		if starts then starts = starts - 1 end --add the "<" which doesn't get matched 
+
+		local ends = starts
+
+		if argsstr then --V for "="		 v for ">"
+			ends = starts + #tag + 1 + #argsstr + 1
+		else 		
+			ends = starts + #tag + 1 --1 for ">"
+		end
+
+		--local tag, argsstr = tagcont:match(tagptrn)
+
+		if not chTag then
+
+			local isend = tag:match(tagendptrn)
+			if not isend or not chathud.TagTable[isend] then print("no such tag to end:", tag, isend) continue end
 
 			for k,v in ipairs(table.Reverse(tags)) do
 				if not istable(v) then continue end  
@@ -312,11 +343,12 @@ function ParseTags(str)
 						realkey = key
 					}
 					
-					prevtagwhere = starts--+1
+					prevtagwhere = ends
 
 					break
 				end 
 			end
+
 			continue
 		end
 
@@ -325,21 +357,33 @@ function ParseTags(str)
 		}
 
 		if not prevtagwhere then 
-			tags[#tags + 1] = str:sub(1, starts-utflen(str))
+			tags[#tags + 1] = str:sub(1, starts - utflen(str)) --utflen decides whether or not sub 2 chars
 		end
 
 		local args = {}
+		
 
-		for argtmp in string.gmatch(argsstr, ".-,") do 
-			local arg = argtmp:match(spacearg)
+		if argsstr then
+			local lastargpos = 0
+			
+			for arg in argsstr:gmatch(expptrn) do 	--First parse all the expression args
 
-			argsstr = argsstr:gsub(argtmp:PatternSafe(), "", 1)
+		        local starts, ends = argsstr:find(arg, lastargpos, true)
+		        lastargpos = starts + 1
 
-			local exp = arg:match("%[(.+)%]") 
+		        local sepnum = 0
+		        local lastsep = 0
 
-			if exp then 
+		        local num = #args + 1
+				if not chTag.args[num] then break end --more args than the tag takes: ignore eet
 
-				local func = CompileExpression(exp, info)
+		      --  argst[#argst + 1] = arg
+
+		        argsstr = argsstr:sub(0, starts-1) .. "-" .. argsstr:sub(ends+1) --"-" allows you to ignore a var and let it be set to a default value; unless it already has a value...
+		        arg = arg:sub(2, -2) --get rid of []
+
+		        local func, newenv = CompileExpression(arg, info, special, env)				-- like this handy expression we just compiled!
+		        env = env or newenv
 
 				if isstring(func) then 
 					print("Expression error: " .. func)
@@ -347,56 +391,44 @@ function ParseTags(str)
 				end 
 
 				args[#args + 1] = func 
-				continue
+		    end
+
+		    local offset = 0
+		    local i = 0
+
+		    for arg in argsstr:gmatch(valptrn) do
+		        i = i + 1
+		        if arg == "-" then continue end --this also increments i, basically offsetting arg by +1
+		        if not chTag.args[i] then break end 
+
+		        local typ = chTag.args[i].type
+				if not chathud.TagTypes[typ] then print("Unknown argument type! ", typ) break end 
+
+				local ret = chathud.TagTypes[typ](arg)	
+
+				if ret then table.insert(args, i, ret) end --if conversion to type succeeded
+		        
+		    end
+
+		    
+
+			local lastargstr = argsstr:match(lastarg)
+
+			if lastargstr and lastargstr ~= "-" then  
+				args[i+1] = lastargstr 
 			end
 
-			local num = #args + 1
-
-			if not chTag.args[num] then break end 
-
-			local typ = chTag.args[num].type
-			if not chathud.TagTypes[typ] then print("Unknown argument type! ", typ) break end 
-
-			local ret = chathud.TagTypes[typ](arg)	
-
-			if ret then args[#args + 1] = ret end --if conversion to type succeeded
-		end 
-
+		end
+		
 		local key = #tags + 1
 
-		local lastarg = argsstr:match(lastarg)
-
-		if lastarg then  
-
-			local exp = lastarg:match("%[(.+)%]") 
-
-			if exp then 
-
-				local func = CompileExpression(exp, info)
-
-				if isstring(func) then 
-					print("Expression error: " .. func)
-				end 
-
-				args[#args + 1] = func 
-				
-			else
-				args[#args + 1] = lastarg 
-			end
-
-		end
-
-		str = str:gsub(s1:PatternSafe(), "", 1)
-
 		if prevtagwhere then 
-
-			tags[key] = str:sub(prevtagwhere+utflen(str)-1, starts-1)
+			tags[key] = str:sub(prevtagwhere + utflen(str) - 1, starts-1)
 			key = key + 1
-
 		end
 
 
-		for k,v in pairs(chTag.args) do 
+		for k,v in ipairs(chTag.args) do --clamp values to mins/maxs
 			if isnumber(args[k]) then
 				if v.min then 
 					args[k] = math.max(args[k], v.min)
@@ -406,7 +438,8 @@ function ParseTags(str)
 				end
 			end
 
-			if not args[k] then 
+			if not args[k] then 		--if that arg didnt exist set it to default
+				print("bruh")
 				args[k] = v.default 
 			end 
 
@@ -420,11 +453,14 @@ function ParseTags(str)
 		}
 
 		prevtagwhere = starts
+
+		local tosub = "<" .. tag .. ((OGargsstr and "=" .. OGargsstr) or "") .. ">"
+		tosub = tosub:PatternSafe()
+		str = str:gsub(tosub, "", 1) --remove the tag we just parsed
 	end
 
-	tags[#tags + 1] = string.sub(str, (prevtagwhere and prevtagwhere+utflen(str)-1) or 1, #str)
-
-
+	tags[#tags + 1] = string.sub(str, (prevtagwhere and prevtagwhere + utflen(str) - 2) or 1, #str)
+	PrintTable(tags)
 	return str, tags
 end
 
@@ -445,6 +481,12 @@ local names = {}
 function chathud:AddText(...)
 
 	local cont = {...}
+	local special = false 
+
+	if cont[1] == true then 
+		table.remove(cont, 1)
+		special = true 
+	end
 
 	local time = CurTime()
 	local nw = 0
@@ -488,6 +530,8 @@ function chathud:AddText(...)
 
 	local merged = {} --final table, containing everything 
 
+	local namewid = 0
+
 	for k,v in ipairs(cont) do 
 
 		--[[ 
@@ -513,6 +557,8 @@ function chathud:AddText(...)
 
 			name = name .. names[v]
 			entparsed = true 
+			surface.SetFont("CH_Text")
+			namewid = math.min(chathud.NameLeeway, (surface.GetTextSize(name)))
 
 			continue
 		end
@@ -536,7 +582,7 @@ function chathud:AddText(...)
 
 			curtext = curtext .. v
 
-			local untagged, tags = ParseTags(v)
+			local untagged, tags = ParseTags(v, special)
 
 			surface.SetFont("CH_Text")
 			
@@ -545,10 +591,16 @@ function chathud:AddText(...)
 
 				if isstring(tg) then
 					local tw, th = surface.GetTextSize(tg)
-	
-					local str, newwid = string.WordWrap2(tg, {chathud.W - curwidth, chathud.W})
 
-					curwidth = curwidth + (newwid or tw)
+					local str, newwid, wrapped = string.WordWrap2(tg, {chathud.W - curwidth, chathud.W - (namewid * chathud.WrapStyle)})
+
+					if wrapped then 
+						curwidth = (newwid or tw)
+					else
+						curwidth = curwidth + (newwid or tw)
+					end
+
+					print("current width is now", curwidth)
 
 					wrappedtxt = wrappedtxt .. str
 					merged[#merged + 1] = str
@@ -572,8 +624,8 @@ function chathud:AddText(...)
 
 	contents = untagged
 
-	surface.SetFont("CH_Text")
-	local tw, th = surface.GetTextSize(name .. ": ")
+	--surface.SetFont("CH_Text")
+	--local tw, th = surface.GetTextSize(name .. ": ")
 
 	local key = #self.History + 1
 	self.History[key] = {
@@ -582,7 +634,7 @@ function chathud:AddText(...)
 		c = merged,	--contents(text+colors+tags to show)
 
 		name = name,	--sender name
-		namewid = tw,
+		namewid = math.min(namewid, chathud.NameLeeway),
 
 		fulltxt = fulltxt,	--just the text
 		wrappedtxt = wrappedtxt,
@@ -591,6 +643,7 @@ function chathud:AddText(...)
 		buffer = buffer,	--buffer to use
 		realkey = key,
 
+		color = color_white:Copy(),
 		heights = {}
 	}
 
@@ -639,8 +692,10 @@ chathud.WrapStyle = 1  --1 = consider nickname, 0 = ignore nickname start from 0
 local shadowfont = "CH_TextShadow"
 
 local function DrawText(txt, buffer, a)
+	if not txt then return false end 
 
 	local font = buffer.font or "CH_Text"
+	a = a or buffer.a
 
 	local col = buffer.fgColor or Color(255, 255, 255)
 
@@ -685,7 +740,7 @@ local function DrawText(txt, buffer, a)
 		if shouldpaint then 
 
 			surface.SetFont(shadowfont)
-			surface.SetTextColor( ColorAlpha(Color(0,0,0), a) )
+			surface.SetTextColor( ColorAlpha(Color(0, 0, 0), a) )
 
 			for i=1, 2 do
 				surface.SetTextPos(tx + i, ty + i )
@@ -758,13 +813,19 @@ local function DrawText(txt, buffer, a)
 
 	return h
 end
-
+chathud.DrawText = DrawText
 
 local frstY = 0
 local frstnum = 0
 
 chathud.Filter = true 
 chathud.FadeTime = 5
+
+function chathud:TagPanic()
+	for k,v in pairs(self.History) do 
+		v.TagPanic = true 
+	end
+end
 
 function chathud:Draw()
 
@@ -926,9 +987,9 @@ function chathud:Draw()
 
 										if not ret then 
 
-											if not v.ComplainedAboutReturning then
-												print("Tag function must return a value! Defaulting to", val)
-												v.ComplainedAboutReturning = true
+											if not v.ComplainedAboutReturning and not arg.default then
+												--print("Tag function must return a value! Defaulting to", val)
+												--v.ComplainedAboutReturning = true
 											end
 
 											args[key] = default
@@ -1043,6 +1104,7 @@ function chathud:Draw()
 			buffer.hist = dat
 			buffer.drawq = drawq --if we need to access draw queue from buffer
 			buffer.curline = 1
+			buffer.fgColor = dat.color
 
 			if not dat.Evaluated then 	
 				buffer.EvaluationPaint = true 
@@ -1051,6 +1113,7 @@ function chathud:Draw()
 				a = 0
 			end
 
+			buffer.a = a
 			local buf = buffer
 
 
@@ -1068,7 +1131,7 @@ function chathud:Draw()
 					continue
 				end
 
-				if v.func then
+				if v.func and not dat.TagPanic then
 					buffer.fgColor = ColorAlpha(buffer.fgColor, a) 		--apply fade-out alpha to fgColor if they're drawing
 					local x_before = buffer.x --if x changes due to tag drawing, we'll need to re-wrap text
 					v.func(buffer, v.tagbuf)
@@ -1094,7 +1157,7 @@ function chathud:Draw()
 
 				-- not an ender, doesn't end later, has a run-func and end-func
 
-				if not v.ender and not v.ends and v.func and v.TagEnd then 
+				if not v.ender and not v.ends and v.func and v.TagEnd and not dat.TagPanic then 
 					v.TagEnd(v.tagbuf, v.tagbuf, buffer, v.getargs and v.getargs())
 				end
 			end
@@ -1116,9 +1179,8 @@ function chathud:Draw()
 	end
 
 	if not ok then 
-		errorf("[ChatHUD] Error during rendering! %s", err)
+		ErrorNoHalt(("[ChatHUD] Error during rendering! %s\n"):format(err))
 	end
-
 
 end
 
@@ -1239,7 +1301,14 @@ local function ParseEmotes(js)
 	--[[
 	collections:
 		{	
-			collection = "collection name",
+			collection = "collection_name",
+			collectionname = "Nice Collection Name",
+			collectiondescription = "description" OR: {
+				txt = "text" 	--mandatory
+				col = {r, g, b}	--optional, can use gray by default
+				font = "muhfont" --optional, can use OS18 by default
+			}
+
 			emote_data = {
 				1. names of animated emotes
 				2. names of static emotes
@@ -1284,6 +1353,8 @@ local function ParseEmotes(js)
 
 	end
 
+	
+
 	if forced then
 		for k,v in pairs(chathud.Emotes) do 
 			MoarPanelsMats[v:GetHDLPath()] = nil 
@@ -1295,8 +1366,8 @@ local function ParseEmotes(js)
 		MsgC(Color(100, 220, 100), "[ChatHUD] Loaded emote data successfully!\n")
 	end
 
-	
-	
+	hook.Run("ChatHUDEmotesUpdated", Emotes.Collections)
+
 	return emote_data
 end
 
