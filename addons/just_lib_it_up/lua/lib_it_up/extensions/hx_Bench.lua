@@ -49,6 +49,7 @@ end
 function benchmark:Open()
 	if self._Start != 0 then Error("This bench is already started, Close it first!") end
 	self._Start = SysTime()
+	return self
 end
 
 function benchmark:DoFunc(func)
@@ -66,11 +67,13 @@ function benchmark:Close()
 	if self._Start == 0 then Error("Can't close what you didn't open!") end
 	if self._Finish != 0 then Error("Can't close the same benchmark twice!") end
 	self._Finish = SysTime()
+	return self
 end
 
 function benchmark:Reset()
 	self._Start		= 0
 	self._Finish	= 0
+	return self
 end
 
 
@@ -99,6 +102,7 @@ end
 function benchmark:print()
 	print(self:__tostring())
 end
+
 benchmark.p = benchmark.print 
 
 function benchmark:__concat(Bench)	return self:__tostring()..Bench:__tostring()						end
