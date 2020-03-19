@@ -371,12 +371,12 @@ local Models = SpawnList.Models
 
 local tohide = {}
 
-hook.Add("SpawnMenuPreClose", "RemoveClouds", function()	--grrrrrrrrrr
+hook.Add("OnSpawnMenuClose", "RemoveClouds", function()	--grrrrrrrrrr
 
 	for k,v in pairs(tohide) do
 		if not IsValid(v) then tohide[k] = nil continue end 
 
-		v:SetAlpha(0)
+		v:Remove()
 	end
 
 end)
@@ -452,15 +452,7 @@ local function MakeTab(type)
 			fr:SetDoubleClickingEnabled(false)
 			local fw, fh = 80, 80
 
-			local p = vgui.Create("Cloud", fr)
-			p.MaxW = 256
-
-			p:SetLabel(name)
-			p:SetPos(40, 1)
-
 			tohide[#tohide+1] = p
-			p:SetAbsPos(0, -16)
-			p.key = #tohide
 
 			local mcol = (LocalPlayer():GetMoney() >= money and Color(100, 220, 100)) or Color(240, 70, 70)
 			local lvcol = (LocalPlayer():GetLevel() >= level and Color(100, 130, 250)) or Color(240, 70, 70)
@@ -469,21 +461,27 @@ local function MakeTab(type)
 
 			local mstr = Language.Currency .. BaseWars.NumberFormat(money)
 
-			local _, mon = p:AddFormattedText(mstr, mcol, "OS24", 20, 1)
-			local _, lv = p:AddFormattedText("LV" .. tostring(level), lvcol, "OS24", 20, 2)
+			
 
 			function fr:OnHover()
+				local cl = self:GetCloud("price")
 
-				if IsValid(p) then 
-					p:Popup(true)
+				if not cl then
+					cl = self:AddCloud("price", name)
+					cl.MaxW = 256
+					cl:SetRelPos(40, 0)
+					cl:AddFormattedText(mstr, mcol, "OS24", 20, 1)
+					cl:AddFormattedText("LV" .. tostring(level), lvcol, "OS24", 20, 2)
+					cl.RemoveWhenDone = true
+
+					tohide[#tohide + 1] = cl
 				end
 
+				cl:Popup(true)
 			end
 
 			function fr:OnUnhover()
-				if not IsValid(p) then return end 
-
-				p:Popup(false)
+				self:RemoveCloud("price")
 			end
 
 			-- https://i.imgur.com/CNRTtIj.png
@@ -508,11 +506,16 @@ local function MakeTab(type)
 
 				self:SetColor(frcol.r, frcol.g, frcol.b, frcol.a)
 
-				local mcol = (LocalPlayer():GetMoney() >= money and Color(100, 220, 100)) or Color(240, 70, 70)
-				local lvcol = (LocalPlayer():GetLevel() >= level and Color(100, 130, 250)) or Color(240, 70, 70)
+				local mcol = (LocalPlayer():GetMoney() >= money and Colors.Money) or Colors.Red
+				local lvcol = (LocalPlayer():GetLevel() >= level and Colors.Sky) or Colors.Red
 
-				p.DoneText[1].Color = LC(p.DoneText[1].Color, mcol, 15) 
-				p.DoneText[2].Color = LC(p.DoneText[2].Color, lvcol, 15) 
+				local cl = self:GetCloud("price")
+
+				if cl then
+					cl.DoneText[1].Color = LC(cl.DoneText[1].Color, mcol, 15) 
+					cl.DoneText[2].Color = LC(cl.DoneText[2].Color, lvcol, 15) 
+				end
+
 				LC(fr.borderColor, Colors.LighterGray, 5)
 			end
 
