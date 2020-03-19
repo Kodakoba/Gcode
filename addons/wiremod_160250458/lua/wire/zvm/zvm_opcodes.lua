@@ -924,7 +924,8 @@ ZVM.OpcodeTable[121] = function(self)  --CPUSET
   self:Dyn_Emit("$L REG = $1")
   self:Dyn_Emit("if VM.InternalRegister[REG] and (not VM.ReadOnlyRegister[REG]) then")
     self:Dyn_Emit("$L OP = $2")
-    self:Dyn_Emit("VM[VM.InternalRegister[REG]] = OP")
+    self:Dyn_Emit("$L limit = VM.InternalLimits[REG]")
+    self:Dyn_Emit("VM[VM.InternalRegister[REG]] = limit and math.Clamp(OP, limit[1], limit[2]) or OP")
     self:Dyn_Emit("if (REG == 0) or (REG == 16) then")
       self:Dyn_Emit("VM:Jump("..self.PrecompileIP..",VM.CS)")
       self:Dyn_EmitState()
@@ -1630,35 +1631,27 @@ ZVM.OpcodeTable[295] = function(self)  --VDIV
   self:Dyn_Emit("end")
 end
 ZVM.OpcodeTable[296] = function(self)  --VTRANSFORM
---[[  if (self.VMODE == 2) then
-    local vec = self:Read2f(Param1 + self[self.PrecompileData[self.XEIP].Segment1])
-    local mx = self:ReadMatrix(Param2 + self[self.PrecompileData[self.XEIP].Segment2])
-
-    local tmp = {}
-    for i=0,3 do
-      tmp[i] = mx[i*4+0] * vec.x +
-         mx[i*4+1] * vec.y +
-         mx[i*4+2] * 0 +
-         mx[i*4+3] * 1
+  self:Dyn_Emit("local address_1 = $1 + VM."..(self.EmitOperandSegment[1] or "DS"))
+  self:Dyn_Emit("local address_2 = $2 + VM."..(self.EmitOperandSegment[2] or "DS"))
+  self:Dyn_Emit [[
+    local V = {0, 0, 0, 1}
+    if address_1~=0 then
+      for i = 1, VM.VMODE do
+        V[i] = VM:ReadCell(address_1 + i - 1) or 0
+      end
     end
-
-
-    self:Write2f(Param1 + self[self.PrecompileData[self.XEIP].Segment1],
-      {x = tmp[0], y = tmp[1], z = 0})
-  else
-    local vec = self:Read3f(Param1 + self[self.PrecompileData[self.XEIP].Segment1])
-    local mx = self:ReadMatrix(Param2 + self[self.PrecompileData[self.XEIP].Segment2])
-
-    local tmp = {}
-    for i=0,3 do
-      tmp[i] = mx[i*4+0] * vec.x +
-         mx[i*4+1] * vec.y +
-         mx[i*4+2] * vec.z +
-         mx[i*4+3] * 1
+  ]]
+  self:Dyn_EmitInterruptCheck()
+  self:Dyn_Emit [[local M = VM:ReadMatrix(address_2)]]
+  self:Dyn_EmitInterruptCheck()
+  self:Dyn_Emit [[
+    for i = 0, VM.VMODE-1 do
+      local result = M[i*4 + 0] * V[1] +
+                     M[i*4 + 1] * V[2] +
+                     M[i*4 + 2] * V[3] +
+                     M[i*4 + 3] * V[4]
+      VM:WriteCell(address_1 + i, result)
     end
-
-
-    self:Write3f(Param1 + self[self.PrecompileData[self.XEIP].Segment1],
-      {x = tmp[0], y = tmp[1], z = tmp[2]})
-  end ]]--
+  ]]
+  self:Dyn_EmitInterruptCheck()
 end

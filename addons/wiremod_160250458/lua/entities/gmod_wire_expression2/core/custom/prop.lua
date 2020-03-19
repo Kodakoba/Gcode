@@ -30,7 +30,7 @@ function PropCore.ValidSpawn(ply, model, isVehicle)
 	local ret -- DO NOT RETURN MID-FUNCTION OR 'LimitHit' WILL BREAK
 	local limithit = playerMeta.LimitHit
 	playerMeta.LimitHit = function() end
-	
+
 	if not PropCore.WithinPropcoreLimits() then
 		ret = false
 	elseif not (util.IsValidProp( model ) and WireLib.CanModel(ply, model)) then
@@ -40,7 +40,7 @@ function PropCore.ValidSpawn(ply, model, isVehicle)
 	else
 		ret = gamemode.Call( "PlayerSpawnProp", ply, model ) ~= false
 	end
-	
+
 	playerMeta.LimitHit = limithit
 	return ret
 end
@@ -149,10 +149,6 @@ function PropCore.PhysManipulate(this, pos, rot, freeze, gravity, notsolid)
 		if gravity ~= nil then phys:EnableGravity( gravity ~= 0 ) end
 		if notsolid ~= nil then this:SetSolid( notsolid ~= 0 and SOLID_NONE or SOLID_VPHYSICS ) end
 		phys:Wake()
-		if !phys:IsMoveable() then
-			phys:EnableMotion( true )
-			phys:EnableMotion( false )
-		end
 	end
 end
 

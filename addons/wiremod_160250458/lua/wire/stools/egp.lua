@@ -8,6 +8,8 @@ TOOL.ClientConVar["createflat"] = 1
 TOOL.ClientConVar["weld"] = 0
 TOOL.ClientConVar["weldworld"] = 0
 TOOL.ClientConVar["freeze"] = 1
+TOOL.ClientConVar["emitter_usert"] = 1
+TOOL.ClientConVar["translucent"] = 0
 
 cleanup.Register( "wire_egps" )
 
@@ -15,7 +17,7 @@ if (SERVER) then
 	CreateConVar('sbox_maxwire_egps', 5)
 
 	local function SpawnEnt( ply, Pos, Ang, model, class)
-		if IsValid(ply) and (!ply:CheckLimit("wire_egps")) then return false end
+		if IsValid(ply) and (not ply:CheckLimit("wire_egps")) then return false end
 		if not ply then ply = game.GetWorld() end -- For Garry's Map Saver
 		if model and not WireLib.CanModel(ply, model) then return false end
 		local ent = ents.Create(class)
@@ -75,27 +77,42 @@ if (SERVER) then
 
 	function TOOL:LeftClick( trace )
 		if not util.IsValidPhysicsObject( trace.Entity, trace.PhysicsBone ) then return false end
+
+		-- check if the player clicked an emitter
+		if IsValid(trace.Entity) and trace.Entity:GetClass() == "gmod_wire_egp_emitter" then
+			trace.Entity:SetUseRT(self:GetClientNumber("emitter_usert")~=0)
+			return true
+		end
+
+		-- check if the player clicked a screen
+		if IsValid(trace.Entity) and trace.Entity:GetClass() == "gmod_wire_egp" then
+			trace.Entity:SetTranslucent(self:GetClientNumber("translucent")~=0)
+			return true
+		end
+
 		local ply = self:GetOwner()
-		if (!ply:CheckLimit( "wire_egps" )) then return false end
+		if (not ply:CheckLimit( "wire_egps" )) then return false end
 
 		local ent
 		local Type = self:GetClientNumber("type")
 		if (Type == 1) then -- Screen
 			local model = self:GetClientInfo("model")
-			if (!util.IsValidModel( model )) then return false end
+			if (not util.IsValidModel( model )) then return false end
 
 			ent = SpawnEGP( ply, trace.HitPos, self:GetAngle(trace), model )
 			if not IsValid(ent) then return end
 
 			self:SetPos(ent, trace) -- Use WireToolObj's pos code
+			ent:SetTranslucent(self:GetClientNumber("translucent")~=0)
 		elseif (Type == 2) then -- HUD
 			ent = SpawnHUD( ply, trace.HitPos + trace.HitNormal * 0.25, trace.HitNormal:Angle() + Angle(90,0,0) )
 		elseif (Type == 3) then -- Emitter
 			ent = SpawnEmitter( ply, trace.HitPos + trace.HitNormal * 0.25, trace.HitNormal:Angle() + Angle(90,0,0) )
+			ent:SetUseRT(self:GetClientNumber("emitter_usert")~=0)
 		end
 
-		local weld = self:GetClientNumber("weld") != 0 and true or false
-		local weldworld = self:GetClientNumber("weldworld") != 0 and true or false
+		local weld = self:GetClientNumber("weld") ~= 0 and true or false
+		local weldworld = self:GetClientNumber("weldworld") ~= 0 and true or false
 		local const
 		if (trace.Entity) then
 			if (trace.Entity:IsValid() and weld) then
@@ -105,15 +122,15 @@ if (SERVER) then
 			end
 		end
 
-		if (self:GetClientNumber("freeze") != 0) then
+		if (self:GetClientNumber("freeze") ~= 0) then
 			local phys = ent:GetPhysicsObject()
-			if (phys) then
+			if IsValid(phys) then
 				phys:EnableMotion(false)
 				phys:Wake()
 			end
 		end
 
-		if (!ent or !ent:IsValid()) then return end
+		if (not ent or not ent:IsValid()) then return end
 		undo.Create( "wire_egp" )
 			if (const) then undo.AddEntity( const ) end
 			undo.AddEntity( ent )
@@ -141,6 +158,8 @@ if CLIENT then
 	language.Add( "Tool_wire_egp_freeze", "Freeze" )
 	language.Add( "Tool_wire_egp_drawemitters", "Draw emitters (Clientside)" )
 	language.Add( "Tool_wire_egp_emitter_drawdist", "Additional emitter draw distance (Clientside)" )
+	language.Add( "Tool_wire_egp_emitter_usert", "Use an RT for emitters (improves performance)" )
+	language.Add( "Tool_wire_egp_translucent", "Transparent background" )
 end
 
 WireToolSetup.SetupLinking(false, "vehicle") -- Generates RightClick, Reload, and DrawHUD functions
@@ -152,53 +171,17 @@ end
 -- Remove SetupLinking's reload function
 TOOL.Reload = nil
 
-if SERVER then
-	--[[
-	function TOOL:RightClick( trace )
-		if (!trace.Entity or !trace.Entity:IsValid()) then return false end
-		if (trace.Entity:IsPlayer()) then return false end
-
-		local ply = self:GetOwner()
-		if (self:GetStage() == 0) then
-			if (trace.Entity:GetClass() != "gmod_wire_egp_hud") then return false end
-			self:SetStage(1)
-			ply:ChatPrint("[EGP] Now right click a vehicle, or right click the same EGP HUD again to unlink it.")
-			self.Selected = trace.Entity
-		else
-			if (!self.Selected or !self.Selected:IsValid()) then
-				self:SetStage(0)
-				ply:ChatPrint("[EGP] Error! Selected EGP HUD is nil or no longer exists!")
-				return false
-			end
-			if (trace.Entity == self.Selected) then
-				EGP:UnlinkHUDFromVehicle( self.Selected )
-				self.Selected = nil
-				self:SetStage(0)
-				ply:ChatPrint("[EGP] EGP HUD unlinked.")
-				return true
-			end
-			if (!trace.Entity:IsVehicle()) then return false end
-			self:SetStage(0)
-			ply:ChatPrint("[EGP] EGP HUD linked.")
-			EGP:LinkHUDToVehicle( self.Selected, trace.Entity )
-			self.Selected = nil
-		end
-
-		return true
-	end
-	]]
-else
-
+if CLIENT then
 	local Menu = {}
 	local CurEnt
 
-	function refreshRT( ent )
+	local function refreshRT( ent )
 		ent.GPU:FreeRT()
 		ent.GPU = GPULib.WireGPU( ent )
 		ent:EGP_Update()
 	end
 
-	function refreshObjects( ent )
+	local function refreshObjects( ent )
 		if ent then
 			RunConsoleCommand("EGP_Request_Reload",ent:EntIndex())
 		else
@@ -225,10 +208,10 @@ else
 		lbl:SetText("Current Screen:")
 		lbl:SizeToContents()
 
-		local lbl = vgui.Create("DLabel",pnl)
-		lbl:SetPos( x2, 24 )
-		lbl:SetText("All screens on map:")
-		lbl:SizeToContents()
+		local lbl2 = vgui.Create("DLabel",pnl)
+		lbl2:SetPos( x2, 24 )
+		lbl2:SetText("All screens on map:")
+		lbl2:SizeToContents()
 
 		local btn = vgui.Create("DButton",pnl)
 		btn:SetText("RenderTarget")
@@ -278,7 +261,7 @@ else
 		function btn4:DoClick()
 			pnl:SetVisible( false )
 			local tbl = ents.FindByClass("gmod_wire_egp")
-			for k,v in pairs( tbl ) do
+			for _,v in pairs( tbl ) do
 				refreshRT( v )
 			end
 			LocalPlayer():ChatPrint("[EGP] RenderTargets reloaded on all screens on the map.")
@@ -301,7 +284,7 @@ else
 		function btn6:DoClick()
 			pnl:SetVisible( false )
 			local tbl = ents.FindByClass("gmod_wire_egp")
-			for k,v in pairs( tbl ) do
+			for _,v in pairs( tbl ) do
 				refreshRT( v )
 			end
 			LocalPlayer():ChatPrint("[EGP] RenderTargets reloaded on all screens on the map.")
@@ -314,13 +297,13 @@ else
 		Menu = { Panel = pnl, SingleRender = btn, SingleObjects = btn2, SingleBoth = btn3, AllRender = btn4, AllObjects = btn5, AllBoth = btn6 }
 	end
 
-	function TOOL:LeftClick( trace ) return (!trace.Entity or (trace.Entity and !trace.Entity:IsPlayer())) end
+	function TOOL:LeftClick( trace ) return (not trace.Entity or (trace.Entity and not trace.Entity:IsPlayer())) end
 	function TOOL:Reload( trace )
 
-		if (!Menu.Panel) then CreateToolReloadMenu() end
+		if (not Menu.Panel) then CreateToolReloadMenu() end
 
 		Menu.Panel:SetVisible( true )
-		if (!EGP:ValidEGP( trace.Entity )) then
+		if (not EGP:ValidEGP( trace.Entity )) then
 			Menu.SingleRender:SetEnabled( false )
 			Menu.SingleObjects:SetEnabled( false )
 			Menu.SingleBoth:SetEnabled( false )
@@ -338,7 +321,7 @@ else
 	end
 
 	function TOOL.BuildCPanel(panel)
-		if !(EGP) then return end
+		if not EGP then return end
 		panel:SetSpacing( 10 )
 		panel:SetName( "E2 Graphics Processor" )
 
@@ -357,7 +340,9 @@ else
 		panel:AddControl("Checkbox", {Label = "#Tool_wire_egp_weld",Command="wire_egp_weld"})
 		panel:AddControl("Checkbox", {Label = "#Tool_wire_egp_weldworld",Command="wire_egp_weldworld"})
 		panel:AddControl("Checkbox", {Label = "#Tool_wire_egp_freeze",Command="wire_egp_freeze"})
+		panel:AddControl("Checkbox", {Label = "#Tool_wire_egp_translucent",Command="wire_egp_translucent"})
 		panel:AddControl("Checkbox", {Label = "#Tool_wire_egp_drawemitters",Command="wire_egp_drawemitters"})
+		panel:AddControl("Checkbox", {Label = "#Tool_wire_egp_emitter_usert",Command="wire_egp_emitter_usert"})
 
 		local slider = vgui.Create("DNumSlider")
 		slider:SetText("#Tool_wire_egp_emitter_drawdist")
@@ -397,10 +382,10 @@ function TOOL:Think()
 	end
 
 	local Type = self:GetClientNumber("type")
-	if (!self.GhostEntity or !self.GhostEntity:IsValid()) then
+	if (not self.GhostEntity or not self.GhostEntity:IsValid()) then
 		local trace = self:GetOwner():GetEyeTrace()
 		self:MakeGhostEntity( Model("models/bull/dynamicbutton.mdl"), trace.HitPos, trace.HitNormal:Angle() + Angle(90,0,0) )
-	elseif (!self.GhostEntity.Type or self.GhostEntity.Type != Type or (self.GhostEntity.Type == 1 and self.GhostEntity:GetModel() != self:GetClientInfo("model"))) then
+	elseif (not self.GhostEntity.Type or self.GhostEntity.Type ~= Type or (self.GhostEntity.Type == 1 and self.GhostEntity:GetModel() ~= self:GetClientInfo("model"))) then
 		if (Type == 1) then
 			self.GhostEntity:SetModel(self:GetClientInfo("model"))
 		elseif (Type == 2 or Type == 3) then

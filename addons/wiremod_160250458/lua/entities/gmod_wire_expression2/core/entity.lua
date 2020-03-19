@@ -22,6 +22,15 @@ local validPhysics = E2Lib.validPhysics
 local getOwner     = E2Lib.getOwner
 local isOwner      = E2Lib.isOwner
 
+local sun = ents.FindByClass("env_sun")[1] -- used for sunDirection()
+
+hook.Add("InitPostEntity","sunent",function()
+	sun = ents.FindByClass("env_sun")[1]
+	timer.Simple(0,function() -- make sure we have a sun first
+		hook.Remove("InitPostEntity","sunent")
+	end ) -- then remove this. we don't need it anymore.
+end )
+
 registerCallback("e2lib_replace_function", function(funcname, func, oldfunc)
 	if funcname == "isOwner" then
 		isOwner = func
@@ -125,6 +134,24 @@ e2function entity entity:owner()
 	return getOwner(self, this)
 end
 
+__e2setcost(20)
+
+e2function table entity:keyvalues()
+	local ret = {n={},ntypes={},s={},stypes={},size=0} -- default table
+	if not IsValid(this) then return ret end
+	local keyvalues = this:GetKeyValues()
+	local size = 0
+	for k,v in pairs( keyvalues ) do
+		size = size + 1
+		ret.s[k] = v
+		ret.stypes[k] = string.lower(type(v)[1]) -- i swear there's a more elegant solution to this but whatever.
+	end
+	ret.size = size
+	return ret
+end
+
+__e2setcost(5) -- temporary
+
 /******************************************************************************/
 // Functions getting vector
 e2function vector entity:pos()
@@ -169,6 +196,12 @@ e2function vector entity:angVelVector()
 	if not validPhysics(this) then return { 0, 0, 0 } end
 	local phys = this:GetPhysicsObject()
 	return phys:GetAngleVelocity()
+end
+
+--- Specific to env_sun because Source is dum. Use this to trace towards the sun or something.
+e2function vector sunDirection()
+	if not isValid(sun) then return { 0, 0, 0 } end
+	return sun:GetKeyValues().sun_dir
 end
 
 /******************************************************************************/
@@ -297,6 +330,7 @@ e2function void setMass(mass)
 	local mass = Clamp(mass, 0.001, 50000)
 	local phys = self.entity:GetPhysicsObject()
 	phys:SetMass(mass)
+	duplicator.StoreEntityModifier(self.entity, "mass", { Mass = mass })
 end
 
 e2function void entity:setMass(mass)
@@ -307,6 +341,7 @@ e2function void entity:setMass(mass)
 	local mass = Clamp(mass, 0.001, 50000)
 	local phys = this:GetPhysicsObject()
 	phys:SetMass(mass)
+	duplicator.StoreEntityModifier(this, "mass", { Mass = mass })
 end
 
 e2function number entity:volume()
@@ -601,6 +636,16 @@ e2function void entity:ejectPod()
 	if not isOwner(self, this) then return end
 	local ply = this:GetDriver()
 	if IsValid(ply) then ply:ExitVehicle() end
+end
+
+e2function void entity:podStripWeapons()
+	if not IsValid(this) or not this:IsVehicle() then return end
+	if not isOwner(self, this) then return end
+	local ply = this:GetDriver()
+	if IsValid(ply) and next(ply:GetWeapons()) ~= nil then
+		ply:StripWeapons()
+		ply:ChatPrint("Your weapons have been stripped!")
+	end
 end
 
 /******************************************************************************/

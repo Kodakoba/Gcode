@@ -474,8 +474,6 @@ end
 -- FixWireCategories
 -- Handles multi categories and favourites
 ----------------------------------------------------------------------
-local toolgun
-
 function PANEL:FixWireCategories()
 	local t = table.Copy( self.ToolTable )
 
@@ -491,12 +489,7 @@ function PANEL:FixWireCategories()
 
 					-- multi categories
 					if not hide_duplicates:GetBool() then
-
-						if not toolgun then 
-							toolgun = weapons.Get("gmod_tool")
-						end
-						local tooltbl = toolgun.Tool[tool.ItemName]
-
+						local tooltbl = weapons.Get("gmod_tool").Tool[tool.ItemName]
 						if tooltbl then
 							if tooltbl.Wire_MultiCategories then
 								self:AddToolToCategories( tool, tooltbl.Wire_MultiCategories )
@@ -569,18 +562,12 @@ function PANEL:AddCategory( Name, Label, tItems, CategoryID )
 		local icon = "icon16/wrench.png"
 
 		if custom_icons:GetBool() then
-
-			if not toolgun then 
-				toolgun = weapons.Get("gmod_tool")
-			end
-			local tooltbl = toolgun.Tool[v.ItemName]
-
+			local tooltbl = weapons.Get("gmod_tool").Tool[v.ItemName]
 			if tooltbl then
 				if tooltbl.Wire_ToolMenuIcon then
 					icon = tooltbl.Wire_ToolMenuIcon
 				end
 			end
-
 		end
 
 		local item = Category:AddNode( v.Text, icon )

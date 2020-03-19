@@ -88,16 +88,30 @@ local function numberToString(t, number, bytes)
 	t[#t+1] = table.concat(str)
 end
 
-local function buildData(datastr, memory, pixelbit, start, length)
-	numberToString(datastr,length,3) -- Length of range
-	numberToString(datastr,start,3) -- Address of range
-	for i = start, start + length - 1 do
+local function buildData(datastr, memory, pixelbit, range, bytesRemaining)
+	if bytesRemaining < 15 then return 0 end
+	local lengthIndex = #datastr+1
+	datastr[lengthIndex] = "000"
+	numberToString(datastr,range.start,3) -- Address of range
+	bytesRemaining = bytesRemaining - 6
+	local i, iend = range.start, range.start + range.length
+	while i<iend and bytesRemaining>0 do
 		if i>=1048500 then
 			numberToString(datastr,memory[i],2)
+			bytesRemaining = bytesRemaining - 2
 		else
 			numberToString(datastr,memory[i],pixelbit)
+			bytesRemaining = bytesRemaining - pixelbit
 		end
+		i = i + 1
 	end
+	local lengthStr = {}
+	numberToString(lengthStr,i - range.start,3) -- Length of range
+	datastr[lengthIndex] = lengthStr[1]
+	range.length = iend - i
+	range.start = i
+
+	return bytesRemaining
 end
 
 util.AddNetworkString("wire_digitalscreen")
@@ -135,45 +149,28 @@ function ENT:FlushCache(ply)
 	local pixelformat = (math.floor(self.Memory[1048569]) or 0) + 1
 	if pixelformat < 1 or pixelformat > #pixelbits then pixelformat = 1 end
 	local pixelbit = pixelbits[pixelformat]
-	local bitsremaining = 200000
+	local bytesRemaining = 32768
 	local datastr = {}
 
-	while bitsremaining>0 and next(self.ChangedCellRanges) do
-		local range = self.ChangedCellRanges[1]
-		local start = range.start
-		local length = math.min(range.length, math.ceil(bitsremaining/pixelbit)) --Estimate how many numbers to read from the range
-
-		range.length = range.length - length --Update the range and remove it if its empty
-		range.start = start + length
-		if range.length==0 then table.remove(self.ChangedCellRanges, 1) end
-
-		buildData(datastr, self.Memory, pixelbit, start, length)
-
-		bitsremaining = bitsremaining - length*pixelbit
+	local range = self.ChangedCellRanges[1]
+	while range and bytesRemaining>0 do
+		bytesRemaining = buildData(datastr, self.Memory, pixelbit, range, bytesRemaining)
+		if range.length==0 then
+			table.remove(self.ChangedCellRanges, 1)
+			range = self.ChangedCellRanges[1]
+		end
 	end
 
 	numberToString(datastr,0,3)
 	datastr = util.Compress(table.concat(datastr))
 
-	local per_batch = 63000
+	net.Start("wire_digitalscreen")
+	net.WriteUInt(self:EntIndex(),16)
+	net.WriteUInt(pixelformat, 5)
+	net.WriteUInt(#datastr, 32)
+	net.WriteData(datastr,#datastr)
 
-	for i=1,#datastr,per_batch do
-		local str = string.sub(datastr,i,i+per_batch-1)
-
-		net.Start("wire_digitalscreen")
-		net.WriteUInt(self:EntIndex(),16)
-
-		local batch_end = #str < per_batch
-		net.WriteBit(batch_end) -- if true, this is the last batch. if false, more is coming
-
-		if batch_end then
-			net.WriteUInt(pixelformat, 5)
-		end
-
-		net.WriteData(str,#str)
-
-		if ply then net.Send(ply) else net.Broadcast() end
-	end
+	if ply then net.Send(ply) else net.Broadcast() end
 end
 
 function ENT:Retransmit(ply)
@@ -273,7 +270,7 @@ end
 
 function ENT:Think()
 	self:FlushCache()
-	self:NextThink(CurTime()+0.2)
+	self:NextThink(CurTime()+1)
 	return true
 end
 

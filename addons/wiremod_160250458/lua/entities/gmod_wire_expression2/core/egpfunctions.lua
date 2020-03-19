@@ -675,6 +675,7 @@ end
 ----------------------------
 e2function void wirelink:egpMaterial( number index, string material )
 	if (!EGP:IsAllowed( self, this )) then return end
+	material = WireLib.IsValidMaterial(material)
 	local bool, k, v = EGP:HasObject( this, index )
 	if (bool) then
 		if (EGP:EditObject( v, { material = material } )) then EGP:DoAction( this, self, "SendObject", v ) Update(self,this) end
@@ -932,6 +933,47 @@ e2function array wirelink:egpVertices( number index )
 		end
 	end
 	return {}
+end
+
+--------------------------------------------------------
+-- Indexes
+--------------------------------------------------------
+__e2setcost(1)
+e2function array wirelink:egpObjectIndexes()
+	if not EGP:ValidEGP(this) then return {} end
+	if not this.RenderTable or #this.RenderTable == 0 then return {} end
+	local indexes = {}
+	for _, v in pairs(this.RenderTable) do
+		indexes[#indexes + 1] = v.index
+	end
+	self.prf = self.prf + #indexes/3
+	return indexes
+end
+
+--------------------------------------------------------
+-- Object Type
+--------------------------------------------------------
+__e2setcost(1)
+
+e2function array wirelink:egpObjectTypes()
+	if not EGP:ValidEGP(this) then return {} end
+	if not this.RenderTable or #this.RenderTable == 0 then return {} end
+	local objs = {}
+	for _, v in pairs(this.RenderTable) do
+		objs[v.index] = EGP.Objects.Names_Inverted[v.ID] or ""
+	end
+	self.prf = self.prf + #this.RenderTable/3
+	return objs
+end
+
+__e2setcost(10)
+
+e2function string wirelink:egpObjectType(number index)
+	local bool, _, v = EGP:HasObject(this, index)
+	if bool then
+		return EGP.Objects.Names_Inverted[v.ID] or ""
+	end
+	return ""
 end
 
 --------------------------------------------------------

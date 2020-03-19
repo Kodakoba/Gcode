@@ -10,7 +10,6 @@ local cvar_timeout = CreateConVar( "wire_expression2_http_timeout", "15", FCVAR_
 
 local requests = {}
 local run_on = {
-	clk = 0,
 	ents = {}
 }
 
@@ -45,14 +44,13 @@ e2function void httpRequest( string url )
 		preq.data = contents or ""
 		preq.success = 1
 
-		run_on.clk = 1
-
 		local ent = self.entity
 		if IsValid(ent) and run_on.ents[ent] then
+			self.data.httpClk = preq
 			ent:Execute()
+			self.data.httpClk = nil
 		end
 
-		run_on.clk = 0
 	end, function( err )
 		if !IsValid( ply ) or !ply:IsPlayer() or !requests[ply] then return end
 
@@ -63,14 +61,12 @@ e2function void httpRequest( string url )
 		preq.data = ""
 		preq.success = 0
 
-		run_on.clk = 1
-
 		local ent = self.entity
 		if IsValid(ent) and run_on.ents[ent] then
+			self.data.httpClk = preq
 			ent:Execute()
+			self.data.httpClk = nil
 		end
-
-		run_on.clk = 0
 	end)
 end
 
@@ -81,7 +77,7 @@ e2function number httpCanRequest()
 end
 
 e2function number httpClk()
-	return run_on.clk
+	return self.data.httpClk and 1 or 0
 end
 
 e2function string httpData()

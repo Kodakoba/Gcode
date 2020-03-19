@@ -239,11 +239,11 @@ e2function void runOnFile( active )
 end
 
 e2function number fileClk()
-	return run_on.file.run
+	return self.data.runOnFile and 1 or 0
 end
 
 e2function number fileClk( string filename )
-	return (run_on.file.run == 1 and run_on.file.name == filename) and 1 or 0
+	return (self.data.runOnFile and run_on.file.name == filename) and 1 or 0
 end
 
 -- runOnList event ---
@@ -255,11 +255,11 @@ e2function void runOnList( active )
 end
 
 e2function number fileListClk()
-	return run_on.list.run
+	return self.data.runOnFileList and 1 or 0
 end
 
 e2function number fileListClk( string dir )
-	return (run_on.list.run == 1 and run_on.list.dir == dir) and 1 or 0
+	return (self.data.runOnFileList and run_on.list.dir == dir) and 1 or 0
 end
 
 --- Hooks 'n' Shit ---
@@ -303,7 +303,8 @@ timer.Create("wire_expression2_flush_file_buffer", 0.2, 0, function()
 
 			if strlen > 0 then
 				net.Start("wire_expression2_file_download_chunk")
-				net.WriteData(string.sub( fdata.data, 1, strlen ), strlen)
+				net.WriteUInt(strlen, 32)
+				net.WriteData(fdata.data, strlen)
 				net.Send(ply)
 
 				fdata.data = string.sub( fdata.data, strlen + 1 )
@@ -330,7 +331,9 @@ local function file_execute( ent, filename, status )
 	run_on.file.name = filename
 	run_on.file.status = status
 
+	ent.context.data.runOnFile = true
 	ent:Execute()
+	ent.context.data.runOnFile = nil
 
 	run_on.file.run = 0
 	run_on.file.name = ""
@@ -367,12 +370,13 @@ end )
 util.AddNetworkString("wire_expression2_file_chunk")
 net.Receive("wire_expression2_file_chunk", function(netlen, ply)
 	local pfile = uploads[ply]
-	if !pfile then return end
+	if !pfile or !pfile.buffer then return end
 	if !pfile.uploading then
 		file_execute( pfile.ent, pfile.name, FILE_TRANSFER_ERROR )
 	end
 
-	pfile.buffer = pfile.buffer .. net.ReadData(netlen/8)
+	local len = net.ReadUInt(32)
+	pfile.buffer = pfile.buffer .. net.ReadData(len)
 
 	local timername = "wire_expression2_file_check_timeout_" .. ply:EntIndex()
 	if timer.Exists( timername ) then
@@ -456,7 +460,9 @@ net.Receive("wire_expression2_file_list", function(netlen, ply)
 	run_on.list.run = 1
 	run_on.list.dir = plist.dir
 
+	plist.ent.context.data.runOnFileList = true
 	plist.ent:Execute()
+	plist.ent.context.data.runOnFileList = nil
 
 	run_on.list.run = 0
 	run_on.list.dir = ""
