@@ -223,7 +223,7 @@ local badlua = {
 }
 
 local function CompileExpression(str, msg, special, preenv)
-	print("compiling expression within existing env?", preenv, str)
+
 	local env = preenv or env(msg, special)
 
 	if not special then --special messages don't get all the checks and can run unrestricted codez
@@ -271,7 +271,7 @@ end
 
 ]]
 
-local tagptrn = "<(%w+)=?([^>]*)>"
+local tagptrn = "<([/%w]+)=?([^>]*)>"
 local tagendptrn = "/(.+)"
 local expptrn = "(%b[]),?" 		--pattern that captures shit in []s and defines whether the arg is an expression
 local valptrn = "%s*(.-)%s*,"	--match arg from a tag without spaces and commas
@@ -327,7 +327,8 @@ function ParseTags(str, special)
 				if v.tag == isend and not v.ends and not v.ender then 
 					--create an ender tag, which will disable tag at k
 					v.ends = starts 
-					str = str:gsub(s1:PatternSafe(), "", 1)
+
+					str = str:gsub(tag:PatternSafe(), "", 1)
 
 					local key = #tags + 1
 
@@ -343,7 +344,7 @@ function ParseTags(str, special)
 						realkey = key
 					}
 					
-					prevtagwhere = ends
+					prevtagwhere = starts + 3 --+3 for <>
 
 					break
 				end 
@@ -396,7 +397,7 @@ function ParseTags(str, special)
 		    local offset = 0
 		    local i = 0
 
-		    for arg in argsstr:gmatch(valptrn) do
+		    for arg in argsstr:gmatch(valptrn) do 	--Then parse all static args (non-expressions)
 		        i = i + 1
 		        if arg == "-" then continue end --this also increments i, basically offsetting arg by +1
 		        if not chTag.args[i] then break end 
@@ -414,7 +415,7 @@ function ParseTags(str, special)
 
 			local lastargstr = argsstr:match(lastarg)
 
-			if lastargstr and lastargstr ~= "-" then  
+			if lastargstr and lastargstr ~= "-" then
 				args[i+1] = lastargstr 
 			end
 
@@ -439,7 +440,6 @@ function ParseTags(str, special)
 			end
 
 			if not args[k] then 		--if that arg didnt exist set it to default
-				print("bruh")
 				args[k] = v.default 
 			end 
 
@@ -459,8 +459,11 @@ function ParseTags(str, special)
 		str = str:gsub(tosub, "", 1) --remove the tag we just parsed
 	end
 
-	tags[#tags + 1] = string.sub(str, (prevtagwhere and prevtagwhere + utflen(str) - 2) or 1, #str)
-	PrintTable(tags)
+
+	local start = prevtagwhere or 1
+
+	tags[#tags + 1] = string.sub(str, start, #str)
+
 	return str, tags
 end
 
@@ -585,7 +588,6 @@ function chathud:AddText(...)
 			local untagged, tags = ParseTags(v, special)
 
 			surface.SetFont("CH_Text")
-			
 
 			for k2,tg in pairs(tags) do 
 
@@ -599,8 +601,6 @@ function chathud:AddText(...)
 					else
 						curwidth = curwidth + (newwid or tw)
 					end
-
-					print("current width is now", curwidth)
 
 					wrappedtxt = wrappedtxt .. str
 					merged[#merged + 1] = str
@@ -720,7 +720,7 @@ local function DrawText(txt, buffer, a)
 
 			dat.cache = dat.cache or {}
 			local newtx = string.WordWrap2(txt, {chathud.W - buffer.x, chathud.W}, font)	
-		
+
 			local newnewlines = select(2, newtx:gsub("%c", ""))
 
 			dat.newlines = dat.newlines - newlines + newnewlines 	--re-calculate amount of newlines for height calculation: only applies next frame :(
@@ -731,7 +731,6 @@ local function DrawText(txt, buffer, a)
 		txt = dat.cache[buffer.RequiresRewrap]	--use cache or whatever we just wrapped
 
 	end
-
 
 	local tx, ty = buffer.x, buffer.y + (dat.heights[buffer.curline] or buffer.curh)/2 - h/2
 
@@ -1136,13 +1135,15 @@ function chathud:Draw()
 					local x_before = buffer.x --if x changes due to tag drawing, we'll need to re-wrap text
 					v.func(buffer, v.tagbuf)
 
+					dat.heights[buffer.curline] = math.max(dat.heights[buffer.curline] or 0, buffer.curh)
+
 					if buffer.x > chathud.W then 
 						buffer.x = x + (dat.namewid * chathud.WrapStyle)
 						buffer.y = buffer.y + buffer.curh
 						curH = curH + buffer.curh
-
+						
 						dat.heights[buffer.curline] = buffer.curh
-						buffer.curline = 1
+						buffer.curline = buffer.curline + 1
 
 						buffer.curh = chh 
 					end
