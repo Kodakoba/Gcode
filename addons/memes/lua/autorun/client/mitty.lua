@@ -280,7 +280,7 @@ hook.Add("ChatHUDEmotesUpdated", "mittymeme", function(col)
 		local viswhere = Vector (-7811, -8618.03125, -1306.9388427734)
 
 		local ang = Angle(-180, -90, 180)
-		local scale = Vector(0.5, 0.5, 0.5)
+		local scale = Vector(0.3, 0.3, 0.3)
 
 		Memes.AddDecal("mitty", where, ang, scale, Vector(0, -1, 0), nil, 
 			function(w, h)
