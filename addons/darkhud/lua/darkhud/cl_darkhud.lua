@@ -181,9 +181,9 @@ function DarkHUD.Create()
 			PopupMoney = CurTime() 
 
 			if pm < mon then -- + money
-				mCol:Set(green)
+				mCol:Set(Colors.Green)
 			else 
-				mCol:Set(red)
+				mCol:Set(Colors.Red)
 			end
 
 			if #pmd < 7 then
@@ -306,9 +306,10 @@ function DarkHUD.Create()
 					local tw, th = surface.GetTextSize(difftxt)
 
 					v.boxcol.a = v.a / 1.2
+					v.col.a = v.a
 
-					draw.RoundedBox(4, 48 + 4, -monY - lvY - v.y, tw + 8, th , v.boxcol)
-					draw.SimpleText(difftxt, "OSB24", 48 + 8,  -monY - lvY - v.y, ColorAlpha(v.col, v.a), 0, 5)
+					draw.RoundedBox(4, 48 + 4, -monY - lvY - v.y, tw + 8, th, v.boxcol)
+					draw.SimpleText(difftxt, "OSB24", 48 + 8,  -monY - lvY - v.y, v.col, 0, 5)
 				end
 
 			else 
