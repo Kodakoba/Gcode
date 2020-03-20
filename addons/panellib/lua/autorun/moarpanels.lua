@@ -54,6 +54,7 @@ if CLIENT then
 	}
 
 	FontFamilies = families
+
 	local sizes = {12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 64, 72, 128}
 
 	for k,v in pairs(families) do 
@@ -67,6 +68,7 @@ if CLIENT then
 	    end
 
 	end
+
 
 end
 
