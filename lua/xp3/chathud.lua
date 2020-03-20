@@ -262,6 +262,7 @@ local function CompileExpression(str, msg, special, preenv)
 	return compiled, env
 end
 
+chathud.CompileExpression = CompileExpression
 
 --[[
 
@@ -344,7 +345,7 @@ function ParseTags(str, special)
 						realkey = key
 					}
 					
-					prevtagwhere = starts + 3 --+3 for <>
+					prevtagwhere = starts + 2 --+2 for <>
 
 					break
 				end 
@@ -387,7 +388,7 @@ function ParseTags(str, special)
 		        env = env or newenv
 
 				if isstring(func) then 
-					print("Expression error: " .. func)
+					printf("Expression error: %s", func)
 					continue
 				end 
 
@@ -403,7 +404,7 @@ function ParseTags(str, special)
 		        if not chTag.args[i] then break end 
 
 		        local typ = chTag.args[i].type
-				if not chathud.TagTypes[typ] then print("Unknown argument type! ", typ) break end 
+				if not chathud.TagTypes[typ] then printf("Unknown argument type! '%s'", typ) break end 
 
 				local ret = chathud.TagTypes[typ](arg)	
 
@@ -729,6 +730,7 @@ local function DrawText(txt, buffer, a)
 		end
 
 		txt = dat.cache[buffer.RequiresRewrap]	--use cache or whatever we just wrapped
+		buffer.RequiresRewrap = buffer.RequiresRewrap + 1 --add 1 so other text also rewraps and caches
 
 	end
 
@@ -962,7 +964,7 @@ function chathud:Draw()
 							drawq[#drawq+1] = {name = v.tag, func = func, ender = v.ends}
 						else 
 							local chTag = chathud.TagTable[v.tag]
-							if not chTag then print("no such tag", v.tag) continue end --???
+							if not chTag then printf("No such tag: %s", v.tag) continue end --???
 
 							local function getargs()
 
@@ -982,7 +984,7 @@ function chathud:Draw()
 
 									if isfunction(val) then 
 										local ok, ret = pcall(val)
-										if not ok then print("Tag error!", ret) v.errs[key] = true continue end 
+										if not ok then printf("Tag error! %s", ret) v.errs[key] = true continue end 
 
 										if not ret then 
 
@@ -1237,23 +1239,23 @@ function chathud:GetSteamEmoticon(emoticon)
 	if file.Exists("emoticon_cache/" .. emoticon .. ".png", "DATA") then
 		MakeCache("emoticon_cache/" .. emoticon .. ".png", emoticon)
 	return emoticon_cache[emoticon] or false end
-	Msg"ChatHUD " print("Downloading emoticon " .. emoticon)
+	Msg"ChatHUD " printf("Downloading emoticon " .. emoticon)
 	http.Fetch("http://steamcommunity-a.akamaihd.net/economy/emoticonhover/:" .. emoticon .. ":	", function(body, len, headers, code)
 		if code == 200 then
 			if body == "" then
-				Msg"ChatHUD " print("Server returned OK but empty response")
+				Msg"ChatHUD " printf("Server returned OK but empty response")
 			return end
-			Msg"ChatHUD " print("Download OK")
+			Msg"ChatHUD " printf("Download OK")
 			local whole = body
 			body = body:match("src=\"data:image/png;base64,(.-)\"")
-			if not body then Msg"ChatHUD " print("ERROR! (no body)", whole) return end
+			if not body then Msg"ChatHUD " printf("ERROR! (no body) %s", whole) return end
 			local b64 = body
 			body = dec(body)
-			if not body then Msg"ChatHUD " print("ERROR! (not b64)", b64) return end
+			if not body then Msg"ChatHUD " printf("ERROR! (not b64) %s", b64) return end
 			file.Write("emoticon_cache/" .. emoticon .. ".png", body)
 			MakeCache("emoticon_cache/" .. emoticon .. ".png", emoticon)
 		else
-			Msg"ChatHUD " print("Download failure. Code: " .. code)
+			Msg"ChatHUD " printf("Download failure. Code: %s", code)
 		end
 	end)
 	busy[emoticon] = true
