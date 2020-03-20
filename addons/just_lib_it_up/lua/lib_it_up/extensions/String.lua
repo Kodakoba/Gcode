@@ -234,6 +234,7 @@ function string.WordWrap2(txt, wid, font)
 		for word in string.gmatch(txt, "(.-)%s") do 
 			
 			local r2, w2, lines, didwrap = WrapWord(word .. " ", curwid, nil, wid, line)
+
 			ret = ret .. r2
 			curwid = w2
 
@@ -249,7 +250,7 @@ function string.WordWrap2(txt, wid, font)
 			ret = ret .. r2
 			curwid = w2
 			wrapped = wrapped or didwrap
-			print("wrapped last", word, "new width", curwid)
+
 		end
 
 		return ret, curwid, wrapped
@@ -361,35 +362,60 @@ function string.Shortcut(str, shcuts)
 	return str
 end
 
-function string.ParseTags(str, tags, shcuts)
+local tagptrn = "<([/%w]+)=?([^>]*)>"
+local tagendptrn = "/(.+)"
+local expptrn = "(%b[]),?" 		--pattern that captures shit in []s and defines whether the arg is an expression
+local valptrn = "%s*(.-)%s*,"	--match arg from a tag without spaces and commas
+local lastarg = "([^,%s?]+)$"	--match last arg in a tag
 
-	local tags = {}
+local utflen = function(s)
+	return (utf8.len(s:sub(#s, #s-1)) == 1 and #(s:sub(#s, #s-1) == 2)) and 2 or 1
+end
+
+function string.ParseTags(str, shortcuts, tagtable)
+
+	local tags = {} --this contains strings (regular text) and tables (tags)
 	
 	local prevtagwhere
+	local env 		--envinroment for expressions, it's shared for one message
 
-	if shcuts then str = str:Shortcut(shcuts) end
+	for s1 in string.gmatch(str, ":(.-):") do --shortcuts, then tags 
 
-	for s1 in string.gmatch( str, "%b<>" ) do
-		local tagcont = s1:GetBetween("<>")
+		if shortcuts[s1] then 
+			str = str:gsub((":%s:"):format(s1), shortcuts[s1], 1)
+		end
+		
+	end
 
-		if not tagcont then continue end
+	for tag, argsstr in string.gmatch( str, tagptrn ) do
+		local OGargsstr = argsstr --argsstr will be changed
 
-		local starts = str:find(s1, 1, true)
+		local chTag = tagtable[tag]
 
-		local tag, argsstr = tagcont:match(tagptrn)
+		local starts = str:find(tag, prevtagwhere or 1, true)
+		if starts then starts = starts - 1 end --add the "<" which doesn't get matched 
 
-		local chTag = chathud.TagTable[tag]
+		local ends = starts
 
-		if not chTag then 
-			local isend = tagcont:match(tagendptrn)
-			if not isend or not chathud.TagTable[isend] then print("no such tag:", tag, isend) continue end
+		if argsstr then --V for "="		 v for ">"
+			ends = starts + #tag + 1 + #argsstr + 1
+		else 		
+			ends = starts + #tag + 1 --1 for ">"
+		end
+
+		if not chTag then
+
+			local isend = tag:match(tagendptrn)
+			if not isend or not tagtable[isend] then print("no such tag to end:", tag, isend) continue end
 
 			for k,v in ipairs(table.Reverse(tags)) do
 				if not istable(v) then continue end  
-				if v.tag == isend and not v.ends and not v.ender then 
+
+				if v.Tag == isend and not v.ends and not v.ender then 
 					--create an ender tag, which will disable tag at k
 					v.ends = starts 
-					str = str:gsub(s1:PatternSafe(), "", 1)
+
+					str = str:gsub(tag:PatternSafe(), "", 1)
 
 					local key = #tags + 1
 
@@ -398,18 +424,20 @@ function string.ParseTags(str, tags, shcuts)
 						key = key + 1
 					end
 
-					tags[key] = {
+					tags[key] = v:GetEnder()
+					--[[tags[key] = {
 						tag = isend, 
 						ender = true, 
 						ends = v.realkey,	--ends tag with key v.realkey
 						realkey = key
-					}
+					}]]
 					
-					prevtagwhere = starts--+1
+					prevtagwhere = starts + 3 --+3 for <>
 
 					break
 				end 
 			end
+
 			continue
 		end
 
@@ -418,21 +446,33 @@ function string.ParseTags(str, tags, shcuts)
 		}
 
 		if not prevtagwhere then 
-			tags[#tags + 1] = str:sub(1, starts-utflen(str))
+			tags[#tags + 1] = str:sub(1, starts - utflen(str)) --utflen decides whether or not sub 2 chars
 		end
 
 		local args = {}
+		
 
-		for argtmp in string.gmatch(argsstr, ".-,") do 
-			local arg = argtmp:match(spacearg)
+		if argsstr then
+			local lastargpos = 0
+			
+			for arg in argsstr:gmatch(expptrn) do 	--First parse all the expression args
 
-			argsstr = argsstr:gsub(argtmp:PatternSafe(), "", 1)
+		        local starts, ends = argsstr:find(arg, lastargpos, true)
+		        lastargpos = starts + 1
 
-			local exp = arg:match("%[(.+)%]") 
+		        local sepnum = 0
+		        local lastsep = 0
 
-			if exp then 
+		        local num = #args + 1
+				if not chTag.args[num] then break end --more args than the tag takes: ignore eet
 
-				local func = CompileExpression(exp, info)
+		      --  argst[#argst + 1] = arg
+
+		        argsstr = argsstr:sub(0, starts-1) .. "-" .. argsstr:sub(ends+1) --"-" allows you to ignore a var and let it be set to a default value; unless it already has a value...
+		        arg = arg:sub(2, -2) --get rid of []
+
+		        local func, newenv = chathud.CompileExpression(arg, info, special, env)				-- like this handy expression we just compiled!
+		        env = env or newenv
 
 				if isstring(func) then 
 					print("Expression error: " .. func)
@@ -440,56 +480,44 @@ function string.ParseTags(str, tags, shcuts)
 				end 
 
 				args[#args + 1] = func 
-				continue
+		    end
+
+		    local offset = 0
+		    local i = 0
+
+		    for arg in argsstr:gmatch(valptrn) do
+		        i = i + 1
+		        if arg == "-" then continue end --this also increments i, basically offsetting arg by +1
+		        if not chTag.args[i] then break end 
+
+		        local typ = chTag.args[i].type
+				if not chathud.TagTypes[typ] then print("Unknown argument type! ", typ) break end 
+
+				local ret = chathud.TagTypes[typ](arg)	
+
+				if ret then table.insert(args, i, ret) end --if conversion to type succeeded
+		        
+		    end
+
+		    
+
+			local lastargstr = argsstr:match(lastarg)
+
+			if lastargstr and lastargstr ~= "-" then  
+				args[i+1] = lastargstr 
 			end
 
-			local num = #args + 1
-
-			if not chTag.args[num] then break end 
-
-			local typ = chTag.args[num].type
-			if not chathud.TagTypes[typ] then print("Unknown argument type! ", typ) break end 
-
-			local ret = chathud.TagTypes[typ](arg)	
-
-			if ret then args[#args + 1] = ret end --if conversion to type succeeded
-		end 
-
+		end
+		
 		local key = #tags + 1
 
-		local lastarg = argsstr:match(lastarg)
-
-		if lastarg then  
-
-			local exp = lastarg:match("%[(.+)%]") 
-
-			if exp then 
-
-				local func = CompileExpression(exp, info)
-
-				if isstring(func) then 
-					print("Expression error: " .. func)
-				end 
-
-				args[#args + 1] = func 
-				
-			else
-				args[#args + 1] = lastarg 
-			end
-
-		end
-
-		str = str:gsub(s1:PatternSafe(), "", 1)
-
 		if prevtagwhere then 
-
-			tags[key] = str:sub(prevtagwhere+utflen(str)-1, starts-1)
+			tags[key] = str:sub(prevtagwhere, starts - 1)
 			key = key + 1
-
 		end
 
 
-		for k,v in pairs(chTag.args) do 
+		for k,v in ipairs(chTag.args) do --clamp values to mins/maxs
 			if isnumber(args[k]) then
 				if v.min then 
 					args[k] = math.max(args[k], v.min)
@@ -499,24 +527,32 @@ function string.ParseTags(str, tags, shcuts)
 				end
 			end
 
-			if not args[k] then 
+			if not args[k] then 		--if that arg didnt exist set it to default
 				args[k] = v.default 
 			end 
 
 		end
 
-		tags[key] = {
+		local TagObj = chathud.Tags(tag, unpack(args))
+		TagObj.realkey = key 
+		TagObj.starts = starts
+
+		tags[key] = TagObj--[[{
 			tag = tag, 
 			args = args,
 			starts = starts,
 			realkey = key --for ender to keep track due to table reversing
-		}
+		}]]
 
 		prevtagwhere = starts
+
+		local tosub = "<" .. tag .. ((OGargsstr and "=" .. OGargsstr) or "") .. ">"
+		tosub = tosub:PatternSafe()
+		str = str:gsub(tosub, "", 1) --remove the tag we just parsed
+
 	end
 
-	tags[#tags + 1] = string.sub(str, (prevtagwhere and prevtagwhere+utflen(str)-1) or 1, #str)
-
+	tags[#tags + 1] = string.sub(str, (prevtagwhere and prevtagwhere + utflen(str) - 2) or 1, #str)
 
 	return str, tags
 end
