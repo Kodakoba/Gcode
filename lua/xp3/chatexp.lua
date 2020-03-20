@@ -130,10 +130,10 @@ if CLIENT then
 		local mode 	= net.ReadUInt(8)
 		--local mode_data = net.ReadUInt(16)
 
-		data = util.Decompress(data)
+		data = util.Decompress(data, 2^12)
 
-		if not data then
-			Msg("CEXP: Failed to decompress message.")
+		if not data or data == "" then
+			printf("CEXP: Failed to decompress message from player %s", ply)
 			return
 		end
 
@@ -156,10 +156,10 @@ if SERVER then
 			if cds[ply] < 2 then printf("CEXP: Too much data from %s (%s > %s)", ply, #data, chatexp.CharLimit) return end
 
 			if not timer.Exists("ChatHUDCoolDown" .. ply:SteamID64()) then 
-				timer.Create("ChatHUDCoolDown" .. ply:SteamID64(), 0.5, 0, function()
-					if cds[ply] < 2 then cds[ply] = nil return end
-					printf("CEXP: %s seems to repeatedly spam overly long messages: violated %s times within 0.5s", ply, cds[ply])
-					cds[ply] = nil
+				timer.Create("ChatHUDCoolDown" .. ply:SteamID64(), 1, 0, function()
+					if cds[ply] < 2 then cds[ply] = 0 return end
+					printf("CEXP: %s seems to repeatedly spam overly long messages: violated %s times within 1s", ply, cds[ply])
+					cds[ply] = 0
 				end)
 			end
 
@@ -172,21 +172,6 @@ if SERVER then
 		if isstring(ret) then data = ret end
 
 		local filter = player.GetHumans()
-
-		--[[local msgmode = chatexp.Modes[mode]
-		if not msgmode then return end 
-
-		local filter = {}
-		if mode == CHATMODE_DM then
-			filter = {Player(mode_data)}
-		elseif msgmode.Filter then
-			for k, v in next,player.GetHumans() do
-				if msgmode.Filter(ply, v) ~= false then filter[#filter+1] = v end
-			end
-		end
-
-		if #filter == 0 then return end
-		if not table.HasValue(filter, ply) then filter[#filter+1] = ply end]]
 
 		local cdata = util.Compress(data)
 		if not cdata then
@@ -228,9 +213,12 @@ if SERVER then
 
 		local mode	= net.ReadUInt(8)
 
-		local data = util.Decompress(cdata)
+		--TODO: add the number to Decompress to prevent decompression bombs
+		--im not doing it rn cuz i wanna test it :^)
 
-		if not data then
+		local data = util.Decompress(cdata, 2^12)
+
+		if not data or data == "" then
 			printf("CEXP: Failed to decompress message from %s", ply)
 			return
 		end
@@ -256,14 +244,15 @@ if SERVER then
 
 					goto docd
 				else 
+
 					if not cd.ViolationCooldown then 
 						cd.NextWrite = CurTime() + chathud.ChatSpamCD
 						local t = CurTime() + 5
 						local holyshit = [[<eval=[env.of=lt(t(), %.2f)]><color=[(env.of and 220 or 140) + sin(t()*6)*40],[140 + sin(t()*6) *30],[(env.of and 140 or 220)+sin(t()*6)*40]>You're <text=[(env.of and "now on cooldown for ".. string.format("%%.2f", %.2f-t()) .." seconds") or "not on cooldown anymore."]>]]
 						holyshit = holyshit:format(math.Round(cd.NextWrite, 1), math.Round(cd.NextWrite, 1))
-						print("sending expression", holyshit)
 						ply:SendChatHUD(holyshit)
 					end --we haven't punished yet
+
 					cd.ViolationCooldown = true
 					return false
 				end
