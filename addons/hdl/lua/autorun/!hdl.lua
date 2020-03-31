@@ -207,7 +207,7 @@ function hdl.PlayURL(url, name, flags, func, fail, ovwrite)
 		sound.PlayFile(n, flags or "", func or BlankFunc)
 
 	end, function(err, str)
-		error("Failed HDL PlayURL! Error: " .. err .. " " .. tostring(str))
+		ErrorNoHalt("Failed HDL PlayURL! Error: " .. err .. " " .. tostring(str) .. "\n")
 	end)
 	
 end
