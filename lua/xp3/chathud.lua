@@ -821,6 +821,7 @@ local frstnum = 0
 
 chathud.Filter = true 
 chathud.FadeTime = 5
+chathud.Bench = false 
 
 function chathud:TagPanic()
 	for k,v in pairs(self.History) do 
@@ -829,6 +830,13 @@ function chathud:TagPanic()
 end
 
 function chathud:Draw()
+	if #self.History < 1 then return end 
+
+	local b 
+
+	if chathud.Bench and #self.History > 1 then 
+		b = bench("ChatHUD"):Open()
+	end
 
 	local x, y = self.x, self.y 
 	local chh = chathud.CharH 
@@ -842,7 +850,10 @@ function chathud:Draw()
 
 
 	local ok, err = pcall(function()
-		for histnum,dat in SortedPairs(self.History, true) do
+		for i = #self.History, 1, -1 do
+			local histnum = i 
+			local dat = self.History[i]
+		--for histnum,dat in SortedPairs(self.History, true) do
 
 			local mult = -2500
 
@@ -1185,6 +1196,11 @@ function chathud:Draw()
 		ErrorNoHalt(("[ChatHUD] Error during rendering! %s\n"):format(err))
 	end
 
+	if chathud.Bench then 
+		b:Close()
+		print(b)
+	end
+
 end
 
 -------------------------
@@ -1312,7 +1328,7 @@ local function ParseEmotes(js)
 				font = "muhfont" --optional, can use OS18 by default
 			}
 
-			emote_data = {
+			data = {
 				1. names of animated emotes
 				2. names of static emotes
 			}

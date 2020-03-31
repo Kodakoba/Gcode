@@ -1,8 +1,11 @@
-local scale = 0.75
+local scale = 0.85
 local hsc = 0.85
 
 DarkHUD = DarkHUD or {}
 local wasvalid = false 
+
+local render = render 
+local surface = surface 
 
 if DarkHUD.Essentials then DarkHUD.Essentials:Remove() DarkHUD.Essentials = nil wasvalid = true end
 
@@ -23,6 +26,99 @@ function DarkHUD.SetUsed(key, val)
 	sql.Query(q)
 end
 
+local shmat = CreateMaterial("darkhud_shadow", "UnlitGeneric", {
+    ["$translucent"] = 1,
+	["$vertexalpha"] = 1,
+	["$vertexcolor"] = 1,
+	["$color"] = "[0 0 0]",
+})
+
+local cringe = CreateMaterial("darkhud_bruhh", "UnlitGeneric", {
+    ["$translucent"] = 1,
+	["$vertexalpha"] = 1,
+	["$vertexcolor"] = 1,
+})
+
+--this is cancer, this is VERY cancer, this is EXTREMELY CANCER but i made this for fun
+
+--well, """""""""""""""""fun"""""""""""""""""""
+function DarkHUD.CachePanelRender(f)
+	
+	hook.Add("PreDrawEffects", "ohgoddamnit", function()
+		local f = DarkHUD.Essentials
+
+		local hder = f.DrawHeaderPanel
+		local shad = f.Shadow
+
+		local padW, padH = 8, 4
+		local shadowW, shadowH = 24, 24
+
+		local rt2 = draw.GetRT("darkhud_shadow", scale*500 + shadowW, hsc*200 + shadowH)
+
+		render.PushRenderTarget(rt2) --just in case
+			render.Clear(0, 0, 0, 0)
+		render.PopRenderTarget()
+
+		f.ShadowCache = draw.RenderOntoMaterial("darkhud_cache", scale*500 + padW*2, hsc*200 + padH*2, function(w, h, rt)
+			f.Shadow = false 
+
+			local x, y = f:LocalToScreen(0, 0)
+			local pw, ph = scale*500, hsc*200
+
+			surface.DisableClipping(true)
+				f:DrawHeaderPanel(pw, ph, padW, padH) --f:Paint(w, h) 
+				if f.CachePaint then f:CachePaint(pw, ph + 4, 8, 8) end
+			surface.DisableClipping(false)
+
+			f.Shadow = shad
+
+			cringe:SetTexture("$basetexture", rt:GetName())
+
+			render.PushRenderTarget(rt2, 0, 0, rt2:Width(), rt2:Height())
+				surface.SetMaterial(cringe)
+				surface.SetDrawColor(color_black)
+				surface.DrawTexturedRect(shadowW/2, shadowH/2, w - shadowW, h - shadowH)
+			render.PopRenderTarget()
+
+			--render.CopyRenderTargetToTexture(rt2)
+			render.BlurRenderTarget(rt2, 4, 4, 2)
+
+			shmat:SetTexture("$basetexture", rt2:GetName())
+	
+		end, function(rt)
+			
+		end, function(mat)
+
+		end, nil, nil, false)
+
+		function f:DrawHeaderPanel(w, h)
+
+			if self.ShadowCache then --if you're fucking crazy you can try caching the shadow in an RT
+				local spread = self.Shadow and self.Shadow.spread or 2
+				local blur = self.Shadow and self.Shadow.blur or 2
+
+				surface.DisableClipping(true)
+
+					surface.SetMaterial(shmat)--self.ShadowCache)
+					surface.SetDrawColor(color_white)
+
+					local exW, exH = 0, 0
+
+					for i=1, 2 do
+						surface.DrawTexturedRect(-shadowW/3, -shadowH/2 - padH, w + shadowW/1.5, h + shadowH + padH*2)
+					end
+
+					surface.SetMaterial(self.ShadowCache)
+					surface.DrawTexturedRect(0, -padH, w, h + padH*2)
+
+				surface.DisableClipping(false)
+			end
+
+		end
+		hook.Remove("PreDrawEffects", "ohgoddamnit")
+	end)
+
+end
 
 
 local dh = DarkHUD 
@@ -122,6 +218,7 @@ function DarkHUD.Create()
 	f.HeaderColor.a = 255
 
 	f.Vitals = vgui.Create("InvisFrame", f)
+
 	local vls = f.Vitals 
 
 	vls:SetSize(f:GetWide(), f:GetTall() - hs)
@@ -363,15 +460,16 @@ function DarkHUD.Create()
 
 	function f:PostPaint(w, h)
 		local x, y = av:GetPos()
-
 		local w2, h2 = av:GetSize()
+
 		draw.SimpleText(LocalPlayer():Nick(), "OSB32", x + w2 + 13, y - 4, tcol, 0, 5)
 
 		surface.SetDrawColor(Color(255, 255, 255, 220))
 		surface.DrawMaterial("https://i.imgur.com/5BQxS4m.png", "faction.png", x + w2 + 24, y + 32, 24, 24)
-
-		if lastfac ~= LocalPlayer():GetFaction() then 
-			lastfac = LocalPlayer():GetFaction()
+		local fac = LocalPlayer():GetFaction()
+		
+		if lastfac ~= fac then 
+			lastfac = fac
 			facname = faclen(lastfac)
 		end
 		
@@ -380,7 +478,6 @@ function DarkHUD.Create()
 		local tm = LocalPlayer():Team()
 		local col = (tm~=0 and team.GetColor(tm)) or Color(100, 100, 100)
 		tcol = LC(tcol, col, 15)
-		
 
 		render.SetStencilEnable(true)
 
@@ -393,8 +490,8 @@ function DarkHUD.Create()
 
 			render.SetStencilReferenceValue( 1 ) --include
 
-			surface.SetDrawColor(Color(0, 0, 0, 1))
-
+			surface.SetDrawColor(Color(0, 0, 255, 255))
+			draw.NoTexture()
 			draw.DrawCircle(x+w2/2, y+h2/2, w2/2, 50)
 
 			render.SetStencilCompareFunction( STENCIL_ALWAYS )
@@ -525,6 +622,8 @@ function DarkHUD.Create()
 		draw.RoundedBox(8, w - 204, y + 82, 128, 16, Color(75, 75, 75))
 		draw.RoundedBox(8, w - 204, y + 82, (128) * (LocalPlayer():GetXP() / LocalPlayer():GetXPNextLevel()), 16, Color(140, 80, 220))
 	end
+
+	timer.Create("DarkHUD_CachePanel", 2, 1, function() DarkHUD.CachePanelRender(f) end)
 end
 
 hook.Add("InitPostEntity", "HUDCreate", function()
@@ -568,6 +667,7 @@ end)
 
 hook.Add("HUDPaint", "DarkHUD", function()
 	local f = DarkHUD.Essentials 
+
 	if not IsValid(f) then 
 		DarkHUD.Create()
 		f = DarkHUD.Essentials

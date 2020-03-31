@@ -76,6 +76,10 @@ function benchmark:Reset()
 	return self
 end
 
+function benchmark:print()
+	print(self)
+end
+benchmark.Print = benchmark.print 
 
 function benchmark:IsValid()
 	return (self._Start != 0 and self._Finish != 0)

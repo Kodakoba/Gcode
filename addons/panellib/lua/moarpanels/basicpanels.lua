@@ -177,7 +177,7 @@ local rots = {
 	270
 }
 
-function PANEL.DrawHeaderPanel(self, w, h)
+function PANEL.DrawHeaderPanel(self, w, h, x, y)
 	self.DraggableH = self.HeaderSize
 
 	local rad = self.RBRadius or 8
@@ -189,14 +189,15 @@ function PANEL.DrawHeaderPanel(self, w, h)
 
 	local icon = (self.Icon and self.Icon.mat) or nil
 
-	local x,y = 0, 0
-
 	if self.Shadow then 
 		--surface.DisableClipping(false)
 		BSHADOWS.BeginShadow()
-		x, y = self:LocalToScreen(0, 0)
+		if not x then x, y = self:LocalToScreen(0, 0) end
 	end
 
+	x = x or 0 
+	y = y or 0
+	
 	local hh = self.HeaderSize
 	local tops = true 
 
@@ -204,6 +205,7 @@ function PANEL.DrawHeaderPanel(self, w, h)
 		draw.RoundedBoxEx(self.HRBRadius or rad, x, y, w, hh, hc, true, true)
 		tops = false
 	end
+
 	draw.RoundedBoxEx(rad, x, y+hh, w, h-hh, bg, tops, tops, true, true)
 
 	if label then
@@ -229,9 +231,7 @@ function PANEL.DrawHeaderPanel(self, w, h)
 		local rot = rots[self.SizableNum]
 
 		local c = math.cos( math.rad( rot ) )
-		local s = math.sin( math.rad( rot ) )	--:pensive:
-
-		
+		local s = math.sin( math.rad( rot ) )	--:pensive:	
 
 		local x0, y0 = sw/2, -sh/2
 		local newx = y0 * s - x0 * c

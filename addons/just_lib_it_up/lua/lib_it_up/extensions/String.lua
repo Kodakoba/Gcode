@@ -552,7 +552,7 @@ function string.ParseTags(str, shortcuts, tagtable)
 
 	end
 
-	tags[#tags + 1] = string.sub(str, (prevtagwhere and prevtagwhere + utflen(str) - 2) or 1, #str)
+	tags[#tags + 1] = string.sub(str, prevtagwhere or 1, #str)
 
 	return str, tags
 end

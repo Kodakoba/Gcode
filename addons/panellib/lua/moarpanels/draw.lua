@@ -691,7 +691,7 @@ function draw.GetRT(name, w, h)
 	return rt
 end
 
-function draw.RenderOntoMaterial(name, w, h, func, rtfunc, matfunc, pre_rt, pre_mat)
+function draw.RenderOntoMaterial(name, w, h, func, rtfunc, matfunc, pre_rt, pre_mat, has2d)
 
 	local rt
 	local mat
@@ -702,9 +702,8 @@ function draw.RenderOntoMaterial(name, w, h, func, rtfunc, matfunc, pre_rt, pre_
 
 		mat = CreateMaterial(name, "UnlitGeneric", {
 		    ["$translucent"] = 1,
-		    ["$vertexalpha"] = 1,
-
-		    ["$alpha"] = 1,
+			["$vertexalpha"] = 1,
+			["$vertexcolor"] = 1,
 		})
 
 		local m = muldim()
@@ -731,9 +730,8 @@ function draw.RenderOntoMaterial(name, w, h, func, rtfunc, matfunc, pre_rt, pre_
 
 		mats[name] = mats[name] or CreateMaterial(name, "UnlitGeneric", {
 		    ["$translucent"] = 1,
-		    ["$vertexalpha"] = 1,
-
-		    ["$alpha"] = 1,
+			["$vertexalpha"] = 1,
+			["$vertexcolor"] = 1,
 		})
 		
 		mat = mats[name]
@@ -742,25 +740,42 @@ function draw.RenderOntoMaterial(name, w, h, func, rtfunc, matfunc, pre_rt, pre_
 	rt = pre_rt or rt 
 	mat = pre_mat or mat
 
-	render.PushRenderTarget(rt)
-
-	render.OverrideAlphaWriteEnable(true, true)
-		render.Clear(0, 0, 0, 0, true, true)
-	render.OverrideAlphaWriteEnable(false, false)
-
 	local sw, sh = ScrW(), ScrH()
+
+	
+	mat:SetTexture("$basetexture", rt:GetName())
+	--render.Clear(0, 255, 0, 0, true)
 
 	render.SetViewPort(0, 0, w, h)
 
-	surface.DisableClipping(true)
+	render.PushRenderTarget(rt)
 
-	cam.Start2D()
-		local ok, err = pcall(func, w, h)
-	cam.End2D()
+		render.OverrideAlphaWriteEnable(true, true)
 
-	surface.DisableClipping(false)
+			render.ClearDepth()
+			render.Clear(0, 0, 0, 0)
+
+			if not has2d then cam.Start2D() end
+				local ok, err = pcall(func, w, h, rt)
+			if not has2d then cam.End2D() end
+
+		render.OverrideAlphaWriteEnable(false)
 
 	render.SetViewPort(0, 0, sw, sh)
+
+	--
+
+		--surface.DisableClipping(true)
+
+			
+			--render.OverrideAlphaWriteEnable(true, true)
+
+
+			--render.OverrideAlphaWriteEnable(false, false)
+
+		--surface.DisableClipping(false)
+
+	--render.SetViewPort(0, 0, sw, sh)
 
 	if rtfunc and ok then 
 		local keep = rtfunc(rt)
@@ -769,7 +784,7 @@ function draw.RenderOntoMaterial(name, w, h, func, rtfunc, matfunc, pre_rt, pre_
 
 	render.PopRenderTarget()
 
-	mat:SetTexture("$basetexture", rt)
+	
 
 	if matfunc and ok then 
 		matfunc(mat)
@@ -1063,7 +1078,7 @@ function draw.DrawGIF(url, name, x, y, dw, dh, frw, frh, start, pnl)
 	local mat = DownloadGIF(url, name)--GetOrDownload(url, name)
 	if not mat then return end 
 	
-	if mat and mat.downloading or mat.mat:IsError() then 
+	if mat and (not mat.mat or mat.downloading or mat.mat:IsError()) then 
 		if mat.mat and mat.mat:IsError() and not mat.downloading then 
 			surface.SetMaterial(bad)
 			surface.DrawTexturedRect(x, y, dw, dh)
