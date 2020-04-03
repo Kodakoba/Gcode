@@ -5,6 +5,22 @@
 
 
 DeltaTextPiece = DeltaTextPiece or Object:extend()
+
+
+local function NewFragment(text, col)
+	return {
+		Text = text, 
+		OffsetY = 0, 
+		OffsetX = 0, 
+
+		AlignX = 0,
+		AlignY = 0,
+
+		Alpha = 255,
+		Color = col,
+	}
+end
+
 local pmeta = DeltaTextPiece.Meta 
 
 function pmeta:Initialize(par, tx, font, key, rep)
@@ -177,7 +193,12 @@ end
 function pmeta:Paint(x, y)
 	self.Color.a = self.Alpha
 
-	if self.Font ~= self.Parent.LastFont then self.Parent.LastFont = self.Font surface.SetFont(self.Font) end
+	if self.Font ~= self.Parent.LastFont then 
+		self.Parent.LastFont = self.Font 
+		surface.SetFont(self.Font) 
+	end
+
+	local curfont = self.Font 
 
 	if self.Fragmented then
 
@@ -188,15 +209,38 @@ function pmeta:Paint(x, y)
 		for k,v in pairs(self.Fragments) do 
 			if v.Text == "" then continue end 
 
+			--if fragment doesn't have a custom font, and current font is not default font (for example, from last frag)
+			--or fragment has a custom font and it's not the same one as the current,
+			--change it
+
+			if (not v.Font and curfont ~= self.Font) or (v.Font and v.Font ~= curfont) then 
+				surface.SetFont(v.Font or self.Font)
+				curfont = v.Font
+			end
+
 			v.Color.a = math.min(v.Alpha or 255, self.Alpha)
 
-			surface.SetTextPos(x + v.OffsetX + self.Offsets.X, y + v.OffsetY + self.Offsets.Y)
+			local tw, th = surface.GetTextSize(v.Text)
+
+			local alignX, alignY = v.AlignX or 0, v.AlignY or 0
+			alignX, alignY = alignX/2, alignY/2
+
+			--0 = left/top
+			--1 = middle
+			--2 = bottom/right
+
+			--current x/y + fragment offset + parent offset + alignment
+
+			local tX = x + v.OffsetX + self.Offsets.X - alignX * tw
+			local tY = y + v.OffsetY + self.Offsets.Y + alignY * th
+
+			surface.SetTextPos(tX, tY)
 
 			surface.SetTextColor(v.Color)
 
 			surface.DrawText(v.Text)
 
-			local tw, th = surface.GetTextSize(v.Text)
+			
 				
 
 			if not v.RewindTextPos then 
@@ -344,15 +388,19 @@ function pmeta:FragmentText(from, to)
 	end
 end
 
+function pmeta:SetFragmentFont(ind, font)
+	if not self.Fragmented then error("Can't set font for unfragmented text piece!") return end
+	if not self.Fragments[ind] then error("No fragment #" .. ind .. "!") return end
+
+	self.Fragments[ind].Font = font
+end
 
 function pmeta:AddFragment(text, num, anim, onend)	--adds a fragment on top 
-	local newfrag = {
-		Text = text, 
-		OffsetY = 0, 
-		OffsetX = 0, 
-		Alpha = anim and 0 or 255,
-		Color = self.Color,
-	}
+	local newfrag = NewFragment(text, self.Color)
+
+	if anim then 
+		newfrag.Alpha = 0 
+	end
 
 	if not self.Fragmented then 
 		self:FragmentText()
@@ -413,35 +461,35 @@ end
 ]]
 
 function pmeta:ReplaceText(num, rep, onend)
-	local newfrag = {
-		ID = num,
-		Text = rep, 
-		OffsetY = 0, 
-		OffsetX = 0, 
-		Alpha = 0,
-		Color = self.Color,
-		LerpFromLast = 0,
-		RewindTextPos = true,
-		}
 
+	local newfrag = NewFragment(rep, self.Color)
+
+	newfrag.Alpha = 0 
+	newfrag.ID = num
+	newfrag.LerpFromLast = 0
+	newfrag.RewindTextPos = true
 
 	local frag 
-	for k,v in pairs(self.Fragments) do 
+
+	for k,v in pairs(self.Fragments) do --find the frag we'll be replacing
 		if not v.Fading and v.ID == num then 
 			frag = v 
 			break 
 		end
 	end
+
 	if not frag then return false end 
 
-	if frag.Text == rep then return false end 
+	if frag.Text == rep then return false end --its the same text
 	--frag.RewindTextPos = true
 	frag.Fading = true
 
 	self:StopAnimation(frag.ID .. "AddText" .. frag.Text)	--in case it existed
 
+	local dropstr = self:GetDropStrength()
+
 	self:CreateAnimation(num .. "SubText" .. frag.Text, function(fr)
-		frag.OffsetY = fr * self:GetDropStrength()
+		frag.OffsetY = fr * dropstr
 		frag.Alpha = 255 - fr*255
 
 		newfrag.LerpFromLast = fr 	--doing it in the fading _out_ looks better, for some reason, than doing it on fading _in_
@@ -459,12 +507,14 @@ function pmeta:ReplaceText(num, rep, onend)
 		newfrag.Finished = true
 	end)
 
+	local appstr = self:GetLiftStrength()
+
 	self:CreateAnimation(num .. "AddText" .. newfrag.Text, function(fr)
 		frag.RewindTextPos = true	--to prevent the new fragment's X pos being impacted by the one we're removing.
 		newfrag.RewindTextPos = false
 
 		
-		newfrag.OffsetY = 24 - (fr * 24)
+		newfrag.OffsetY = appstr - (fr * appstr)
 		newfrag.Alpha = fr*255
 
 	end, 
@@ -482,9 +532,9 @@ function pmeta:ReplaceText(num, rep, onend)
 		end
 	end
 
-	table.insert(self.Fragments, inswhere, newfrag)
+	local where = table.insert(self.Fragments, inswhere, newfrag)
 
-	return newfrag
+	return where, newfrag
 end
 
 --[[
