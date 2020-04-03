@@ -3,7 +3,9 @@ local COLOR = FindMetaTable("Color")
 Colors = Colors or {}
 
 Colors.Green = Color(60, 235, 60)
+
 Colors.Red = Color(255, 70, 70)
+Colors.DarkerRed = Color(205, 40, 40)
 
 Colors.Gray = Color(50, 50, 50)
 Colors.DarkGray = Color(35, 35, 35)

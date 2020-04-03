@@ -49,7 +49,7 @@ table.KeysToValues = table.KeysToValue
 
 	WeakTable = Object:callable()
 
-	function WeakTable:Initialize(mode, sepmeta)
+	function WeakTable:Initialize(mode)
 		return setmetatable({}, weaks[mode or "kv"])
 	end
 
