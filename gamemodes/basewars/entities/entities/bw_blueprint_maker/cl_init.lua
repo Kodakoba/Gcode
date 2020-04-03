@@ -121,6 +121,7 @@ local mats = {	-- "random" will be rendered from an RT as soon as the menu opens
 
 function ENT:OpenMenu()
 	if IsValid(menu) then return end
+	local ent = self 
 
 	mats.random = mats.random or draw.RenderOntoMaterial("bp_random", 48, 48, function(w, h)
 		draw.SimpleText("?", "MRB72", w/2, h/2, color_white, 1, 1)
@@ -129,7 +130,9 @@ function ENT:OpenMenu()
 	menu = vgui.Create("FFrame")
 	menu:SetSize(650, 500)
 
-	menu:SetPos(ScrW() / 2 - (menu:GetWide() + 350) / 2, ScrH() / 2 - menu:GetTall() / 2)
+	local FullW = 342 + 650
+									--   V inventory has 8px padding from menu
+	menu:SetPos(ScrW() / 2 - FullW / 2 - 4, ScrH() / 2 - menu:GetTall() / 2)
 
 	menu.Shadow = {}
 
@@ -184,10 +187,22 @@ function ENT:OpenMenu()
 	end
 
 	function menu:UpdateCost()
-		curcost = math.floor(basecost * costmult)
+		local newcost = math.floor(basecost * costmult)
+
+
 		if self.Cost then 
-			self.CostPiece:ReplaceText(self.CostFragmentInd, curcost)
+			if newcost > curcost then
+				self.CostPiece:SetDropStrength(18)
+				self.CostPiece:SetLiftStrength(-18)
+			else 
+				self.CostPiece:SetDropStrength(-18)
+				self.CostPiece:SetLiftStrength(18)
+			end 
+
+			self.CostPiece:ReplaceText(self.CostFragmentInd, newcost)
 		end
+
+		curcost = newcost
 	end
 
 	local dled = draw.GetMaterial("https://i.imgur.com/zhejG17.png", "bp128.png", nil, function(mat)
@@ -224,22 +239,22 @@ function ENT:OpenMenu()
 	local btns = 4
 
 	local sel
+	local SelectedTier = 0
 
 	local text = "Tier %d Blueprint"
 	local cycled = false
 
 	local cType
 
-	for i=0, btns - 1 do 
-		local num = i+1
+	for i=1, btns do 
 
 		local tier = icons:Add("FButton")
 
 		tier:SetSize(96, 120 - 16)
 
 		function tier:PostPaint(w, h)
-			if BlueprintPaints[i+1] then 
-				BlueprintPaints[i+1] (self, w, h) 
+			if BlueprintPaints[i] then 
+				BlueprintPaints[i] (self, w, h) 
 			end
 		end
 
@@ -252,10 +267,11 @@ function ENT:OpenMenu()
 
 			sel = self
 
-			basecost = Inventory.BlueprintCosts[i + 1]
+			basecost = Inventory.BlueprintCosts[i]
 
 			menu:UpdateCost()
-			menu:MakeTier(i + 1)
+			menu:MakeTier(i)
+			SelectedTier = i
 		end
 	end
 
@@ -263,15 +279,24 @@ function ENT:OpenMenu()
 
 	function menu:MakeTier(t)
 
-		if not cycled then 
+		if not cycled then
 			delta:CycleNext()
 			dtext.Fragments[ptier].Text = t
 			cycled = true 
 		else
+
+			if t > SelectedTier then
+				dtext:SetDropStrength(12)
+				dtext:SetLiftStrength(-12)
+			else 
+				dtext:SetDropStrength(-12)
+				dtext:SetLiftStrength(12)
+			end 
+
 			dtext:ReplaceText(ptier, t)
 		end
 
-		if not cType then 
+		if not cType then -- this is the first time we're making tier info: create panels
 
 			cType = vgui.Create("FComboBox", menu)
 			cType:SetSortItems(false)
@@ -313,7 +338,7 @@ function ENT:OpenMenu()
 					elseif icon.IconName then
 
 						mat = draw.GetMaterial(icon.IconURL, icon.IconName, icon.IconFlags, function(mat, cache)
-							if cache then print("oh shit oh fuck") return end
+							if cache then return end
 
 							if IsValid(cType) then 
 								cType:SetChoiceMaterial(name, mat)
@@ -332,26 +357,66 @@ function ENT:OpenMenu()
 
 				end
 
-				cType:AddChoice(name, v.CostMult, v.Default, mat, function(self, opt)
+				local choice = cType:AddChoice(name, v.CostMult, v.Default, mat, function(self, opt)
 					opt.IconW = icon.IconW or opt.IconW
 					opt.IconH = icon.IconH or opt.IconH
 
 					opt.IconPad = icon.IconPad or opt.IconPad
 				end)
+
+				if v.Default then 
+					SelectedType = name 
+				end
 			end
 
+			local lastsel = 1 	--index for determining which way deltatext will scroll
+								--when changing type
+
 			function cType:OnSelect(i, val, mult)
+
+				if i > lastsel then
+					dtext:SetDropStrength(12)
+					dtext:SetLiftStrength(-12)
+				else 
+					dtext:SetDropStrength(-12)
+					dtext:SetLiftStrength(12)
+				end 
+
+				lastsel = i
+
 				dtext:ReplaceText(ptype, val)
 
 				costmult = mult 
+				SelectedType = val
 
 				menu:UpdateCost()
 			end
 
+			menu.HasBlueprintsAmt = Inventory.Data.Temp:GetItemCount("blank_bp")
+
+
 			menu.Cost = DeltaText():SetFont("MR48")
+			
 
 			menu.CostPiece = menu.Cost:AddText("x"):SetColor(Colors.Blue)
-			menu.CostFragmentInd = menu.CostPiece:AddFragment(curcost, nil, false)
+
+			menu.CostPiece.Animation.Length = 0.3
+
+			menu.CostFragmentInd, menu.CostFragment = menu.CostPiece:AddFragment(curcost, nil, false)
+
+			local format = "  (x%s)"
+
+			local haveind, havefrag = menu.CostPiece:AddFragment(format:format(menu.HasBlueprintsAmt), nil, false)
+
+			menu.HaveFragmentInd = haveind
+			menu.CostPiece:SetFragmentFont(haveind, "MR24")
+
+			havefrag.AlignY = 1
+
+			local h,s,v = ColorToHSV(Colors.Blue)
+			local have_col = HSVToColor(h, s, v - 0.1)
+
+			havefrag.Color = have_col
 
 			menu.Cost:CycleNext()
 
@@ -367,19 +432,42 @@ function ENT:OpenMenu()
 
 			function btn:Think()
 				menu.HasBlueprintsAmt = Inventory.Data.Temp:GetItemCount("blank_bp")
+
+				local _, frag = menu.CostPiece:ReplaceText(haveind, format:format(menu.HasBlueprintsAmt))
+
+				if frag then 
+					frag.Font = "MR24"
+					frag.AlignY = 1 
+					frag.Color = have_col
+				end
+
 				menu.HasEnough = menu.HasBlueprintsAmt >= curcost
 
-				print("cur cost:", curcost, menu.HasEnough)
-
 				if menu.HasEnough then 
-					print("enuff")
 					self:SetColor(50, 150, 250)
+					LC(menu.CostFragment.Color, Colors.Blue, 15)
+
+					self.Disabled = false
 				else 
-					print("not enuff")
 					local grey = Colors.Button
 					self:SetColor()
+					LC(menu.CostFragment.Color, Colors.DarkerRed, 15)
+
+					self.Disabled = false
 				end
 			end
+
+			function btn:DoClick()
+				if self.Disabled then return end 
+				net.Start("BlueprintMaker")
+					net.WriteEntity(ent)
+					net.WriteUInt(SelectedTier, 4)
+					net.WriteString(SelectedType)
+				net.SendToServer()
+
+				print("current type", SelectedType)
+			end
+
 		end
 		
 	end
