@@ -740,13 +740,7 @@ function draw.RenderOntoMaterial(name, w, h, func, rtfunc, matfunc, pre_rt, pre_
 	rt = pre_rt or rt 
 	mat = pre_mat or mat
 
-	local sw, sh = ScrW(), ScrH()
-
-	
 	mat:SetTexture("$basetexture", rt:GetName())
-	--render.Clear(0, 255, 0, 0, true)
-
-	render.SetViewPort(0, 0, w, h)
 
 	render.PushRenderTarget(rt)
 
@@ -761,21 +755,6 @@ function draw.RenderOntoMaterial(name, w, h, func, rtfunc, matfunc, pre_rt, pre_
 
 		render.OverrideAlphaWriteEnable(false)
 
-	render.SetViewPort(0, 0, sw, sh)
-
-	--
-
-		--surface.DisableClipping(true)
-
-			
-			--render.OverrideAlphaWriteEnable(true, true)
-
-
-			--render.OverrideAlphaWriteEnable(false, false)
-
-		--surface.DisableClipping(false)
-
-	--render.SetViewPort(0, 0, sw, sh)
 
 	if rtfunc and ok then 
 		local keep = rtfunc(rt)
