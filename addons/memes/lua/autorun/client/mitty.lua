@@ -218,6 +218,11 @@ end)
 
 	rtw = RT width  ]
 	rth = RT height ] 128 by default
+
+	------------
+	
+	todo: make this function return a decal object so  
+		  you don't have to give so many args
 ]]
 
 function Memes.AddDecal(name, pos, ang, scale, normal, col, rtpaint, rtupd, pixpos, pixrad, mw, mh, rtw, rth)

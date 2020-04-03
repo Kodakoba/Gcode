@@ -11,27 +11,8 @@ serversecure.EnablePlayerInfoCache(true)
 
 
 print("fake player count on refresh:", serversecure.RefreshInfoCache())
-
 ]]
-/*
-print('requiring sourcenet')
 
-require("sourcenet")
-EnableLuaFileValidation(true)
-
-print('required sourcenet')
-
---
-hook.Add("SendLuaFileToClient", "UhOh", function(clnum, clstr, fileid, fn)
-    print("doing for:", clnum, clstr, fileid, fn)
-	if fn:find("basicpanels") then 
-        print('found em boy')
-		--return false, "fuckwits.lua"
-	end 
-
-end)
-
-*/
 
 local debuggingDownloads = false
 
@@ -211,6 +192,8 @@ timer.Simple(0, function()
         DownloadFolder("sound/mus")
         
         DownloadFolder("sound/vgui")
+
+       --resource.AddSingleFile("materials/grp/fuck.vtf")
     end
 end)
 
