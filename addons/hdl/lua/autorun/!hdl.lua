@@ -179,7 +179,7 @@ function hdl.DownloadFile(url, name, func, fail, ovwrite, onqueue)
 
 end
 
-httpReady = httpReady or Perilous_Perks or false
+httpReady = httpReady or (not GachiRP) or false
 
 hook.Add("Think", "HDL", function()
 	if not httpReady then return end 

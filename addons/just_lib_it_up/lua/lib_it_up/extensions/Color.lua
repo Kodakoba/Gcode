@@ -9,8 +9,11 @@ Colors.DarkerRed = Color(205, 40, 40)
 
 Colors.Gray = Color(50, 50, 50)
 Colors.DarkGray = Color(35, 35, 35)
+Colors.DarkerGray = Color(20, 20, 20)
+
 Colors.LightGray = Color(65, 65, 65)
 Colors.LighterGray = Color(75, 75, 75)
+
 Colors.Sky = Color(100, 130, 250)
 Colors.Money = Color(100, 220, 100)
 

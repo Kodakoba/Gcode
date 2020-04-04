@@ -106,7 +106,7 @@ function PANEL:Init()
 
 	self.DimColor = Color(0, 0, 0, 220)
 
-	self:DockPadding(4, 32, 4, 4)
+	self:DockPadding(4, 32 + 4, 4, 4)
 
 
 	self.SizableNum = 3
@@ -178,7 +178,6 @@ local rots = {
 }
 
 function PANEL.DrawHeaderPanel(self, w, h, x, y)
-	self.DraggableH = self.HeaderSize
 
 	local rad = self.RBRadius or 8
 
@@ -316,7 +315,7 @@ local cursors = {
 }
 
 function PANEL:Think()
-
+	self.DraggableH = self.HeaderSize
 	local mousex = math.Clamp( gui.MouseX(), 1, ScrW() - 1 )
 	local mousey = math.Clamp( gui.MouseY(), 1, ScrH() - 1 )
 

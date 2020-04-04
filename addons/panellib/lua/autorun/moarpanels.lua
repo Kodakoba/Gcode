@@ -51,6 +51,8 @@ if CLIENT then
 	    ["BreezeSans Medium"] = "BSSB",
 	    ["BreezeSans Light"] = "BSL",
 	    ["BreezeSans Bold"] = "BSB",
+
+	    ["DejaVu Sans"] = "DV",
 	}
 
 	FontFamilies = families
