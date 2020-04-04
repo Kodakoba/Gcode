@@ -1,5 +1,7 @@
 file.CreateDir("emoticon_cache")
 
+setfenv(1, _G)
+
 local col = Color(255, 200, 0, 255)
 local Msg = function(...) MsgC(col, ...)  end
 local surface = surface 

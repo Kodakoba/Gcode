@@ -121,14 +121,14 @@ if CLIENT then
 
 	net.Receive(chatexp.NetTag, function(len2)
 
-		local special = net.ReadBool()
+		--local special = net.ReadBool()
 		local ply 	= net.ReadEntity()
 
 		local len 	= net.ReadUInt(16)
 		local data 	= net.ReadData(len)
 
 		local mode 	= net.ReadUInt(8)
-		--local mode_data = net.ReadUInt(16)
+		local mode_data = net.ReadUInt(16)
 
 		data = util.Decompress(data, 2^12)
 
