@@ -128,7 +128,6 @@ Partizones = PawwtizOwOnes
 local function HexLibLoaded( ... )
 
 	PawwtizOwOne = Object:extend()
-
 	Partizone = PawwtizOwOne
 
 	PawwtizOwOneMethOwOds = PawwtizOwOne.Meta

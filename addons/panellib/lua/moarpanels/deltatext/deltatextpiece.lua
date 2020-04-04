@@ -206,6 +206,28 @@ function pmeta:Paint(x, y)
 		local lastw = 0
 		local lasttx = ""
 
+		for k,v in pairs(self.Fragments) do
+			local alignX = v.AlignX or 0
+			alignX = alignX / 2
+			if (not v.Font and curfont ~= self.Font) or (v.Font and v.Font ~= curfont) then 
+				surface.SetFont(v.Font or self.Font)
+				curfont = v.Font
+			end
+
+			local tw, th = surface.GetTextSize(v.Text)
+
+			if not v.RewindTextPos then 
+
+				if v.LerpFromLast then 
+					x = x -  Lerp(Ease(v.LerpFromLast, v.Ease or 0.6), lastw or tw*alignX, tw*alignX)
+				else 
+					x = x - tw * alignX 
+				end 
+
+			end
+			
+		end
+
 		for k,v in pairs(self.Fragments) do 
 			if v.Text == "" then continue end 
 
@@ -231,7 +253,7 @@ function pmeta:Paint(x, y)
 
 			--current x/y + fragment offset + parent offset + alignment
 
-			local tX = x + v.OffsetX + self.Offsets.X - alignX * tw
+			local tX = x + v.OffsetX + self.Offsets.X -- alignX * tw
 			local tY = y + v.OffsetY + self.Offsets.Y + alignY * th
 
 			surface.SetTextPos(tX, tY)
@@ -315,6 +337,7 @@ function pmeta:FragmentText(from, to)
 
 			t[1] = {
 				Text = t1,
+				ID = 1,
 				OffsetX = 0,
 				OffsetY = 0,
 				Color = self.Color,
@@ -322,6 +345,7 @@ function pmeta:FragmentText(from, to)
 
 			t[2] = {
 				Text = t2,
+				ID = 2,
 				OffsetX = 0,
 				OffsetY = 0,
 				Color = self.Color,
@@ -329,6 +353,7 @@ function pmeta:FragmentText(from, to)
 
 			t[3] = {
 				Text = t3,
+				ID = 3,
 				OffsetX = 0,
 				OffsetY = 0,
 				Color = self.Color,
@@ -337,6 +362,7 @@ function pmeta:FragmentText(from, to)
 		else 
 			t[1] = {
 				Text = self.Text,
+				ID = 1,
 				OffsetX = 0,
 				OffsetY = 0,
 				Color = self.Color
@@ -483,6 +509,10 @@ function pmeta:ReplaceText(num, rep, onend)
 	if frag.Text == rep then return false end --its the same text
 	--frag.RewindTextPos = true
 	frag.Fading = true
+
+	newfrag.AlignX = frag.AlignX 
+	newfrag.AlignY = frag.AlignY 
+	newfrag.Color = frag.Color 
 
 	self:StopAnimation(frag.ID .. "AddText" .. frag.Text)	--in case it existed
 
