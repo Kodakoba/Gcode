@@ -14,7 +14,7 @@ print("fake player count on refresh:", serversecure.RefreshInfoCache())
 ]]
 
 
-local debuggingDownloads = false
+local debuggingDownloads = true
 
 
 local TTTaddons = {

@@ -502,7 +502,6 @@ function chatbox.BuildTabChat(self, a)
 						gui.OpenURL(val)
 					end
 				end
-				print("signal", name, val)
 			end
 		self.chat.input_base = vgui.Create("DPanel", self.chat)
 		self.chat.input_base:Dock(BOTTOM)

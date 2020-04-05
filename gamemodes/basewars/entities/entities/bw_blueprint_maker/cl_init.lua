@@ -453,7 +453,7 @@ function ENT:OpenMenu()
 					self:SetColor()
 					LC(menu.CostFragment.Color, Colors.DarkerRed, 15)
 
-					self.Disabled = false
+					self.Disabled = true
 				end
 			end
 

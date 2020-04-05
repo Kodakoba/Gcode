@@ -321,8 +321,8 @@ chathud.TagTable = {
 		end,
 		TagEnd = function(self, markup, buffer, args)
 			cam.PopModelMatrix()
-			local xdif = buffer.x - self._bufferx
-			local ydif = buffer.y - self._buffery 
+			local xdif = buffer.x - (self._bufferx or 0)
+			local ydif = buffer.y - (self._buffery or 0)
 			if ydif==0 then 
 				buffer.x = buffer.x + xdif * (args[1] - 1)
 			end

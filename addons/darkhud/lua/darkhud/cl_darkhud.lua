@@ -443,7 +443,7 @@ function DarkHUD.Create()
 
 				hintbox.a = helpa
 
-				draw.SimpleText(str, "OS24", w/2, -8, Color(255, 255, 255, hintbox), 1, TEXT_ALIGN_BOTTOM)
+				draw.SimpleText(str, "OS24", w/2, -8, hintbox, 1, TEXT_ALIGN_BOTTOM)
 			end
 
 		surface.DisableClipping(false)

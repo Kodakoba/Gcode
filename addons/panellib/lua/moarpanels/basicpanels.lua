@@ -316,6 +316,7 @@ local cursors = {
 
 function PANEL:Think()
 	self.DraggableH = self.HeaderSize
+
 	local mousex = math.Clamp( gui.MouseX(), 1, ScrW() - 1 )
 	local mousey = math.Clamp( gui.MouseY(), 1, ScrH() - 1 )
 
@@ -437,7 +438,8 @@ function PANEL:Think()
 end
 
 function PANEL:OnMousePressed()
-
+	self.DraggableH = self.DraggableH or self.HeaderSize 
+	
 	local screenX, screenY = self:LocalToScreen( 0, 0 )
 
 	if self:GetSizable() then

@@ -24,16 +24,12 @@ addons/*mining*
 addons/*inventory*
 addons/*research*
 
-#anything thats not a lua file >:(
-*.*
-!*.lua
-
-# Ignore everything in repository root 
-/*
-
 # Files to not ignore
 !/.gitignore
 !/addons
 
 # Folder to not ignore
 !/gamemodes/basewars
+
+*.*
+!lua/xp3/*
