@@ -160,9 +160,6 @@ function SWEP:CheckMoves(owner, mv, dir)
 
 			vel = dir * mul
 			vel.z = math.max(vel.z * (dir.z > 0.6 and (0.5 / (1 - dir.z)) or 1), 400)
-			print(vel.z)
-			--vel.z = 400
-
 
 			if SERVER then
 
