@@ -1,4 +1,3 @@
-
 SWEP.Author			= "grmx"
 SWEP.Contact			= ""
 SWEP.Purpose			= ""
@@ -134,38 +133,49 @@ function SWEP:CheckMoves(owner, mv, dir)
 		end
 
 	else --Dash started in mid-air
+
 		if dt.jump or not dt.down then return end --Player must've dashed without space and dashed downwards
 
 		local tr = util.TraceHull({
-			start = owner:GetPos(),
-			endpos = owner:GetPos() - Vector(0, 0, 2),
+			start = owner:GetPos() + Vector(0, 0, 8),
+			endpos = owner:GetPos() - Vector(0, 0, 24),
 			filter = owner,
-			mins = Vector( -16, -16, -16 ),
-			maxs = Vector( 16, 16, 16 ),
+			mins = Vector( -16, -16, -4 ),
+			maxs = Vector( 16, 16, 4 ),
 			mask = MASK_SOLID
 		})
 
 		if tr.Hit then
-
+			
 			local vel 
 
 			local ang = dir:Angle()
 			local strength = ang.p --the lower they aimed their dash, the more it will be
 
-			if true then
-				vel = dir * 1500
-				vel.z = 400
-				return
-			end
+			local dir = Vector()
+			dir:Set(dt.dir)
+			dir.z = math.min(-dir.z, 0.9)
+
+			local mul = 2000 * (1 - dir.z)
+
+			vel = dir * mul
+			vel.z = math.max(vel.z * (dir.z > 0.6 and (0.5 / (1 - dir.z)) or 1), 400)
+			print(vel.z)
+			--vel.z = 400
+
 
 			if SERVER then
+
 				self:StopDash()
 
 				owner:SetPos(mv:GetOrigin())
 
+				--mv:SetVelocity(vel)
 				return vel
 
 			elseif not self.StoppedDash then
+
+				--self:StopDash()
 
 				dt.newvel = vel/2
 
@@ -231,14 +241,12 @@ function SWEP:PrimaryAttack()
 	end
 	local dt = DashTable[owner]
 
-	
+ 
+	dt.ground = owner:IsOnGround()
 
-	if SERVER then 
-		dt.ground = owner:IsOnGround()
+	dt.jump = owner:KeyDown(IN_JUMP)
+	dt.down = dir.z < -0.15
 
-		dt.jump = owner:KeyDown(IN_JUMP)
-		dt.down = dir.z < -0.25
-	end
 
 	--
 
@@ -306,7 +314,7 @@ hook.Add("FinishMove", "Dash", function(ply, mv, cmd)
 	if isvector(changed) then --return bool to prevent mv
 		--if not IsFirstTimePredicted() and CLIENT then return end
 
-		ply:SetVelocity(-ply:GetVelocity() + changed) 
+		ply:SetVelocity(-mv:GetVelocity() + changed) 
 
 		--self:StopDash()
 
