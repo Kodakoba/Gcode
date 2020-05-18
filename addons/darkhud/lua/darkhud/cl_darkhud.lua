@@ -2,126 +2,32 @@ local scale = 0.85
 local hsc = 0.85
 
 DarkHUD = DarkHUD or {}
-local wasvalid = false 
+local wasvalid = false
 
-local render = render 
-local surface = surface 
+local render = render
+local surface = surface
 
 if DarkHUD.Essentials then DarkHUD.Essentials:Remove() DarkHUD.Essentials = nil wasvalid = true end
 
-DarkHUD.EverUsed = false 
+DarkHUD.EverUsed = false
 
 sql.Query("CREATE TABLE IF NOT EXISTS DarkHUD(used TEXT, settings TEXT)")
 DarkHUD.Used = DarkHUD.Used or sql.Query("SELECT used FROM DarkHUD")
 local used = DarkHUD.Used
 
-if not used then used = {} sql.Query("INSERT INTO DarkHUD(used, settings) VALUES('[]', '[]')") end 
-if used and used[1] and used[1].used then used = util.JSONToTable(used[1].used) end 
+if not used then used = {} sql.Query("INSERT INTO DarkHUD(used, settings) VALUES('[]', '[]')") end
+if used and used[1] and used[1].used then used = util.JSONToTable(used[1].used) end
 
 function DarkHUD.SetUsed(key, val)
-	used[key] = val 
+	used[key] = val
 
 	local str = SQLStr(util.TableToJSON(used))
 	local q = ("UPDATE DarkHUD SET used = %s"):format(str)
 	sql.Query(q)
 end
 
-local shmat = CreateMaterial("darkhud_shadow", "UnlitGeneric", {
-    ["$translucent"] = 1,
-	["$vertexalpha"] = 1,
-	["$vertexcolor"] = 1,
-	["$color"] = "[0 0 0]",
-})
 
-local cringe = CreateMaterial("darkhud_bruhh", "UnlitGeneric", {
-    ["$translucent"] = 1,
-	["$vertexalpha"] = 1,
-	["$vertexcolor"] = 1,
-})
-
---this is cancer, this is VERY cancer, this is EXTREMELY CANCER but i made this for fun
-
---well, """""""""""""""""fun"""""""""""""""""""
-function DarkHUD.CachePanelRender(f)
-	
-	hook.Add("PreDrawEffects", "ohgoddamnit", function()
-		local f = DarkHUD.Essentials
-
-		local hder = f.DrawHeaderPanel
-		local shad = f.Shadow
-
-		local padW, padH = 8, 4
-		local shadowW, shadowH = 24, 24
-
-		local rt2 = draw.GetRT("darkhud_shadow", scale*500 + shadowW, hsc*200 + shadowH)
-
-		render.PushRenderTarget(rt2) --just in case
-			render.Clear(0, 0, 0, 0)
-		render.PopRenderTarget()
-
-		f.ShadowCache = draw.RenderOntoMaterial("darkhud_cache", scale*500 + padW*2, hsc*200 + padH*2, function(w, h, rt)
-			f.Shadow = false 
-
-			local x, y = f:LocalToScreen(0, 0)
-			local pw, ph = scale*500, hsc*200
-
-			surface.DisableClipping(true)
-				f:DrawHeaderPanel(pw, ph, padW, padH) --f:Paint(w, h) 
-				if f.CachePaint then f:CachePaint(pw, ph + 4, 8, 8) end
-			surface.DisableClipping(false)
-
-			f.Shadow = shad
-
-			cringe:SetTexture("$basetexture", rt:GetName())
-
-			render.PushRenderTarget(rt2, 0, 0, rt2:Width(), rt2:Height())
-				surface.SetMaterial(cringe)
-				surface.SetDrawColor(color_black)
-				surface.DrawTexturedRect(shadowW/2, shadowH/2, w - shadowW, h - shadowH)
-			render.PopRenderTarget()
-
-			--render.CopyRenderTargetToTexture(rt2)
-			render.BlurRenderTarget(rt2, 4, 4, 2)
-
-			shmat:SetTexture("$basetexture", rt2:GetName())
-	
-		end, function(rt)
-			
-		end, function(mat)
-
-		end, nil, nil, false)
-
-		function f:DrawHeaderPanel(w, h)
-
-			if self.ShadowCache then --if you're fucking crazy you can try caching the shadow in an RT
-				local spread = self.Shadow and self.Shadow.spread or 2
-				local blur = self.Shadow and self.Shadow.blur or 2
-
-				surface.DisableClipping(true)
-
-					surface.SetMaterial(shmat)--self.ShadowCache)
-					surface.SetDrawColor(color_white)
-
-					local exW, exH = 0, 0
-
-					for i=1, 2 do
-						surface.DrawTexturedRect(-shadowW/3, -shadowH/2 - padH, w + shadowW/1.5, h + shadowH + padH*2)
-					end
-
-					surface.SetMaterial(self.ShadowCache)
-					surface.DrawTexturedRect(0, -padH, w, h + padH*2)
-
-				surface.DisableClipping(false)
-			end
-
-		end
-		hook.Remove("PreDrawEffects", "ohgoddamnit")
-	end)
-
-end
-
-
-local dh = DarkHUD 
+local dh = DarkHUD
 
 dh.PaddingX = scale * 64
 dh.PaddingY = hsc * 48
@@ -202,10 +108,11 @@ function DarkHUD.Create()
 	DarkHUD.Essentials = vgui.Create("FFrame")
 
 	local f = DarkHUD.Essentials
+	if not IsValid(f) then return false end --?
 	f:SetPaintedManually(true)
 	f.HeaderSize = 24
 
-	local hs = f.HeaderSize 
+	local hs = f.HeaderSize
 
 
 	f:SetSize(scale*500, hsc*200)
@@ -219,14 +126,14 @@ function DarkHUD.Create()
 
 	f.Vitals = vgui.Create("InvisFrame", f)
 
-	local vls = f.Vitals 
+	local vls = f.Vitals
 
 	vls:SetSize(f:GetWide(), f:GetTall() - hs)
 	vls:SetPos(0, hs)
 
 
 	f.Economy = vgui.Create("InvisFrame", f)
-	local ecn = f.Economy 
+	local ecn = f.Economy
 
 	ecn:SetSize(f:GetWide(), f:GetTall() - hs)
 	ecn:SetPos(0, hs)
@@ -235,7 +142,7 @@ function DarkHUD.Create()
 
 
 	local av = vgui.Create("AvatarImage", f)
-	f.Avatar = av 
+	f.Avatar = av
 
 	av:SetSize(64, 64)
 	av:SetPos(16, hs + 8)
@@ -250,14 +157,14 @@ function DarkHUD.Create()
 	local hpfr = 0
 	local arfr = 0
 
-	local contextopen = false 
+	local contextopen = false
 
 	local pl, pm, pe = LocalPlayer():GetLevel(), LocalPlayer():GetMoney()
 
-	local PopupLevel = 0 
-	local PopupMoney = 0 
+	local PopupLevel = 0
+	local PopupMoney = 0
 
-	local pld, pmd, ped = {}, {}, {} --differences 
+	local pld, pmd, ped = {}, {}, {} --differences
 
 	local mCol = Color(250, 250, 250)
 	local lvCol = Color(250, 250, 250)
@@ -268,38 +175,38 @@ function DarkHUD.Create()
 		local lvl = LocalPlayer():GetLevel()
 		local mon = LocalPlayer():GetMoney()
 
-		if pl ~= lvl then 
+		if pl ~= lvl then
 			PopupLevel = CurTime()
 			lvCol:Set(Colors.Green)
 			pld = {amt = lvl - pl, y = 0, ct = CurTime(), boxcol = boxcol:Copy()}
 		end
 
-		if pm ~= mon then 
-			PopupMoney = CurTime() 
+		if pm ~= mon then
+			PopupMoney = CurTime()
 
 			if pm < mon then -- + money
 				mCol:Set(Colors.Green)
-			else 
+			else
 				mCol:Set(Colors.Red)
 			end
 
 			if #pmd < 7 then
 				pmd[#pmd+1] = {amt = mon - pm, y = 0, ct = CurTime(), col = mCol:Copy(), boxcol = boxcol:Copy()}
-			else 
+			else
 				local cur = pmd[1]
 
 				cur.amt = cur.amt + (mon - pm)
 				cur.ct = CurTime()
 
-				if cur.amt < 0 then 
+				if cur.amt < 0 then
 					cur.col:Set(red)
-				else 
-					cur.col:Set(green) 
-				end 
+				else
+					cur.col:Set(green)
+				end
 
 			end
 
-		end 
+		end
 
 		pl, pm, pe = lvl, mon
 	end
@@ -312,10 +219,10 @@ function DarkHUD.Create()
 	local mondiffY = 0
 
 
-	local monYMax = 36 
-	local monYMin = -10 
+	local monYMax = 36
+	local monYMin = -10
 
-	local lvYMax = 36 
+	local lvYMax = 36
 	local lvYMin = 0
 
 
@@ -325,23 +232,23 @@ function DarkHUD.Create()
 	function f:PrePaint(w,h)
 		local ct = CurTime()
 
-		if ct - PopupLevel < 4 then 
+		if ct - PopupLevel < 4 then
 			lvY = L(lvY, lvYMax, 8, true)
-		else 
+		else
 			lvY = L(lvY, lvYMin, 15)
 		end
 
-		if ct - PopupLevel > 0.5 then 
+		if ct - PopupLevel > 0.5 then
 			LC(lvCol, color_white, 15)
 		end
 
-		if ct - PopupMoney < 4 then 
+		if ct - PopupMoney < 4 then
 			monY = L(monY, monYMax, 8, true)
-		else 
+		else
 			monY = L(monY, monYMin, 15)
 		end
 
-		if ct - PopupMoney > 1 then 
+		if ct - PopupMoney > 1 then
 			LC(mCol, color_white, 15)
 		end
 
@@ -350,13 +257,13 @@ function DarkHUD.Create()
 		surface.DisableClipping(true)
 
 
-			if monY > 2 then 
+			if monY > 2 then
 
 				local mtxt = Language.Currency .. BaseWars.NumberFormat(LocalPlayer():GetMoney())
-				
+
 				surface.SetFont("OSB28")
 				local mw, mh = surface.GetTextSize(mtxt)
-				
+
 				draw.RoundedBox(6, 12, -monY - lvY, mw + 24 + 24, 32, boxcol)
 
 				surface.SetDrawColor(255, 255, 255)
@@ -368,37 +275,37 @@ function DarkHUD.Create()
 
 				for k,v in pairs(pmd) do 	--money popups
 
-					if v.a and v.a > 10 then 
-						i = i + 1 
+					if v.a and v.a > 10 then
+						i = i + 1
 					end
 
-					local amt = v.amt 
+					local amt = v.amt
 
 					local difftxt = Language.Currency .. BaseWars.NumberFormat(math.abs(amt))
 
-					if amt < 0 then 
-						difftxt = "-" .. difftxt 
-					else 
-						difftxt = "+" .. difftxt 
+					if amt < 0 then
+						difftxt = "-" .. difftxt
+					else
+						difftxt = "+" .. difftxt
 					end
 
 					if monY > monYMax*0.9 then
 						v.y = L(v.y, 28 * i, 10)
 
-						if v.ct < CurTime() - 2.5 then 
+						if v.ct < CurTime() - 2.5 then
 							v.a = L(v.a, 0, 15)
-							if v.a <= 0.1 then 
+							if v.a <= 0.1 then
 								table.remove(pmd, k)
-							end 
+							end
 						else
 							v.a = L(v.a, 255, 15)
 						end
 
-					else 
+					else
 						v.a = L(v.a, 0, 15)
 					end
 
-						
+
 					surface.SetFont("OSB24")
 					local tw, th = surface.GetTextSize(difftxt)
 
@@ -409,12 +316,12 @@ function DarkHUD.Create()
 					draw.SimpleText(difftxt, "OSB24", 48 + 8,  -monY - lvY - v.y, v.col, 0, 5)
 				end
 
-			else 
+			else
 				mondiffY = 0
 			end
 
 
-			if lvY > 2 then 
+			if lvY > 2 then
 				local lv = tostring(LocalPlayer():GetLevel())
 				surface.SetFont("OSB28")
 				local mw, mh = surface.GetTextSize(lv)
@@ -428,13 +335,13 @@ function DarkHUD.Create()
 
 				local col = ColorAlpha(lvCol, lvY * (255/24) )
 				draw.SimpleText(lv, "OSB28", 48, -lvY + 16, col, 0, 1)
-			else 
+			else
 				--mondiffY = 0
 			end
 
-			if not used["ContextMenu"] then 	
-				helpa = L(helpa, 255, 10, true)		
-			else 
+			if not used["ContextMenu"] then
+				helpa = L(helpa, 255, 10, true)
+			else
 				helpa = L(helpa, 0, 10, true)
 			end
 			if helpa > 0 then
@@ -455,7 +362,7 @@ function DarkHUD.Create()
 		return (utf8.len(lastfac) > 32 and (string.sub(lastfac, 0, 30) .. "..")) or lastfac
 	end
 
-	
+
 	local facname
 
 	function f:PostPaint(w, h)
@@ -467,12 +374,12 @@ function DarkHUD.Create()
 		surface.SetDrawColor(Color(255, 255, 255, 220))
 		surface.DrawMaterial("https://i.imgur.com/5BQxS4m.png", "faction.png", x + w2 + 24, y + 32, 24, 24)
 		local fac = LocalPlayer():GetFaction()
-		
-		if lastfac ~= fac then 
+
+		if lastfac ~= fac then
 			lastfac = fac
 			facname = faclen(lastfac)
 		end
-		
+
 		draw.SimpleText(facname, "FactionFont", x + w2 + 24 + 20 + 8, y + 32 + 20, Color(255, 255, 255, 20), 0, 4)
 
 		local tm = LocalPlayer():Team()
@@ -484,7 +391,7 @@ function DarkHUD.Create()
 			render.ClearStencil()
 			render.SetStencilWriteMask( 1 )
 			render.SetStencilTestMask( 1 )
-			
+
 			render.SetStencilCompareFunction( STENCIL_ALWAYS )
 			render.SetStencilPassOperation( STENCIL_REPLACE )
 
@@ -507,7 +414,7 @@ function DarkHUD.Create()
 			av:PaintManual()
 
 		render.SetStencilEnable(false)
-		
+
 		surface.SetDrawColor(tcol)
 		surface.DrawMaterial("https://i.imgur.com/VMZue2h.png", "circle_outline.png", x-3, y-3, w2+6, h2+6)
 	end
@@ -517,32 +424,32 @@ function DarkHUD.Create()
 		local x, y = 12, av.Y
 		y = y - hs
 		local w2, h2 = av:GetSize()
-		
+
 		--self:SetSize(f:GetWide(), f:GetTall() - hs)
-		
+
 		hpfr = L(hpfr, (LocalPlayer():Health()/LocalPlayer():GetMaxHealth()), 15)
 		arfr = L(arfr, LocalPlayer():Armor()/100, 15)
 
 		local avx = x + 16 --contains X padding
 		local avy = y + 32 + 32 + 18 --contains Y padding
-		
+
 
 		local sx, sy = self:LocalToScreen(avx, avy)
 		local hpw = w - avx*2 - 48
 		--[[
 			Health & Armor
 		]]
-		local overheal = false 
-		local overar = false 
+		local overheal = false
+		local overar = false
 
-		if hpfr > 1 then 
-			overheal = true 
-			hpfr = 1 
-		end 
+		if hpfr > 1 then
+			overheal = true
+			hpfr = 1
+		end
 
-		if arfr > 1 then 
-			overar = true 
-			arfr = 1 
+		if arfr > 1 then
+			overar = true
+			arfr = 1
 		end
 
 
@@ -556,19 +463,19 @@ function DarkHUD.Create()
 			draw.RoundedBox(8, avx, avy, w - avx*2 - 48, 16, Color(80, 80, 80))
 
 			if not round then
-				--draw.RoundedBox(8, avx, avy, hpw, 16, Color(240, 70, 70))	
-				if hpw*hpfr < 16 then 
+				--draw.RoundedBox(8, avx, avy, hpw, 16, Color(240, 70, 70))
+				if hpw*hpfr < 16 then
 					render.SetScissorRect(sx, sy, sx+hpw*hpfr, sy+16, true)
 						draw.RoundedBoxEx(8, avx, avy, 16, 16, Color(240, 70, 70), true, false, true, false)
 					render.SetScissorRect(0, 0, 0, 0, false)
-				else 
+				else
 
 					draw.RoundedBox(8, avx, avy, hpw*hpfr, 16, Color(240, 70, 70))
 
 				end
-				
-			elseif round then 
-			
+
+			elseif round then
+
 				draw.RoundedBoxExEx(8, avx, avy, hpw*hpfr, 16, Color(240, 70, 70), 8, round, 8, round)
 
 			end
@@ -586,18 +493,18 @@ function DarkHUD.Create()
 			draw.RoundedBox(8, avx, avy, w - avx*2 - 48, 16, Color(80, 80, 80))
 
 			if not round then
-				if hpw*arfr < 16 then 
+				if hpw*arfr < 16 then
 					render.SetScissorRect(sx, sy, sx+hpw*arfr, sy+16, true)
 						draw.RoundedBox(8, avx, avy, 16, 16, Color(40, 120, 255))
 					render.SetScissorRect(0, 0, 0, 0, false)
-				else 
+				else
 
 					draw.RoundedBox(8, avx, avy, hpw*arfr, 16, Color(40, 120, 255))
 
 				end
-				
-			elseif round then 
-			
+
+			elseif round then
+
 				draw.RoundedBoxExEx(8, avx, avy, hpw*arfr, 16, Color(40, 120, 255), 8, round, 8, round)
 
 			end
@@ -623,7 +530,6 @@ function DarkHUD.Create()
 		draw.RoundedBox(8, w - 204, y + 82, (128) * (LocalPlayer():GetXP() / LocalPlayer():GetXPNextLevel()), 16, Color(140, 80, 220))
 	end
 
-	timer.Create("DarkHUD_CachePanel", 2, 1, function() DarkHUD.CachePanelRender(f) end)
 end
 
 hook.Add("InitPostEntity", "HUDCreate", function()
@@ -631,52 +537,52 @@ hook.Add("InitPostEntity", "HUDCreate", function()
 end)
 
 hook.Add("OnContextMenuOpen", "DarkHUD", function()
-	local f = DarkHUD.Essentials 
+	local f = DarkHUD.Essentials
 
-	if not IsValid(f) then 
+	if not IsValid(f) then
 		DarkHUD.Create()
 		f = DarkHUD.Essentials
 		if not IsValid(DarkHUD.Essentials) then return end
-	end 
+	end
 
-	if not used["ContextMenu"] then 
+	if not used["ContextMenu"] then
 		DarkHUD.SetUsed("ContextMenu", 1)
 	end
 
-	if IsValid(f.Vitals) and IsValid(f.Economy) then 
+	if IsValid(f.Vitals) and IsValid(f.Economy) then
 		f.Vitals:PopOut(nil, nil, function() end)
 		f.Economy:PopIn()
-	else 
+	else
 
 	end
 
 end)
 
 hook.Add("OnContextMenuClose", "DarkHUD", function()
-	local f = DarkHUD.Essentials 
-	if not IsValid(f) then return end 
-	
-	if IsValid(f.Vitals) and IsValid(f.Economy) then 
+	local f = DarkHUD.Essentials
+	if not IsValid(f) then return end
+
+	if IsValid(f.Vitals) and IsValid(f.Economy) then
 		f.Economy:PopOut(nil, nil, function() end)
 		f.Vitals:PopIn()
-	else 
+	else
 
 	end
 
 end)
 
 hook.Add("HUDPaint", "DarkHUD", function()
-	local f = DarkHUD.Essentials 
+	local f = DarkHUD.Essentials
 
-	if not IsValid(f) then 
+	if not IsValid(f) then
 		DarkHUD.Create()
 		f = DarkHUD.Essentials
 		if not IsValid(DarkHUD.Essentials) then return end
-	end 
+	end
 
 	f:PaintManual()
 
 end)
-if wasvalid then 
-	DarkHUD.Create() 
+if wasvalid then
+	DarkHUD.Create()
 end
