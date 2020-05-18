@@ -1,13 +1,13 @@
 function file.Here(lv)
 	lv = lv or 2 
-	local source = debug.getinfo(lv).source 
+	local source = debug.getinfo(lv).source
 
 	return source:match(".+/lua/(.+/).+%.lua")
 end
 
 function file.Me(lv)
-	lv = lv or 2 
-	local source = debug.getinfo(lv).source 
+	lv = lv or 2
+	local source = debug.getinfo(lv).source
 
 	return source:match(".+/lua/.+/(.+%.lua)")
 end
@@ -22,13 +22,12 @@ end
 
 function file.ForEveryFile(path, where, func)
 
-	if isfunction(where) then 
-		func = where 
+	if isfunction(where) then
+		func = where
 		where = "LUA"
 	end
 
-	for k,v in ipairs(file.Find(path, where)) do 
-		print("running func for", v)
+	for k,v in ipairs(file.Find(path, where)) do
 		func(v)
 	end
 end

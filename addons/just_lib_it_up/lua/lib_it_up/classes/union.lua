@@ -3,6 +3,8 @@
 		Calling methods on it will call the methods on its' children instead.
 
 		Can only have numbered keys.
+
+		Easylua, anyone?
 ]]
 
 UnionTable = {}
@@ -15,7 +17,7 @@ meta.IsUnion = true
 function meta.__index(self, key)
 	local raw = rawget(self, key) or rawget(meta, key)
 
-	if raw or isnumber(key) then 
+	if raw or isnumber(key) then
 		return raw
 	end
 
@@ -31,19 +33,18 @@ function meta.__index(self, key)
 		local outs = {}
 
 
-		local useself = false 
+		local useself = false
 
-		if args_orig[1] == self then 
-			useself = true 
+		if args_orig[1] == self then
+			useself = true
 			table.remove(args, 1)
-		end 
+		end
 
-		for k,v in pairs(self) do 
+		for k,v in pairs(self) do
 
-			if isfunction(v[key]) then 
+			if isfunction(v[key]) then
 
 				local func = v[key]
-				local whomst = nil
 
 				outs[v] = func( useself and v or args_orig[1], unpack(args) )
 			end

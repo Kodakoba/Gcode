@@ -1,15 +1,15 @@
-MoarPanelsMats = MoarPanelsMats or {
+MoarPanelsMats = MoarPanelsMats or {}
 
-}
-
+setfenv(1, _G) --never speak to me or my son
 
 MoarPanelsMats.gu = Material("vgui/gradient-u")
 MoarPanelsMats.gd = Material("vgui/gradient-d")
 MoarPanelsMats.gr = Material("vgui/gradient-r")
 MoarPanelsMats.gl = Material("vgui/gradient-l")
+MoarPanelsMats.g = Material("gui/gradient", "noclamp smooth")
 
 local spinner = Material("data/hdl/spinner.png")
-local cout = Material("data/hdl/circle_outline256.png") --not c++
+local cout = Material("data/hdl/circle_outline256.png")
 local cout128 = Material("data/hdl/circle_outline128.png")
 local cout64 = Material("data/hdl/circle_outline64.png")
 local bad = Material("materials/icon16/cancel.png")
@@ -30,11 +30,11 @@ local function BenchPoly(...)	--shh
 	surface.DrawPoly(...)
 end
 
-local ipairs = ipairs 
+local ipairs = ipairs
 
-local sin = math.sin 
+local sin = math.sin
 local cos = math.cos
-local mrad = math.rad 
+local mrad = math.rad
 
 
 local function FetchUpValuePanel()
@@ -51,7 +51,7 @@ function draw.DrawLoading(pnl, x, y, w, h)
 	local ct = CurTime()
 	local sx, sy
 
-	local clipping = true 
+	local clipping = true
 
 	if not ispanel(pnl) and pnl ~= nil then 	--backwards compat
 
@@ -66,9 +66,7 @@ function draw.DrawLoading(pnl, x, y, w, h)
 
 		pnl = panl
 
-		
-
-		if not ispanel(pnl) then 
+		if not ispanel(pnl) then
 			draw.LegacyLoading(x, y, w, h)
 		return end
 
@@ -78,7 +76,7 @@ function draw.DrawLoading(pnl, x, y, w, h)
 		sx, sy = x, y
 		x, y = x, y
 
-	elseif ispanel(pnl) then 
+	elseif ispanel(pnl) then
 		sx, sy = pnl:LocalToScreen(w/2, h/2)
 		clipping = false
 	end
@@ -87,8 +85,6 @@ function draw.DrawLoading(pnl, x, y, w, h)
 	w = math.min(w, h)	--smallest square
 	h = math.min(w, h)
 
-	
-	
 
 	local amt = 3
 	local dur = 2 --seconds
@@ -99,9 +95,9 @@ function draw.DrawLoading(pnl, x, y, w, h)
 	render.PushFilterMag( TEXFILTER.ANISOTROPIC )
 	render.PushFilterMin( TEXFILTER.ANISOTROPIC )
 
-	for i=1, amt do 
+	for i=1, amt do
 		local off = dur/amt
-		local a = ((ct + off * (i-1))%dur)/dur 
+		local a = ((ct + off * (i-1)) % dur) / dur
 
 		local r = w*a
 		local mat = (r > 160 and cout) or (r > 64 and cout128) or (r < 64 and cout64) or cout64
@@ -120,7 +116,7 @@ function draw.DrawLoading(pnl, x, y, w, h)
 
 		pcall(function()
 			surface.SetDrawColor(Color(255, 255, 255, (1 - a)*255))
-			surface.DrawTexturedRect(x-w/2, y-h/2, w, h)	--i aint gotta explain shit where the 1.05 came from
+			surface.DrawTexturedRect(x - w/2, y - h/2, w, h)	--i aint gotta explain shit where the 1.05 came from
 		end)
 
 		cam.PopModelMatrix(vm)
@@ -130,36 +126,14 @@ function draw.DrawLoading(pnl, x, y, w, h)
 	render.PopFilterMag()
 end
 
---eclipse gave me this V
-
-function draw.DrawSine(x, y, height, length, speed, frequency)
-    local time = CurTime()
-
-    local y1 = y
-
-    frequency = frequency or 20
-
-    for x=x, x+length do
-        local y = math.sin((x + time * speed) / frequency or 20) * height / 2 + y
-        local lastX = x - 5
-        local lastY = math.sin((lastX + time * speed) / frequency) * height / 2 + y1
-        
-        surface.DrawLine(lastX, lastY, x, y)
-        
-    end
-    
-end
-
---eclipse gave me this ^
-
 function draw.DrawCircle(x, y, rad, seg, perc, reverse, matsize)
 	local circ = {}
 
 	local uvdiv = (matsize and 2*matsize) or 2
-	perc = perc or 100 
+	perc = perc or 100
 
-	if reverse == nil then 
-		reverse = false 
+	if reverse == nil then
+		reverse = false
 	end
 
 	local segs = math.min(seg * (perc/100), seg)
@@ -167,13 +141,13 @@ function draw.DrawCircle(x, y, rad, seg, perc, reverse, matsize)
 	local degoff = -360
 	local key = "reg"
 
-	if circles[key][seg] then 
+	if circles[key][seg] then
 
 		local st = circles[key][seg]	--st = pre-generated cached circle
 
 		local segfull, segdec = math.modf(segs)
 		segfull = segfull + 2
-		segdec = (segdec~=0 and segdec) or nil 
+		segdec = (segdec~=0 and segdec) or nil
 
 		for k,w in ipairs(st) do 	--CURSED VAR NAME
 
@@ -182,7 +156,7 @@ function draw.DrawCircle(x, y, rad, seg, perc, reverse, matsize)
 			]]
 
 			if not reverse and (k > segfull) then --the current segment will be the sub-segment
-				if segdec then 
+				if segdec then
 
 					local a = mrad( ( (segs) / seg ) * degoff)
 
@@ -199,9 +173,9 @@ function draw.DrawCircle(x, y, rad, seg, perc, reverse, matsize)
 				end
 			break end 	--+1 due to poly #1 being a [0,0]
 
-			if reverse and (k-3 < seg-segfull) and k ~= 1 then 
+			if reverse and (k-3 < seg-segfull) and k ~= 1 then
 
-				if segdec and k-2 >= seg-segfull then 
+				if segdec and k-2 >= seg-segfull then
 
 					local a = mrad( ( (k-2-segdec) / seg ) * degoff)
 					local s = sin(a)
@@ -222,15 +196,15 @@ function draw.DrawCircle(x, y, rad, seg, perc, reverse, matsize)
 				u=w.u/uvdiv + 0.5,		--UwU
 				v=w.v/uvdiv + 0.5 	 	--VwV
 			}
-	
+
 			if k==1 then circ[#circ].u = 0.5 circ[#circ].v = 0.5 end
 		end
 
 		BenchPoly(circ)
-	else 
+	else
 
 		local segfull, segdec = math.modf(segs)
-		segdec = (segdec~=0 and segdec) or nil 
+		segdec = (segdec~=0 and segdec) or nil
 
 		for i=0, seg do --generate full circle...
 
@@ -270,11 +244,11 @@ function draw.DrawCircle(x, y, rad, seg, perc, reverse, matsize)
 
 		table.insert(circ, 1, origin)
 
-		local c2 = {}	
+		local c2 = {}
 
 		for k,w in pairs(circ) do 	--CURSED VAR NAME
-			if not reverse and (k > segs+1) then 
-				if segdec then 
+			if not reverse and (k > segs+1) then
+				if segdec then
 
 					local a = mrad( ( (k-3+segdec) / seg ) * degoff)
 
@@ -306,16 +280,16 @@ end
 
 draw.Circle = draw.DrawCircle --noob mistakes
 
-local rbcache = muldim:new()
+local rbcache = muldim:new(true)
 
 local function GenerateRBPoly(rad, x, y, w, h, notr, nobr, nobl, notl)
 
 
 	local deg = 360
-	local segdeg = deg/rad/4
+	local segdeg = deg / rad / 4
 
-	local lx = x + rad 
-	local rx = x + w - rad 
+	local lx = x + rad
+	local rx = x + w - rad
 
 	local ty = y + rad
 	local by = y + h - rad
@@ -327,14 +301,14 @@ local function GenerateRBPoly(rad, x, y, w, h, notr, nobr, nobl, notl)
 	p[3] = {x = rx, y = y}
 
 	if not notr then
-		for i=1, rad - 1 do 
+		for i=1, rad - 1 do
 			local a = mrad(segdeg * i)
 
 			local s = sin(a) * rad
 			local c = cos(a) * rad
 
 			p[#p + 1] = {
-				x = rx + s, 
+				x = rx + s,
 				y = ty - c,
 			}
 		end
@@ -346,13 +320,13 @@ local function GenerateRBPoly(rad, x, y, w, h, notr, nobr, nobl, notl)
 	p[#p + 1] = {x = x+w, y = by}
 
 	if not nobr then
-		for i=rad, rad*2 - 1 do 
+		for i=rad, rad*2 - 1 do
 			local a = mrad(segdeg * i)
 			local s = sin(a) * rad
 			local c = cos(a) * rad
 
 			p[#p + 1] = {
-				x = rx + s, 
+				x = rx + s,
 				y = by - c,
 			}
 		end
@@ -364,13 +338,13 @@ local function GenerateRBPoly(rad, x, y, w, h, notr, nobr, nobl, notl)
 	p[#p + 1] = {x = lx, y = y + h}
 
 	if not nobl then
-		for i=rad*2, rad*3 - 1 do 
+		for i=rad*2, rad*3 - 1 do
 			local a = mrad(segdeg * i)
 			local s = sin(a) * rad
 			local c = cos(a) * rad
 
 			p[#p + 1] = {
-				x = lx + s, 
+				x = lx + s,
 				y = by - c,
 			}
 		end
@@ -382,14 +356,14 @@ local function GenerateRBPoly(rad, x, y, w, h, notr, nobr, nobl, notl)
 	p[#p + 1] = {x = x, y = ty}
 
 	if not notl then
-		for i=rad*3, rad*4 - 1 do 
+		for i=rad*3, rad*4 - 1 do
 			local a = mrad(segdeg * -i)
 
 			local s = sin(a) * rad
 			local c = cos(a) * rad
 
 			p[#p + 1] = {
-				x = lx - s, 
+				x = lx - s,
 				y = ty - c,
 			}
 		end
@@ -401,10 +375,10 @@ local function GenerateRBPoly(rad, x, y, w, h, notr, nobr, nobl, notl)
 
 	return p
 end
+												--   clockwise order:
+												-- V no topright, no bottomright, no bottomleft, no topleft
+function draw.RoundedPolyBox(rad, x, y, w, h, col, notr, nobr, nobl, notl)
 
-
-function draw.RoundedPolyBox(rad, x, y, w, h, col)
-	
 	--[[
 		coords for post-rounded corners
 	]]
@@ -412,21 +386,56 @@ function draw.RoundedPolyBox(rad, x, y, w, h, col)
 	surface.SetDrawColor(col)
 	draw.NoTexture()
 
-	local cache = rbcache:Get(rad, x, y, w, h)
+	local cache = rbcache:Get(rad, x, y, w, h, notr, nobr, nobl, notl)
 
 	if not cache then
 
-		local p = GenerateRBPoly(rad, x, y, w, h)
+		local p = GenerateRBPoly(rad, x, y, w, h, notr, nobr, nobl, notl)
 
-		rbcache:Set(p, rad, x, y, w, h)
+		rbcache:Set(p, rad, x, y, w, h, notr, nobr, nobl, notl)
 		cache = p
 	end
 
-	if not cache then return end 
+	if not cache then return end
 	BenchPoly(cache)
 end
 
-local rbexcache = muldim:new()
+local rbexcache = muldim:new(true)
+
+
+--mostly useful for stencils
+
+--if bottom is true, it'll make the bottom shorter
+--otherwise the top is shorter
+
+function draw.RightTrapezoid(x, y, w, h, leg, bottom)
+
+
+	local poly = {
+
+		{ --top left
+			x = x,
+			y = y,
+		},
+
+		{ --top right
+			x = x + w - (bottom and 0 or leg),
+			y = y,
+		},
+
+		{ --bottom right
+			x = x + w - (bottom and leg or 0),
+			y = y + h,
+		},
+
+		{ --bottom left
+			x = x,
+			y = y + h,
+		}
+	}
+
+	surface.DrawPoly(poly)
+end
 
 function draw.RoundedPolyBoxEx(rad, x, y, w, h, col, notr, nobr, nobl, notl)
 
@@ -443,7 +452,7 @@ function draw.RoundedPolyBoxEx(rad, x, y, w, h, col, notr, nobr, nobl, notl)
 		cache = p
 	end
 
-	if not cache then return end 
+	if not cache then return end
 	BenchPoly(cache)
 
 end
@@ -452,7 +461,7 @@ function draw.RotatedBox(x, y, x2, y2, w)
 	local dx, dy = x2 - x, y2 - y
 
 	draw.NoTexture()
-	
+
 	local rad = -math.atan2(dy, dx)
 
 	local sin = math.sin(rad)
@@ -483,10 +492,10 @@ function draw.RotatedBox(x, y, x2, y2, w)
 	surface.DrawPoly(poly)
 end
 
-draw.Line = draw.RotatedBox 
+draw.Line = draw.RotatedBox
 
 local function GetOrDownload(url, name, flags, cb)	--callback: 1st arg is material, 2nd arg is boolean: was the material loaded from cache?
-	if url == "-" or name == "-" then return false end 
+	if url == "-" or name == "-" then return false end
 
 	local key = name:gsub("%.png$", "")
 
@@ -512,7 +521,7 @@ local function GetOrDownload(url, name, flags, cb)	--callback: 1st arg is materi
 			MoarPanelsMats[key].downloading = true
 
 			hdl.DownloadFile(url, name or "unnamed.dat", function(fn)
-				MoarPanelsMats[key].downloading = false 
+				MoarPanelsMats[key].downloading = false
 				local cmat = Material(fn, flags or "smooth")
 				MoarPanelsMats[key].mat = cmat
 
@@ -534,48 +543,50 @@ local function GetOrDownload(url, name, flags, cb)	--callback: 1st arg is materi
 
 	else --mat was already preloaded
 
-		if cb then cb(MoarPanelsMats[key].mat, true) end 
+		if cb then cb(MoarPanelsMats[key].mat, true) end
 	end
 
 	return mat
 end
 
-draw.GetMaterial = GetOrDownload 
+draw.GetMaterial = GetOrDownload
 
 draw.Rect = surface.DrawRect
-draw.DrawRect = surface.DrawRect 
+draw.DrawRect = surface.DrawRect
 
-draw.Color = surface.SetDrawColor 
+draw.Color = surface.SetDrawColor
 
 function surface.DrawMaterial(url, name, x, y, w, h, rot)
 	local mat = GetOrDownload(url, name)
-	if not mat then return end 
+	if not mat then return false end
 
 	if mat and (mat.downloading or mat.mat:IsError()) then
 		draw.DrawLoading(x + w/2, y + h/2, w, h)
-		return
+		return false
 	end
 
 	surface.SetMaterial(mat.mat)
-	if rot then 
+
+	if rot then
 		surface.DrawTexturedRectRotated(x, y, w, h, rot)
-	else 
+	else
 		surface.DrawTexturedRect(x, y, w, h)
 	end
 
+	return mat
 end
 
 function surface.DrawUVMaterial(url, name, x, y, w, h, u1, v1, u2, v2)
 	local mat = GetOrDownload(url, name, "smooth")
-	if not mat then return end 
-	
-	if mat and mat.downloading or not mat.mat or mat.mat:IsError() then 
+	if not mat then return end
+
+	if mat and mat.downloading or not mat.mat or mat.mat:IsError() then
 		draw.DrawLoading(x + w/2, y + h/2, w, h)
 		return
 	end
 
 	surface.SetMaterial(mat.mat)
-	
+
 	surface.DrawTexturedRectUV(x, y, w, h, u1, v1, u2, v2)
 
 end
@@ -583,9 +594,9 @@ end
 surface.PaintMaterial = Deprecated or function() print("surface.PaintMaterial is deprecated", debug.traceback()) end
 
 function draw.DrawMaterialCircle(x, y, rad)	--i hate it but its the only way to make an antialiased circle on clients with no antialiasing set
-	if rad < 64 then 
+	if rad < 64 then
 		surface.DrawMaterial("https://i.imgur.com/MMHZw92.png", "small-circle.png", x - rad/2, y - rad/2, rad, rad)
-	elseif rad < 256 then 
+	elseif rad < 256 then
 		surface.DrawMaterial("https://i.imgur.com/XAWPA15.png", "medium-circle.png", x - rad/2, y - rad/2, rad, rad)
 	else
 		surface.DrawMaterial("https://i.imgur.com/6SdL8ff.png", "big-circle.png", x - rad/2, y - rad/2, rad, rad)
@@ -594,14 +605,14 @@ end
 
 draw.MaterialCircle = draw.DrawMaterialCircle
 
-function draw.Masked(mask, op, demask, deop)
+function draw.Masked(mask, op, demask, deop, ...)
 
 	render.SetStencilPassOperation( STENCIL_KEEP )
 
 	render.SetStencilEnable(true)
 
 		render.ClearStencil()
-		
+
 		render.SetStencilTestMask(0xFF)
 		render.SetStencilWriteMask(0xFF)
 
@@ -610,25 +621,25 @@ function draw.Masked(mask, op, demask, deop)
 
 		render.SetStencilReferenceValue( 1 ) --include
 
-		mask()
+		mask(...)
 
 		render.SetStencilReferenceValue( 0 ) --exclude
 
 		if demask then
 
-			demask()
+			demask(...)
 
 		end
 
 		render.SetStencilCompareFunction( STENCIL_NOTEQUAL )
 		render.SetStencilFailOperation( STENCIL_KEEP )
 
-		op()	--actual draw op
+		op(...)	--actual draw op
 
 		if deop then
 			render.SetStencilCompareFunction( STENCIL_EQUAL )
 
-			deop()
+			deop(...)
 		end
 
 	render.SetStencilEnable(false)
@@ -645,9 +656,9 @@ MoarPanelsRTMats = mats
 local function CreateRT(name, w, h)
 
 	return GetRenderTargetEx(
-		name, 
-		w, 
-		h, 
+		name,
+		w,
+		h,
 		RT_SIZE_OFFSCREEN,			--the wiki claims rendertargets change sizes to powers of 2 and clamp it to screen size; lets prevent that
 		MATERIAL_RT_DEPTH_SHARED, 	--idfk?
 		2, 	--texture filtering, the enum doesn't work..?
@@ -659,9 +670,9 @@ end
 
 function draw.GetRT(name, w, h)
 	local rt
-	if not w or not h then error("error #2 or #3: expected width and height, received nothin'") return end 
+	if not w or not h then error("error #2 or #3: expected width and height, received nothin'") return end
 
-	if not RTs[name] then	
+	if not RTs[name] then
 
 		rt = CreateRT(name .. w .. h, w, h)
 
@@ -671,7 +682,7 @@ function draw.GetRT(name, w, h)
 		m:Set(rt, w, h)
 		m:Set(1, "Number")
 
-	else 
+	else
 		local rtm = RTs[name]
 		local cached = rtm:Get(w, h)
 
@@ -696,12 +707,12 @@ function draw.RenderOntoMaterial(name, w, h, func, rtfunc, matfunc, pre_rt, pre_
 	local rt
 	local mat
 
-	if not RTs[name] then	
+	if not RTs[name] then
 
 		rt = CreateRT(name, w, h)
 
 		mat = CreateMaterial(name, "UnlitGeneric", {
-		    ["$translucent"] = 1,
+			["$translucent"] = 1,
 			["$vertexalpha"] = 1,
 			["$vertexcolor"] = 1,
 		})
@@ -713,7 +724,7 @@ function draw.RenderOntoMaterial(name, w, h, func, rtfunc, matfunc, pre_rt, pre_
 
 		mats[name] = mat
 
-	else 
+	else
 		local rtm = RTs[name]
 		local cached = rtm:Get(w, h)
 
@@ -723,21 +734,20 @@ function draw.RenderOntoMaterial(name, w, h, func, rtfunc, matfunc, pre_rt, pre_
 
 			local id = rtm:Get("Number")
 			rtm:Set(id + 1, "Number")
-
 			rt = CreateRT(name .. id, w, h)
 			rtm:Set(rt, w, h)
 		end
 
 		mats[name] = mats[name] or CreateMaterial(name, "UnlitGeneric", {
-		    ["$translucent"] = 1,
+			["$translucent"] = 1,
 			["$vertexalpha"] = 1,
 			["$vertexcolor"] = 1,
 		})
-		
+
 		mat = mats[name]
 	end
 
-	rt = pre_rt or rt 
+	rt = pre_rt or rt
 	mat = pre_mat or mat
 
 	mat:SetTexture("$basetexture", rt:GetName())
@@ -751,25 +761,33 @@ function draw.RenderOntoMaterial(name, w, h, func, rtfunc, matfunc, pre_rt, pre_
 
 			if not has2d then cam.Start2D() end
 				local ok, err = pcall(func, w, h, rt)
+
+
+			if rtfunc and ok then
+				local ok, keep = pcall(rtfunc, rt)
+				if ok and keep == false then
+
+					render.PopRenderTarget()
+					render.OverrideAlphaWriteEnable(false)
+					if not has2d then cam.End2D() end
+
+					return
+				end
+			end
+
 			if not has2d then cam.End2D() end
 
 		render.OverrideAlphaWriteEnable(false)
 
-
-	if rtfunc and ok then 
-		local keep = rtfunc(rt)
-		if keep == false then render.PopRenderTarget() return end
-	end
-
 	render.PopRenderTarget()
 
-	
 
-	if matfunc and ok then 
+
+	if matfunc and ok then
 		matfunc(mat)
 	end
 
-	if not ok then 
+	if not ok then
 		error("RenderOntoMaterial got an error while drawing!\n" .. err)
 		return
 	end
@@ -783,8 +801,8 @@ local mdls = {}
 if IsValid(MoarPanelsSpawnIcon) then MoarPanelsSpawnIcon:Remove() end
 
 local function GetSpawnIcon()
-	
-	if not IsValid(MoarPanelsSpawnIcon) then 
+
+	if not IsValid(MoarPanelsSpawnIcon) then
 		MoarPanelsSpawnIcon = vgui.Create("SpawnIcon")
 		local spic = MoarPanelsSpawnIcon
 		spic:SetSize(64, 64)
@@ -796,19 +814,19 @@ end
 
 function draw.DrawOrRender(pnl, mdl, x, y, w, h)
 
-	local icname = mdl 
+	local icname = mdl
 
 	icname = icname:gsub("%.mdl", "")
 
-	if not icname:find("%.png") then 
+	if not icname:find("%.png") then
 		icname = icname .. ".png"
 	end
 
-	if not mdls[mdl] then 
+	if not mdls[mdl] then
 
 		mdls[mdl] = Material("spawnicons/" .. icname)
 
-		if mdls[mdl]:IsError() then 
+		if mdls[mdl]:IsError() then
 			local spic = GetSpawnIcon()
 
 			spic:SetModel(mdl)
@@ -821,13 +839,13 @@ function draw.DrawOrRender(pnl, mdl, x, y, w, h)
 				if amt == 1 then spic:Remove() end
 			end)
 
-		end 
+		end
 
-		draw.DrawLoading(pnl, x+w/2, y+h/2, w, h)
+		draw.DrawLoading(pnl, x + w/2, y + h/2, w, h)
 
 		return
-	elseif isbool(mdls[mdl]) then 
-		draw.DrawLoading(pnl, x+w/2, y+h/2, w, h)
+	elseif isbool(mdls[mdl]) then
+		draw.DrawLoading(pnl, x + w/2, y + h/2, w, h)
 		return
 	end
 
@@ -860,7 +878,7 @@ local function ParseGIF(fn, realname)
 
 	if hdsize > 512 then --ridiculous header size = gg
 		errorf("GIF %s broke as hell; header size is apparently '%d'", realname, hdsize)
-		return 
+		return
 	end
 
 	f:Skip(-hdsize - 2)
@@ -871,7 +889,6 @@ local function ParseGIF(fn, realname)
 
 	local gifdata = f:Read(where)
 
-	
 
 	local time = f:ReadUShort()
 	info[1] = time
@@ -882,13 +899,13 @@ local function ParseGIF(fn, realname)
 
 
 	info.wid, info.hgt = fr_wid, fr_hgt
-	
+
 	info.amt = fr_amt
 
 
 	local left = hdsize - 8	--8 bytes were already read
 
-	while left > 0 do 
+	while left > 0 do
 
 		local frame = f:ReadUShort()
 		local time = f:ReadUShort()
@@ -898,9 +915,9 @@ local function ParseGIF(fn, realname)
 		left = left - 4
 	end
 
-	if left ~= 0 then 
+	if left ~= 0 then
 		ErrorNoHalt("GIF's header parsed incorrectly! Name: " .. name .. ", left bytes: " .. left .. "\n")
-	end 
+	end
 
 	f:Close()
 
@@ -909,7 +926,7 @@ end
 
 draw.ParseGIF = ParseGIF
 
-local function ParseGIFInfo(path, name, info)
+local function ParseGIFInfo(_, name, info)
 
 	local path = "hdl/%s"
 
@@ -923,7 +940,7 @@ local function ParseGIFInfo(path, name, info)
 	tbl.h = cmat:Height()
 	tbl.i = info
 
-	tbl.frw = info.wid 
+	tbl.frw = info.wid
 	tbl.frh = info.hgt
 
 	local dur = 0
@@ -932,8 +949,8 @@ local function ParseGIFInfo(path, name, info)
 	local fulltimes = {}
 	local timings = {}
 
-	for i=1, info.amt do 
-		
+	for i=1, info.amt do
+
 		if info[i] then time = info[i] end
 
 		dur = dur + time
@@ -941,7 +958,6 @@ local function ParseGIFInfo(path, name, info)
 		fulltimes[i] = time
 		timings[i] = dur
 
-		
 	end
 
 	tbl.dur = dur / 100 --centiseconds
@@ -952,14 +968,14 @@ local function ParseGIFInfo(path, name, info)
 end
 
 function DownloadGIF(url, name)
-	if url == "-" or name == "-" then return false end 
+	if url == "-" or name == "-" then return false end
 
 	local path = "hdl/%s"
 
 	local mat = MoarPanelsMats[name]
 	if not name then error("no name! disaster averting") return end
 
-	if not mat or (mat.failed and mat.failed ~= url) then 
+	if not mat or (mat.failed and mat.failed ~= url) then
 		MoarPanelsMats[name] = {}
 
 		local gifpath = path:format(name)
@@ -977,7 +993,7 @@ function DownloadGIF(url, name)
 															h = mat:Height()
 															i = info
 
-															frw = info.wid 
+															frw = info.wid
 															frh = info.hgt
 
 															dur = full duration in centiseconds
@@ -1003,7 +1019,7 @@ function DownloadGIF(url, name)
 
 				local chunk = body:sub(#body - 20, #body)
 
-				for s in chunk:gmatch(".") do 
+				for s in chunk:gmatch(".") do
 					bytes[#bytes + 1] = bit.tohex(string.byte(s)):sub(7)
 				end
 
@@ -1017,11 +1033,11 @@ function DownloadGIF(url, name)
 				file.Write(path:format(name .. "_info")  .. ".dat", util.TableToJSON(info))
 
 				file.Delete(("hdl/temp_gif%s.dat"):format(name))
-				
-				MoarPanelsMats[name].downloading = false 
+
+				MoarPanelsMats[name].downloading = false
 
 				local tbl = ParseGIFInfo(path, name, info)
-				
+
 				tbl.fromurl = url
 				MoarPanelsMats[name] = tbl
 
@@ -1033,32 +1049,33 @@ function DownloadGIF(url, name)
 		end
 
 
-	elseif mat and mat.failed then 
+	elseif mat and mat.failed then
 		return false
 	end
 
 	return MoarPanelsMats[name]
 end
 
---[[
-	because source is poopoo it somehow fucks up with this
-	i double-checked my maths, i tried different values and making sure that U/V on emotes get calculated as small as possible(0.2 instead of 0.20001582061),
-	i tried bringing emotes to power of 2 before using and calculating uv shit, tried noclamp flag which also does that
-	but it didn't work, which leads me to believe it might be source fucking this
+function surface.DrawNewlined(tx, x, y, first_x, first_y)
+	local i = 0
+	local _, th = surface.GetTextSize(tx:gsub("\n", ""))
 
-	basically, emotes float off somehow
-	this is most visible with OzenWant, which isn't even a big emote
-	i really have no fucking clue what's up with that
+	for s in tx:gmatch("[^\n]+") do
+		surface.SetTextPos(first_x or x, (first_y or y) + i*th)
+		surface.DrawText(s)
+		i = i + 1
 
-	give me a shout if you come up with a solution which isn't downloading 200 frames per emote as separate files
-]]
+		first_x, first_y = nil, nil
+	end
+
+end
 
 function draw.DrawGIF(url, name, x, y, dw, dh, frw, frh, start, pnl)
-	local mat = DownloadGIF(url, name)--GetOrDownload(url, name)
-	if not mat then return end 
-	
-	if mat and (not mat.mat or mat.downloading or mat.mat:IsError()) then 
-		if mat.mat and mat.mat:IsError() and not mat.downloading then 
+	local mat = DownloadGIF(url, name)
+	if not mat then return end
+
+	if mat and (not mat.mat or mat.downloading or mat.mat:IsError()) then
+		if mat.mat and mat.mat:IsError() and not mat.downloading then
 			surface.SetMaterial(bad)
 			surface.DrawTexturedRect(x, y, dw, dh)
 		else
@@ -1068,46 +1085,41 @@ function draw.DrawGIF(url, name, x, y, dw, dh, frw, frh, start, pnl)
 	end
 
 	surface.SetMaterial(mat.mat)
-	local w, h, i = mat.w, mat.h, mat.i 
+	local w, h = mat.w, mat.h
 
 	frw = frw or mat.frw
 	frh = frh or mat.frh
 
-	if not start then start = 0 end 
+	if not start then start = 0 end
 	local ct = CurTime()
 
 	local t = ((ct - start) % mat.dur) * 100
 
 	local frame = 0
 
-	for i=1, #mat.timings do 
+	for i=1, #mat.timings do
 
-		if t < mat.timings[i] then 
+		if t < mat.timings[i] then
 			frame = i - 1
-			break 
-		end 
+			break
+		end
 	end
 
-	local frames = math.min(mat.i.amt, 5)	--frames on a row
-	local totalframes = mat.i.amt 
-
 	local row, col = (frame % 5), math.floor(frame / 5)
-	
-	local xpad, ypad = 4, 4
 
-	local cols = h / (frh + ypad)
+	local xpad, ypad = 4, 4
 
 	local xo, yo = xpad, ypad
 
-	local startX = row * frw + row * xo 	
-	local endX = startX + frw 
+	local startX = row * frw + row * xo
+	local endX = startX + frw
 
-	local startY = col * frh + col * yo 
-	local endY = startY + frh 
+	local startY = col * frh + col * yo
+	local endY = startY + frh
 
-	local u1, v1 = startX / (w - 1) , startY / (h - 1)		--Before you ask where -1 came from, I DONT KNOW.
+	local u1, v1 = startX / (w - 1) , startY / (h - 1)		--before you ask where -1 came from, I DONT KNOW
 	local u2, v2 = endX / (w - 1), endY / (h - 1)			--ALL OF THIS JUST WORKS
 
-															--i spent 4 days fixing this and turns out i just needed to sub 1 PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands 
+															--i spent 4 days fixing this and turns out i just needed to sub 1 PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands
 	surface.DrawTexturedRectUV(x, y, dw, dh, u1, v1, u2, v2)
 end

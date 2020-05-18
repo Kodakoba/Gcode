@@ -2,12 +2,12 @@
 
 function string.Random(len)
 	local rnd = ""
-	for i=1,( len or math.random(6,11) ) do
+	for i=1, (len or math.random(6,11)) do
 		local c = math.random(65,116)
 		if c >= 91 and c <= 96 then
 			c = c + 6
 		end
-		rnd = rnd..string.char(c)
+		rnd = rnd .. string.char(c)
 	end
 	return rnd
 end
@@ -15,20 +15,20 @@ end
 
 
 function ValidString(v)
-	return isstring(v) and v != ""
+	return isstring(v) and v ~= ""
 end
 
 local cachetbl = {}
 local cachenums = {}
-local wrapped = {}
 
-function string.WordWrap(name, w, font)	-- not hex's necessarily, also stolen from prestige v1.5
+
+function string.WordWrap(name, w, font)	-- this should be deprecated cuz it sucks
 
 	surface.SetFont(font or "RL18")
 
 	local txw, height = surface.GetTextSize(name)
 
-	if istable(w) then 
+	if istable(w) then
 
 		if txw < table.GetWinningKey(w) then return name, {txw}, height end --no actions necessary
 	else
@@ -37,30 +37,30 @@ function string.WordWrap(name, w, font)	-- not hex's necessarily, also stolen fr
 
 	--check cache with width as table
 
-	if cachetbl[name] and istable(w) then 
+	if cachetbl[name] and istable(w) then
 		local cch = cachetbl[name]
-		
+
 		local rettxt, retwids = false, false
 
-		for final, tbl in pairs(cch) do 
+		for final, tbl in pairs(cch) do
 
-			if tbl.w then 
+			if tbl.w then
 				local ineq = false
-				for k,wid in pairs(tbl.w) do 
-					if wid ~= w[k] then ineq = true break end 
-				end 
+				for k,wid in pairs(tbl.w) do
+					if wid ~= w[k] then ineq = true break end
+				end
 				if not ineq then rettxt = final retwids = tbl.widths break end
 			end
 
-		end 
+		end
 
-		if rettxt then 
+		if rettxt then
 			return rettxt, retwids, height
-		end 
+		end
 
 	end
-	
-	if cachenums[w] and cachenums[w][name] then 
+
+	if cachenums[w] and cachenums[w][name] then
 		return cachenums[w][name].text, cachenums[w][name].widths, height
 	end
 
@@ -76,16 +76,16 @@ function string.WordWrap(name, w, font)	-- not hex's necessarily, also stolen fr
 
 	local iter = utf8.codes(name)
 
-	for i, char in iter do 
+	for i, char in iter do
 
 		local notalot = utflen - i <= 4
 
-		if char==10 then --newline
+		if char == 10 then --newline
 			text = text .. "\n"
-			widths[#widths+1] = ctxw																	
+			widths[#widths + 1] = ctxw
 			ctxw = 0
 			curline = curline + 1
-			continue 
+			continue
 		end
 
 		local char = utf8.char(char)
@@ -97,9 +97,9 @@ function string.WordWrap(name, w, font)	-- not hex's necessarily, also stolen fr
 
 		if ctxw > ww*0.8 then --attempt \n'ing nicely
 
-			if char==" " and not notalot then 
+			if char==" " and not notalot then
 				text = text .. "\n"	--hijack the space
-				widths[#widths+1] = ctxw																	
+				widths[#widths+1] = ctxw
 				ctxw = 0
 				curline = curline + 1
 				continue
@@ -109,7 +109,7 @@ function string.WordWrap(name, w, font)	-- not hex's necessarily, also stolen fr
 
 		if ctxw > ww*0.8 and utflen - i >= 2 then  --wrap asap
 
-			for i2 = 0, 2 do 		
+			for i2 = 0, 2 do
 				if name[i+i2] == " " then continue end --disregard, it can still be done nicely
 			end
 
@@ -129,19 +129,19 @@ function string.WordWrap(name, w, font)	-- not hex's necessarily, also stolen fr
 
 	end
 
-	if istable(w) then 
+	if istable(w) then
 		cachetbl[name] = cachetbl[name] or {}
 		local cch = cachetbl[name]
 		widths[#widths + 1] = ctxw
-		cch[text] = {w = w, widths = widths} 
+		cch[text] = {w = w, widths = widths}
 	end
 
-	if isnumber(w) then 
+	if isnumber(w) then
 		cachenums[w] = cachenums[w] or {}
 		local cch = cachenums[w]
 		widths[#widths + 1] = ctxw
 		cch[name] = {text = text, widths = widths}
-	end 
+	end
 
 	return text, widths, height
 end
@@ -153,25 +153,25 @@ local function WrapByLetters(txt, curwid, fullwid, wids, line)
 	local line = line or 0
 	local wrapped = false
 
-	for i, code in utf8.codes(txt) do 
+	for i, code in utf8.codes(txt) do
 		local char = utf8.char(code)
 		local charw = (surface.GetTextSize(char))
 
-		if charw > curwid then 
+		if charw > curwid then
 
 			local shoulddash = ret:sub(#ret):match("[^%s%c]") --not a space or control char; need to dash it
 			ret = ret .. (shoulddash and "-" or "") .. "\n" .. char
 
-			if wids then 
+			if wids then
 				fullwid = wids[line + 1] or wids[#wids]
-				line = line + 1 
+				line = line + 1
 			end
 
 			curwid = fullwid - charw
 			wrapped = true
-		else 
-			ret = ret .. char 
-			curwid = curwid - charw 
+		else
+			ret = ret .. char
+			curwid = curwid - charw
 		end
 	end
 
@@ -190,16 +190,16 @@ local function WrapWord(word, curwid, fullwid, widtbl, line)
 
 	if curwid + tw > fullwid - 8 then --have to wrap
 
-		local too_wide = tw > fullwid * 0.75 --very wide word; wrap by letters if true
+		local too_wide = tw > fullwid * 0.65 --very wide word; wrap by letters if true
 
-		if not too_wide then 
+		if not too_wide then
 
 			ret = ret .. "\n" .. word
 			curwid = tw
 			wrapped = true
 
 			line = line + 1
-		else 
+		else
 			local newtx, newwid, lines, didwrap = WrapByLetters(word, fullwid - curwid, fullwid, widtbl, line)
 			--if widtbl was provided, WrapByLetters'll figure out what to do
 
@@ -210,7 +210,7 @@ local function WrapWord(word, curwid, fullwid, widtbl, line)
 			line = lines
 			wrapped = wrapped or didwrap
 		end
-	else 
+	else
 		ret = ret .. word
 		curwid = curwid + tw
 	end
@@ -219,20 +219,19 @@ local function WrapWord(word, curwid, fullwid, widtbl, line)
 end
 
 function string.WordWrap2(txt, wid, font)
-	surface.SetFont(font or "RL24")
+	if font then surface.SetFont(font) end
 
-	local wrapped = false 
+	local wrapped = false
 
-	if istable(wid) then 
+	if istable(wid) then
 
 		local ret = ""
 
-		local needwid = wid[1]
 		local curwid = 0
 		local line = 1
 
-		for word in string.gmatch(txt, "(.-)%s") do 
-			
+		for word in string.gmatch(txt, "(.-)%s") do
+
 			local r2, w2, lines, didwrap = WrapWord(word .. " ", curwid, nil, wid, line)
 
 			ret = ret .. r2
@@ -245,7 +244,7 @@ function string.WordWrap2(txt, wid, font)
 		local lastword = txt:match("[^%s]+$")
 
 		if lastword then
-			local r2, w2, lines, didwrap = WrapWord(lastword, curwid, nil, wid, line)
+			local r2, w2, _, didwrap = WrapWord(lastword, curwid, nil, wid, line)
 
 			ret = ret .. r2
 			curwid = w2
@@ -254,15 +253,14 @@ function string.WordWrap2(txt, wid, font)
 		end
 
 		return ret, curwid, wrapped
-	else 
-		local widths = {}
+	else
+
 		local ret = ""
 
 		local needwid = wid
 		local curwid = 0
 
-		for word in string.gmatch(txt, "(.-)%s") do 
-			
+		for word in string.gmatch(txt, "(.-)%s") do
 			local r2, w2, didwrap = WrapWord(word .. " ", curwid, needwid)
 			ret = ret .. r2
 			curwid = w2
@@ -280,38 +278,37 @@ function string.WordWrap2(txt, wid, font)
 		end
 
 		return ret, curwid, wrapped
-		
+
 	end
 
 end
 
-function string.GetBetween(str, tag, num)
-	local pat = "%b" .. tag 
+--[[function string.GetBetween(str, tag, num) --wtf is this
+	local pat = "%b" .. tag
 	local pat2 = tag[1] .. "(.+)" .. tag[2]
 
-	local str = str 
+	if num then
 
-	if num then 
-
-		for i=1, 10000 do 
+		for i=1, 10000 do
 
 			local match = str:match(pat)
 			if not match then return end
 
-			if match then 
-				if i ~= num then 
+			if match then
+				if i ~= num then
 					str = str:gsub(match:PatternSafe(), "")
 				else
 					return match:match(pat2)
-				end 
-			end 
+				end
+			end
 		end
 
-	else 
+	else
 		return str:match(pat):match(pat2)
 	end
-end
-function string.TimeParse(time)
+end]]
+
+function string.TimeParse(time) --this is broken i think
 
 	local h = math.floor(time / 3600)
 	local m = math.floor(time/60) - h*60
@@ -321,12 +318,11 @@ function string.TimeParse(time)
 
 end
 
-
 function string.YeetNewlines(str, also_spaces)
 	str = str:gsub("\n", " ")
 	str = str:gsub("\r", "")
 	str = str:gsub("\t", " ")
-	
+
 	if also_spaces then
 		str = str:gsub("  ", " ")
 		str = str:gsub("  ", " ")
@@ -336,15 +332,15 @@ function string.YeetNewlines(str, also_spaces)
 end
 
 local vowels = {
-	["a"] = true, 
+	["a"] = true,
 	["e"] = true,
 	["i"] = true,
-	["o"] = true, 
+	["o"] = true,
 	["u"] = true,
 }
 
 function string.IsVowel(char)
-	return (not not vowels[string.lower(char)])
+	return (not not vowels[string.lower(char:sub(1, 1))])
 end
 
 --[[
@@ -353,8 +349,8 @@ end
 ]]
 function string.Shortcut(str, shcuts)
 
-	for s1 in string.gmatch(str, ":(.-):") do --shortcuts, then tags 
-		if shcuts[s1] then 
+	for s1 in string.gmatch(str, ":(.-):") do --shortcuts, then tags
+		if shcuts[s1] then
 			str = str:gsub((":%s:"):format(s1), shcuts[s1], 1)
 		end
 	end
@@ -372,19 +368,21 @@ local utflen = function(s)
 	return (utf8.len(s:sub(#s, #s-1)) == 1 and #(s:sub(#s, #s-1) == 2)) and 2 or 1
 end
 
+
+--hoooolyyyyyy shit
 function string.ParseTags(str, shortcuts, tagtable)
 
 	local tags = {} --this contains strings (regular text) and tables (tags)
-	
+
 	local prevtagwhere
 	local env 		--envinroment for expressions, it's shared for one message
 
-	for s1 in string.gmatch(str, ":(.-):") do --shortcuts, then tags 
+	for s1 in string.gmatch(str, ":(.-):") do --shortcuts, then tags
 
-		if shortcuts[s1] then 
+		if shortcuts[s1] then
 			str = str:gsub((":%s:"):format(s1), shortcuts[s1], 1)
 		end
-		
+
 	end
 
 	for tag, argsstr in string.gmatch( str, tagptrn ) do
@@ -393,15 +391,7 @@ function string.ParseTags(str, shortcuts, tagtable)
 		local chTag = tagtable[tag]
 
 		local starts = str:find(tag, prevtagwhere or 1, true)
-		if starts then starts = starts - 1 end --add the "<" which doesn't get matched 
-
-		local ends = starts
-
-		if argsstr then --V for "="		 v for ">"
-			ends = starts + #tag + 1 + #argsstr + 1
-		else 		
-			ends = starts + #tag + 1 --1 for ">"
-		end
+		if starts then starts = starts - 1 end --add the "<" which doesn't get matched
 
 		if not chTag then
 
@@ -409,33 +399,33 @@ function string.ParseTags(str, shortcuts, tagtable)
 			if not isend or not tagtable[isend] then print("no such tag to end:", tag, isend) continue end
 
 			for k,v in ipairs(table.Reverse(tags)) do
-				if not istable(v) then continue end  
+				if not istable(v) then continue end
 
-				if v.Tag == isend and not v.ends and not v.ender then 
+				if v.Tag == isend and not v.ends and not v.ender then
 					--create an ender tag, which will disable tag at k
-					v.ends = starts 
+					v.ends = starts
 
 					str = str:gsub(tag:PatternSafe(), "", 1)
 
 					local key = #tags + 1
 
-					if prevtagwhere then 
-						tags[key] = str:sub(prevtagwhere, starts+utflen(str)-2)	--if ender, put text first ender later
+					if prevtagwhere then
+						tags[key] = str:sub(prevtagwhere, starts + utflen(str) -2)	--if ender, put text first ender later
 						key = key + 1
 					end
 
 					tags[key] = v:GetEnder()
 					--[[tags[key] = {
-						tag = isend, 
-						ender = true, 
+						tag = isend,
+						ender = true,
 						ends = v.realkey,	--ends tag with key v.realkey
 						realkey = key
 					}]]
-					
+
 					prevtagwhere = starts + 3 --+3 for <>
 
 					break
-				end 
+				end
 			end
 
 			continue
@@ -445,73 +435,68 @@ function string.ParseTags(str, shortcuts, tagtable)
 			SendTime = CurTime(),
 		}
 
-		if not prevtagwhere then 
+		if not prevtagwhere then
 			tags[#tags + 1] = str:sub(1, starts - utflen(str)) --utflen decides whether or not sub 2 chars
 		end
 
 		local args = {}
-		
+
 
 		if argsstr then
 			local lastargpos = 0
-			
+
 			for arg in argsstr:gmatch(expptrn) do 	--First parse all the expression args
 
-		        local starts, ends = argsstr:find(arg, lastargpos, true)
-		        lastargpos = starts + 1
+				local _, ends = argsstr:find(arg, lastargpos, true)
+				lastargpos = starts + 1
 
-		        local sepnum = 0
-		        local lastsep = 0
-
-		        local num = #args + 1
+				local num = #args + 1
 				if not chTag.args[num] then break end --more args than the tag takes: ignore eet
 
-		      --  argst[#argst + 1] = arg
+			  --  argst[#argst + 1] = arg
 
-		        argsstr = argsstr:sub(0, starts-1) .. "-" .. argsstr:sub(ends+1) --"-" allows you to ignore a var and let it be set to a default value; unless it already has a value...
-		        arg = arg:sub(2, -2) --get rid of []
+				argsstr = argsstr:sub(0, starts-1) .. "-" .. argsstr:sub(ends + 1) --"-" allows you to ignore a var and let it be set to a default value; unless it already has a value...
+				arg = arg:sub(2, -2) --get rid of []
 
-		        local func, newenv = chathud.CompileExpression(arg, info, special, env)				-- like this handy expression we just compiled!
-		        env = env or newenv
+				local func, newenv = chathud.CompileExpression(arg, info, special, env)				-- like this handy expression we just compiled!
+				env = env or newenv
 
-				if isstring(func) then 
+				if isstring(func) then
 					print("Expression error: " .. func)
 					continue
-				end 
+				end
 
-				args[#args + 1] = func 
-		    end
+				args[#args + 1] = func
+			end
 
-		    local offset = 0
-		    local i = 0
+			local i = 0
 
-		    for arg in argsstr:gmatch(valptrn) do
-		        i = i + 1
-		        if arg == "-" then continue end --this also increments i, basically offsetting arg by +1
-		        if not chTag.args[i] then break end 
+			for arg in argsstr:gmatch(valptrn) do
 
-		        local typ = chTag.args[i].type
-				if not chathud.TagTypes[typ] then print("Unknown argument type! ", typ) break end 
+				i = i + 1
+				if arg == "-" then continue end --this also increments i, basically offsetting arg by +1
+				if not chTag.args[i] then break end
 
-				local ret = chathud.TagTypes[typ](arg)	
+				local typ = chTag.args[i].type
+				if not chathud.TagTypes[typ] then print("Unknown argument type! ", typ) break end
+
+				local ret = chathud.TagTypes[typ](arg)
 
 				if ret then table.insert(args, i, ret) end --if conversion to type succeeded
-		        
-		    end
 
-		    
+			end
 
 			local lastargstr = argsstr:match(lastarg)
 
-			if lastargstr and lastargstr ~= "-" then  
-				args[i+1] = lastargstr 
+			if lastargstr and lastargstr ~= "-" then
+				args[i + 1] = lastargstr
 			end
 
 		end
-		
+
 		local key = #tags + 1
 
-		if prevtagwhere then 
+		if prevtagwhere then
 			tags[key] = str:sub(prevtagwhere, starts - 1)
 			key = key + 1
 		end
@@ -519,26 +504,26 @@ function string.ParseTags(str, shortcuts, tagtable)
 
 		for k,v in ipairs(chTag.args) do --clamp values to mins/maxs
 			if isnumber(args[k]) then
-				if v.min then 
+				if v.min then
 					args[k] = math.max(args[k], v.min)
-				end 
-				if v.max then 
+				end
+				if v.max then
 					args[k] = math.min(args[k], v.max)
 				end
 			end
 
 			if not args[k] then 		--if that arg didnt exist set it to default
-				args[k] = v.default 
-			end 
+				args[k] = v.default
+			end
 
 		end
 
 		local TagObj = chathud.Tags(tag, unpack(args))
-		TagObj.realkey = key 
+		TagObj.realkey = key
 		TagObj.starts = starts
 
 		tags[key] = TagObj--[[{
-			tag = tag, 
+			tag = tag,
 			args = args,
 			starts = starts,
 			realkey = key --for ender to keep track due to table reversing

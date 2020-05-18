@@ -1,21 +1,19 @@
 
 --moshi moshi calling all retards
+if not HexLib then require("autorun/!!libitup") end
 
 AddCSLuaFile()
-
-local PANEL = {}
-local BLANK = {}
-local BlankFunc = function() end 
-local blankfunc = BlankFunc 
 
 MoarPanelsLoaded = true
 
 function eval(var, ...)
-	if isfunction(var) then 
+
+	if isfunction(var) then
 		return var(...)
-	else 
+	else
 		return var
 	end
+
 end
 
 
@@ -23,7 +21,7 @@ local path = "moarpanels/"
 
 
 
-if CLIENT then 
+--[[if CLIENT then 
 
 	local families = {
 	    ["Roboto"] = "R",
@@ -72,15 +70,9 @@ if CLIENT then
 	end
 
 
-end
-
-local Load = function()
-	IncludeFolder(path .. "*", _CL, true)
-	IncludeFolder("moarpanels/deltatext/*", _CL)
-end
-
-if HexLib then 
-	Load()
-else 
-	hook.Add("HexlibLoaded", "LoadMorePanels", Load)
-end
+end]]
+--[[
+IncludeFolder(path .. "*", _CL, true)
+IncludeFolder("moarpanels/deltatext/*", _CL)]]
+print("cum")
+FInc.Recursive("moarpanels/*", _CL)

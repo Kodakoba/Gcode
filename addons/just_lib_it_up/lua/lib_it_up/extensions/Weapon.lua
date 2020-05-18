@@ -5,7 +5,7 @@ local WEAPON = FindMetaTable("Weapon")
 
 
 if CLIENT then
-    local pi = math.pi 
+    local pi = math.pi
     local tg = math.tan
 
     function WEAPON:PositionToViewmodel(pos, inverse)

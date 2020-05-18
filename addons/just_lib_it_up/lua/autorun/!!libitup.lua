@@ -25,7 +25,7 @@ LibItUp = "LibbedItUp"
 
 local path = "lib_it_up/"
 
-_CL = 1 
+_CL = 1
 _SH = 2
 _SV = 3
 
@@ -35,7 +35,7 @@ local files = 0
 
 local includes = {
 	[_CL] = function()
-		if SERVER then 
+		if SERVER then
 			AddCSLuaFile(name)
 		else
 			include(name)

@@ -19,16 +19,16 @@ Colors.Money = Color(100, 220, 100)
 
 function COLOR:Set(col, g, b, a)
 
-	if IsColor(col) then 
-		self.r = col.r 
-		self.g = col.g 
-		self.b = col.b 
-		self.a = col.a 
-	else 
+	if IsColor(col) then
+		self.r = col.r
+		self.g = col.g
+		self.b = col.b
+		self.a = col.a
+	else
 		self.r = col or self.r
 		self.g = g or self.g
-		self.b = b or self.b 
-		self.a = a or self.a 
+		self.b = b or self.b
+		self.a = a or self.a
 	end
 
 end

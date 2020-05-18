@@ -30,7 +30,7 @@ setmetatable(IIterObj, IIterMeta)
 local function IndexValid(self, k)
 	local rg = rawget(self, k)
 
-	if not IsValid(rg) then self[k] = nil return nil end 
+	if not IsValid(rg) then self[k] = nil return nil end
 	return rg
 end
 
@@ -40,11 +40,11 @@ end
 
 function IterMeta:clean()
 
-	for k,v in pairs(self) do 
-		if not IsValid(v) then 
-			self[k] = nil 
-		end 
-	end 
+	for k,v in pairs(self) do
+		if not IsValid(v) then
+			self[k] = nil
+		end
+	end
 
 end
 
@@ -56,9 +56,9 @@ function IterMeta:tosequential()
 
 	self:clean()
 
-	for k, v in pairs(self) do 
-		i = i + 1 
-		t[i] = v 
+	for k, v in pairs(self) do
+		i = i + 1
+		t[i] = v
 	end
 
 end
@@ -74,7 +74,7 @@ function ValidIterable:new(t, mode)
 	return tbl
 end
 
-ValidIterable.__call = ValidIterable.new 
+ValidIterable.__call = ValidIterable.new
 
 
 
@@ -85,20 +85,20 @@ ValidIterable.__call = ValidIterable.new
 		- Same as Valid Iterable, but sequential.
 ]]
 
-function IIterMeta:pairs() 
+function IIterMeta:pairs()
 	return ipairs(self)
-end 
+end
 
-IIterMeta.ipairs = IIterMeta.pairs 
+IIterMeta.ipairs = IIterMeta.pairs
 
 function IIterMeta:clean()
 
-	for i=0, #self-1 do 
+	for i=0, #self-1 do
 		local key, ent = next(self, i)
 
 		if not IsValid(ent) and ent then
 			self[key] = nil
-		end 
+		end
 	end
 
 	self:sequential()
@@ -108,11 +108,11 @@ function IIterMeta:sequential()
 	local len = table.maxn(self)
 	local shift = 0
 
-	for i=1, len do 
+	for i=1, len do
 
 		local v = self[i]
 
-		if v == nil then 
+		if v == nil then
 
 			while shift < len and self[i + shift] == nil do
 			 	shift = shift + 1
@@ -122,7 +122,7 @@ function IIterMeta:sequential()
 			self[i+shift] = nil
 		end
 	end
-end 
+end
 
 function IIterMeta:add(v)
 	self:clean()
@@ -144,7 +144,7 @@ function ValidSeqIterable:new(t)
 	return tbl
 end
 
-ValidSeqIterable.__call = ValidSeqIterable.new 
+ValidSeqIterable.__call = ValidSeqIterable.new
 
 
 local seqMeta = {}
@@ -154,12 +154,12 @@ SeqIterable.__index = seqMeta
 
 function seqMeta:filter(func)
 
-	for i=0, #self-1 do 
+	for i=0, #self-1 do
 		local key, val = next(self, i)
 
 		if val and func(key, val) == false then
 			table.remove(self, key)
-		end 
+		end
 	end
 
 end
@@ -180,6 +180,5 @@ end
 
 
 setmetatable(SeqIterable, SeqIterable)
-
 
 setmetatable(ValidSeqIterable, ValidSeqIterable)

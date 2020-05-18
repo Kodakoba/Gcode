@@ -9,22 +9,22 @@ DeltaTextPiece = DeltaTextPiece or Object:extend()
 
 local function NewFragment(text, col)
 	return {
-		Text = text, 
-		OffsetY = 0, 
-		OffsetX = 0, 
+		Text = text,
+		OffsetY = 0,
+		OffsetX = 0,
 
-		AlignX = 0,
-		AlignY = 0,
+		--AlignX = 0,
+		--AlignY = 0,
 
 		Alpha = 255,
 		Color = col,
 	}
 end
 
-local pmeta = DeltaTextPiece.Meta 
+local pmeta = DeltaTextPiece.Meta
 
 function pmeta:Initialize(par, tx, font, key, rep)
-	self.Text = tx 
+	self.Text = tx
 	self.Font = font
 	self.Key = key
 
@@ -52,8 +52,8 @@ function pmeta:Initialize(par, tx, font, key, rep)
 		to :CreateAnimation, this will be used
 	]]
 
-	aninfo.Length = 0.3
-	aninfo.Ease = 0.4
+	aninfo.Length = 0.4
+	aninfo.Ease = 0.3
 	aninfo.Delay = 0
 	aninfo.AnimationFunction = function(self, len, delay, ease, onend, think) return NewAnimation(len, delay, ease, onend) end
 
@@ -64,7 +64,7 @@ function pmeta:Initialize(par, tx, font, key, rep)
 		TODO: Make a text fragment into an object as well.
 	]]
 
-	self.Fragmented = false 
+	self.Fragmented = false
 	self.Fragments = {}
 
 end
@@ -76,9 +76,9 @@ end
 
 function pmeta:StopAnimation(name)
 
-	if self.Animations[name] then 
-		self.Animations[name]:Stop() 
-		self.Animations[name] = nil 
+	if self.Animations[name] then
+		self.Animations[name]:Stop()
+		self.Animations[name] = nil
 	end
 
 end
@@ -94,16 +94,16 @@ function pmeta:CreateAnimation(name, think, cb, len, del)
 	local anim = self.Animations.Alpha
 	local aninfo = self.Animation
 
-	if anim and not anim.Finished then return end 
+	if anim and not anim.Finished then return end
 
-	if anim then 
+	if anim then
 		anim:Swap(len or aninfo.Length, del or aninfo.Delay, aninfo.Ease)
 		return
 	end
 
 	local anim, nooverride = aninfo.AnimationFunction(self, len or aninfo.Length, del or aninfo.Delay, aninfo.Ease, cb, think)
 
-	if not nooverride then 
+	if not nooverride then
 		anim.Animate = think
 	end
 
@@ -127,27 +127,27 @@ end
 	Don't override it; use :AppearAnimation() and :DisappearAnimation callbacks instead.
 ]]
 
-function pmeta:AnimateAppearance(fr)
+function pmeta:AnimateAppearance(fr, a)
 	if self:AppearAnimation(fr) then return end
 
 	self.Alpha = fr * 255
 
-	local xo, yo = self.Offsets.XAppear, self.Offsets.YAppear
+	local xo, yo = self.Offsets.XAppear, -self:GetLiftStrength()
 
-	self.Offsets.X = -xo + fr * xo
-	self.Offsets.Y = -yo + fr * yo
+	self.Offsets.X = Lerp(fr, xo, 0)
+	self.Offsets.Y = Lerp(fr, yo, 0)
 
 	self:AppearAnimation(fr)
 end
 
-function pmeta:AnimateDisappearance(fr)
+function pmeta:AnimateDisappearance(fr, a, x, y)
 	if self:DisappearAnimation(fr) then return end
 
-	self.Alpha = 255 - fr * 255
-	local xo, yo = self.Offsets.XDisappear, self.Offsets.YDisappear
+	self.Alpha = a - fr * a
+	local xo, yo = self.Offsets.XDisappear, self:GetDropStrength()
 
-	self.Offsets.X = fr * xo
-	self.Offsets.Y = fr * yo
+	self.Offsets.X = Lerp(fr, x, xo)
+	self.Offsets.Y = Lerp(fr, y, yo)
 
 end
 
@@ -155,25 +155,32 @@ end
 function pmeta:Disappear()
 	self:StopAnimation("Appear")	--stop spazzing out
 
-	self.Parent.Active[self.Key] = false		-- Deactivate self for the parent
-	self.Parent.Disappearing[self.Key] = self	-- and set self for disappearing
+	self.Parent.Disappearing[self.Key] = self	-- set self for disappearing
+	self.Disappearing = true
 
-	self:CreateAnimation("Disappear", function(fr) 
-		self:AnimateDisappearance(fr) 
-	end, function() 
-		self.Parent.Disappearing[self.Key] = nil 
+	local fromX, fromY = self.Offsets.X, self.Offsets.Y
+	local a = self.Alpha
+
+	self:CreateAnimation("Disappear", function(fr)
+		self:AnimateDisappearance(fr, a, fromX, fromY)
+	end, function()
+		self.Parent.Disappearing[self.Key] = nil
+		self.Disappeared = true
 	end)
 
 end
 
-function pmeta:Appear()	
-	--it's unlikely an :Appear() will be ever called after a Disappear so we're not stopping animations here
+function pmeta:Appear()
+	self:StopAnimation("Disappear")
 	self:CreateAnimation("Appear", function(fr) self:AnimateAppearance(fr) end, function() end)
+
+	self.Disappearing = false
+	self.Disappeared = false
 end
 
 --[[
-	:CreateAnimation uses a regular NewAnimation function by default. 
-	
+	:CreateAnimation uses a regular NewAnimation function by default.
+
 
 	By setting your own animation you can change what kind of animation it uses. The AnimationFunction gets called with these arguments:
 	self, Length, Delay, Ease, onend, think
@@ -190,15 +197,24 @@ function pmeta:SetAnimationFunction(func)
 	self.AnimationFunction = func
 end
 
+
+function pmeta:DrawText(x, y, col, tx, frag) --Available for override
+	surface.SetTextPos(x, y)
+	surface.SetTextColor(col.r, col.g, col.b, col.a)
+	surface.DrawText(tx)
+end
+
 function pmeta:Paint(x, y)
+	local parent = self.Parent
+
 	self.Color.a = self.Alpha
 
-	if self.Font ~= self.Parent.LastFont then 
-		self.Parent.LastFont = self.Font 
-		surface.SetFont(self.Font) 
+	if self.Font ~= parent.LastFont then
+		parent.LastFont = self.Font
+		surface.SetFont(self.Font)
 	end
 
-	local curfont = self.Font 
+	local curfont = self.Font
 
 	if self.Fragmented then
 
@@ -206,46 +222,55 @@ function pmeta:Paint(x, y)
 		local lastw = 0
 		local lasttx = ""
 
+		local lerpnext = 1
+		local lerpfrom = 0
+
 		for k,v in pairs(self.Fragments) do
-			local alignX = v.AlignX or 0
+			local alignX = v.AlignX or parent.AlignX or 0
 			alignX = alignX / 2
-			if (not v.Font and curfont ~= self.Font) or (v.Font and v.Font ~= curfont) then 
+			if (not v.Font and curfont ~= self.Font) or (v.Font and v.Font ~= curfont) then
 				surface.SetFont(v.Font or self.Font)
 				curfont = v.Font
 			end
 
 			local tw, th = surface.GetTextSize(v.Text)
 
-			if not v.RewindTextPos then 
 
-				if v.LerpFromLast then 
-					x = x -  Lerp(Ease(v.LerpFromLast, v.Ease or 0.6), lastw or tw*alignX, tw*alignX)
-				else 
-					x = x - tw * alignX 
-				end 
-
+			if v.LerpNext then --if lerpnext is active then this fragment's width will be calculated by the next fragment
+				lerpnext = Ease(v.LerpNext, v.Ease or 0.6)
+				lerpfrom = tw*alignX
+			else
+				x = x - Lerp(lerpnext, lerpfrom, tw * alignX)
+				lerpnext = 1
+				lerpfrom = 0
 			end
-			
+
+			lastw = v.Fading and tw
+
 		end
 
-		for k,v in pairs(self.Fragments) do 
-			if v.Text == "" then continue end 
+		lastw = 0
+
+		for k,v in pairs(self.Fragments) do
+			if v.Text == "" then continue end
 
 			--if fragment doesn't have a custom font, and current font is not default font (for example, from last frag)
 			--or fragment has a custom font and it's not the same one as the current,
 			--change it
 
-			if (not v.Font and curfont ~= self.Font) or (v.Font and v.Font ~= curfont) then 
+			if (not v.Font and curfont ~= self.Font) or (v.Font and v.Font ~= curfont) then
 				surface.SetFont(v.Font or self.Font)
 				curfont = v.Font
 			end
 
-			v.Color.a = math.min(v.Alpha or 255, self.Alpha)
+			local oldA = v.Color.a --we only want to change the alpha of the color temporarily, in case there's the same color being used for multiple fragments
+
+			v.Color.a = math.min(v.Alpha or 255, self.Alpha, v.Color.a)
 
 			local tw, th = surface.GetTextSize(v.Text)
 
-			local alignX, alignY = v.AlignX or 0, v.AlignY or 0
-			alignX, alignY = alignX/2, alignY/2
+			local alignX, alignY = v.AlignX or parent.AlignX or 0, v.AlignY or parent.AlignY or 0
+			alignX, alignY = alignX / 2, alignY / 2
 
 			--0 = left/top
 			--1 = middle
@@ -256,48 +281,54 @@ function pmeta:Paint(x, y)
 			local tX = x + v.OffsetX + self.Offsets.X -- alignX * tw
 			local tY = y + v.OffsetY + self.Offsets.Y + alignY * th
 
-			surface.SetTextPos(tX, tY)
+			self:DrawText(tX, tY, v.Color, v.Text, v)
 
-			surface.SetTextColor(v.Color)
+			if not v.RewindTextPos then
 
-			surface.DrawText(v.Text)
-
-			
-				
-
-			if not v.RewindTextPos then 
-
-				if v.LerpFromLast then 
+				if v.LerpFromLast then
 					x = x + Lerp(Ease(v.LerpFromLast, v.Ease or 0.6), lastw or tw, tw)
-				else 
+				elseif not v.Fading then
 					x = x + tw
-				end 
+				end
 
 			end
+
+			v.Color.a = oldA --reset the alpha to what it was
 
 			lastw = v.Fading and tw
 			lasttx = v.Text
 		end
 
-		return 
+		return
 	end
-	surface.SetTextPos(x + self.Offsets.X, y + self.Offsets.Y)
-	surface.SetTextColor(self.Color)
 
-	surface.DrawText(self.Text)
+	local tw, th = surface.GetTextSize(self.Text)
+
+	local alignX = self.AlignX or parent.AlignX or 0
+	local alignY = self.AlignY or parent.AlignY or 0
+
+	alignX, alignY = alignX / 2, alignY / 2
+
+	local tX = x + self.Offsets.X - alignX * tw
+	local tY = y + self.Offsets.Y + alignY * th
+
+	self:DrawText(tX, tY, self.Color, self.Text)
 
 end
 
 function pmeta:GetText(ignore_fading)
-	if not self.Fragments then 
+	if not self.Fragmented then
 		return self.Text
-	else 
+	else
+
 		local s = ""
-		for k,v in pairs(self.Fragments) do 
+
+		for k,v in pairs(self.Fragments) do
 			if ignore_fading and v.RewindTextPos then continue end
-			s = s .. v.Text 
-		end 
-		return s 
+			s = s .. v.Text
+		end
+
+		return s
 	end
 end
 function pmeta:OnAppear()	--for override
@@ -324,7 +355,7 @@ end
 ]]
 function pmeta:FragmentText(from, to)
 
-	if not self.Fragmented then 
+	if not self.Fragmented then
 
 		self.Fragmented = true
 
@@ -335,53 +366,35 @@ function pmeta:FragmentText(from, to)
 
 			local t1, t2, t3 = self.Text:sub(0, from-1), self.Text:sub(from, to), self.Text:sub(to+1, #self.Text)
 
-			t[1] = {
-				Text = t1,
-				ID = 1,
-				OffsetX = 0,
-				OffsetY = 0,
-				Color = self.Color,
-			}
+			t[1] = NewFragment(t1, self.Color) 
+			t[1].ID = 1
 
-			t[2] = {
-				Text = t2,
-				ID = 2,
-				OffsetX = 0,
-				OffsetY = 0,
-				Color = self.Color,
-			}
+			t[2] = NewFragment(t2, self.Color)
+			t[2].ID = 2
 
-			t[3] = {
-				Text = t3,
-				ID = 3,
-				OffsetX = 0,
-				OffsetY = 0,
-				Color = self.Color,
-			}
+			t[3] = NewFragment(t3, self.Color) 
+			t[3].ID = 3
+
 			self.Fragments = t
-		else 
-			t[1] = {
-				Text = self.Text,
-				ID = 1,
-				OffsetX = 0,
-				OffsetY = 0,
-				Color = self.Color
-			}
+		else
+			t[1] = NewFragment(self.Text, self.Color)
+			t[1].ID = 1
+
 			self.Fragments = t
-		end 
-
-		
-
-		return t
-	else 
-		
-		local len = 0
-
-		if from < 0 then 
-			from = #self.Text + from 
 		end
 
-		for k,v in pairs(self.Fragments) do 
+
+
+		return t
+	else
+
+		local len = 0
+
+		if from < 0 then
+			from = #self.Text + from
+		end
+
+		for k,v in pairs(self.Fragments) do
 
 			local txt = v.Text
 
@@ -399,7 +412,7 @@ function pmeta:FragmentText(from, to)
 
 				if newtext == 0 then --they didn't leave any text; just remove the frag
 					table.remove(self.Fragments, k)
-				else 
+				else
 					v.Text = txt:sub(0, newtext)
 				end
 
@@ -407,7 +420,7 @@ function pmeta:FragmentText(from, to)
 				frag.ID = where
 
 				return where
-				
+
 			end
 		end
 
@@ -421,23 +434,23 @@ function pmeta:SetFragmentFont(ind, font)
 	self.Fragments[ind].Font = font
 end
 
-function pmeta:AddFragment(text, num, anim, onend)	--adds a fragment on top 
+function pmeta:AddFragment(text, num, anim, onend)	--adds a fragment on top
 	local newfrag = NewFragment(text, self.Color)
 
-	if anim then 
-		newfrag.Alpha = 0 
+	if anim then
+		newfrag.Alpha = 0
 	end
 
-	if not self.Fragmented then 
+	if not self.Fragmented then
 		self:FragmentText()
 	end
 
-	if anim then 
+	if anim then
 
 		self:CreateAnimation("AddFragText" .. newfrag.Text, function(fr)
 			newfrag.OffsetY = 24 - (fr * 24)
 			newfrag.Alpha = fr*255
-		end, function() 
+		end, function()
 			if onend then onend() end
 		end, nil, 0.1)
 
@@ -445,12 +458,12 @@ function pmeta:AddFragment(text, num, anim, onend)	--adds a fragment on top
 
 	local where
 
-	if num then 
+	if num then
 		where = table.insert(self.Fragments, num, newfrag)
-	else 
+	else
 		where = table.insert(self.Fragments, newfrag)
 	end
-	newfrag.ID = where 
+	newfrag.ID = where
 
 	return where, newfrag
 end
@@ -467,9 +480,9 @@ function pmeta:OnReset()
 end
 
 function pmeta:Reset()
-	if self:OnReset() then return end 
+	if self:OnReset() then return end
 
-	if self.Fragmented then 
+	if self.Fragmented then
 		local tx = self.Text
 		self:CollectFragments()
 		self.Text = tx
@@ -486,55 +499,63 @@ end
 	the text in the fragment is exactly the same as you're trying to change it to)
 ]]
 
-function pmeta:ReplaceText(num, rep, onend)
+function pmeta:ReplaceText(num, rep, onend, nolerp)
 
 	local newfrag = NewFragment(rep, self.Color)
 
-	newfrag.Alpha = 0 
+	newfrag.Alpha = 0
 	newfrag.ID = num
-	newfrag.LerpFromLast = 0
-	newfrag.RewindTextPos = true
+	--newfrag.LerpFromLast = 0
+	--newfrag.RewindTextPos = true
 
-	local frag 
+	local frag
 
 	for k,v in pairs(self.Fragments) do --find the frag we'll be replacing
-		if not v.Fading and v.ID == num then 
-			frag = v 
-			break 
+		if not v.Fading and v.ID == num then
+			frag = v
+			break
 		end
 	end
 
-	if not frag then return false end 
+	if not frag then return false end
 
 	if frag.Text == rep then return false end --its the same text
-	--frag.RewindTextPos = true
+	frag.RewindTextPos = true
 	frag.Fading = true
 
-	newfrag.AlignX = frag.AlignX 
-	newfrag.AlignY = frag.AlignY 
-	newfrag.Color = frag.Color 
+	frag.LerpNext = 0
+
+
+	newfrag.AlignX = frag.AlignX
+	newfrag.AlignY = frag.AlignY
+	newfrag.Color = frag.Color
 
 	self:StopAnimation(frag.ID .. "AddText" .. frag.Text)	--in case it existed
 
 	local dropstr = self:GetDropStrength()
 
+	local a = frag.Alpha
+
 	self:CreateAnimation(num .. "SubText" .. frag.Text, function(fr)
 		frag.OffsetY = fr * dropstr
-		frag.Alpha = 255 - fr*255
+		frag.Alpha = a - fr*a
 
-		newfrag.LerpFromLast = fr 	--doing it in the fading _out_ looks better, for some reason, than doing it on fading _in_
+		frag.LerpNext = fr
+		newfrag.LerpFromLast = fr --doing it in the fading _out_ looks better than doing it on fading _in_
+
 	end, function()
 
 		local found = false
 
 		for k,v in pairs(self.Fragments) do 	--this is done like this because the keys might change by the time the animation finishes
-			if v == frag then 
+			if v == frag then
 				table.remove(self.Fragments, k)
 				return
-			end 
+			end
 		end
 
 		newfrag.Finished = true
+		--newfrag.LerpFromLast = 0
 	end)
 
 	local appstr = self:GetLiftStrength()
@@ -543,22 +564,23 @@ function pmeta:ReplaceText(num, rep, onend)
 		frag.RewindTextPos = true	--to prevent the new fragment's X pos being impacted by the one we're removing.
 		newfrag.RewindTextPos = false
 
-		
+
 		newfrag.OffsetY = appstr - (fr * appstr)
 		newfrag.Alpha = fr*255
 
-	end, 
-	function() 
+	end,
+
+	function()
 		if onend then onend() end
-	end, 
-	nil, 
-	0.1)	--delay		
+	end,
+	nil,
+	0.1)	--delay
 
 	local inswhere = num+1
 
-	for k,v in pairs(self.Fragments) do 	--find latest fragment with this ID which is fading, to put the new frag after it 
+	for k,v in pairs(self.Fragments) do 	--find latest fragment with this ID which is fading, to put the new frag after it
 		if v.Fading and v.ID == num then 	--this is done for text X rewinding to work properly(ORDERRR!)
-			inswhere = k+1 
+			inswhere = k+1
 		end
 	end
 
@@ -568,24 +590,24 @@ function pmeta:ReplaceText(num, rep, onend)
 end
 
 --[[
-	Re-collects all fragments, and if an argument isn't provided, 
+	Re-collects all fragments, and if an argument isn't provided,
 	unites all text fragments into its' .Text member.
 
 	Removes fragmentation entirely.
 ]]
 function pmeta:CollectFragments(keeptxt)
 
-	if not keeptxt then 
+	if not keeptxt then
 		local s = ""
 
-		for k,v in pairs(self.Fragments) do 
+		for k,v in pairs(self.Fragments) do
 			s = s .. v.Text
 		end
 
-		self.Text = s 
+		self.Text = s
 	end
 
-	self.Fragmented = false 
-	
+	self.Fragmented = false
+
 	table.Empty(self.Fragments)
 end
