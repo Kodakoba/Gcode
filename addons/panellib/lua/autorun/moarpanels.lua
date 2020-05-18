@@ -74,5 +74,5 @@ end]]
 --[[
 IncludeFolder(path .. "*", _CL, true)
 IncludeFolder("moarpanels/deltatext/*", _CL)]]
-print("cum")
+
 FInc.Recursive("moarpanels/*", _CL)
