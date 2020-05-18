@@ -1,36 +1,29 @@
 
 --credits to <CODE BLUE>
 
-local updating = true --set this to true when fucking with shadows to update the shadow materials with new reloads
+local updating = false --set this to true when fucking with shadows to update the shadow materials with new reloads
 
-BSHADOWS_ID = BSHADOWS_ID or 0 
+BSHADOWS_ID = BSHADOWS_ID or 0
 BSHADOWS_ID = BSHADOWS_ID + 1
 
-BSHADOWS = {}
+BSHADOWS = (not updating and BSHADOWS) or {}
 
-local render = render 
-
-BSHADOWS.RTs = {}
-
-hook.Add("HexlibLoaded", "bshadows", function()
-    BSHADOWS.RTs = mdimobj()
-end)
+local render = render
 
 BSHADOWS.RenderTarget = GetRenderTarget("bshadows_original", ScrW(), ScrH())
- 
+
 BSHADOWS.RenderTarget2 = GetRenderTarget("bshadows_shadow",  ScrW(), ScrH())
- 
+
 BSHADOWS.ShadowMaterial = BSHADOWS.ShadowMaterial or CreateMaterial("bshadows" .. BSHADOWS_ID,"UnlitGeneric",{
     ["$translucent"] = 1,
     ["$vertexalpha"] = 1,
     ["alpha"] = 1
 })
- 
+
 BSHADOWS.ShadowMaterialGrayscale = (not updating and BSHADOWS.ShadowMaterialGrayscale) or CreateMaterial("bshadows_grayscale" .. BSHADOWS_ID,"UnlitGeneric",{
     ["$translucent"] = 1,
     ["$vertexalpha"] = 1,
     ["$alpha"] = 1,
-    
     ["$color"] = "[0 0 0]",
 })
 
@@ -44,15 +37,13 @@ BSHADOWS.ShadowMaterialColorscale = (not updating and BSHADOWS.ShadowMaterialCol
 
 BSHADOWS.ShadowMaterialColor = (not updating and BSHADOWS.ShadowMaterialColor) or CreateMaterial("bshadows_color" .. BSHADOWS_ID,"UnlitGeneric",{
     ["$translucent"] = 1,
-    
     ["$vertexalpha"] = 1,
-
     ["$alpha"] = 1,
 })
 
 
 local offsetted = false --is current shadow being offsetted by x,y,w,h args?
-local started = false 
+local started = false
 
 local curX, curY = 0, 0
 local curW, curH
@@ -62,29 +53,29 @@ local realW, realH
 local CurRT, ShadowRT
 
 BSHADOWS.BeginShadow = function(x, y, w, h)
- 	
+
  	realW, realH = ScrW(), ScrH()
  	curW, curH = w or realW, h or realH
 
     local rt1 = draw.GetRT("bshadows", curW, curH)
     local rt2 = draw.GetRT("bshadows_shadow", curW, curH)
 
-    if not rt1 or not rt2 then print("The fuck nigga", rt1, rt2) return end 
+    if not rt1 or not rt2 then print("failed to get Rt for the shadow or somethin?") return end
 
     CurRT = rt1
     ShadowRT = rt2
 
     --Set the render target so all draw calls draw onto the render target instead of the screen
     render.PushRenderTarget(rt1)
- 
+
     --Clear is so that theres no color or alpha
     render.OverrideAlphaWriteEnable(true, true)
     render.Clear(0, 0, 0, 0, true)
     render.OverrideAlphaWriteEnable(false, false)
- 
+
     --Start Cam2D as where drawing on a flat surface
-    
-    if x and y then 
+
+    if x and y then
 
     	offsetted = true
     	curX, curY = x, y
@@ -92,15 +83,12 @@ BSHADOWS.BeginShadow = function(x, y, w, h)
     	--render.SetViewPort(x, y, w, h)
     end
 
-    started = true 
+    started = true
 
     cam.Start2D()
- 
+
     --Now leave the rest to the user to draw onto the surface
 end
- 	
-local blackvec = vector_origin
-local whitevec = Vector(255, 255, 255)
 
 --This will draw the shadow, and mirror any other draw calls the happened during drawing the shadow
 BSHADOWS.EndShadow = function(intensity, spread, blur, opacity, direction, distance, _shadowOnly, color, color2)
@@ -112,7 +100,7 @@ BSHADOWS.EndShadow = function(intensity, spread, blur, opacity, direction, dista
 
     --Copy this render target to the other
     render.CopyRenderTargetToTexture(ShadowRT)
- 
+
     --Blur the second render target
     if blur > 0 then
 
@@ -121,24 +109,24 @@ BSHADOWS.EndShadow = function(intensity, spread, blur, opacity, direction, dista
         render.OverrideAlphaWriteEnable(false, false)
 
     end
- 
+
     --First remove the render target that the user drew
     if started then render.PopRenderTarget() end
 
     local shmat = BSHADOWS.ShadowMaterialGrayscale	--the actual shadow material
     local mat = BSHADOWS.ShadowMaterial 			--the material on which the user has drawn
 
-    if color or color2 then 
+    if color or color2 then
     	shmat = BSHADOWS.ShadowMaterialColorscale
     end
 
     --Now update the material to what was drawn
     mat:SetTexture('$basetexture', CurRT)
- 
+
     --Now update the material to the shadow render target
     shmat:SetTexture('$basetexture', ShadowRT)
 
- 	if color then 
+ 	if color then
     	local vc = Vector(color.r, color.g, color.b) --nO cOloR mEtatAblE
 
     	shmat:SetVector("$color", vc)				--this is a weird ass shader which adds something like a...halo, i guess
@@ -146,41 +134,40 @@ BSHADOWS.EndShadow = function(intensity, spread, blur, opacity, direction, dista
     	shmat:SetUndefined("$color2")				--seems like color2 makes $color behave weird so lets unset it
     end
 
-    if color2 then 
+    if color2 then
     	local vc = Vector(color2.r, color2.g, color2.b)
     	shmat:SetVector("$color2", vc)	--color2 is more "color of the shadow" than "color of the halo"
 
     	if not color then shmat:SetUndefined("$color") end
     end
 
-    if color or color2 then 
+    if color or color2 then
     	shmat:Recompute()
     end
 
     --Work out shadow offsets
     local xOffset = math.sin(math.rad(direction)) * distance
     local yOffset = math.cos(math.rad(direction)) * distance
- 
-    shmat:SetFloat("$alpha", opacity/255)
 
-    --first draw the shadow 
+    shmat:SetFloat("$alpha", opacity / 255)
+
+    --first draw the shadow
 
     render.SetMaterial(shmat)
 
     for i = 1, math.ceil(intensity) do
-		render.DrawScreenQuadEx(xOffset+curX, yOffset+curY, curW or ScrW(), curH or ScrH())
+        render.DrawScreenQuadEx(xOffset + curX, yOffset + curY, curW or ScrW(), curH or ScrH())
     end
- 	
+
  	--then whatever the user has drawn
 
     if not _shadowOnly then
         mat:SetTexture('$basetexture', CurRT)
         render.SetMaterial(mat)
-		--render.DrawScreenQuad()
         render.DrawScreenQuadEx(curX, curY, curW or ScrW(), curH or ScrH())
     end
 
-    if offsetted then 
+    if offsetted then
 
         started = false
 
@@ -188,7 +175,7 @@ BSHADOWS.EndShadow = function(intensity, spread, blur, opacity, direction, dista
 
     	--render.SetViewPort(0, 0, realW, realH)
 
-    	curX = 0 
+    	curX = 0
     	curY = 0
 
     	offsetted = false
@@ -197,26 +184,4 @@ BSHADOWS.EndShadow = function(intensity, spread, blur, opacity, direction, dista
     end
 
     if started then cam.End2D() started = false end
-end
-
-function draw.Shadowed(off, op)
-
-end
-
-if IsValid(testp) then testp:Remove() return else return end
-
-testp = vgui.Create("FFrame")
-local p = testp
-
-p:SetSize(600, 400)
-p:Center()
-p.Shadow = {}
-function p:PostPaint(w, h)
-	--draw.RoundedPolyBoxEx(16, 50, 100, 500, 200, Color(250, 20, 20, 250))
-	surface.SetDrawColor(Color(250, 50, 50))
-	BSHADOWS.BeginShadow()
-		--draw.DrawMaterialCircle(w/2, h - 64, 128)
-		draw.NoTexture()
-		draw.SimpleText("Peepee poopoo peepee poopoo", "OS72", w/2, h-64, Color(255, 255, 255))--DrawCircle(w/2, h-64, 32, 128)
-	BSHADOWS.EndShadow(1, 0.1, 3, nil, 45, 1, nil, HSVToColor((CurTime() * 120)%360, 1, 1) )
 end

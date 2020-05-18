@@ -293,7 +293,7 @@ hook.Add("ChatHUDEmotesUpdated", "mittymeme", function(col)
 
 				surface.SetDrawColor(color_white)
 				mitty:Paint(0, 0, 128, 128)
-			end, 
+			end,
 		false, viswhere, 32)
 	end
 
@@ -336,6 +336,6 @@ end
 
 hook.Add("ChatHUDFFZUpdated", "manmeme", addMaN)
 
-if Emotes.Collections.FFZ then 
+if Emotes and Emotes.Collections.FFZ then 
 	addMaN(Emotes.Collections.FFZ)
 end
