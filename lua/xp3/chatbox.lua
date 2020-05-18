@@ -1,6 +1,6 @@
 chatbox = chatbox or {}
 
-if IsValid(chatbox.frame) then 
+if IsValid(chatbox.frame) then
 	chatbox.frame:Remove()
 end
 
@@ -110,7 +110,7 @@ end
 function chatbox.ParseInto(feed, ...)
 
 	local tbl = {...}
-	
+
 	feed:InsertColorChange(120, 219, 87, 255)
 
 	if #tbl == 1 and isstring(tbl[1]) then
@@ -162,12 +162,11 @@ function chatbox.ParseInto(feed, ...)
 end
 
 function chatbox.OpenEmotesMenu(btn)
-	if IsValid(chatbox.EmoteMenu) then chatbox.EmoteMenu:StartClosing() chatbox.EmoteMenu = nil return end 
+	if IsValid(chatbox.EmoteMenu) then chatbox.EmoteMenu:StartClosing() chatbox.EmoteMenu = nil return end
 
 	local emotes = vgui.Create("TabbedFrame")
-	chatbox.EmoteMenu = emotes 
+	chatbox.EmoteMenu = emotes
 	emotes.Shadow = {intensity = 3, blur = 1, spread = 0.7}
-	
 
 	emotes.TabColor = Color(65, 65, 65)
 
@@ -229,12 +228,12 @@ function chatbox.OpenEmotesMenu(btn)
 	emotes.HeaderSize = 20
 
 	emotes:SetTabSize(18)
-	emotes:DockPadding(0, 0, 0, 0)
+
 	emotes:On("OnSizeChanged", emotes.OnSizeChanged)
 
 	function emotes:OnSizeChanged(w, h)
 		self:Emit("OnSizeChanged", w, h)
-	end	
+	end
 
 	function emotes:OnRemove()
 		self:Emit("OnRemove")
@@ -253,7 +252,7 @@ function chatbox.OpenEmotesMenu(btn)
 	end
 
 	function reload:OnHover()
-		if not IsValid(self.Cloud) then 
+		if not IsValid(self.Cloud) then
 			self.Cloud = vgui.Create("Cloud", self)
 			self.Cloud:SetText("Reload all emotes")
 
@@ -267,16 +266,16 @@ function chatbox.OpenEmotesMenu(btn)
 		end
 
 		self.Cloud:Popup(true)
-	end 
+	end
 
 	function reload:OnUnhover()
-		if not IsValid(self.Cloud) then return end 
+		if not IsValid(self.Cloud) then return end
 		self.Cloud:Popup(false)
 	end
 
 	function reload:DoClick()
 
-		for k,v in pairs(Emotes.Collections.Animated:GetEmotes()) do 
+		for k,v in pairs(Emotes.Collections.Animated:GetEmotes()) do
 			RunConsoleCommand("mat_reloadmaterial", "data/hdl/" .. v:GetHDLPath())
 		end
 	end
@@ -295,15 +294,13 @@ function chatbox.OpenEmotesMenu(btn)
 								--this gets reset every frame by list:PostPaint
 
 								--this way, we're letting only 1 emote per frame to load
-										
-	for name, coll in pairs(Emotes.Collections) do 
+
+	for name, coll in pairs(Emotes.Collections) do
 		local tab = emotes:AddTab(name, function()
 			local list = vgui.Create("FScrollPanel", emotes)
 			list:Dock(FILL)
 
 			--apply filters to all children (emotes)
-
-			
 
 			list.Paint = function()
 				render.PushFilterMag( TEXFILTER.ANISOTROPIC )
@@ -322,7 +319,7 @@ function chatbox.OpenEmotesMenu(btn)
 			local size = 40
 
 			local il = list:Add("DIconLayout")
-			il:Dock(FILL)	
+			il:Dock(FILL)
 			local minspace = 6
 			il:SetSpaceX(6)
 			il:SetSpaceY(4)
@@ -343,9 +340,7 @@ function chatbox.OpenEmotesMenu(btn)
 				toscrH = midY + h/2
 			end)
 
-			
-
-			for k,v in pairs(coll:GetEmotes()) do 
+			for k,v in pairs(coll:GetEmotes()) do
 				local b = il:Add("DButton")
 				b:SetSize(size, size)
 				b:SetText("")
@@ -357,15 +352,15 @@ function chatbox.OpenEmotesMenu(btn)
 						emotesLoading = true													-- switch emotesLoading to true and allow 1 mat to load
 					elseif emotesLoading then 													-- emote material is loading and we're already loading something, don't do anything
 						draw.DrawLoading(self, w/2, h/2, w, h)
-						return 
-					end 
+						return
+					end
 
 					surface.SetDrawColor(color_white)
 					self.Emote:Paint(0, 0, w, h, self)
 				end
 
 				function b:OnCursorEntered()
-					if not IsValid(self.Cloud) then 
+					if not IsValid(self.Cloud) then
 						self.Cloud = vgui.Create("Cloud", self)
 						self.Cloud:SetText(self.Emote:GetName())
 						self.Cloud:SetSize(self:GetSize())	--makes cloud always paint even if 0,0 of the button is hidden
@@ -378,15 +373,15 @@ function chatbox.OpenEmotesMenu(btn)
 
 					end
 					self.Cloud:Popup(true)
-				end 
+				end
 
 				function b:OnCursorExited()
-					if not IsValid(self.Cloud) then return end 
+					if not IsValid(self.Cloud) then return end
 					self.Cloud:Popup(false)
 				end
 
 				function b:DoClick()
-					if IsValid(chatbox.frame.chat.input) then 
+					if IsValid(chatbox.frame.chat.input) then
 						chatbox.frame.chat.input:SetValue(chatbox.frame.chat.input:GetValue() .. ":" .. self.Emote:GetShortcut() .. ":")
 					end
 				end
@@ -396,37 +391,37 @@ function chatbox.OpenEmotesMenu(btn)
 		end)
 
 		function tab:OnCursorEntered()
-			if not coll:GetNiceName() then return end 
+			if not coll:GetNiceName() then return end
 
-			if not IsValid(self.Cloud) then 
+			if not IsValid(self.Cloud) then
 				self.Cloud = vgui.Create("Cloud", self)
 				self.Cloud:SetText(coll:GetNiceName())
 
 				self.Cloud.MaxW = emotes:GetWide()
 				self.Cloud.Middle = 0.5
 
-				if coll:GetDescription() then 
+				if coll:GetDescription() then
 					local desc = coll:GetDescription()
 
 					if isstring(desc) then
-						self.Cloud:AddFormattedText(desc, Color(150, 150, 150), "OS18") 
-					elseif istable(desc) then 
-						for k,v in pairs(desc) do 
-							self.Cloud:AddFormattedText(v.txt, v.col or Color(150, 150, 150), v.font or "OS18") 
+						self.Cloud:AddFormattedText(desc, Color(150, 150, 150), "OS18")
+					elseif istable(desc) then
+						for k,v in pairs(desc) do
+							self.Cloud:AddFormattedText(v.txt, v.col or Color(150, 150, 150), v.font or "OS18")
 						end
 					end
 
 				end
-				
+
 				self.Cloud:SetAbsPos(emotes:GetWide() / 2 - self.X, -32)	--i don't know why i had to subtract self.X tbh
 				self.Cloud.RemoveWhenDone = true
 			end
 
 			self.Cloud:Popup(true)
-		end 
+		end
 
 		function tab:OnCursorExited()
-			if not IsValid(self.Cloud) then return end 
+			if not IsValid(self.Cloud) then return end
 			self.Cloud:Popup(false)
 		end
 	end
@@ -493,12 +488,12 @@ function chatbox.BuildTabChat(self, a)
 		self.chat.text_feed = vgui.Create("RichText", self.chat)
 			self.chat.text_feed:Dock(FILL)
 			self.chat.text_feed:DockMargin(4, 0, 4, 0)
-			
+
 			self.chat.text_feed.PerformLayout = feed_layout
 
 			function self.chat.text_feed:ActionSignal(name, val)
-				if name == "TextClicked" then 
-					if val:match("https://(.+)") then 
+				if name == "TextClicked" then
+					if val:match("https://.+") then
 						gui.OpenURL(val)
 					end
 				end
@@ -506,11 +501,11 @@ function chatbox.BuildTabChat(self, a)
 		self.chat.input_base = vgui.Create("DPanel", self.chat)
 		self.chat.input_base:Dock(BOTTOM)
 
-		function self.chat.input_base:Paint(w, h) 
-			draw.RoundedBoxEx(8, 0, 0, w, h, Color(30, 30, 30, 230), false, false, true, true) 
+		function self.chat.input_base:Paint(w, h)
+			draw.RoundedBoxEx(8, 0, 0, w, h, Color(30, 30, 30, 230), false, false, true, true)
 		end
 
-			
+
 		self.chat.input_base:SetHeight(40)
 		self.chat.input_base:SetAlpha(220)
 

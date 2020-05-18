@@ -1,27 +1,27 @@
 --hello
 
 local emote = chathud.Emote or Class:Callable()
-chathud.Emote = emote 
+chathud.Emote = emote
 
 Emotes = Emotes or {}
 Emotes.Collections = Emotes.Collections or {}
 
 local collection = Emotes.Collection or Class:Callable()
-Emotes.Collection = collection 
+Emotes.Collection = collection
 Emotes.All = Emotes.All or {} --multiple emotes with the smae name will override each other
 
 function collection:Initialize(name, desc)
-	self.Name = name 
-	self.Description = desc 
+	self.Name = name
+	self.Description = desc
 
 	self.Emotes = {}
-end 
+end
 
 ChainAccessor(collection, "NiceName", "NiceName")
 ChainAccessor(collection, "Description", "Description")
 
 function collection:AddEmote(emote)
-	self.Emotes[emote:GetName()] = emote 
+	self.Emotes[emote:GetName()] = emote
 	Emotes.All[emote:GetName()] = emote
 end
 
@@ -30,10 +30,10 @@ function collection:GetEmotes()
 end
 
 function emote:Initialize(name, url)
-	self.Name = name 
+	self.Name = name
 	self.URL = url
 	self.HDLPath = "emotes/" .. name
-	
+
 	chathud.Emotes[name] = self
 end
 
@@ -53,21 +53,21 @@ ChainAccessor(emote, "Name", "Name")
 ChainAccessor(emote, "URL", "URL")
 
 function emote:SetStatic(b)
-	self.IsAnimated = not b 
+	self.IsAnimated = not b
 	return self
 end
 
 function emote:SetAnimated(b)
-	self.IsAnimated = b 
+	self.IsAnimated = b
 	return self
 end
 
 function emote:GetAnimated()
-	return self.IsAnimated 
+	return self.IsAnimated
 end
 
 function emote:GetStatic()
-	return not self.IsAnimated 
+	return not self.IsAnimated
 end
 
 function emote:GetPath()
@@ -89,7 +89,7 @@ end
 function emote:Download()
 	self.Downloading = true
 	draw.GetMaterial(self:GetURL(), self:GetHDLPath() .. ".png", nil, function()
-		self.Downloading = false 
+		self.Downloading = false
 	end)
 end
 
@@ -98,7 +98,7 @@ end
 function emote:Paint(x, y, w, h, pnl)
 	if not self:Exists() then self.Downloading = true end
 
-	if self:GetAnimated() then 
+	if self:GetAnimated() then
 		draw.DrawGIF(self:GetURL(), self:GetHDLPath(), x, y, w, h, nil, nil, nil, pnl)
 	else
 		surface.DrawMaterial(self:GetURL(), self:GetHDLPath() .. ".png", x, y, w, h)
