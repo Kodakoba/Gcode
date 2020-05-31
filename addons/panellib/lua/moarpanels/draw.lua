@@ -36,6 +36,44 @@ local sin = math.sin
 local cos = math.cos
 local mrad = math.rad
 
+local sizes = {}
+
+function surface.CharSizes(tx, font, unicode)
+	local szs = {}
+	surface.SetFont(font)
+	local cache = sizes[font] or {}
+	sizes[font] = cache
+
+	if unicode then
+		local codes = {utf8.codepoint(tx, 1, #tx)}
+		for i=1, #codes do
+			local char = utf8.char(codes[i])
+			local sz = cache[char]
+
+			if not sz then
+				sz = (surface.GetTextSize(char))
+				cache[char] = sz
+			end
+
+			szs[i] = sz
+		end
+
+	else
+		for i=1, #tx do
+			local char = tx[i]
+			local sz = cache[char]
+
+			if not sz then
+				sz = (surface.GetTextSize(char))
+				cache[char] = sz
+			end
+
+			szs[i] = sz
+		end
+	end
+
+	return szs
+end
 
 local function FetchUpValuePanel()
 	return debug.getlocal(3, 1)
@@ -383,7 +421,7 @@ function draw.RoundedPolyBox(rad, x, y, w, h, col, notr, nobr, nobl, notl)
 		coords for post-rounded corners
 	]]
 
-	surface.SetDrawColor(col)
+	surface.SetDrawColor(col:Unpack())
 	draw.NoTexture()
 
 	local cache = rbcache:Get(rad, x, y, w, h, notr, nobr, nobl, notl)
@@ -604,6 +642,40 @@ function draw.DrawMaterialCircle(x, y, rad)	--i hate it but its the only way to 
 end
 
 draw.MaterialCircle = draw.DrawMaterialCircle
+
+function draw.BeginMask(mask, ...)
+	render.SetStencilPassOperation( STENCIL_KEEP )
+
+	render.SetStencilEnable(true)
+
+		render.ClearStencil()
+
+		render.SetStencilTestMask(0xFF)
+		render.SetStencilWriteMask(0xFF)
+
+		render.SetStencilCompareFunction( STENCIL_NEVER )
+		render.SetStencilFailOperation( STENCIL_REPLACE )
+
+		render.SetStencilReferenceValue( 1 ) --include
+
+		mask(...)
+
+end
+
+function draw.DeMask(demask, ...) --requires mask to be started
+	render.SetStencilReferenceValue( 0 ) --exclude
+	demask(...)
+end
+
+function draw.DrawOp()
+	render.SetStencilCompareFunction( STENCIL_NOTEQUAL )
+	render.SetStencilFailOperation( STENCIL_KEEP )
+	render.SetStencilReferenceValue( 0 )
+end
+
+function draw.FinishMask()
+	render.SetStencilEnable(false)
+end
 
 function draw.Masked(mask, op, demask, deop, ...)
 

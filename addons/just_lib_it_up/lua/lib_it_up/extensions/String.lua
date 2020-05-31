@@ -22,6 +22,14 @@ local cachetbl = {}
 local cachenums = {}
 
 
+function eachNewline(s) --meant to be used as 'for s in eachNewline(tx) do...'
+	local iter, line = (s:gmatch("[^\r\n]+")), 0
+	return function()
+		line = line + 1
+		return iter(), line
+	end
+end
+
 function string.WordWrap(name, w, font)	-- this should be deprecated cuz it sucks
 
 	surface.SetFont(font or "RL18")
