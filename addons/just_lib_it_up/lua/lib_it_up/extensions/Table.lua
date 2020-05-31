@@ -222,3 +222,13 @@ function ChainAccessor(t, key, func)
 		return self
 	end
 end
+
+function table.InsertVararg(t, ...)
+	local len = select('#', ...)
+	local tlen = #t
+
+	for i=1, len do
+		t[tlen + i] = select(i, ...)
+	end
+
+end

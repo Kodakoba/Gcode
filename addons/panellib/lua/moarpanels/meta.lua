@@ -24,6 +24,11 @@ function META:GetCenter(xfrac, yfrac)
 	return x, y
 end
 
+local dred = Color(230, 40, 40, 20)
+function META:Debug()
+	self.Paint = function(self, w, h) draw.RoundedBox(8, 0, 0, w, h, dred) end
+end
+
 function META:AddDockPadding(l, t, r, b)
 	l, t, r, b = l or 0, t or 0, r or 0, b or 0
 
@@ -100,6 +105,10 @@ function META:Lerp(key, val, dur, del, ease)
 		anims[key] = anim
 	end
 
+	anim:On("Stop", "RemoveAnim", function()
+		anims[key] = nil
+	end)
+
 	anim.Think = function(anim, self, fr)
 		self[key] = Lerp(fr, from, val)
 	end
@@ -141,6 +150,10 @@ function META:MemberLerp(tbl, key, val, dur, del, ease)
 		anim.FromTable = tbl
 		anims[key .. as_str] = anim
 	end
+
+	anim:On("Stop", "RemoveAnim", function()
+		anims[key] = nil
+	end)
 
 	anim.Think = function(anim, self, fr)
 		tbl[key] = Lerp(fr, from, val)
@@ -205,6 +218,10 @@ function META:LerpColor(key, val, dur, del, ease)
 
 	local newfrom = from:Copy()
 
+	anim:On("Stop", "RemoveAnim", function()
+		anims[key] = nil
+	end)
+
 	anim.Think = function(anim, self, fr)
 		if iscol then
 			LerpColorFrom(fr, newfrom, val, from)
@@ -218,16 +235,23 @@ end
 
 
 
-function META:On(event, name, cb)
+function META:On(event, name, cb, ...)
 	self.__Events = self.__Events or muldim:new()
+
 	local events = self.__Events
+	local vararg
 
 	if isfunction(name) then
+		vararg = cb
 		cb = name
 		name = #(events:GetOrSet(event)) + 1
+
+		local t = {cb, vararg, ...}
+		events:Set(t, event, name)
+	else
+		events:Set({cb, ...}, event, name)
 	end
 
-	events:Set(cb, event, name)
 end
 
 function META:Emit(event, ...)
@@ -239,7 +263,18 @@ function META:Emit(event, ...)
 		for k,v in pairs(evs) do
 			--if event name isn't a string, isn't a number and isn't valid then bail
 			if not (isstring(k) or isnumber(k) or IsValid(k)) then evs[k] = nil continue end
-			v(self, ...)
+			--v[1] is the callback function
+			--every other key-value is what was passed by On
+			
+			if #v > 1 then --AHHAHAHAHAHAHAHAHAHAHHA
+				local t = {unpack(v, 2)}
+				table.InsertVararg(t, ...)
+
+				v[1](self, unpack(t))
+			else
+				v[1](self, ...)
+			end
+
 		end
 	end
 end

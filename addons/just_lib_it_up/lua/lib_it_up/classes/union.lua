@@ -56,8 +56,8 @@ function meta.__index(self, key)
 	return func
 end
 
-function UnionTable:new()
-	return setmetatable({}, self.Meta)
+function UnionTable:new(t)
+	return setmetatable(t or {}, self.Meta)
 end
 UnionTable.__call = UnionTable.new
 setmetatable(UnionTable, UnionTable)
