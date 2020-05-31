@@ -59,7 +59,7 @@ function IncludeFolder(name, realm, nofold)	--This function will be used both by
 											-- so we'll only count files when we're loading
 	local file, folder = file.Find( name, "LUA" )
 
-	local tbl = string.Explode("/", name)	
+	local tbl = string.Explode("/", name)
 	tbl[#tbl] = nil	--strip the last path
 
 	local pathname = table.concat(tbl, "/")
@@ -76,7 +76,7 @@ function IncludeFolder(name, realm, nofold)	--This function will be used both by
 
 		local name = pathname .. v
 
-		if includes[realm] then 
+		if includes[realm] then
 			includes[realm] (name)
 		else
 			ErrorNoHalt("Could not include file " .. name .. "; fucked up realm?\n")
@@ -84,7 +84,7 @@ function IncludeFolder(name, realm, nofold)	--This function will be used both by
 		end
 
 	end
-		
+
 	--[[
 		Recursively add folders
 	]]
@@ -94,7 +94,7 @@ function IncludeFolder(name, realm, nofold)	--This function will be used both by
 			IncludeFolder(pathname .. v .. "/*", realm)
 		end
 	end
-	
+
 end
 
 IncludeFolder(path .. "*", _SH)	--add all files then folders within lib_it_up/
@@ -110,3 +110,15 @@ hook.Run("LibItUp")
 
 hook.Run("HexlibLoaded")	--legacy
 
+FInc.Recursive("lib_deps/sh_*.lua", _SH, true)
+
+FInc.Recursive("lib_deps/cl_*.lua", _CL, true)
+FInc.Recursive("lib_deps/sv_*.lua", _SV, true)
+
+FInc.Recursive("lib_deps/client/*", _CL)
+FInc.Recursive("lib_deps/server/*", _SV)
+
+
+hook.Add("InitPostEntity", "Inventory", function()
+	EntityInitted = true
+end)
