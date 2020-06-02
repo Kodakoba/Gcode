@@ -186,6 +186,8 @@ local function WrapByLetters(txt, curwid, fullwid, wids, line)
 	return ret, (fullwid - curwid), line, wrapped
 end
 
+--returns: wrapped text, current width, current line, 1 if wrapped entire word, 2 if partially
+
 local function WrapWord(word, curwid, fullwid, widtbl, line)
 
 	local tw, th = surface.GetTextSize(word)
@@ -201,10 +203,9 @@ local function WrapWord(word, curwid, fullwid, widtbl, line)
 		local too_wide = tw > fullwid * 0.65 --very wide word; wrap by letters if true
 
 		if not too_wide then
-
 			ret = ret .. "\n" .. word
 			curwid = tw
-			wrapped = true
+			wrapped = 1
 
 			line = line + 1
 		else
@@ -216,7 +217,7 @@ local function WrapWord(word, curwid, fullwid, widtbl, line)
 			ret = ret .. newtx
 			curwid = newwid
 			line = lines
-			wrapped = wrapped or didwrap
+			wrapped = wrapped or (didwrap and 2)
 		end
 	else
 		ret = ret .. word
@@ -238,9 +239,13 @@ function string.WordWrap2(txt, wid, font)
 		local curwid = 0
 		local line = 1
 
-		for word in string.gmatch(txt, "(.-)%s") do
+		for word in string.gmatch(txt, ".-%s") do
 
-			local r2, w2, lines, didwrap = WrapWord(word .. " ", curwid, nil, wid, line)
+			local r2, w2, lines, didwrap = WrapWord(word, curwid, nil, wid, line)
+
+			if didwrap == 1 then
+				ret = ret:gsub("%s$", "") --whoops, that space shouldn't be there
+			end
 
 			ret = ret .. r2
 			curwid = w2
@@ -253,6 +258,10 @@ function string.WordWrap2(txt, wid, font)
 
 		if lastword then
 			local r2, w2, _, didwrap = WrapWord(lastword, curwid, nil, wid, line)
+
+			if didwrap == 1 then
+				ret = ret:gsub("%s$", "") --whoops, that space shouldn't be there
+			end
 
 			ret = ret .. r2
 			curwid = w2
@@ -268,24 +277,35 @@ function string.WordWrap2(txt, wid, font)
 		local needwid = wid
 		local curwid = 0
 
-		for word in string.gmatch(txt, "(.-)%s") do
-			local r2, w2, didwrap = WrapWord(word .. " ", curwid, needwid)
+		for word in string.gmatch(txt, ".-%s") do
+			local r2, w2, _, didwrap = WrapWord(word, curwid, needwid)
+
+			if didwrap == 1 then
+				ret = ret:gsub("%s$", "")
+			end
+
 			ret = ret .. r2
 			curwid = w2
+
 			wrapped = wrapped or didwrap
 		end
 
 		local lastword = txt:match("[^%s]+$")
 
 		if lastword then
-			local r2, w2, didwrap = WrapWord(lastword, curwid, needwid)
+			local r2, w2, _, didwrap = WrapWord(lastword, curwid, needwid)
+
+			if didwrap == 1 then
+				ret = ret:gsub("%s$", "")
+			end
 
 			ret = ret .. r2
+
 			curwid = w2
 			wrapped = wrapped or didwrap
 		end
 
-		return ret, curwid, wrapped
+		return ret, curwid, wrapped and true
 
 	end
 
