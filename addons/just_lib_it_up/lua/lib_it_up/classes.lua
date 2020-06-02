@@ -23,11 +23,11 @@ Class.Debugging = false
 --]]
 
 local function getInitFunc(self)
-	return self.Initialize or self.initialize or self.Meta.Initialize or self.Meta.initialize
+	return self.Initialize or self.initialize or (self.Meta and (self.Meta.Initialize or self.Meta.initialize))
 end
 
 local function rawgetInitFunc(self)
-	return rawget(self, "Initialize") or rawget(self, "initialize") or rawget(self, "Initialize") or rawget(self, "initialize")
+	return rawget(self, "Initialize") or rawget(self, "initialize") or (rawget(self, "Meta") and (rawget(self, "Initialize") or rawget(self, "initialize")))
 end
 
 local lv = 0
@@ -59,7 +59,7 @@ function Class:extend(...)
 	end
 
 	new.__parent = old
-
+	new.__instance = new
 	local curobj
 
 	new.__init = function(newobj, ...) --this function is kinda hard to wrap your head around, so i'll try to explain

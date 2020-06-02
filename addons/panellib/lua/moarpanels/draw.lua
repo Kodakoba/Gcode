@@ -1142,7 +1142,7 @@ function surface.DrawNewlined(tx, x, y, first_x, first_y)
 
 end
 
-function draw.DrawGIF(url, name, x, y, dw, dh, frw, frh, start, pnl)
+function draw.DrawGIF(url, name, x, y, dw, dh, frw, frh, start, frametime, pnl)
 	local mat = DownloadGIF(url, name)
 	if not mat then return end
 
@@ -1165,15 +1165,20 @@ function draw.DrawGIF(url, name, x, y, dw, dh, frw, frh, start, pnl)
 	if not start then start = 0 end
 	local ct = CurTime()
 
-	local t = ((ct - start) % mat.dur) * 100
+	local dur = (frametime and frametime * mat.i.amt / 100) or mat.dur
+	local t = ((ct - start) % dur) * 100
 
 	local frame = 0
 
-	for i=1, #mat.timings do
+	if frametime then --we were given frame time to use
+		frame = math.floor(t / frametime)
+	else
+		for i=1, #mat.timings do
 
-		if t < mat.timings[i] then
-			frame = i - 1
-			break
+			if t < mat.timings[i] then
+				frame = i - 1
+				break
+			end
 		end
 	end
 
