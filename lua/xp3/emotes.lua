@@ -99,7 +99,7 @@ function emote:Paint(x, y, w, h, pnl)
 	if not self:Exists() then self.Downloading = true end
 
 	if self:GetAnimated() then
-		draw.DrawGIF(self:GetURL(), self:GetHDLPath(), x, y, w, h, nil, nil, nil, pnl)
+		draw.DrawGIF(self:GetURL(), self:GetHDLPath(), x, y, w, h, nil, nil, nil, nil, pnl)
 	else
 		surface.DrawMaterial(self:GetURL(), self:GetHDLPath() .. ".png", x, y, w, h)
 	end

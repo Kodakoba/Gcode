@@ -119,6 +119,6 @@ FInc.Recursive("lib_deps/client/*", _CL)
 FInc.Recursive("lib_deps/server/*", _SV)
 
 
-hook.Add("InitPostEntity", "Inventory", function()
+hook.Add("InitPostEntity", "InittedGlobal", function()
 	EntityInitted = true
 end)
