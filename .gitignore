@@ -1,35 +1,26 @@
-
 lua/autorun/server/lanes.lua
-
 lua/xp3/chathud-stable_5-to-1.lua
 
 *.sublime-project
 *.sublime-workspace
 *.sublime-project
+*.zip
+*.gma
 
 addons/pLogs*
+addons/advdupe2-master*
+/*
+!addons/
+!*.lua
 
-*.zip
+!addons/panellib
+!gamemodes/basewars
+!lua/xp3/*
 
-# do not track anything with GDCW or CW in the name
 addons/*gdcw*
 addons/*cw*
 addons/*customizable*
 
-#do not track advdupe
-addons/advdupe2-master*
-
-#do not track inventory; thats a separate repo
-addons/*mining*
-addons/*inventory*
-addons/*research*
-
-# Files to not ignore
-!/.gitignore
-!/addons
-
-# Folder to not ignore
-!/gamemodes/basewars
-
-*.*
-!lua/xp3/*
+addons/epic_mining*
+addons/inventory/*
+addons/research/*
