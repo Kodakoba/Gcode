@@ -18,6 +18,17 @@ function math.PointIn2DBox(px, py, rx, ry, rw, rh)
 	return true
 end
 
+function math.Length(num) --length of number in base 10, kind of works for retarded numbers (> 14 in len)
+	if num == 0 then return 0 end
+	local ret = math.floor(
+			math.log10(
+				math.abs( num )
+			)
+		)
+
+	return (ret > 14 and 0 or 1) + ret
+end
+
 function bit.bool(bool)
 	return bool and 1 or 0
 end

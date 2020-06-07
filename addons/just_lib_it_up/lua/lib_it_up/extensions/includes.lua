@@ -5,7 +5,9 @@ _SH = 2
 _SV = 3
 
 local includes = {
-	[_CL] = function(name)
+	[_CL] = function(name, should)
+		if should == false then return end
+
 		if SERVER then
 			AddCSLuaFile(name)
 		else
@@ -13,14 +15,18 @@ local includes = {
 		end
 	end,
 
-	[_SH] = function(name)
-		AddCSLuaFile(name)
-		return include(name)
+	[_SH] = function(name, cl, sv)
+		--cl = false : file doesn't get AddCSLua'd + not included clientside
+		--cl = 1     : file gets only AddCSLua'd but not included
+		--sv = false : file is only AddCSLua'd
+
+		if cl ~= false then AddCSLuaFile(name) end
+		if (sv ~= false and SERVER) or (cl ~= false and cl ~= 1 and CLIENT) then return include(name) end
 	end,
 
 
-	[_SV] = function(name)
-		if not SERVER then return end
+	[_SV] = function(name, should)
+		if not SERVER or should == false then return end
 		return include(name)
 	end,
 
@@ -43,6 +49,14 @@ FInc.IncludeRealms = includes
 
 local BlankFunc = function() end
 
+--callback:
+--when _SV or _CL, return false to prevent including and addcslua'ing (when _CL)
+
+--when _SH,
+-- 1st return: 	if false, doesn't get AddCSLua'd and included clientside
+-- 				if 1    , gets AddCSLua'd but not included clientside
+-- 2nd return: if false, doesn't include serverside
+
 function FInc.Recursive(name, realm, nofold, callback)	--even though with "nofold" it's not really recursive
 	if not NeedToInclude(realm) then return end
 	callback = callback or BlankFunc
@@ -60,7 +74,9 @@ function FInc.Recursive(name, realm, nofold, callback)	--even though with "nofol
 		if loading then files = files + 1 end
 
 		if includes[realm] then
-			callback (inc_name, includes[realm] (inc_name))
+
+			includes[realm] (inc_name, callback (inc_name))
+
 		else
 			ErrorNoHalt("Could not include file " .. inc_name .. "; fucked up realm?\n")
 			continue
@@ -80,6 +96,18 @@ function FInc.Recursive(name, realm, nofold, callback)	--even though with "nofol
 
 end
 
+-- Recursively starts a coroutine per each include,
+-- fires the callback (if provided) with that coroutine
+-- as the 2nd argument and then includes the file
+function FInc.Coroutine(name, realm, nofold, callback)
+
+	FInc.Recursive(name, realm, nofold, function(path)
+		local co = coroutine.create(includes[realm])
+		if callback then callback(path, co) end
+		coroutine.resume(co, path)
+	end)
+
+end
 
 function FInc.NonRecursive(name, realm) --mhm
 	return FInc.Recursive(name, realm, true)

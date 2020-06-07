@@ -45,9 +45,11 @@ local function IsGroup(ply, group)
 
 end
 
+
 if SERVER then
 
 	function BWSpawn(ply, cat, subcat, num)
+		num = tonumber(num)
 
 		if ply.IsBanned and ply:IsBanned() then return end
 
@@ -55,23 +57,21 @@ if SERVER then
 
 		local l = SpawnList and SpawnList.Models
 
-		if not l then return end
+		if not l then print("no spawnlist") return end
 
-		if not cat or not item then return end
+		if not cat or not num then print("no cat or num") return end
 
 		local i = l[cat]
 
-		if not i then return end
+		if not i then print("no cat:", cat) return end
 
 		i = i[subcat]
 
-		if not i then return end
-
-		num = tonumber(num)
+		if not i then print("no subcat:", subcat) return end
 
 		i = i[num]
 
-		if not i then return end
+		if not i then print("no item:", num) return end
 
 		local item = i.Name
 		local model, price, ent, sf, lim, vip, trust = i.Model, i.Price, i.ClassName, i.UseSpawnFunc, i.Limit, i.vip, i.trust
@@ -231,7 +231,7 @@ if SERVER then
 			end
 
 
-			if newEnt.IsGenerator then 
+			if newEnt.IsGenerator then
 				gens[sid64] = (gens[sid64] or 0) + 1
 			end
 
@@ -563,7 +563,7 @@ local function MakeTab(type)
 				surface.PlaySound("ui/buttonclickrelease.wav")
 
 				local function DoIt()
-
+					print("rannnn")
 					RunConsoleCommand("basewars_spawn", type, catName, tab.Key)
 
 				end

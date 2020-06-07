@@ -14,7 +14,7 @@ Colors.DarkerGray = Color(20, 20, 20)
 Colors.LightGray = Color(65, 65, 65)
 Colors.LighterGray = Color(75, 75, 75)
 
-Colors.Sky = Color(100, 130, 250)
+Colors.Sky = Color(50, 150, 250)
 Colors.Money = Color(100, 220, 100)
 
 function COLOR:Set(col, g, b, a)

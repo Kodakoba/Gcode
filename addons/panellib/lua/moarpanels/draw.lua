@@ -1086,7 +1086,7 @@ function DownloadGIF(url, name)
 			MoarPanelsMats[name].downloading = true
 
 			hdl.DownloadFile(url, ("temp_gif%s.dat"):format(name), function(fn, body)
-				if body:find("404 Not Found") then return end
+				if body:find("404 %-") then errorf("404'd while attempting to download %q", name) return end
 				local bytes = {}
 
 				local chunk = body:sub(#body - 20, #body)
