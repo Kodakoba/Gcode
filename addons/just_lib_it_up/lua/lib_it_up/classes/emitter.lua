@@ -44,7 +44,7 @@ end
 Emitter.make = Emitter.Make
 --
 function Emitter:On(event, name, cb, ...)
-	self.__Events = self.__Events or muldim:new() 	--deadass no clue why i have to do this, some shit doesn't get __Events... somehow.
+	self.__Events = self.__Events or muldim:new()
 	local events = self.__Events
 
 	local vararg
@@ -115,3 +115,11 @@ end
 function Emitter:RemoveListener(event, name)
 	self.__Events:Set(nil, event, name)
 end
+
+function MakeEmitter(t)
+	t.On = Emitter.On
+	t.Emit = Emitter.Emit
+	t.Once = Emitter.Once
+end
+
+MakeEmitter(FindMetaTable("Entity"))
