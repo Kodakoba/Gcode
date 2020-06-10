@@ -246,14 +246,14 @@ end
 function ENT:CLInit()
 	print("called")
 	
-	poles[#poles + 1] = self
+	--[[poles[#poles + 1] = self
 	local me = BWEnts[self]
 	me.Generators = {}
 
 	me.Electronics = {}
 	me.Grid = {}
 
-	me.ThrowLightning = {}
+	me.ThrowLightning = {}]]
 
 	local qm = self:SetQuickInteractable()
 	qm.OnOpen = function(...) self:OpenShit(...) end
