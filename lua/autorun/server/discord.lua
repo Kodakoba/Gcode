@@ -21,12 +21,12 @@ dissocket = dissocket or BromSock()
 local log
 local logtbl = {name = "Discord Relay", col = Color(40, 135, 255)}
 
-if Modules and Modules.Log then 
+if Modules and Modules.Log then
 	log = function(str, ...)
 		Modules.Log(logtbl, str:format(...))
 	end
 
-	discord.Log = log 
+	discord.Log = log
 end
 
 hook.Add("PostGamemodeLoaded", "inventory_log", function()
@@ -35,7 +35,7 @@ hook.Add("PostGamemodeLoaded", "inventory_log", function()
 		Modules.Log(logtbl, str:format(...))
 	end
 
-	discord.Log = log 
+	discord.Log = log
 
 end)
 
@@ -44,7 +44,7 @@ local socket = dissocket
 local port = 27020
 local pingport = 27025
 
-local silence = false 
+local silence = false
 
 local function writeline(line)
 	local packet = BromPacket()
@@ -112,24 +112,24 @@ function DiscordReconnect()
 
 end
 
-concommand.Add("discord_reconnect", function(ply) 
-	if IsValid(ply) and not ply:IsSuperAdmin() then return end 
+concommand.Add("discord_reconnect", function(ply)
+	if IsValid(ply) and not ply:IsSuperAdmin() then return end
 	DiscordReconnect()
 end)
 
 --matches everything after a !, ., / until a first space
 local cmdptrn = "^[%./!](%w+)%s?"
 
-hook.Add("PlayerSay", "Discord", function(ply, msg) 
-	if not discord.Enabled then return end 
+hook.Add("PlayerSay", "Discord", function(ply, msg)
+	if not discord.Enabled then return end
 
-    local cmd = msg:match(cmdptrn) 
+    local cmd = msg:match(cmdptrn)
 
-    if 	aowl.cmds[cmd] or 
-    	CUM.cmds[cmd] or 
+    if 	aowl.cmds[cmd] or
+    	CUM.cmds[cmd] or
     	BaseWars.Commands.cmds[cmd] or
     	isfunction(ULib[cmd]) --ulib has a very gay method of storing commands
-    then return end 
+    then return end
 
     discord.Send("chat", ply:Nick(), msg)
 
@@ -140,7 +140,7 @@ Embed = {}
 EmbedMeta = {}
 EmbedMeta.IsEmbed = true
 
-EmbedMeta.__index = EmbedMeta 
+EmbedMeta.__index = EmbedMeta
 
 function EmbedMeta:SetTitle(txt, ...)
 	self.title = txt:format(...)
@@ -157,12 +157,12 @@ end
 EmbedMeta.SetDescription = EmbedMeta.SetText
 
 function EmbedMeta:SetColor(col, g2, b2)
-	local r, g, b 
+	local r, g, b
 
-	if IsColor(col) then 
+	if IsColor(col) then
 		r, g, b = col.r, col.g, col.b
 	else
-		r, g, b = col, g2, b2 
+		r, g, b = col, g2, b2
 	end
 
 	self.color = bit.lshift(r, 16) + bit.lshift(g, 8) + b
@@ -190,7 +190,7 @@ setmetatable(Embed, Embed)
 local db = mysqloo and mysqloo.GetDB()
 
 hook.Add("OnMySQLReady", "Discord", function()
-	db = mysqloo.GetDB() 
+	db = mysqloo.GetDB()
 end)
 
 
@@ -204,9 +204,9 @@ function discord.GetChannels(mode, cb)
 	q.onSuccess = function(self, dat)
 		local urls = {}
 
-		if not dat[1] then return end --no relays listening for this mode 
+		if not dat[1] then return end --no relays listening for this mode
 
-		for k,v in pairs(dat) do 
+		for k,v in pairs(dat) do
 			urls[#urls + 1] = v.whook_url
 		end
 
@@ -220,10 +220,10 @@ function discord.GetChannels(mode, cb)
 	q:start()
 end
 function discord.Send(mode, name, txt)
-	
+
 	local function callback(urls)
 
-		http.Post("https://vaati.net/Gachi/shit.php", { 
+		http.Post("https://vaati.net/Gachi/shit.php", {
 			name = name or "GachiRP",
 			api = "disrelay",
 			p = txt,
@@ -235,21 +235,21 @@ function discord.Send(mode, name, txt)
 
 	discord.GetChannels(mode, callback)
 
-end 
+end
 
-BlankFunc = function(...) end 
+BlankFunc = function(...) end
 
 function discord.SendEmbed(mode, name, t, cb, fail)
 	local em
 
 	if t.IsEmbed then
-		em = {t} 
-	else 
-		em = t 
+		em = {t}
+	else
+		em = t
 	end
 
 	local function callback(urls)
-		http.Post("https://vaati.net/Gachi/shit.php", { 
+		http.Post("https://vaati.net/Gachi/shit.php", {
 			name = name or "GachiRP",
 			api = "disrelay",
 			json = "y",
@@ -262,30 +262,32 @@ function discord.SendEmbed(mode, name, t, cb, fail)
 end
 
 
-discord.Notified = discord.Notified or false 
+discord.Notified = discord.Notified or false
+
+discord.Notified = true --disabled notifications for now
 
 hook.Add("Tick", "ServerNotify", function()
 
-	if discord.Notified then return end 
+	if discord.Notified then return end
 
 	RunConsoleCommand("sv_hibernate_think", 1)
 
-	local quip 
-	
+	local quip
+
 	local pass = math.random(0, 100) < quipchance
 
 	if pass then
 
-		while quip == nil do 
+		while quip == nil do
 			quip = eval(quips[math.random(#quips)])
 		end
 
 		quip = quip .. "\n\n"	--if we should generate a quip, add newlines
-	else 
+	else
 		quip = ""
 	end
 
-	
+
 
 
 	discord.Notified = true
@@ -308,7 +310,7 @@ hook.Add("Tick", "ServerNotify", function()
 			RunConsoleCommand("sv_hibernate_think", 0)
 			hook.Remove("Tick", "ServerNotify")
 		end)
-		
+
 	end)
 
 end)
