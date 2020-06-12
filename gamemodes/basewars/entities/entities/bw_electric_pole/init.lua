@@ -12,15 +12,10 @@ poles = PowerPoles
 
 
 function ENT:Init(me)
-	local me = BWEnts[self]
-
 	timer.Simple(0, function() self:PingGrids() end)
-	print("hello???")
 end
 
 function ENT:PingGrids()
-	print("pinging")
-	local me = BWEnts[self]
 	local mypos = self:GetPos()
 	local cable = self.ConnectDistance ^ 2
 	local ow = self:CPPIGetOwner()
@@ -46,7 +41,7 @@ function ENT:PingGrids()
 			local pos = line:GetPos()
 			local dist = pos:DistToSqr(mypos)
 
-			if dist < cable and mindist < dist then
+			if dist < cable and dist < mindist then
 				mindist = dist
 				minpole = line
 			end
@@ -56,7 +51,7 @@ function ENT:PingGrids()
 			cur_grid = grid --we found an existing grid we can connect to
 		end
 	end
-
+	print("found grid?", cur_grid)
 	if not cur_grid then cur_grid = PowerGrid:new(ow) end --we're gonna have to create a new grid
 
 	cur_grid:AddLine(self) --then connect ourselves to that grid
@@ -69,8 +64,7 @@ function ENT:PingGrids()
 		--connect every powerline-less generator and then consumer
 
 		for _, gen in ipairs(grid.Generators) do
-			local it = BWEnts[gen]
-			if it.Grid and not table.IsEmpty(it.Grid.PowerLines) then print("gen has lines") continue end
+			if gen.Grid and IsValid(gen:GetLine()) then print("gen has lines") continue end
 
 			local pos = gen:GetPos()
 			local dist = pos:DistToSqr(mypos)
@@ -80,19 +74,19 @@ function ENT:PingGrids()
 		end
 
 		for _, ent in ipairs(grid.Consumers) do
-			local it = BWEnts[ent]
-			if it.Grid and not table.IsEmpty(it.Grid.PowerLines) then print("ent has lines") continue end
+			if ent.Grid and IsValid(ent:GetLine()) then print("ent has lines") continue end
 
 			local pos = ent:GetPos()
 			local dist = pos:DistToSqr(mypos)
 			if dist < cable then
+				if ent.Grid then ent.Grid:Remove() end
 				cur_grid:AddConsumer(ent, self)
 			end
 		end
 
 	end
 
-	me.Grid = cur_grid
+	self.Grid = cur_grid
 end
 
 function ENT:PhysicsUpdate(pos, ang)

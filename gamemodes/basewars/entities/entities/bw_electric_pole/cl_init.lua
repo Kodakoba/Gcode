@@ -9,14 +9,14 @@ local poles = PowerPoles
 function ENT:OnConnectionChange(id, old, new)
 	local me = BWEnts[self]
 
-	if not IsValid(new) then 
-		new = nil 
-	end 
+	if not IsValid(new) then
+		new = nil
+	end
 
 	local key = (id < 9 and "Generators") or (id < 24 and "Electronics") or "Grid"
 	me[key][id + 1] = new
 
-	if id < 24 and id >= 9 and IsValid(new) then 
+	if id < 24 and id >= 9 and IsValid(new) then
 		me.ThrowLightning[new] = {t = CurTime(), start = self:GetPos(), ["end"] = new:GetPos(), dist = self:GetPos():Distance(new:GetPos())}
 	end
 
@@ -54,7 +54,7 @@ function ENT:CreateBaseScroll(pnl, name, icon)
 
 			BSHADOWS.EndShadow(3, 2, 2, 255)
 
-		surface.DisableClipping(false)	
+		surface.DisableClipping(false)
 
 	end
 
@@ -64,14 +64,14 @@ end
 function ENT:CreateGeneratorsScroll(pnl, me)
 
 	local scr = self:CreateBaseScroll(pnl, "Generators", {
-		url = "https://i.imgur.com/poRxTau.png", 
+		url = "https://i.imgur.com/poRxTau.png",
 		name = "electricity.png"
 	})
 
 	scr.X = 425 - 400
 	scr.Y = pnl.CircleY
 
-	for k,v in ValidPairs(me.Generators) do 
+	for k,v in ValidPairs(me.Generators) do
 		local f = scr:Add("InvisPanel")
 		f:Dock(TOP)
 		f:DockMargin(0, 0, 0, 8)
@@ -93,7 +93,7 @@ function ENT:CreateGeneratorsScroll(pnl, me)
 			draw.SimpleText("Generates: " .. gens, "TWB24", 80, h/2 + 12, green, 0, 1)
 
 			draw.SimpleText("Stored: " .. v:GetPower() .. "PW", "TWB24", w/2 + 56, h/2 + 12, blue, 0, 1)
-			
+
 		end
 
 		local gen = vgui.Create("ModelImage", f)
@@ -114,14 +114,14 @@ function ENT:CreateGeneratorsScroll(pnl, me)
 		end
 
 		function disc:OnHover()
-			popup = true 
+			popup = true
 			curtip = "Disconnect " .. name
 			hovd = self
 		end
 
 		function disc:OnUnhover()
-			if hovd == self then 
-				popup = false 
+			if hovd == self then
+				popup = false
 				hovd = nil
 			end
 		end
@@ -134,14 +134,14 @@ local red = Color(200, 100, 100)
 
 function ENT:CreateConsumersScroll(pnl, me)
 	local scr = self:CreateBaseScroll(pnl, "Consumers", {
-		url = "https://i.imgur.com/poRxTau.png", 
+		url = "https://i.imgur.com/poRxTau.png",
 		name = "electricity.png"
 	})
 
 	scr.X = 450
 	scr.Y = pnl.CircleY
 
-	for k,v in ValidPairs(me.Electronics) do 
+	for k,v in ValidPairs(me.Electronics) do
 		local f = scr:Add("InvisPanel")
 		f:Dock(TOP)
 		f:DockMargin(0, 0, 0, 8)
@@ -163,7 +163,7 @@ function ENT:CreateConsumersScroll(pnl, me)
 			draw.SimpleText("Consumes: " .. gens, "TWB24", 80, h/2 + 12, red, 0, 1)
 
 			draw.SimpleText("Stored: " .. v:GetPower() .. "PW", "TWB24", w/2 + 64, h/2 + 12, blue, 0, 1)
-			
+
 		end
 
 		local ent = vgui.Create("ModelImage", f)
@@ -184,14 +184,14 @@ function ENT:CreateConsumersScroll(pnl, me)
 		end
 
 		function disc:OnHover()
-			popup = true 
+			popup = true
 			curtip = "Disconnect " .. name
 			hovd = self
 		end
 
 		function disc:OnUnhover()
-			if hovd == self then 
-				popup = false 
+			if hovd == self then
+				popup = false
 				hovd = nil
 			end
 		end
@@ -213,7 +213,7 @@ function ENT:QMThink(qm, self, pnl)
 
 	local cloud = pnl.Cloud
 
-	cloud.MaxW = 512 
+	cloud.MaxW = 512
 	cloud.Middle = 0.5
 	cloud.Font = "OSB36"
 	cloud:Popup(popup)
@@ -244,23 +244,35 @@ end
 
 
 function ENT:CLInit()
-	print("called")
-	
-	--[[poles[#poles + 1] = self
+
+	poles[#poles + 1] = self
+
 	local me = BWEnts[self]
-	me.Generators = {}
-
-	me.Electronics = {}
-	me.Grid = {}
-
-	me.ThrowLightning = {}]]
+	me.ThrowLightning = {}
 
 	local qm = self:SetQuickInteractable()
 	qm.OnOpen = function(...) self:OpenShit(...) end
 	qm.Think = function(...) self:QMThink(...) end
 	qm.OnFullClose = function(...) self:QMOnClose(...) end
+
+	self:OnChangeGridID(self:GetGridID())
 end
 
+function ENT:OnChangeGridID(new)
+	if self.OldGridID == new or new <= 0 then return end
+
+
+	self.OldGridID = new
+
+	local grid = PowerGrids[new]
+
+	if not grid then
+		grid = PowerGrid:new(self:CPPIGetOwner(), new)
+		grid:AddLine(self)
+	else
+		grid:AddLine(self)
+	end
+end
 local cab = Material("cable/cable2")
 local lightning = Material("trails/electric")
 
@@ -268,74 +280,81 @@ hook.Add("PostDrawTranslucentRenderables", "DrawPoleCables", function(d, sb)
 	--local b = bench("rendering")
 	--b:Open()
 
-	if sb or #poles <= 0 then return end 
+	if sb or #poles <= 0 then return end
+	if not ipairs or not PowerGrids then
+		print("WTF WTF WTF", PowerGrids, ipairs, ipairs and ipairs(PowerGrids))
+	end
 
-	
+	for k, grid in ipairs(PowerGrids) do
 
-	for k, pole in pairs(poles) do 
+		if #grid.PowerLines == 0 then break end
 
-		if not IsValid(pole) then table.remove(poles, k) continue end
+		for _, ent in ipairs(grid.AllEntities) do
+			if ent.PowerType == "Line" then continue end
+			local pole = ent:GetLine()
+			if not pole:IsValid() then continue end
+			
+			local me = BWEnts[pole]
+			local pos = pole:LocalToWorld(pole.ConnectPoint)
+			local newpos = me.LastCablePos ~= pos
 
-		local me = BWEnts[pole]
-		local pos = pole:LocalToWorld(pole.ConnectPoint)
-		local newpos = me.LastCablePos ~= pos 
+			me.LastCablePos = pos
 
-		me.LastCablePos = pos
+			if not me.ThrowLightning then continue end
 
-		if not me.Generators or not me.ThrowLightning then continue end 
+			render.SetMaterial(cab)
 
-		render.SetMaterial(cab)
+			if ent.PowerType == "Generator" or ent.PowerType == "Consumer" then
 
-		for id, gen in pairs(me.Generators) do
-			--print("drawing", gen)
-			if not IsValid(gen) then me.Generators[gen] = nil continue end
+				local genpos = ent:GetPos()
 
-			local genpos = gen:GetPos()
+				local them = BWEnts[ent]
 
-			local them = BWEnts[gen]
-
-			if newpos or them.LastCablePos ~= genpos or them.LastCableTo ~= pos or not them.Cable then 
-				them.Cable = GenerateCable(pos, genpos, 3, 10, true)
-				them.LastCablePos = genpos
-				them.LastCableTo = pos
-			end
-
-			local cable = them.Cable
-
-
-			render.StartBeam(#cable)
-
-				for k, v in ipairs(cable) do
-					render.AddBeam( v, 2, 0.5, color_white)
+				if newpos or them.LastCablePos ~= genpos or them.LastCableTo ~= pos or not them.Cable then
+					them.Cable = GenerateCable(pos, genpos, 3, 10, true)
+					them.LastCablePos = genpos
+					them.LastCableTo = pos
 				end
 
-			render.EndBeam()
+				local cable = them.Cable
+
+
+				render.StartBeam(#cable)
+
+					for k, v in ipairs(cable) do
+						render.AddBeam( v, 2, 0.5, color_white)
+					end
+
+				render.EndBeam()
+			end
+
+			--b:Close()
+
+			--print(b)
+
+			--[[render.SetMaterial(lightning)
+
+			for ent, t in pairs(me.ThrowLightning) do
+				local time = math.min(0.2, t.dist)
+
+				local frac = (CurTime() - t.t) / time
+
+				if frac >= 1 then me.ThrowLightning[ent] = nil return end
+				--len is .1 of frac
+				local s = LerpVector(frac, t.start, t["end"])
+
+				local edir = (t["end"] - t.start)
+				edir:Normalize()
+
+				local dist = math.min(t.dist, 128, s:Distance(t["end"]))
+				edir = edir * dist
+
+				render.DrawBeam(s, s + edir, 7, frac*5, frac*5 + dist/t.dist)	--multiplying frac gives it a flow-animation where the texture flows back <-- front
+
+			end]]
 		end
 
-		--b:Close()
 
-		--print(b)
-
-		render.SetMaterial(lightning)
-
-		for ent, t in pairs(me.ThrowLightning) do 
-			local time = math.min(0.2, t.dist)
-	
-			local frac = (CurTime() - t.t) / time
-
-			if frac >= 1 then me.ThrowLightning[ent] = nil return end
-			--len is .1 of frac
-			local s = LerpVector(frac, t.start, t["end"])
-
-			local edir = (t["end"] - t.start)
-			edir:Normalize()
-
-			local dist = math.min(t.dist, 128, s:Distance(t["end"]))
-			edir = edir * dist
-
-			render.DrawBeam(s, s + edir, 7, frac*5, frac*5 + dist/t.dist)	--multiplying frac gives it a flow-animation where the texture flows back <-- front
-
-		end
 	end
 
 	--b:Close()

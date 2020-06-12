@@ -27,17 +27,12 @@ ENT.MaxElectronics = 16
 ENT.MultipleGenerators = true
 
 function ENT:DerivedDataTables()
-
-	for i=0, 31 do
-		self:NetworkVar("Entity", i, "Connection" .. i)
-
-		if CLIENT then
-			self:NetworkVarNotify("Connection" .. i, function(self, name, old, new)
-				self:OnConnectionChange(i, old, new)
-			end)
-		end
-
+	--self:NetworkVar("Int", 3, "GridID")
+	--self:NetworkVar("Entity", 1, "")
+	if CLIENT then
+		self:NetworkVarNotify("GridID", function(self, name, old, new)
+			self:OnChangeGridID(new)
+		end)
 	end
-
 
 end

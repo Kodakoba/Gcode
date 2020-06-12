@@ -6,21 +6,13 @@ lua/xp3/chathud-stable_5-to-1.lua
 *.sublime-project
 *.zip
 *.gma
-
-addons/pLogs*
-addons/advdupe2-master*
-/*
-!addons/
-!*.lua
-
-!addons/panellib
-!gamemodes/basewars
-!lua/xp3/*
+**.*
+!gamemodes/basewars/**/*.lua
 
 addons/*gdcw*
 addons/*cw*
 addons/*customizable*
 
-addons/epic_mining*
+addons/epic_mining/*
 addons/inventory/*
 addons/research/*

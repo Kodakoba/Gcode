@@ -323,9 +323,26 @@ local function OpenShit(qm, self, pnl)
 end
 
 function ENT:CLInit()
-	local qm = self:SetQuickInteractable()
-	qm.OnOpen = OpenShit
+	--local qm = self:SetQuickInteractable()
+	--qm.OnOpen = OpenShit
 	--qm.OnReopen = OpenShit
+
+	self:OnChangeGridID(self:GetGridID())
+end
+
+function ENT:OnChangeGridID(new)
+	if self.OldGridID == new or new <= 0 then return end
+
+	self.OldGridID = new
+
+	local grid = PowerGrids[new]
+	if not grid then
+		grid = PowerGrid:new(self:CPPIGetOwner(), new)
+		grid:AddGenerator(self)
+	else
+		grid:AddGenerator(self)
+	end
+
 end
 
 function ENT:Think()

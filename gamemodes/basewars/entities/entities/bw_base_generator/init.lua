@@ -7,12 +7,6 @@ local meta = FindMetaTable("Entity")
 util.AddNetworkString("ConnectGenerator")
 
 function ENT:Init()
-	local me = BWEnts[self]
-
-	me.PowerGenerated = self.PowerGenerated
-	me.PowerCapacity = self.PowerCapacity
-	me.Power = 0
-	me.CableLength = (self.ConnectDistance or 600) ^ 2
 
 	Generators[#Generators + 1] = self
 
@@ -20,10 +14,11 @@ function ENT:Init()
 end
 
 function ENT:PingGrids()
-	local me = BWEnts[self]
+
 	local mypos = self:GetPos()
 	local cable = self.ConnectDistance ^ 2
 	local ow = self:CPPIGetOwner()
+	if not ow or not IsValid(ow) then return end --???
 
 	for _, grid in ipairs(PowerGrids) do --picks the closest powerline entity and connects to it if it exists and exits the function
 		if not grid.Owner:IsValid() or not grid.Owner:IsTeammate(ow) then continue end
@@ -48,9 +43,8 @@ function ENT:PingGrids()
 	end
 
 	--this will execute if a grid wasn't found
-	print("gen: creating new grid")
-	me.Grid = PowerGrid:new(ow)
-	me.Grid:AddGenerator(self) --i'm here on my ooooooooown...
+	self.Grid = PowerGrid:new(ow)
+	self.Grid:AddGenerator(self) --i'm here on my ooooooooown...
 end
 
 net.Receive("ConnectGenerator", function(_, ply)

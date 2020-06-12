@@ -25,20 +25,14 @@ function ENT:DerivedGenDataTables()
 end
 
 function ENT:DerivedDataTables()
-	self:NetworkVar("Entity", 0, "ConnectedTo")
-
+	--self:NetworkVar("Int", 3, "GridID")
+	self:NetworkVar("Entity", 1, "Line")
 
 	if CLIENT then
 
-		self:NetworkVarNotify("ConnectedTo", function(self, name, old, new)
-
-		 	if new==Entity(0) and old ~= Entity(0) and IsValid(old) then
-		 		self:OnDisconnect(old)
-		 	end
-
-		 	if new~=Entity(0) and IsValid(new) then
-		 		self:OnConnect(new)
-		 	end
+		self:NetworkVarNotify("GridID", function(self, name, old, new)
+			print("Changed GridID clientside")
+			self:OnChangeGridID(new)
 		end)
 
 	end
