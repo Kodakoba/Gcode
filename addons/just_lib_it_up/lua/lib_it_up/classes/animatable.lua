@@ -160,6 +160,7 @@ function Animatable:MemberLerp(tbl, key, val, dur, del, ease)
 	local anims = self.__Animations or {}
 	self.__Animations = anims
 
+	if isstring(tbl) then tbl = self[tbl] end
 	local as_str = hex(tbl)
 
 	local anim = anims[key .. as_str]

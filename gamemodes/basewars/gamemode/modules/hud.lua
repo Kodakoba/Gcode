@@ -26,11 +26,13 @@ local hdcol = Color(30, 30, 30)
 
 local alpha = 0
 
-local w, h = 180, 75
+local w, h = 180, 55
 local headerH = 24
 
 local lastpos = Vector()
 local lastX, lastY = 0, 0
+local lastent
+
 
 local function DrawScalingBox(rad, x, y, w, h, col)
 	rad = math.min(rad, h/2, w/2)
@@ -75,6 +77,18 @@ local vm = Matrix()
 
 local name = ""
 
+local anims
+
+local function make()
+	anims = Animatable(true)
+	anims.EntHPs = {}
+end
+
+if not Animatable then
+	hook.Add("LibbedItUp", "BaseWarsHUD", make)
+else
+	make()
+end
 
 local function DrawStructureInfo()
 
@@ -88,7 +102,7 @@ local function DrawStructureInfo()
 	local dist = math.max(lastpos:Distance(trace.StartPos) - 96, 0)
 
 	if not valid then
-		alpha = L(alpha, 0, 15)
+		anims:To("Alpha", 0, 0.25, 0, 0.2)
 	else 
 
 		local wep = ply:GetActiveWeapon()
@@ -98,19 +112,17 @@ local function DrawStructureInfo()
 		lastpos = ent:LocalToWorld(ent:OBBCenter())
 
 		dist = math.max(lastpos:Distance(trace.StartPos) - 96, 0)
-
+		lastent = ent
 		EntHP = ent:Health()
 		EntMaxHP = math.max(ent:GetMaxHealth(), 0)
 
-		EntPW = ent:GetPower()
-		EntMaxPW = ent:GetMaxPower()
-
 		name = ent.PrintName or "wat"
 
-		if dist < 96 then alpha = L(alpha, to, 15) else alpha = L(alpha, 0, 15) end
+		if dist < 108 then anims:To("Alpha", to, 0.3, 0, 0.3) else anims:To("Alpha", 0, 0.3, 0, 0.3) end
 		
 	end
 
+	alpha = anims.Alpha or 0
 	backcol.a = alpha 
 	hdcol.a = alpha
 
@@ -134,13 +146,19 @@ local function DrawStructureInfo()
 	sx, sy = sx - w/2 * scale, sy - h/2 * scale
 
 	local hpfrac = (EntHP / EntMaxHP) 
-	HPFrac = L(HPFrac, hpfrac, 15)
+
+	if not anims.EntHPs[lastent:EntIndex()] then
+		anims.EntHPs[lastent:EntIndex()] = hpfrac
+	end
+
+	anims:MemberLerp(anims.EntHPs, lastent:EntIndex(), hpfrac, 0.3, 0, 0.3)
+	local HPFrac = anims.EntHPs[lastent:EntIndex()]
 
 	local hpw = HPFrac * (w-12)
 
-	local bary = sy + headerH*scale + 8*scale
+	local bary = headerH + 8
 
-	local hpW = math.floor(math.max(hpw, 8)*scale)			--for nice rounding
+	local hpW = math.floor(math.max(hpw, 8))			--for nice rounding
 
 	local hph = math.ceil(14*scale)
 
@@ -171,36 +189,20 @@ local function DrawStructureInfo()
 				print("err #1 >:(", err)
 			end
 
+			draw.RoundedBox(6, 6, headerH + 8, w - 13, 14, HPBG)
+
+			--render.SetScissorRect(sx + 6, bary - 1, sx + 6 + hpw - (1 - scale) * 4, bary + hph + 1, true)
+	
+				draw.RoundedBox(6, 6, headerH + 8, hpW, 14, HPFG)
+			--render.SetScissorRect(0, 0, 0, 0, false)
+
 		cam.PopModelMatrix()
 
 		
 
-		DrawScalingBox(6, sx + 6, bary - 1, w*scale - 13, hph, HPBG)
-
-		render.SetScissorRect(sx + 6, bary - 1, sx + 6 + hpw - (1 - scale) * 4, bary + hph + 1, true)
-
-			DrawScalingBox(6, sx + 6, bary - 1, hpW , hph, HPFG) --HP Bar
-
-		render.SetScissorRect(0, 0, 0, 0, false)
+		
 		
 		--Prepare for new bar (Power)
-
-		bary = bary + hph + 6*scale
-
-
-		local pwfrac = (EntPW / EntMaxPW)
-		PWFrac = L(PWFrac, pwfrac, 15)
-
-		local pww = PWFrac * (w-12)
-		local pwW = math.min(math.max(pww, 8) * scale, w-13)
-
-		DrawScalingBox(6, sx + 6, bary - 1, w*scale - 12, hph, HPBG)
-
-		render.SetScissorRect(sx + 6, bary - 1, sx + 6 + pww, bary + hph + 1, true)
-
-			DrawScalingBox(6, sx + 6, bary - 1, pwW, hph, PWFG)	--PW Bar
-
-		render.SetScissorRect(0, 0, 0, 0, false)
 
 		cam.PushModelMatrix(vm)
 			local ok, err = pcall(function() 
@@ -209,15 +211,15 @@ local function DrawStructureInfo()
 				local tx = Language("Health", EntHP, EntMaxHP)
 
 				draw.Masked(function()
-					DrawScalingPolyBox(6, 4, headerH + 3, hpW/scale, 24, HPFG)	
+					draw.RoundedPolyBox(6, 4, headerH + 3, hpW + 1, 24, HPFG)	
 				end, function()
-					draw.SimpleText(tx, "OSB18", 4 + w/2, headerH + 13, white, 1, 1)
+					draw.SimpleText(tx, "OSB18", 4 + w/2, headerH + 14, white, 1, 1)
 				end, nil, function()
-					draw.SimpleText(tx, "OSB18", 4 + w/2, headerH + 13, gray, 1, 1)
+					draw.SimpleText(tx, "OSB18", 4 + w/2, headerH + 14, gray, 1, 1)
 				end)
 
 
-				local tx = Language("Power", EntPW, EntMaxPW)
+				--[[local tx = Language("Power", EntPW, EntMaxPW)
 
 				draw.Masked(function()
 					DrawScalingPolyBox(6, 4, headerH + 20, pwW/scale, 24, HPFG)	
@@ -225,7 +227,7 @@ local function DrawStructureInfo()
 					draw.SimpleText(tx, "OSB18", 4 + w/2, headerH + 34, white, 1, 1)
 				end, nil, function()
 					draw.SimpleText(tx, "OSB18", 4 + w/2, headerH + 34, gray, 1, 1)
-				end)
+				end)]]
 
 			end) 
 
