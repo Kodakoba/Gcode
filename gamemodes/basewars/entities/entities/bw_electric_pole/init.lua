@@ -12,6 +12,7 @@ poles = PowerPoles
 
 
 function ENT:Init(me)
+	me.ConnectDistanceSqr = self.ConnectDistance ^ 2
 	timer.Simple(0, function() self:PingGrids() end)
 end
 
@@ -25,13 +26,12 @@ function ENT:PingGrids()
 	local available_grids = {}
 
 	--find all grids we can even modify (eg owned by factionmates)
-	print(#available_grids, #PowerGrids)
-
 	for _, grid in ipairs(PowerGrids) do
 		if not grid.Owner:IsValid() or not grid.Owner:IsTeammate(ow) then continue end
 		available_grids[#available_grids + 1] = grid
 	end
 
+	local chosen_pole
 
 	for _, grid in ipairs(available_grids) do
 		--try to find an existing grid we can use first
@@ -49,12 +49,13 @@ function ENT:PingGrids()
 
 		if minpole then
 			cur_grid = grid --we found an existing grid we can connect to
+			chosen_pole = minpole
 		end
 	end
-	print("found grid?", cur_grid)
+
 	if not cur_grid then cur_grid = PowerGrid:new(ow) end --we're gonna have to create a new grid
 
-	cur_grid:AddLine(self) --then connect ourselves to that grid
+	cur_grid:AddLine(self, chosen_pole) --then connect ourselves to that grid
 
 
 	--here we're done finding a grid and we have either a brand new one or an existing one,
@@ -64,7 +65,7 @@ function ENT:PingGrids()
 		--connect every powerline-less generator and then consumer
 
 		for _, gen in ipairs(grid.Generators) do
-			if gen.Grid and IsValid(gen:GetLine()) then print("gen has lines") continue end
+			if gen.Grid and IsValid(gen:GetLine()) then continue end
 
 			local pos = gen:GetPos()
 			local dist = pos:DistToSqr(mypos)
@@ -74,7 +75,7 @@ function ENT:PingGrids()
 		end
 
 		for _, ent in ipairs(grid.Consumers) do
-			if ent.Grid and IsValid(ent:GetLine()) then print("ent has lines") continue end
+			if ent.Grid and IsValid(ent:GetLine()) then continue end
 
 			local pos = ent:GetPos()
 			local dist = pos:DistToSqr(mypos)
@@ -114,6 +115,34 @@ function ENT:ConnectTo(ent)
 end
 
 function ENT:Disconnect(ent)
+
+end
+
+function ENT:Think()
+	local me = BWEnts[self]
+	if me.CheckDist and self.Grid then
+		local pos = self:GetPos()
+		local range = me.ConnectDistanceSqr
+		for k,v in ipairs(self.Grid.AllEntities) do
+			if v.PowerType == "Line" then
+				if v==self or self:GetLine() ~= v then continue end
+				if pos:DistToSqr(v:GetPos()) > range then
+					self.Grid:RemoveLine(v, true)
+					self:SetLine(NULL)
+				end
+			else
+				BWEnts[v].CheckDist = true
+				v:CheckCableDistance()
+			end
+		end
+
+		me.CheckDist = false
+	end
+end
+
+function ENT:PhysicsUpdate(...)
+	local me = BWEnts[self]
+	me.CheckDist = true
 
 end
 

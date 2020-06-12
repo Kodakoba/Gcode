@@ -69,7 +69,7 @@ end)
 PowerGrid:On("RemovedLine", function(self, line)
 
 	for k,v in pairs(self.Accessors) do
-		if k == "Line" then continue end
+		--if k == "Line" then continue end
 		local ents = self[v.tbl]
 
 		for i=#ents, 1, -1 do --ty CornerPin for this https://discordapp.com/channels/565105920414318602/567617926991970306/720349414408847370
@@ -183,7 +183,7 @@ for k,v in pairs(accessors) do
 			new["Add" .. ent.PowerType] (new, ent)
 			if SERVER then ent:SetGridID(ent:GetGrid().ID) end
 		end
-		
+
 	end
 
 end
@@ -194,10 +194,12 @@ function PowerGrid.FindNearestPole(ent) --this isn't a class function, it's a ut
 	local ow = ent:CPPIGetOwner()
 
 	for _, grid in ipairs(PowerGrids) do
-		if not grid.Owner:IsValid() or not grid.Owner:IsTeammate(ow) then continue end
+		if not grid.Owner:IsValid() or not grid.Owner:IsTeammate(ow) then print("no owner fuck you") continue end
 		local mindist, minpole = math.huge
 
 		for _, line in ipairs(grid.PowerLines) do
+			if line == ent then continue end
+
 			local pos = line:GetPos()
 			local dist = pos:DistToSqr(mypos)
 
@@ -207,8 +209,9 @@ function PowerGrid.FindNearestPole(ent) --this isn't a class function, it's a ut
 			end
 		end
 
-		return minpole
+		if minpole then return minpole end
 	end
+
 end
 
 hook.Add("EntityRemoved", "ClearGrid", function(ent)

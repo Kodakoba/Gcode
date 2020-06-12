@@ -47,6 +47,31 @@ function ENT:PingGrids()
 	self.Grid:AddGenerator(self) --i'm here on my ooooooooown...
 end
 
+function ENT:Think()
+	self:CheckCableDistance()
+end
+function ENT:CheckCableDistance(bwe)
+	bwe = bwe or BWEnts[self]
+	local line = self:GetLine()
+
+	if bwe.CheckDist and IsValid(line) then
+		local pos = self:GetPos()
+		local pos2 = line:GetPos()
+
+		if pos:DistToSqr(pos2) > math.min(bwe.ConnectDistanceSqr, BWEnts[line].ConnectDistanceSqr) then
+			self:SetLine(NULL)
+			local grid = PowerGrid:new(self:CPPIGetOwner())
+			grid:AddGenerator(self)
+		else
+			bwe.CheckDist = nil
+		end
+	end
+end
+
+function ENT:PhysicsUpdate()
+	BWEnts[self].CheckDist = true
+end
+
 net.Receive("ConnectGenerator", function(_, ply)
 	local disconnect = net.ReadBool()
 	local gen = net.ReadEntity()
@@ -54,7 +79,7 @@ net.Receive("ConnectGenerator", function(_, ply)
 		local ent = net.ReadEntity()
 
 		if not IsValid(gen) or not IsValid(ent) then return end
-		if (not gen.IsGenerator and not gen.Cableable) or not (ent.IsElectronic or ent.Connectable) then print('no') return end
+		if (not gen.IsGenerator and not gen.Cableable) or not (ent.IsElectronic or ent.Connectable) then return end
 
 		gen:ConnectTo(ent)
 	else

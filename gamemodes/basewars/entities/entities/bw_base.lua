@@ -52,8 +52,6 @@ hook.Add("PlayerDisconnected", "SaveOwners", function(ply)
 
 	local sid64 = ply:SteamID64()
 
-	print("PLAYER LEFT", ply, sid64)
-
 	for k,v in pairs(BWOwners) do
 		if k==ply then
 			BWOwners[sid64] = v
@@ -136,19 +134,17 @@ function ENT:SetupDataTables()
 end
 
 function ENT:OnChangeGridID(new)
-	print("OnChangeGridID", new, self.OldGridID, Realm())
-	if self.OldGridID == new or new <= 0 then print("no tahnks") return end
+
+	if self.OldGridID == new or new <= 0 then return end
 
 	self.OldGridID = new
 
 	local grid = PowerGrids[new]
 
 	if not grid then
-		print("created new grid with consumer")
 		grid = PowerGrid:new(self:CPPIGetOwner(), new)
 		grid:AddConsumer(self)
 	else
-		print("joined to existing grid")
 		grid:AddConsumer(self)
 	end
 
@@ -214,7 +210,6 @@ if SERVER then
 
 				if self.IsElectronic then
 					local pole = PowerGrid.FindNearestPole(self)
-
 					if pole then
 						pole.Grid:AddConsumer(self, pole)
 					else

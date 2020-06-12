@@ -31,7 +31,6 @@ function ENT:DerivedDataTables()
 	if CLIENT then
 
 		self:NetworkVarNotify("GridID", function(self, name, old, new)
-			print("Changed GridID clientside")
 			self:OnChangeGridID(new)
 		end)
 

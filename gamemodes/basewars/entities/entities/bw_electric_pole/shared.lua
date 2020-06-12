@@ -14,7 +14,15 @@ ENT.ConnectDistance = 1500
 
 ENT.Connectable = true
 ENT.Cableable = true
+
 ENT.ConnectPoint = Vector (3.6, 0, 24)
+ENT.ChainPoints = {
+	Vector (12.8, -3.2, 72),
+	Vector (-0.02, -3, 72),
+	Vector (-29, -4, 72),
+	Vector (-40, -4, 72)
+}
+
 
 ENT.UseSpline = true
 ENT.SplineStrength = 1

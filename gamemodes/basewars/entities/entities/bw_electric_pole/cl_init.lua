@@ -249,6 +249,7 @@ function ENT:CLInit()
 
 	local me = BWEnts[self]
 	me.ThrowLightning = {}
+	me.Cables = {}
 
 	local qm = self:SetQuickInteractable()
 	qm.OnOpen = function(...) self:OpenShit(...) end
@@ -281,77 +282,61 @@ hook.Add("PostDrawTranslucentRenderables", "DrawPoleCables", function(d, sb)
 	--b:Open()
 
 	if sb or #poles <= 0 then return end
-	if not ipairs or not PowerGrids then
-		print("WTF WTF WTF", PowerGrids, ipairs, ipairs and ipairs(PowerGrids))
-	end
 
 	for k, grid in ipairs(PowerGrids) do
 
 		if #grid.PowerLines == 0 then break end
 
-		for _, ent in ipairs(grid.AllEntities) do
-			if ent.PowerType == "Line" then continue end
+		for key, ent in ipairs(grid.AllEntities) do
+			local pos
+			local genpos
+
 			local pole = ent:GetLine()
 			if not pole:IsValid() then continue end
-			
-			local me = BWEnts[pole]
-			local pos = pole:LocalToWorld(pole.ConnectPoint)
-			local newpos = me.LastCablePos ~= pos
 
-			me.LastCablePos = pos
+			if ent.PowerType == "Line" then
+				local pts = ent.ChainPoints
+				local chosen = pts[key % (#pts - 1) + 1]
+
+				pos = pole:LocalToWorld(chosen)
+				genpos = ent:LocalToWorld(chosen)
+				me = BWEnts[ent]
+			else
+				pos = pole:LocalToWorld(pole.ConnectPoint)
+				genpos = ent:GetPos()
+			end
+
+			local me = BWEnts[pole]
 
 			if not me.ThrowLightning then continue end
 
 			render.SetMaterial(cab)
 
-			if ent.PowerType == "Generator" or ent.PowerType == "Consumer" then
 
-				local genpos = ent:GetPos()
+			local them = BWEnts[ent]
+			local cab = me.Cables[ent]
 
-				local them = BWEnts[ent]
+			local qual = (ent.PowerType == "Line" and 35) or 10
 
-				if newpos or them.LastCablePos ~= genpos or them.LastCableTo ~= pos or not them.Cable then
-					them.Cable = GenerateCable(pos, genpos, 3, 10, true)
-					them.LastCablePos = genpos
-					them.LastCableTo = pos
-				end
-
-				local cable = them.Cable
-
-
-				render.StartBeam(#cable)
-
-					for k, v in ipairs(cable) do
-						render.AddBeam( v, 2, 0.5, color_white)
-					end
-
-				render.EndBeam()
+			if not cab or cab.From ~= pos or cab.To ~= genpos then--if newpos or them.LastCablePos ~= genpos or them.LastCableTo ~= pos or not them.Cable then
+				local h = (ent.PowerType == "Line" and math.min(20, math.sqrt(math.max(600 - pos:Distance(genpos), 16)))) or 3
+				
+				me.Cables[ent] = GenerateCable(pos, genpos, h, qual)
+				me.Cables[ent].From = pos
+				me.Cables[ent].To = genpos
 			end
 
-			--b:Close()
+			local cable = me.Cables[ent]
 
-			--print(b)
+			render.StartBeam(#cable)
 
-			--[[render.SetMaterial(lightning)
+				for i=1, qual do
+					render.AddBeam( cable[i], 2, 0.5, color_white)
+				end
 
-			for ent, t in pairs(me.ThrowLightning) do
-				local time = math.min(0.2, t.dist)
+			render.EndBeam()
 
-				local frac = (CurTime() - t.t) / time
-
-				if frac >= 1 then me.ThrowLightning[ent] = nil return end
-				--len is .1 of frac
-				local s = LerpVector(frac, t.start, t["end"])
-
-				local edir = (t["end"] - t.start)
-				edir:Normalize()
-
-				local dist = math.min(t.dist, 128, s:Distance(t["end"]))
-				edir = edir * dist
-
-				render.DrawBeam(s, s + edir, 7, frac*5, frac*5 + dist/t.dist)	--multiplying frac gives it a flow-animation where the texture flows back <-- front
-
-			end]]
+			::fuck_off::
 		end
 
 

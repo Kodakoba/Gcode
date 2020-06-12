@@ -411,23 +411,8 @@ local cab = Material("cable/cable2")
 
 local qual = 25
 
-local FinalCablePoint
-local NoSpline = false
 
-local cache = muldim()
-
-function GenerateCable(from, to, h, qual, ignorecache)
-
-	local s1, s2
-
-	if not ignorecache then
-		s1, s2 = tostring(from), tostring(to)
-		local cached = cache:Get(s1, s2, h, qual)
-
-		if cached then
-			return cached
-		end
-	end
+function GenerateCable(from, to, h, qual)
 
 	h = h or 10
 
@@ -436,8 +421,6 @@ function GenerateCable(from, to, h, qual, ignorecache)
 	if h==0 then
 		return {from, to}
 	end
-
-	local dif = from - to
 
 	local div = 1/qual
 
@@ -464,8 +447,6 @@ function GenerateCable(from, to, h, qual, ignorecache)
 	for i=0, 1, div do
 		beams[#beams + 1] = math.BSplinePoint(i, points, 1)
 	end
-
-	if not ignorecache then cache:Set(beams, s1, s2, h, qual) end
 
 	return beams
 end

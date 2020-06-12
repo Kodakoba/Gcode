@@ -27,10 +27,8 @@ end
 
 if SERVER then
 
-	function ENT:Think()
-		local me = self:GetTable()
-		local bwe = BWEnts[self]
-
+	function ENT:CheckCableDistance(bwe)
+		bwe = bwe or BWEnts[self]
 		if bwe.CheckDist and IsValid(self:GetLine()) then
 			local pos = self:GetPos()
 
@@ -43,6 +41,13 @@ if SERVER then
 				bwe.CheckDist = nil
 			end
 		end
+	end
+
+	function ENT:Think()
+		local me = self:GetTable()
+		local bwe = BWEnts[self]
+
+		self:CheckCableDistance(bwe)
 
 		local pow = self:DrainPower()
 		if not pow then return end
@@ -94,14 +99,10 @@ if SERVER then
 	end
 
 	function ENT:StartBitching()
-		print("bitchin and disconnecting")
-		local me = BWEnts[self]
 		self:SetLine(NULL)
-		
 
 		local grid = PowerGrid:new(self:CPPIGetOwner())
 		grid:AddConsumer(self)
-		print("new grid")
 	end
 
 	function ENT:CheckUsable()
