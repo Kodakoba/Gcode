@@ -591,7 +591,7 @@ function NavPanel:PaintOver(w, h)
 end
 
 vgui.Register("NavFrame", NavPanel, "FFrame")
-
+vgui.Register("NavPanel", NavPanel, "FFrame")
 
 local Testing = false
 

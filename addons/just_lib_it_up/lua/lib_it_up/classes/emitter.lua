@@ -7,10 +7,11 @@
 			creates an event listener for when :Emit(event_name) gets called
 			if id_name is provided, it MUST be a string, a number or something with an :IsValid() method
 			callback args are self + arguments passed from :Emit()
-
 			id_name functions kinda like hook.Add's identifier
 
 			returns id_name where it put the emitter
+
+			creating listeners on the class instead of an instance of it will make instances inherit those listeners
 
 
 		emitter:Emit(event_name, ...)
@@ -29,11 +30,31 @@
 														 ...
 ]]
 
+local objcopy = function(a)
+	if istable(a) then
+		return table.Copy(a)
+	else
+		return a
+	end
+end
+
+local copy = function(old, new)
+	for k,v in pairs(old) do
+		new:Set(v, objcopy(k))
+	end
+end
+
 Emitter = Class:callable()
 
-function Emitter:Initialize()
+function Emitter:Initialize(e)
 	self.__Events = muldim:new()
 	if not self.__instance and self ~= Emitter then setmetatable(self, Emitter) end
+
+	if self.__instance and self.__instance.__Events then
+		local oldev = self.__instance.__Events
+		local newev = self.__Events
+		copy(oldev, newev)
+	end
 end
 
 function Emitter.Make(t)

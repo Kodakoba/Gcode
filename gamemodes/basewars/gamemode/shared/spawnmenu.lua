@@ -12,22 +12,23 @@ local function LimitDeduct(self, ent, ply)
 	self.o_OnRemove = self.OnRemove
 	local sid = ""
 
-	if IsValid(ply) then 
+	if IsValid(ply) then
 		sid = ply:SteamID64()
 	end
 
-	local entname = ent 
+	local entname = ent
+	local sent = sid .. entname
 
-	self:CallOnRemove("LimitDeduct"..sid, function(ent, sid) 
-		if not BaseWars.Limits[sid..entname] then return end 
+	self:CallOnRemove("LimitDeduct"..sid, function(ent, sid)
+		if not BaseWars.Limits[sent] then return end
 
-		BaseWars.Limits[sid..entname] = BaseWars.Limits[sid..entname] - 1 
+		BaseWars.Limits[sent] = BaseWars.Limits[sent] - 1
 
 		BaseWars.Purchased[sid] = BaseWars.Purchased[sid] or {}
-		BaseWars.Purchased[sid][entname] = (BaseWars.Purchased[sid][entname] or 0) - 1
+		BaseWars.Purchased[sid][entname] = (BaseWars.Purchased[sid][entname] or 1) - 1
 	end, sid )
 
-	BaseWars.Limits[sid .. entname] = BaseWars.Limits[sid .. entname] + 1
+	BaseWars.Limits[sent] = BaseWars.Limits[sent] + 1
 
 	BaseWars.Purchased[sid] = BaseWars.Purchased[sid] or {}
 	BaseWars.Purchased[sid][entname] = (BaseWars.Purchased[sid][entname] or 0) + 1
@@ -37,8 +38,8 @@ local function IsGroup(ply, group)
 	if not ply.CheckGroup then error("what the fuck where's ULX") return end
 	if not IsValid(ply) or not ply:IsPlayer() then return end
 
-	if ply:CheckGroup(string.lower(group)) or (ply:IsAdmin() and (group=="vip" or group=="trusted")) or ply:IsSuperAdmin() then 
-		return true 
+	if ply:CheckGroup(string.lower(group)) or (ply:IsAdmin() and (group=="vip" or group=="trusted")) or ply:IsSuperAdmin() then
+		return true
 	end
 
 	return false
@@ -198,7 +199,7 @@ if SERVER then
 			local newEnt = ents.Create(ent)
 
 			if not newEnt then return end
-			
+
 
 			if newEnt.SpawnFunction and sf then
 
@@ -374,7 +375,7 @@ local tohide = {}
 hook.Add("OnSpawnMenuClose", "RemoveClouds", function()	--grrrrrrrrrr
 
 	for k,v in pairs(tohide) do
-		if not IsValid(v) then tohide[k] = nil continue end 
+		if not IsValid(v) then tohide[k] = nil continue end
 
 		v:Remove()
 	end
@@ -383,7 +384,7 @@ end)
 
 local function MakeTab(type)
 
-	if not Models[type] then return end 
+	if not Models[type] then return end
 
 	local cats = vgui.Create("DCategoryList")
 
@@ -403,20 +404,20 @@ local function MakeTab(type)
 
 		local topair = {}
 
-		for k,v in pairs(subT) do 
+		for k,v in pairs(subT) do
 			v.Key = k
-			topair[#topair + 1] = v 
+			topair[#topair + 1] = v
 		end
 
 		table.sort(topair, function(a, b)
 			local ret = false
 
-			local lv = a.Level < b.Level 
+			local lv = a.Level < b.Level
 
-			if not lv and a.Level == b.Level then 
-				ret = a.Price < b.Price 
-			else 
-				ret = lv 
+			if not lv and a.Level == b.Level then
+				ret = a.Price < b.Price
+			else
+				ret = lv
 			end
 
 			return ret
@@ -431,7 +432,7 @@ local function MakeTab(type)
 			local money = tab.Price
 			local level = tab.Level or 0
             local tooltip = tab.Tooltip or ""
-            local vip = tab.vip 
+            local vip = tab.vip
             local trust = tab.trust
             local name = tab.Name or tostring(v.Key)
 
@@ -461,7 +462,7 @@ local function MakeTab(type)
 
 			local mstr = Language.Currency .. BaseWars.NumberFormat(money)
 
-			
+
 
 			function fr:OnHover()
 				local cl = self:GetCloud("price")
@@ -497,12 +498,12 @@ local function MakeTab(type)
 
 				local col = (not haslv and lvlLocked) or (wayenuff and blueEnough) or (enuff and greenEnough) or notEnough
 
-				if not set then 
+				if not set then
 					frcol:Set(col)
-				else 
+				else
 					LC(frcol, col)
 				end
-				
+
 
 				self:SetColor(frcol.r, frcol.g, frcol.b, frcol.a)
 
@@ -512,8 +513,8 @@ local function MakeTab(type)
 				local cl = self:GetCloud("price")
 
 				if cl then
-					cl.DoneText[1].Color = LC(cl.DoneText[1].Color, mcol, 15) 
-					cl.DoneText[2].Color = LC(cl.DoneText[2].Color, lvcol, 15) 
+					cl.DoneText[1].Color = LC(cl.DoneText[1].Color, mcol, 15)
+					cl.DoneText[2].Color = LC(cl.DoneText[2].Color, lvcol, 15)
 				end
 
 				LC(fr.borderColor, Colors.LighterGray, 5)
@@ -522,18 +523,18 @@ local function MakeTab(type)
 			local ty = 0
 
 			function fr:PaintOver(w, h)
-				if not self:IsHovered() then 
+				if not self:IsHovered() then
 					ty = L(ty, 4, 15)
-				else 
+				else
 					ty = L(ty, -32, 15)
 				end
-				
-				local name = tab.ShortName or name 
+
+				local name = tab.ShortName or name
 
 				if not isstring(name) then name = "no_str" .. (tostring(name)) end
 				local len = utf8.len(name)
 
-				if len >= 12 then 
+				if len >= 12 then
 					name = string.sub(name, 0, 10) .. ".."
 				end
 
@@ -595,13 +596,13 @@ local function MakeTab(type)
 			end
 
 		end
-		
+
 		cat:SetContents(iLayout)
 		cat:SetExpanded(true)
 
 	end
 
-	return cats 
+	return cats
 end
 
 local treetabs = {
@@ -654,20 +655,20 @@ local function MakeSpawnList()
 
 	local sel
 
-	for k,v in SortedPairs(treetabs) do 
+	for k,v in SortedPairs(treetabs) do
 
 		local node = main:AddNode(v.Name)
 
 		if v.Icon then
 			node:SetIcon(v.Icon)
 		end
-		node.sel = v.AssociatedPanel 
+		node.sel = v.AssociatedPanel
 
 	end
 
 	function tree:OnNodeSelected(pnl)
 		if IsValid(sel) then sel:PopOut() end
-		if not pnl.sel then return end 
+		if not pnl.sel then return end
 
 		sel = MakeTab(pnl.sel)
 		sel:SetParent(its)
@@ -676,7 +677,7 @@ local function MakeSpawnList()
 
 	end
 
-	return pnl 
+	return pnl
 
 end
 
@@ -692,13 +693,13 @@ local function RemoveTabs()
 	--local Admin = ply:IsAdmin()
 
 	function spawnmenu.Reload()
-		for k,v in pairs(spawnMenuTabs) do 
+		for k,v in pairs(spawnMenuTabs) do
 			spawnmenu.AddCreationTab(k, v.Function, v.Icon, v.Order)
 		end
 		RunConsoleCommand("spawnmenu_reload")
 
 	end
-	
+
 
 	function spawnmenu.RemoveCreationTab(blah)
 		spawnMenuTabs[blah] = spawnmenu.GetCreationTabs()[blah]

@@ -76,7 +76,7 @@ wsBrowser = wsBrowser or nil
 local cooldown = 0
 
 function OpenGUI()
-	local f = vgui.Create("TabbedPanel")
+	local f = vgui.Create("NavPanel")
 	f:NoClipping(true)
 	f:SetSize(800, 600)
 	f:Center()
