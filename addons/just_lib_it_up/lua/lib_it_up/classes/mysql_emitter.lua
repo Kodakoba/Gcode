@@ -2,6 +2,14 @@ if CLIENT then return end --not for you, pumpkin
 
 if not Emitter then include('emitter.lua') end
 
+local verygood = Color(50, 150, 250)
+local verybad = Color(240, 70, 70)
+
+local function defaultCatch(q, err, sql)
+	local str = "	Error: %s\n	Query: %s"
+	MsgC(verygood, "[MySQLEmitter ", verybad, "ERROR!", verygood, "]\n", color_white, str:format(err, sql), "\n")
+end
+
 MySQLEmitter = Emitter:Callable()
 
 function MySQLEmitter:Initialize(query, also_do)
@@ -52,19 +60,17 @@ function MySQLEmitter:Then(f, err)
 end
 
 function MySQLEmitter:Catch(err)
-	self.CatchFunc = err
+	self.CatchFunc = (isfunction(err) and err) or defaultCatch
 	return self
 end
 
 function MySQLEmitter:Queue(q)
 	q.onSuccess = function(...)
 		self:onSuccess(...)
-		print("mysqlemitter: on success")
 	end
 
 	q.onError = function(...)
 		self:onError(...)
-		print("mysqlemitter: on error", ...)
 	end
 
 	self.CurrentQuery = q

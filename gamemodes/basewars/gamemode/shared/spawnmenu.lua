@@ -498,12 +498,7 @@ local function MakeTab(type)
 
 				local col = (not haslv and lvlLocked) or (wayenuff and blueEnough) or (enuff and greenEnough) or notEnough
 
-				if not set then
-					frcol:Set(col)
-				else
-					LC(frcol, col)
-				end
-
+				self:LerpColor(frcol, col, 0.3, 0, 0.3)
 
 				self:SetColor(frcol.r, frcol.g, frcol.b, frcol.a)
 
@@ -513,21 +508,17 @@ local function MakeTab(type)
 				local cl = self:GetCloud("price")
 
 				if cl then
-					cl.DoneText[1].Color = LC(cl.DoneText[1].Color, mcol, 15)
-					cl.DoneText[2].Color = LC(cl.DoneText[2].Color, lvcol, 15)
+					cl:LerpColor(cl.DoneText[1].Color, mcol, 0.3, 0, 0.3)
+					cl:LerpColor(cl.DoneText[2].Color, lvcol, 0.3, 0, 0.3)
 				end
 
-				LC(fr.borderColor, Colors.LighterGray, 5)
+				local a = self:LerpColor("borderColor", Colors.LighterGray, 0.4, 0, 0.4)
+
 			end
 
-			local ty = 0
-
 			function fr:PaintOver(w, h)
-				if not self:IsHovered() then
-					ty = L(ty, 4, 15)
-				else
-					ty = L(ty, -32, 15)
-				end
+				self:To("NameY", self:IsHovered() and -32 or 4, 0.3, 0, 0.3)
+				local ty = self.NameY or 0
 
 				local name = tab.ShortName or name
 
@@ -564,9 +555,7 @@ local function MakeTab(type)
 				surface.PlaySound("ui/buttonclickrelease.wav")
 
 				local function DoIt()
-					print("rannnn")
 					RunConsoleCommand("basewars_spawn", type, catName, tab.Key)
-
 				end
 
 				if (money > 0) and not (myMoney / 20 > money) then
