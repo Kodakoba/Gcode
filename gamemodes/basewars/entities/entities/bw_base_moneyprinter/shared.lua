@@ -17,6 +17,8 @@ ENT.PrintName 		= "Basic Printer"
 ENT.IsPrinter 		= true
 ENT.IsValidRaidable = false
 
+ENT.RebootTime = 10
+
 local Clamp = math.Clamp
 
 local slot = 2

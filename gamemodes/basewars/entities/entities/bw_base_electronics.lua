@@ -14,6 +14,9 @@ ENT.PowerRequired = 20
 ENT.PowerCapacity = 1000
 
 ENT.ConnectDistance = 550
+
+ENT.RebootTime = 3
+
 function ENT:DrainPower(val)
 	local pw = self.Power
 	if pw and CurTime() - self.Power < 1.1 then return true end
@@ -22,7 +25,7 @@ function ENT:DrainPower(val)
 end
 
 function ENT:IsPowered(val)
-	return self.Power
+	return self:GetPowered()
 end
 
 if SERVER then

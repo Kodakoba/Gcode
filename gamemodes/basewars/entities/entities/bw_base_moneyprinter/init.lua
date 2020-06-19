@@ -3,7 +3,6 @@ AddCSLuaFile("shared.lua")
 include("shared.lua")
 
 function ENT:Init()
-    print("init called")
 
     local me = BWEnts[self]
     
@@ -20,9 +19,6 @@ function ENT:Init()
     self:SetHealth(self.PresetMaxHealth or 100)
 
     self.rtb = 0
-
-    self.FontColor = color_white
-    self.BackColor = color_black
 
     self:SetUpgradeCost(self.UpgradeCost)
     self:SetMultiplier(1)
@@ -138,7 +134,6 @@ function ENT:NetworkVars()
 
     t.SetNWMoney(self, t.Money)
     t.SetMultiplier(self, t.Multiplier)
-    t.SetPower(self, me.Power)
 end
 
 function ENT:PlayerTakeMoney(ply, suppress)

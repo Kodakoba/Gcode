@@ -109,19 +109,36 @@ function ENT:DerivedDataTables()
 
 end
 
+function ENT:ForceUpdate()
+	self.TransmitTime = CurTime()
+end
+
+function ENT:UpdateTransmitState()
+	if not self.TransmitTime or CurTime() - self.TransmitTime < 0.5 then
+		self.TransmitTime = self.TransmitTime or CurTime()
+		return TRANSMIT_ALWAYS
+	end
+	return TRANSMIT_PVS
+end
+
 function ENT:BadlyDamaged()
 
 	return self:Health() <= (self:GetMaxHealth() / 5)
 
 end
 
+function ENT:GetPower()
+	return self:GetPowered()
+end
+
 function ENT:SetupDataTables()
 
-	self:NetworkVar("Int", 0, "Power")
-	self:NetworkVar("Int", 1, "MaxPower")
+	self:NetworkVar("Bool", 1, "Powered")
+	self:NetworkVar("Bool", 2, "Rebooting")
+
 	self:NetworkVar("Int", 2, "GridID")
 
-	self:NetworkVar("Entity", 1, "Line")
+	self:NetworkVar("Entity", 0, "Line")
 
 	if CLIENT then
 		self:NetworkVarNotify("GridID", function(self, name, old, new)
@@ -135,37 +152,20 @@ end
 
 function ENT:OnChangeGridID(new)
 
-	if self.OldGridID == new or new <= 0 then return end
-
+	if self.OldGridID == new or new <= 0 then print("Nope", new, self.OldGridID) return end
+	print("OnChangeGridID")
 	self.OldGridID = new
 
 	local grid = PowerGrids[new]
 
 	if not grid then
+		print("New grid")
 		grid = PowerGrid:new(self:CPPIGetOwner(), new)
 		grid:AddConsumer(self)
 	else
+		print("Existed grid")
 		grid:AddConsumer(self)
 	end
-
-end
-
-function ENT:DrainPower(val)
-
-	local me = BWEnts[self]
-
-	me.Power = math.max(me.Power-val, 0)
-
-	self:SetPower(me.Power)
-
-	me.LastDrain = CurTime()
-end
-
-function ENT:ReceivePower(val)
-	local me = BWEnts[self]
-	me.Power = math.min(me.Power+val, me.MaxPower)
-	self:SetPower(me.Power)
-	return
 
 end
 
@@ -191,12 +191,15 @@ if SERVER then
 		self:Activate()
 
 		self:SetHealth(self.PresetMaxHealth or self.MaxHealth)
-		self:SetMaxPower(self.PowerCapacity)
 		self.rtb = 0
 
 		self:Init(me)
 
 		self:SetMaxHealth(self:Health())
+		
+		timer.Simple(0.5, function()
+			if IsValid(self) then self:RemoveEFlags(EFL_FORCE_CHECK_TRANSMIT) end
+		end)
 
 		timer.Simple(0, function()
 			if IsValid(self) then
@@ -213,8 +216,7 @@ if SERVER then
 					if pole then
 						pole.Grid:AddConsumer(self, pole)
 					else
-						self.Grid = PowerGrid:new(self:CPPIGetOwner())
-						self.Grid:AddConsumer(self)
+						PowerGrid:new(self:CPPIGetOwner()):AddConsumer(self)
 					end
 
 				end
@@ -324,8 +326,9 @@ else
 	end
 
 	function ENT:Initialize()
+		print("Initialized", Realm())
 		BWEnts[self] = {}
-		if CLIENT then self:OnChangeGridID(self:GetGridID()) end
+		self:OnChangeGridID(self:GetGridID())
 		self:CLInit()
 	end
 

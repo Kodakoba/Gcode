@@ -1,6 +1,6 @@
 AddCSLuaFile()
 
-PowerGrid = Emitter:extend()
+PowerGrid = PowerGrid or Emitter:extend()
 
 function PowerGrid.UpdateIDs()
 	for k, grid in ipairs(PowerGrids) do
@@ -8,8 +8,8 @@ function PowerGrid.UpdateIDs()
 
 		grid.ID = k
 
-		for _, ent in ipairs(grid.AllEntities) do
-			if not IsValid(ent) then table.remove(grid.AllEntities, _) continue end --wat
+		for id, ent in pairs(grid.AllEntities) do
+			if not IsValid(ent) then grid.AllEntities[id] = nil continue end --wat
 			if SERVER then 	ent:SetGridID(k) else
 							ent.OldGridID = k end
 		end
@@ -27,8 +27,22 @@ function PowerGrid:UpdatePowerIn(gen)
 	self.PowerIn = pw_in
 end
 
-PowerGrid:On("AddedGenerator", PowerGrid.UpdatePowerIn)
-PowerGrid:On("RemovedGenerator", PowerGrid.UpdatePowerIn)
+PowerGrid:On("AddedGenerator", "UpdatePowerIn", PowerGrid.UpdatePowerIn)
+PowerGrid:On("RemovedGenerator", "UpdatePowerIn", PowerGrid.UpdatePowerIn)
+
+
+function PowerGrid:UpdatePowerOut(con)
+	local pw_out = 0
+	for k,v in ipairs(self.Consumers--[[OfTheCumChalice]]) do
+		pw_out = pw_out + v.PowerRequired
+	end
+
+	self.PowerOut = pw_out
+end
+
+PowerGrid:On("AddedConsumer", "UpdatePowerOut", PowerGrid.UpdatePowerOut)
+PowerGrid:On("RemovedConsumer", "UpdatePowerOut", PowerGrid.UpdatePowerOut)
+
 
 function PowerGrid:Initialize(ow, id, id2) --`id` is only used clientside, when we rely on the server fixing up powergrids to be sequential
 										   --`id2` is to fix up CPPIGetOwner returning uniqueID
@@ -42,6 +56,8 @@ function PowerGrid:Initialize(ow, id, id2) --`id` is only used clientside, when 
 	self.PowerLines = {}
 
 	self.AllEntities = {}
+
+	self.Changes = {}
 
 	self.Owner = ow
 
@@ -58,7 +74,7 @@ function PowerGrid:Initialize(ow, id, id2) --`id` is only used clientside, when 
 
 end
 
-PowerGrid:On("Changed", function(self)
+PowerGrid:On("Changed", "TrackConnections", function(self)
 	if self.Connections == 0 then
 		self:Remove()
 	end
@@ -66,7 +82,15 @@ PowerGrid:On("Changed", function(self)
 	PowerGrid.UpdateIDs()
 end)
 
-PowerGrid:On("RemovedLine", function(self, line)
+PowerGrid:On("Changed", "UpdateNetworking", function(self, ent)
+	if not table.HasValue(self.AllEntities, ent) then
+		self.Changes[ent] = false --removed
+	else
+		self.Changes[ent] = true --added
+	end
+end)
+
+PowerGrid:On("RemovedLine", "RepickLine", function(self, line)
 
 	for k,v in pairs(self.Accessors) do
 		--if k == "Line" then continue end
@@ -128,6 +152,8 @@ for k,v in pairs(accessors) do
 	PowerGrid["Add" .. k] = function(self, ent, line, ...)
 		local grid = ent:GetGrid()
 
+		if grid == self or self.AllEntities[ent:EntIndex()] then return end --nope
+
 		--First add the ent to a new grid
 
 		local t = self[v.tbl]
@@ -141,7 +167,7 @@ for k,v in pairs(accessors) do
 			ent:SetLine(line)
 		end
 
-		self.AllEntities[#self.AllEntities + 1] = ent
+		self.AllEntities[ent:EntIndex()] = ent
 
 		--Only then remove
 		if grid and grid ~= self then
@@ -156,6 +182,7 @@ for k,v in pairs(accessors) do
 
 	PowerGrid["Remove" .. k] = function(self, ent, new)
 		local t = self[v.tbl]
+		if not self.AllEntities[ent:EntIndex()] then print("What", ent, ent:EntIndex()) return end
 
 		for k,v in ipairs(t) do --remove from PowerType table (generator / powerline / battery)
 			if v == ent then
@@ -164,12 +191,11 @@ for k,v in pairs(accessors) do
 			end
 		end
 
-		for k,v in ipairs(self.AllEntities) do --remove from all entities table
-			if v == ent then
-				table.remove(self.AllEntities, k)
-				break
-			end
-		end
+		self.AllEntities[ent:EntIndex()] = nil
+
+		--[[for k,v in pairs(self.AllEntities) do --remove from all entities table
+			self.AllEntities[ent:EntIndex()] = nil
+		end]]
 
 		--if ent.SetLine then ent:SetLine(NULL) end
 
@@ -214,6 +240,78 @@ function PowerGrid.FindNearestPole(ent) --this isn't a class function, it's a ut
 
 end
 
+function PowerGrid:EntToTable(e)
+	local t = e.PowerType
+	return accessors[t] and self[accessors[t].tbl]
+end
+
+function PowerGrid:AddEntity(e, ...)
+	local t = e.PowerType
+	self["Add" .. t] (self, e, ...)
+end
+
+function PowerGrid:Network()
+	local ns = netstack:new()
+
+	local rems, adds = {}, {}
+
+	for ent, what in pairs(self.Changes) do
+		if not IsValid(ent) then continue end
+		if what then
+			adds[#adds + 1] = ent
+		else
+			rems[#rems + 1] = ent
+		end
+	end
+	table.Empty(self.Changes)
+	ns:WriteUInt(self.ID, 16)
+
+		ns:WriteUInt(#rems, 8)
+			for k,v in ipairs(rems) do
+				ns:WriteEntity(v)
+			end
+
+		ns:WriteUInt(#adds, 8)
+			for k,v in ipairs(adds) do
+				ns:WriteEntity(v)
+			end
+
+		ns:WriteUInt(self.PowerStored, 24)
+
+	return ns
+end
+
+function PowerGrid:Read()
+	local removed = net.ReadUInt(8)
+	for i=1, removed do
+		local ent = net.ReadUInt(16)
+		local ref = self.AllEntities[ent] --ent reference, NULL
+
+		for k,v in pairs(accessors) do
+			for k,v in pairs(self[v.tbl]) do --this is the only way to remove a NULL entity :(
+				if v == ref then
+					table.remove(self[v.tbl], k)
+				end
+			end
+		end
+
+		self.AllEntities[ent] = nil
+	end
+
+	local added = net.ReadUInt(8)
+	for i=1, added do
+		local ent = net.ReadEntity()
+		if not IsValid(ent) then continue end --um?
+
+		self.AllEntities[ent:EntIndex()] = ent
+
+		local t = self:AddEntity(ent)
+	end
+
+	local pw = net.ReadUInt(24)
+	self.PowerStored = pw
+end
+
 hook.Add("EntityRemoved", "ClearGrid", function(ent)
 	local grid = ent.Grid
 
@@ -227,6 +325,8 @@ function ENTITY:GetGrid()
 end
 
 function PowerGrid:Think()
+	
+
 	self:Emit("Think")
 
 	local pw_in = self.PowerIn
@@ -234,21 +334,99 @@ function PowerGrid:Think()
 
 	local ct = CurTime()
 
+	local die = false
+
 	for k,v in ipairs(self.Consumers) do
 		local req = v.PowerRequired
 		local enough = pw_total - req > 0
+
+		local rebooting = v.RebootStart and CurTime() - v.RebootStart < v.RebootTime
+
+
+		if enough and (not v.Power or v.ShouldReboot) and v.EverPowered then
+			v.RebootStart = CurTime()
+			rebooting = true
+		elseif not enough and not v.Power then
+			v.ShouldReboot = true
+			v.RebootStart = nil
+			rebooting = false
+		end
+
+		v:SetRebooting(rebooting)
+
+		--[[if enough and (not v.Power or v.ShouldReboot) then -- it died this power tick
+			v.RebootStart = CurTime()
+			rebooting = true
+		end
+
+		if not enough and not v.Power then --it's dead and reboot time has passed; we're just straight up dead
+			if not rebooting then
+				v:SetRebooting(false)
+				v.ShouldReboot = true
+			end
+		else
+			v:SetRebooting(rebooting)
+		end]]
+
+
+		--it should resurrect this tick, check reboot time
+		if enough and rebooting then 
+			-- it's still rebooting; drain power but don't make it powered yet
+			enough = false
+			pw_total = pw_total - math.floor(req / 2)
+		end
+
+		if enough then
+			v.EverPowered = true
+		end
+
 		v.Power = (enough and ct) or false
 
-		if not enough then break end --rip
+		if not die then
+			v:SetPowered(enough)
 
-		pw_total = pw_total - req
+			if enough then
+				pw_total = pw_total - req
+			else
+				die = true
+			end
+		else
+			v:SetPowered(false) -- everything dies and everyone cries
+		end
 	end
 
 	self.PowerStored = math.Clamp(pw_total, 0, self.MaxPowerStored)
 end
 
-timer.Create("PowerGridThink", 1, 0, function()
-	for k,v in ipairs(PowerGrids) do
-		v:Think()
-	end
-end)
+if SERVER then
+	util.AddNetworkString("PowerGrids")
+
+	timer.Create("PowerGridThink", 1, 0, function()
+		local nses = {}
+		for k,v in ipairs(PowerGrids) do
+			v:Think()
+			nses[#nses + 1] = v:Network()
+		end
+
+		net.Start("PowerGrids")
+			net.WriteUInt(#nses, 16)
+			for k,v in ipairs(nses) do
+				net.WriteNetStack(v)
+			end
+		net.Broadcast()
+	end)
+else
+
+	net.Receive("PowerGrids", function()
+		local grids = net.ReadUInt(16)
+		for i=1, grids do
+			local id = net.ReadUInt(16)
+			if not PowerGrids[id] then printf("Received unknown grid #%d, ignoring", id) return end
+			PowerGrids[id]:Read()
+		end
+	end)
+
+
+end
+
+

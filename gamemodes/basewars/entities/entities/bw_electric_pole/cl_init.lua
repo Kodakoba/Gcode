@@ -287,7 +287,7 @@ hook.Add("PostDrawTranslucentRenderables", "DrawPoleCables", function(d, sb)
 
 		if #grid.PowerLines == 0 then break end
 
-		for key, ent in ipairs(grid.AllEntities) do
+		for key, ent in pairs(grid.AllEntities) do
 			local pos
 			local genpos
 

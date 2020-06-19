@@ -2,10 +2,10 @@ AddCSLuaFile()
 include("shared.lua")
 
 
-function ENT:Initialize()
+function ENT:Init()
 
-    if not self.FontColor then self.FontColor = color_white end
-    if not self.BackColor then self.BackColor = color_black end
+    if not self.FontColor then self.FontColor = color_white:Copy() end
+    if not self.BackColor then self.BackColor = color_black:Copy() end
 
 end
 

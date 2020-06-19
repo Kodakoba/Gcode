@@ -128,9 +128,7 @@ local function DrawStructureInfo()
 
 	local ts = lastpos:ToScreen()
 	
-	if not ts.visible or alpha < 1 then return end 
-
-	local w, h = w, h 
+	if not ts.visible or alpha < 1 or not IsValid(lastent) then return end 
 
 	local scale = math.max(200 - dist, 75) / 200
 
@@ -161,6 +159,24 @@ local function DrawStructureInfo()
 	local hpW = math.floor(math.max(hpw, 8))			--for nice rounding
 
 	local hph = math.ceil(14*scale)
+
+	--[[
+		Height Calculation
+	]]
+
+		local toH = h
+
+		local rebooting
+
+		if lastent.GetRebooting and lastent:GetRebooting() then
+			toH = toH + 18
+			rebooting = true
+		end
+
+		anims:MemberLerp(anims, "Height", toH, 0.3, 0, 0.3)
+
+		local h = anims.Height or toH
+
 
 	render.PushFilterMin(TEXFILTER.ANISOTROPIC)
 
@@ -218,16 +234,12 @@ local function DrawStructureInfo()
 					draw.SimpleText(tx, "OSB18", 4 + w/2, headerH + 14, gray, 1, 1)
 				end)
 
+				local tY = headerH + 24
 
-				--[[local tx = Language("Power", EntPW, EntMaxPW)
-
-				draw.Masked(function()
-					DrawScalingPolyBox(6, 4, headerH + 20, pwW/scale, 24, HPFG)	
-				end, function()
-					draw.SimpleText(tx, "OSB18", 4 + w/2, headerH + 34, white, 1, 1)
-				end, nil, function()
-					draw.SimpleText(tx, "OSB18", 4 + w/2, headerH + 34, gray, 1, 1)
-				end)]]
+				if rebooting then
+					draw.SimpleText("Rebooting" .. ("."):rep((CurTime() * 3) % 2 + 1), "OS18", 8, tY, white, 0, 5)
+					tY = tY + 18
+				end
 
 			end) 
 

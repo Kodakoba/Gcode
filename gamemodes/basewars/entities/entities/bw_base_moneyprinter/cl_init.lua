@@ -3,10 +3,10 @@ include("shared.lua")
 
 ENT.ContextInteractable = true 
 
-function ENT:Initialize()
+function ENT:Init()
 
-    if not self.FontColor then self.FontColor = color_white end
-    if not self.BackColor then self.BackColor = color_black end
+    if not self.FontColor then self.FontColor = color_white:Copy() end
+    if not self.BackColor then self.BackColor = color_black:Copy() end
 
 end
 
@@ -218,9 +218,7 @@ function ENT:Draw()
     local pos, ang, scale = self:GetMoneyBarPos()
     local me = self:GetTable() --i hate this but its omegaoptimization
 
-    local pw = self:GetPower()
-    local pwd = true
-    if pw < me.PowerRequired then pwd = false end
+    local pwd = self:GetPower()
 
     cam.Start3D2D(pos, ang, scale)
         local ok, err = pcall(self.DrawMoneyBar, self, pos, ang, scale, me, pwd)

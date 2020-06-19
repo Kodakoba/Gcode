@@ -60,8 +60,6 @@ function ENT:PhysicsCollide(data, phys)
 	if ent.GetMaxPower and not self.Removing then
 	
 		ent.Battery = true
-	
-		ent:SetMaxPower(ent:GetMaxPower() * self.PowerAmt)
 		
 		self.Removing = true
 		self:Remove()

@@ -123,7 +123,8 @@ function ENT:Think()
 	if me.CheckDist and self.Grid then
 		local pos = self:GetPos()
 		local range = me.ConnectDistanceSqr
-		for k,v in ipairs(self.Grid.AllEntities) do
+
+		for k,v in pairs(self.Grid.AllEntities) do
 			if v.PowerType == "Line" then
 				if v==self or self:GetLine() ~= v then continue end
 				if pos:DistToSqr(v:GetPos()) > range then
