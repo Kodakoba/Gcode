@@ -15,6 +15,7 @@ end)
 function AnimMeta:Stop()
 	self.Parent.m_AnimList[self.Key] = nil
 	self:Emit("Stop")
+	self:Emit("End")
 end
 
 function AnimMeta:SetSwappable(b)

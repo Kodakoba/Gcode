@@ -20,6 +20,7 @@
 
 		emitter:RemoveListener(event_name, id_name)
 			if no id_name is provided it'll remove every fucking listener for event_name so be careful
+			shouldn't do anything if you don't give event_name tho
 
 
 		emitter.__Events - muldim table of	[event_name]:[id_name]:function , pls dont touch it
