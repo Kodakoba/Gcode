@@ -2,9 +2,9 @@ SWEP.Author			= "grmx"
 SWEP.Contact			= ""
 SWEP.Purpose			= ""
 
- 
+
 SWEP.Spawnable			= true
- 
+
 SWEP.ViewModel			= "models/weapons/v_pistol.mdl"
 SWEP.WorldModel		= "models/weapons/w_pistol.mdl"
 SWEP.DrawAmmo = false
@@ -25,18 +25,18 @@ function SWEP:SetupDataTables()
 end
 DashTable = {}
 function SWEP:Initialize()
-	if CLIENT then 
+	if CLIENT then
 		self:SetPredictable(false)
 		self.Dashed = false
 	end
 end
 
 hook.Add("GetFallDamage", "DashFall", function(ply)
- 	if ply:GetActiveWeapon():GetClass() == "dash" then --and ply:GetActiveWeapon():GetDashTime() - CurTime() > -5 then 
- 		--ply:EmitSound("dash/land.ogg", 70, 100, 1, CHAN_AUTO)
- 		return 0 
- 	end
- 	
+	if ply:GetActiveWeapon():GetClass() == "dash" then --and ply:GetActiveWeapon():GetDashTime() - CurTime() > -5 then
+		--ply:EmitSound("dash/land.ogg", 70, 100, 1, CHAN_AUTO)
+		return 0
+	end
+
  end)
 
 function SWEP:Reload()
@@ -44,19 +44,19 @@ function SWEP:Reload()
 end
 
 
-function SWEP:Think()	
+function SWEP:Think()
 
 	if self:GetOwner():IsOnGround() and not DashTable[self:GetOwner()] and self:GetDashCharges() ~= 1 and not (CLIENT and self:GetDashing()) then --hmmmmmmmmmmmmmmmm
 
-		self:SetDashCharges(1) 
-		if CLIENT then 
-			self.Dashed = false 
-		end 
+		self:SetDashCharges(1)
+		if CLIENT then
+			self.Dashed = false
+		end
 	end
-	
+
 end
 
-local OverrideDashEnd 
+local OverrideDashEnd
 local OverrideDashFinalVel
 
 function SWEP:CheckMoves(owner, mv, dir)
@@ -64,14 +64,14 @@ function SWEP:CheckMoves(owner, mv, dir)
 	local jumping = mv:KeyDown(IN_JUMP)
 	local ducked = mv:KeyDown(IN_DUCK)
 
-	if not jumping or OverrideDashEnd then return end 
+	if not jumping or OverrideDashEnd then return end
 	if not IsFirstTimePredicted() then return end
 
 	local dt = DashTable[owner]
 
-	if dt.ground then 
+	if dt.ground then
 
-		if dt.jump or dt.down then return end 
+		if dt.jump or dt.down then return end
 
 
 		local tr = util.TraceHull({
@@ -87,21 +87,21 @@ function SWEP:CheckMoves(owner, mv, dir)
 		local col = tr.Hit and Colors.Green or Colors.Red
 
 		if tr.Hit then
-			
-			local vel 
+
+			local vel
 
 
-			if ducked then 
+			if ducked then
 
 				vel = dir * 2350
 				vel.z = 300
 
-			else 
+			else
 				vel = dir * 1500
 				vel.z = 400
 			end
 
-			
+
 			self:SetSuperMoving(true)
 
 			if SERVER then
@@ -129,7 +129,7 @@ function SWEP:CheckMoves(owner, mv, dir)
 
 				return vel
 			end
-			
+
 		end
 
 	else --Dash started in mid-air
@@ -146,8 +146,8 @@ function SWEP:CheckMoves(owner, mv, dir)
 		})
 
 		if tr.Hit then
-			
-			local vel 
+
+			local vel
 
 			local ang = dir:Angle()
 			local strength = ang.p --the lower they aimed their dash, the more it will be
@@ -193,19 +193,19 @@ hdl.DownloadFile("http://vaati.net/Gachi/shared/whoosh.ogg", "whoosh.dat")
 function SWEP:PrimaryAttack()
 	local owner = self:GetOwner()
 
-	if not IsFirstTimePredicted() or DashTable[owner] then return end 
+	if not IsFirstTimePredicted() or DashTable[owner] then return end
 
-	if self:GetDashCharges() <= 0 or self.Dashed then return end 
+	if self:GetDashCharges() <= 0 or self.Dashed then return end
 
 	self:SetDashCharges(self:GetDashCharges() - 1)
 
-	if CLIENT then 
-		self.Dashed = true 
+	if CLIENT then
+		self.Dashed = true
 		--self:EmitSound("dash/whoosh.ogg", 45)
 		sound.PlayFile("data/hdl/whoosh.dat", "", function() end)
 	end
 
-	
+
 
 	if SERVER then self:SetDashEndTime(CurTime() + self.DashTime) end
 	self:SetDashing(true)
@@ -213,15 +213,15 @@ function SWEP:PrimaryAttack()
 	local z = dir.z
 
 
-	if z > -0.15 and z < 0.20 then 
+	if z > -0.15 and z < 0.20 then
 		dir.z = 0.1
 	end
 
-	if CLIENT then 
+	if CLIENT then
 
 		DashTable[owner] = {
-			t = CurTime(), 
-			dir = dir, 
+			t = CurTime(),
+			dir = dir,
 			wep = self,
 			ground = owner:IsOnGround(),
 		}
@@ -229,8 +229,8 @@ function SWEP:PrimaryAttack()
 	else
 
 		DashTable[owner] = {
-			t = CurTime(), 
-			dir = dir, 
+			t = CurTime(),
+			dir = dir,
 			wep = self,
 			ground = owner:IsOnGround(),
 		}
@@ -238,7 +238,7 @@ function SWEP:PrimaryAttack()
 	end
 	local dt = DashTable[owner]
 
- 
+
 	dt.ground = owner:IsOnGround()
 
 	dt.jump = owner:KeyDown(IN_JUMP)
@@ -247,7 +247,7 @@ function SWEP:PrimaryAttack()
 
 	--
 
- 	self:SetNextPrimaryFire(CurTime() + 0.4)
+	self:SetNextPrimaryFire(CurTime() + 0.4)
 
 end
 
@@ -258,65 +258,65 @@ hook.Remove("Move", "Dash")
 hook.Add("FinishMove", "Dash", function(ply, mv, cmd)
 	local dash = ply:GetWeapon("dash")
 
-	if not IsValid(dash) then return end 
+	if not IsValid(dash) then return end
 
-	if dash.EndSuperMove and SERVER then 
-		if mv:GetVelocity():Length() < 800 or ply:IsOnGround() then 
+	if dash.EndSuperMove and SERVER then
+		if mv:GetVelocity():Length() < 800 or ply:IsOnGround() then
 			dash:SetSuperMoving(false)
 		end
 	end
-	if not DashTable[ply] then return end 
+	if not DashTable[ply] then return end
 
-	if CLIENT and ply~=LocalPlayer() then 
-		return 
+	if CLIENT and ply~=LocalPlayer() then
+		return
 	end
 
 	local t =  DashTable[ply]
 	local self = t.wep
-	if not IsValid(self) then DashTable[ply] = nil self.StoppedDash = nil return end 
-	
+	if not IsValid(self) then DashTable[ply] = nil self.StoppedDash = nil return end
+
 	local time = t.t
 	local endtime = OverrideDashEnd or (CLIENT and self:GetDashEndTime()~=0 and self:GetDashEndTime() + 0.6) or t.t+self.DashTime
 	local ping = (SERVER and 0) or ply:Ping()/500
 	local d = t.dir
 	local vel = mv:GetVelocity()
 
-	local newvel = t.newvel or d * 800 
+	local newvel = t.newvel or d * 800
 
 
-	if CurTime() - time < 0 then return end 
+	if CurTime() - time < 0 then return end
 
-	if CurTime() > endtime then 
+	if CurTime() > endtime then
 
-		if OverrideDashFinalVel then 
+		if OverrideDashFinalVel then
 			mv:SetVelocity(OverrideDashFinalVel)
 			self:SetSuperMoving(false)
 		end
 
-		if SERVER then 
-			self:SetDashEndTime(0) 
-			self:SetDashing(false) 
-			self.EndSuperMove = true 
+		if SERVER then
+			self:SetDashEndTime(0)
+			self:SetDashing(false)
+			self.EndSuperMove = true
 		end
 
-		DashTable[ply] = nil 
-		OverrideDashEnd = nil 
-		OverrideDashFinalVel = nil 
+		DashTable[ply] = nil
+		OverrideDashEnd = nil
+		OverrideDashFinalVel = nil
 		self.StoppedDash = nil
 		return
-	end 
+	end
 
 	local changed = self:CheckMoves(ply, mv, d)
 
 	if isvector(changed) then --return bool to prevent mv
 		--if not IsFirstTimePredicted() and CLIENT then return end
 
-		ply:SetVelocity(-mv:GetVelocity() + changed) 
+		ply:SetVelocity(-mv:GetVelocity() + changed)
 
 		--self:StopDash()
 
 		--mv:SetVelocity(changed)
-	else 
+	else
 		mv:SetVelocity(newvel)
 	end
 
@@ -325,7 +325,7 @@ end)
 local trails = {}
 
 local st = 0
-local two = math.pi/2 
+local two = math.pi/2
 local fin = math.pi
 
 local trail = Material("models/props_combine/stasisshield_sheet")
@@ -337,12 +337,12 @@ hook.Add("PostPlayerDraw", "Dash", function(ply)
 	local t = trails[ply]
 	local dash = ply:GetWeapon("dash")
 	local dasht = (IsValid(dash) and dash:GetTable())
-	if dasht and (dasht.GetDashing and dasht.GetSuperMoving) and (dash:GetDashing() or dash:GetSuperMoving()) or DashTable[ply] then 
+	if dasht and (dasht.GetDashing and dasht.GetSuperMoving) and (dash:GetDashing() or dash:GetSuperMoving()) or DashTable[ply] then
 
 		local widmul = (dash:GetDashing() or DashTable[ply]) and 15 or 8
 
 		local wid = math.min(ply:GetVelocity():Length() / 50, widmul)
-		
+
 		t = t or {}
 
 		trails[ply] = t
@@ -354,10 +354,10 @@ hook.Add("PostPlayerDraw", "Dash", function(ply)
 
 		t[#t + 1] = {pos, CurTime(), wid}
 	elseif t then
-		if #t == 0 or CurTime() - t[#t][2] > 1 then trails[ply] = nil return end 
+		if #t == 0 or CurTime() - t[#t][2] > 1 then trails[ply] = nil return end
 	end
 
-	if not t then return end 
+	if not t then return end
 
 	local rems = {}
 
@@ -365,7 +365,7 @@ hook.Add("PostPlayerDraw", "Dash", function(ply)
 
 		for i=1, #t do
 			local time = (CurTime() - t[i][2])
-	
+
 			local one = Lerp(time, two, fin)
 			local two = Lerp((time - 0.3)*2, fin, two)
 
@@ -382,25 +382,26 @@ hook.Add("PostPlayerDraw", "Dash", function(ply)
 	render.EndBeam()
 
 	for k,v in ipairs(rems) do
-		table.remove(t, v) 
+		table.remove(t, v)
 	end
 end)
 
 function SWEP:Holster(wep)
-	local owner = self:GetOwner()
 
-	if string.find(wep.Base or "", "cw_") then
+	if wep.CW20Weapon then
+		local oldMult = wep.DrawSpeedMult
+		wep.DrawSpeedMult = wep.DrawSpeedMult * 3
+		wep.GlobalDelay = 0
+		wep:recalculateDeployTime()
 
-	    wep.DrawSpeed=wep.DrawSpeed*3
-	    wep.GlobalDelay = 0
+		timer.Simple(0.2, function()
+			if not IsValid(wep) then return end
+			wep.DrawSpeedMult = wep.DrawSpeedMult / 3
+			wep.GlobalDelay = 0
+			wep:recalculateDeployTime()
+		end)
 
-        timer.Simple(0.2, function()  
-        	if not IsValid(wep) then return end
-	        wep.DrawSpeed=wep.DrawSpeed/3
-	        wep.GlobalDelay = 0
-        end)
-        
-    end
+	end
 
 	return true
 end
@@ -424,8 +425,8 @@ end
 
 function SWEP:SecondaryAttack()
 
- 	if DashTable[self:GetOwner()] then 
- 		self:StopDash(false)
- 	end
+	if DashTable[self:GetOwner()] then
+		self:StopDash(false)
+	end
 
 end

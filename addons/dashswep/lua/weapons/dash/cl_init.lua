@@ -1,7 +1,7 @@
 
 include('shared.lua')
- 
- SWEP.PrintName        = "Dash SWEP"			
+
+ SWEP.PrintName        = "Dash SWEP"
  SWEP.Slot		= 4
  SWEP.SlotPos		= 0
  SWEP.DrawAmmo		= false
@@ -13,8 +13,8 @@ include('shared.lua')
 local CurrentColor = Color(240,40,40)
 local snapTime = CurTime()
 
-local snap = false 
-local snapped = false 
+local snap = false
+local snapped = false
 
 local snapCols = {
 	[0] = Color(50, 100, 250),
@@ -30,7 +30,7 @@ local snapDur = 0.25
 local flashDur = 0.2
 
 local dir = 0
-local size = 64 
+local size = 64
 
 
 local dbgFr = 0
@@ -42,20 +42,20 @@ function SWEP:DrawHUD()
 	oldCharges = newCharges
 	newCharges = self:GetDashCharges()
 
-	if oldCharges ~= newCharges and not snap then 
-		snap = true 
+	if oldCharges ~= newCharges and not snap then
+		snap = true
 		snapped = false
 		snapTo = newCharges
-		snapTime = CurTime() 
+		snapTime = CurTime()
 		dir = newCharges - oldCharges
 	end
 
-	if snap and CurTime() - snapTime > snapDur then 
-		snap = false 
+	if snap and CurTime() - snapTime > snapDur then
+		snap = false
 		--dir = 0
 	end
 
-	if CurTime() - snapTime > flashDur then 
+	if CurTime() - snapTime > flashDur then
 		dir = 0
 	end
 
@@ -87,7 +87,7 @@ function SWEP:DrawHUD()
 
 		draw.NoTexture()
 		draw.DrawCircle(ScrW()/2, ScrH() * 0.9 - 64, size - 2, 20)
-		
+
 	if a > 5 and spr > 0 then
 		BSHADOWS.EndShadow(int, spr, blur, a, nil, nil, nil, Color(255, 255, 255))
 	end
@@ -95,20 +95,20 @@ function SWEP:DrawHUD()
 	draw.DrawMaterialCircle(ScrW()/2, ScrH() * 0.9 - 64, size*2)
 
 	--[[
-	if LocalPlayer():KeyDown(IN_JUMP) then 
+	if LocalPlayer():KeyDown(IN_JUMP) then
 		dbgFr = L(dbgFr, 1, 25)
-	else 
+	else
 		dbgFr = L(dbgFr, -0.01, 10)
 	end
 	col.a = dbgFr * 255
 
-	
+
 	local time = ((self.StoppedDash or 0) - CurTime())
 	local str
 
-	if time > 0 then 
+	if time > 0 then
 		str = ("in: %.2fs"):format(time)
-	else 
+	else
 		str = "now!"
 	end
 
