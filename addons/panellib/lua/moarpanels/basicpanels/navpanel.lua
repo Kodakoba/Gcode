@@ -497,6 +497,8 @@ function NavPanel:PerformLayout(w, h)
 		self.__InvisButton:SetPos(self.RetractedSize, self.HeaderSize)
 		self.__InvisButton:SetSize(self:GetWide(), self:GetTall())
 	end
+
+	self:Emit("PerformLayout", w, h)
 end
 
 function NavPanel:AddCustomElement(fr)
@@ -533,12 +535,13 @@ end
 function NavPanel:AddTab(name, onopen, onclose)
 	local tab = vgui.Create("NavbarChoice", self.Navbar)
 	tab:SetName(name)
+	tab.NavPanel = self
 
 	tab:On("Select", function(btn, navbar, noanim, ...)
 		local pnl, nofade, noanimret
 
 		if onopen then
-			pnl, nofade, noanimret = onopen(btn, btn.HiddenPanel, noanim, ...)
+			pnl, nofade, noanimret = onopen(btn.NavPanel, btn, btn.HiddenPanel, noanim, ...)
 			noanim = noanim or noanimret
 		end
 
@@ -548,7 +551,7 @@ function NavPanel:AddTab(name, onopen, onclose)
 
 	if onclose then
 		tab:On("Deselect", function(btn, ...)
-			onclose(btn, btn.HiddenPanel, ...)
+			onclose(btn.NavPanel, btn, btn.HiddenPanel, ...)
 		end)
 	end
 
@@ -565,7 +568,7 @@ function NavPanel:SelectTab(name, dontanim)
 	local tabs = self.Navbar.Tabs
 
 	for k,v in pairs(tabs) do
-		print(v:GetName(), name)
+
 		if v:GetName() == name then
 			v:Select(true)
 		end

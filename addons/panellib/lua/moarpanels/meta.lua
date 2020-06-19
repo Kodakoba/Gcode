@@ -24,7 +24,7 @@ function META:GetCenter(xfrac, yfrac)
 	return x, y
 end
 
-local dred = Color(230, 40, 40, 20)
+local dred = Color(160, 40, 40, 120)
 function META:Debug()
 	self.Paint = function(self, w, h) draw.RoundedBox(8, 0, 0, w, h, dred) end
 end
@@ -105,7 +105,7 @@ function META:Lerp(key, val, dur, del, ease)
 		anims[key] = anim
 	end
 
-	anim:On("Stop", "RemoveAnim", function()
+	anim:On("End", "RemoveAnim", function()
 		anims[key] = nil
 	end)
 
@@ -151,7 +151,7 @@ function META:MemberLerp(tbl, key, val, dur, del, ease)
 		anims[key .. as_str] = anim
 	end
 
-	anim:On("Stop", "RemoveAnim", function()
+	anim:On("End", "RemoveAnim", function()
 		anims[key] = nil
 	end)
 
@@ -162,14 +162,15 @@ function META:MemberLerp(tbl, key, val, dur, del, ease)
 end
 
 --CW has its' own LerpColor which seems to work differently from this
-local function LerpColor(frac, col1, col2)
+--src will be the source color from which the lerp starts
+local function LerpColor(frac, col1, col2, src)
 
-	col1.r = Lerp(frac, col1.r, col2.r)
-	col1.g = Lerp(frac, col1.g, col2.g)
-	col1.b = Lerp(frac, col1.b, col2.b)
+	col1.r = Lerp(frac, src.r, col2.r)
+	col1.g = Lerp(frac, src.g, col2.g)
+	col1.b = Lerp(frac, src.b, col2.b)
 
-	if col1.a ~= col2.a then
-		col1.a = Lerp(frac, col1.a, col2.a)
+	if src.a ~= col2.a then
+		col1.a = Lerp(frac, src.a, col2.a)
 	end
 
 end
@@ -199,7 +200,9 @@ function META:LerpColor(key, val, dur, del, ease)
 	local anim
 
 	local iscol = IsColor(key)
-	local from = (iscol and key) or self[key] or color_white
+	local from = (iscol and key) or self[key]
+	if not from then errorf("Didn't find color when provided %s (%s)", key, type(key)) end
+	if from == val then return end
 
 	if anims[key] then
 		anim = anims[key]
@@ -218,7 +221,7 @@ function META:LerpColor(key, val, dur, del, ease)
 
 	local newfrom = from:Copy()
 
-	anim:On("Stop", "RemoveAnim", function()
+	anim:On("End", "RemoveAnim", function()
 		anims[key] = nil
 	end)
 
@@ -226,8 +229,8 @@ function META:LerpColor(key, val, dur, del, ease)
 		if iscol then
 			LerpColorFrom(fr, newfrom, val, from)
 		else
-			self[key] = (IsColor(self[key]) and self[key]) or from:Copy()
-			LerpColor(fr, newfrom, val, self[key])
+			self[key] = (IsColor(self[key]) and self[key]) or from
+			LerpColor(fr, from, val, newfrom)
 		end
 	end
 
@@ -265,8 +268,8 @@ function META:Emit(event, ...)
 			if not (isstring(k) or isnumber(k) or IsValid(k)) then evs[k] = nil continue end
 			--v[1] is the callback function
 			--every other key-value is what was passed by On
-			
-			if #v > 1 then --AHHAHAHAHAHAHAHAHAHAHHA
+
+			if #v > 1 then --AHHAHAHAHAHAHAHAHAHAHHA AAAA
 				local t = {unpack(v, 2)}
 				table.InsertVararg(t, ...)
 
@@ -297,6 +300,18 @@ function META:PopOut(dur, del, rem)
 	end
 
 	return self:AlphaTo(0, dur or 0.1, del or 0, func)
+end
+
+function META:PopInShow(dur, del, rem)
+	self:Show()
+	return self:PopIn(dur or 0.1, del or 0, nil, true)
+end
+
+function META:PopOutHide(dur, del, rem)
+	return self:PopOut(dur or 0.1, del or 0, function(_, self)
+		self:Hide()
+		if rem then rem(_, self) end
+	end)
 end
 
 --[[

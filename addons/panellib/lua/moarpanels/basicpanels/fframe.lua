@@ -278,7 +278,7 @@ function PANEL:Think()
 		end
 
 		self:SetPos( x, y )
-
+		self:Emit("Drag", x, y)
 	end
 
 	local boxX, boxY = self.SizableBoxX * self:GetWide(), self.SizableBoxY * self:GetTall()
