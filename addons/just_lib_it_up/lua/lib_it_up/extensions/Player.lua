@@ -1,8 +1,6 @@
 
-local Player = FindMetaTable("Player")
-local Entity = FindMetaTable("Entity")
 
-function Entity:Distance(ent)
+function ENTITY:Distance(ent)
 	return self:GetPos():Distance(ent:GetPos())
 end
 
@@ -15,7 +13,7 @@ if SERVER then
 
 	local rtimes = {}
 
-	function Player:SetRespawnTime(time, abs)
+	function PLAYER:SetRespawnTime(time, abs)
 		local rt = rtimes
 
 		if not abs then
@@ -27,7 +25,7 @@ if SERVER then
 		self:SetNW2Float("NextRespawn", rt[self])
 	end
 
-	Player.SetNextRespawn = Player.SetRespawnTime
+	PLAYER.SetNextRespawn = PLAYER.SetRespawnTime
 
 	hook.Add("PlayerSpawn", "DoRespawnTime", function(ply)
 		rtimes[ply] = nil
@@ -44,25 +42,25 @@ if SERVER then
 		if t and t > CurTime() then return true end
 	end)
 
-	function Player:GetRespawnTime()
+	function PLAYER:GetRespawnTime()
 		return rtimes[self] or (self.NextSpawnTime - CurTime()) --base gamemode
 	end
 
 else
 
-	function Player:GetRespawnTime()
+	function PLAYER:GetRespawnTime()
 		local t = self:GetNW2Float("NextRespawn")
 
 		if t == 0 then return nil else return t end
 	end
 
-	function Player:GetDeathTime()
+	function PLAYER:GetDeathTime()
 		local t = self:GetNW2Float("DeathTime")
 
 		if t == 0 then return nil else return t end
 	end
 
-	function Player:GetRespawnLeft()
+	function PLAYER:GetRespawnLeft()
 		local t = self:GetNW2Float("NextRespawn")
 
 		if t == 0 then
@@ -74,7 +72,7 @@ else
 
 end
 
-Player.GetNextRespawn = Player.GetRespawnTime
+PLAYER.GetNextRespawn = PLAYER.GetRespawnTime
 
 
 
@@ -125,5 +123,32 @@ else
 
 	end)
 
+
+	gameevent.Listen("player_info") --smh my head
+	local ran = {}
+
+	local function runHook(ply, uid)
+		hook.Run("PlayerJoined", ply)
+		ran[uid] = true
+	end
+
+	hook.Add("player_info", "GarryPls", function(dat)
+		local uid = dat.userid
+
+		if not ran[uid] then
+
+			hook.Add("Think", "ValidatePlayer" .. uid, function() --yikers
+				if ran[uid] then hook.Remove("Think", "ValidatePlayer" .. uid) return end
+
+				local ply = Player(uid)
+									--YIKERS
+				if ply:IsValid() and ply:Team() ~= 0 then
+					runHook(ply, uid)
+				end
+			end)
+
+		end
+
+	end)
 end
 
