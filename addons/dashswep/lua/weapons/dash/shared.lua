@@ -256,9 +256,9 @@ function Realm()
 end
 hook.Remove("Move", "Dash")
 hook.Add("FinishMove", "Dash", function(ply, mv, cmd)
-	local dash = ply:GetWeapon("dash")
+	local dash = ply:GetActiveWeapon()
 
-	if not IsValid(dash) then return end
+	if not dash or not dash:IsValid() or not dash.IsDash then return end
 
 	if dash.EndSuperMove and SERVER then
 		if mv:GetVelocity():Length() < 800 or ply:IsOnGround() then

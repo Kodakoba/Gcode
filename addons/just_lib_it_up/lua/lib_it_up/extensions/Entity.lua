@@ -19,10 +19,8 @@ EntitySubscribers.Entities = ent_subs					-- this is used for adding/removing su
 
 local BlankFunc = function() end
 
-local Entity = FindMetaTable("Entity")
-local Player = FindMetaTable("Player")
 
-function Entity:Subscribe(ply, dist, onunsub, addtwice)
+function ENTITY:Subscribe(ply, dist, onunsub, addtwice)
 
 	if CLIENT then
 		ply = LocalPlayer()
@@ -47,7 +45,7 @@ function Entity:Subscribe(ply, dist, onunsub, addtwice)
 	sub_ent[ply] = ply
 end
 
-function Entity:IsSubscribed(ply)
+function ENTITY:IsSubscribed(ply)
 	local my_subs = ent_subs[self]
 
 	if my_subs and my_subs[ply] then
@@ -57,7 +55,7 @@ function Entity:IsSubscribed(ply)
 	return false
 end
 
-function Entity:Unsubscribe(ply)
+function ENTITY:Unsubscribe(ply)
 	local my_subs = ent_subs[self]
 
 	if my_subs then
@@ -66,7 +64,7 @@ function Entity:Unsubscribe(ply)
 	end
 end
 
-function Entity:GetSubscribers()
+function ENTITY:GetSubscribers()
 	local t = {}
 	local i = 1
 
@@ -84,7 +82,7 @@ function Entity:GetSubscribers()
 	return t
 end
 
-function Entity:GetSubscribersKeys()
+function ENTITY:GetSubscribersKeys()
 
 	local my_subs = ent_subs[self]
 
@@ -92,11 +90,11 @@ function Entity:GetSubscribersKeys()
 end
 
 
-function Player:Subscribe(ent, ...)
+function PLAYER:Subscribe(ent, ...)
 	return ent:Subscribe(self, ...)
 end
 
-function Player:IsSubscribed(ent)
+function PLAYER:IsSubscribed(ent)
 	return ent:IsSubscribed(self)
 end
 
@@ -104,8 +102,11 @@ hook.Add("FinishMove", "EntitySubscriptions", function(pl, mv)
 	if not subs[pl] then return end
 
 	local pos = mv:GetOrigin()
+	local len = #subs[pl]
 
-	for key, dat in ipairs(subs[pl]) do
+	for key = len, 1, -1 do --start from the top so table.remove'ing doesn't make us skip keys
+
+		local dat = subs[pl][key]
 
 		local ent = dat[1]
 		local dist = dat[2]

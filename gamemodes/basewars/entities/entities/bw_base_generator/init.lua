@@ -43,8 +43,7 @@ function ENT:PingGrids()
 	end
 
 	--this will execute if a grid wasn't found
-	self.Grid = PowerGrid:new(ow)
-	self.Grid:AddGenerator(self) --i'm here on my ooooooooown...
+	PowerGrid:new(ow):AddGenerator(self) --i'm here on my ooooooooown...
 end
 
 function ENT:ForceUpdate()

@@ -17,6 +17,11 @@ ENT.ConnectDistance = 550
 
 ENT.RebootTime = 3
 
+function ENT:Reboot()
+	self.RebootStart = CurTime()
+	self:SetRebooting(true)
+end
+
 function ENT:DrainPower(val)
 	local pw = self.Power
 	if pw and CurTime() - self.Power < 1.1 then return true end
