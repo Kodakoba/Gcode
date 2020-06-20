@@ -1,7 +1,7 @@
 AddCSLuaFile()
 include("shared.lua")
 
-ENT.ContextInteractable = true 
+ENT.ContextInteractable = true
 
 function ENT:Init()
 
@@ -33,7 +33,7 @@ end
 
 function ENT:InteractItem(item, slot)
 
-    if not self:CanInteractItem(item) then return false end 
+    if not self:CanInteractItem(item) then return false end
 
     net.Start("OverclockPrinter")
         net.WriteEntity(self)
@@ -44,7 +44,7 @@ function ENT:InteractItem(item, slot)
 end
 
 function ENT:ContextInteractItem(item, slot)
-    
+
     local ok = self:InteractItem(item)
     if ok==false then return true end
 
@@ -53,9 +53,9 @@ end
 function ENT:DrawMoneyBar(pos, ang, scale, me, pwd)
 
     if me.TTR then me.PrintAmount = self:GetNWInt("UpgradeCost", 0) / me.TTR  end
-    
+
     local w, h = 290*2, 72*2
-   
+
     local Lv = me.dt.Level
     local Cp = me.dt.Capacity
     local Mt = me.dt.Multiplier
@@ -64,8 +64,8 @@ function ENT:DrawMoneyBar(pos, ang, scale, me, pwd)
 
     surface.SetDrawColor(Color(0, 0, 0))
     surface.DrawRect(0, 0, w, h)
-    
-    if pwd then 
+
+    if pwd then
         surface.SetDrawColor(me.FontColor or Color(255,255,255))
         surface.DrawRect(wpad - 2, yoff - 2, (w-wpad*2) + 4, barH + 4)
 
@@ -91,21 +91,21 @@ function ENT:DrawMisc(pos, ang, scale, me, pwd)
     surface.SetDrawColor(Color(0, 0, 0, 250))
     surface.DrawRect(0, 0, w, h)
 
-    if pwd then 
+    if pwd then
         draw.SimpleText(self.PrintName, "TW72", w/2, yoff - 36, color_white, 1, 1)
         draw.SimpleText("Lv. " .. me.dt.Level, "TW72", w/2, yoff + 24, color_white, 1, 1)
         local mods = me.dt.Mods
         mods = util.JSONToTable(mods)
         surface.SetDrawColor(Color(0, 0, 0, 220))
-        if mods then 
+        if mods then
             surface.DrawRect(40, h + 60, w - 80, 120)
             local col = Color(255, 0, 0)
             local mat = mods.o --overclocker
             local over = Inventory.Crafting.utils.cats.Economy[1].vars
             local col = Color(255, 0, 0)
 
-            for k,v in pairs(over) do 
-                if v.id == mat then 
+            for k,v in pairs(over) do
+                if v.id == mat then
                     col = v.col or Color(200, 200, 200)
                     break
                 end
@@ -122,7 +122,7 @@ function ENT:DrawMisc(pos, ang, scale, me, pwd)
             self.Mods = tbl --for other ents
         end
 
-        if self:Health()/self:GetMaxHealth() < 0.25 then 
+        if self:Health()/self:GetMaxHealth() < 0.25 then
             local sin = math.abs(math.sin(CurTime()*2))
             local col = Color(170 + sin*75, 40 + sin*40, 40 + sin*40)
 
@@ -141,7 +141,7 @@ function ENT:DrawStats(pos, ang, scale, me, pwd)
     surface.SetDrawColor(Color(0, 0, 0, 250))
     surface.DrawRect(0, h + 12, w, h)
 
-    if pwd then 
+    if pwd then
 
         local rate = me.GetPrintAmount(self) * me.GetMultiplier(self) * me.GetLevel(self)
         draw.SimpleText("$" .. BaseWars.NumberFormat(rate) .. "/s.", "OS64", w/2, h/2, color_white, 1, 1)
@@ -152,7 +152,7 @@ function ENT:DrawStats(pos, ang, scale, me, pwd)
         if left > 1 then
             local t = string.FormattedTime(left, "%01i:%02i")
             str = str .. t
-        else 
+        else
             str = "Full!"
         end
 
@@ -226,14 +226,14 @@ function ENT:Draw()
     cam.End3D2D()
 
     local pos, ang, scale = self:GetMiscPos()
-    
+
     cam.Start3D2D(pos, ang, scale)
         local ok, err = pcall(self.DrawMisc, self, pos, ang, scale, me, pwd)
         if not ok then print('Printers error:', err) end
     cam.End3D2D()
 
     local pos, ang, scale = self:GetStatsPos()
-    
+
     cam.Start3D2D(pos, ang, scale)
         local ok, err = pcall(self.DrawStats, self, pos, ang, scale, me, pwd)
         if not ok then print('Printers error:', err) end

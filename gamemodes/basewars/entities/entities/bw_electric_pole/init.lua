@@ -86,8 +86,6 @@ function ENT:PingGrids()
 		end
 
 	end
-
-	self.Grid = cur_grid
 end
 
 function ENT:PhysicsUpdate(pos, ang)

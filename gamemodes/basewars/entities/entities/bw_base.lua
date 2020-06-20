@@ -153,17 +153,15 @@ end
 function ENT:OnChangeGridID(new)
 
 	if self.OldGridID == new or new <= 0 then print("Nope", new, self.OldGridID) return end
-	print("OnChangeGridID")
+
 	self.OldGridID = new
 
 	local grid = PowerGrids[new]
 
 	if not grid then
-		print("New grid")
 		grid = PowerGrid:new(self:CPPIGetOwner(), new)
 		grid:AddConsumer(self)
 	else
-		print("Existed grid")
 		grid:AddConsumer(self)
 	end
 
@@ -196,7 +194,7 @@ if SERVER then
 		self:Init(me)
 
 		self:SetMaxHealth(self:Health())
-		
+
 		timer.Simple(0.5, function()
 			if IsValid(self) then self:RemoveEFlags(EFL_FORCE_CHECK_TRANSMIT) end
 		end)
@@ -222,8 +220,6 @@ if SERVER then
 				end
 			end
 		end)
-
-		
 
 	end
 
@@ -326,7 +322,6 @@ else
 	end
 
 	function ENT:Initialize()
-		print("Initialized", Realm())
 		BWEnts[self] = {}
 		self:OnChangeGridID(self:GetGridID())
 		self:CLInit()

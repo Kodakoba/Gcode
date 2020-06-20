@@ -46,7 +46,7 @@ PowerGrid:On("RemovedConsumer", "UpdatePowerOut", PowerGrid.UpdatePowerOut)
 
 function PowerGrid:Initialize(ow, id, id2) --`id` is only used clientside, when we rely on the server fixing up powergrids to be sequential
 										   --`id2` is to fix up CPPIGetOwner returning uniqueID
-	if ow:UniqueID() == id then
+	if ow and ow:UniqueID() == id then
 		id = id2
 	end
 
@@ -68,13 +68,15 @@ function PowerGrid:Initialize(ow, id, id2) --`id` is only used clientside, when 
 	self.PowerStored = 0	--currently stored power
 	self.MaxPowerStored = 500	--how much can be stored
 
-	PowerGrids[id or #PowerGrids + 1] = self
+	local newid = id or #PowerGrids + 1
+	PowerGrids[newid] = self
 
-	self.ID = id or #PowerGrids
+	self.ID = newid
 
 end
 
 PowerGrid:On("Changed", "TrackConnections", function(self)
+
 	if self.Connections == 0 then
 		self:Remove()
 	end
@@ -119,7 +121,9 @@ PowerGrid:On("RemovedLine", "RepickLine", function(self, line)
 end)
 
 function PowerGrid:Remove()
-	table.RemoveByValue(PowerGrids, self)
+
+	--table.RemoveByValue(PowerGrids, self) --DIE DIE DIE DIE DIE
+	PowerGrids[self.ID] = nil
 end
 
 local accessors = {
@@ -152,7 +156,7 @@ for k,v in pairs(accessors) do
 	PowerGrid["Add" .. k] = function(self, ent, line, ...)
 		local grid = ent:GetGrid()
 
-		if grid == self or self.AllEntities[ent:EntIndex()] then return end --nope
+		if grid == self or self.AllEntities[ent:EntIndex()] then print(Realm(), "nope not adding", grid == self, ent:GetGridID(), self.AllEntities[ent:EntIndex()], ent, debug.traceback()) return end --nope
 
 		--First add the ent to a new grid
 
@@ -220,7 +224,8 @@ function PowerGrid.FindNearestPole(ent) --this isn't a class function, it's a ut
 	local ow = ent:CPPIGetOwner()
 
 	for _, grid in ipairs(PowerGrids) do
-		if not grid.Owner:IsValid() or not grid.Owner:IsTeammate(ow) then print("no owner fuck you") continue end
+		grid.Owner = grid.Owner or table.Random(self.AllEntities):CPPIGetOwner()
+		if not grid.Owner:IsValid() or not grid.Owner:IsTeammate(ow) then continue end
 		local mindist, minpole = math.huge
 
 		for _, line in ipairs(grid.PowerLines) do
@@ -316,7 +321,10 @@ hook.Add("EntityRemoved", "ClearGrid", function(ent)
 	local grid = ent.Grid
 
 	if ent.PowerType and grid then
-		grid["Remove" .. ent.PowerType](grid, ent)
+		local ok, err = pcall(grid["Remove" .. ent.PowerType], grid, ent)
+		if not ok then
+			printf("PowerGrid: EntityRemoved error: %s\nstack traceback: %s", err, debug.traceback())
+		end
 	end
 end)
 
@@ -325,7 +333,6 @@ function ENTITY:GetGrid()
 end
 
 function PowerGrid:Think()
-	
 
 	self:Emit("Think")
 
@@ -340,19 +347,30 @@ function PowerGrid:Think()
 		local req = v.PowerRequired
 		local enough = pw_total - req > 0
 
-		local rebooting = v.RebootStart and CurTime() - v.RebootStart < v.RebootTime
+		local rebooting_time = v.RebootStart and CurTime() - v.RebootStart < v.RebootTime 	--should it still be rebooting?
+		local is_rebooting = v:GetRebooting()												--is it currently rebooting?
+
+		local should_reboot = rebooting_time --by default just obey the time
+
+		--if we have enough,
+		-- 	and it wasn't powered or it should be rebooting,
+		-- 		and it was powered before (so new entities aren't in reboot)
+		-- 			and it's not rebooting currently
 
 
-		if enough and (not v.Power or v.ShouldReboot) and v.EverPowered then
+		if enough and (not v.Power or v.ShouldReboot) and v.EverPowered and not is_rebooting then
+			--start rebooting sequence
 			v.RebootStart = CurTime()
-			rebooting = true
+			should_reboot = true
 		elseif not enough and not v.Power then
-			v.ShouldReboot = true
+			v.ShouldReboot = true --next time it's powered it will go into reboot
 			v.RebootStart = nil
-			rebooting = false
+			should_reboot = false
 		end
 
-		v:SetRebooting(rebooting)
+		v:SetRebooting(should_reboot)
+
+		is_rebooting = should_reboot
 
 		--[[if enough and (not v.Power or v.ShouldReboot) then -- it died this power tick
 			v.RebootStart = CurTime()
@@ -370,7 +388,7 @@ function PowerGrid:Think()
 
 
 		--it should resurrect this tick, check reboot time
-		if enough and rebooting then 
+		if enough and is_rebooting then
 			-- it's still rebooting; drain power but don't make it powered yet
 			enough = false
 			pw_total = pw_total - math.floor(req / 2)
@@ -401,19 +419,28 @@ end
 if SERVER then
 	util.AddNetworkString("PowerGrids")
 
-	timer.Create("PowerGridThink", 1, 0, function()
+	local networkTime = 1 --once per X seconds all grids get networked
+
+	local lastNW = 0
+	timer.Create("PowerGridThink", 0.25, 0, function()
 		local nses = {}
 		for k,v in ipairs(PowerGrids) do
 			v:Think()
 			nses[#nses + 1] = v:Network()
 		end
 
-		net.Start("PowerGrids")
-			net.WriteUInt(#nses, 16)
-			for k,v in ipairs(nses) do
-				net.WriteNetStack(v)
-			end
-		net.Broadcast()
+		if CurTime() - lastNW > networkTime then
+
+			net.Start("PowerGrids")
+				net.WriteUInt(#nses, 16)
+				for k,v in ipairs(nses) do
+					net.WriteNetStack(v)
+				end
+			net.Broadcast()
+
+			lastNW = CurTime()
+		end
+
 	end)
 else
 

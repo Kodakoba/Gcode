@@ -53,13 +53,13 @@ end
 
 function ENT:Overclock(lv, mult)
     if not self.Overclockable or self.Overclocker then return false end 
-    self.Overclockable = false 
-    self.Overclocker = lv 
+    self.Overclockable = false
+    self.Overclocker = lv
     self:SetMultiplier(self.Multiplier * mult)
     self.Multiplier = self.Multiplier * mult
 
     BaseWars.Printers.MasterTable[self].mult = self.Multiplier
-    
+
     self.Mods["o"] = lv
     self:NetworkMods()
     return true
