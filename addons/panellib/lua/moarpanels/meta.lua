@@ -80,7 +80,7 @@ function META:GetCloud(name)
 	return IsValid(cls[name]) and cls[name]
 end
 
-function META:Lerp(key, val, dur, del, ease)
+function META:Lerp(key, val, dur, del, ease, forceswap)
 	local anims = self.__Animations or {}
 	self.__Animations = anims
 
@@ -91,7 +91,7 @@ function META:Lerp(key, val, dur, del, ease)
 
 	if anims[key] then
 		anim = anims[key]
-		if anim.ToVal == val then return anim, false end --don't re-create animation if we're already lerping to that anyways
+		if anim.ToVal == val and not forceswap then return anim, false end --don't re-create animation if we're already lerping to that anyways
 
 		anim.ToVal = val
 		anim:Swap(dur, del, ease)
@@ -124,7 +124,7 @@ local function hex(t)
 	return format("%p", t)
 end
 
-function META:MemberLerp(tbl, key, val, dur, del, ease)
+function META:MemberLerp(tbl, key, val, dur, del, ease, forceswap)
 	local anims = self.__Animations or {}
 	self.__Animations = anims
 
@@ -136,7 +136,7 @@ function META:MemberLerp(tbl, key, val, dur, del, ease)
 	if tbl[key] == val then return end
 
 	if anim then
-		if anim.ToVal == val then return end
+		if anim.ToVal == val and not forceswap then return end
 
 		anim.ToVal = val
 		anim:Swap(dur, del, ease)
@@ -193,7 +193,7 @@ draw.LerpColorFrom = LerpColorFrom
 	Because colors are tables, instead of giving a key you can give LerpColor a color as the first arg,
 	so the color structure will be changed instead
 ]]
-function META:LerpColor(key, val, dur, del, ease)
+function META:LerpColor(key, val, dur, del, ease, forceswap)
 	local anims = self.__Animations or {}
 	self.__Animations = anims
 
@@ -206,7 +206,7 @@ function META:LerpColor(key, val, dur, del, ease)
 
 	if anims[key] then
 		anim = anims[key]
-		if anim.ToVal == val then return end --don't re-create animation if we're already lerping to that anyways
+		if anim.ToVal == val and not forceswap then return end --don't re-create animation if we're already lerping to that anyways
 
 		anim.ToVal = val
 		anim:Swap(dur, del, ease)

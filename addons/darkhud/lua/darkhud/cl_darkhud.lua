@@ -300,9 +300,112 @@ function DarkHUD.Create()
 	local hintbox = Color(255, 255, 255)
 	local lvbox = Color(50, 50, 50)
 
+	local popups = Animatable:new()
+
+	popups.MoneyFrac = 0
+	popups.MoneyColor = color_white:Copy()
+
+	popups.LevelFrac = 0
+
+	popups.Money = {}
+	popups.Levels = {}
+
+	LocalPlayer():On("MoneyChanged", f, function(_, old, new)
+		local diff = new - old
+
+		local t = {
+			amt = diff,
+			ct = CurTime(),
+			boxcol = boxcol:Copy(),
+			y = 0,
+			a = 0, --alpha, 0-1
+			--col = green or red, depending on diff
+		}
+
+		if diff > 0 then
+			t.col = Colors.Green:Copy()
+			popups.MoneyColor:Set(Colors.Green)
+		else
+			t.col = Colors.DarkerRed:Copy()
+			popups.MoneyColor:Set(Colors.Red)
+		end
+
+		popups:LerpColor(popups.MoneyColor, color_white, 0.4, 0.5, 0.3, true) --force swap the animation
+
+		table.insert(popups.Money, t)
+	end)
+
 	function f:PrePaint(w,h)
 
+		if #popups.Money > 0 then
+			popups:To("MoneyFrac", 1, 0.3, 0, 0.3)
+		else
+			popups:To("MoneyFrac", 0, 0.3, 0.1, 0.3)
+		end
+
+		local mf = popups.MoneyFrac
+
+		if mf > 0 then
+
+			local mtxt = Language.Currency .. BaseWars.NumberFormat(me:GetMoney())
+
+			surface.SetFont("OSB28")
+			local mw, mh = surface.GetTextSize(mtxt)
+
+			local boxY, boxH = -mf * 36, 32
+
+			DisableClipping(true)
+				draw.RoundedBox(8, 12, boxY, mw + 8 + 24 + 6 + 8, boxH, boxcol)
+
+				surface.SetDrawColor(255, 255, 255)
+				surface.DrawMaterial("https://i.imgur.com/8b0nZI7.png", "moneybag.png", 12 + 8, boxY + 4, 25, 24)
+
+				surface.SetTextColor(popups.MoneyColor:Unpack())
+				surface.SetTextPos(12 + 8 + 24 + 6, boxY + boxH / 2 - mh / 2)
+				surface.DrawText(mtxt)
+			DisableClipping(false)
+			--draw.SimpleText(mtxt, "OSB28", 48, boxY + boxH / 2, col, 0, 1)
+		end
+
 		local ct = CurTime()
+
+		DisableClipping(true)
+
+			for k = #popups.Money, 1, -1 do--k,v in ipairs(popups.Money) do
+				local v = popups.Money[k]
+				local should_y = -36 - 4 - (28 * k)
+
+				if ct - v.ct > 2 then --stayed for more than 2 seconds, gtfo now
+
+					local anim, new = popups:LerpMember(v, "y", 0, 0.3, 0, 2)
+					popups:LerpMember(v, "a", 0, 0.2, 0, 1.7)
+
+					if v.a <= 0 then
+						table.remove(popups.Money, k)
+					end
+
+				else --go up
+					popups:LerpMember(v, "y", should_y, 0.3, 0, 0.3)
+					popups:LerpMember(v, "a", 1, 0.2, 0, 0.3)
+				end
+
+				local y = v.y
+				local difftxt = Language.Currency .. BaseWars.NumberFormat(math.abs(v.amt))
+
+				surface.SetFont("OSB24")
+				local tw, th = surface.GetTextSize(difftxt)
+
+				v.boxcol.a = v.a * 240
+				v.col.a = v.a * 255
+
+				draw.RoundedBox(4, 12, y, tw + 8, th + 2, v.boxcol)
+				surface.SetTextPos(16, y + 1)
+				surface.SetTextColor(v.col:Unpack())
+				surface.DrawText(difftxt)
+				--draw.SimpleText(difftxt, "OSB24", 48 + 8,  -monY - lvY - v.y, v.col, 0, 5)
+			end
+		DisableClipping(false)
+		--[[local ct = CurTime()
 
 		if ct - PopupLevel < 4 then
 			lvY = L(lvY, lvYMax, 8, true)
@@ -425,7 +528,7 @@ function DarkHUD.Create()
 				draw.SimpleText(str, "OS24", w/2, -8, hintbox, 1, TEXT_ALIGN_BOTTOM)
 			end
 
-		surface.DisableClipping(false)
+		surface.DisableClipping(false)]]
 	end
 
 	local lastfac
