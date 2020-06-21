@@ -369,7 +369,6 @@ function PowerGrid:Think()
 		end
 
 		v:SetRebooting(should_reboot)
-
 		is_rebooting = should_reboot
 
 		--[[if enough and (not v.Power or v.ShouldReboot) then -- it died this power tick
@@ -391,7 +390,6 @@ function PowerGrid:Think()
 		if enough and is_rebooting then
 			-- it's still rebooting; drain power but don't make it powered yet
 			enough = false
-			pw_total = pw_total - math.floor(req / 2)
 		end
 
 		if enough then
