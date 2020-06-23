@@ -224,7 +224,7 @@ function PowerGrid.FindNearestPole(ent) --this isn't a class function, it's a ut
 	local ow = ent:CPPIGetOwner()
 
 	for _, grid in ipairs(PowerGrids) do
-		grid.Owner = grid.Owner or table.Random(self.AllEntities):CPPIGetOwner()
+		grid.Owner = grid.Owner or table.Random(grid.AllEntities):CPPIGetOwner()
 		if not grid.Owner:IsValid() or not grid.Owner:IsTeammate(ow) then continue end
 		local mindist, minpole = math.huge
 

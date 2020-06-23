@@ -575,6 +575,6 @@ function printf(s, ...)
 end
 
 function errorf(s, ...)
-	return error(s:format(...))
+	return error(s:format(...), 2)
 end
 

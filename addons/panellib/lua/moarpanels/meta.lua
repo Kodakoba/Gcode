@@ -578,3 +578,37 @@ local function AnimationsThink()
 end
 
 hook.Add("Think", "Animations", AnimationsThink)
+
+
+-- Drag'n'drop callbacks
+-- (Why are there none by default!?)
+if not DetouredDragFuncs then
+	local startDragging, stopDragging = META.OnStartDragging, META.OnStopDragging
+
+	META.OnDragStart, META.OnDragStop = BlankFunc, BlankFunc
+
+	function META:OnStartDragging()
+
+		self.Dragging = true
+		self:InvalidateLayout()
+
+		if ( self:IsSelectable() ) then
+
+			local canvas = self:GetSelectionCanvas()
+
+			if ( !self:IsSelected() ) then
+				canvas:UnselectAll()
+			end
+
+		end
+
+		self:OnDragStart()
+	end
+
+	function META:OnStopDragging()
+		self.Dragging = false
+		self:OnDragStop()
+	end
+
+	DetouredDragFuncs = true
+end

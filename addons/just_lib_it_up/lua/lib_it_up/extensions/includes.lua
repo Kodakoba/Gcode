@@ -103,8 +103,14 @@ function FInc.Coroutine(name, realm, nofold, callback)
 
 	FInc.Recursive(name, realm, nofold, function(path)
 		local co = coroutine.create(includes[realm])
-		if callback then callback(path, co) end
-		coroutine.resume(co, path)
+
+		local ret, ret2
+		if callback then 
+			ret, ret2 = callback(path, co)
+			return
+		end
+
+		coroutine.resume(co, path, ret, ret2)
 	end)
 
 end
