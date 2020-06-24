@@ -1214,9 +1214,9 @@ local rets = {
 }
 
 function draw.HSVToColor(hue, saturation, value)
-
+	value = math.Clamp(value, 0, 1)
 	if saturation == 0 then
-		return value, value, value
+		return value * 255, value * 255, value * 255
 	end
 
 	hue = hue % 360

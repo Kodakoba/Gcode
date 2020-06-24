@@ -1,5 +1,5 @@
 
-netstack = Object:callable()
+netstack = netstack or Object:callable()
 local nsm = netstack
 
 for k,v in pairs(net) do

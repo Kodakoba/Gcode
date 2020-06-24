@@ -45,7 +45,7 @@ local copy = function(old, new)
 	end
 end
 
-Emitter = Class:callable()
+Emitter = Emitter or Class:callable()
 
 function Emitter:Initialize(e)
 	self.__Events = muldim:new()
@@ -122,11 +122,11 @@ function Emitter:Emit(event, ...)
 				local t = {unpack(v, 2)}
 				table.InsertVararg(t, ...)
 
-				local rt = v[1](self, unpack(t))
-				if rt ~= nil then return rt end
+				local a, b, c, d, e, why = v[1](self, unpack(t))
+				if a ~= nil then return a, b, c, d, e, why end --hook.Call intensifies
 			else
-				local rt = v[1](self, ...)
-				if rt ~= nil then return rt end
+				local a, b, c, d, e, why = v[1](self, ...)
+				if a ~= nil then return a, b, c, d, e, why end
 			end
 
 		end

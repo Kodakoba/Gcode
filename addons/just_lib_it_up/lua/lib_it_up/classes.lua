@@ -5,7 +5,7 @@
 BlankFunc = function() end
 BLANKFUNC = BlankFunc
 
-Class = {}
+Class = Class or {}
 Class.Meta = {__index = Class}
 Class.Debugging = false
 

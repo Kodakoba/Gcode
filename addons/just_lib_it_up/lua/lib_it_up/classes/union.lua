@@ -7,7 +7,7 @@
 		Easylua, anyone?
 ]]
 
-UnionTable = Object:callable()
+UnionTable = UnionTable or Object:callable()
 
 UnionTable.IsUnion = true
 
