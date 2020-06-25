@@ -139,10 +139,12 @@ function PANEL:Recalculate()
 				}
 			end
 
-			maxH = math.max(maxH, t.y + t.h + 24)
+			maxH = math.max(maxH, t.y + t.h)
 			self.DrawQueue[#self.DrawQueue + 1] = t
 			self.Texts[#self.Texts + 1] = t
 		elseif ispanel(v) then
+			--unimplemented; untested
+
 			self:CalculatePanelSize(v)
 
 			self.DrawQueue[#self.DrawQueue + 1] = {
@@ -159,6 +161,8 @@ function PANEL:Recalculate()
 	end
 
 	self:SetTall(maxH + 1)
+	self:GetParent():SetTall(math.max(self:GetParent():GetTall(), maxH + 1))
+
 end
 
 function PANEL:OnKeyCodePressed(key)
@@ -395,10 +399,12 @@ function PANEL:Paint(w, h)
 
 			buf:SetPos(v.endX, v.endY)
 		elseif IsTag(v) then
-			if not v:GetBaseTag().ExecutePerChar then self:ExecuteTag(v, buf) end
+			local base = v:GetBaseTag()
+
+			if base and not base.ExecutePerChar then self:ExecuteTag(v, buf) end
 
 			self.ActiveTags[#self.ActiveTags + 1] = v
-			if v:GetBaseTag().ExecutePerChar then
+			if base and base.ExecutePerChar then
 				self.ExecutePerChar[#self.ExecutePerChar + 1] = v
 			end
 
@@ -439,11 +445,31 @@ end
 
 function PANEL:EndTag(num)
 	local tag = self.Elements[num]
-	if not num or not tag or not IsTag(tag) then errorf("Tried to end a non-existant tag @ key %s!", num) return end
-	local ender = tag:GetEnder()
-	self.Elements[#self.Elements + 1] = ender
-	ender.Ends = num
-	tag.HasEnder = true
+	if not num or not tag or not IsTag(tag) then errorf("Tried to end a non-existent tag @ key %s!", num) return end
+	local base = tag.GetBase and tag:GetBase()
+
+	if base then
+
+		if not base.ExecutePerChar then
+
+			local ender = tag:GetEnder()
+			self.Elements[#self.Elements + 1] = ender
+			ender.Ends = num
+			tag.HasEnder = true
+
+		else
+
+			self.Elements[#self.Elements + 1] = {markupExec = function()  --hardcode a ExecutePerChar remover for this tag
+				for k,v in pairs(self.ExecutePerChar) do
+					if v == tag then
+						table.remove(self.ExecutePerChar, k)
+					end
+				end
+			end}
+
+		end
+	end
+
 end
 
 function PANEL:AddText(tx, offset)

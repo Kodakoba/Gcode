@@ -29,6 +29,7 @@ function tag:Initialize(name, ...)
 	end
 
 	local tag = MarkupTagTable[name]
+
 	local args = {...}
 
 	self.Name = name
@@ -367,6 +368,25 @@ hsv:SetEnd(function(tag, buf, args)
 	buf:SetTextColor(tag.curColor)
 end)
 
+local col = MarkupBaseTag("color")
+
+col:AddArg("number", 255)	--R
+col:AddArg("number", 255)	--G
+col:AddArg("number", 255)	--B
+
+col:SetStart(function(tag, buf, args)
+	local cur = buf:GetTextColor()
+
+	tag.curColor = tag.curColor or {}
+	tag.curColor[1], tag.curColor[2], tag.curColor[3] = cur:Unpack()
+
+	cur:Set(args[1], args[2], args[3])
+end)
+
+col:SetEnd(function(tag, buf, args)
+	buf:GetTextColor():Set(tag.curColor[1], tag.curColor[2], tag.curColor[3])
+end)
+
 local chtr = MarkupBaseTag("chartranslate")
 
 chtr:AddArg("number", 0)	--x
@@ -374,6 +394,7 @@ chtr:AddArg("number", 0)	--y
 
 chtr:SetStart(function(tag, buf, args)
 	local vec = Vector(args[1], args[2])
+
 	mtrx2:Set(mtrx)
 	mtrx2:Translate(vec)
 	cam.PushModelMatrix(mtrx2)

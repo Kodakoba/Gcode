@@ -34,6 +34,10 @@ end
 local NavbarChoice = {}
 local questionMark
 
+hook.Add("OnScreenSizeChanged", "garry_die", function()
+	questionMark = nil
+end)
+
 function NavbarChoice:Init()
 	self:SetText("")
 	self:SetTall(64)
