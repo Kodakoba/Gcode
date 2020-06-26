@@ -31,18 +31,30 @@
 														 ...
 ]]
 
-local objcopy = function(a)
-	if istable(a) then
-		return table.Copy(a)
-	else
-		return a
-	end
-end
+local recursiveParentCopy = function(newobj, parent)
+	--recursively copy every parent's listeners
 
-local copy = function(old, new)
-	for k,v in pairs(old) do
-		new:Set(v, objcopy(k))
+	local events = obj.__Events
+
+	while parent do
+
+		if parent.__Events then
+			--loop over every [event_name] : { [ev_id] : {args} }
+			-- 					 (name)				(parevs)
+
+			for name, parevs in pairs(parent.__Events) do
+				local myevs = events:GetOrSet(name)
+
+				for id, args in pairs(parevs) do
+					myevs:Set(args, id)
+				end
+			end
+
+		end
+
+		parent = parent.__parent
 	end
+
 end
 
 Emitter = Emitter or Class:callable()
@@ -52,9 +64,10 @@ function Emitter:Initialize(e)
 	if not self.__instance and self ~= Emitter then setmetatable(self, Emitter) end
 
 	if self.__instance and self.__instance.__Events then
-		local oldev = self.__instance.__Events
-		local newev = self.__Events
-		copy(oldev, newev)
+		
+		local par = self.__instance
+		recursiveParentCopy(self, par)
+
 	end
 end
 
