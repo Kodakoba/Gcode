@@ -34,7 +34,7 @@ function AnimMeta:Swap(length, delay, ease, callback)
 	self.Ended = false
 
 	self:Emit("Swap")
-	
+
 	return self
 end
 
@@ -101,15 +101,15 @@ function Animatable:NewAnimation( length, delay, ease, callback )
 
 	delay = delay + SysTime()
 
-	local anim = {
+	local anim = AnimMeta:new()
+
+	table.Merge(anim, {
 		EndTime = delay + length,
 		StartTime = delay,
 		Ease = ease,
 		OnEnd = callback,
 		Parent = self,
-	}
-
-	setmetatable(anim, AnimMeta)
+	})
 
 	if ( self.m_AnimList == nil ) then self.m_AnimList = {} end
 

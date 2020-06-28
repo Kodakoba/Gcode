@@ -134,14 +134,14 @@ function meta:NewAnimation( length, delay, ease, callback )
 
 	end
 
-	local anim = {
+	local anim = AnimMeta:new()
+	table.Merge(anim, {
 		EndTime = delay + length,
 		StartTime = delay,
 		Ease = ease,
 		OnEnd = callback,
 		Parent = self,
-	}
-	setmetatable(anim, AnimMeta)
+	})
 
 	self:SetAnimationEnabled( true )
 	if ( self.m_AnimList == nil ) then self.m_AnimList = {} end

@@ -56,24 +56,26 @@ local recursiveParentCopy = function(newobj, parent)
 
 end
 
+local rawevent = function(self)
+	return (istable(self) and rawget(self, "__Events")) or self.__Events
+end
+
 Emitter = Emitter or Class:callable()
 Emitter.Name = "Emitter"
+
 function Emitter:Initialize(e)
 	self.__Events = muldim:new()
 	if not self.__instance and self ~= Emitter then setmetatable(self, Emitter) end
 
 	if self.__instance and self.__instance.__Events then
-		
 		local par = self.__instance
 		recursiveParentCopy(self, par)
-
 	end
 end
 
 function Emitter:OnExtend(new)
 	new.__Events = muldim:new()
 	recursiveParentCopy(new, self)
-
 end
 
 function Emitter.Make(t)
@@ -84,7 +86,7 @@ end
 Emitter.make = Emitter.Make
 --
 function Emitter:On(event, name, cb, ...)
-	self.__Events = self.__Events or muldim:new()
+	self.__Events = rawevent(self) or muldim:new()
 	local events = self.__Events
 
 	local vararg
@@ -122,7 +124,7 @@ function Emitter:Once(event, name, cb, ...)
 end
 
 function Emitter:Emit(event, ...)
-	self.__Events = self.__Events or muldim:new()
+	self.__Events = rawevent(self) or muldim:new()
 
 	local events = self.__Events
 	if not events then return end
