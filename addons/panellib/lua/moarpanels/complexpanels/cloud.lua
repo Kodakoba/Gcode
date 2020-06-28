@@ -15,7 +15,7 @@
 
 	Cloud:FullInit()
 	Cloud:Popup(bool)
-	
+
 	Cloud:Bond(pnl) 	--if the panel is gone, so is the cloud
 
 	Stuff you can modify:
@@ -26,9 +26,9 @@
 		Cloud.Label
 		Cloud.HOffset
 		Cloud.Speed -- popup speed
-		Cloud.Color 
-		Cloud.TextColor 
-	
+		Cloud.Color
+		Cloud.TextColor
+
 		Cloud.Middle 	-- 0-1 (or less/more for full zane)
 
 		Cloud.YAlign	--like text aligns, except the cloud aligns there : 0/1/2
@@ -37,7 +37,7 @@
 		Cloud.Shadow = {}
 
 		Cloud.Min/MaxW
-		
+
 ---------------------------------------------------------------------------]]
 
 CLOUDS = CLOUDS or {}
@@ -289,7 +289,7 @@ function Cloud:Paint()
 				offy = offy + v.YOff
 
 				-- check if that text had a separator after it
-				if self.Separators[k] then 
+				if self.Separators[k] then
 					local sep = self.Separators[k]
 
 					surface.SetDrawColor(sep.col)
@@ -367,8 +367,8 @@ function Cloud:AddFormattedText(txt, col, font, overy, num) --if you're updating
 end
 
 function Cloud:AddSeparator(col, offx, offy, num)
-	offx = offx or 4 
-	offy = offy or 2 
+	offx = offx or 4
+	offy = offy or 2
 
 	self.Separators[num or #self.DoneText] = {col = col or Color(70, 70, 70), offx = offx, offy = offy}
 	self.SepH = self.SepH + offy * 2
@@ -411,9 +411,9 @@ function Cloud:Think()
 		self:To("Frac", 0, self.DisappearTime, 0, self.DisappearEase)
 	end
 
-	if self.Frac == 0 and self.RemoveWhenDone then 
-		self:Remove() 
-		return 
+	if self.Frac == 0 and self.RemoveWhenDone then
+		self:Remove()
+		return
 	end
 
 	self:SetAlpha(self.Frac * 255)
