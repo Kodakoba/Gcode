@@ -1,4 +1,4 @@
-if not muldim then include("muldim.lua") end
+if not muldim then include("multidim.lua") end
 --[[
 
 	how 2 use:
