@@ -33,6 +33,9 @@ function PANEL:OnKeyCodePressed(key)
 
 end
 
+function PANEL:GetPieces()
+	return self.Pieces
+end
 function PANEL:Add(p)
 	if self.Scrollable then
 		p:SetParent(self.ScrollPanel)

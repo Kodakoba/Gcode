@@ -33,16 +33,15 @@
 
 local recursiveParentCopy = function(newobj, parent)
 	--recursively copy every parent's listeners
-
 	local events = newobj.__Events
 
 	while parent do
-
-		if parent.__Events then
+		local ev = rawget(parent, "__Events")
+		if ev then
 			--loop over every [event_name] : { [ev_id] : {args} }
 			-- 					 (name)				(parevs)
 
-			for name, parevs in pairs(parent.__Events) do
+			for name, parevs in pairs(ev) do
 				local myevs = events:GetOrSet(name)
 
 				for id, args in pairs(parevs) do
@@ -58,7 +57,7 @@ local recursiveParentCopy = function(newobj, parent)
 end
 
 Emitter = Emitter or Class:callable()
-
+Emitter.Name = "Emitter"
 function Emitter:Initialize(e)
 	self.__Events = muldim:new()
 	if not self.__instance and self ~= Emitter then setmetatable(self, Emitter) end
@@ -69,6 +68,12 @@ function Emitter:Initialize(e)
 		recursiveParentCopy(self, par)
 
 	end
+end
+
+function Emitter:OnExtend(new)
+	new.__Events = muldim:new()
+	recursiveParentCopy(new, self)
+
 end
 
 function Emitter.Make(t)
