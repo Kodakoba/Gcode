@@ -34,7 +34,7 @@
 local recursiveParentCopy = function(newobj, parent)
 	--recursively copy every parent's listeners
 
-	local events = obj.__Events
+	local events = newobj.__Events
 
 	while parent do
 
