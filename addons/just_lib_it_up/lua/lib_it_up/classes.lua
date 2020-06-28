@@ -41,6 +41,27 @@ local metamethods = { --metamethods except __index cannot be inherited
 	--lets not add math metamethods?
 }
 
+local recursiveExtend = function(new, old, ...)
+	-- we want OnExtend's to go from oldest to newest, so
+	-- we'll store the chain and iterate in reverse order
+	local chain, i = {new}, 1
+	local prev = old --provided `old` is merely the parent from which it got extended
+
+	while old do
+		i = i + 1
+		chain[i] = old
+		old = old.__parent
+	end
+
+	for i2=i, 1, -1 do --iterate in reverse order, from oldest to newest
+		local obj = chain[i2]
+		local onExt = rawget(obj, "OnExtend")
+		if onExt then
+			onExt(prev, new, ...)
+		end
+	end
+end
+
 function Class:extend(...)
 	local new = {}
 	local old = self
@@ -106,9 +127,7 @@ function Class:extend(...)
 		return curobj
 	end
 
-	if old.OnExtend then
-		old:OnExtend(new, ...)
-	end
+	recursiveExtend(new, old, ...)
 
 
 	return setmetatable(new, new.Meta)
