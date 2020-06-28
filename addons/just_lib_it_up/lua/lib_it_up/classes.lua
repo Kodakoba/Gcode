@@ -133,8 +133,8 @@ function Class:extend(...)
 	return setmetatable(new, new.Meta)
 end
 
-function Class:callable()
-	local new = self:extend()
+function Class:callable(...)
+	local new = self:extend(...)
 	new.Meta.__call = new.new
 	return new
 end
