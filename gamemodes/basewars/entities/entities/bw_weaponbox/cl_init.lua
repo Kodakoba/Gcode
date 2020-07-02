@@ -43,7 +43,7 @@ local wepname
 ENT.txtcol = {255,255,255}
 ENT.gotowhite = true
     function ENT:Draw()
-        local str
+       --[[ local str
         self:DrawModel() 
         if LocalPlayer():GetEyeTrace().Entity and LocalPlayer():GetEyeTrace().Entity == self then 
             self.AnimPos = L(self.AnimPos, 1) 
@@ -75,7 +75,7 @@ ENT.gotowhite = true
             draw.SimpleText(str_num,"BaseWars.MoneyPrinter.Huge",400,280/1.5,Color(self.txtcol[1],self.txtcol[2],self.txtcol[3], self.alpha*1.5), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
             --draw.SimpleText("Cost: " .. cost.." souls","BaseWars.MoneyPrinter.Huge",400,280/1.2,Color(self.txtcol[1],self.txtcol[2],self.txtcol[3], self.alpha*1.5), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
             cam.End3D2D()
-
+]]
 
     end
 

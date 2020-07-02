@@ -232,3 +232,16 @@ function table.InsertVararg(t, ...)
 	end
 
 end
+
+if not table.Shuffle then
+
+	function table.Shuffle( t )
+		local n = #t
+
+		for i=1, n - 1 do
+			local j = math.random(i, n)
+			t[i], t[j] = t[j], t[i]
+		end
+	end
+
+end

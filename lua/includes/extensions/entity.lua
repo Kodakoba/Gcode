@@ -10,7 +10,7 @@ AccessorFunc( meta, "m_bPlayPickupSound", "ShouldPlayPickupSound" )
 -- Entity index accessor. This used to be done in engine, but it's done in Lua now because it's faster
 --
 
-local cached = {}
+--local cached = {}
 
 function meta:__index( key )
 
@@ -23,8 +23,8 @@ function meta:__index( key )
 	--
 	-- Search the entity table
 	--
-	local tab = cached[self] or self:GetTable()
-	cached[self] = tab
+	local tab = self:GetTable()
+	--cached[self] = tab
 	
 	if ( tab ) then
 		local val = tab[ key ]

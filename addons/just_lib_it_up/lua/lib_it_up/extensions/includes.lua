@@ -18,7 +18,7 @@ local includes = {
 	[_SH] = function(name, cl, sv)
 		--cl = false : file doesn't get AddCSLua'd + not included clientside
 		--cl = 1     : file gets only AddCSLua'd but not included
-		--sv = false : file is only AddCSLua'd
+		--sv = false : file is not loaded but can be AddCSLua'd
 
 		if cl ~= false then AddCSLuaFile(name) end
 		if (sv ~= false and SERVER) or (cl ~= false and cl ~= 1 and CLIENT) then return include(name) end
@@ -57,6 +57,8 @@ local BlankFunc = function() end
 -- 				if 1    , gets AddCSLua'd but not included clientside
 -- 2nd return: if false, doesn't include serverside
 
+-- if both returns are `false`, regardless of realm it'll just not do anything at all
+
 function FInc.Recursive(name, realm, nofold, callback)	--even though with "nofold" it's not really recursive
 	if not NeedToInclude(realm) then return end
 	callback = callback or BlankFunc
@@ -74,8 +76,10 @@ function FInc.Recursive(name, realm, nofold, callback)	--even though with "nofol
 		if loading then files = files + 1 end
 
 		if includes[realm] then
+			local cl, sv = callback (inc_name)
+			if cl == false and sv == false then continue end --mkay
 
-			includes[realm] (inc_name, callback (inc_name))
+			includes[realm] (inc_name, cl, sv)
 
 		else
 			ErrorNoHalt("Could not include file " .. inc_name .. "; fucked up realm?\n")
@@ -99,18 +103,20 @@ end
 -- Recursively starts a coroutine per each include,
 -- fires the callback (if provided) with that coroutine
 -- as the 2nd argument and then includes the file
+
 function FInc.Coroutine(name, realm, nofold, callback)
 
 	FInc.Recursive(name, realm, nofold, function(path)
 		local co = coroutine.create(includes[realm])
 
 		local ret, ret2
-		if callback then 
+
+		if callback then
 			ret, ret2 = callback(path, co)
-			return
 		end
 
 		coroutine.resume(co, path, ret, ret2)
+		return false, false --don't include by FInc.Recursive default action since we already included it with the coroutine
 	end)
 
 end

@@ -316,19 +316,21 @@ hook.Add("ChatHUDEmotesUpdated", "mittymeme", function(col)
 
 end)
 
-local stuck_where = Vector (-820.6, 44.415222167969, 485)
+do
+	local stuck_where = Vector (-820.6, 44.415222167969, 485)
 
---Vector (-825.44427490234, 46.31368637085, 470.28253173828)
-local stuck_ang = Angle(0, -111.6, 0)
-local scale = Vector(0.2, 0.2, 0.2)
+	--Vector (-825.44427490234, 46.31368637085, 470.28253173828)
+	local stuck_ang = Angle(0, -111.6, 0)
+	local scale = Vector(0.2, 0.2, 0.2)
 
-Memes.AddDecal("stuck", stuck_where, stuck_ang, scale, Vector(0.5, 1, 0), nil,
-	function(w, h)
-		draw.RoundedBox(16, 0, 0, w, h, ColorAlpha(Colors.DarkGray, 240))
-		draw.SimpleText("Getting stuck is PROHIBITED.", "MR72", w/2, 0, Colors.Red, 1, 0)
-		draw.SimpleText("If you are stuck, CEASE IMMEDIATELY.", "MR48", w/2, 72, Colors.Red, 1, 0)
-	end,
-false, stuck_where + stuck_ang:Right() * 128 * 0.2, 20, 256, 32, 1024, 128)
+	Memes.AddDecal("stuck", stuck_where, stuck_ang, scale, Vector(0.5, 1, 0), nil,
+		function(w, h)
+			draw.RoundedBox(16, 0, 0, w, h, ColorAlpha(Colors.DarkGray, 240))
+			draw.SimpleText("Getting stuck is PROHIBITED.", "MR72", w/2, 0, Colors.Red, 1, 0)
+			draw.SimpleText("If you are stuck, CEASE IMMEDIATELY.", "MR48", w/2, 72, Colors.Red, 1, 0)
+		end,
+	false, stuck_where + stuck_ang:Right() * 128 * 0.2, 20, 256, 32, 1024, 128)
+end
 
 local function addMaN(ffz)
 	local man = ffz:GetEmotes().MaN
@@ -354,4 +356,23 @@ hook.Add("ChatHUDFFZUpdated", "manmeme", addMaN)
 
 if Emotes and Emotes.Collections.FFZ then
 	addMaN(Emotes.Collections.FFZ)
+end
+
+
+do
+	local pos = Vector(11995, 2069, 208.4)
+	local ang = Angle(193, -15, 180)
+	local scale = 0.2
+	local normal = -ang:Forward()
+	local col = color_white
+
+	local url = "http://vaati.net/Gachi/shared/cerber_1.png"
+
+	local rt = function(w, h)
+	    surface.SetDrawColor(col)
+	    draw.DrawGIF(url, "cerber", 0, 0, w, h, nil, nil, nil, 7)
+	end
+
+
+	Memes.AddDecal("cerberus", pos, ang, scale, normal, col, rt, true, nil, nil, nil, nil, nil, nil, 4)
 end

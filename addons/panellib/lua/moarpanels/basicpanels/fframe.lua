@@ -110,7 +110,7 @@ function PANEL:OnSizeChanged(w,h)
 	end
 
 	self:OnChangedSize(w,h)
-
+	self:Emit("ChangedSize", w, h)
 end
 
 
@@ -366,8 +366,6 @@ function PANEL:Think()
 	if ( self.y < 0 ) then
 		self:SetPos( self.x, 0 )
 	end
-
-
 
 end
 

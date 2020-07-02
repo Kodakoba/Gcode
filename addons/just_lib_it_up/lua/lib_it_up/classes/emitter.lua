@@ -61,7 +61,6 @@ local rawevent = function(self)
 end
 
 Emitter = Emitter or Class:callable()
-Emitter.Name = "Emitter"
 
 function Emitter:Initialize(e)
 	self.__Events = muldim:new()
