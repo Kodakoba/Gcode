@@ -478,6 +478,9 @@ function NavPanel:SetRetractedSize(size)
 	navbar.X = x
 end
 
+function NavPanel:SetExpandedSize(size)
+	self.Navbar:SetWide(size)
+end
 function NavPanel:SetTabSize(size)
 	self.TabSize = size
 	local l, t, r, b = self:GetDockPadding()
@@ -574,7 +577,7 @@ function NavPanel:SelectTab(name, dontanim)
 	for k,v in pairs(tabs) do
 
 		if v:GetName() == name then
-			v:Select(true)
+			v:Select(dontanim)
 		end
 	end
 end

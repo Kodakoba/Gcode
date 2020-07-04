@@ -612,3 +612,25 @@ if not DetouredDragFuncs then
 
 	DetouredDragFuncs = true
 end
+
+
+function META:Bond(to)
+	if not self.__HasBonded then
+		local name = ("bondThink:%p:%p"):format(self, to) --ptrs
+
+		hook.Add("Think", name, function()
+			if not IsValid(to) then
+				if IsValid(self) then self:Remove() end
+				hook.Remove("Think", name)
+				return
+			end
+
+			if not IsValid(self) then
+				hook.Remove("Think", name)
+			end
+		end)
+
+	end
+
+	self.__HasBonded = to
+end

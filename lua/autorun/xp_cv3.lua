@@ -190,10 +190,10 @@ do -- chathud
 	hook.Add("HUDShouldDraw", "chathud.disable", function(ch)
 		if ew[ch] then return false end
 	end)
-	
+
 	local panics = {
-		["sh"] = true, 
-		["stop"] = true, 
+		["sh"] = true,
+		["stop"] = true,
 		["shut"] = true
 	}
 
