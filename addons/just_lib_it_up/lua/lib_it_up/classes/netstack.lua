@@ -58,6 +58,15 @@ function netstack:MergeInto(ns)
 	end
 end
 
+function netstack:Send(netname, where)
+		net.Start(netname)
+			net.WriteNetStack(self)
+	if CLIENT then
+		net.SendToServer()
+	else
+		net.Send(where)
+	end
+end
 netstack.__tostring = function(self)
 	local head = "NetStack: %d ops:"
 	head = head:format(#self.Ops)
