@@ -283,7 +283,7 @@ hook.Add("PostDrawTranslucentRenderables", "DrawPoleCables", function(d, sb)
 
 	if sb or #poles <= 0 then return end
 
-	for k, grid in ipairs(PowerGrids) do
+	for k, grid in pairs(PowerGrids) do
 
 		if #grid.PowerLines == 0 then break end
 

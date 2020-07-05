@@ -26,7 +26,7 @@ function ENT:PingGrids()
 	local available_grids = {}
 
 	--find all grids we can even modify (eg owned by factionmates)
-	for _, grid in ipairs(PowerGrids) do
+	for _, grid in pairs(PowerGrids) do
 		if not grid.Owner:IsValid() or not grid.Owner:IsTeammate(ow) then continue end
 		available_grids[#available_grids + 1] = grid
 	end

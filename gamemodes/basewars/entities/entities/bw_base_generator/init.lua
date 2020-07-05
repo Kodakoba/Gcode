@@ -20,7 +20,7 @@ function ENT:PingGrids()
 	local ow = self:CPPIGetOwner()
 	if not ow or not IsValid(ow) then return end --???
 
-	for _, grid in ipairs(PowerGrids) do --picks the closest powerline entity and connects to it if it exists and exits the function
+	for _, grid in pairs(PowerGrids) do --picks the closest powerline entity and connects to it if it exists and exits the function
 		if not grid.Owner:IsValid() or not grid.Owner:IsTeammate(ow) then continue end
 
 		local mindist, minpole = math.huge

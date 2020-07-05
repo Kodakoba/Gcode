@@ -3,7 +3,7 @@ AddCSLuaFile()
 PowerGrid = PowerGrid or Emitter:extend()
 
 function PowerGrid.UpdateIDs()
-	for k, grid in ipairs(PowerGrids) do
+	for k, grid in pairs(PowerGrids) do
 		--if grid.ID == k then continue end
 
 		grid.ID = k
@@ -223,7 +223,7 @@ function PowerGrid.FindNearestPole(ent) --this isn't a class function, it's a ut
 	local cable = ent.ConnectDistance ^ 2
 	local ow = ent:CPPIGetOwner()
 
-	for _, grid in ipairs(PowerGrids) do
+	for _, grid in pairs(PowerGrids) do
 		grid.Owner = grid.Owner or table.Random(grid.AllEntities):CPPIGetOwner()
 		if not grid.Owner:IsValid() or not grid.Owner:IsTeammate(ow) then continue end
 		local mindist, minpole = math.huge
@@ -343,12 +343,12 @@ function PowerGrid:Think()
 
 	local die = false
 
-	for k,v in ipairs(self.Consumers) do
+	for k,v in pairs(self.Consumers) do
 		local req = v.PowerRequired
 		local enough = pw_total - req > 0
 
 		local rebooting_time = v.RebootStart and CurTime() - v.RebootStart < v.RebootTime 	--should it still be rebooting?
-		local is_rebooting = v:GetRebooting()												--is it currently rebooting?
+		local is_rebooting = v.RebootStart and v.RebootStart ~= 0
 
 		local should_reboot = rebooting_time --by default just obey the time
 
@@ -362,13 +362,14 @@ function PowerGrid:Think()
 			--start rebooting sequence
 			v.RebootStart = CurTime()
 			should_reboot = true
+			v.ShouldReboot = false
 		elseif not enough and not v.Power then
 			v.ShouldReboot = true --next time it's powered it will go into reboot
 			v.RebootStart = nil
 			should_reboot = false
 		end
 
-		v:SetRebooting(should_reboot)
+		v:SetRebootTime(should_reboot and CurTime() or 0)
 		is_rebooting = should_reboot
 
 		--[[if enough and (not v.Power or v.ShouldReboot) then -- it died this power tick
@@ -422,7 +423,7 @@ if SERVER then
 	local lastNW = 0
 	timer.Create("PowerGridThink", 0.25, 0, function()
 		local nses = {}
-		for k,v in ipairs(PowerGrids) do
+		for k,v in pairs(PowerGrids) do
 			v:Think()
 			nses[#nses + 1] = v:Network()
 		end
