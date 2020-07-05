@@ -348,43 +348,34 @@ function PowerGrid:Think()
 		local enough = pw_total - req > 0
 
 		local rebooting_time = v.RebootStart and CurTime() - v.RebootStart < v.RebootTime 	--should it still be rebooting?
-		local is_rebooting = v.RebootStart and v.RebootStart ~= 0
 
-		local should_reboot = rebooting_time --by default just obey the time
+		local is_rebooting = v:GetRebootTime() ~= 0
+		local should_reboot = not is_rebooting and not enough 	-- should the entity be in a reboot state?
 
 		--if we have enough,
 		-- 	and it wasn't powered or it should be rebooting,
 		-- 		and it was powered before (so new entities aren't in reboot)
 		-- 			and it's not rebooting currently
 
-
 		if enough and (not v.Power or v.ShouldReboot) and v.EverPowered and not is_rebooting then
 			--start rebooting sequence
 			v.RebootStart = CurTime()
 			should_reboot = true
 			v.ShouldReboot = false
-		elseif not enough and not v.Power then
+		elseif not enough and not v.Power and not is_rebooting then
 			v.ShouldReboot = true --next time it's powered it will go into reboot
-			v.RebootStart = nil
 			should_reboot = false
 		end
 
-		v:SetRebootTime(should_reboot and CurTime() or 0)
-		is_rebooting = should_reboot
+		if not is_rebooting and should_reboot and enough then
+			v:SetRebootTime(CurTime())
+			is_rebooting = true
+		elseif not rebooting_time and not should_reboot then
+			v:SetRebootTime(0)
 
-		--[[if enough and (not v.Power or v.ShouldReboot) then -- it died this power tick
-			v.RebootStart = CurTime()
-			rebooting = true
+			v.RebootStart = 0
+			is_rebooting = false
 		end
-
-		if not enough and not v.Power then --it's dead and reboot time has passed; we're just straight up dead
-			if not rebooting then
-				v:SetRebooting(false)
-				v.ShouldReboot = true
-			end
-		else
-			v:SetRebooting(rebooting)
-		end]]
 
 
 		--it should resurrect this tick, check reboot time

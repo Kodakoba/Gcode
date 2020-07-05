@@ -103,7 +103,7 @@ local function DrawStructureInfo()
 
 	if not valid then
 		anims:To("Alpha", 0, 0.25, 0, 0.2)
-	else 
+	else
 
 		local wep = ply:GetActiveWeapon()
 		local class = (IsValid(wep) and wep:GetClass())
@@ -119,7 +119,6 @@ local function DrawStructureInfo()
 		name = ent.PrintName or "wat"
 
 		if dist < 108 then anims:To("Alpha", to, 0.3, 0, 0.3) else anims:To("Alpha", 0, 0.3, 0, 0.3) end
-		
 	end
 
 	alpha = anims.Alpha or 0
@@ -127,8 +126,8 @@ local function DrawStructureInfo()
 	hdcol.a = alpha
 
 	local ts = lastpos:ToScreen()
-	
-	if not ts.visible or alpha < 1 or not IsValid(lastent) then return end 
+
+	if not ts.visible or alpha < 1 or not IsValid(lastent) then return end
 
 	local scale = math.max(200 - dist, 75) / 200
 
@@ -143,7 +142,7 @@ local function DrawStructureInfo()
 
 	sx, sy = sx - w/2 * scale, sy - h/2 * scale
 
-	local hpfrac = (EntHP / EntMaxHP) 
+	local hpfrac = (EntHP / EntMaxHP)
 
 	if not anims.EntHPs[lastent:EntIndex()] then
 		anims.EntHPs[lastent:EntIndex()] = hpfrac
@@ -167,12 +166,16 @@ local function DrawStructureInfo()
 		local toH = h
 
 		local rebooting
+		local dead = not lastent:GetPowered()
 
-		if lastent.GetRebooting and lastent:GetRebooting() then
-			toH = toH + 18
+		if lastent.GetRebootTime and lastent:GetRebootTime() ~= 0 then
 			rebooting = true
 		end
 
+		if dead or rebooting then
+			toH = toH + 18
+		end
+	
 		anims:MemberLerp(anims, "Height", toH, 0.3, 0, 0.3)
 
 		local h = anims.Height or toH
@@ -184,7 +187,7 @@ local function DrawStructureInfo()
 
 		cam.PushModelMatrix(vm)
 
-			local ok, err = pcall(function() 
+			local ok, err = pcall(function()
 
 				local x, y = 0, 0
 
@@ -199,35 +202,31 @@ local function DrawStructureInfo()
 
 				draw.SimpleText(name, "TW24", w/2, 0, white, 1, 5)
 
-			end) 
+			end)
 
-			if not ok then 
+			if not ok then
 				print("err #1 >:(", err)
 			end
 
 			draw.RoundedBox(6, 6, headerH + 8, w - 13, 14, HPBG)
 
 			--render.SetScissorRect(sx + 6, bary - 1, sx + 6 + hpw - (1 - scale) * 4, bary + hph + 1, true)
-	
+
 				draw.RoundedBox(6, 6, headerH + 8, hpW, 14, HPFG)
 			--render.SetScissorRect(0, 0, 0, 0, false)
 
 		cam.PopModelMatrix()
 
-		
-
-		
-		
 		--Prepare for new bar (Power)
 
 		cam.PushModelMatrix(vm)
-			local ok, err = pcall(function() 
+			local ok, err = pcall(function()
 
 				local x, y = 0, 0
 				local tx = Language("Health", EntHP, EntMaxHP)
 
 				draw.Masked(function()
-					draw.RoundedPolyBox(6, 4, headerH + 3, hpW + 1, 24, HPFG)	
+					draw.RoundedPolyBox(6, 4, headerH + 3, hpW + 1, 24, HPFG)
 				end, function()
 					draw.SimpleText(tx, "OSB18", 4 + w/2, headerH + 14, white, 1, 1)
 				end, nil, function()
@@ -237,11 +236,21 @@ local function DrawStructureInfo()
 				local tY = headerH + 24
 
 				if rebooting then
-					draw.SimpleText("Rebooting" .. ("."):rep((CurTime() * 3) % 2 + 1), "OS18", 8, tY, white, 0, 5)
+					draw.SimpleText("Rebooting" .. ("."):rep((CurTime() * 3) % 2 + 1), "OS18", w/2, tY, white, 1, 5)
 					tY = tY + 18
+				elseif dead then
+					anims.NoPowerCol = anims.NoPowerCol or Color(200, 60, 60)
+					local colh, cols, colv = 0, 0.7, 0.78 --values for Color(200, 60, 60)
+					draw.ColorModHSV(anims.NoPowerCol, colh, cols, colv + math.sin(CurTime() * 8) * 0.08)
+					anims.NoPowerCol.a = alpha
+
+					draw.SimpleText("Insufficient power!", "OSB18", w/2, tY, anims.NoPowerCol, 1, 5)
+
+					tY = tY + 18
+
 				end
 
-			end) 
+			end)
 
 
 
