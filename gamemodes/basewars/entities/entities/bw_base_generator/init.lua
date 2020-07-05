@@ -11,6 +11,7 @@ function ENT:Init()
 	Generators[#Generators + 1] = self
 	self:AddEFlags(EFL_FORCE_CHECK_TRANSMIT)
 	timer.Simple(0, function() self:PingGrids() end)
+	self:SetPowered(true)
 end
 
 function ENT:PingGrids()
