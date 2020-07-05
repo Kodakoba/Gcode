@@ -137,11 +137,14 @@ end
 local handle = util.GetPixelVisibleHandle()
 local vis = 0
 
-hook.Add("PostDrawTranslucentRenderables", "mittyvis", function()
+hook.Add("PostDrawTranslucentRenderables", "mittyvis", function(sb, dpth)
+	if sb or dpth then return end
 
 	local lp = EyePos()
 
+	local i = 0
 	for k,v in pairs(Memes.Decals) do
+		i = i + 1
 		local dist = lp:DistToSqr(v.PixPos)
 
 		if dist > v.MaxDistSqr then
@@ -150,6 +153,8 @@ hook.Add("PostDrawTranslucentRenderables", "mittyvis", function()
 			v.Vis = 1
 		else
 			v.Vis = util.PixelVisible(v.PixPos or v.Pos, v.PixRad or 32, v.PixVisHandle)
+			--render.SetColorMaterialIgnoreZ()
+			--render.DrawSphere(v.PixPos or v.Pos, 8, 16, 16, color_white)
 		end
 
 	end
@@ -167,6 +172,7 @@ hook.Add("PostDrawTranslucentRenderables", "mittypls", function(bd, bs)
 
 	render.SuppressEngineLighting(true)
 	for k,v in pairs(Memes.Decals) do
+
 		if not v.Vis or v.Vis > 0 then
 
 			local lr = render.ComputeLighting(v.Middle, v.Normal)--:Unpack()
@@ -234,7 +240,8 @@ function Memes.AddDecal(name, pos, ang, scale, normal, col, rtpaint, rtupd, pixp
 
 		rtw = RT width  ]
 		rth = RT height ] 128 by default
-
+		
+		light = light multiplication for correction
 		------------
 		todo: make this function return a decal object so
 			  you don't have to give so many args
