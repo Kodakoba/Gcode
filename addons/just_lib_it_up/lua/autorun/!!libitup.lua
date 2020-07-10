@@ -99,7 +99,7 @@ end
 
 IncludeFolder(path .. "*", _SH)	--add all files then folders within lib_it_up/
 
-loading = false 
+loading = false
 
 local str = "\n/------------\n Lib-it-up loaded!\n %d files included. \n-------------/\n\n"
 

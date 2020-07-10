@@ -1,4 +1,5 @@
 --rip your RAM
+setfenv(0, _G)
 
 muldim = Class:callable()
 local mmeta = muldim.Meta

@@ -1,4 +1,4 @@
-
+if not GachiRP then easylua.StartWeapon("dash") end
 include('shared.lua')
 
  SWEP.PrintName        = "Dash SWEP"
@@ -116,3 +116,4 @@ function SWEP:DrawHUD()
 	draw.SimpleText("Dash will happen " .. str, "MR64", ScrW() / 2, ScrH() * 0.9 - 128, col, 1, 4)
 	]]
 end
+if not GachiRP then easylua.EndWeapon("dash") end

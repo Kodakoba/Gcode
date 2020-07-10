@@ -1,11 +1,12 @@
 --[[----------------------------------]]
 --  Idea shamelessly stolen from Luvit
 --[[----------------------------------]]
+setfenv(0, _G)
 
 BlankFunc = function() end
 BLANKFUNC = BlankFunc
 
-Class = Class or {}
+Class = {}
 Class.Meta = {__index = Class}
 Class.Debugging = false
 
@@ -69,6 +70,7 @@ function Class:extend(...)
 	new.Meta = {}
 	new.Meta.__index = old 				-- this time, __index points to the the parent
 										-- which points to that parent's meta, which points to that parent's parent, so on
+
 	for k,v in ipairs(metamethods) do
 		new[v] = rawget(old, v)
 	end
@@ -76,7 +78,13 @@ function Class:extend(...)
 	setmetatable(new.Meta, old)
 
 	new.__index = function(t, k)
-		return rawget(new, k) or new.Meta[k]
+		local parval = rawget(new, k)
+
+		if parval ~= nil then
+			return parval
+		else
+			return new.Meta[k]
+		end
 	end
 
 	new.__parent = old

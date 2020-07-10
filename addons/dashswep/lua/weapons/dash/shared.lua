@@ -1,3 +1,8 @@
+
+if not GachiRP then easylua.StartWeapon("dash") end
+
+setfenv(0, _G)
+
 SWEP.Author			= "grmx"
 SWEP.Contact			= ""
 SWEP.Purpose			= ""
@@ -26,6 +31,7 @@ end
 DashTable = {}
 function SWEP:Initialize()
 	if CLIENT then
+		hdl.DownloadFile("http://vaati.net/Gachi/shared/whoosh.ogg", "whoosh.dat")
 		self:SetPredictable(false)
 		self.Dashed = false
 	end
@@ -83,13 +89,9 @@ function SWEP:CheckMoves(owner, mv, dir)
 			mask = MASK_SOLID
 		})
 
-		local s = owner:GetPos()
-		local col = tr.Hit and Colors.Green or Colors.Red
-
 		if tr.Hit then
 
 			local vel
-
 
 			if ducked then
 
@@ -188,8 +190,6 @@ function SWEP:CheckMoves(owner, mv, dir)
 
 end
 
-hdl.DownloadFile("http://vaati.net/Gachi/shared/whoosh.ogg", "whoosh.dat")
-
 function SWEP:PrimaryAttack()
 	local owner = self:GetOwner()
 
@@ -205,8 +205,6 @@ function SWEP:PrimaryAttack()
 		sound.PlayFile("data/hdl/whoosh.dat", "", function() end)
 	end
 
-
-
 	if SERVER then self:SetDashEndTime(CurTime() + self.DashTime) end
 	self:SetDashing(true)
 	local dir = owner:EyeAngles():Forward()
@@ -220,7 +218,7 @@ function SWEP:PrimaryAttack()
 	if CLIENT then
 
 		DashTable[owner] = {
-			t = CurTime(),
+			t = CurTime() + owner:Ping() / 1000,
 			dir = dir,
 			wep = self,
 			ground = owner:IsOnGround(),
@@ -244,7 +242,6 @@ function SWEP:PrimaryAttack()
 	dt.jump = owner:KeyDown(IN_JUMP)
 	dt.down = dir.z < -0.15
 
-
 	--
 
 	self:SetNextPrimaryFire(CurTime() + 0.4)
@@ -267,7 +264,7 @@ hook.Add("FinishMove", "Dash", function(ply, mv, cmd)
 	end
 	if not DashTable[ply] then return end
 
-	if CLIENT and ply~=LocalPlayer() then
+	if CLIENT and ply ~= LocalPlayer() then
 		return
 	end
 
@@ -276,17 +273,17 @@ hook.Add("FinishMove", "Dash", function(ply, mv, cmd)
 	if not IsValid(self) then DashTable[ply] = nil self.StoppedDash = nil return end
 
 	local time = t.t
-	local endtime = OverrideDashEnd or (CLIENT and self:GetDashEndTime()~=0 and self:GetDashEndTime() + 0.6) or t.t+self.DashTime
-	local ping = (SERVER and 0) or ply:Ping()/500
+	local endtime = OverrideDashEnd or (CLIENT and self:GetDashEndTime()~=0 and self:GetDashEndTime() + 0.6) or t.t + self.DashTime
+	local ping = (SERVER and ply:Ping()/2000) or 0
 	local d = t.dir
 	local vel = mv:GetVelocity()
 
 	local newvel = t.newvel or d * 800
 
-
+	--print(endtime, Realm(), "dont mind me just spamming numbers")
 	if CurTime() - time < 0 then return end
 
-	if CurTime() > endtime then
+	if CurTime() > endtime + ping then
 
 		if OverrideDashFinalVel then
 			mv:SetVelocity(OverrideDashFinalVel)
@@ -430,3 +427,5 @@ function SWEP:SecondaryAttack()
 	end
 
 end
+
+if not GachiRP then easylua.EndWeapon("dash") end
