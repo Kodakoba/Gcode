@@ -65,11 +65,12 @@ function ENT:PingGrids()
 		--connect every powerline-less generator and then consumer
 
 		for _, gen in ipairs(grid.Generators) do
-			if gen.Grid and IsValid(gen:GetLine()) then continue end
+			if gen.Grid and IsValid(gen:GetLine()) then print("gen has a line") continue end
 
 			local pos = gen:GetPos()
 			local dist = pos:DistToSqr(mypos)
 			if dist < cable then
+				print("yup connecting")
 				cur_grid:AddGenerator(gen, self)
 			end
 		end
@@ -126,8 +127,10 @@ function ENT:Think()
 			if v.PowerType == "Line" then
 				if v==self or self:GetLine() ~= v then continue end
 				if pos:DistToSqr(v:GetPos()) > range then
-					self.Grid:RemoveLine(v, true)
+					print("too far, removin")
+					self.Grid:RemoveLine(self, true)
 					self:SetLine(NULL)
+					break
 				end
 			else
 				BWEnts[v].CheckDist = true

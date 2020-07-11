@@ -45,6 +45,11 @@ chathud.x = 0.84 * 64
 local ChatHUDYPos = ScrH() - (0.84 * 200) - (0.84 * 140)
 chathud.y = ChatHUDYPos
 
+hook.Add("OnScreenSizeChanged", "ChatHUD", function()
+	ChatHUDYPos = ScrH() - (0.84 * 200) - (0.84 * 140)
+	chathud.y = ChatHUDYPos
+end)
+
 chathud.W = 600
 chathud.NameLeeway = chathud.W * 0.2
 

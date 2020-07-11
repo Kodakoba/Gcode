@@ -29,16 +29,31 @@ local curtip = ""
 local popup = false
 local hovd
 
+local hovTall = 400
+local unhovTall = 200
+
 function ENT:CreateBaseScroll(pnl, name, icon)
 
 	local scr = vgui.Create("FScrollPanel", pnl)
-	scr:SetSize(400, 250)
+	scr:SetSize(300, unhovTall)
+
+	local ent = self
+
+	self.Scrolls[scr] = true
+
+	scr:SetMouseInputEnabled(true)
 
 	scr.GradBorder = true
 	scr.BackgroundColor = Color(60, 60, 60)
 	scr:GetCanvas():DockPadding(0, 8, 0, 8)
 	scr.Shadow = {intensity = 3, blur = 1}
 
+	scr.AlphaOverride = true
+
+	scr:SetAlpha(0)
+	scr.Alpha = 120
+
+	local wasHov = false
 	function scr:PostPaint(w, h)
 		surface.DisableClipping(true)
 
@@ -52,10 +67,52 @@ function ENT:CreateBaseScroll(pnl, name, icon)
 
 				surface.DrawMaterial(icon.url, icon.name, x + w/2 - tw/2 - 36, y-18 - 16, 32, 32)
 
-			BSHADOWS.EndShadow(3, 2, 2, 255)
+			BSHADOWS.EndShadow(3, 2, 1, 255)
 
 		surface.DisableClipping(false)
 
+		local x, y = self:LocalToScreen(0, 0)
+		local is_hov = math.PointIn2DBox(gui.MouseX(), gui.MouseY(), x, y, w, h) --bweh
+
+		if is_hov and not wasHov then
+			wasHov = true
+			ent.Focus = self
+			
+			self:OnHover()
+		elseif not is_hov and wasHov then
+			wasHov = false
+			ent.Focus = Either(ent.Focus == self, nil, ent.Focus)
+
+			self:OnUnhover()
+		end
+
+		if ent.Focus == self then
+			self:To("Alpha", 255, 0.3, 0, 0.3)
+		else
+			self:To("Alpha", 120, 0.3, 0, 0.3)
+		end
+
+		local a = self.Alpha
+
+		if not self.AlphaOverride then self:SetAlpha(a) end
+	end
+
+	local curSizeAnim
+
+	function scr:OnHover()
+		if curSizeAnim then curSizeAnim:Stop() end
+		curSizeAnim = self:SizeTo(self:GetWide(), hovTall, 0.3, 0, 0.3)
+		curSizeAnim:On("Think", function(_, fr)
+			self.SizeFrac = fr
+		end)
+	end
+
+	function scr:OnUnhover()
+		if curSizeAnim then curSizeAnim:Stop() end
+		curSizeAnim = self:SizeTo(self:GetWide(), unhovTall, 0.3, 0, 0.3)
+		curSizeAnim:On("Think", function(_, fr)
+			self.SizeFrac = 1 - fr
+		end)
 	end
 
 	return scr
@@ -68,10 +125,12 @@ function ENT:CreateGeneratorsScroll(pnl, me)
 		name = "electricity.png"
 	})
 
-	scr.X = 425 - 400
-	scr.Y = pnl.CircleY
+	scr.X = pnl:GetWide() / 2 - scr:GetWide() - 8
+	scr.Y = pnl.CircleY - scr:GetTall() / 2
 
-	for k,v in ValidPairs(me.Generators) do
+	local grid = self:GetGrid()
+
+	for k,v in ValidPairs(grid.Generators) do
 		local f = scr:Add("InvisPanel")
 		f:Dock(TOP)
 		f:DockMargin(0, 0, 0, 8)
@@ -92,7 +151,7 @@ function ENT:CreateGeneratorsScroll(pnl, me)
 
 			draw.SimpleText("Generates: " .. gens, "TWB24", 80, h/2 + 12, green, 0, 1)
 
-			draw.SimpleText("Stored: " .. v:GetPower() .. "PW", "TWB24", w/2 + 56, h/2 + 12, blue, 0, 1)
+			--draw.SimpleText("Stored: " .. v:GetPower() .. "PW", "TWB24", w/2 + 56, h/2 + 12, blue, 0, 1)
 
 		end
 
@@ -127,6 +186,28 @@ function ENT:CreateGeneratorsScroll(pnl, me)
 		end
 	end
 
+	local greenA = green:Copy()
+	local grayA = Colors.Gray:Copy()
+	local txW = 0
+
+	scr:On("Paint", function(self, w, h)
+		self.SizeFrac = self.SizeFrac or 0
+		local a = self.SizeFrac * 255
+
+		greenA.a = a
+		grayA.a = a
+
+		local y = h - 24 + self.SizeFrac * 24
+		local x, y = self:LocalToScreen(w/2, y)
+		BSHADOWS.BeginShadow()
+			DisableClipping(true)
+				draw.RoundedBoxEx(8, x - txW / 2 - 4, y, txW + 8, 24, grayA, false, false, true, true)
+				local txw, txh = draw.SimpleText("Total generated: 1488pw", "OS24", x, y, greenA, 1, 5)
+				txW = txw
+			DisableClipping(false)
+		BSHADOWS.EndShadow(3, 2, 1, 255)
+	end)
+
 	return scr
 end
 
@@ -138,10 +219,12 @@ function ENT:CreateConsumersScroll(pnl, me)
 		name = "electricity.png"
 	})
 
-	scr.X = 450
-	scr.Y = pnl.CircleY
+	scr.X = pnl:GetWide() / 2 + 8
+	scr.Y = pnl.CircleY - scr:GetTall() / 2
 
-	for k,v in ValidPairs(me.Electronics) do
+	local grid = self:GetGrid()
+
+	for k,v in ValidPairs(grid.Consumers) do
 		local f = scr:Add("InvisPanel")
 		f:Dock(TOP)
 		f:DockMargin(0, 0, 0, 8)
@@ -162,14 +245,15 @@ function ENT:CreateConsumersScroll(pnl, me)
 
 			draw.SimpleText("Consumes: " .. gens, "TWB24", 80, h/2 + 12, red, 0, 1)
 
-			draw.SimpleText("Stored: " .. v:GetPower() .. "PW", "TWB24", w/2 + 64, h/2 + 12, blue, 0, 1)
+			--draw.SimpleText("Stored: " .. v:GetPower() .. "PW", "TWB24", w/2 + 64, h/2 + 12, blue, 0, 1)
 
 		end
 
-		local ent = vgui.Create("ModelImage", f)
+		local ent = vgui.Create("SpawnIcon", f)
 		ent:Dock(LEFT)
-		ent:DockMargin(8, 8, 8, 8)
-		ent:SetSize(48, 48)
+		ent:DockMargin(8, 2, 8, 2)
+		local size = f:GetTall() - 4
+		ent:SetSize(size, size)
 
 		ent:SetModel(v:GetModel())
 
@@ -197,17 +281,69 @@ function ENT:CreateConsumersScroll(pnl, me)
 		end
 	end
 
+	local redA = red:Copy()
+	local grayA = Colors.Gray:Copy()
+	local txW = 0
+
+	scr:On("Paint", function(self, w, h)
+		self.SizeFrac = self.SizeFrac or 0
+		local a = self.SizeFrac * 255
+
+		redA.a = a
+		grayA.a = a
+
+		local y = h - 24 + self.SizeFrac * 24
+		local x, y = self:LocalToScreen(w/2, y)
+		BSHADOWS.BeginShadow()
+			DisableClipping(true)
+				draw.RoundedBoxEx(8, x - txW / 2 - 4, y, txW + 8, 24, grayA, false, false, true, true)
+				local txw, txh = draw.SimpleText("Total consumed: 1488pw", "OS24", x, y, redA, 1, 5)
+				txW = txw
+			DisableClipping(false)
+		BSHADOWS.EndShadow(3, 2, 1, 255)
+	end)
+
 	return scr
 end
 
+function ENT:QMOnBeginClose(qm, self, pnl)
+
+	if IsValid(qm.GenScroll) then
+		qm.GenScroll:PopOut(nil, nil, BlankFunc)
+
+		qm.GenScroll.AlphaOverride = true
+	end
+	if IsValid(qm.ConsumerScroll) then
+		qm.ConsumerScroll:PopOut(nil, nil, BlankFunc)
+
+		qm.ConsumerScroll.AlphaOverride = true
+	end
+end
+
+function ENT:QMOnReopen(qm, self, pnl)
+	if IsValid(qm.GenScroll) then
+		qm.GenScroll:AlphaTo(120, 0.1, 0, function()
+			qm.GenScroll.AlphaOverride = false
+		end)
+
+		qm.GenScroll.AlphaOverride = true
+	end
+	if IsValid(qm.ConsumerScroll) then
+		qm.ConsumerScroll:AlphaTo(120, 0.1, 0, function()
+			qm.ConsumerScroll.AlphaOverride = false
+		end)
+
+		qm.ConsumerScroll.AlphaOverride = true
+	end
+end
+
 function ENT:QMOnClose(qm, self, pnl)
-	print("called on close")
 	if pnl.Cloud then pnl.Cloud:Remove() pnl.NoCloud = true end
 end
 
 function ENT:QMThink(qm, self, pnl)
 
-	if pnl.NoCloud then print("okay????????") return end --just in case
+	if pnl.NoCloud then return end --just in case
 
 	pnl.Cloud = pnl.Cloud or vgui.Create("Cloud")
 
@@ -223,9 +359,9 @@ end
 
 function ENT:OpenShit(qm, self, pnl)
 
-	pnl:SetSize(850, 700)	--cant fit
+	pnl:SetSize(850, 600)	--cant fit
 	pnl:CenterHorizontal()
-
+	--pnl.Y = 0
 	local x, y = 425, 200	--ScreenToLocal doesn't work for some reason...
 
 	local me = BWEnts[self]
@@ -234,11 +370,18 @@ function ENT:OpenShit(qm, self, pnl)
 
 	local gens = self:CreateGeneratorsScroll(pnl, me)
 
-	qm:AddPopIn(gens, gens.X, gens.Y + pnl.CircleSize, 0, 32)
+	qm.GenScroll = gens
+	gens:AlphaTo(120, 0.1):On("End", function()
+		gens.AlphaOverride = false
+	end)
+	--qm:AddPopIn(gens, gens.X, gens.Y + pnl.CircleSize, 0, 32)
 
 	local consumers = self:CreateConsumersScroll(pnl, me)
-
-	qm:AddPopIn(consumers, consumers.X, consumers.Y + pnl.CircleSize, 0, 32)
+	qm.ConsumerScroll = consumers
+	consumers:AlphaTo(120, 0.1):On("End", function()
+		consumers.AlphaOverride = false
+	end)
+	--qm:AddPopIn(consumers, consumers.X, consumers.Y + pnl.CircleSize, 0, 32)
 
 end
 
@@ -251,10 +394,15 @@ function ENT:CLInit()
 	me.ThrowLightning = {}
 	me.Cables = {}
 
+	self.Scrolls = {}
+
 	local qm = self:SetQuickInteractable()
+
 	qm.OnOpen = function(...) self:OpenShit(...) end
 	qm.Think = function(...) self:QMThink(...) end
+	qm.OnClose = function(...) self:QMOnBeginClose(...) end
 	qm.OnFullClose = function(...) self:QMOnClose(...) end
+	qm.OnReopen = function(...) self:QMOnReopen(...) end
 
 	self:OnChangeGridID(self:GetGridID())
 end
@@ -281,11 +429,11 @@ hook.Add("PostDrawTranslucentRenderables", "DrawPoleCables", function(d, sb)
 	--local b = bench("rendering")
 	--b:Open()
 
-	if sb or #poles <= 0 then return end
+	if sb then return end--or #poles <= 0 then return end
 
 	for k, grid in pairs(PowerGrids) do
 
-		if #grid.PowerLines == 0 then break end
+		if #grid.PowerLines == 0 then continue end
 
 		for key, ent in pairs(grid.AllEntities) do
 			local pos

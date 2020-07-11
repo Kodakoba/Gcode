@@ -233,7 +233,7 @@ local function DrawStructureInfo()
 					draw.SimpleText(tx, "OSB18", 4 + w/2, headerH + 14, gray, 1, 1)
 				end)
 
-				local tY = headerH + 24
+				local tY = headerH + 26
 
 				if rebooting then
 					draw.SimpleText("Rebooting" .. ("."):rep((CurTime() * 3) % 2 + 1), "OS18", w/2, tY, white, 1, 5)
