@@ -121,8 +121,6 @@ PowerGrid:On("RemovedLine", "RepickLine", function(self, line)
 end)
 
 function PowerGrid:Remove()
-
-	--table.RemoveByValue(PowerGrids, self) --DIE DIE DIE DIE DIE
 	PowerGrids[self.ID] = nil
 end
 
@@ -156,7 +154,7 @@ for k,v in pairs(accessors) do
 	PowerGrid["Add" .. k] = function(self, ent, line, ...)
 		local grid = ent:GetGrid()
 
-		if grid == self or self.AllEntities[ent:EntIndex()] then print(Realm(), "nope not adding", grid == self, ent:GetGridID(), self.AllEntities[ent:EntIndex()], ent, debug.traceback()) return end --nope
+		if grid == self or self.AllEntities[ent:EntIndex()] then return end --print(Realm(), "nope not adding", grid == self, ent:GetGridID(), self.AllEntities[ent:EntIndex()], ent, debug.traceback()) return end --nope
 
 		--First add the ent to a new grid
 
@@ -225,7 +223,7 @@ function PowerGrid.FindNearestPole(ent) --this isn't a class function, it's a ut
 
 	for _, grid in pairs(PowerGrids) do
 		grid.Owner = grid.Owner or table.Random(grid.AllEntities):CPPIGetOwner()
-		if not grid.Owner:IsValid() or not grid.Owner:IsTeammate(ow) then continue end
+		if not grid.Owner:IsValid() or not grid.Owner:IsTeammate(ow) then print("no", grid.Owner) continue end
 		local mindist, minpole = math.huge
 
 		for _, line in ipairs(grid.PowerLines) do
@@ -319,7 +317,6 @@ end
 
 hook.Add("EntityRemoved", "ClearGrid", function(ent)
 	local grid = ent.Grid
-
 	if ent.PowerType and grid then
 		local ok, err = pcall(grid["Remove" .. ent.PowerType], grid, ent)
 		if not ok then
@@ -327,6 +324,19 @@ hook.Add("EntityRemoved", "ClearGrid", function(ent)
 		end
 	end
 end)
+
+if CLIENT then
+	hook.Add("NotifyShouldTransmit", "UpdatePowerGrids", function(ent, enter)
+		if not enter or not ent.GetGridID then return end
+
+		local id = ent:GetGridID()
+
+		if not PowerGrids[id] or not PowerGrids[id].AllEntities[ent:EntIndex()] then
+			ent.OldGridID = nil
+			ent:OnChangeGridID(id)
+		end
+	end)
+end
 
 function ENTITY:GetGrid()
 	return self.Grid
