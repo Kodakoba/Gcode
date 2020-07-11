@@ -647,7 +647,7 @@ hook.Add("StartCommand", "StopConnectingCable", function(ply, cmd)
 
 	if (DrawCable or (preventRMBs and (CurTime() - preventRMBs < dur))) and cmd:KeyDown(IN_ATTACK2) and not wasRMB then
 		cmd:RemoveKey(IN_ATTACK2)
-		print('removed dc')
+
 		DrawCable = false
 		PreviewCable = false
 		FinalCablePoint = nil
@@ -686,7 +686,7 @@ hook.Add("StartCommand", "StopConnectingCable", function(ply, cmd)
 			ch:SetVolume(3) --its real fuckin quiet
 			ch:Play()
 		end)
-		print("removed dc")
+
 		DrawCable = nil
 		PreviewCable = false
 		DrawCableEntity = nil

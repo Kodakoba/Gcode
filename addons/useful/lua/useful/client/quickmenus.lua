@@ -4,11 +4,11 @@ QuickMenus = QuickMenus or {}
 QuickMenus.Registered = QuickMenus.Registered or {} --table that holds ents that registered for quickmenus for fast lookups
 QuickMenus.IRegistered = QuickMenus.IRegistered or {} --table that holds same shit but sequential for fast ipairs, yes its microoptimization stfu
 
-local qmregistered = QuickMenus.Registered	
+local qmregistered = QuickMenus.Registered
 
-local iqmr = QuickMenus.IRegistered			
+local iqmr = QuickMenus.IRegistered
 
-openedQM = nil
+openedQM = nil --panel
 
 local ENTITY = FindMetaTable("Entity")
 local QMObj = {}
@@ -70,22 +70,22 @@ end
 ]]
 function QMMeta:__OnClose(ent, pnl)
 
-	for k,v in pairs(self.PopIns) do 
-		if not IsValid(v.Panel) then self.PopIns[k] = nil continue end 
+	for k,v in pairs(self.PopIns) do
+		if not IsValid(v.Panel) then self.PopIns[k] = nil continue end
 
-		local btn = v.Panel 
+		local btn = v.Panel
 
-		local oX, oY = v.OffX, v.OffY 
+		local oX, oY = v.OffX, v.OffY
 
-		if v.PopInAnim then 
+		if v.PopInAnim then
 
 			oX = v.X - btn.X + oX
 			oY = v.Y - btn.Y + oY
 
-			v.PopInAnim:Stop() 
-			v.PopInAnim = nil 
-		end 
-		if v.MoveInAnim then v.MoveInAnim:Stop() v.MoveInAnim = nil end 
+			v.PopInAnim:Stop()
+			v.PopInAnim = nil
+		end
+		if v.MoveInAnim then v.MoveInAnim:Stop() v.MoveInAnim = nil end
 
 		v.PopOutAnim = btn:AlphaTo(0, self:GetTime(), 0)
 		v.MoveOutAnim = btn:MoveBy(oX, oY, self:GetTime(), 0, 0.2)
@@ -95,14 +95,14 @@ end
 
 function QMMeta:__OnReopen(ent, pnl)
 
-	for k,v in pairs(self.PopIns) do 
+	for k,v in pairs(self.PopIns) do
 
-		if not IsValid(v.Panel) then self.PopIns[k] = nil continue end 
+		if not IsValid(v.Panel) then self.PopIns[k] = nil continue end
 
-		local btn = v.Panel 
+		local btn = v.Panel
 
-		if v.PopOutAnim then v.PopOutAnim:Stop() v.PopOutAnim = nil end 
-		if v.MoveOutAnim then v.MoveOutAnim:Stop() v.MoveOutAnim = nil end 
+		if v.PopOutAnim then v.PopOutAnim:Stop() v.PopOutAnim = nil end
+		if v.MoveOutAnim then v.MoveOutAnim:Stop() v.MoveOutAnim = nil end
 
 		v.PopInAnim = btn:AlphaTo(255, 0.1, 0)
 		v.MoveInAnim = btn:MoveTo(v.X, v.Y, self:GetTime(), 0, 0.2)
@@ -118,8 +118,8 @@ function QMMeta:AddPopIn(pnl, x, y, offx, offy)
 	self.PopIns[#self.PopIns + 1] = pop
 
 	pop.Panel = pnl
-	pop.X = x 
-	pop.Y = y 
+	pop.X = x
+	pop.Y = y
 
 	pop.OffX = offx or 0
 	pop.OffY = offy or 0
@@ -128,7 +128,7 @@ function QMMeta:AddPopIn(pnl, x, y, offx, offy)
 
 	pnl:SetAlpha(0)
 
-	pop.PopInAnim = pnl:AlphaTo(255, 0.1, 0)
+	pop.PopInAnim = pnl:PopIn()
 	pop.MoveInAnim = pnl:MoveTo(x, y, self:GetTime(), 0, 0.2)
 
 	return pop
@@ -136,12 +136,12 @@ end
 
 function ENTITY:SetQuickInteractable(b)
 
-	if b==nil or b then 
+	if b==nil or b then
 
 		local key = #iqmr + 1
 
 		local tbl = {
-			key = key, 
+			key = key,
 			ent = self,
 
 			dist = 192,
@@ -159,6 +159,17 @@ function ENTITY:SetQuickInteractable(b)
 
 		return tbl
 	end
+
+	local id = ("QuickMenus:%p"):format(self)
+
+	hook.OnceRet("EntityRemoved", id, function(ent)
+		if ent ~= self then return false end
+		if tbl.progress > 0 then
+			tbl:OnClose(v.ent, openedQM)
+			tbl:__OnClose(v.ent, openedQM)
+			tbl:OnFullClose(v.ent, openedQM)
+		end
+	end)
 
 	table.remove(iqmr, qmregistered[self].key)
 	qmregistered[self] = nil
@@ -178,10 +189,10 @@ end
 
 local function DoTimer(qm, slow)
 
-	if not qm then 
-		for k,v in ipairs(iqmr) do 
+	if not qm then
+		for k,v in ipairs(iqmr) do
 			DoTimer(v, slow)
-		end 
+		end
 		return
 	end
 
@@ -198,48 +209,57 @@ local function CreateQuickMenu()
 
 	local maxperc = 0
 
-	local qm 	--the quick menu with maximum progress
+	local qm	--the quick menu with maximum progress
 
 	function p:Think()
+
 		maxperc = 0
 
-		local active = false 
+		local active = false
 
 		local hastime = false
 
-		for k,v in ipairs(iqmr) do 
-			if v.active then 
-				active = true 
+		for k=#iqmr, 1, -1 do--k,v in ipairs(iqmr) do
 
-				if v.wasopened and not v.opened then 
+			local v = iqmr[k]
+
+			if not IsValid(v.ent) then
+				table.remove(iqmr, k)
+				continue
+			end
+
+			if v.active then
+				active = true
+
+				if v.wasopened and not v.opened then
 					v:OnRehold()
 				end
 			end
 
-			if v.progress > 0 then 
-				hastime = true 
+			if v.progress > 0 then
+				hastime = true
 				v:Think(v.ent, self)
-			else 
+			else
 				v:OnFullClose(v.ent, self)
 				v.wasopened = false
 			end
 
 			if v.progress == 1 and not v.opened and not self.CurrentQM then 	--progress = 100%, not open and no more opened quickmenus
 
-				if v.wasopened then 
+				if v.wasopened then
 					v:OnReopen(v.ent, self)
 					v:__OnReopen(v.ent, self)
 				else
 					v.wasopened = true
 					v:OnOpen(v.ent, self)
-					
+
 				end
 
 				v.opened = true
 				opened = v
 			end
 
-			if v.progress ~= 1 and v.opened then 
+			if v.progress ~= 1 and v.opened then
 				v:OnClose(v.ent, self)
 				v:__OnClose(v.ent, self)
 				v.opened = false
@@ -247,19 +267,19 @@ local function CreateQuickMenu()
 
 			maxperc = math.max(v.progress, maxperc)
 
-			if v.progress == maxperc then 
+			if v.progress == maxperc then
 				qm = v
 			end
-			
+
 		end
 
-		self.CurrentQM = (qm.progress == 1 and qm)
+		self.CurrentQM = (qm and qm.progress == 1 and qm)
 
 
-		if not active and not hastime then 
+		if not active and not hastime then
 
 			self:Remove()
-			openedQM = nil 
+			openedQM = nil
 			return
 		end
 	end
@@ -274,11 +294,11 @@ local function CreateQuickMenu()
 
 		local midX, midY = self.CircleX, self.CircleY
 
-		if not midX or not midY then 
+		if not midX or not midY then
 
 			local x, y = self:ScreenToLocal(ScrW()/2, ScrH()/2)	--w, h might change and the circle always needs to draw in the middle
 																--(unless overridden with self.CircleX, self.CircleY)
-			midX, midY = midX or x, midY or y 
+			midX, midY = midX or x, midY or y
 
 			self.CircleX = midX
 			self.CircleY = midY
@@ -293,25 +313,24 @@ local function CreateQuickMenu()
 
 		local a = perc
 
-		self.Alpha = a 
-		if a > 100 then print(a) end
+		self.Alpha = a
 
 		local op = function()
 			surface.SetDrawColor(Color(250, 250, 250, a*3))
 			draw.MaterialCircle(midX, midY, (size-pad)*2 )
 		end
-	
+
 		surface.SetDrawColor(Color(10, 10, 10, math.min(a*2.35, 150)))
 		draw.MaterialCircle(midX, midY, size*2)
 
 		draw.Masked(mask, op)
 
-		self.CircleSize = size 
+		self.CircleSize = size
 
-		if perc==100 and not shrinking then 
-			shrinking = true 
+		if perc==100 and not shrinking then
+			shrinking = true
 
-			if shrinkanim then 
+			if shrinkanim then
 				shrinkanim:Swap(0.1, 0, 0.4)
 			else
 				shrinkanim = self:NewAnimation(0.1, 0, 0.4):SetSwappable()
@@ -326,7 +345,7 @@ local function CreateQuickMenu()
 				size = 64 - 24*frac
 			end
 
-		elseif shrinking and perc~=100 then 
+		elseif shrinking and perc~=100 then
 
 			shrinkanim:Swap(0.1, 0, 0.4)
 
@@ -341,7 +360,7 @@ local function CreateQuickMenu()
 
 		end
 
-		
+
 
 		qm:Paint(qm.ent, self)
 	end
@@ -352,17 +371,17 @@ end
 
 hook.Add("Think", "QuickMenus", function()
 
-	for k,v in ipairs(iqmr) do 
-		if not IsValid(v.ent) then 
-			table.remove(iqmr, k) 
-			qmregistered[v.ent] = nil 
+	for k,v in ipairs(iqmr) do
+		if not IsValid(v.ent) then
+			table.remove(iqmr, k)
+			qmregistered[v.ent] = nil
 		end
 	end
 
-	for k,v in ipairs(iqmr) do 
-		if not v.KeepAlive then 
+	for k,v in ipairs(iqmr) do
+		if not v.KeepAlive then
 			v.active = false
-		end	
+		end
 	end
 
 	local lp = LocalPlayer()
@@ -373,28 +392,28 @@ hook.Add("Think", "QuickMenus", function()
 
 	if not using then DoTimer() return end
 
-	if not IsValid(tr.Entity) then 
+	if not IsValid(tr.Entity) then
 
 		if openedQM then
 
-			for k,v in ipairs(iqmr) do 
+			for k,v in ipairs(iqmr) do
 				if v ~= openedQM._qm then
 					DoTimer(v)
-				end 
+				end
 			end
 
-		else 
+		else
 			DoTimer()
 		end
 
-	return end 
+	return end
 
 	local ent = tr.Entity
 	local qm = qmregistered[ent]
 
 	if not qm then DoTimer(nil, using) return end --??
 
-	if tr.Fraction*32768 > qm.dist then DoTimer(qm) return end 
+	if tr.Fraction*32768 > qm.dist then DoTimer(qm) return end
 
 	--if:
 	-- 	1. player held use
@@ -404,10 +423,10 @@ hook.Add("Think", "QuickMenus", function()
 	--then quickmenu counts up
 
 	qm.active = true
-	
+
 	DoTimer()
 
-	if not IsValid(openedQM) then 
+	if not IsValid(openedQM) then
 		openedQM = CreateQuickMenu()
 	end
 

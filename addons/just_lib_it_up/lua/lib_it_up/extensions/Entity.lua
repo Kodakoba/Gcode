@@ -126,3 +126,8 @@ hook.Add("FinishMove", "EntitySubscriptions", function(pl, mv)
 
 	end
 end)
+
+
+
+include("entity_dt.lua")
+AddCSLuaFile("entity_dt.lua")
