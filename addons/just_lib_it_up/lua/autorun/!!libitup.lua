@@ -97,7 +97,10 @@ function IncludeFolder(name, realm, nofold)	--This function will be used both by
 
 end
 
-IncludeFolder(path .. "*", _SH)	--add all files then folders within lib_it_up/
+include(path .. "classes.lua") -- base class goes first
+
+IncludeFolder(path .. "extensions/*", _SH) -- then extensions
+IncludeFolder(path .. "classes/*", _SH)
 
 loading = false
 

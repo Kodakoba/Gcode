@@ -2,13 +2,41 @@
 netstack = netstack or Object:callable()
 local nsm = netstack
 
+local sizes = {
+	Float = 32,
+	Double = 64,
+	Entity = 16,
+	Vector = 32 * 3,
+
+	Normal = 12*2 + 3, --https://github.com/ValveSoftware/source-sdk-2013/blob/0d8dceea4310fde5706b3ce1c70609d72a38efdf/mp/src/tier1/bitbuf.cpp#L692-L710
+
+	Angle = 32 * 3,
+	Color = 8 * 4,
+	Bool = 1,
+	Bit = 1,
+}
+
+local function determineSize(typ, ...)
+	typ = typ:gsub("Write", "")
+	if typ == "UInt" or typ == "Int" then
+		return select(2, ...)
+	elseif typ == "String" then
+		return #(select(1, ...)) * 8 + 8 -- + 8 = null byte
+	elseif typ == "Data" then
+		return select(2, ...) * 8
+	else
+		return sizes[typ] or 0
+	end
+end
+
 for k,v in pairs(net) do
-	if k:find("Write*") then
+	if k:find("Write.+") then
 		nsm[k] = function(self, ...)
 			local aeiou = {...}	--stupid stupid lua
 			self.Ops[#self.Ops + 1] = {
 				type = k,
 				args = aeiou,
+				size = determineSize(k, ...),
 				--trace = debug.traceback(),	--not worth it
 				func = function()
 					net[k](unpack(aeiou)) --i cant use ... cuz its outside of this function!!!
@@ -18,6 +46,22 @@ for k,v in pairs(net) do
 		end
 	end
 end
+
+
+local function detourSender(s)
+	_G["__realnet" .. s] = _G["__realnet" .. s] or net[s]
+
+	net[s] = function(...)
+		hook.Run("NetSent", s, ...)
+		return _G["__realnet" .. s] (...)
+	end
+end
+
+detourSender("Send")
+detourSender("SendPVS")
+detourSender("SendPAS")
+detourSender("SendOmit")
+detourSender("SendToServer")
 
 function net.WriteNetStack(ns)
 	if not ns.Ops then local str = "net.WriteNetStack: expected netstack; got %s" error(str:format(type(ns))) return end
@@ -42,6 +86,33 @@ function net.WriteNetStack(ns)
 	end
 end
 
+local hijacked = {} --cache for hijacked functions that write into the active netstack
+
+local function hijackNet()
+	for k,v in pairs(net) do
+		local name = k:find("^Write.+")
+		if name and v ~= net.WriteNetStack and isfunction(v) then
+
+			if not net["__Real" .. k] then net["__Real" .. k] = v end
+
+			local hj = hijacked[name] or function(...)
+				if net.ActiveNetstack then net.ActiveNetstack[k] (net.ActiveNetstack, ...) else net["__Real" .. k](...) end
+			end
+
+			net[k] = hj
+		end
+	end
+end
+
+local function unhijackNet()
+	for k,v in pairs(net) do
+		local name = k:find("Write.+")
+		if name and v ~= net.WriteNetStack and net["__Real" .. name] then
+			net[k] = net["__Real" .. k]
+		end
+	end
+end
+
 netstack.__call = net.WriteNetStack
 
 function netstack:Initialize()
@@ -50,6 +121,33 @@ end
 
 function netstack:GetOps()
 	return self.Ops
+end
+
+
+function netstack:BytesWritten()
+	local bits = 0
+	for k,v in ipairs(self.Ops) do
+		bits = bits + v.size
+	end
+
+	return bits / 8, bits
+end
+
+-- hijacks all net.Write* calls to instead write to this netstack
+
+function netstack:Hijack(b)
+	if b == nil or b then
+		net.ActiveNetstack = self
+		hijackNet()
+
+		hook.Once("NetSent", ("unhijack_netstack:%p"):format(self), function()
+			self:Hijack(false)
+		end)
+
+	else
+		net.ActiveNetstack = nil
+		unhijackNet()
+	end
 end
 
 function netstack:MergeInto(ns)

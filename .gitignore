@@ -1,13 +1,7 @@
-lua/autorun/server/lanes.lua
-lua/xp3/chathud-stable_5-to-1.lua
+*.*
 
-*.sublime-project
-*.sublime-workspace
-*.sublime-project
-*.zip
-*.gma
-**.*
-!gamemodes/basewars/**/*.lua
+# But descend into directories
+addons/inventory/**
 
 addons/*gdcw*
 addons/*cw*
@@ -17,3 +11,28 @@ addons/epic_mining/*
 addons/inventory/*
 addons/research/*
 addons/inventory/inventory_1.0.zip
+
+
+
+
+#lua/autorun/server/lanes.lua
+#lua/xp3/chathud-stable_5-to-1.lua
+#*
+#!*/
+#
+#*.sublime-project
+#*.sublime-workspace
+#*.sublime-project
+#*.zip
+#*.gma
+#**.*
+#!gamemodes/basewars/**/*.lua
+#
+#addons/*gdcw*
+#addons/*cw*
+#addons/*customizable*
+#
+#addons/epic_mining/*
+#addons/inventory/*
+#addons/research/*
+#addons/inventory/inventory_1.0.zip
