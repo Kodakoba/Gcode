@@ -1,5 +1,6 @@
 *.*
 
+!addons/**
 # But descend into directories
 addons/inventory/**
 
