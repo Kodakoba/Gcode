@@ -384,7 +384,7 @@ function PANEL:UpdateNotches()
 	if ( range < self:GetWide() / 4 ) then
 		return self.Slider:SetNotches( range )
 	else
-		self.Slider:SetNotches( self:GetWide() / 4 )
+		self.Slider:SetNotches( self:GetWide() / 8 )
 	end
 
 end

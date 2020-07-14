@@ -1,6 +1,6 @@
 MoarPanelsMats = MoarPanelsMats or {}
 
-setfenv(1, _G) --never speak to me or my son
+setfenv(0, _G) --never speak to me or my son
 
 MoarPanelsMats.gu = Material("vgui/gradient-u")
 MoarPanelsMats.gd = Material("vgui/gradient-d")
@@ -25,6 +25,20 @@ hook.Add("InitPostEntity", "MoarPanels", function()
 end)
 
 local circles = {rev = {}, reg = {}} --reverse and regular
+
+local function LerpColor(frac, col1, col2, src)
+
+	col1.r = Lerp(frac, src.r, col2.r)
+	col1.g = Lerp(frac, src.g, col2.g)
+	col1.b = Lerp(frac, src.b, col2.b)
+
+	if src.a ~= col2.a then
+		col1.a = Lerp(frac, src.a, col2.a)
+	end
+
+end
+
+draw.LerpColor = LerpColor
 
 local function BenchPoly(...)	--shh
 	surface.DrawPoly(...)

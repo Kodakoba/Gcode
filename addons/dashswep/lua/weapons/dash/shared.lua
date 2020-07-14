@@ -1,5 +1,5 @@
 
-if not GachiRP then easylua.StartWeapon("dash") end
+if not GachiRP then easylua.StartWeapon("dash2") end
 
 setfenv(0, _G)
 
@@ -260,6 +260,7 @@ hook.Add("FinishMove", "Dash", function(ply, mv, cmd)
 	if dash.EndSuperMove and SERVER then
 		if mv:GetVelocity():Length() < 800 or ply:IsOnGround() then
 			dash:SetSuperMoving(false)
+			dash.EndSuperMove = nil
 		end
 	end
 	if not DashTable[ply] then return end
@@ -428,4 +429,5 @@ function SWEP:SecondaryAttack()
 
 end
 
-if not GachiRP then easylua.EndWeapon("dash") end
+
+if not GachiRP then easylua.EndWeapon() end

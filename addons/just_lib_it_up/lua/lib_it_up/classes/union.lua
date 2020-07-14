@@ -54,6 +54,10 @@ function UnionTable:__index(key)
 	return func
 end
 
+function UnionTable:OnExtend(new)
+	new.__index = UnionTable.__index
+end
+
 function UnionTable:Initialize(t)
 	if t then return setmetatable(t, UnionTable) end
 end

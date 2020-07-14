@@ -18,7 +18,8 @@ if SERVER then util.AddNetworkString("DTVarChangeNotify") end
 
 if not table.KeysToValues then include("table.lua") end
 
-local queue = {}
+_EntityDTQueue = _EntityDTQueue or {}
+local queue = _EntityDTQueue
 
 local sz = {
 	Int = 32,
@@ -37,9 +38,33 @@ local typs = {
 local backTyps = table.KeysToValues(typs)
 local typLen = #backTyps
 
+local OBBs = { -- add ent pos, min, max and center of its' obb to PVS
+	function(e, pos)
+		return pos
+	end,
+
+	function(e, pos)
+		local p = e:OBBMins()
+		p:Add(pos)
+		return p
+	end,
+
+	function(e, pos)
+		local p = e:OBBMaxs()
+		p:Add(pos)
+		return p
+	end,
+
+	function(e, pos)
+		local p = e:OBBCenter()
+		p:Add(pos)
+		return p
+	end
+}
+
 function ENTITY:NotifyDTVars(pvs)
-	if not self:IsValid() then return end
-	if not queue[self] or table.Count(queue[self]) == 0 then return end
+	if not self:IsValid() then print("NotifyDTVars: invalid self.") return end
+	if not queue[self] or table.Count(queue[self]) == 0 then print("NotifyDTVars: Nothing queued") return end
 
 	net.Start("DTVarChangeNotify")
 		net.WriteEntity(self)
@@ -52,7 +77,15 @@ function ENTITY:NotifyDTVars(pvs)
 			net["Write" .. typ] (val, sz[typ])
 		end
 
-	net.SendPVS(self:GetPos())
+		local recip = RecipientFilter()
+		local pos = self:GetPos()
+
+		for i=1, #OBBs do
+			local pvs_point = OBBs[i](self, pos)
+			recip:AddPVS(pvs_point)
+		end
+
+	net.Send(recip)
 
 	table.Empty(queue[self])
 end
@@ -68,7 +101,7 @@ function ENTITY:QueueNotifyChange(ind, typ, name, old, new)
 
 	local notify = self.NotifyDTVars
 
-	timer.Create(("%p"):format(self), 0, 1, function() notify(self) end)
+	timer.Create(("NotifyDTs:%p"):format(self), 0, 1, function() notify(self) end)
 
 end
 
@@ -77,8 +110,8 @@ local notifQueue = {}
 local notifyDT --pre-definition, see client part
 
 function ENTITY:InstallDataTable()
-	self:oldInstallDataTable()
 
+	self:oldInstallDataTable()
 	local datatable = select(2, debug.getupvalue(self.CallDTVarProxies, 1))
 
 	self._dt_data = datatable
@@ -86,7 +119,7 @@ function ENTITY:InstallDataTable()
 	local dt_rev = {}
 	self._dt_reverse = dt_rev
 
-	self.CallDTVarProxies = BlankFunc
+	--self.CallDTVarProxies = BlankFunc
 
 	self.DTVar = function( ent, typename, index, name )
 
@@ -152,7 +185,6 @@ if CLIENT then
 	function notifyDT(ent, all_data)
 
 		local rev = ent._dt_reverse
-
 		--[[
 			["String"] = {
 				[1] = {datatable_stuff},
@@ -164,7 +196,7 @@ if CLIENT then
 		for typ, indvals in pairs(all_data) do
 
 			for ind, val in pairs(indvals) do
-				if not rev[typ .. ind] then continue end
+				if not rev[typ .. ind] then print("notifyDT: didnt find", typ .. ind) continue end
 				callCallbacks(ent, rev[typ .. ind], val)
 			end
 		end
@@ -172,7 +204,6 @@ if CLIENT then
 	end
 
 	net.Receive("DTVarChangeNotify", function(len)
-
 		local entID = net.ReadUInt(16)
 		local valid = true
 
@@ -198,7 +229,7 @@ if CLIENT then
 
 		local ent = Entity(entID)
 
-		if valid then
+		if valid and ent._dt_reverse then
 			notifyDT(ent, dat)
 		else
 			notifQueue[entID] = dat

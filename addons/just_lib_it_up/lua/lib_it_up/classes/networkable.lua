@@ -2,7 +2,7 @@ setfenv(0, _G)
 
 if not muldim then include("multidim.lua") end
 
-Networkable = Emitter:callable()
+Networkable = Networkable or Emitter:callable()
 local nw = Networkable
 
 local update_freq = 0.3
@@ -16,10 +16,18 @@ _NetworkableLastNetworkedIDs = 0		--how many NumberToID pairs existed when it wa
 
 _NetworkableChanges = muldim:new()-- _NetworkableChanges or muldim:new()
 
+_NetworkableAwareness = muldim:new() --[ply] = {'ID', 'ID'} , not numberids
+
 local cache = _NetworkableCache
 
 local numToID = _NetworkableNumberToID
 local IDToNum = _NetworkableIDToNumber
+
+function Networkable.ResetAll()
+	table.Empty(cache)
+	table.Empty(numToID)
+	table.Empty(IDToNum)
+end
 
 local encoderIDLength = 5 --5 bits fit 16 (0-15) encoders
 
@@ -66,8 +74,8 @@ local decoders = {
 	["color"] = {6, net.ReadColor},
 
 	["uint"] = {7, net.ReadUInt, 32},
-	["float"] = {8, net.ReadFloat},
-	["int"] = {9, net.ReadInt, 32},
+	["int"] = {8, net.ReadInt},
+	["float"] = {9, net.ReadFloat, 32},
 }
 
 local decoderByID = {}
@@ -76,14 +84,16 @@ for typ,v in pairs(decoders) do
 	decoderByID[v[1]] = v
 end
 
-
+local NetworkAll --pre-definition
 
 local function determineEncoder(typ, val)
 	if typ == "number" then --numbers are a bit more complicated
 		if math.ceil(val) == val then
+			print("ceiled val == val", val)
 			if val >= 0 then return net.WriteUInt, 7, 32
 			else return net.WriteInt, 8, 32 end
 		else
+			print("ceiled val is not the same, writing float")
 			return net.WriteFloat, 9
 		end
 	end
@@ -91,7 +101,7 @@ local function determineEncoder(typ, val)
 	if typ == "player" or typ == "weapon" then typ = "entity" end
 
 	local enc = encoders[typ]
-	if not enc then errorf("Failed to find Encoder function for type %s!", typ) return end
+	if not enc then errorf("Failed to find Encoder function for type %s! Value is %s", typ, val) return end
 
 	return enc[2], enc[1], enc[3]
 end
@@ -115,7 +125,9 @@ function nw:Initialize(id)
 
 	if SERVER then
 		numToID[#numToID + 1] = id
+
 		IDToNum[id] = #numToID
+		self.NumberID = #numToID
 	end
 	--self.NumberID = nil
 
@@ -128,7 +140,45 @@ function nw:Set(k, v)
 
 	self.Networked[k] = v
 	_NetworkableChanges:Set(v, self.ID, k)
+	return self
 end
+
+function nw:Invalidate()
+	_NetworkableCache[self.ID] = nil
+	table.remove(numToID, IDToNum[self.ID])
+	IDToNum[self.ID] = nil
+
+	for ply, ids in pairs(_NetworkableAwareness) do
+		ids[self.ID] = nil
+	end
+
+	_NetworkableLastNetworkedIDs = _NetworkableLastNetworkedIDs - 1
+end
+
+
+function nw:Bond(what)
+	if not self.ID then error("Assign an ID first!") return end
+
+	if isentity(what) then
+		hook.OnceRet("EntityRemoved", ("Networkable.Bond:%p"):format(what), function(ent)
+			if ent ~= what then return false end
+			print("EntityRemoved", ent, " invaidating networkable", Realm())
+			if CLIENT then
+				timer.Simple(0.1, function()
+					if IsValid(self) then print("Disregard...?") self:Bond(self) return end --fullupdates :v
+					print("Invalidated")
+					self:Invalidate()
+				end)
+			else
+				self:Invalidate()
+			end
+
+		end)
+	end
+	
+	return self
+end
+
 
 local function IDToNumber(id)
 	return IDToNum[id]
@@ -136,13 +186,12 @@ end
 
 if SERVER then
 
-	local function WriteIDPair(i)
-		local num = #numToID - (i - 1)
+	local function WriteIDPair(i, literal)
+
+		local num = literal and i or #numToID - (i - 1)
+		print("writing idpair", num, numToID[num])
 		local name = numToID[num]
 		local obj = cache[name]
-		print(name, cache[name])
-		--[[print("IDEncoder:", obj.IDEncoder.IDArg)
-		PrintTable(obj.IDEncoder)]]
 
 		net.WriteUInt(num, 24)
 		net.WriteUInt(obj.IDEncoder.ID, encoderIDLength)
@@ -169,15 +218,33 @@ if SERVER then
 
 	util.AddNetworkString("NetworkableSync")
 
-	timer.Create("NetworkableNetwork", update_freq, 0, function()
+
+	-- this networks to ALL PLAYERS!
+
+	--[[local]] function NetworkAll()
 		if not next(_NetworkableChanges) then return end
 
-		local changes_count = table.Count(_NetworkableChanges)
+		local everyone = player.GetAll()
+
+		local changes_count = 0
+
+		for id, v in pairs(_NetworkableChanges) do
+			-- if an obj has a filter it gets removed from all-player-broadcasting
+			local obj = _NetworkableCache[id]
+
+			if not obj.Filter then
+				changes_count = changes_count + 1
+				for k, ply in ipairs(everyone) do
+					local arr = _NetworkableAwareness:GetOrSet(ply)
+					arr[obj.ID] = true
+				end
+			end
+		end 
+
 		local newid_count = #numToID - _NetworkableLastNetworkedIDs
 		_NetworkableLastNetworkedIDs = #numToID
 		local nw = netstack:new()
 
-		print("networking")
 		net.Start("NetworkableSync")
 			net.WriteUInt(newid_count, 16)
 			for i=1, newid_count do
@@ -193,6 +260,9 @@ if SERVER then
 			local bits = select(2, net.BytesWritten())
 
 			for id, changes in pairs(_NetworkableChanges) do
+				local obj = _NetworkableCache[id]
+				if obj.Filter then continue end --nyope
+
 				changed = changed + 1
 				net.WriteUInt(IDToNumber(id), 24)
 				net.WriteUInt(table.Count(changes), 16) --amount of changed values in the Networkable object
@@ -217,8 +287,15 @@ if SERVER then
 
 			_AAA = ns
 			net.WriteNetStack(ns)
-
+			print("sent Networkables to all", newid_count, changes_count)
 		net.Send(player.GetAll())
+	end
+
+	timer.Create("NetworkableNetwork", update_freq, 0, function()
+		local ok, err = pcall(NetworkAll)
+		if not ok then
+			print("NetworkableNetwork Error:", err)
+		end
 	end)
 
 	hook.Add("PlayerFullyLoaded", "NetworkableUpdate", function(ply)
@@ -244,6 +321,29 @@ if SERVER then
 
 	end)
 
+
+	function nw:Network() --networks everything in the next tick
+		if not self.Filter then
+			timer.Adjust("NetworkableNetwork", 0, 0, function()
+				NetworkAll()
+				timer.Adjust("NetworkableNetwork", update_freq, 0, NetworkAll)
+			end)
+		else
+			local anyone_missing = false
+			for k, ply in ipairs(self.Filter) do
+				if not _NetworkableAwareness[ply] or not _NetworkableAwareness[ply][self.ID] then anyone_missing = true break end --awh
+			end
+
+			net.Start("NetworkableSync")
+				net.WriteUInt(anyone_missing and 1 or 0, 16) --don't write yourself if everyone knows
+				if anyone_missing then
+					WriteIDPair(self.NumberID, true)
+				end
+
+				net.WriteUInt(1, 16)
+		end
+	end
+
 end
 
 if CLIENT then
@@ -262,9 +362,15 @@ if CLIENT then
 		local k_encID = net.ReadUInt(encoderIDLength)
 
 		local k_dec = decoderByID[k_encID]
+
+		if not k_dec then
+			print("failed to read k_dec", k_dec, k_encID)
+		end
+
 		local decoded_key = k_dec[2](k_dec[3])
 
 		local v_encID = net.ReadUInt(encoderIDLength)
+
 		local v_dec = decoderByID[v_encID]
 		local decoded_val = v_dec[2](v_dec[3])
 
@@ -275,21 +381,23 @@ if CLIENT then
 		print("received networkable sync: length", len/8, "bytes")
 		-- read new numid:id pairs
 		local new_ids = net.ReadUInt(16)
+		print("reading", new_ids, "new pairs")
 		for i=1, new_ids do
 			local num_id, id = ReadIDPair(i)
 
 			if not _NetworkableCache[id] then --that object doesn't exist clientside; create it ahead of time
+				print("creating networkable we didn't know about...?", id)
 				_NetworkableCache[id] = Networkable(id)
 			end
-
+			print("created pair", num_id, "=", id)
 			numToID[num_id] = id
 		end
 
 		--read networkable changes
-		local changes = net.ReadUInt(16)
+		local changes = net.ReadUInt(16) --how many networkable objects were changed
 		for i=1, changes do
-			local num_id = net.ReadUInt(24)
-			local changed_keys = net.ReadUInt(16)
+			local num_id = net.ReadUInt(24)			--numberID of the networkable object
+			local changed_keys = net.ReadUInt(16)	--amt of changed keys
 
 			local obj = _NetworkableCache[numToID[num_id]]
 
@@ -298,7 +406,10 @@ if CLIENT then
 				if obj then obj.Networked[k] = v end
 			end
 
-			if obj then obj:Emit("Changed") end
+			if obj then
+				obj.NumberID = num_id
+				obj:Emit("Changed")
+			end
 		end
 	end)
 end
