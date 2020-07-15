@@ -17,6 +17,9 @@ Colors.LighterGray = Color(75, 75, 75)
 Colors.Sky = Color(50, 150, 250)
 Colors.Money = Color(100, 220, 100)
 
+Colors.DarkWhite = Color(220, 220, 220) --yes, dark white
+Colors.Blue = Color(60, 140, 200)
+
 function COLOR:Set(col, g, b, a)
 
 	if IsColor(col) then

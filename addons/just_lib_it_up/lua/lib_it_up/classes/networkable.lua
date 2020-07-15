@@ -175,7 +175,7 @@ function nw:Bond(what)
 
 		end)
 	end
-	
+
 	return self
 end
 
@@ -239,7 +239,7 @@ if SERVER then
 					arr[obj.ID] = true
 				end
 			end
-		end 
+		end
 
 		local newid_count = #numToID - _NetworkableLastNetworkedIDs
 		_NetworkableLastNetworkedIDs = #numToID

@@ -788,7 +788,7 @@ function draw.GetRT(name, w, h)
 	return rt
 end
 
-function draw.RenderOntoMaterial(name, w, h, func, rtfunc, matfunc, pre_rt, pre_mat, has2d)
+function draw.RenderOntoMaterial(name, w, h, func, rtfunc, matfunc, pre_rt, pre_mat, has2d, x, y)
 
 	local rt
 	local mat
@@ -838,7 +838,7 @@ function draw.RenderOntoMaterial(name, w, h, func, rtfunc, matfunc, pre_rt, pre_
 
 	mat:SetTexture("$basetexture", rt:GetName())
 
-	render.PushRenderTarget(rt)
+	render.PushRenderTarget(rt, x or 0, y or 0, w, h)
 
 		render.OverrideAlphaWriteEnable(true, true)
 

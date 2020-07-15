@@ -165,7 +165,7 @@ function NavbarChoice:Draw(w, h)
 																--(basically makes so text is invisible until 35% expanded)
 
 
-	draw.SimpleText(self.Name, "BS22", tx, 2, self.TextColor, 0, 5)
+	draw.SimpleText(self.Name, self.Font or "BS22", tx, 2, self.TextColor, 0, 5)
 
 	if self.WrappedDescription then
 		local frac = math.max((nav.ExpandFrac - 0.4) * 1/0.6, 0)
@@ -290,7 +290,7 @@ function Navbar:Init()
 	self.Tabs = {}
 end
 
-function Navbar:OnClick()
+function Navbar:OnClick() --on clicked the expand button/arrow
 	local btn = self.ShowBtn
 
 	self.Active = not self.Active
@@ -458,10 +458,14 @@ function NavPanel:GenerateInvisibleButton(nav)
 	btn:SetSize(self:GetWide(), self:GetTall())
 	btn:SetText("")
 	btn.Paint = BlankFunc
+
 	btn.DoClick = function()
 		self.Navbar:OnClick()
 	end
+
 	btn:SetZPos(32766)
+	btn:RequestFocus()
+	btn:SetDoubleClickingEnabled(false)
 	self.__InvisButton = btn
 end
 
@@ -479,8 +483,11 @@ function NavPanel:SetRetractedSize(size)
 end
 
 function NavPanel:SetExpandedSize(size)
+	local x = -size * (1 - self.Navbar.ExpandFrac) + self.Navbar.RetractedSize
+	self.Navbar.X = x
 	self.Navbar:SetWide(size)
 end
+
 function NavPanel:SetTabSize(size)
 	self.TabSize = size
 	local l, t, r, b = self:GetDockPadding()
