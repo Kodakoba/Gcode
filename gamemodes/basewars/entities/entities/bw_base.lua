@@ -136,7 +136,7 @@ function ENT:SetupDataTables()
 	self:NetworkVar("Bool", 1, "Powered")
 	self:NetworkVar("Float", 1, "RebootTime")
 
-	self:NetworkVar("Int", 2, "GridID")
+	self:NetworkVar("Int", 0, "GridID")
 
 	self:NetworkVar("Entity", 0, "Line")
 
@@ -167,6 +167,9 @@ function ENT:OnChangeGridID(new)
 
 end
 
+function ENT:SHInit()
+
+end
 
 if SERVER then
 
@@ -174,7 +177,7 @@ if SERVER then
 		BWEnts[self] = {}
 		local me = BWEnts[self]
 		me.ConnectDistanceSqr = self.ConnectDistance ^ 2
-		
+
 		self:SetModel(self.Model)
 		self:SetSkin(self.Skin)
 
@@ -192,6 +195,7 @@ if SERVER then
 		self.rtb = 0
 
 		self:Init(me)
+		self:SHInit()
 
 		self:SetMaxHealth(self:Health())
 
@@ -325,6 +329,7 @@ else
 		BWEnts[self] = {}
 		self:OnChangeGridID(self:GetGridID())
 		self:CLInit()
+		self:SHInit()
 	end
 
 end
