@@ -111,7 +111,8 @@ hook.Add("FinishMove", "EntitySubscriptions", function(pl, mv)
 		local ent = dat[1]
 		local dist = dat[2]
 		local callback = dat[3]
-
+		if not IsValid(ent) then table.remove(subs[pl], key) continue end
+	
 		local epos = ent:GetPos()
 
 		if pos:DistToSqr(epos) > dist then
