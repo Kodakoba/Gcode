@@ -27,7 +27,7 @@ function MySQLEmitter:Initialize(query, also_do)
 	if also_do then self.CurrentQuery:start() end
 end
 
-function MySQLEmitter:onSuccess(qobj, data) --self is the mysqloo query object
+function MySQLEmitter:onSuccess(qobj, data)
 	self.CurrentQuery = nil
 
 	self:Emit("Success", qobj, data, self.CurrentStep)
