@@ -7,6 +7,7 @@ util.AddNetworkString("BlueprintPrinter")
 
 function ENT:Init(me)
 	self.LastPrint = CurTime()
+	self.LastThink = CurTime()
 end
 
 function ENT:SendInfo(ply)
@@ -29,6 +30,10 @@ end
 
 function ENT:Think()
 	local me = BWEnts[self]
+	local diff = CurTime() - self.LastThink
+	self.LastThink = CurTime()
+
+	if not self:IsPowered() then self.LastPrint = self.LastPrint + diff return end
 
 	if self:GetJammed() then
 		if self:IsFull() then

@@ -5,44 +5,48 @@ local blue = Color(40, 120, 250)
 local green = Color(80, 200, 80)
 
 hdl.DownloadFile("https://i.imgur.com/SpRAhWY.jpg", "crafting/bp_line.jpg", function(fn)
+	local mat = Material(fn, "noclamp")
 
-	local path = Material(fn, "noclamp"):GetTexture("$basetexture"):GetName()
+	if not BlueprinterMat then
 
-	CreateMaterial("BlueprintPrinterLine", "VertexLitGeneric", {
-		["$basetexture"] = path,
-		["$nocull"] = 1,
+		BlueprinterMat = CreateMaterial("BlueprintPrinter_Line", "VertexLitGeneric", {
+			["$nocull"] = 1,
+			["$model"] = 1,
 
-		["$model"] = 1,
-		--["$translucent"] = 1,
-		--["$vertexalpha"] = 1,
+			["$texturescrollspeed"] = 0.05,
 
-		["$texturescrollspeed"] = 0.05,
+			["$vertexcolor"] = 1,
 
-		["$vertexcolor"] = 1,
+			["Proxies"] = {
+				["TextureScroll"] = {
+					["texturescrollvar"] = "$basetexturetransform",
+					["texturescrollrate"] = "$texturescrollspeed",
+					["texturescrollangle"] = -90
+				},
 
-		["Proxies"] = {
-			["TextureScroll"] = {
-				["texturescrollvar"] = "$basetexturetransform",
-				["texturescrollrate"] = "$texturescrollspeed",
-				["texturescrollangle"] = -90
-			},
-
-			["BlueprintScroll"] = {
-				resultVar = "$texturescrollspeed"
+				["BlueprintScroll"] = {
+					resultVar = "$texturescrollspeed"
+				}
 			}
-		}
+		})
+
+	end
+
+	BlueprinterMat:SetTexture("$basetexture", mat:GetTexture("$basetexture"))
+
+	matproxy.Add({
+		name = "BlueprintScroll",
+		init = function( self, mat, values )
+
+		end,
+		bind = function( self, mat, ent )
+			mat:SetFloat("$texturescrollspeed", ent.ScrollSpeed or 0.1)
+		end
 	})
+
 end)
 
-matproxy.Add({
-	name = "BlueprintScroll",
-	init = function( self, mat, values )
 
-	end,
-	bind = function( self, mat, ent )
-		mat:SetFloat("$texturescrollspeed", ent.ScrollSpeed or 0.1)
-	end
-})
 
 function ENT:CLInit()
 
@@ -122,6 +126,8 @@ function ENT:GenerateWithdrawMenu(menu, old)
 
 	function pnl:Paint(w, h)
 		local fin = ent:GetNextFinish()
+		local is_pw = ent:IsPowered()
+
 		local left = math.max(fin - CurTime(), 0)
 		local tx = ("%.1f s."):format(left, 2)
 
@@ -132,7 +138,9 @@ function ENT:GenerateWithdrawMenu(menu, old)
 		surface.SetMaterial(MoarPanelsMats.gl)
 		surface.DrawTexturedRect(w - infoW, 0, 5, h)
 
-		if ent:GetJammed() then
+		if not is_pw then
+			draw.SimpleText("No power.", "MR18", w - infoW/2, h/2, Colors.LightGray, 1, 1)
+		elseif ent:GetJammed() then
 			draw.SimpleText("Full!", "MR18", w - infoW/2, h/2, Colors.Red, 1, 1)
 		else
 			draw.SimpleText("Next print in:", "MR18", w - infoW/2, h/2 - 9, color_white, 1, 1)
@@ -148,7 +156,8 @@ function ENT:OpenMenu()
 	if IsValid(menu) then return end
 
 	local inv = Inventory.Panels.CreateInventory(LocalPlayer().Inventory.Backpack, nil, {
-		SlotSize = 64
+		SlotSize = 64,
+		SlotPadding = 4
 	})
 
 	--inv:SetTall(350)

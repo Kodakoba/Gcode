@@ -37,7 +37,7 @@ end
 
 
 function ENT:SHInit()
-	self:SetSubMaterial(1, "!BlueprintPrinterLine")
+	self:SetSubMaterial(1, "!BlueprintPrinter_Line")
 	self.Inventory = {Inventory.Inventories.Entity:new(self)}
 
 	self.Storage = self.Inventory[1]
