@@ -8,6 +8,18 @@ BlankFunc = function() end
 BLANKFUNC = BlankFunc
 
 Class = {}
+
+Class.__index = function(self, k)
+	local parval = rawget(Class, k)
+
+	if parval ~= nil then
+		return parval
+	else
+		return Class.Meta[k]
+	end
+
+end
+
 Class.Meta = {__index = Class}
 Class.Debugging = false
 
@@ -64,6 +76,10 @@ local recursiveExtend = function(new, old, ...)
 	end
 end
 
+function Class:ChangeInitArgs(...)
+	Class.__args = {...}
+end
+
 function Class:extend(...)
 	local new = {}
 	local old = self
@@ -78,7 +94,7 @@ function Class:extend(...)
 
 	setmetatable(new.Meta, old)
 
-	new.__index = function(t, k)
+	new.__index = function(t, k) --daily reminder this __index is for children, not for the class itself
 		local parval = rawget(new, k)
 
 		if parval ~= nil then
@@ -92,6 +108,8 @@ function Class:extend(...)
 	new.__instance = new
 	local curobj
 
+	
+
 	new.__init = function(newobj, ...) --this function is kinda hard to wrap your head around, so i'll try to explain
 		--`self` is the parent class
 		--`new` is the new class
@@ -99,14 +117,23 @@ function Class:extend(...)
 		lv = lv + 1
 		local is_def = false 	--is this the function call that defined curobj?
 
-		if not curobj then
-			curobj = newobj
+		curobj = newobj
+		local oldArgs
+
+		if newobj.__instance == new then
+			
 			is_def = true
+			oldArgs = Class.__args
+			Class.__args = {...}
+
 		end
+
+		local args = Class.__args
 
 		if self.__init then 							--recursively call the parents' __init's
 			if Class.Debugging then print("found __init in", self.Name) end
-			local ret = self.__init(curobj, ...)		--if any of the initializes return a new object,
+
+			local ret = self.__init(curobj, unpack(args))		--if any of the initializes return a new object,
 			curobj = ret or curobj						--that object will be used forward going up the chain
 		end
 
@@ -114,13 +141,15 @@ function Class:extend(...)
 	  --[[------------------------------]]
 	  --	  calling :Initialize()
 	  --[[------------------------------]]
+	  	args = Class.__args
 
 		local func = rawgetInitFunc(new)	--after the oldest __init was called it'll start calling :Initialize()
 											--this way we call :Initialize() starting from the oldest one and going up to the most recent one
 
 		if func then
 			if Class.Debugging then print("Rawgot init foonction from", new.Name) end
-			local ret = func(curobj, ...)		--returning an object from any of the Initializes will use
+
+			local ret = func(curobj, unpack(args))		--returning an object from any of the Initializes will use
 			curobj = ret or curobj 				--that returned object on every initialize up the chain
 		end
 
@@ -129,6 +158,7 @@ function Class:extend(...)
 		if is_def then
 			local temp = curobj 	--return curobj to original state
 			curobj = nil
+			Class.__args = oldArgs
 
 			return temp
 		end
