@@ -1,5 +1,5 @@
 if not Emitter then include('emitter.lua') end
-Animatable = Emitter:callable()
+Animatable = Animatable or Emitter:callable()
 AnimatableObjects = AnimatableObjects or {}
 local objs = AnimatableObjects
 
