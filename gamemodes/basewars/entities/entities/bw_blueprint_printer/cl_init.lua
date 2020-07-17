@@ -173,7 +173,7 @@ function ENT:OpenMenu()
 
 	menu.X = ScrW() / 2 - sumW / 2
 	menu.Y = inv.Y
-	inv.X = menu.X + menu:GetWide() + 8 
+	inv.X = menu.X + menu:GetWide() + 8
 
 	inv:Bond(menu)
 	menu:Bond(inv)

@@ -25,7 +25,7 @@ local function OntoMat(id, w, h, func)	--scrapped
 
 	if not prerenders[id] then
 		prerenders[id] = draw.RenderOntoMaterial("bphelp1shadow" .. id, w, h, func)
-	else 
+	else
 		surface.SetDrawColor(color_white)
 		surface.SetMaterial(prerenders[id])
 		surface.DrawTexturedRect(0, 0, w, h)
@@ -44,7 +44,7 @@ local BlueprintPaints = {
 		surface.SetDrawColor(Colors.DarkWhite)
 		surface.DrawMaterial("https://i.imgur.com/zhejG17.png", "bp128.png", w/2 - 36, h/2 - 36, 72, 72)
 	end,
-		
+
 	--[[
 		Tier 2 paint
 	]]
@@ -105,9 +105,9 @@ local BlueprintPaints = {
 			surface.SetDrawColor(color_white)
 			surface.SetMaterial(bpmat)
 			surface.DrawTexturedRect(w/2 - 40, h/2 - 40, 80, 80)
-			
+
 		BSHADOWS.EndShadow(2, 45, 1, 205, 60, 2, nil, Color(230, 5, 5), Color(170, 1, 1))
-	end,	
+	end,
 }
 
 
@@ -121,7 +121,7 @@ local mats = {	-- "random" will be rendered from an RT as soon as the menu opens
 
 function ENT:OpenMenu()
 	if IsValid(menu) then return end
-	local ent = self 
+	local ent = self
 
 	mats.random = mats.random or draw.RenderOntoMaterial("bp_random", 48, 48, function(w, h)
 		draw.SimpleText("?", "MRB72", w/2, h/2, color_white, 1, 1)
@@ -141,27 +141,28 @@ function ENT:OpenMenu()
 
 	menu.Delta = DeltaText()
 
-	menu.Inventory = Inventory.CreateFrame(Inventory.Data.Temp)
+	menu.Inventory = Inventory.Panels.CreateInventory(LocalPlayer().Inventory.Backpack, nil, {
+		SlotSize = 64
+	})
 
-	function menu:OnRemove()
-		if IsValid(self.Inventory) then 
-			self.Inventory:Remove()
-		end
-	end
+	menu.Inventory:CenterVertical()
 
-	local inv = menu.Inventory 
+	menu:Bond(menu.Inventory)
+	menu.Inventory:Bond(menu)
+
+	local inv = menu.Inventory
 	inv:SetSize(342, menu:GetTall())
 	inv:MoveRightOf(menu, 8)
 	inv.Y = menu.Y
 
-	inv:CreateItems()
+	--inv:CreateItems()
 
 	local basecost = 0
 
 	local costmult = 1
 	local curcost = basecost
 
-	local delta = menu.Delta 
+	local delta = menu.Delta
 
 	local dtext = delta:AddText("")
 	dtext:SetColor(Colors.DarkWhite)
@@ -170,16 +171,21 @@ function ENT:OpenMenu()
 	local ptier = dtext:AddFragment("?")
 	dtext:AddFragment(" Blueprint")
 
-	
-
 	delta:SetAlignment(1)
 	delta:SetFont("MR36")
+
+	local bp_col = color_white:Copy()
 
 	function menu:PostPaint(w, h)
 		delta:Paint(w/2, 80 + 120 + 24)
 
-		if self.Cost then 
-			surface.SetDrawColor(color_white)
+		if self.Cost then
+		
+			self:To("BPAlpha", 255, 0.3, 0, 0.3)
+			local a = self.BPAlpha or 0
+			bp_col.a = a
+
+			surface.SetDrawColor(bp_col)
 			surface.DrawMaterial("https://i.imgur.com/zhejG17.png", "bp128.png", w/2 - 72, h - 158, 64, 64)
 			self.Cost:Paint(w/2, h - 150)
 		end
@@ -190,14 +196,14 @@ function ENT:OpenMenu()
 		local newcost = math.floor(basecost * costmult)
 
 
-		if self.Cost then 
+		if self.Cost then
 			if newcost > curcost then
 				self.CostPiece:SetDropStrength(18)
 				self.CostPiece:SetLiftStrength(-18)
-			else 
+			else
 				self.CostPiece:SetDropStrength(-18)
 				self.CostPiece:SetLiftStrength(18)
-			end 
+			end
 
 			self.CostPiece:ReplaceText(self.CostFragmentInd, newcost)
 		end
@@ -209,8 +215,8 @@ function ENT:OpenMenu()
 		bpmat = mat
 	end)
 
-	if dled then 
-		bpmat = dled.mat 
+	if dled then
+		bpmat = dled.mat
 	end
 
 	--[[
@@ -218,7 +224,7 @@ function ENT:OpenMenu()
 	]]
 
 	local icons = vgui.Create("FIconLayout", menu)
-	icons.CenterX = true 
+	icons.CenterX = true
 
 	icons:SetPos(80, 80)
 	icons:SetSize(menu:GetWide() - icons:GetPos()*2, 120)
@@ -246,20 +252,20 @@ function ENT:OpenMenu()
 
 	local cType
 
-	for i=1, btns do 
+	for i=1, btns do
 
 		local tier = icons:Add("FButton")
 
 		tier:SetSize(96, 120 - 16)
 
 		function tier:PostPaint(w, h)
-			if BlueprintPaints[i] then 
-				BlueprintPaints[i] (self, w, h) 
+			if BlueprintPaints[i] then
+				BlueprintPaints[i] (self, w, h)
 			end
 		end
 
 		function tier:DoClick()
-			if sel then 
+			if sel then
 				sel:SetColor(70, 70, 70)
 			end
 
@@ -267,7 +273,7 @@ function ENT:OpenMenu()
 
 			sel = self
 
-			basecost = Inventory.BlueprintCosts[i]
+			basecost = Inventory.Blueprints.Costs[i]
 
 			menu:UpdateCost()
 			menu:MakeTier(i)
@@ -282,16 +288,16 @@ function ENT:OpenMenu()
 		if not cycled then
 			delta:CycleNext()
 			dtext.Fragments[ptier].Text = t
-			cycled = true 
+			cycled = true
 		else
 
 			if t > SelectedTier then
 				dtext:SetDropStrength(12)
 				dtext:SetLiftStrength(-12)
-			else 
+			else
 				dtext:SetDropStrength(-12)
 				dtext:SetLiftStrength(12)
-			end 
+			end
 
 			dtext:ReplaceText(ptier, t)
 		end
@@ -301,6 +307,7 @@ function ENT:OpenMenu()
 			cType = vgui.Create("FComboBox", menu)
 			cType:SetSortItems(false)
 			cType:CenterHorizontal()
+			cType:PopIn()
 
 			cType.Y = 280
 			cType:SetSize(160, 40)
@@ -308,9 +315,9 @@ function ENT:OpenMenu()
 			cType:SetContentAlignment(5)
 			cType:SetColor(Color(70, 70, 70))
 
-			local t = {} 
+			local t = {}
 
-			for k,v in pairs(Inventory.BlueprintTypes) do 
+			for k,v in pairs(Inventory.Blueprints.Types) do
 				v = table.Copy(v)
 				v.Name = v.Name or k
 
@@ -321,7 +328,7 @@ function ENT:OpenMenu()
 				return a.CostMult < b.CostMult or (a.Order and b.Order and a.Order > b.Order)
 			end)
 
-			for k,v in ipairs(t) do 
+			for k,v in ipairs(t) do
 
 				local name = v.Name
 				local mat = mats[v.RenderName]
@@ -330,7 +337,7 @@ function ENT:OpenMenu()
 
 				if v.Icon and not mat then
 
-					if icon.RenderName then 
+					if icon.RenderName then
 
 						mat = draw.RenderOntoMaterial(icon.RenderName, icon.RenderW, icon.RenderH, icon.Render)
 						mats[icon.RenderName] = mat
@@ -340,20 +347,20 @@ function ENT:OpenMenu()
 						mat = draw.GetMaterial(icon.IconURL, icon.IconName, icon.IconFlags, function(mat, cache)
 							if cache then return end
 
-							if IsValid(cType) then 
+							if IsValid(cType) then
 								cType:SetChoiceMaterial(name, mat)
 							end
 
 							mats[icon.IconName] = mat
 						end)
 
-						if not mat.downloading and not mat.failed then 
+						if not mat.downloading and not mat.failed then
 							mat = mat.mat
 							cType:SetChoiceMaterial(name, mat)
 							mats[icon.IconName] = mat
 						end
-						
-					end 
+
+					end
 
 				end
 
@@ -364,8 +371,8 @@ function ENT:OpenMenu()
 					opt.IconPad = icon.IconPad or opt.IconPad
 				end)
 
-				if v.Default then 
-					SelectedType = name 
+				if v.Default then
+					SelectedType = name
 				end
 			end
 
@@ -377,26 +384,26 @@ function ENT:OpenMenu()
 				if i > lastsel then
 					dtext:SetDropStrength(12)
 					dtext:SetLiftStrength(-12)
-				else 
+				else
 					dtext:SetDropStrength(-12)
 					dtext:SetLiftStrength(12)
-				end 
+				end
 
 				lastsel = i
 
 				dtext:ReplaceText(ptype, val)
 
-				costmult = mult 
+				costmult = mult
 				SelectedType = val
 
 				menu:UpdateCost()
 			end
 
-			menu.HasBlueprintsAmt = Inventory.Data.Temp:GetItemCount("blank_bp")
+			menu.HasBlueprintsAmt = Inventory.Util.GetItemCount(LocalPlayer().Inventory.Backpack, "base_bp")
 
 
 			menu.Cost = DeltaText():SetFont("MR48")
-			
+
 
 			menu.CostPiece = menu.Cost:AddText("x"):SetColor(Colors.Blue)
 
@@ -422,33 +429,33 @@ function ENT:OpenMenu()
 
 
 			menu.Begin = vgui.Create("FButton", menu)
-			local btn = menu.Begin 
+			local btn = menu.Begin
 			btn:SetSize(192, 56)
 			btn:Center()
 			btn.Y = menu:GetTall() - 72
 
-			btn.Font = "MR36"
+			btn.Font = "OSB36"
 			btn.Label = "Begin!"
 
 			function btn:Think()
-				menu.HasBlueprintsAmt = Inventory.Data.Temp:GetItemCount("blank_bp")
+				menu.HasBlueprintsAmt = Inventory.Util.GetItemCount(LocalPlayer().Inventory.Backpack, "base_bp")
 
 				local _, frag = menu.CostPiece:ReplaceText(haveind, format:format(menu.HasBlueprintsAmt))
 
-				if frag then 
+				if frag then
 					frag.Font = "MR24"
-					frag.AlignY = 1 
+					frag.AlignY = 1
 					frag.Color = have_col
 				end
 
 				menu.HasEnough = menu.HasBlueprintsAmt >= curcost
 
-				if menu.HasEnough then 
+				if menu.HasEnough then
 					self:SetColor(50, 150, 250)
 					LC(menu.CostFragment.Color, Colors.Blue, 15)
 
 					self.Disabled = false
-				else 
+				else
 					local grey = Colors.Button
 					self:SetColor()
 					LC(menu.CostFragment.Color, Colors.DarkerRed, 15)
@@ -458,7 +465,7 @@ function ENT:OpenMenu()
 			end
 
 			function btn:DoClick()
-				if self.Disabled then return end 
+				if self.Disabled then return end
 				net.Start("BlueprintMaker")
 					net.WriteEntity(ent)
 					net.WriteUInt(SelectedTier, 4)
@@ -469,7 +476,7 @@ function ENT:OpenMenu()
 			end
 
 		end
-		
+
 	end
 
 end
@@ -483,22 +490,22 @@ function ENT:Draw()
 	ang:RotateAroundAxis(ang:Forward(), 90)
 
 	cam.Start3D2D(pos, ang, 0.03)
-	
+
 		local ok, err = pcall(function()
 			draw.RoundedBox(8, 0, 0, 750, 650, col)
 		end)
 
 	cam.End3D2D()
 
-	if not ok then 
+	if not ok then
 		print("err", err)
 	end
-	
+
 end
 
 net.Receive("BlueprintMaker", function()
 	local ent = net.ReadEntity()
-	if not IsValid(ent) or not ent.BlueprintMaker then error("wtf " .. tostring(ent)) return end 
+	if not IsValid(ent) or not ent.BlueprintMaker then error("wtf " .. tostring(ent)) return end
 
 	ent:OpenMenu()
 end)
