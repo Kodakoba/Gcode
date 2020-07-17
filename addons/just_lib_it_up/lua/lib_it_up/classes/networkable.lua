@@ -285,7 +285,6 @@ if SERVER then
 
 			ns.Ops[1].args[1] = changed --this is the changes_count, change it to `changed` in case we broke out of the loop early
 
-			_AAA = ns
 			net.WriteNetStack(ns)
 			print("sent Networkables to all", newid_count, changes_count)
 		net.Send(player.GetAll())
@@ -322,7 +321,8 @@ if SERVER then
 	end)
 
 
-	function nw:Network() --networks everything in the next tick
+	function nw:Network() 	--networks everything in the next tick
+							--currently unfinished for filtered networking
 		if not self.Filter then
 			timer.Adjust("NetworkableNetwork", 0, 0, function()
 				NetworkAll()
