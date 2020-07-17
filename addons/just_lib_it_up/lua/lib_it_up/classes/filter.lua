@@ -77,6 +77,7 @@ function Filter:Free() --optional
 	return self
 end
 
+if not UnionTable then include("union.lua") end 
 
 UnionFilter = UnionTable:Callable()
 UnionFilter.Free = Filter.Free
