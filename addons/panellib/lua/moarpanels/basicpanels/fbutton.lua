@@ -33,7 +33,7 @@ function button:Init()
 	self.LabelColor = Color(255, 255, 255)
 	self.RBRadius = 8
 	self.HoverColor = self.Color:Copy()
-
+	self.HoverColorGenerated = self.Color:Copy()
 	self.Icon = nil --[[
 	{
 		IconURL = "",
@@ -123,7 +123,7 @@ function button:HoverLogic()
 
 		if self.HoverColorGenerated ~= self.Color then
 			self.HoverColor:Set(fr, fg, fb)
-			self.HoverColorGenerated = self.Color
+			self.HoverColorGenerated:Set(self.Color:Unpack())
 		end
 
 		LC(self.drawColor, self.HoverColor, 10) --this just looks better, idfk

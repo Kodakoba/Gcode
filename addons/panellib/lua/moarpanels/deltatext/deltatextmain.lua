@@ -255,8 +255,11 @@ function DeltaText:Paint(x, y)
 		if not tp.Paint then continue end
 
 		if tp.Font ~= self.LastFont then self.LastFont = tp.Font surface.SetFont(self.Font) end
-		tw = tw + (surface.GetTextSize(tp:GetText(true)))
+
+		tw = tw + tp:GetWide()--(surface.GetTextSize(tp:GetText(true)))
 	end
+
+	self.LastFont = nil
 
 	self.TextWidth = tw
 

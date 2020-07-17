@@ -25,7 +25,7 @@ local pmeta = DeltaTextPiece
 
 function pmeta:Initialize(par, tx, font, key, rep)
 	self.Text = tx
-	self.Font = font
+	--self.Font = font
 	self.Key = key
 
 	self.DropStrength = 24	--Text replacement animation: height to which text drops FROM the text
@@ -197,6 +197,46 @@ function pmeta:SetAnimationFunction(func)
 	self.AnimationFunction = func
 end
 
+function pmeta:GetWide()
+	local curfont
+	local parent = self.Parent
+	local font = self.Font or parent.Font -- piece font takes priority over parent font
+
+	if self.Fragmented then
+		local x = 0
+		local lastw = 0
+
+		for k,v in ipairs(self.Fragments) do
+			local font = v.Font or font -- fragment font takes priority over piece font
+
+			if curfont ~= font then
+				surface.SetFont(font)
+				curfont = font
+			end
+
+			local tw, th = surface.GetTextSize(v.Text)
+
+			if not v.RewindTextPos then
+
+				if v.LerpFromLast then
+					local fr = Ease(v.LerpFromLast, v.Ease or 0.6)
+					x = x + Lerp(fr, lastw or tw, tw)
+				elseif not v.Fading then
+					x = x + tw
+				end
+
+			end
+
+			lastw = v.Fading and tw
+		end
+
+		return x
+	else
+		surface.SetFont(font)
+		return (surface.GetTextSize(self.Text))
+	end
+end
+
 
 function pmeta:DrawText(x, y, col, tx, frag) --Available for override
 	surface.SetTextPos(x, y)
@@ -206,6 +246,7 @@ end
 
 function pmeta:Paint(x, y)
 	local parent = self.Parent
+	local font = self.Font or parent.Font -- piece font takes priority over parent font
 
 	self.Color.a = self.Alpha
 
@@ -226,10 +267,12 @@ function pmeta:Paint(x, y)
 		local lerpfrom = 0
 
 		for k,v in pairs(self.Fragments) do
+			local font = v.Font or font -- fragment font takes priority over piece font
+
 			local alignX = v.AlignX or parent.AlignX or 0
 			alignX = alignX / 2
 			if (not v.Font and curfont ~= self.Font) or (v.Font and v.Font ~= curfont) then
-				surface.SetFont(v.Font or self.Font)
+				surface.SetFont(font)
 				curfont = v.Font
 			end
 
@@ -238,7 +281,7 @@ function pmeta:Paint(x, y)
 
 			if v.LerpNext then --if lerpnext is active then this fragment's width will be calculated by the next fragment
 				lerpnext = Ease(v.LerpNext, v.Ease or 0.6)
-				lerpfrom = tw*alignX
+				lerpfrom = tw * alignX
 			else
 				x = x - Lerp(lerpnext, lerpfrom, tw * alignX)
 				lerpnext = 1
@@ -254,13 +297,14 @@ function pmeta:Paint(x, y)
 		for k,v in pairs(self.Fragments) do
 			if v.Text == "" then continue end
 
+			local font = v.Font or font
 			--if fragment doesn't have a custom font, and current font is not default font (for example, from last frag)
 			--or fragment has a custom font and it's not the same one as the current,
 			--change it
 
-			if (not v.Font and curfont ~= self.Font) or (v.Font and v.Font ~= curfont) then
-				surface.SetFont(v.Font or self.Font)
-				curfont = v.Font
+			if curfont ~= font then
+				surface.SetFont(font)
+				curfont = font
 			end
 
 			local oldA = v.Color.a --we only want to change the alpha of the color temporarily, in case there's the same color being used for multiple fragments
@@ -280,13 +324,13 @@ function pmeta:Paint(x, y)
 
 			local tX = x + v.OffsetX + self.Offsets.X -- alignX * tw
 			local tY = y + v.OffsetY + self.Offsets.Y + alignY * th
-
 			self:DrawText(tX, tY, v.Color, v.Text, v)
 
 			if not v.RewindTextPos then
 
 				if v.LerpFromLast then
-					x = x + Lerp(Ease(v.LerpFromLast, v.Ease or 0.6), lastw or tw, tw)
+					local fr = Ease(v.LerpFromLast, v.Ease or 0.6)
+					x = x + Lerp(fr, lastw or tw, tw)
 				elseif not v.Fading then
 					x = x + tw
 				end
@@ -505,7 +549,7 @@ function pmeta:ReplaceText(num, rep, onend, nolerp)
 
 	newfrag.Alpha = 0
 	newfrag.ID = num
-	--newfrag.LerpFromLast = 0
+	newfrag.LerpFromLast = 0
 	--newfrag.RewindTextPos = true
 
 	local frag
@@ -522,6 +566,7 @@ function pmeta:ReplaceText(num, rep, onend, nolerp)
 	if frag.Text == rep then return false end --its the same text
 	frag.RewindTextPos = true
 	frag.Fading = true
+	frag.LerpFromLast = nil
 
 	frag.LerpNext = 0
 
