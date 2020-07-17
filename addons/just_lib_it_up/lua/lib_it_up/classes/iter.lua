@@ -1,6 +1,6 @@
 
 --[[
-	what's the point in just plain iterable classes that don't do anything special or don't have convenient methods? 
+	this lowkey sucks and i probably won't use it ever again :v
 ]]
 
 
