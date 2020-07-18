@@ -31,26 +31,12 @@ table.KeysToValues = table.KeysToValue
 	Weak tables
 ]]
 
-	--Keep weaktable constructors
-
-	local weakctors = {
-		["k"] = function() return setmetatable({}, {__mode = "k"}) end,
-		["v"] = function() return setmetatable({}, {__mode = "v"}) end,
-		["kv"] = function() return setmetatable({}, {__mode = "kv"}) end,
-	}
-
-	--Keep weaktable metatables
-
-	local weaks = {}
-
-	for k,v in pairs(weakctors) do
-		weaks[k] = v()
-	end
-
 	WeakTable = Object:callable()
 
-	function WeakTable:Initialize(mode)
-		return setmetatable({}, weaks[mode or "kv"])
+	function WeakTable:Initialize(t, mode)
+		if isstring(t) then mode = t t = nil end
+
+		return setmetatable(t or {}, {__mode = mode or "kv"})
 	end
 
 --[[
@@ -242,6 +228,17 @@ if not table.Shuffle then
 			local j = math.random(i, n)
 			t[i], t[j] = t[j], t[i]
 		end
+	end
+
+end
+
+
+function eval(var, ...)
+
+	if isfunction(var) then
+		return var(...)
+	else
+		return var
 	end
 
 end

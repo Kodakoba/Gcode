@@ -6,16 +6,6 @@ AddCSLuaFile()
 
 MoarPanelsLoaded = true
 
-function eval(var, ...)
-
-	if isfunction(var) then
-		return var(...)
-	else
-		return var
-	end
-
-end
-
 
 local path = "moarpanels/"
 
