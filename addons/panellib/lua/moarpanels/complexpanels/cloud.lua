@@ -34,6 +34,9 @@
 		Cloud.YAlign	--like text aligns, except the cloud aligns there : 0/1/2
 						--by default it's 2 which means align by bottom (because it's a cloud)
 
+		Cloud.ToX = 0	-- by how much XY cloud will move when it's popped up
+		Cloud.ToY = 0	-- use these to make s w e e t pop-in animations
+
 		Cloud.Shadow = {}
 
 		Cloud.Min/MaxW
@@ -171,7 +174,7 @@ function Cloud:Paint()
 
 	local cw = math.min(math.max(self.MaxWidth, self.LabelWidth + 16, self.MinW), self.MaxW)
 
-	local lab = self.wwrapped[self.Label] or string.WordWrap(self.Label, cw, self.Font)
+	local lab = self.wwrapped[self.Label] or string.WordWrap2(self.Label, cw, self.Font)
 
 	self.wwrapped[self.Label] = lab
 

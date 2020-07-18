@@ -1,5 +1,7 @@
 
 netstack = netstack or Object:callable()
+netstack.IsNetStack = true
+
 local nsm = netstack
 
 local sizes = {
@@ -186,3 +188,9 @@ netstack.__tostring = function(self)
 
 	return head .. "\n" .. args
 end
+
+
+function IsNetStack(what)
+	return what.IsNetStack
+end
+IsNetstack = IsNetStack
