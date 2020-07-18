@@ -138,7 +138,7 @@ function FMO:Paint(w,h)
 	end
 
 	surface.SetDrawColor(self.drawColor)
-	surface.DrawRect(0,0,w,h)
+	surface.DrawRect(0, 0, w, h)
 
 	self:PreTextPaint(w, h)
 
@@ -173,7 +173,6 @@ function FM:PerformLayout()
 	local y = 0 -- for padding
 
 	for k, pnl in pairs( self:GetCanvas():GetChildren() ) do
-	
 		pnl:SetWide( w )
 		pnl:SetPos( 0, pnl.PutMeAtY or y )
 
@@ -192,8 +191,9 @@ function FM:PerformLayout()
 end
 
 function FM:CreateDescription()
-	local f = vgui.Create("DPanel", self)
-	f:SetSize(250, 1)
+	local f = vgui.Create("Panel", self)
+	f:SetSize(self:GetWide(), 1)
+	function f:PerformLayout() end
 	self.DescPanel = f
 	f.desc = "fuk"
 	local m = self
@@ -256,7 +256,6 @@ function FM:AddOption( strText, funcFunction )
 	pnl:SetMenu( self )
 	pnl:SetText( strText )
 	pnl.DesHeight = 28
-
 	if ( funcFunction ) then pnl.DoClick = funcFunction end
 
 	self:AddPanel( pnl )
@@ -266,12 +265,13 @@ function FM:AddOption( strText, funcFunction )
 end
 
 function FM:Paint(w,h)
+
 	surface.DisableClipping(true)
-	draw.RoundedBox(4, -2, -2, w + 4, h + 4, self.Color)
-	local sx, sy = self:LocalToScreen(0, 0)
-	if sy + h > ScrH() then
-		self:SetPos(sx, L(self.Y, ScrH() - h - 12, 15, true))
-	end
+		draw.RoundedBox(4, -2, -2, w + 4, h + 4, self.Color)
+		local sx, sy = self:LocalToScreen(0, 0)
+		if sy + h > ScrH() then
+			self:SetPos(sx, L(self.Y, ScrH() - h - 12, 15, true))
+		end
 	surface.DisableClipping(false)
 end
 
