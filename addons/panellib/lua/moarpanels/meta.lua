@@ -273,9 +273,11 @@ function META:Emit(event, ...)
 				local t = {unpack(v, 2)}
 				table.InsertVararg(t, ...)
 
-				v[1](self, unpack(t))
+				local a, b, c, d, e, why = v[1](self, unpack(t))
+				if a ~= nil then return a, b, c, d, e, why end --hook.Call intensifies
 			else
-				v[1](self, ...)
+				local a, b, c, d, e, why = v[1](self, ...)
+				if a ~= nil then return a, b, c, d, e, why end
 			end
 
 		end
