@@ -200,9 +200,18 @@ local function WrapWord(word, curwid, fullwid, widtbl, line)
 
 	if curwid + tw > fullwid - 8 then --have to wrap
 
-		local too_wide = tw > fullwid * 0.65 --very wide word; wrap by letters if true
+		local should_hyphenate = false -- ignore that, we'll go MS Word way  -> 							--tw > fullwid * 0.65 --very wide word; wrap by letters if true
+						  		-- if both parts of the word would have three or more letters, we hyphenate
 
-		if not too_wide then
+		-- if this passes, the first 3 letters can remain on this line
+		if #word > 6 and (surface.GetTextSize(word:sub(1, 3))) < fullwid - curwid then
+			--if this passes, there are at least 3 letters on the next line
+			if (surface.GetTextSize(word:sub(1, #word - 3))) > fullwid - curwid then
+				should_hyphenate = true
+			end
+		end
+
+		if not should_hyphenate then
 			ret = ret .. "\n" .. word
 			curwid = tw
 			wrapped = 1
