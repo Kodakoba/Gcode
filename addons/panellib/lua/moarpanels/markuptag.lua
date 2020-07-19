@@ -77,6 +77,8 @@ function tag:Initialize(name, ...)
 	end
 end
 
+ChainAccessor(tag, "Panel", "Panel")
+
 local function eval_exp(self, key, f, ...)
 
 	local ok, ret = pcall(f, ...)
@@ -118,15 +120,15 @@ function tag:Run(buffer, ...)
 	end
 
 	if self.BaseTag.TagStart then
-		self.BaseTag.TagStart(self.TagBuffer, buffer, args)
+		self.BaseTag.TagStart(self.TagBuffer, buffer, args, self.Panel)
 	end
 
 	if self.BaseTag.Draw then
-		self.BaseTag.Draw(self.TagBuffer, buffer, args)
+		self.BaseTag.Draw(self.TagBuffer, buffer, args, self.Panel)
 	end
 
 	if self.BaseTag.ModifyBuffer then
-		self.BaseTag.ModifyBuffer(self.TagBuffer, buffer, args)
+		self.BaseTag.ModifyBuffer(self.TagBuffer, buffer, args, self.Panel)
 	end
 
 	self.Ended = false
@@ -144,7 +146,7 @@ function tag:End(buffer)
 	end
 
 	if self.BaseTag.TagEnd then
-		self.BaseTag.TagEnd(self.TagBuffer, buffer, buffer, args)
+		self.BaseTag.TagEnd(self.TagBuffer, buffer, buffer, args, self.Panel)
 	end
 
 	self.Ended = true
@@ -154,6 +156,7 @@ function tag:GetEnder()
 	if self.ender then return false end
 
 	local ender = MarkupTags(true)
+	ender.BaseTag = self.BaseTag
 	ender.ender = true
 	ender.Run = function(_, buf) self:End(buf) end
 	ender.End = function(_, buf) self:End(buf) end
@@ -343,10 +346,44 @@ tr:SetStart(function(tag, buf, args)
 end)
 
 tr:SetEnd(function(tag, buf, args)
-	cam.PopModelMatrix(mtrx2)
+	cam.PopModelMatrix()
 end)
 
 
+local rot = MarkupBaseTag("rotate")
+
+rot:AddArg("number", 0)	--rot
+
+local rotmtrx = Matrix()  --actually used matrix
+
+local ang = Angle()
+local offset = Vector()
+
+rot:SetStart(function(tag, buf, args, pnl)
+	if not ispanel(pnl) then return end 
+
+	local x, y = pnl:LocalToScreen(0, 0)
+	local bx, by = buf:GetPos()
+
+	ang.y = args[1]
+	rotmtrx:Set(mtrx)
+
+	offset.x, offset.y = x + bx, y + by
+
+	rotmtrx:Translate(offset)
+		rotmtrx:SetAngles(ang)
+		offset:Mul(-1)
+	rotmtrx:Translate(offset)
+
+	offset:Set(vector_origin)
+
+	cam.PushModelMatrix(rotmtrx, true)
+end)
+
+rot:SetEnd(function(tag, buf, args, pnl)
+	if not pnl then return end 
+	cam.PopModelMatrix()
+end)
 
 local hsv = MarkupBaseTag("hsv")
 
@@ -422,4 +459,44 @@ emote:SetDraw(function(tag, buf, args)
 	surface.SetDrawColor(255, 255, 255)
 	local x, y = buf:GetPos()
 	emote:Paint(x, y, args[2], args[3])
+end)
+
+
+local sc = MarkupBaseTag("scale")
+
+sc:AddArg("number", 1)
+sc:AddArg("number", 1)
+
+local scmtrx = Matrix()  --actually used matrix
+
+local offset = Vector()
+local scale = Vector()
+
+sc:SetStart(function(tag, buf, args, pnl)
+	if not ispanel(pnl) then return end 
+
+	local x, y = pnl:LocalToScreen(0, 0)
+	local bx, by = buf:GetPos()
+
+	scale.x, scale.y = args[1], args[2]
+
+	scmtrx:Set(mtrx)
+
+	offset.x, offset.y = x + bx, y + by
+
+	render.PushFilterMin(TEXFILTER.ANISOTROPIC)
+
+	scmtrx:Translate(offset)
+		scmtrx:Scale(scale)
+		offset:Mul(-1)
+	scmtrx:Translate(offset)
+
+	offset:Set(vector_origin)
+
+	cam.PushModelMatrix(scmtrx)
+end)
+
+sc:SetEnd(function(tag, buf, args)
+	cam.PopModelMatrix()
+	render.PopFilterMin()
 end)

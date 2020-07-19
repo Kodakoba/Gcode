@@ -95,6 +95,9 @@ function PANEL:Recalculate()
 	local buf = self.Buffer
 	buf:Reset()
 
+	local res = self:Emit("ShouldRecalculateHeight", buf)
+	if res ~= nil then return end
+
 	surface.SetFont(self.Font)
 
 	for k,v in ipairs(self.Elements) do
@@ -159,6 +162,9 @@ function PANEL:Recalculate()
 		end
 
 	end
+
+	local res = self:Emit("RecalculateHeight", buf)
+	if res ~= nil then return end
 
 	self:SetTall(maxH + 1)
 	self:GetParent():SetTall(math.max(self:GetParent():GetTall(), maxH + 1))
@@ -400,7 +406,6 @@ function PANEL:Paint(w, h)
 			buf:SetPos(v.endX, v.endY)
 		elseif IsTag(v) then
 			local base = v:GetBaseTag()
-
 			if base and not base.ExecutePerChar then self:ExecuteTag(v, buf) end
 
 			self.ActiveTags[#self.ActiveTags + 1] = v
@@ -437,6 +442,7 @@ end
 
 function PANEL:AddTag(tag)
 	if not IsTag(tag) then error("Tried to add a non-tag to MarkupPiece!") return end
+	tag:SetPanel(self)
 	self.Elements[#self.Elements + 1] = tag
 	self:InvalidateLayout()
 
@@ -446,7 +452,7 @@ end
 function PANEL:EndTag(num)
 	local tag = self.Elements[num]
 	if not num or not tag or not IsTag(tag) then errorf("Tried to end a non-existent tag @ key %s!", num) return end
-	local base = tag.GetBase and tag:GetBase()
+	local base = tag.GetBaseTag and tag:GetBaseTag()
 
 	if base then
 
@@ -456,7 +462,6 @@ function PANEL:EndTag(num)
 			self.Elements[#self.Elements + 1] = ender
 			ender.Ends = num
 			tag.HasEnder = true
-
 		else
 
 			self.Elements[#self.Elements + 1] = {markupExec = function()  --hardcode a ExecutePerChar remover for this tag
@@ -468,6 +473,7 @@ function PANEL:EndTag(num)
 			end}
 
 		end
+
 	end
 
 end
