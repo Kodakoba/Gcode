@@ -128,11 +128,8 @@ function ENT:OpenMenu()
 	end)
 
 	menu = vgui.Create("FFrame")
-	menu:SetSize(650, 500)
+	menu:SetSize(600, 500)
 
-	local FullW = 342 + 650
-									--   V inventory has 8px padding from menu
-	menu:SetPos(ScrW() / 2 - FullW / 2 - 4, ScrH() / 2 - menu:GetTall() / 2)
 
 	menu.Shadow = {}
 
@@ -142,7 +139,8 @@ function ENT:OpenMenu()
 	menu.Delta = DeltaText()
 
 	menu.Inventory = Inventory.Panels.CreateInventory(LocalPlayer().Inventory.Backpack, nil, {
-		SlotSize = 64
+		SlotSize = 64,
+		FitsItems = 5
 	})
 
 	menu.Inventory:CenterVertical()
@@ -151,7 +149,12 @@ function ENT:OpenMenu()
 	menu.Inventory:Bond(menu)
 
 	local inv = menu.Inventory
-	inv:SetSize(342, menu:GetTall())
+	inv:SetTall(menu:GetTall())
+
+	local FullW = inv:GetWide() + menu:GetWide()
+									--   V inventory has 8px padding from menu
+	menu:SetPos(ScrW() / 2 - FullW / 2 - 4, ScrH() / 2 - menu:GetTall() / 2)
+
 	inv:MoveRightOf(menu, 8)
 	inv.Y = menu.Y
 
