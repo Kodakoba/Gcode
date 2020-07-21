@@ -150,6 +150,10 @@ function ENT:SetupDataTables()
 
 end
 
+function ENT:IsRebooting()
+	return self:GetRebootTime() ~= 0, self.RebootTime - (CurTime() - self:GetRebootTime())
+end
+
 function ENT:OnChangeGridID(new)
 
 	if self.OldGridID == new or new <= 0 then print("Nope", new, self.OldGridID) return end

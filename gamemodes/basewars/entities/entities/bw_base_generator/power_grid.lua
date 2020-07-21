@@ -355,7 +355,12 @@ function PowerGrid:Think()
 
 	for k,v in pairs(self.Consumers) do
 		local req = v.PowerRequired
+		if v:Emit("ShouldConsumePower", req) == false then continue end
+
+
 		local enough = pw_total - req > 0
+
+		v:Emit("ConsumePower", req, pw_total, enough)
 
 		local rebooting_time = v.RebootStart and CurTime() - v.RebootStart < v.RebootTime 	--should it still be rebooting?
 
@@ -422,12 +427,17 @@ if SERVER then
 	local networkTime = 1 --once per X seconds all grids get networked
 
 	local lastNW = 0
-	timer.Create("PowerGridThink", 0.25, 0, function()
-		local nses = {}
+
+	local function gridThink(nses)
 		for k,v in pairs(PowerGrids) do
 			v:Think()
 			nses[#nses + 1] = v:Network()
 		end
+	end
+
+	timer.Create("PowerGridThink", 0.25, 0, function()
+		local nses = {}
+		local ok, err = pcall(gridThink, nses)
 
 		if CurTime() - lastNW > networkTime then
 
@@ -439,6 +449,10 @@ if SERVER then
 			net.Broadcast()
 
 			lastNW = CurTime()
+		end
+		
+		if not ok then
+			ErrorNoHalt(err)
 		end
 
 	end)
