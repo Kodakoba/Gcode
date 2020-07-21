@@ -214,7 +214,7 @@ function PANEL:OnMouseReleased( mousecode )
 	end
 
 	--if ( !self.Hovered ) then return end fuck you fuck you fuck you fuck you fuck you fuck you 
-	if vgui.GetHoveredPanel() ~= self then return end
+	if not self.Hovered and vgui.GetHoveredPanel() ~= self then return end
 
 	--
 	-- For the purposes of these callbacks we want to

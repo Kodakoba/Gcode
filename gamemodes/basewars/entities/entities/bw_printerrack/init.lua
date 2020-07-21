@@ -17,7 +17,7 @@ function ENT:Init()
 	self:On("ConsumePower", self.ConsumePower)
 end
 
-local pos = {
+--[[local pos = {
 	Vector (0.912353515625, -0.44677734375, 13.148170471191),
 	Vector (0.912353515625, -0.44677734375, 13.148170471191 + 6.25),
 	Vector (0.912353515625, -0.44677734375, 13.148170471191 + 6.25*2),
@@ -29,7 +29,7 @@ local pos = {
 	Vector (0.912353515625, -0.44677734375, 13.148170471191 + 6.25*8 - 1.1),
 	Vector (0.912353515625, -0.44677734375, 13.148170471191 + 6.25*9 - 1.1),
 	Vector (0.912353515625, -0.44677734375, 13.148170471191 + 6.25*10 - 1.1),
-}
+}]]
 
 local pos = {}
 
@@ -227,6 +227,9 @@ net.Receive("PrinterRack", function(_, ply)
 	end
 
 end)
+
+function ENT:Use()
+end
 
 function ENT:Collect(ply)
 
