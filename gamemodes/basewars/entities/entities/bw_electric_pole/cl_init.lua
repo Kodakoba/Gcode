@@ -129,12 +129,15 @@ function ENT:CreateGeneratorsScroll(pnl, me)
 	scr.Y = pnl.CircleY - scr:GetTall() / 2
 
 	local grid = self:GetGrid()
+	local total = 0
 
 	for k,v in ValidPairs(grid.Generators) do
 		local f = scr:Add("InvisPanel")
 		f:Dock(TOP)
 		f:DockMargin(0, 0, 0, 8)
 		f:SetTall(64)
+
+		total = total + v.PowerGenerated
 
 		local name = v.PrintName or "wtf"
 		local gens = "+" .. (v.PowerGenerated or -1337) .. "PW"
@@ -201,8 +204,8 @@ function ENT:CreateGeneratorsScroll(pnl, me)
 		local x, y = self:LocalToScreen(w/2, y)
 		BSHADOWS.BeginShadow()
 			DisableClipping(true)
-				draw.RoundedBoxEx(8, x - txW / 2 - 4, y, txW + 8, 24, grayA, false, false, true, true)
-				local txw, txh = draw.SimpleText("Total generated: 1488pw", "OS24", x, y, greenA, 1, 5)
+				draw.RoundedBoxEx(8, x - txW / 2 - 6, y, txW + 12, 24, grayA, false, false, true, true)
+				local txw, txh = draw.SimpleText("Total: +" .. total .. " PW", "OS24", x, y, greenA, 1, 5)
 				txW = txw
 			DisableClipping(false)
 		BSHADOWS.EndShadow(3, 2, 1, 255)
@@ -223,6 +226,7 @@ function ENT:CreateConsumersScroll(pnl, me)
 	scr.Y = pnl.CircleY - scr:GetTall() / 2
 
 	local grid = self:GetGrid()
+	local total = 0
 
 	for k,v in ValidPairs(grid.Consumers) do
 		local f = scr:Add("InvisPanel")
@@ -231,7 +235,8 @@ function ENT:CreateConsumersScroll(pnl, me)
 		f:SetTall(64)
 
 		local name = v.PrintName or "wtf"
-		local gens = "-" .. (v.PowerRequired or -1337) .. "PW"
+		local gens = "-" .. v.PowerRequired .. "PW"
+		total = total + v.PowerRequired
 
 		function f:Paint(w, h)
 			surface.SetDrawColor(40, 40, 40)
@@ -296,8 +301,8 @@ function ENT:CreateConsumersScroll(pnl, me)
 		local x, y = self:LocalToScreen(w/2, y)
 		BSHADOWS.BeginShadow()
 			DisableClipping(true)
-				draw.RoundedBoxEx(8, x - txW / 2 - 4, y, txW + 8, 24, grayA, false, false, true, true)
-				local txw, txh = draw.SimpleText("Total consumed: 1488pw", "OS24", x, y, redA, 1, 5)
+				draw.RoundedBoxEx(8, x - txW / 2 - 6, y, txW + 12, 24, grayA, false, false, true, true)
+				local txw, txh = draw.SimpleText("Total: -" .. total .. " PW", "OS24", x, y, redA, 1, 5)
 				txW = txw
 			DisableClipping(false)
 		BSHADOWS.EndShadow(3, 2, 1, 255)

@@ -18,7 +18,7 @@ ENT.IsPrinter 		= true
 ENT.IsValidRaidable = false
 
 ENT.RebootTime = 10
-
+ENT.PowerRequired = 8
 local Clamp = math.Clamp
 
 local slot = 2
