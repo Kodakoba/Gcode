@@ -161,6 +161,7 @@ function MakeEmitter(t)
 	t.On = Emitter.On
 	t.Emit = Emitter.Emit
 	t.Once = Emitter.Once
+	t.RemoveListener = Emitter.RemoveListener
 end
 
 MakeEmitter(FindMetaTable("Entity"))

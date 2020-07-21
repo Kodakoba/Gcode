@@ -16,7 +16,7 @@ function button:Init()
 
 	self.Font = "OS24"
 	self.DrawShadow = true
-	self.HovMult = 1.1
+	self.HovMult = 1.2
 
 	self.Shadow = {
 		MaxSpread = 0.6,
@@ -33,7 +33,7 @@ function button:Init()
 	self.LabelColor = Color(255, 255, 255)
 	self.RBRadius = 8
 	self.HoverColor = self.Color:Copy()
-	self.HoverColorGenerated = self.Color:Copy()
+	self.HoverColorGenerated = color_black:Copy()
 	self.Icon = nil --[[
 	{
 		IconURL = "",
@@ -324,6 +324,7 @@ end
 function button:PrePaint(w,h)
 
 end
+
 function button:PaintOver(w, h)
 
 	if self.Dim then
@@ -331,10 +332,6 @@ function button:PaintOver(w, h)
 	end
 
 end
-
---[[
-	todo: move this to panel meta
-]]
 
 function button:Paint(w, h)
 	self:PrePaint(w,h)
