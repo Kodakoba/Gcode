@@ -415,19 +415,7 @@ function ebutton:Think()
 
 	local frac = self.ExpandFrac
 
-	self:SetSize(w, Lerp(frac, self.FakeH, self.FakeH + self.ExpandTo))
-	--print("expandfrac", frac)
-	--[[if self.Expand then
-
-		self:SetSize(w, Lerp(frac, self.ClickHeight, self.FakeH + self.ExpandTo))
-		self.RBEx = {bl = false, br = false}
-
-	else
-
-		self:SetSize(w, Lerp(frac, self.ClickHeight, self.FakeH))
-
-		if frac >= 0.95 then self.RBEx = nil end
-	end]]
+	self:SetTall( Lerp(frac, self.FakeH, self.FakeH + self.ExpandTo) )
 
 end
 

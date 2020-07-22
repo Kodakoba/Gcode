@@ -48,6 +48,11 @@ function ENT:GetMiscPos()
 
 end
 
+local scaleH = { --bool = scaled down or not
+	[false] = 72,
+	[true] = 56
+}
+
 local function CreateFrame(ent)
 
 	local f =  vgui.Create("FFrame")
@@ -60,31 +65,34 @@ local function CreateFrame(ent)
 	f.HeaderSize = 48
 
 	f:DockPadding(16, 64, 16, 16)
+	f.ScaleDown = ScrH() < 800
+
+	local col = vgui.Create("FButton", f)
+
 	function f:Paint(w,h)
 		if not IsValid(ent) then self:Remove() end --bruh
 
 		self:DrawHeaderPanel(w,h)
 
 		draw.SimpleText("Printer Rack", "OSB28", w/2, 24, color_white, 1, 1)
-		if ScrH() < 800 then
-			local str = "(%s < %s)"
-			str = str:format(ScrH(), 800)
-			draw.DrawText("This rack may be bugged\nbecause your resolution is too low.\nSorry :(\n" .. str, "OS24", w/2, h - 250, Color(230, 100, 100), 1, 1)
+		self.ScaleDown = ScrH() < 800
+
+		local desH = scaleH[self.ScaleDown]
+
+		for k,v in pairs(self.Buttons) do
+			if v:GetTall() ~= desH and v.ExpandFrac == 0 then
+				v:SetTall(desH)
+			end
 		end
 
+		col:SetTall(desH * 1.5)
 	end
 	ent.Frame = f
 
-	local scr = vgui.Create("FScrollPanel", f)
-	scr:SetSize(650, 600)
-	scr:Dock(TOP)
-
-	f.Scroll = scr
-
-	local col = vgui.Create("FButton", f)
 	col:SetSize(450, 120)
 	col:DockMargin(150, 24, 150, 24)
 	col:Dock(TOP)
+	col:SetZPos(32766)
 
 	local color = Color(90, 180, 90)
 	function col:Think()
@@ -118,7 +126,7 @@ function ENT:Draw()
 
 	local pos, ang, scale = self:GetMiscPos()
 
-	if not self.Frame then
+	if not IsValid(self.Frame) then
 		CreateFrame(self)
 	end
 	local f = self.Frame
@@ -139,11 +147,13 @@ function ENT:Draw()
 
 		if not IsValid(ent) then continue end
 
-		f.Buttons[k] = vgui.Create("EButton", f.Scroll)
+		f.Buttons[k] = vgui.Create("EButton", f)
 		local fr = f.Buttons[k]
 		fr:SetDoubleClickingEnabled(false)
 		--fr:SetPos(50, -100 + f.HeaderSize + 16 + 100*i)
-		fr:SetSize(375, 72)
+		local frH = scaleH[f.ScaleDown]
+
+		fr:SetSize(375, frH)
 		fr:Dock(TOP)
 		fr:DockMargin(8, 4, 8, 0)
 		fr.Border = {w = 2, h = 2}
@@ -167,40 +177,36 @@ function ENT:Draw()
 			dc(self)
 		end
 
-		function fr:PostPaint(w,h)
+		function fr:PostPaint(w, h)
 			if not IsValid(ent) then self:Remove() print("invalid lolno") return end
 
 			local txt = (ent.PrintName .. " Lv. " .. ((ent.GetLevel and ent:GetLevel()) or "-2.147b")) or " ??? "
 
-			draw.SimpleText(txt, "BS36", 12, 72/2, color_white, 0, 1)
+			draw.SimpleText(txt, "BS36", 12, h/2, color_white, 0, 1)
 
 
-			if ent.Mods then
-				local i = table.Count(ent.Mods)
-				for k,v in pairs(ent.Mods) do
-
-					local col, name, url = v.col, v.name, v.url
-					if not col or not name or not url then continue end
-
-					surface.SetDrawColor(col)
-					surface.DrawMaterial(url, name, w - (80 * i), h/2 - 32, 64, 64)
-
-					i = i - 1
-				end
+			if ent.GetPrintAmount then
+				local amt = ("$%s/s."):format(BaseWars.NumberFormat(ent:GetPrintAmount()))
+				draw.SimpleText(amt, "BS24", w - 8, h/2, color_white, 2, 1)
 			end
 		end
 
-		function fr.ExpandPanel:Paint(w,h)  -- V only because 3d2d panels act wonky with clipping
-			draw.RoundedBoxEx(4, 0, 0, w, fr:GetTall() - 72, Color(35, 35, 35), false, false, true, true)
+		function fr.ExpandPanel:Paint(w, h)  
+
+							-- V only because 3d2d panels act wonky with clipping
+			fr:ExpandPaint(w, fr:GetTall() - fr.FakeH)
+
+			-- somehow makes upgrade/eject buttons clip properly??
+			-- i ain't askin
 			self:NoClipping(true)
 		end
+
 		function fr.ExpandPanel:PaintOver()
 			self:NoClipping(false)
 		end
+
 		fr.Eject = vgui.Create("FButton", fr.ExpandPanel)
 		local b = fr.Eject
-
-
 
 		b:Dock(FILL)
 		b:DockMargin(400, 16, 100, 16)
@@ -232,20 +238,20 @@ function ENT:Draw()
 		end
 
 		fr.Upgrade = vgui.Create("FButton", fr.ExpandPanel)
-		local b = fr.Upgrade
+		local b2 = fr.Upgrade
 
-		b:SetPos(100, 16)
-		b:SetSize(236, (90 - 32))
+		b2:SetPos(100, 16)
+		b2:SetSize(236, b:GetTall())
 
-		b:SetLabel("Upgrade")
-		b.Font = "OS32"
+		b2:SetLabel("Upgrade")
+		b2.Font = "OS32"
 		--b:SetPaintedManually(true)
 
-		b:SetDoubleClickingEnabled(false)
-		b.TextAX = 0
-		b.TextX = 18 + 32 + 8
+		b2:SetDoubleClickingEnabled(false)
+		b2.TextAX = 0
+		b2.TextX = 18 + 32 + 8
 
-		function b:PostPaint(w, h)
+		function b2:PostPaint(w, h)
 			surface.SetDrawColor(255, 255, 255)
 			surface.DrawMaterial("https://i.imgur.com/6CyUc0d.png", "upgrade.png", 18, 13, 32, 32)
 
@@ -263,7 +269,7 @@ function ENT:Draw()
 		end
 
 
-		function b:PrePaint(w, h)
+		function b2:PrePaint(w, h)
 
 		end
 
@@ -280,18 +286,18 @@ function ENT:Draw()
 			m1 = false
 		end]]
 
-		b.DoClick = function(self)
+		b2.DoClick = function(self)
 			net.Start("BW.Upgrade")
 				net.WriteEntity(ent)
 			net.SendToServer()
 		end
 
-		b:SetColor(90, 90, 90)
+		b2:SetColor(90, 90, 90)
 
-		function b:IsHovered()
+		function b2:IsHovered()
 			return self.Hovered
 		end
-		b.DrawShadow = false
+		b2.DrawShadow = false
 
 	end
 
