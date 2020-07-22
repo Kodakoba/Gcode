@@ -83,7 +83,7 @@ function Emitter.Make(t)
 end
 
 Emitter.make = Emitter.Make
---
+
 function Emitter:On(event, name, cb, ...)
 	self.__Events = rawevent(self) or muldim:new()
 	local events = self.__Events
