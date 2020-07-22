@@ -229,7 +229,7 @@ function ENT:OpenMenu()
 	local icons = vgui.Create("FIconLayout", menu)
 	icons.CenterX = true
 
-	icons:SetPos(80, 80)
+	icons:SetPos(32, 80)
 	icons:SetSize(menu:GetWide() - icons:GetPos()*2, 120)
 	icons:SetColor(Color(0, 0, 0, 0))
 	icons.MarginX = 16
