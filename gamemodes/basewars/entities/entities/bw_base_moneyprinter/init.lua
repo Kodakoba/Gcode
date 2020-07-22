@@ -122,7 +122,8 @@ function ENT:Upgrade(ply)
         self:SetLevel(self.Level)
         
         self:EmitSound("replay/rendercomplete.wav")
-    
+        
+        self:SetPrintAmount( BaseWars.Printers.GetPrintRate(self) )
     end
         
 end

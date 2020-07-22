@@ -143,7 +143,7 @@ function ENT:DrawStats(pos, ang, scale, me, pwd)
 
     if pwd then
 
-        local rate = me.GetPrintAmount(self) * me.GetMultiplier(self) * me.GetLevel(self)
+        local rate = me.GetPrintAmount(self)
         draw.SimpleText("$" .. BaseWars.NumberFormat(rate) .. "/s.", "OS64", w/2, h/2, color_white, 1, 1)
 
         local left = (me.Capacity - me.GetNWMoney(self)) / rate
