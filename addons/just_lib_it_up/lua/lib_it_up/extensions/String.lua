@@ -368,6 +368,10 @@ function string.YeetNewlines(str, also_spaces)
 	return str
 end
 
+getmetatable("").__mod = function(self, what) --hot
+	return string.format(self, what)
+end
+
 local vowels = {
 	["a"] = true,
 	["e"] = true,
