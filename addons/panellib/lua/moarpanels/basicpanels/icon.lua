@@ -2,7 +2,11 @@
 	Icon
 
 	Icon.Rotation = num
+
 	Icon.Icon = mat
+		OR
+	Icon.IconURL = url
+	Icon.IconName = name
 ]]
 
 
@@ -10,7 +14,7 @@ local I = {}
 
 local err = Material("__error")
 
-function I:Init(w,h)
+function I:Init()
 	self.Icon = err
 
 	self.IconURL = nil
@@ -20,12 +24,12 @@ function I:Init(w,h)
 	self.Rotation = 0
 end
 
-function I:Paint(w,h)
+function I:Paint(w, h)
 	local mat = self.Icon or err
 
 	surface.SetDrawColor(self.Color)
 
-	if self.IconURL then
+	if self.IconURL and self.IconName then
 		surface.DrawMaterial(self.IconURL, self.IconName, w/2, h/2, w, h, self.Rotation)
 	else
 		surface.SetMaterial(mat)

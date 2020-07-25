@@ -22,14 +22,14 @@ end
 
 mysqloo.HookName = "OnMySQLReady"
 
-mysqloo.GetDatabase = mysqloo.GetDB 
+mysqloo.GetDatabase = mysqloo.GetDB
 mysqloo.GetDataBase = mysqloo.GetDB
 
 function mysqloo.CreateTable(db, name, ...)
 
 	if isstring(db) then 	--database is optional; it'll just use default
-		name = db 
-		db = rsDB 
+		name = db
+		db = rsDB
 	end
 
 	local q = "CREATE TABLE IF NOT EXISTS `%s` (%s)"
