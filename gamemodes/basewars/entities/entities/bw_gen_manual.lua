@@ -6,7 +6,7 @@ ENT.PrintName 		= "Manual Generator"
 ENT.Model 			= "models/props_c17/TrapPropeller_Engine.mdl"
 
 ENT.PowerGenerated 	= 0
-ENT.PowerGenerated2 = 150
+ENT.PowerGenerated2 = 50
 ENT.PowerCapacity 	= 5000
 
 ENT.TransmitRadius 	= 300
@@ -22,19 +22,19 @@ if SERVER then util.AddNetworkString("ManualGen") end
 function ENT:GenPower()
 
 	self:EmitSound(self.Sounds[math.random(1, #self.Sounds)])
-	self:ReceivePower(self.PowerGenerated2)
-	
+	self:GetGrid():AddPower(self.PowerGenerated2)
+	--self:GetGrid():Network()
 end
 
 function ENT:GenerateOptions(qm, pnl)
 	local gen = vgui.Create("FButton", pnl)
 	gen:SetLabel("Make some power!")
-	
+
 	gen:SetSize(160, 48)
 
 	gen:Center()
 
-	gen.AlwaysDrawShadow = true 
+	gen.AlwaysDrawShadow = true
 
 	gen:PopIn()
 	gen:SetDoubleClickingEnabled(false)
@@ -44,10 +44,11 @@ function ENT:GenerateOptions(qm, pnl)
 		net.Start("ManualGen")
 			net.WriteEntity(self)
 		net.SendToServer()
+		self:GetGrid():AddPower(self.PowerGenerated2)
 	end
 
 	local pw = vgui.Create("InvisPanel", pnl)
-	
+
 	pw:SetSize(200, 40)
 
 	pw:Center()
@@ -57,25 +58,27 @@ function ENT:GenerateOptions(qm, pnl)
 	local ent = self 
 
 	function pw:Paint(w, h)
+		if not IsValid(ent) then pnl:Remove() return end
 		surface.SetDrawColor(60, 60, 60, 150)
 		surface.DrawRect(0, 0, w, h)
-
-		draw.SimpleText(("Power: %d/%d"):format(ent:GetPower(), ent.PowerCapacity), "OSB24", w/2, h/2, Color(50, 160, 250), 1, 1)
+		local grid = ent:GetGrid()
+		draw.SimpleText(("Power: %d/%d"):format(grid.PowerStored, grid.MaxPowerStored), "OSB24", w/2, h/2, Color(50, 160, 250), 1, 1)
 
 		surface.SetDrawColor(0, 0, 0)
 		self:DrawGradientBorder(w, h, 3, 3)
+
 	end
 
-	qm:AddPopIn(pw, pw.X, pw.Y, 0, -32)
+	qm:AddPopIn(pw, pw.X, pw.Y, 0, 32)
 	qm:AddPopIn(gen, gen.X, gen.Y - pnl.CircleSize - 8, 0, -32)
 end
 
-if SERVER then 
+if SERVER then
 	net.Receive("ManualGen", function(_, ply)
 		local gen = net.ReadEntity()
-		if not IsValid(gen) or not gen.IsManualGen then return end 
 
-		if ply:GetPos():Distance(gen:GetPos()) > 196 then return end 
+		if not IsValid(gen) or not gen.IsManualGen then return end
+		if ply:GetPos():Distance(gen:GetPos()) > 196 then return end
 
 		gen:GenPower()
 	end)

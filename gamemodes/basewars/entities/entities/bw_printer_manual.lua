@@ -19,24 +19,21 @@ ENT.BypassMaster = true
 
 function ENT:UseFunc(act, call)
    
-    if self:GetPower() < 5 then return end
+    if not self:GetGrid():TakePower(5) then return end
 
-    local printed = self.PrintAmount*self:GetLevel()
-
+    local printed = self.PrintAmount * self:GetLevel()
     
 	act:GiveMoney(printed)
 	hook.Run("BaseWars_PlayerEmptyPrinter", call, self, printed)
-	
-	self:DrainPower(5)
+
 end
 
 function ENT:Draw()
 	self:DrawModel()
 end
+
 function ENT:ThinkFunc()
-return
 end
 
 function ENT:UseBypass()
-return
 end
