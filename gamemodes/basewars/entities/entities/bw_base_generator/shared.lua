@@ -26,8 +26,7 @@ end
 
 function ENT:DerivedDataTables()
 	--self:NetworkVar("Int", 3, "GridID")
-	self:NetworkVar("Entity", 1, "Line")
-
+	self:NetworkVar("Entity", 1, "Hotwired")
 	if CLIENT then
 
 		self:NetworkVarNotify("GridID", function(self, name, old, new)

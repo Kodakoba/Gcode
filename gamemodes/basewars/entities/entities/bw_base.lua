@@ -14,7 +14,7 @@ ENT.PowerCapacity = 1000
 ENT.PresetMaxHealth = 100
 ENT.Power = 0
 ENT.IsBaseWars = true
-
+ENT.ConnectPoint = Vector()
 local pow = ENT.Power
 
 BWEnts = BWEnts or {}

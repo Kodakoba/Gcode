@@ -427,25 +427,52 @@ function ENT:OnChangeGridID(new)
 		grid:AddLine(self)
 	end
 end
+
 local cab = Material("cable/cable2")
 local lightning = Material("trails/electric")
 
+--local b = bench("cables", 600)
+
 hook.Add("PostDrawTranslucentRenderables", "DrawPoleCables", function(d, sb)
-	--local b = bench("rendering")
+	
 	--b:Open()
 
 	if sb then return end--or #poles <= 0 then return end
 
+	render.SetMaterial(cab)
+
 	for k, grid in pairs(PowerGrids) do
 
-		if #grid.PowerLines == 0 then continue end
+		if #grid.PowerLines == 0 then
+
+			local should_bail = true
+			for k,v in ipairs(grid.Generators) do
+				if v:GetHotwired():IsValid() then
+					should_bail = false
+					break
+				end
+			end
+
+			if should_bail then continue end
+		end
+
 
 		for key, ent in pairs(grid.AllEntities) do
 			local pos
 			local genpos
 
 			local pole = ent:GetLine()
-			if not pole:IsValid() then continue end
+			if not pole:IsValid() then
+				if ent.PowerType == "Generator" and ent:GetHotwired():IsValid() then
+					pole = ent:GetHotwired()
+				else
+					continue
+				end
+			end
+
+			-- i understand that there are situations where both ents may be out of PVS
+			-- but the cable between them should draw, but i think performance is more important
+			if ent:IsDormant() and pole:IsDormant() then continue end 
 
 			if ent.PowerType == "Line" then
 				local pts = ent.ChainPoints
@@ -460,20 +487,20 @@ hook.Add("PostDrawTranslucentRenderables", "DrawPoleCables", function(d, sb)
 			end
 
 			local me = BWEnts[pole]
+			me.Cables = me.Cables or {}
+			--if not me.ThrowLightning then print("nope") continue end
 
-			if not me.ThrowLightning then continue end
-
-			render.SetMaterial(cab)
+			
 
 
 			local them = BWEnts[ent]
 			local cab = me.Cables[ent]
 
-			local qual = (ent.PowerType == "Line" and 35) or 10
+			local qual = (ent.PowerType == "Line" and 35) or 15
 
-			if not cab or cab.From ~= pos or cab.To ~= genpos then--if newpos or them.LastCablePos ~= genpos or them.LastCableTo ~= pos or not them.Cable then
+			if not cab or cab.From ~= pos or cab.To ~= genpos then
 				local h = (ent.PowerType == "Line" and math.min(20, math.sqrt(math.max(600 - pos:Distance(genpos), 16)))) or 3
-				
+
 				me.Cables[ent] = GenerateCable(pos, genpos, h, qual)
 				me.Cables[ent].From = pos
 				me.Cables[ent].To = genpos
@@ -495,5 +522,5 @@ hook.Add("PostDrawTranslucentRenderables", "DrawPoleCables", function(d, sb)
 
 	end
 
-	--b:Close()
+	--b:Close():print()
 end)

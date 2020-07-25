@@ -84,7 +84,7 @@ local function OpenShit(qm, self, pnl)
 		DrawCable = ent
 	end
 
-	if IsValid(self:GetConnectedTo()) then
+	if IsValid(self:GetHotwired()) then
 
 		local disc = vgui.Create("FButton", pnl)
 		disc:SetSize(128, 48)
@@ -127,7 +127,7 @@ local function OpenShit(qm, self, pnl)
 
 	function pnl:OnActive()
 
-		if not IsValid(self.Disconnect) and IsValid(ent:GetConnectedTo()) then
+		if not IsValid(self.Disconnect) and IsValid(ent:GetHotwired()) then
 			--[[
 				Disconnect button
 			]]
@@ -306,7 +306,7 @@ local function OpenShit(qm, self, pnl)
 
 	end
 
-	local ent = self:GetConnectedTo()
+	local ent = self:GetHotwired()
 
 	if IsValid(ent) then
 		if ent.DontPreview then return end
@@ -323,9 +323,9 @@ local function OpenShit(qm, self, pnl)
 end
 
 function ENT:CLInit()
-	--local qm = self:SetQuickInteractable()
-	--qm.OnOpen = OpenShit
-	--qm.OnReopen = OpenShit
+	local qm = self:SetQuickInteractable()
+	qm.OnOpen = OpenShit
+	qm.OnReopen = OpenShit
 
 	self:OnChangeGridID(self:GetGridID())
 end

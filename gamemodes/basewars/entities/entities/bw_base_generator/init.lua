@@ -91,6 +91,41 @@ function ENT:PhysicsUpdate()
 	BWEnts[self].CheckDist = true
 end
 
+
+function ENT:ConnectTo(ent)
+	print("hotwiring", self, "to", ent)
+	if not ent.PowerType == "Consumer" then return end
+
+	local grid = self:GetGrid()
+	local count = table.Count(grid.AllEntities)
+
+	if count > 2 then print("more than 2 ents", count) return end
+	if count == 2 and #grid.Consumers == 1 then
+		grid:RemoveConsumer(grid.Consumers[1])
+	elseif #grid.Consumers > 1 then
+		print("more than 2 consumers or some shit?", #grid.Consumers)
+		return
+	end
+
+	local other_grid = ent:GetGrid()
+
+	for k,v in ipairs(other_grid.Generators) do
+		if v:GetHotwired() == ent then
+			v:SetHotwired(Entity(0))
+		end
+	end
+
+	other_grid:RemoveConsumer(ent)
+	grid:AddConsumer(ent)
+
+	self:SetHotwired(ent)
+	print("added successfully")
+end
+
+function ENT:Disconnect()
+
+end
+
 net.Receive("ConnectGenerator", function(_, ply)
 	local disconnect = net.ReadBool()
 	local gen = net.ReadEntity()
