@@ -1,6 +1,6 @@
 AddCSLuaFile()
 
-PowerGrid = PowerGrid or Emitter:extend()
+PowerGrid = PowerGrid or Networkable:extend()--Emitter:extend()
 
 function PowerGrid.UpdateIDs()
 	for k, grid in pairs(PowerGrids) do
@@ -73,9 +73,16 @@ function PowerGrid:Initialize(ow, id, id2) --`id` is only used clientside, when 
 
 	self.ID = newid
 
+	self:SetNetworkableID("PowerGrid" .. newid)
 end
 
-PowerGrid:On("Changed", "TrackConnections", function(self)
+if CLIENT then
+	PowerGrid:On("NetworkedChanged", "UpdateVars", function(self)
+		self.PowerStored = self.Networked.PowerStored or self.PowerStored
+	end)
+end
+
+PowerGrid:On("GridChanged", "TrackConnections", function(self)
 
 	if self.Connections == 0 then
 		self:Remove()
@@ -84,7 +91,7 @@ PowerGrid:On("Changed", "TrackConnections", function(self)
 	PowerGrid.UpdateIDs()
 end)
 
-PowerGrid:On("Changed", "UpdateNetworking", function(self, ent)
+PowerGrid:On("GridChanged", "UpdateNetworking", function(self, ent)
 	if not table.HasValue(self.AllEntities, ent) then
 		self.Changes[ent] = false --removed
 	else
@@ -100,7 +107,7 @@ PowerGrid:On("RemovedLine", "RepickLine", function(self, line)
 
 		for i=#ents, 1, -1 do --ty CornerPin for this https://discordapp.com/channels/565105920414318602/567617926991970306/720349414408847370
 			--if there's no pole to be found here then the entity will be removed from the new grid, and if there's 0 connections
-			--the powergrid will be removed entirely (replaced by new ones), see :On("Changed") above for the removal
+			--the powergrid will be removed entirely (replaced by new ones), see :On("GridChanged") above for the removal
 
 			local ent = ents[i]
 			if ent:GetLine() ~= line then continue end
@@ -176,7 +183,7 @@ for k,v in pairs(accessors) do
 			grid["Remove" .. ent.PowerType] (grid, ent)
 		end
 
-		self:Emit("Changed", ent, ...)
+		self:Emit("GridChanged", ent, ...)
 		self:Emit("Added" .. v.emit, ent, ...)
 
 		if SERVER then ent:SetGridID(self.ID) end
@@ -203,7 +210,7 @@ for k,v in pairs(accessors) do
 
 		self.Connections = self.Connections - 1
 
-		self:Emit("Changed", ent)
+		self:Emit("GridChanged", ent)
 		self:Emit("Removed" .. v.emit, ent, new)
 
 		if new then
@@ -342,6 +349,21 @@ function ENTITY:GetGrid()
 	return self.Grid
 end
 
+function PowerGrid:AddPower(pw)
+	self.PowerStored = math.Clamp(self.PowerStored + pw, 0, self.MaxPowerStored)
+end
+
+function PowerGrid:TakePower(pw)
+	local take = math.min(pw, self.PowerStored)
+	self.PowerStored = self.PowerStored - take
+
+	return take == pw, take
+end
+
+function PowerGrid:GetPower()
+	return self.PowerStored
+end
+
 function PowerGrid:Think()
 
 	self:Emit("Think")
@@ -431,7 +453,8 @@ if SERVER then
 	local function gridThink(nses)
 		for k,v in pairs(PowerGrids) do
 			v:Think()
-			nses[#nses + 1] = v:Network()
+			v:Set("PowerStored", v.PowerStored)
+			--nses[#nses + 1] = v:Network()
 		end
 	end
 
@@ -439,7 +462,7 @@ if SERVER then
 		local nses = {}
 		local ok, err = pcall(gridThink, nses)
 
-		if CurTime() - lastNW > networkTime then
+		--[[if CurTime() - lastNW > networkTime then
 
 			net.Start("PowerGrids")
 				net.WriteUInt(#nses, 16)
@@ -449,11 +472,11 @@ if SERVER then
 			net.Broadcast()
 
 			lastNW = CurTime()
-		end
-		
-		if not ok then
+		end]]
+
+		--[[if not ok then
 			ErrorNoHalt(err)
-		end
+		end]]
 
 	end)
 else
