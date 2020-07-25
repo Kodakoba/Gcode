@@ -27,6 +27,8 @@ function Networkable.ResetAll()
 	table.Empty(cache)
 	table.Empty(numToID)
 	table.Empty(IDToNum)
+
+	_NetworkableAwareness = muldim:new()
 end
 
 local encoderIDLength = 5 --5 bits fit 16 (0-15) encoders
@@ -106,18 +108,27 @@ local function determineEncoder(typ, val)
 	return enc[2], enc[1], enc[3]
 end
 
+nw.AutoAssignID = true
+
 function nw:Initialize(id)
 	if not id then error("Networkable creation requires an ID!") return end
 	if _NetworkableCache[id] then return _NetworkableCache[id] end
 
-	self.ID = id
 	self.Networked = {}
+
+	if not rawget(self.__instance, "AutoAssignID") then return end
+	print("autoassigning ID to networkable", id)
+	nw:SetID(id)
+end
+
+function nw:SetNetworkableID(id)
+	self.NetworkableID = id
 
 	local typ = type(id):lower()
 
 	local encoder, encoderID, additionalArg = determineEncoder(typ, id)
 
-	self.IDEncoder = {
+	self.NetworkableIDEncoder = {
 		Func = encoder, --function which will encode the ID
 		ID = encoderID, --ID of the encoder function so the client knows how to figure it out
 		IDArg = additionalArg, --additional arg for the encoder function, for cases like UInt and whatnot which require a second arg
@@ -129,27 +140,26 @@ function nw:Initialize(id)
 		IDToNum[id] = #numToID
 		self.NumberID = #numToID
 	end
-	--self.NumberID = nil
+
 
 	_NetworkableCache[id] = self
 end
 
-
 function nw:Set(k, v)
-	if self.Networked[k] == v then print("no not doing") return end
+	if self.Networked[k] == v then --[[adios]] return end
 
 	self.Networked[k] = v
-	_NetworkableChanges:Set(v, self.ID, k)
+	_NetworkableChanges:Set(v, self.NetworkableID, k)
 	return self
 end
 
 function nw:Invalidate()
-	_NetworkableCache[self.ID] = nil
-	table.remove(numToID, IDToNum[self.ID])
-	IDToNum[self.ID] = nil
+	_NetworkableCache[self.NetworkableID] = nil
+	table.remove(numToID, IDToNum[self.NetworkableID])
+	IDToNum[self.NetworkableID] = nil
 
 	for ply, ids in pairs(_NetworkableAwareness) do
-		ids[self.ID] = nil
+		ids[self.NetworkableID] = nil
 	end
 
 	_NetworkableLastNetworkedIDs = _NetworkableLastNetworkedIDs - 1
@@ -157,7 +167,7 @@ end
 
 
 function nw:Bond(what)
-	if not self.ID then error("Assign an ID first!") return end
+	if not self.NetworkableID then error("Assign an ID first!") return end
 
 	if isentity(what) then
 		hook.OnceRet("EntityRemoved", ("Networkable.Bond:%p"):format(what), function(ent)
@@ -194,8 +204,8 @@ if SERVER then
 		local obj = cache[name]
 
 		net.WriteUInt(num, 24)
-		net.WriteUInt(obj.IDEncoder.ID, encoderIDLength)
-		obj.IDEncoder.Func(name, obj.IDEncoder.IDArg)
+		net.WriteUInt(obj.NetworkableIDEncoder.ID, encoderIDLength)
+		obj.NetworkableIDEncoder.Func(name, obj.NetworkableIDEncoder.IDArg)
 	end
 
 	local function WriteChange(key, val)
@@ -236,7 +246,7 @@ if SERVER then
 				changes_count = changes_count + 1
 				for k, ply in ipairs(everyone) do
 					local arr = _NetworkableAwareness:GetOrSet(ply)
-					arr[obj.ID] = true
+					arr[obj.NetworkableID] = true
 				end
 			end
 		end
@@ -331,7 +341,7 @@ if SERVER then
 		else
 			local anyone_missing = false
 			for k, ply in ipairs(self.Filter) do
-				if not _NetworkableAwareness[ply] or not _NetworkableAwareness[ply][self.ID] then anyone_missing = true break end --awh
+				if not _NetworkableAwareness[ply] or not _NetworkableAwareness[ply][self.NetworkableID] then anyone_missing = true break end --awh
 			end
 
 			net.Start("NetworkableSync")
@@ -408,7 +418,7 @@ if CLIENT then
 
 			if obj then
 				obj.NumberID = num_id
-				obj:Emit("Changed")
+				obj:Emit("NetworkedChanged")
 			end
 		end
 	end)
