@@ -129,6 +129,7 @@ end)
 
 function PowerGrid:Remove()
 	PowerGrids[self.ID] = nil
+	self:Invalidate()
 end
 
 local accessors = {
@@ -349,13 +350,19 @@ function ENTITY:GetGrid()
 	return self.Grid
 end
 
+function PowerGrid:UpdatePower()
+	self:Set("PowerStored", self.PowerStored)
+end
+
 function PowerGrid:AddPower(pw)
 	self.PowerStored = math.Clamp(self.PowerStored + pw, 0, self.MaxPowerStored)
+	self:UpdatePower()
 end
 
 function PowerGrid:TakePower(pw)
 	local take = math.min(pw, self.PowerStored)
 	self.PowerStored = self.PowerStored - take
+	self:UpdatePower()
 
 	return take == pw, take
 end
@@ -453,7 +460,7 @@ if SERVER then
 	local function gridThink(nses)
 		for k,v in pairs(PowerGrids) do
 			v:Think()
-			v:Set("PowerStored", v.PowerStored)
+			v:UpdatePower()
 			--nses[#nses + 1] = v:Network()
 		end
 	end
