@@ -105,10 +105,10 @@ local function DrawStructureInfo()
 		anims:To("Alpha", 0, 0.25, 0, 0.2)
 	else
 
-		local wep = ply:GetActiveWeapon()
+		local wep = me:GetActiveWeapon()
 		local class = (IsValid(wep) and wep:GetClass())
 
-		local to = (class == "weapon_physgun" and ((input.IsMouseDown(MOUSE_LEFT) and 140) or 240) ) or 250
+		local to = (class == "weapon_physgun" and ((input.IsMouseDown(MOUSE_LEFT) and not vgui.CursorVisible() and 140) or 240) ) or 250
 		lastpos = ent:LocalToWorld(ent:OBBCenter())
 
 		dist = math.max(lastpos:Distance(trace.StartPos) - 96, 0)
@@ -122,7 +122,7 @@ local function DrawStructureInfo()
 	end
 
 	alpha = anims.Alpha or 0
-	backcol.a = alpha 
+	backcol.a = alpha
 	hdcol.a = alpha
 
 	local ts = lastpos:ToScreen()
