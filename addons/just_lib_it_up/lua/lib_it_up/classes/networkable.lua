@@ -89,11 +89,9 @@ local NetworkAll --pre-definition
 local function determineEncoder(typ, val)
 	if typ == "number" then --numbers are a bit more complicated
 		if math.ceil(val) == val then
-			print("ceiled val == val", val)
 			if val >= 0 then return net.WriteUInt, 7, 32
 			else return net.WriteInt, 8, 32 end
 		else
-			print("ceiled val is not the same, writing float")
 			return net.WriteFloat, 9
 		end
 	end
@@ -118,7 +116,7 @@ function nw:Initialize(id)
 
 	if _NetworkableCache[id] then return _NetworkableCache[id] end
 
-	nw:SetNetworkableID(id)
+	self:SetNetworkableID(id)
 end
 
 function nw:SetNetworkableID(id)
@@ -180,7 +178,6 @@ function nw:Bond(what)
 			if CLIENT then
 				timer.Simple(0.1, function()
 					if IsValid(self) then print("Disregard...?") self:Bond(self) return end --fullupdates :v
-					print("Invalidated")
 					self:Invalidate()
 				end)
 			else
@@ -202,8 +199,6 @@ if SERVER then
 
 	local function WriteIDPair(i)
 
-		print("writing idpair", i, numToID[i])
-
 		local name = numToID[i]
 		local obj = cache[name]
 
@@ -220,12 +215,12 @@ if SERVER then
 		local v_encoder, v_encoderID, v_additionalArg = determineEncoder(val_typ, val)
 
 		-- write key encoderID and the encoded key
-		net.WriteUInt(k_encoderID, encoderIDLength)
+		net.WriteUInt(k_encoderID, encoderIDLength).Description = "Changed key encoder ID"
 		k_encoder(key, k_additionalArg)
 
 		-- write val encoderID and the encoded val
 
-		net.WriteUInt(v_encoderID, encoderIDLength)
+		net.WriteUInt(v_encoderID, encoderIDLength).Description = "Changed value encoder ID"
 		v_encoder(val, v_additionalArg)
 
 	end
@@ -242,6 +237,21 @@ if SERVER then
 
 		local changes_count = 0
 
+
+		-- count networkables someone might not know about
+
+		local newids = {}
+
+		for _, ply in ipairs(everyone) do
+			for numID, nameID in ipairs(numToID) do
+				if not _NetworkableAwareness[ply] or not _NetworkableAwareness[ply][nameID] then
+					newids[#newids + 1] = numID
+					_NetworkableAwareness:Set(true, ply, nameID)
+				end
+			end
+		end
+
+		-- store their awareness
 		for id, v in pairs(_NetworkableChanges) do
 			-- if an obj has a filter it gets removed from all-player-broadcasting
 			local obj = _NetworkableCache[id]
@@ -251,16 +261,6 @@ if SERVER then
 				for k, ply in ipairs(everyone) do
 					local arr = _NetworkableAwareness:GetOrSet(ply)
 					arr[obj.NetworkableID] = true
-				end
-			end
-		end
-
-		local newids = {}
-
-		for _, ply in ipairs(everyone) do
-			for numID, nameID in ipairs(numToID) do
-				if not _NetworkableAwareness[nameID] then
-					newids[#newids + 1] = numID
 				end
 			end
 		end
@@ -276,9 +276,7 @@ if SERVER then
 			local ns = netstack:new()
 			ns:Hijack()
 
-			print("written amount of changes:", changes_count)
-
-			net.WriteUInt(changes_count, 16) --amount of changed networkable objects
+			net.WriteUInt(changes_count, 16).Description = "Changed objects count" --amount of changed networkable objects
 			local changed = 0
 
 			local bits = select(2, net.BytesWritten())
@@ -288,8 +286,8 @@ if SERVER then
 				if obj.Filter then continue end --nyope
 
 				changed = changed + 1
-				net.WriteUInt(IDToNumber(id), 24)
-				net.WriteUInt(table.Count(changes), 16) --amount of changed values in the Networkable object
+				net.WriteUInt(IDToNumber(id), 24).Description = "IDToNumber"
+				net.WriteUInt(table.Count(changes), 16).Description = "Amount of changes in an object" --amount of changed values in the Networkable object
 
 				for k,v in pairs(changes) do
 					WriteChange(k, v)
@@ -310,7 +308,7 @@ if SERVER then
 			ns.Ops[1].args[1] = changed --this is the changes_count, change it to `changed` in case we broke out of the loop early
 
 			net.WriteNetStack(ns)
-			print("sent Networkables to all", newid_count, changes_count)
+
 		net.Send(player.GetAll())
 	end
 
@@ -406,14 +404,13 @@ if CLIENT then
 		-- read new numid:id pairs
 		local new_ids = net.ReadUInt(16)
 		print("reading", new_ids, "new pairs")
+
 		for i=1, new_ids do
 			local num_id, id = ReadIDPair(i)
 
 			if not _NetworkableCache[id] then --that object doesn't exist clientside; create it ahead of time
-				print("creating networkable we didn't know about...?", id)
 				_NetworkableCache[id] = Networkable(id)
 			end
-			print("created pair", num_id, "=", id)
 			numToID[num_id] = id
 		end
 
@@ -423,16 +420,16 @@ if CLIENT then
 		for i=1, changes do
 			local num_id = net.ReadUInt(24)			--numberID of the networkable object
 			local changed_keys = net.ReadUInt(16)	--amt of changed keys
-			print("number id and amt of changed keys:", num_id, changed_keys)
+
 			local obj = _NetworkableCache[numToID[num_id]]
-			print("object:", obj)
+
 			for key_i = 1, changed_keys do
-				print("reading change #", key_i)
 				local k,v = ReadChange()
 				if obj then obj.Networked[k] = v end
 			end
-
+			print("ID of obj:", numToID[num_id], num_id)
 			if obj then
+				print("ye exists")
 				obj.NumberID = num_id
 				obj:Emit("NetworkedChanged")
 			end
