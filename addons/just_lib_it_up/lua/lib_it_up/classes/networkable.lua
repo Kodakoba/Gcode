@@ -12,8 +12,6 @@ _NetworkableCache = _NetworkableCache or {}-- _NetworkableCache or {}
 _NetworkableNumberToID = _NetworkableNumberToID or {} --[num] = name
 _NetworkableIDToNumber = _NetworkableIDToNumber or {} --[name] = num
 
-_NetworkableLastNetworkedIDs = 0		--how many NumberToID pairs existed when it was last networked
-
 _NetworkableChanges = muldim:new()-- _NetworkableChanges or muldim:new()
 
 _NetworkableAwareness = muldim:new() --[ply] = {'ID', 'ID'} , not numberids
@@ -111,13 +109,15 @@ end
 nw.AutoAssignID = true
 
 function nw:Initialize(id)
-	if not id then error("Networkable creation requires an ID!") return end
-	if _NetworkableCache[id] then return _NetworkableCache[id] end
-
 	self.Networked = {}
 
-	if not rawget(self.__instance, "AutoAssignID") then return end
-	print("autoassigning ID to networkable", id)
+	if not rawget(self.__instance, "AutoAssignID") then return end 	-- if this object is constructed from an Networkable extension,
+																	-- ignore the fact we don't have an ID
+
+	if not id then error("Networkable creation requires an ID!") return end
+
+	if _NetworkableCache[id] then return _NetworkableCache[id] end
+
 	nw:SetNetworkableID(id)
 end
 
@@ -146,6 +146,11 @@ function nw:SetNetworkableID(id)
 end
 
 function nw:Set(k, v)
+	if not self.NetworkableID then
+		error("Set a NetworkableID first!")
+		return
+	end
+
 	if self.Networked[k] == v then --[[adios]] return end
 
 	self.Networked[k] = v
@@ -162,7 +167,6 @@ function nw:Invalidate()
 		ids[self.NetworkableID] = nil
 	end
 
-	_NetworkableLastNetworkedIDs = _NetworkableLastNetworkedIDs - 1
 end
 
 
@@ -172,7 +176,7 @@ function nw:Bond(what)
 	if isentity(what) then
 		hook.OnceRet("EntityRemoved", ("Networkable.Bond:%p"):format(what), function(ent)
 			if ent ~= what then return false end
-			print("EntityRemoved", ent, " invaidating networkable", Realm())
+
 			if CLIENT then
 				timer.Simple(0.1, function()
 					if IsValid(self) then print("Disregard...?") self:Bond(self) return end --fullupdates :v
@@ -196,14 +200,14 @@ end
 
 if SERVER then
 
-	local function WriteIDPair(i, literal)
+	local function WriteIDPair(i)
 
-		local num = literal and i or #numToID - (i - 1)
-		print("writing idpair", num, numToID[num])
-		local name = numToID[num]
+		print("writing idpair", i, numToID[i])
+
+		local name = numToID[i]
 		local obj = cache[name]
 
-		net.WriteUInt(num, 24)
+		net.WriteUInt(i, 24)
 		net.WriteUInt(obj.NetworkableIDEncoder.ID, encoderIDLength)
 		obj.NetworkableIDEncoder.Func(name, obj.NetworkableIDEncoder.IDArg)
 	end
@@ -251,18 +255,28 @@ if SERVER then
 			end
 		end
 
-		local newid_count = #numToID - _NetworkableLastNetworkedIDs
-		_NetworkableLastNetworkedIDs = #numToID
+		local newids = {}
+
+		for _, ply in ipairs(everyone) do
+			for numID, nameID in ipairs(numToID) do
+				if not _NetworkableAwareness[nameID] then
+					newids[#newids + 1] = numID
+				end
+			end
+		end
+
 		local nw = netstack:new()
 
 		net.Start("NetworkableSync")
-			net.WriteUInt(newid_count, 16)
-			for i=1, newid_count do
-				WriteIDPair(i)
+			net.WriteUInt(#newids, 16)
+			for i=1, #newids do
+				WriteIDPair(newids[i])
 			end
 
 			local ns = netstack:new()
 			ns:Hijack()
+
+			print("written amount of changes:", changes_count)
 
 			net.WriteUInt(changes_count, 16) --amount of changed networkable objects
 			local changed = 0
@@ -405,13 +419,15 @@ if CLIENT then
 
 		--read networkable changes
 		local changes = net.ReadUInt(16) --how many networkable objects were changed
+		print("reading", changes, " changes")
 		for i=1, changes do
 			local num_id = net.ReadUInt(24)			--numberID of the networkable object
 			local changed_keys = net.ReadUInt(16)	--amt of changed keys
-
+			print("number id and amt of changed keys:", num_id, changed_keys)
 			local obj = _NetworkableCache[numToID[num_id]]
-
+			print("object:", obj)
 			for key_i = 1, changed_keys do
+				print("reading change #", key_i)
 				local k,v = ReadChange()
 				if obj then obj.Networked[k] = v end
 			end

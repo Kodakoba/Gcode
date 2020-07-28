@@ -98,7 +98,7 @@ local function hijackNet()
 			if not net["__Real" .. k] then net["__Real" .. k] = v end
 
 			local hj = hijacked[name] or function(...)
-				if net.ActiveNetstack then net.ActiveNetstack[k] (net.ActiveNetstack, ...) else net["__Real" .. k](...) end
+				if net.ActiveNetstack then return net.ActiveNetstack[k] (net.ActiveNetstack, ...) else net["__Real" .. k](...) end
 			end
 
 			net[k] = hj
