@@ -306,7 +306,7 @@ local function OpenShit(qm, self, pnl)
 
 	end
 
-	local ent = self:GetHotwired()
+	--[[local ent = self:GetHotwired()
 
 	if IsValid(ent) then
 		if ent.DontPreview then return end
@@ -318,7 +318,7 @@ local function OpenShit(qm, self, pnl)
 		end
 
 		PreviewCable = self
-	end
+	end]]
 
 end
 
