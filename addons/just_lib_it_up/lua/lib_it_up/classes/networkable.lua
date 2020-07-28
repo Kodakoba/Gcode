@@ -44,7 +44,7 @@ local encoders = {
 		--if t.Networkable_Encoder then return t:Networkable_Encoder() end
 
 		local vonned = von.serialize(t)
-		print("serialized into", vonned, #vonned)
+
 		net.WriteUInt(#vonned, 16)
 		net.WriteData(vonned, #vonned)
 	end},
@@ -118,7 +118,7 @@ function nw:Initialize(id)
 
 	if not rawget(self.__instance, "AutoAssignID") then return end
 	print("autoassigning ID to networkable", id)
-	nw:SetID(id)
+	nw:SetNetworkableID(id)
 end
 
 function nw:SetNetworkableID(id)
