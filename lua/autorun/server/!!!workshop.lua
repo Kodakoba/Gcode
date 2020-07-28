@@ -17,61 +17,19 @@ print("fake player count on refresh:", serversecure.RefreshInfoCache())
 local debuggingDownloads = false
 
 
-local TTTaddons = {
-    534491717,
-    921953443,
-    121287462,
-    307624986,
-    423895566,
-    802015788,
-    935770059,
-    1291233400,
-}
-local Desaddons = {
-    966444856
-
-}
-local Sandaddons={
-    922947756
-}
-
 local BWAddons={
     160250458, --wire
     922947756, --synths
-    349050451, --CW2.0
-    358608166, --extra CW
-    359830105, --unoff. extra CW
-    354842171, --hk416 CW
-    707343339, --cw melee
-    404394772, --ppsh
-    414514472, --sako
+
     296828130, --bw evocity
     506283460, --csgo kneivs
     546392647, --media players
     284266415,
-    507707748, --whitesnow attachment pack
-    757604550, --wos anim base
-    876487668, --tfa ksg
-    434019312, --bf4 #2
-    852242061, --bf4 atts
-    433547942, --bf4 #1
-    415143062, --tfa base
-    1597122290, --ak12 covertible
-    1099499798, --scar l
-    526188110, --scorpion evo,
-    157621500, --pdw
-    157173896, --mp5k
-    605564693, --acr-e
 
-    --TESTING NEW WEAPONS:
-    374453458, --honey badger
-    374790957, --aug
-    631698506, --mk18
-    657241323, --insurgency 2
-    1166282010, --sg552
-    838920776, --bullpup arsenal
-    1106736515, --khris hcar
-    255763250, --kriss vector
+    2131057232, -- arccw base(d on what)
+    2179387416, -- arccw arknights charms because aerach lmao
+    2131058270, -- arccw cs+
+    2176333528, -- arccw insurgency
 }
 
 
@@ -129,72 +87,39 @@ end
 
 timer.Simple(0, function()
 
-    if gmod.GetGamemode().FolderName == "terrortown" then
-
-        for i=1,#TTTaddons do
-        resource.AddWorkshop(tostring(TTTaddons[i]))
-        end
-
-    print("TTT Workshop Loaded.")
-
-    end
-
-    if gmod.GetGamemode().FolderName == "deception" then
-
-        for i=1,#Desaddons do
-        resource.AddWorkshop(tostring(Desaddons[i]))
-        end
-
-    print("Deception Workshop Loaded.")
-    end
-
-    if gmod.GetGamemode().FolderName == "sandbox" then
-
-        for i=1,#Sandaddons do
-        resource.AddWorkshop(tostring(Sandaddons[i]))
-        end
-
-    print("Sandbox Workshop Loaded.")
-    end
-
-
-    if gmod.GetGamemode().FolderName:find("basewars") then
-
-        for i=1,#BWAddons do
+    for i=1,#BWAddons do
         resource.AddWorkshop(tostring(BWAddons[i]))
-        end
-
-        DownloadFolder("sound/gachi")
-
-        DownloadFolder("sound/dash")
-
-        DownloadFolder('sound/snds')
-
-        DownloadFolder('sound/playsound')
-
-        DownloadFolder("materials/vgui/prestige")
-
-        DownloadFolder("materials/vgui/runes")
-
-        DownloadFolder("materials/vgui/misc")
-
-        DownloadFolder("models/player/wiltos")
-
-        DownloadFolder("materials/grp")
-        DownloadFolder("materials/zerochain")
-        DownloadFolder("materials/models/props/computers")
-
-        DownloadFolder("models/grp")
-        DownloadFolder("models/zerochain")
-
-        DownloadFolder("resource/fonts", "*.ttf")
-
-        DownloadFolder("sound/mus")
-        
-        DownloadFolder("sound/vgui")
-
-       --resource.AddSingleFile("materials/grp/fuck.vtf")
     end
+
+    DownloadFolder("sound/gachi")
+
+    DownloadFolder("sound/dash")
+
+    DownloadFolder('sound/snds')
+
+    DownloadFolder('sound/playsound')
+
+    DownloadFolder("materials/vgui/prestige")
+
+    DownloadFolder("materials/vgui/runes")
+
+    DownloadFolder("materials/vgui/misc")
+
+    DownloadFolder("models/player/wiltos")
+
+    DownloadFolder("materials/grp")
+    DownloadFolder("materials/zerochain")
+    DownloadFolder("materials/models/props/computers")
+
+    DownloadFolder("models/grp")
+    DownloadFolder("models/zerochain")
+
+    DownloadFolder("resource/fonts", "*.ttf")
+
+    DownloadFolder("sound/mus")
+
+    DownloadFolder("sound/vgui")
+
 end)
 
 
