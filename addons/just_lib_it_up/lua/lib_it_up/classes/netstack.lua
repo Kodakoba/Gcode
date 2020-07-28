@@ -180,7 +180,9 @@ netstack.__tostring = function(self)
 		end
 
 		argsstr = argsstr:sub(1, #argsstr - 2)
-
+		if v.Description then
+			argsstr = argsstr .. "	| " .. v.Description
+		end
 		args = args .. ("%d: %s - %s\n"):format(k, v.type, argsstr)
 	end
 
