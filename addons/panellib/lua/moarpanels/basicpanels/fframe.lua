@@ -294,7 +294,7 @@ function PANEL:Think()
 
 	local mX, mY = self:ScreenToLocal(mousex, mousey)
 
-	self:On("Think")
+	self:Emit("Think")
 
 	if ( self.Sizing ) then
 
