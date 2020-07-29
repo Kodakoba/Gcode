@@ -2,10 +2,12 @@ AddCSLuaFile()
 include("shared.lua")
 
 
-function ENT:Init()
+function ENT:CLInit()
 
 	if not self.FontColor then self.FontColor = color_white:Copy() end
 	if not self.BackColor then self.BackColor = color_black:Copy() end
+
+	self.Printers = Networkable(("PrinterRack:%d"):format(self:EntIndex())):Bond(self)
 	self.PowerRequired = 5
 end
 
@@ -69,10 +71,14 @@ local function CreateFrame(ent)
 
 	local col = vgui.Create("FButton", f)
 
-	function f:Paint(w,h)
-		if not IsValid(ent) then self:Remove() end --bruh
+	f:On("Think", function(self)
+		if not IsValid(ent) then self:Remove() return end --bruh
+	end)
 
-		self:DrawHeaderPanel(w,h)
+	function f:PostPaint(w,h)
+		
+		
+		--self:DrawHeaderPanel(w,h)
 
 		draw.SimpleText("Printer Rack", "OSB28", w/2, 24, color_white, 1, 1)
 		self.ScaleDown = ScrH() < 800
@@ -132,23 +138,22 @@ function ENT:Draw()
 	local f = self.Frame
 
 	local pr = self:GetPrinters()
-	local t = ParsePrintersOut(pr)
+	local t = self.Printers.Networked--ParsePrintersOut(pr)
 
 	local i = 0
 
-	for k,v in ipairs(t) do
+	local rack = self
 
-		i = i + 1
+	for entKey, entID in ipairs(t) do
 
-		if v==0 then continue end
 		if IsValid(f.Buttons[k]) then continue end
 
-		local ent = Entity(v)
+		local ent = Entity(entID)
 
 		if not IsValid(ent) then continue end
 
-		f.Buttons[k] = vgui.Create("EButton", f)
-		local fr = f.Buttons[k]
+		f.Buttons[entKey] = vgui.Create("EButton", f)
+		local fr = f.Buttons[entKey]
 		fr:SetDoubleClickingEnabled(false)
 		--fr:SetPos(50, -100 + f.HeaderSize + 16 + 100*i)
 		local frH = scaleH[f.ScaleDown]
@@ -158,7 +163,7 @@ function ENT:Draw()
 		fr:DockMargin(8, 4, 8, 0)
 		fr.Border = {w = 2, h = 2}
 		fr.borderColor = ent.FontColor or Color(255, 0, 0)
-		fr.ID = k
+		fr.ID = entKey
 
 		function fr:IsHovered()
 			return self.Hovered and not (self.Eject.Hovered or self.Upgrade.Hovered)
@@ -178,7 +183,7 @@ function ENT:Draw()
 		end
 
 		function fr:PostPaint(w, h)
-			if not IsValid(ent) then self:Remove() print("invalid lolno") return end
+			if not IsValid(ent) or rack.Printers:GetNetworked()[entKey] ~= entID then self:Remove() print("invalid or not self lolno") return end
 
 			local txt = (ent.PrintName .. " Lv. " .. ((ent.GetLevel and ent:GetLevel()) or "-2.147b")) or " ??? "
 
@@ -218,10 +223,11 @@ function ENT:Draw()
 		--b:SetPaintedManually(true)
 
 		b.DoClick = function(s)
-
-			net.Start("EjectPrinter")
+			print("doclick called")
+			net.Start("PrinterRack")
 				net.WriteEntity(self)
-				net.WriteUInt(k, 8)
+				net.WriteUInt(0, 2) -- = eject
+				net.WriteUInt(entKey, 8)
 			net.SendToServer()
 
 		end
@@ -262,9 +268,9 @@ function ENT:Draw()
 			else
 				lc.a = L(lc.a, 255, 30, true)
 			end
+
 			local cost = BaseWars.NumberFormat(ent:GetUpgradeValue() * ent:GetLevel())
 			draw.SimpleText("$" .. cost, "OS36", 18 + 32 + 8, h/2, ColorAlpha(color_white, 255 - lc.a), 0, 1)
-
 
 		end
 
@@ -304,7 +310,6 @@ function ENT:Draw()
 	for k,v in pairs(f.Buttons) do
 		if not IsValid(v) then f.Buttons[k] = nil continue end
 		if t[v.ID]==0 then v:PopOut() f.Buttons[k] = nil continue end
-
 	end
 
 	vgui.Start3D2D( pos, ang, scale )
