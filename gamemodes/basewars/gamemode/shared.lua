@@ -35,8 +35,8 @@ Credits:
 
 See GM.OGLicense for the basewars_free license.
 See GM.OGCredits for the basewars_free credits.]]
-	
-local license = GM.License 
+
+local license = GM.License
 
 GM.OGLicense = [[
 Copyright (c) 2015-2017 Hexahedronic, Q2F2, Ghosty, Liquid, Tenrys, Trixter, User4992
@@ -67,13 +67,13 @@ function Deprecated()
 	local tr = debug.traceback()
 	local caller
 
-	local traced = false 
-	print(tr)
+	local traced = false
+
 	for s in string.gmatch(tr, "(%C+)%c") do
 
-		if not isstring(s) then print(s, "not a string") return end 
-		for where, what in string.gmatch(s, "(.+) in (.+)") do 
-			if not caller then 
+		if not isstring(s) then print(s, "not a string") return end
+		for where, what in string.gmatch(s, "(.+) in (.+)") do
+			if not caller then
 				print(str:format(what))
 				caller = what
 			else
@@ -84,7 +84,7 @@ function Deprecated()
 			end
 		end
 
-	end 
+	end
 
 end
 
@@ -169,15 +169,15 @@ BaseWars.IsXmasTime = Deprecated
 function BaseWars.AddToSpawn(t)
 
 	t.Limit = t.Limit or BaseWars.Config.DefaultLimit
-	
+
 	t.Price = t.Price or 420
-	t.Level = t.Level or 0 
+	t.Level = t.Level or 0
 
 	t.Model = t.Model or "models/Humans/Group01/Male_Cheaple.mdl"
 	t.ShouldFreeze = (t.Gun and false) or (t.ShouldFreeze == nil and true) or t.ShouldFreeze
 	t.Name = t.Name or "???"
-	if not t.ClassName then error("look i'd put up with your shit like not setting limits or price but NOT CLASS NAME???") return end 
-	
+	if not t.ClassName then error("look i'd put up with your shit like not setting limits or price but NOT CLASS NAME???") return end
+
 	return t
 
 end
@@ -356,7 +356,7 @@ function BaseWars.UTIL.RefundFromCrash(ply)
 
 		local Money = file.Read(FileName, "DATA")
 		Money = tonumber(Money)
-		if not Money then file.Delete(FileName) return end 
+		if not Money then file.Delete(FileName) return end
 		ply:ChatPrint(Language.WelcomeBackCrash)
 		ply:ChatPrint(Language("Refunded", BaseWars.NumberFormat(Money)))
 
@@ -456,7 +456,7 @@ function GM:PlayerNoClip(ply)
 
 	end
 
-	return Admin and not ply:InRaid() 
+	return Admin and not ply:InRaid()
 
 end
 
@@ -516,13 +516,6 @@ function GM:CanTool(ply, tr, tool)
 
 	if BaseWars.Config.BlockedTools[tool] then return IsAdmin(ply, ent, Ret) end
 	if IsValid(tr.Entity) and tr.Entity:GetClass():find("bw_") then return IsAdmin(ply, ent, Ret) end
-
-	if SERVER then
-
-		local Pos = tr.HitPos
-		local HitString = math.floor(Pos.x) .. "," .. math.floor(Pos.y) .. "," .. math.floor(Pos.z)
-
-	end
 
 	return BlockInteraction(ply, ent, Ret)
 
@@ -586,11 +579,11 @@ function GM:PlayerSpawnProp(ply, model)
 
 end
 
-local Lerp = Lerp 
+local Lerp = Lerp
 local FrameTime = FrameTime
 local IsColor = IsColor
 
-local Color = Color 
+local Color = Color
 
 function LC(col, dest, vel)
 	local v = 10
@@ -606,9 +599,12 @@ function L(s, d, v, pnl)
     if not v then v = 5 end
     if not s then s = 0 end
     local res = Lerp(FrameTime()*v, s, d)
-    if pnl then 
+    if pnl then
         local choose = res>s and "ceil" or "floor"
-        res = math[choose](res) 
+        res = math[choose](res)
     end
     return res
 end
+
+
+include("modules.lua")
