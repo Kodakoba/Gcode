@@ -16,9 +16,25 @@ _NetworkableChanges = muldim:new()-- _NetworkableChanges or muldim:new()
 
 _NetworkableAwareness = muldim:new() --[ply] = {'ID', 'ID'} , not numberids
 
+Networkable.Verbose = true
+
+local realPrint = print
+local print = function(...)
+	if not Networkable.Verbose then return end
+	realPrint(...)
+end
+
+local realPrintf = printf
+local printf = function(...)
+	if not Networkable.Verbose then return end
+	realPrintf(...)
+end
+
+local fakeNil = newproxy() --lul
+
 local cache = _NetworkableCache
 
-local numToID = _NetworkableNumberToID
+local numToID = _NetworkableNumberToID -- these tables are not sequential!!!
 local IDToNum = _NetworkableIDToNumber
 
 function Networkable.ResetAll()
@@ -26,7 +42,8 @@ function Networkable.ResetAll()
 	table.Empty(numToID)
 	table.Empty(IDToNum)
 
-	_NetworkableAwareness = muldim:new()
+	table.Empty(_NetworkableChanges)
+	table.Empty(_NetworkableAwareness)
 end
 
 local encoderIDLength = 5 --5 bits fit 16 (0-15) encoders
@@ -51,7 +68,7 @@ local encoders = {
 	["angle"] = {5, net.WriteAngle},
 	["color"] = {6, net.WriteColor},
 
-	--7, 8, 9 are used!!!!!! do not use them!
+	--7, 8, 9, 10 are used!!!!!! do not use them!
 }
 
 local decoders = {
@@ -76,6 +93,7 @@ local decoders = {
 	["uint"] = {7, net.ReadUInt, 32},
 	["int"] = {8, net.ReadInt},
 	["float"] = {9, net.ReadFloat, 32},
+	["nil"] = {10, BlankFunc}
 }
 
 local decoderByID = {}
@@ -87,6 +105,10 @@ end
 local NetworkAll --pre-definition
 
 local function determineEncoder(typ, val)
+	if val == fakeNil then --lol
+		return BlankFunc, 10
+	end
+
 	if typ == "number" then --numbers are a bit more complicated
 		if math.ceil(val) == val then
 			if val >= 0 then return net.WriteUInt, 7, 32
@@ -114,7 +136,7 @@ function nw:Initialize(id)
 
 	if not id then error("Networkable creation requires an ID!") return end
 
-	if _NetworkableCache[id] then return _NetworkableCache[id] end
+	if cache[id] then return cache[id] end
 
 	self:SetNetworkableID(id)
 end
@@ -139,8 +161,7 @@ function nw:SetNetworkableID(id)
 		self.NumberID = #numToID
 	end
 
-
-	_NetworkableCache[id] = self
+	cache[id] = self
 end
 
 function nw:Set(k, v)
@@ -149,6 +170,7 @@ function nw:Set(k, v)
 		return
 	end
 
+	if v == nil then v = fakeNil end --lul
 	if self.Networked[k] == v then --[[adios]] return end
 
 	self.Networked[k] = v
@@ -156,9 +178,23 @@ function nw:Set(k, v)
 	return self
 end
 
+function nw:Get(k, default)
+	local ret = self.Networked[k]
+	if ret == nil then return default end
+
+	return ret
+end
+
+function nw:GetNetworked() --shrug
+	return self.Networked
+end
+
 function nw:Invalidate()
-	_NetworkableCache[self.NetworkableID] = nil
-	table.remove(numToID, IDToNum[self.NetworkableID])
+
+	cache[self.NetworkableID] = nil
+
+	if self.NumberID then numToID[self.NumberID] = nil end
+
 	IDToNum[self.NetworkableID] = nil
 
 	for ply, ids in pairs(_NetworkableAwareness) do
@@ -202,6 +238,10 @@ if SERVER then
 		local name = numToID[i]
 		local obj = cache[name]
 
+		if not obj then
+			realPrintf("Failed obtaining networkable object serverside: ID %d; name %s", i, name)
+		end
+
 		net.WriteUInt(i, 24)
 		net.WriteUInt(obj.NetworkableIDEncoder.ID, encoderIDLength)
 		obj.NetworkableIDEncoder.Func(name, obj.NetworkableIDEncoder.IDArg)
@@ -243,7 +283,7 @@ if SERVER then
 		local newids = {}
 
 		for _, ply in ipairs(everyone) do
-			for numID, nameID in ipairs(numToID) do
+			for numID, nameID in pairs(numToID) do
 				if not _NetworkableAwareness[ply] or not _NetworkableAwareness[ply][nameID] then
 					newids[#newids + 1] = numID
 					_NetworkableAwareness:Set(true, ply, nameID)
@@ -254,7 +294,7 @@ if SERVER then
 		-- store their awareness
 		for id, v in pairs(_NetworkableChanges) do
 			-- if an obj has a filter it gets removed from all-player-broadcasting
-			local obj = _NetworkableCache[id]
+			local obj = cache[id]
 
 			if not obj.Filter then
 				changes_count = changes_count + 1
@@ -282,7 +322,7 @@ if SERVER then
 			local bits = select(2, net.BytesWritten())
 
 			for id, changes in pairs(_NetworkableChanges) do
-				local obj = _NetworkableCache[id]
+				local obj = cache[id]
 				if obj.Filter then continue end --nyope
 
 				changed = changed + 1
@@ -315,7 +355,7 @@ if SERVER then
 	timer.Create("NetworkableNetwork", update_freq, 0, function()
 		local ok, err = pcall(NetworkAll)
 		if not ok then
-			print("NetworkableNetwork Error:", err)
+			realPrint("NetworkableNetwork Error:", err)
 		end
 	end)
 
@@ -329,7 +369,7 @@ if SERVER then
 
 			net.WriteUInt(#_NetworkableNumberToID, 16) --amount of networkable objects in total
 
-			for id, obj in pairs(_NetworkableCache) do
+			for id, obj in pairs(cache) do
 				net.WriteUInt(IDToNumber(id), 24)
 				net.WriteUInt(table.Count(obj.Networked), 16) --amount of changed values in the Networkable object
 
@@ -386,7 +426,7 @@ if CLIENT then
 		local k_dec = decoderByID[k_encID]
 
 		if not k_dec then
-			print("failed to read k_dec", k_dec, k_encID)
+			print("	failed to read k_dec", k_dec, k_encID)
 		end
 
 		local decoded_key = k_dec[2](k_dec[3])
@@ -396,6 +436,7 @@ if CLIENT then
 		local v_dec = decoderByID[v_encID]
 		local decoded_val = v_dec[2](v_dec[3])
 
+		print("	decoded key, val:", decoded_key, decoded_val)
 		return decoded_key, decoded_val
 	end
 
@@ -407,9 +448,9 @@ if CLIENT then
 
 		for i=1, new_ids do
 			local num_id, id = ReadIDPair(i)
-
-			if not _NetworkableCache[id] then --that object doesn't exist clientside; create it ahead of time
-				_NetworkableCache[id] = Networkable(id)
+			printf("	new pair: %d = %s", num_id, id)
+			if not cache[id] then --that object doesn't exist clientside; create it ahead of time
+				cache[id] = Networkable(id)
 			end
 			numToID[num_id] = id
 		end
@@ -421,15 +462,18 @@ if CLIENT then
 			local num_id = net.ReadUInt(24)			--numberID of the networkable object
 			local changed_keys = net.ReadUInt(16)	--amt of changed keys
 
-			local obj = _NetworkableCache[numToID[num_id]]
+			local obj = cache[numToID[num_id]]
+
+			print("	amt of changed keys for", obj, changed_keys)
 
 			for key_i = 1, changed_keys do
+				printf("	reading change #%d", key_i)
 				local k,v = ReadChange()
 				if obj then obj.Networked[k] = v end
 			end
-			print("ID of obj:", numToID[num_id], num_id)
+
+			print("	ID of obj:", numToID[num_id], num_id)
 			if obj then
-				print("ye exists")
 				obj.NumberID = num_id
 				obj:Emit("NetworkedChanged")
 			end
