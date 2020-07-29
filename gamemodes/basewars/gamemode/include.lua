@@ -46,53 +46,42 @@ do
 	IncludeCS("shared/sh_perks.lua")
 
 	if BaseWars.Config.ExtraStuff then
-
 		IncludeCS("shared/playuhr.lua")
 		IncludeCS("shared/customnick.lua")
-
 	end
 
 	if ulib or ulx then
-
 		IncludeCS("integration/bw_admin_ulx.lua")
-
-	end
-	
-	Inventory = Inventory or {}
-	Items = Items or {}
-	function Items:Get(name)
-		for k,v in pairs(Items) do 
-			if istable(v) and v.name and (v.name == name or v.name:lower() == name) then 
-				return k, v 
-			end
-		end
-		return false
 	end
 
-	for k,v in pairs(file.Find("basewars_free/gamemode/shared/inventory/*.lua","LUA")) do 
-		IncludeCS('shared/inventory/'..v)
-		print('included',v)
-	end
-	hook.Run("OnInvLoad")
 end
 
-do
+local path = "basewars/gamemode/"
+
+local function shouldInclude(fn)
+	if fn:match("_ext") then return false, false end
+end
+
+FInc.Recursive(path .. "shared/*", _SH, nil, shouldInclude)
+FInc.Recursive(path .. "client/*", _CL, nil, shouldInclude)
+FInc.Recursive(path .. "server/*", _SV, nil, shouldInclude)
+
+include("modules.lua")
+AddCSLuaFile("modules.lua")
+
+--[[do
 
 	LoadFileCS("client/cl_items.lua")
 	LoadFileCS("client/cl_bwmenu.lua")
 
-	LoadFileCS("client/cl_weaponcrafter.lua")
 	LoadFileCS("client/cl_status.lua")
 
 	LoadFileCS("client/cl_font_disaster.lua")
 	LoadFileCS("client/cl_perks.lua")
 	LoadFileCS("client/cl_suggestions.lua")
-	
-	LoadFileCS("client/cl_rules.lua")
+
 	LoadFileCS("client/cl_playmus.lua")
 
-	LoadFileCS("client/cl_prestige.lua")
-	LoadFileCS("client/cl_prestige_anim.lua")
 	for k,v in pairs(file.Find("basewars/gamemode/client/*.lua", "LUA")) do 
 		LoadFileCS("basewars/gamemode/client/" .. v)
 	end
@@ -105,4 +94,4 @@ do
 
 	IncludeSV("server/printers.lua")
 	IncludeSV("server/morelang.lua")
-end
+end]]

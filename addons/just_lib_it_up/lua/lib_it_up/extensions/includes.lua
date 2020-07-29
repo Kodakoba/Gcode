@@ -6,11 +6,12 @@ _SV = 3
 
 local includes = {
 	[_CL] = function(name, should)
-		if should == false then return end
-
+		-- always add to CSLua,
+		-- don't include clientside if should = false
 		if SERVER then
 			AddCSLuaFile(name)
 		else
+			if should == false then return end
 			return include(name)
 		end
 	end,

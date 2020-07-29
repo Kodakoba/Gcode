@@ -5,9 +5,6 @@ include("autorun/server/sql_extension.lua")
 include("include.lua")
 AddCSLuaFile("include.lua")
 
-include("modules.lua")
-AddCSLuaFile("modules.lua")
-
 MODULES = {}
 
 
