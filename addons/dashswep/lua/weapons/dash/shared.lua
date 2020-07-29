@@ -47,6 +47,7 @@ hook.Add("GetFallDamage", "DashFall", function(ply)
 
 function SWEP:Reload()
 	self:SetDashCharges(1)
+	self.Dashed = false
 end
 
 
@@ -74,6 +75,7 @@ function SWEP:CheckMoves(owner, mv, dir)
 	if not IsFirstTimePredicted() then return end
 
 	local dt = DashTable[owner]
+	if not dt then return end --ok?
 
 	if dt.ground then
 
@@ -142,8 +144,8 @@ function SWEP:CheckMoves(owner, mv, dir)
 			start = owner:GetPos() + Vector(0, 0, 8),
 			endpos = owner:GetPos() - Vector(0, 0, 24),
 			filter = owner,
-			mins = Vector( -16, -16, -4 ),
-			maxs = Vector( 16, 16, 4 ),
+			mins = Vector( -16, -16, -8 ),
+			maxs = Vector( 16, 16, 8 ),
 			mask = MASK_SOLID
 		})
 
@@ -180,7 +182,7 @@ function SWEP:CheckMoves(owner, mv, dir)
 
 				mv:SetVelocity(vel)
 
-				self.StoppedDash = CurTime()
+				--self.StoppedDash = CurTime()
 
 				return vel
 			end
@@ -189,6 +191,10 @@ function SWEP:CheckMoves(owner, mv, dir)
 	end
 
 end
+
+CreateConVar("dash_smooth", 0,
+	FCVAR_ARCHIVE + FCVAR_CLIENTCMD_CAN_EXECUTE + FCVAR_USERINFO,
+	"Makes Dashing smoother at the cost of dash time/distance.\n	The higher your ping is, the more dash time you sacrifice.\n	Blame Source.", 0, 1)
 
 function SWEP:PrimaryAttack()
 	local owner = self:GetOwner()
@@ -215,22 +221,30 @@ function SWEP:PrimaryAttack()
 		dir.z = 0.1
 	end
 
-	if CLIENT then
+	local sub = owner:GetInfo("dash_smooth")
+	local smooth = tonumber(sub) == 1
 
+	if CLIENT then
 		DashTable[owner] = {
-			t = CurTime() + owner:Ping() / 1000,
+			t = CurTime(),
 			dir = dir,
 			wep = self,
 			ground = owner:IsOnGround(),
 		}
 
 	else
+		if smooth then
+			sub = owner:Ping() / 1000
+		else
+			sub = 0
+		end
 
 		DashTable[owner] = {
 			t = CurTime(),
 			dir = dir,
 			wep = self,
 			ground = owner:IsOnGround(),
+			smooth = smooth
 		}
 
 	end
@@ -244,14 +258,15 @@ function SWEP:PrimaryAttack()
 
 	--
 
-	self:SetNextPrimaryFire(CurTime() + 0.4)
+	self:SetNextPrimaryFire(UnPredictedCurTime() + 0.4)
 
 end
 
 function Realm()
 	return (CLIENT and "Client") or "Server" --for debugging prediction
 end
-hook.Remove("Move", "Dash")
+hook.Remove("SetupMove", "Dash")
+
 hook.Add("FinishMove", "Dash", function(ply, mv, cmd)
 	local dash = ply:GetActiveWeapon()
 
@@ -261,8 +276,10 @@ hook.Add("FinishMove", "Dash", function(ply, mv, cmd)
 		if mv:GetVelocity():Length() < 800 or ply:IsOnGround() then
 			dash:SetSuperMoving(false)
 			dash.EndSuperMove = nil
+			dash.Dashed = false
 		end
 	end
+
 	if not DashTable[ply] then return end
 
 	if CLIENT and ply ~= LocalPlayer() then
@@ -270,21 +287,35 @@ hook.Add("FinishMove", "Dash", function(ply, mv, cmd)
 	end
 
 	local t =  DashTable[ply]
+	
 	local self = t.wep
-	if not IsValid(self) then DashTable[ply] = nil self.StoppedDash = nil return end
-
+	if not IsValid(self) then
+		DashTable[ply] = nil
+		self.StoppedDash = nil
+		self.Dashed = false
+		return
+	end
+	--local CurTime = UnPredictedCurTime
 	local time = t.t
-	local endtime = OverrideDashEnd or (CLIENT and self:GetDashEndTime()~=0 and self:GetDashEndTime() + 0.6) or t.t + self.DashTime
-	local ping = (SERVER and ply:Ping()/2000) or 0
+
+	if t.smooth then
+		time = time - ply:Ping() / 1000
+	end
+
+	local endtime = OverrideDashEnd or time + self.DashTime
+
+	local curt = CurTime()
+
+	
+
 	local d = t.dir
 	local vel = mv:GetVelocity()
 
 	local newvel = t.newvel or d * 800
 
-	--print(endtime, Realm(), "dont mind me just spamming numbers")
-	if CurTime() - time < 0 then return end
+	if curt - time < 0 then return end
 
-	if CurTime() > endtime + ping then
+	if curt > endtime then
 
 		if OverrideDashFinalVel then
 			mv:SetVelocity(OverrideDashFinalVel)
@@ -301,23 +332,17 @@ hook.Add("FinishMove", "Dash", function(ply, mv, cmd)
 		OverrideDashEnd = nil
 		OverrideDashFinalVel = nil
 		self.StoppedDash = nil
-		return
+		self.Dashed = false
 	end
 
 	local changed = self:CheckMoves(ply, mv, d)
 
-	if isvector(changed) then --return bool to prevent mv
-		--if not IsFirstTimePredicted() and CLIENT then return end
-
+	if isvector(changed) then
 		ply:SetVelocity(-mv:GetVelocity() + changed)
-
-		--self:StopDash()
-
-		--mv:SetVelocity(changed)
-	else
+	elseif curt < endtime then
 		mv:SetVelocity(newvel)
 	end
-
+	
 end)
 
 local trails = {}
