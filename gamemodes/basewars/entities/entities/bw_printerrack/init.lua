@@ -11,7 +11,10 @@ function ENT:Init()
 
 	self.rtb = 0
 	self:SetTrigger(true)
-	self.Printers = {}
+
+	self.Printers = Networkable(("PrinterRack:%d"):format(self:EntIndex())):Bond(self)
+	self.Printers.Entities = {}
+
 	self.PowerRequired = 5
 
 	self:On("ConsumePower", self.ConsumePower)
@@ -61,17 +64,20 @@ local function ParsePrintersIn(tbl)
 end
 
 function ENT:NetworkPrinters()
-	local str = ParsePrintersIn(self.Printers)
-	self:SetPrinters(str)
+
+	for k,v in pairs(self.Printers.Entities) do
+		self.Printers:Set(k, v:EntIndex())
+	end
 
 end
 
 function ENT:ConsumePower(req, total, enough)
 
 	local me = self:GetTable()
+	local printers = me.Printers.Entities
 
 	if self:IsRebooting() or not self:IsPowered() then
-		for k,ent in pairs(me.Printers) do
+		for k, ent in pairs(printers) do
 			ent:SetPowered(false)
 		end
 		return
@@ -80,8 +86,11 @@ function ENT:ConsumePower(req, total, enough)
 	if not enough then
 		local pw = self:GetGrid().PowerStored
 
-		for k,ent in pairs(me.Printers) do
-			if not IsValid(ent) then me.Printers[k] = nil continue end
+		for k,ent in pairs(printers) do
+			if not IsValid(ent) then
+				printers[k] = nil
+				continue
+			end
 
 			local req = ent.PowerRequired
 			if not req or pw <= req then ent:SetPowered(false) print("not nnuff", ent, pw, self.PowerRequired) continue end
@@ -89,7 +98,7 @@ function ENT:ConsumePower(req, total, enough)
 			pw = pw - req
 		end
 	else
-		for k,ent in pairs(me.Printers) do
+		for k,ent in pairs(printers) do
 			if ent:IsRebooting() then continue end
 			ent:SetPowered(true)
 		end
@@ -101,9 +110,7 @@ function ENT:AddPrinter(slot, ent)
 
 	if not pos[slot] then error('attempted adding a printer to a slot which doesnt have a pos (' .. slot .. ")") return end
 
-	print("adding printer @", slot, ent)
-	self.Printers[slot] = ent
-
+	self.Printers.Entities[slot] = ent
 
 	local off = pos[slot]
 
@@ -120,13 +127,11 @@ function ENT:AddPrinter(slot, ent)
 	ent:SetParent(self)
 	ent.IsInRack = true
 
-	print("added", ent, pos, ent:GetPos(), slot)
-
 	self:NetworkPrinters()
 	self.CurrentValue = 15000
 	self.PowerRequired = 5
 
-	for k,v in pairs(self.Printers) do
+	for k,v in pairs( self.Printers.Entities ) do
 		if v.CurrentValue then self.CurrentValue = self.CurrentValue + v.CurrentValue end
 		self.PowerRequired = self.PowerRequired + v.PowerRequired
 	end
@@ -139,13 +144,16 @@ end
 function ENT:Touch(ent)
 
 	if not ent.IsPrinter or ent.IsInRack or self.Printers[ent] or ent:CPPIGetOwner() ~= self:CPPIGetOwner() then return end
-	if table.Count(self.Printers) >= max then return end
+
+	local printers = self.Printers.Entities
+	if table.Count(printers) >= max then return end
 
 	local fr = 0
 
 	for i=1, max do
-		if not self.Printers[i] then fr = i break end
+		if not printers[i] then fr = i break end
 	end
+
 	if fr==0 then error('no free key for printer!') end
 
 	self:AddPrinter(fr, ent)
@@ -158,9 +166,9 @@ end
 function ENT:Eject(num)
 	local me = self:GetTable()
 
-	if not me.Printers[num] then print("no printer!", num) return end
+	if not me.Printers.Entities[num] then print("no printer!", num) return end
 
-	local ent = me.Printers[num]
+	local ent = me.Printers.Entities[num]
 	if not ent or not IsValid(ent) then print('not valid') return end
 
 	local mins = ent:OBBMins()
@@ -176,20 +184,24 @@ function ENT:Eject(num)
 	local dir = ang:Forward()
 	local len = 64
 
-	local ignore = {self, ent}
+	local ignore = table.KeysToValues({self, ent})
 
-	table.Add(ignore, me.Printers)
+	table.Add(ignore, me.Printers.Entities)
 
 	local tr = util.TraceHull( {
 		start = startpos,
 		endpos = startpos + dir * len,
 		maxs = maxs,
 		mins = mins,
-		filter = ignore
+		filter = function(ent)
+			return not (ignore[ent] or ent.IsPrinter)
+		end
 	} )
 
 	if not tr.Hit then
-		me.Printers[num] = nil
+		me.Printers.Entities[num] = nil
+		me.Printers:Set(num, nil)
+
 		ent.IsInRack = false
 
 		ent:SetParent(nil)
@@ -202,7 +214,7 @@ function ENT:Eject(num)
 
 		ent:RemoveListener("ShouldConsumePower", "RackConsume")
 		self.CurrentValue = 15000
-		for k,v in pairs(self.Printers) do
+		for k,v in pairs(self.Printers.Entities) do
 			if v.CurrentValue then self.CurrentValue = self.CurrentValue + v.CurrentValue end
 		end
 	else
@@ -215,7 +227,15 @@ util.AddNetworkString("PrinterRack")
 
 net.Receive("PrinterRack", function(_, ply)
 	local ent = net.ReadEntity()
-	if not IsValid(ent) or ent:GetClass() ~= "bw_printerrack" or ply:GetPos():Distance(ent:GetPos()) > 192 or ent:CPPIGetOwner() ~= ply then return end
+	if 	not IsValid(ent) or
+		ent:GetClass() ~= "bw_printerrack" or
+		ply:GetPos():Distance(ent:GetPos()) > 192 or
+		ent:CPPIGetOwner() ~= ply then
+			print("can't interact",
+				not IsValid(ent), ent:GetClass() ~= "bw_printerrack",
+				ply:GetPos():Distance(ent:GetPos()) > 192, ent:CPPIGetOwner() ~= ply)
+			return
+		end
 
 	local typ = net.ReadUInt(2)
 
@@ -235,7 +255,7 @@ function ENT:Collect(ply)
 
 	local moneys = 0
 
-	for k,v in pairs(self.Printers) do
+	for k,v in pairs(self.Printers.Entities) do
 		if not IsValid(v) then continue end
 
 		local mon = v.UseFunc and v:UseFunc(ply, ply, _, _, true)

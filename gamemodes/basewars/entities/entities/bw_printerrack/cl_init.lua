@@ -76,9 +76,6 @@ local function CreateFrame(ent)
 	end)
 
 	function f:PostPaint(w,h)
-		
-		
-		--self:DrawHeaderPanel(w,h)
 
 		draw.SimpleText("Printer Rack", "OSB28", w/2, 24, color_white, 1, 1)
 		self.ScaleDown = ScrH() < 800
@@ -146,7 +143,7 @@ function ENT:Draw()
 
 	for entKey, entID in ipairs(t) do
 
-		if IsValid(f.Buttons[k]) then continue end
+		if IsValid(f.Buttons[entKey]) then continue end
 
 		local ent = Entity(entID)
 
@@ -183,7 +180,7 @@ function ENT:Draw()
 		end
 
 		function fr:PostPaint(w, h)
-			if not IsValid(ent) or rack.Printers:GetNetworked()[entKey] ~= entID then self:Remove() print("invalid or not self lolno") return end
+			if not IsValid(ent) or rack.Printers:GetNetworked()[entKey] ~= entID then self:Remove() return end
 
 			local txt = (ent.PrintName .. " Lv. " .. ((ent.GetLevel and ent:GetLevel()) or "-2.147b")) or " ??? "
 
