@@ -434,7 +434,7 @@ local lightning = Material("trails/electric")
 --local b = bench("cables", 600)
 
 hook.Add("PostDrawTranslucentRenderables", "DrawPoleCables", function(d, sb)
-	
+
 	--b:Open()
 
 	if sb then return end--or #poles <= 0 then return end
@@ -458,6 +458,8 @@ hook.Add("PostDrawTranslucentRenderables", "DrawPoleCables", function(d, sb)
 
 
 		for key, ent in pairs(grid.AllEntities) do
+			if ent.DrawCable == false then continue end
+
 			local pos
 			local genpos
 
@@ -472,7 +474,7 @@ hook.Add("PostDrawTranslucentRenderables", "DrawPoleCables", function(d, sb)
 
 			-- i understand that there are situations where both ents may be out of PVS
 			-- but the cable between them should draw, but i think performance is more important
-			if ent:IsDormant() and pole:IsDormant() then continue end 
+			if ent:IsDormant() and pole:IsDormant() then continue end
 
 			if ent.PowerType == "Line" then
 				local pts = ent.ChainPoints

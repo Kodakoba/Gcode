@@ -481,9 +481,9 @@ if SERVER then
 			lastNW = CurTime()
 		end]]
 
-		--[[if not ok then
+		if not ok then
 			ErrorNoHalt(err)
-		end]]
+		end
 
 	end)
 else
