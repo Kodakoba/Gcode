@@ -11,15 +11,20 @@ Modules.Register = function(name, col)
 end
 
 local modules = 0
+
 function IncludeModules()
 
 	modules = 0
 
+	local function incrementModule()
+		modules = modules + 1
+	end
+
 	local s = SysTime()
 
-	FInc.Recursive(path .. "*.lua", _SH, true)
-	FInc.Recursive(path .. "server/*.lua", _SV)
-	FInc.Recursive(path .. "client/*.lua", _CL)
+	FInc.Recursive(path .. "*.lua", _SH, true, incrementModule)
+	FInc.Recursive(path .. "server/*.lua", _SV, nil, incrementModule)
+	FInc.Recursive(path .. "client/*.lua", _CL, nil, incrementModule)
 
 	s = SysTime() - s
 
