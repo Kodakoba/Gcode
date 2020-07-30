@@ -130,6 +130,7 @@ nw.AutoAssignID = true
 
 function nw:Initialize(id)
 	self.Networked = {}
+	self.LastSerialized = {} -- purely for networked tables
 
 	if not rawget(self.__instance, "AutoAssignID") then return end 	-- if this object is constructed from an Networkable extension,
 																	-- ignore the fact we don't have an ID
@@ -142,7 +143,18 @@ function nw:Initialize(id)
 end
 
 function nw:SetNetworkableID(id)
+	
+
 	self.NetworkableID = id
+
+	if cache[id] then 
+		table.Empty(self)
+
+		for k,v in pairs(cache[id]) do --basically copy
+			self[k] = v
+		end
+		return cache[id]
+	end
 
 	local typ = type(id):lower()
 
@@ -162,16 +174,28 @@ function nw:SetNetworkableID(id)
 	end
 
 	cache[id] = self
+
+	return self
 end
 
 function nw:Set(k, v)
+	if self.Valid == false then return end
+
 	if not self.NetworkableID then
 		error("Set a NetworkableID first!")
 		return
 	end
 
 	if v == nil then v = fakeNil end --lul
-	if self.Networked[k] == v then --[[adios]] return end
+	if self.Networked[k] == v and not istable(v) then --[[adios]] return end
+
+	if istable(v) then --we have to check if tables are exact
+		local last_von = self.LastSerialized[v]
+		if last_von then
+			local new_von = von.serialize(v)
+			if last_von == new_von then --[[adios]] return end
+		end
+	end
 
 	self.Networked[k] = v
 	_NetworkableChanges:Set(v, self.NetworkableID, k)
@@ -190,13 +214,15 @@ function nw:GetNetworked() --shrug
 end
 
 function nw:Invalidate()
+	self.Valid = false
 
 	cache[self.NetworkableID] = nil
 
 	if self.NumberID then numToID[self.NumberID] = nil end
 
 	IDToNum[self.NetworkableID] = nil
-
+	_NetworkableChanges[self.NetworkableID] = nil
+	
 	for ply, ids in pairs(_NetworkableAwareness) do
 		ids[self.NetworkableID] = nil
 	end
@@ -316,7 +342,7 @@ if SERVER then
 			local ns = netstack:new()
 			ns:Hijack()
 
-			net.WriteUInt(changes_count, 16).Description = "Changed objects count" --amount of changed networkable objects
+			net.WriteUInt(changes_count, 8).Description = "Changed objects count" --amount of changed networkable objects
 			local changed = 0
 
 			local bits = select(2, net.BytesWritten())
@@ -327,7 +353,7 @@ if SERVER then
 
 				changed = changed + 1
 				net.WriteUInt(IDToNumber(id), 24).Description = "IDToNumber"
-				net.WriteUInt(table.Count(changes), 16).Description = "Amount of changes in an object" --amount of changed values in the Networkable object
+				net.WriteUInt(table.Count(changes), 8).Description = "Amount of changes in an object" --amount of changed values in the Networkable object
 
 				for k,v in pairs(changes) do
 					WriteChange(k, v)
@@ -371,7 +397,7 @@ if SERVER then
 
 			for id, obj in pairs(cache) do
 				net.WriteUInt(IDToNumber(id), 24)
-				net.WriteUInt(table.Count(obj.Networked), 16) --amount of changed values in the Networkable object
+				net.WriteUInt(table.Count(obj.Networked), 8) --amount of changed values in the Networkable object
 
 				for k,v in pairs(obj.Networked) do
 					WriteChange(k, v)
@@ -456,15 +482,15 @@ if CLIENT then
 		end
 
 		--read networkable changes
-		local changes = net.ReadUInt(16) --how many networkable objects were changed
+		local changes = net.ReadUInt(8) --how many networkable objects were changed
 		print("reading", changes, " changes")
 		for i=1, changes do
 			local num_id = net.ReadUInt(24)			--numberID of the networkable object
-			local changed_keys = net.ReadUInt(16)	--amt of changed keys
+			local changed_keys = net.ReadUInt(8)	--amt of changed keys
 
 			local obj = cache[numToID[num_id]]
 
-			print("	amt of changed keys for", obj, changed_keys)
+			printf("	amt of changed keys for %s(id: %d): %d", obj, num_id, changed_keys)
 
 			for key_i = 1, changed_keys do
 				printf("	reading change #%d", key_i)
