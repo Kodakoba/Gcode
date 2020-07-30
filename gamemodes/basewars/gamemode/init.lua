@@ -3,12 +3,6 @@ BaseWars = BaseWars or {}
 include("autorun/server/sql_extension.lua")
 include("include.lua")
 
-MODULES = {}
-
-
-
-IncludeModules()
-
 local AuthTbl = {}
 
 function GM:NetworkIDValidated(name, steamid)

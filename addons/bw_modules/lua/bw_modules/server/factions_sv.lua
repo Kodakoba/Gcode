@@ -15,6 +15,7 @@ facmeta = Networkable:extend()
 function facmeta:InRaid()
 	return self.Raided or self.Raider
 end
+
 function facmeta:GetMembers()
 	return self.memvals
 end
@@ -38,12 +39,13 @@ end
 function facmeta:GetLeader()
 	return self.own
 end
+
 facmeta.GetOwner = facmeta.GetLeader
 
 function facmeta:RaidedCooldown()
 	local oncd = false 
 	if self.RaidCooldown and CurTime() - self.RaidCooldown < RaidCoolDown then oncd = true end
-	print("returning", RaidCoolDown - (CurTime() - (self.RaidCooldown or 0)))
+
 	return oncd, RaidCoolDown - (CurTime() - (self.RaidCooldown or 0))
 end
 

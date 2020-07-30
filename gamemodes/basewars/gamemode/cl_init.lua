@@ -11,9 +11,8 @@ local PLAYER = debug.getregistry().Player
 function GM:GetGameDescription()
 	return self.Name
 end
-ScoreBoard = ScoreBoard or nil
 
-IncludeModules()
+ScoreBoard = ScoreBoard or nil
 
 surface.CreateFont("SB_TeamName", {
 		font = "Roboto",

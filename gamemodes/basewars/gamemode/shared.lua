@@ -603,6 +603,3 @@ function L(s, d, v, pnl)
     end
     return res
 end
-
-
-include("modules.lua")
