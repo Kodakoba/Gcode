@@ -262,9 +262,6 @@ function SWEP:PrimaryAttack()
 
 end
 
-function Realm()
-	return (CLIENT and "Client") or "Server" --for debugging prediction
-end
 hook.Remove("SetupMove", "Dash")
 
 hook.Add("FinishMove", "Dash", function(ply, mv, cmd)
