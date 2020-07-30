@@ -1,4 +1,4 @@
-
+AddCSLuaFile()
 
 local CURRENCY = "£"
 

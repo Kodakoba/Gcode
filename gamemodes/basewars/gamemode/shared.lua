@@ -153,8 +153,6 @@ end
 
 --ents.FindInCone = Deprecated
 
-BaseWars = BaseWars or {}
-
 function BaseWars.IsXmasTime(day)
 
 	local Month = tonumber(os.date("%m"))

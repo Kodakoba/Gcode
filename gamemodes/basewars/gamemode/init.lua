@@ -1,9 +1,7 @@
 BaseWars = BaseWars or {}
 
 include("autorun/server/sql_extension.lua")
-
 include("include.lua")
-AddCSLuaFile("include.lua")
 
 MODULES = {}
 

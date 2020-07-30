@@ -16,15 +16,15 @@ ScoreBoard = ScoreBoard or nil
 IncludeModules()
 
 surface.CreateFont("SB_TeamName", {
-        font = "Roboto",
-        size = 48,
-        weight = 600,
-        antialias = true,
-    })
+		font = "Roboto",
+		size = 48,
+		weight = 600,
+		antialias = true,
+	})
 
 local scale = 1
 
-local render = render 
+local render = render
 local c = Material("vgui/circle")
 c:SetInt("$alpha", 1)
 c:Recompute()
@@ -38,14 +38,13 @@ function CreatePlayerFrame(sb, ply)
 
 
 	function f:DoClick()
-		for k,v in pairs(sb.Frs) do 
-			if v~=self and v.Expand then v.Expand = false end 
+		for k,v in pairs(sb.Frs) do
+			if v ~= self and v.Expand then v.Expand = false end
 		end
 		self.Expand = not self.Expand
 	end
 
 	local sidcol = Color(150, 150, 150)
-	local sidw, _ = 0
 
 	local sid = vgui.Create("DLabel", f.ExpandPanel)
 	sid:SetPos(16, 4)
@@ -68,26 +67,24 @@ function CreatePlayerFrame(sb, ply)
 
 	local txs = {}
 
-	local hov = false 
-
 	function copy:Paint(w, h)
-		if self:IsHovered() or sid:IsHovered() then 
+		if self:IsHovered() or sid:IsHovered() then
 			sidcol = LC(sidcol, color_white, 15)
-		else 
+		else
 			sidcol = LC(sidcol, Color(150, 150, 150), 15)
 		end
 
 		surface.DisableClipping(true)
 
-			for k,v in pairs(txs) do 
+			for k,v in pairs(txs) do
 				v.x = L(v.x, 20, 7)
-				if v.x >= 16 then 
+				if v.x >= 16 then
 					v.a = L(v.a, 0, 10)
-				else 
+				else
 					v.a = L(v.a, 255, 15, true)
 				end
 
-				if v.a <= 0.2 then 
+				if v.a <= 0.2 then
 					table.remove(txs, k)
 				end
 				draw.SimpleText("SteamID copied to clipboard!", "OS24", w + v.x, h/2, ColorAlpha(color_white, v.a), 0, 1)
@@ -101,17 +98,17 @@ function CreatePlayerFrame(sb, ply)
 
 	function copy:DoClick()
 		if #txs <= 2 then
-			txs[#txs+1] = {x=0, a=2}
+			txs[#txs + 1] = {x = 0, a = 2}
 		end
 		SetClipboardText(sidnum)
 	end
 
 	sid.DoClick = copy.DoClick
-	--copy:SetDoubleClickingEnabled(false)	
+	--copy:SetDoubleClickingEnabled(false)
 	if ply ~= LocalPlayer() then
 
 		local mute = vgui.Create("FButton", f.ExpandPanel)
-		mute.DrawShadow = false 
+		mute.DrawShadow = false
 		mute:SetSize(64, 32)
 		mute:SetColor(190, 50, 50)
 
@@ -121,8 +118,8 @@ function CreatePlayerFrame(sb, ply)
 		mute:DockMargin(4, 8, 16, 8)
 		local muted = ply:IsMuted()
 		function mute:PrePaint(w,h)
-			if IsValid(ply) then muted = ply:IsMuted() end 
-			if muted~=0 then 
+			if IsValid(ply) then muted = ply:IsMuted() end
+			if muted ~= 0 then
 					self.Label = "Unmute"
 				return
 			end
@@ -130,7 +127,7 @@ function CreatePlayerFrame(sb, ply)
 		end
 
 		local pm = vgui.Create("FButton", f.ExpandPanel)
-		pm.DrawShadow = false 
+		pm.DrawShadow = false
 		pm:SetSize(64, 32)
 		pm:SetColor(50, 130, 230)
 
@@ -147,11 +144,11 @@ function CreatePlayerFrame(sb, ply)
 			pf.Shadow = {}
 			pf:PopIn()
 
-			local triedtoshift = false 
+			local triedtoshift = false
 			local sha = 255
 			local shy = 0
 			function pf:PrePaint(w,h)
-				if triedtoshift then 
+				if triedtoshift then
 					surface.DisableClipping(true)
 						draw.SimpleText("SHIFT+Enter again to send the text", "OSB24", w/2, h+shy, Color(230, 70, 70, sha), 1, 4)
 					surface.DisableClipping(false)
@@ -163,14 +160,14 @@ function CreatePlayerFrame(sb, ply)
 				end
 			end
 			local col = color_white:Copy()
-			
+
 			local te = vgui.Create("FTextEntry", pf)
 			te:SetFont("OS24")
 			te:Dock(FILL)
 			te:DockMargin(8, 16, 8, 24)
 			te:SetEnterAllowed(true)
 			function te:OnEnter()
-				if input.IsKeyDown(KEY_LSHIFT) and not triedtoshift then 
+				if input.IsKeyDown(KEY_LSHIFT) and not triedtoshift then
 					triedtoshift = CurTime()
 					return
 				end
@@ -231,9 +228,9 @@ function CreatePlayerFrame(sb, ply)
 
 	local function newanim(from, by)
 
-		if IsValid(anim) then 
+		if IsValid(anim) then
 			anim:Swap(0.1, 0, 1)
-		else 
+		else
 			anim = f:NewAnimation(0.1, 0, 1)
 		end
 
@@ -248,7 +245,7 @@ function CreatePlayerFrame(sb, ply)
 	cloud:Bond(f)
 	cloud:SetText("View Profile")
 	cloud:Popup(false)
-	
+
 
 	function avbtn:OnHover()
 
@@ -260,7 +257,7 @@ function CreatePlayerFrame(sb, ply)
 		newanim(start, left)
 
 		cloud:Popup(true)
-		
+
 		cloud:MoveAbove(self)
 
 	end
@@ -269,7 +266,7 @@ function CreatePlayerFrame(sb, ply)
 
 		f.ForceHovered = false
 
- 		local start = size
+		local start = size
 		local left = 20 - start
 
 		newanim(start, left)
@@ -279,15 +276,15 @@ function CreatePlayerFrame(sb, ply)
 	end
 
 	function f:PostPaint(w, h)
-		
+
 
 		if not IsValid(ply) then --ok bye bye
 			if not self.ByeBye then
-				self:PopOut() 
+				self:PopOut()
 				self:MoveBy(600, 0, 0.4, 0, 2)
 				self.ByeBye = true
 			end
-		else 
+		else
 			lastnick = ply:Nick()
 			lv = ply:GetLevel()
 
@@ -295,7 +292,7 @@ function CreatePlayerFrame(sb, ply)
 			mon = BaseWars.NumberFormat(mon or 0)
 			time = ply:GetPlayTime()
 			col = col or team.GetColor(ply:Team())
-		end 
+		end
 
 		av.X = 46 - 44 + size*0.5
 		av.Y = 36 - 44 + size*0.5
@@ -312,13 +309,13 @@ function CreatePlayerFrame(sb, ply)
 		local mins = ""
 		local secs = ""
 
-		if time.h then 
+		if time.h then
 			hrs = ("%sh. "):format(time.h)
-		end 
+		end
 
-		if time.m then 
+		if time.m then
 			mins = ("%sm. "):format(time.m)
-		end 
+		end
 
 		secs = ("%ss."):format(time.s)
 		str = str:format(hrs, mins, secs)
@@ -335,7 +332,7 @@ function CreatePlayerFrame(sb, ply)
 			render.ClearStencil()
 			render.SetStencilWriteMask( 1 )
 			render.SetStencilTestMask( 1 )
-			
+
 			render.SetStencilCompareFunction( STENCIL_ALWAYS )
 			render.SetStencilPassOperation( STENCIL_REPLACE )
 
@@ -358,7 +355,7 @@ function CreatePlayerFrame(sb, ply)
 			av:PaintManual()
 
 		render.SetStencilEnable(false)
-		
+
 		surface.SetDrawColor(ColorAlpha(col, self:GetAlpha()))
 		surface.DrawMaterial("https://i.imgur.com/VMZue2h.png", "circle_outline.png", x + w/2 - 16 - size/2 - 2, y+h/2 - 16 - size/2 - 2, 36+size, 36+size)
 
@@ -375,7 +372,7 @@ function GM:ScoreboardShow()
 
 	ScoreBoard = vgui.Create("FFrame")
 
-	local sb = ScoreBoard 
+	local sb = ScoreBoard
 	sb.BackgroundColor.a = 240
 
 	scale = ScrW()/1920
@@ -391,7 +388,7 @@ function GM:ScoreboardShow()
 	sb:PopIn(0.04)
 
 	local frs = {}
-	local scr 
+	local scr
 
 	local saveme = vgui.Create("FButton", sb)
 	saveme:Dock(BOTTOM)
@@ -422,14 +419,14 @@ function GM:ScoreboardShow()
 
 	function sb:Think()
 
-		if input.IsMouseDown(MOUSE_RIGHT) and not self.PoppedUp then 
+		if input.IsMouseDown(MOUSE_RIGHT) and not self.PoppedUp then
 			self:MakePopup()
 			self:SetKeyBoardInputEnabled(false)
 			self.PoppedUp = true
 		end
 
-		for k,v in pairs(player.GetAll()) do 
-			if not frs[v] then 
+		for k,v in pairs(player.GetAll()) do
+			if not frs[v] then
 				print('new in a hook')
 				local f = NewPlayerFrame(v)
 				f:PopIn()
@@ -443,15 +440,15 @@ function GM:ScoreboardShow()
 	scr:Dock(FILL)
 	scr.BackgroundColor = Color(0, 0, 0, 0)
 	scr:GetCanvas():DockPadding(16, 4, 16, 8)
-	
+
 	local v = scr:GetVBar()
 
 	v:SetEnabled(true)	--goddamnit garry
 
-	local pteams = {}	
+	local pteams = {}
 
-	for k,v in pairs(player.GetAll()) do 
-		if not pteams[v:Team()] then pteams[v:Team()] = {} end 
+	for k,v in pairs(player.GetAll()) do
+		if not pteams[v:Team()] then pteams[v:Team()] = {} end
 
 		local team = pteams[v:Team()]
 		team[#team+1] = v
@@ -459,14 +456,14 @@ function GM:ScoreboardShow()
 	local teaminfo = team.GetAllTeams()
 
 	local ty = 0
-	
-	
 
-	for k,v in pairs(pteams) do 
+
+
+	for k,v in pairs(pteams) do
 		if not teaminfo[k] then print('the fuck?') continue end
 
-		local col = teaminfo[k].Color 
-		local name = teaminfo[k].Name 
+		local col = teaminfo[k].Color
+		local name = teaminfo[k].Name
 		local tn = vgui.Create("InvisPanel", scr)
 
 		function tn:Paint(w,h)
@@ -480,7 +477,7 @@ function GM:ScoreboardShow()
 
 		local px, py = scale*25, ty + 52
 
-		for num, ply in pairs(v) do 
+		for num, ply in pairs(v) do
 
 			NewPlayerFrame(ply, col)
 
@@ -495,49 +492,49 @@ end
 function GM:ScoreboardHide()
 
 	if ScoreBoard and IsValid(ScoreBoard) then ScoreBoard:PopOut(0.04) ScoreBoard = nil return end --???
-	
+
 end
 
-local Lerp = Lerp 
+local Lerp = Lerp
 local math = math
 
 function LC(col, dest, vel)
-    local v = vel or 10
-    if not IsColor(col) or not IsColor(dest) then return end
+	local v = vel or 10
+	if not IsColor(col) or not IsColor(dest) then return end
 
-    col.r = Lerp(FrameTime()*v, col.r, dest.r)
-    col.g = Lerp(FrameTime()*v, col.g, dest.g)
-    col.b = Lerp(FrameTime()*v, col.b, dest.b)
+	col.r = Lerp(FrameTime()*v, col.r, dest.r)
+	col.g = Lerp(FrameTime()*v, col.g, dest.g)
+	col.b = Lerp(FrameTime()*v, col.b, dest.b)
 
-    if dest.a ~= col.a then
-    	col.a = Lerp(FrameTime()*v, col.a, dest.a)
-    end
+	if dest.a ~= col.a then
+		col.a = Lerp(FrameTime()*v, col.a, dest.a)
+	end
 
-    return col
+	return col
 end
 
 function LCC(col, r, g, b, a, vel)
 	local v = vel or 10
 
 
-    col.r = Lerp(FrameTime()*v, col.r, r)
-    col.g = Lerp(FrameTime()*v, col.g, g)
-    col.b = Lerp(FrameTime()*v, col.b, b)
+	col.r = Lerp(FrameTime()*v, col.r, r)
+	col.g = Lerp(FrameTime()*v, col.g, g)
+	col.b = Lerp(FrameTime()*v, col.b, b)
 
-    if a and a ~= col.a then
-    	col.a = Lerp(FrameTime()*v, col.a, a)
-    end
+	if a and a ~= col.a then
+		col.a = Lerp(FrameTime()*v, col.a, a)
+	end
 
-    return col
+	return col
 end
 
 function L(s,d,v,pnl)
-    if not v then v = 5 end
-    if not s then s = 0 end
-    local res = Lerp(FrameTime()*v, s, d)
-    if pnl then 
-        local choose = (res>s and "ceil") or "floor"
-        res = math[choose](res) 
-    end
-    return res
+	if not v then v = 5 end
+	if not s then s = 0 end
+	local res = Lerp(FrameTime()*v, s, d)
+	if pnl then
+		local choose = (res>s and "ceil") or "floor"
+		res = math[choose](res)
+	end
+	return res
 end

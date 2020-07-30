@@ -1,8 +1,10 @@
 AddCSLuaFile()
 
 local path = "basewars/gamemode/modules/"
+local rlm = Realm(true, true)
 
 Modules = Modules or {}
+Modules.Log = Logger("BW-Modules", Colors.Sky)
 
 Modules.Register = function(name, col)
 	return {name = name, col = col}
@@ -12,6 +14,7 @@ local modules = 0
 function IncludeModules()
 
 	modules = 0
+
 	local s = SysTime()
 
 	FInc.Recursive(path .. "*.lua", _SH, true)
@@ -20,7 +23,6 @@ function IncludeModules()
 
 	s = SysTime() - s
 
-	MsgC(Color(40, 140, 255), "[Modules]", Color(255, 255, 255), " Loaded " .. modules .. " modules " .. ((CLIENT and "clientside") or "serverside") .. " in " .. math.Round(s, 3) .. "s! \n" )
+	Modules.Log("Loaded %d modules %s in %.2f s!", modules, rlm, s )
 end
 
-Modules.Log = Log --e.

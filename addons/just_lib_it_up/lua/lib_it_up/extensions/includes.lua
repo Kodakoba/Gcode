@@ -78,7 +78,6 @@ function FInc.Recursive(name, realm, nofold, callback)	--even though with "nofol
 
 		if includes[realm] then
 			local cl, sv = callback (inc_name)
-			if cl == false and sv == false then continue end --mkay
 
 			includes[realm] (inc_name, cl, sv)
 
