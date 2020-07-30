@@ -10,8 +10,7 @@ facs.Players = facs.Players or {}
 facs.Factions = facs.Factions or {}
 facs.FactionIDs = facs.FactionIDs or {}
 
-facmeta = {}
-facmeta.__index = facmeta
+facmeta = Networkable:extend()
 
 function facmeta:InRaid()
 	return self.Raided or self.Raider
@@ -35,12 +34,24 @@ end
 function facmeta:GetID()
 	return self.id
 end
+
+function facmeta:GetLeader()
+	return self.own
+end
+facmeta.GetOwner = facmeta.GetLeader
+
 function facmeta:RaidedCooldown()
 	local oncd = false 
 	if self.RaidCooldown and CurTime() - self.RaidCooldown < RaidCoolDown then oncd = true end
 	print("returning", RaidCoolDown - (CurTime() - (self.RaidCooldown or 0)))
 	return oncd, RaidCoolDown - (CurTime() - (self.RaidCooldown or 0))
 end
+
+function facmeta:Update()
+	self:Set("Members", self.memvals)
+	self:Set("Leader", self.own)
+end
+
 function facmeta:Join(ply, pw, force)
 
 	if table.Count(self.memvals) >= 4 then return false end 
@@ -61,36 +72,35 @@ function facmeta:Join(ply, pw, force)
 	facs.Players[ply] = self:GetName()
 
 	ply:SetTeam(self:GetID())
+
+	self:Update()
 end
 
-function facmeta:new(ply, id, name, pw, col)
+function facmeta:Initialize(ply, id, name, pw, col)
 
 	if not id or not name then error('what??? ' .. tostring(id) .. " " .. tostring(name)) return false end --for real?
 
 	if facs.Factions[name] then return false end 
 
-	local fac = {}
-	
-
 	team.SetUp(id, name, col, false)
 
-	fac.id = id
-	fac.name = name
-	fac.col = col
-	fac.pw = pw 
-	fac.own = ply
-	fac.members = {[ply] = true}
-	fac.memvals = {[1] = ply}
+	self.id = id
+	self.name = name
+	self.col = col
+	self.pw = pw 
+	self.own = ply
+	self.members = {[ply] = true}
+	self.memvals = {ply}
 
-	setmetatable(fac, facmeta)
-
-	facs.Factions[name] = fac
+	facs.Factions[name] = self
 	facs.Players[ply] = name
-	facs.FactionIDs[id] = fac 
+	facs.FactionIDs[id] = self 
 
 	ply:SetTeam(id)
-	return fac 
+
+	self:SetNetworkableID("Faction:" .. id)
 end
+
 function facmeta:IsRaidable()
 	local kk = false
 	for k,v in pairs(self.members) do 
@@ -102,8 +112,9 @@ function facmeta:IsRaidable()
 	end
 	return kk
 end
+
 function ValidFactions()
-	print("Validating")
+
 	for k,v in pairs(facs.Factions) do 
 
 		--Members checking
@@ -132,10 +143,13 @@ function ValidFactions()
 				net.WriteUInt(v.id, 24)
 			net.Broadcast()
 
+			v:Invalidate()
+
 			facs.FactionIDs[v.id] = nil
 			facs.Factions[k] = nil 
 
-		continue end 
+			continue
+		end 
 
 		--Owner checking
 
@@ -143,9 +157,12 @@ function ValidFactions()
 			facs.RandomizeOwner(v.name)
 		end
 
+		v:Update()
+
 	end
 
 end
+
 function facs.InFaction(ply, ply2) --mostly unused, really...
 	if IsValid(ply2) then 
 		return facs.Players[ply] == facs.Players[ply2]
@@ -184,6 +201,9 @@ function facs.RandomizeOwner(name)
 				facs.LeaveFac(v)
 			end
 		end
+
+		v:Invalidate()
+
 		facs.FactionIDs[facs.Factions[name].id] = nil
 		facs.Factions[name] = nil
 
@@ -208,6 +228,8 @@ local cooldowns = {}
 function facs.CreateFac(ply, name, pw, col)
 	if cooldowns[ply] and CurTime() - cooldowns[ply] < 1 then return end 
 
+	ValidFactions()
+
 	local pw = string.sub(pw, 0, 16)
 	local name = string.sub(name, 0, 64)
 
@@ -222,9 +244,8 @@ function facs.CreateFac(ply, name, pw, col)
 
 	if not col then col = Color(math.random(0, 255), math.random(0, 255), math.random(0, 255)) end
 	
-
 	local fac = facmeta:new(ply, id, name, pw, col)
-	
+
 	cooldowns[ply] = CurTime()
 
 	net.Start("Factions")
@@ -232,14 +253,15 @@ function facs.CreateFac(ply, name, pw, col)
 		net.WriteUInt(id, 24)
 		net.WriteString(name)
 		net.WriteColor(col)
-		net.WriteUInt(ply:UserID(), 24)
+		--net.WriteUInt(ply:UserID(), 24)
 
 		local haspw = false
 		if pw then haspw = true end
 		net.WriteBool(haspw)
 
 	net.Broadcast()
-	ValidFactions()
+
+	fac:Update()
 end
 
 PLAYER.CreateFaction = facs.CreateFac 
@@ -252,17 +274,24 @@ function facs.LeaveFac(ply)
 	local fac = facs.Factions[name]
 	if not fac then return end 
 
-	if fac then 
-		fac.members[ply] = nil 
-		for k,v in pairs(fac.memvals) do if v==ply then fac.memvals[k] = nil break end end
+
+	fac.members[ply] = nil 
+
+	for k,v in pairs(fac.memvals) do
+		if v==ply then 
+			fac.memvals[k] = nil
+			break
+		end
 	end
 
-	if fac and fac.own==ply then 
+	if fac.own == ply then 
 		facs.RandomizeOwner(name)
 	end 
 
 	facs.Players[ply] = nil
 	ply:SetTeam(1)
+
+	fac:Update()
 
 	ValidFactions()
 end
@@ -284,21 +313,24 @@ PLAYER.JoinFaction = facs.JoinFac
 
 
 hook.Add("PlayerDisconnected", "FactionDisband", function(ply)
-	timer.Simple(0.1, function() ValidFactions() end)
-
 	local fac = ply:GetFaction()
 	if not fac then return end  
 
 	fac.members[ply] = nil
 	facs.Factions[ply] = nil
-	for k,v in pairs(fac.memvals) do if v==ply then fac.memvals[k] = nil break end end
+	for k,v in pairs(fac.memvals) do
+		if v==ply then
+			fac.memvals[k] = nil
+			break
+		end
+	end
 
 	if fac.owner == ply then 
 		facs.RandomizeOwner(fac.name)
 	end
 
-	
-
+	fac:Update()
+	ValidFactions()
 end)
 
 net.Receive("Factions", function(_, ply)
@@ -335,7 +367,7 @@ hook.Add("PlayerInitialSpawn", "FactionNetwork", function(ply)
 			net.WriteUInt(v.id, 24)
 			net.WriteString(v.name)
 			net.WriteColor(v.col)
-			net.WriteUInt(v.own:UserID(), 24)
+			--net.WriteUInt(v.own:UserID(), 24)
 			local haspw = false
 			if v.pw then haspw = true end
 			net.WriteBool(haspw)
@@ -353,7 +385,7 @@ net.Start("Factions")
 		net.WriteUInt(v.id, 24)
 		net.WriteString(v.name)
 		net.WriteColor(v.col)
-		net.WriteUInt(v.own:UserID(), 24)
+		--net.WriteUInt(v.own:UserID(), 24)
 
 		local haspw = false
 		if v.pw then haspw = true end

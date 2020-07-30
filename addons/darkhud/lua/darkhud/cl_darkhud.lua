@@ -561,7 +561,7 @@ function DarkHUD.Create()
 		surface.SetDrawColor(Color(255, 255, 255, 220))
 		--surface.DrawOutlinedRect(x + w2 + 12, nameY, w, h)
 
-		local fac = me:GetFaction()
+		local fac = me:GetFactionName()
 
 		if lastfac ~= fac then
 			lastfac = fac

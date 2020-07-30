@@ -7,6 +7,49 @@ Factions.FactionIDs = Factions.FactionIDs or {}
 
 local facs = Factions
 
+local facmeta = Networkable:extend()
+
+function facmeta:Initialize(id, name, col, haspw)
+	print("faction initializer got", self, " for init")
+
+	self = self:SetNetworkableID("Faction:" .. id)
+
+	self.id = id
+	self.name = name
+	self.col = col
+	self.haspw = haspw
+
+	return self
+end
+
+function facmeta:InRaid()
+	return self:Get("Raided") or self:Get("Raider")
+end
+
+function facmeta:GetMembers()
+	return self:Get("Members")
+end
+
+function facmeta:GetLeader()
+	return self:Get("Leader")
+end
+
+
+function facmeta:GetName()
+	return self.name
+end
+
+function facmeta:GetColor()
+	return self.col
+end
+
+function facmeta:HasPassword()
+	return self.pw or false
+end
+
+function facmeta:GetID()
+	return self.id
+end
 
 local PLAYER = debug.getregistry().Player
 
@@ -16,7 +59,7 @@ net.Receive("Factions", function(len)
 
 	print(('CL: Factions: Type %s; size: %s bytes'):format(type, len/8))
 
-	if type == 1 then
+	if type == 1 then -- full update
 
 		facs.Factions = {}
 
@@ -26,57 +69,48 @@ net.Receive("Factions", function(len)
 			local id = net.ReadUInt(24)
 			local name = net.ReadString()
 			local col = net.ReadColor()
-			local lead = net.ReadUInt(24)
-
-			if IsValid(Player(lead)) then --sometimes the player doesnt yet exist for client
-				lead = Player(lead)		  --in this case, leader will be attempted to autoconvert to real owner when the time to parse the name comes
-			end
 
 			local haspw = net.ReadBool()
 
 			team.SetUp(id, name, col, false)
-			facs.Factions[name] = {id = id, name = name, col = col, own = lead, pw = haspw}
-			facs.FactionIDs[id] = {id = id, name = name, col = col, own = lead, pw = haspw}
+
+			local fac = facmeta:new(id, name, col, haspw)
+			facs.Factions[name] = fac
+			facs.FactionIDs[id] = fac
+
+			--[[facs.Factions[name] = {id = id, name = name, col = col, own = lead, pw = haspw}
+			facs.FactionIDs[id] = {id = id, name = name, col = col, own = lead, pw = haspw}]]
 		end
 
-	elseif type==2 then 
+	elseif type==2 then -- update
 
 		local id = net.ReadUInt(24)
 		local name = net.ReadString()
 		local col = net.ReadColor()
-		local lead = net.ReadUInt(24)
-		if IsValid(Player(lead)) then 
-			lead = Player(lead)
-		end
+
 		local haspw = net.ReadBool()
 
 		team.SetUp(id, name, col, false)
 
-		facs.Factions[name] = {id = id, name = name, col = col, own = lead, pw = haspw}
-		facs.FactionIDs[id] = {id = id, name = name, col = col, own = lead, pw = haspw}
+		print("created new faction:", id, name)
+
+		local fac = facmeta:new(id, name, col, haspw)
+		facs.Factions[name] = fac
+		facs.FactionIDs[id] = fac
 
 	elseif type==3 then 
 
 		local id = net.ReadUInt(24)
-
+		print("deleting faction #" .. id)
 		for k,v in pairs(facs.Factions) do 
 			if v.id and v.id==id then 
+				v:Invalidate()
 				facs.Factions[k] = nil
 				facs.FactionIDs[id] = nil
 				break
 			end
 		end
 
-	elseif type==4 then --update leader
-		local id = net.ReadUInt(24)
-		local lead = net.ReadUInt(24)
-		print('updating faction', id)
-		if IsValid(Player(lead)) then 
-			lead = Player(lead)
-		end
-		print('to ', lead)
-		facs.FactionIDs[id].own = lead
-		facs.Factions[facs.FactionIDs[id].name].own = lead
 	end
 
 	if type==10 then 
@@ -91,6 +125,10 @@ function GetFactions()
 end
 
 function PLAYER:GetFaction()
+	return Factions.FactionIDs[self:Team()]
+end
+
+function PLAYER:GetFactionName()
 	local fac = Factions.FactionIDs[self:Team()]
 	if fac then return fac.name end
 	return "no faction"

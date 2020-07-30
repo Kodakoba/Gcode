@@ -308,7 +308,7 @@ function GM:EntityTakeDamage(ent, dmginfo)
 		end
 
 		local FriendlyFire = BaseWars.Config.AllowFriendlyFire
-		local Team = ent:GetFaction()
+		local Team = ent:GetFactionName()
 
 		if not (ent == Attacker) and not FriendlyFire and ent:InFaction() and Attacker:IsPlayer() and Attacker:InFaction(Team) then
 			print("nope", not (ent == Attacker) , not FriendlyFire , ent:InFaction() , Attacker:IsPlayer() , Attacker:InFaction(Team))
