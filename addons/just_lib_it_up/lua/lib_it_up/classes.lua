@@ -121,19 +121,20 @@ function Class:extend(...)
 		local oldArgs
 
 		if newobj.__instance == new then
-			
 			is_def = true
 			oldArgs = Class.__args
 			Class.__args = {...}
-
 		end
 
 		local args = Class.__args
 
 		if self.__init then 							--recursively call the parents' __init's
-			if Class.Debugging then print("found __init in", self.Name) end
+			if Class.Debugging then
+				print("found __init in", self.Name)
+				print("Calling with args:", unpack(args, 1, table.maxn(args)))
+			end
 
-			local ret = self.__init(curobj, unpack(args))		--if any of the initializes return a new object,
+			local ret = self.__init(curobj, unpack(args, 1, table.maxn(args)))		--if any of the initializes return a new object,
 			curobj = ret or curobj						--that object will be used forward going up the chain
 		end
 
@@ -147,9 +148,12 @@ function Class:extend(...)
 											--this way we call :Initialize() starting from the oldest one and going up to the most recent one
 
 		if func then
-			if Class.Debugging then print("Rawgot init foonction from", new.Name) end
+			if Class.Debugging then 
+				print("Rawgot init function from", new.Name)
+				print("Calling with args:", unpack(args, 1, table.maxn(args)))
+			end
 
-			local ret = func(curobj, unpack(args))		--returning an object from any of the Initializes will use
+			local ret = func(curobj, unpack(args, 1, table.maxn(args)))		--returning an object from any of the Initializes will use
 			curobj = ret or curobj 				--that returned object on every initialize up the chain
 		end
 
