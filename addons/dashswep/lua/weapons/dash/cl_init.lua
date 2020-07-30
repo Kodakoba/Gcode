@@ -1,4 +1,4 @@
-if not GachiRP then SWEP = weapons.GetStored("dash") end --easylua.StartWeapon("dash") end
+
 include('shared.lua')
 
  SWEP.PrintName        = "Dash SWEP"
@@ -89,6 +89,3 @@ function SWEP:DrawHUD()
 	draw.DrawMaterialCircle(ScrW()/2, ScrH() * 0.9 - 64, size*2)
 
 end
-
-
-if not GachiRP then SWEP = nil end--easylua.EndWeapon("dash") end

@@ -1,8 +1,4 @@
 
-if not GachiRP then easylua.StartWeapon("dash2") end
-
-setfenv(0, _G)
-
 SWEP.Author			= "grmx"
 SWEP.Contact			= ""
 SWEP.Purpose			= ""
@@ -450,6 +446,3 @@ function SWEP:SecondaryAttack()
 	end
 
 end
-
-
-if not GachiRP then easylua.EndWeapon() end
