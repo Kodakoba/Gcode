@@ -2,6 +2,8 @@
 AddCSLuaFile()
 
 BaseWars = BaseWars or {}
+BW = BaseWars
+Basewars = BW 
 
 BaseWars.LoadLog = Logger("BW-Load", Color(220, 100, 100))
 local rlm = Realm(true, true)
@@ -9,10 +11,10 @@ BaseWars.LoadLog("Beginning inclusion %s", rlm)
 
 local t1 = SysTime()
 
-if not BaseWars.Loaded then
-	BaseWars.LoadLog("	Deriving...")
-	DeriveGamemode("sandbox")
-end
+
+BaseWars.LoadLog("	Deriving...")
+DeriveGamemode("sandbox")
+
 
 local function includeCS(File)
 	include(File)
