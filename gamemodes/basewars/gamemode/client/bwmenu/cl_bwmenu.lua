@@ -21,7 +21,7 @@ local function CreateBWFrame()
 	f.Shadow = {}
 
 	f:PopIn()
-
+	f:SetRetractedSize(f:GetRetractedSize() * 1.2)
 	function f:Disappear()
 		self:PopOut(nil, nil, function()
 			self:Remove()

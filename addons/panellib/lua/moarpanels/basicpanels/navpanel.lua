@@ -90,7 +90,9 @@ function NavbarChoice:SetIcon(url, name, h)
 	local ic = Icon(url, name)
 	self.Icon = ic
 
-	self.IconSizeOverride = h
+	self.Icon.Aspect = h
+
+	return ic
 end
 
 AccessorFunc(NavbarChoice, "Name", "Name")
@@ -149,28 +151,34 @@ function NavbarChoice:Draw(w, h)
 
 	local frac = self:GetExpFrac(nav.ExpandFrac, 0.8, 0.5)
 
-	local size = self.IconSizeOverride or self.IconSize
+	local size = self.Icon.Size or self.IconSize
+	local aspect = self.Icon.Aspect or 1
 
+	local iw, ih = size, aspect * size
 	--  when expanded becomes 8,		when expanded, becomes 8 (padding from left edge)
 	--  otherwise centers				otherwise, becomes the left edge of visible area (area that's not clipped by parent)
-	ix = Lerp(frac, nav.RetractedSize/2 - size/2, 8) + Lerp(frac, nav:GetWide() - nav.RetractedSize, 0)
+	ix = Lerp(frac, nav.RetractedSize/2 - iw/2, 8) + Lerp(frac, nav:GetWide() - nav.RetractedSize, 0)
 
-	self.Icon:Paint(ix, h/2 - size/2, size, size)
+	
+
+	self.Icon:Paint(ix, h/2 - ih/2, iw, ih)
 
 	local frac = self:GetExpFrac(nav.ExpandFrac, 0.9, 0.5) 	--different frac; more eased so text goes to the right faster than the icon
 															--(and goes left slower)
 
-	tx = ix + size + Lerp(frac, size, 0) + 4
+	local iconArea = ix + size
+	local area = w - iconArea --available area
+
+	tx = ix + size + Lerp(frac, area, area/2) - 4
 	self.TextColor.a = 255 * (nav.ExpandFrac - 0.35) * 1/0.65 	--mmmmmm yes cancer maths
 																--(basically makes so text is invisible until 35% expanded)
 
-
-	draw.SimpleText(self.Name, self.Font or "BS22", tx, 2, self.TextColor, 0, 5)
+	draw.SimpleText(self.Name, self.Font or "BS22", tx, 2, self.TextColor, 1, 5)
 
 	if self.WrappedDescription then
 		local frac = math.max((nav.ExpandFrac - 0.4) * 1/0.6, 0)
 		frac = self:GetExpFrac(frac, 0.9, 0.5)
-		local descx = ix + size + Lerp(frac, size, 0) + 4 + 4
+		--local descx = Lerp(frac, size, 0)
 
 		local height = self.DescripitionNewlines * self.DescriptionFontHeight
 		local space = self:GetTall() - 24
@@ -182,11 +190,28 @@ function NavbarChoice:Draw(w, h)
 		surface.SetFont(self.DescriptionFont) 					-- microoptimization reeeeeeeeeee
 		surface.SetTextColor(self.DescriptionColor:Unpack()) 	-- (coulda just used draw.SimpleText but im not aligning anyways and im drawing multiple lines, so)
 
+		local txs = {--[[width, lineString]]}
+		local maxW = 0
+
 		for s in self.WrappedDescription:gmatch("[^%c]+") do
-			surface.SetTextPos(descx, ty + i * self.DescriptionFontHeight)
+			txs[#txs + 1] = {
+				(surface.GetTextSize(s)),
+				s
+			}
+			maxW = math.max(maxW, txs[#txs][1])
+		end
+
+		for _, dat in ipairs(txs) do
+			local tw = dat[1]
+			local s = dat[2]
+			
+			local tx = iconArea + area/2 - tw/2
+
+			surface.SetTextPos(tx + maxW * (1 - frac), ty + i * self.DescriptionFontHeight)
 			surface.DrawText(s)
 			i = i + 1
 		end
+
 	end
 end
 
@@ -471,6 +496,14 @@ end
 
 function NavPanel:RemoveInvisibleButton(nav)
 	if IsValid(self.__InvisButton) then self.__InvisButton:Remove() return end
+end
+
+function NavPanel:GetRetractedSize()
+	return self.RetractedSize
+end
+
+function NavPanel:GetExpandedSize()
+	return self.Navbar:GetWide()
 end
 
 function NavPanel:SetRetractedSize(size)
