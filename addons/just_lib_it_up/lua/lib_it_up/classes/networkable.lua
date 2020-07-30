@@ -222,7 +222,7 @@ function nw:Invalidate()
 
 	IDToNum[self.NetworkableID] = nil
 	_NetworkableChanges[self.NetworkableID] = nil
-	
+
 	for ply, ids in pairs(_NetworkableAwareness) do
 		ids[self.NetworkableID] = nil
 	end
@@ -306,13 +306,17 @@ if SERVER then
 
 		-- count networkables someone might not know about
 
-		local newids = {}
+		local newids = {--[[ [seq_id] = name ]]}
+		local added = {--[[ [name] = true ]]}
 
 		for _, ply in ipairs(everyone) do
 			for numID, nameID in pairs(numToID) do
+				if added[nameID] then continue end
+
 				if not _NetworkableAwareness[ply] or not _NetworkableAwareness[ply][nameID] then
 					newids[#newids + 1] = numID
 					_NetworkableAwareness:Set(true, ply, nameID)
+					added[nameID] = true
 				end
 			end
 		end
