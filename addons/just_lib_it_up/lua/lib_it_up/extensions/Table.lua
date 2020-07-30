@@ -2,7 +2,7 @@
 function table.LowestSequential(t)
 
 	for k,v in ipairs(t) do
-		if v == nil or next(t, k) == nil then return k end
+		if t[k + 1] == nil then return k end
 	end
 	return 0
 end
