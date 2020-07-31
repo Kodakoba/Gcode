@@ -49,6 +49,10 @@ end
 local encoderIDLength = 5 --5 bits fit 16 (0-15) encoders
 
 -- make sure you up encoderIDLength if you go above encoder ID of 15
+local ns = netstack:new()
+-- write hijacked versions of net.*
+
+ns:Hijack(true)
 
 local encoders = {
 	["string"] = {0, net.WriteString},
@@ -70,6 +74,7 @@ local encoders = {
 
 	--7, 8, 9, 10 are used!!!!!! do not use them!
 }
+ns:Hijack(false)
 
 local decoders = {
 	["string"] = {0, net.ReadString},
@@ -143,13 +148,10 @@ function nw:Initialize(id)
 end
 
 function nw:SetNetworkableID(id)
-	
 
 	self.NetworkableID = id
 
-	if cache[id] then 
-		table.Empty(self)
-
+	if cache[id] then
 		for k,v in pairs(cache[id]) do --basically copy
 			self[k] = v
 		end
@@ -168,7 +170,6 @@ function nw:SetNetworkableID(id)
 
 	if SERVER then
 		numToID[#numToID + 1] = id
-
 		IDToNum[id] = #numToID
 		self.NumberID = #numToID
 	end
@@ -218,7 +219,7 @@ function nw:Invalidate()
 
 	cache[self.NetworkableID] = nil
 
-	if self.NumberID then numToID[self.NumberID] = nil end
+	if self.NumberID and numToID[self.NumberID] == self then numToID[self.NumberID] = nil end
 
 	IDToNum[self.NetworkableID] = nil
 	_NetworkableChanges[self.NetworkableID] = nil
@@ -270,6 +271,7 @@ if SERVER then
 
 		net.WriteUInt(i, 24)
 		net.WriteUInt(obj.NetworkableIDEncoder.ID, encoderIDLength)
+
 		obj.NetworkableIDEncoder.Func(name, obj.NetworkableIDEncoder.IDArg)
 	end
 
@@ -311,7 +313,7 @@ if SERVER then
 
 		for _, ply in ipairs(everyone) do
 			for numID, nameID in pairs(numToID) do
-				if added[nameID] then continue end
+				if added[nameID] then print("was added", nameID) continue end
 
 				if not _NetworkableAwareness[ply] or not _NetworkableAwareness[ply][nameID] then
 					newids[#newids + 1] = numID
@@ -338,15 +340,16 @@ if SERVER then
 		local nw = netstack:new()
 
 		net.Start("NetworkableSync")
+			local ns = netstack:new()
+			ns:Hijack()
+
 			net.WriteUInt(#newids, 16)
 			for i=1, #newids do
 				WriteIDPair(newids[i])
 			end
 
-			local ns = netstack:new()
-			ns:Hijack()
-
 			net.WriteUInt(changes_count, 8).Description = "Changed objects count" --amount of changed networkable objects
+			local changedCountID = #ns.Ops
 			local changed = 0
 
 			local bits = select(2, net.BytesWritten())
@@ -375,8 +378,8 @@ if SERVER then
 
 			ns:Hijack(false)
 
-			ns.Ops[1].args[1] = changed --this is the changes_count, change it to `changed` in case we broke out of the loop early
-
+			ns.Ops[changedCountID].args[1] = changed --this is the changes_count, change it to `changed` in case we broke out of the loop early
+			--print("sent:", ns)
 			net.WriteNetStack(ns)
 
 		net.Send(player.GetAll())
@@ -390,26 +393,7 @@ if SERVER then
 	end)
 
 	hook.Add("PlayerFullyLoaded", "NetworkableUpdate", function(ply)
-
-		net.Start("NetworkableSync")
-			net.WriteUInt(#_NetworkableNumberToID, 16)
-			for i=1, #_NetworkableNumberToID do
-				WriteIDPair(i)
-			end
-
-			net.WriteUInt(#_NetworkableNumberToID, 16) --amount of networkable objects in total
-
-			for id, obj in pairs(cache) do
-				net.WriteUInt(IDToNumber(id), 24)
-				net.WriteUInt(table.Count(obj.Networked), 8) --amount of changed values in the Networkable object
-
-				for k,v in pairs(obj.Networked) do
-					WriteChange(k, v)
-				end
-			end
-
-		net.Send(ply)
-
+		NetworkAll()
 	end)
 
 
