@@ -161,7 +161,7 @@ end
 function GM:EntityTakeDamage(ent, dmginfo)
 
 	local Player = ((IsValid(ent) and ent:IsPlayer()) and ent) or false
-	if dmginfo:IsDamageType(DMG_BURN) and not Player then return false end 
+	if dmginfo:IsDamageType(DMG_BURN) and not Player then return false end
 
 	local Owner = IsValid(ent) and ent.CPPIGetOwner and ent:CPPIGetOwner()
 	Owner = (IsPlayer(Owner) and Owner) or false
@@ -177,14 +177,14 @@ function GM:EntityTakeDamage(ent, dmginfo)
 	local IsProp = ent:GetClass() == "prop_physics"
 
 	if Owner then
-		if not IsPlayer(Attacker) then return false end 
+		if not IsPlayer(Attacker) then return false end
 
-		local IsOwner = Attacker == Owner 
+		local IsOwner = Attacker == Owner
 
 		local Enemy = IsOwner or Owner:IsEnemy(Attacker)
 
 		local Cant1 = IsOwner and (Owner:InRaid() or IsProp)
-		local Cant2 = not Enemy 
+		local Cant2 = not Enemy
 
 		if not ent.AllwaysRaidable and (Cant1 or Cant2) then
 
@@ -196,45 +196,45 @@ function GM:EntityTakeDamage(ent, dmginfo)
 	end
 
 	if not Owner and not Player and IsPlayer(Attacker) then --no owner; attacked isn't a player and attacker is a player
-		local sid64 = ent.FPPSteamID64 
+		local sid64 = ent.FPPSteamID64
 
-		if sid64 then 
+		if sid64 then
 
-			if BaseWars.Raid.WasInRaid(sid64) then --ononono you aint escaping the shame 
+			if BaseWars.Raid.WasInRaid(sid64) then --ononono you aint escaping the shame
 				local sids = BaseWars.Raid.WasInRaid(sid64).SteamIDs
 
-				local atk = Attacker 
+				local atk = Attacker
 				local atkside = 0
 
-				local ow = Owner 
+				local ow = Owner
 				local owside = 0
 
-				for k,v in pairs(sids) do 
+				for k,v in pairs(sids) do
 
-					if k == sid64 then 
-						owside = v 
+					if k == sid64 then
+						owside = v
 					end
 
-					if k == Attacker:SteamID64() then 
-						atkside = v 
+					if k == Attacker:SteamID64() then
+						atkside = v
 					end
 
 				end
 
 				if not (owside==2 and atkside==1) then --only (owner: raided, attacker: raider) gets a pass
 					dmginfo:ScaleDamage(0)
-					dmginfo:SetDamage(0)						 
+					dmginfo:SetDamage(0)
 					return false
 				end
 
 				if ent.DestructableProp then
 					local hp = ent:Health()
 					local ActualDmg = Damage * PropDamageScale
-					hp = hp - ActualDmg 
+					hp = hp - ActualDmg
 
-					if hp < 0 then 
+					if hp < 0 then
 						ent:Remove()
-						return 
+						return
 					end
 
 					ent:SetHealth(hp)
@@ -245,40 +245,40 @@ function GM:EntityTakeDamage(ent, dmginfo)
 
 					ent:SetColor(Color)
 
-					return 
+					return
 				end
 
-			else 
+			else
 
 				dmginfo:ScaleDamage(0)
-				dmginfo:SetDamage(0)	
+				dmginfo:SetDamage(0)
 
 				return false
 			end
 
-		end 
+		end
 	end
 
 	if ent.DestructableProp then
 
 		if not Owner then return end
 
-		local IsOwner = Attacker == Owner 
+		local IsOwner = Attacker == Owner
 
 		local Enemy = IsOwner or Owner:IsEnemy(Attacker)
 
 		local Cant1 = IsOwner and Owner:InRaid()
-		local Cant2 = not Enemy 
-		
-		if Cant1 or Cant2 then return false end 
+		local Cant2 = not Enemy
+
+		if Cant1 or Cant2 then return false end
 
 		local hp = ent:Health()
 		local ActualDmg = Damage * PropDamageScale
-		hp = hp - ActualDmg 
+		hp = hp - ActualDmg
 
-		if hp < 0 then 
+		if hp < 0 then
 			ent:Remove()
-			return 
+			return
 		end
 
 		ent:SetHealth(hp)
@@ -305,9 +305,7 @@ function GM:EntityTakeDamage(ent, dmginfo)
 		local Team = ent:GetFactionName()
 
 		if not (ent == Attacker) and not FriendlyFire and ent:InFaction() and Attacker:IsPlayer() and Attacker:InFaction(Team) then
-			print("nope", not (ent == Attacker) , not FriendlyFire , ent:InFaction() , Attacker:IsPlayer() , Attacker:InFaction(Team))
 			dmginfo:SetDamage(0)
-
 			return
 
 		end

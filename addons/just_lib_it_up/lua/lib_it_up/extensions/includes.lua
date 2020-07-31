@@ -8,6 +8,7 @@ local includes = {
 	[_CL] = function(name, should)
 		-- always add to CSLua,
 		-- don't include clientside if should = false
+
 		if SERVER then
 			AddCSLuaFile(name)
 		else
@@ -78,7 +79,6 @@ function FInc.Recursive(name, realm, nofold, callback)	--even though with "nofol
 
 		if includes[realm] then
 			local cl, sv = callback (inc_name)
-
 			includes[realm] (inc_name, cl, sv)
 
 		else

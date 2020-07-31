@@ -98,12 +98,12 @@ net.Receive("Factions", function(len)
 		facs.Factions[name] = fac
 		facs.FactionIDs[id] = fac
 
-	elseif type==3 then 
+	elseif type==3 then
 
 		local id = net.ReadUInt(24)
 		print("deleting faction #" .. id)
-		for k,v in pairs(facs.Factions) do 
-			if v.id and v.id==id then 
+		for k,v in pairs(facs.Factions) do
+			if v.id and v.id==id then
 				v:Invalidate()
 				facs.Factions[k] = nil
 				facs.FactionIDs[id] = nil
@@ -113,7 +113,7 @@ net.Receive("Factions", function(len)
 
 	end
 
-	if type==10 then 
+	if type==10 then
 		if FacErrorReceiver then FacErrorReceiver() end
 		return
 	end
@@ -121,32 +121,22 @@ net.Receive("Factions", function(len)
 end)
 
 function GetFactions()
-	return Factions.Factions 
-end
-
-function PLAYER:GetFaction()
-	return Factions.FactionIDs[self:Team()]
-end
-
-function PLAYER:GetFactionName()
-	local fac = Factions.FactionIDs[self:Team()]
-	if fac then return fac.name end
-	return "no faction"
+	return Factions.Factions
 end
 
 function PLAYER:InFaction(ply2)
 	local fac = Factions.FactionIDs[self:Team()]
 
-	if not ply2 then 
+	if not ply2 then
 		if fac then return fac.name else return false end
 	elseif IsPlayer(ply2) then
 		local fac2 = Factions.FactionIDs[ply2:Team()]
-		if self:Team()~=1 and fac==fac2 then 
-			return fac.name 
-		else 
-			return false 
-		end 
-	elseif isnumber(ply2) then 
+		if self:Team()~=1 and fac==fac2 then
+			return fac.name
+		else
+			return false
+		end
+	elseif isnumber(ply2) then
 		return self:Team() == ply2
 	end
 	return false --???
