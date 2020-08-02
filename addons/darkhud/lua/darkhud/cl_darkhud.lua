@@ -56,7 +56,6 @@ local dh = DarkHUD
 	local hsc = 0
 
 	function DarkHUD.ReScale()
-		print("changed to", ScrW(), ScrH())
 		scale = ScrH() / 1080 * 0.9
 		hsc = scale
 
@@ -90,7 +89,7 @@ local dh = DarkHUD
 		dh.PaddingY = 16 + hsc * 24
 
 		local f = DarkHUD.Essentials
-		if not IsValid(f) then return end
+		if not IsValid(f) then print("bruh invalid darkhud, can't resize bruhbruh") return end
 
 		f:ResizeElements()
 	end
@@ -234,9 +233,6 @@ function DarkHUD.Create()
 
 	local pl, pm = LocalPlayer():GetLevel(), LocalPlayer():GetMoney()
 
-	local PopupLevel = 0
-	local PopupMoney = 0
-
 	local pmd  = {} --differences
 
 	local mCol = Color(250, 250, 250)
@@ -266,7 +262,7 @@ function DarkHUD.Create()
 			end
 
 			if #pmd < 7 then
-				pmd[#pmd+1] = {amt = mon - pm, y = 0, ct = CurTime(), col = mCol:Copy(), boxcol = boxcol:Copy()}
+				pmd[#pmd + 1] = {amt = mon - pm, y = 0, ct = CurTime(), col = mCol:Copy(), boxcol = boxcol:Copy()}
 			else
 				local cur = pmd[1]
 
@@ -285,20 +281,6 @@ function DarkHUD.Create()
 
 		pl, pm, pe = lvl, mon
 	end
-
-	local monY = 0
-
-	local helpa = 0
-
-	local monYMax = 36
-	local monYMin = -10
-
-	local lvYMax = 36
-	local lvYMin = 0
-
-
-	local hintbox = Color(255, 255, 255)
-	local lvbox = Color(50, 50, 50)
 
 	local popups = Animatable:new()
 
@@ -402,133 +384,10 @@ function DarkHUD.Create()
 				surface.SetTextPos(16, y + 1)
 				surface.SetTextColor(v.col:Unpack())
 				surface.DrawText(difftxt)
-				--draw.SimpleText(difftxt, "OSB24", 48 + 8,  -monY - lvY - v.y, v.col, 0, 5)
+
 			end
 		DisableClipping(false)
-		--[[local ct = CurTime()
-
-		if ct - PopupLevel < 4 then
-			lvY = L(lvY, lvYMax, 8, true)
-		else
-			lvY = L(lvY, lvYMin, 15)
-		end
-
-		if ct - PopupLevel > 0.5 then
-			LC(lvCol, color_white, 15)
-		end
-
-		if ct - PopupMoney < 4 then
-			monY = L(monY, monYMax, 8, true)
-		else
-			monY = L(monY, monYMin, 15)
-		end
-
-		if ct - PopupMoney > 1 then
-			LC(mCol, color_white, 15)
-		end
-
-		surface.SetDrawColor(255, 255, 255)
-
-		surface.DisableClipping(true)
-
-
-			if monY > 2 then
-
-				local mtxt = Language.Currency .. BaseWars.NumberFormat(me:GetMoney())
-
-				surface.SetFont("OSB28")
-				local mw, _ = surface.GetTextSize(mtxt)
-
-				draw.RoundedBox(6, 12, -monY - lvY, mw + 24 + 24, 32, boxcol)
-
-				surface.SetDrawColor(255, 255, 255)
-				surface.DrawMaterial("https://i.imgur.com/8b0nZI7.png", "moneybag.png", 20, 4 - monY - lvY, 25, 24)
-				local col = ColorAlpha(mCol, monY * (255/24) )
-				draw.SimpleText(mtxt, "OSB28", 48, 4 - monY - lvY, col, 0, 5)
-
-				local i = 0
-
-				for k,v in pairs(pmd) do 	--money popups
-
-					if v.a and v.a > 10 then
-						i = i + 1
-					end
-
-					local amt = v.amt
-
-					local difftxt = Language.Currency .. BaseWars.NumberFormat(math.abs(amt))
-
-					if amt < 0 then
-						difftxt = "-" .. difftxt
-					else
-						difftxt = "+" .. difftxt
-					end
-
-					if monY > monYMax*0.9 then
-						v.y = L(v.y, 28 * i, 10)
-
-						if v.ct < CurTime() - 2.5 then
-							v.a = L(v.a, 0, 15)
-							if v.a <= 0.1 then
-								table.remove(pmd, k)
-							end
-						else
-							v.a = L(v.a, 255, 15)
-						end
-
-					else
-						v.a = L(v.a, 0, 15)
-					end
-
-
-					surface.SetFont("OSB24")
-					local tw, th = surface.GetTextSize(difftxt)
-
-					v.boxcol.a = v.a / 1.2
-					v.col.a = v.a
-
-					draw.RoundedBox(4, 48 + 4, -monY - lvY - v.y, tw + 8, th, v.boxcol)
-					draw.SimpleText(difftxt, "OSB24", 48 + 8,  -monY - lvY - v.y, v.col, 0, 5)
-				end
-
-			else
-				mondiffY = 0
-			end
-
-
-			if lvY > 2 then
-				local lv = tostring(me:GetLevel())
-				surface.SetFont("OSB28")
-				local mw, mh = surface.GetTextSize(lv)
-
-				lvbox.a = lvY * (255/24)
-
-				draw.RoundedBox(6, 12, -lvY, mw + 24 + 24, 32, lvbox)
-
-				surface.SetDrawColor(255, 255, 255)
-				surface.DrawMaterial("https://i.imgur.com/YYXglpb.png", "star.png", 20, 4 - lvY, 24, 24)
-
-				local col = ColorAlpha(lvCol, lvY * (255/24) )
-				draw.SimpleText(lv, "OSB28", 48, -lvY + 16, col, 0, 1)
-			else
-				--mondiffY = 0
-			end
-
-			if not used["ContextMenu"] then
-				helpa = L(helpa, 255, 10, true)
-			else
-				helpa = L(helpa, 0, 10, true)
-			end
-			if helpa > 0 then
-				local key = input.LookupBinding("+menu_context") or "UNBOUND"
-				local str = ("Hold [%s] to see your money and level."):format(string.upper(key))
-
-				hintbox.a = helpa
-
-				draw.SimpleText(str, "OS24", w/2, -8, hintbox, 1, TEXT_ALIGN_BOTTOM)
-			end
-
-		surface.DisableClipping(false)]]
+		
 	end
 
 	local lastfac
