@@ -1,8 +1,6 @@
 include("include.lua")
-include("modules.lua")
 
 GM.Name 		= "BaseWars"
-
 GM.Author 		= "gachirmx"
 
 
