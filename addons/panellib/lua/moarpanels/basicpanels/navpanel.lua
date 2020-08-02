@@ -536,8 +536,7 @@ function NavPanel:PerformLayout(w, h)
 	canv:SetPos(navbar.X + navbar:GetWide(), self.HeaderSize)
 
 	if IsValid(self.ActivePnl) then
-		self.ActivePnl:SetPos(self.RetractedSize + 8, self.HeaderSize)
-		self.ActivePnl:SetSize(self:GetWide() - self.RetractedSize - 8, self:GetTall() - self.HeaderSize)
+		self:PositionPanel(self.ActivePnl)
 	end
 
 	if IsValid(self.__InvisButton) then
@@ -554,12 +553,13 @@ function NavPanel:AddCustomElement(fr)
 end
 
 function NavPanel:PositionPanel(pnl)
-	pnl:SetPos(self.RetractedSize, self.HeaderSize)
-	pnl:SetSize(self:GetWide() - self.RetractedSize, self:GetTall() - self.HeaderSize)
+	local rad = self.RBRadius or 8
+	pnl:SetPos(self.RetractedSize + rad, self.HeaderSize)
+	pnl:SetSize(self:GetWide() - self.RetractedSize - (rad * 2), self:GetTall() - self.HeaderSize)
 end
 
 function NavPanel:SetActivePanel(pnl, nopopout, noanim) --nil is acceptable as pnl
-
+	print("SetActivePanel:", self.ActivePnl)
 	if IsValid(self.ActivePnl) and not self.ActivePnl.__navNoPopout then
 		self.ActivePnl:PopOut(nil, nil, function(_, self)
 			self:SetVisible(false)
@@ -571,11 +571,10 @@ function NavPanel:SetActivePanel(pnl, nopopout, noanim) --nil is acceptable as p
 
 	if pnl then
 		pnl.__navNoPopout = nopopout
-		pnl:SetPos(self.RetractedSize, self.HeaderSize)
-		pnl:SetSize(self:GetWide() - self.RetractedSize, self:GetTall() - self.HeaderSize)
-
+		self:PositionPanel(pnl)
 		if not noanim then pnl:PopIn() end
-		pnl:SetVisible(true)
+
+		pnl:Show()
 	end
 end
 
