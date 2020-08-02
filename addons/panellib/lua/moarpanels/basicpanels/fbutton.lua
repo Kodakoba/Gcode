@@ -239,7 +239,7 @@ function button:PaintIcon(x, y, tw, th)
 
 	if not ic.IconRotation then
 		iX = x - iW * xoff - ioff
-		iY = y + th/2 - iH/2
+		iY = self:GetTall() / 2 - iH / 2
 	else
 		iX = x - ioff
 		iY = y
@@ -253,6 +253,11 @@ function button:PaintIcon(x, y, tw, th)
 	end
 end
 
+local AYToTextY = {
+	[0] = 4,
+	[1] = 1,
+	[2] = 5
+}
 --mostly shadow logic and caller for Draw* functions
 function button:Draw(w, h)
 
@@ -295,19 +300,21 @@ function button:Draw(w, h)
 
 		label = tostring(label)
 
-		local tx = self.TextX or w/2
-		local ty = self.TextY or h/2
+		local tx = self.TextX or w / 2
+		local ty = self.TextY or h / 2
 
 		local ax = self.TextAX or 1
 		local ay = self.TextAY or 1
+		local realAY = AYToTextY[ay] or 1
 
 		if label:find("\n") then
 			local tw = draw.DrawText(label, self.Font, tx, ty, self.LabelColor, ax)
 		else
-			local tw, th = draw.SimpleText(label, self.Font, tx, ty, self.LabelColor, ax, ay)
+			local tw, th = draw.SimpleText(label, self.Font, tx, ty, self.LabelColor, ax, realAY)
 
 			local iX = tx - tw * (ax/2)
-			local iY = ty - th * (ay/2)
+			local iY = ty + th * (ay/2)
+
 			self:PaintIcon(iX, iY, tw, th)
 		end
 		return
