@@ -554,6 +554,8 @@ local function GetOrDownload(url, name, flags, cb)	--callback: 1st arg is materi
 	local mat = MoarPanelsMats[key]
 	if not name then error("no name! disaster averting") return end
 
+	name = name:gsub("%(.+%)", "")
+
 	if not mat or (mat.failed and mat.failed ~= url) then 	--mat was not loaded
 
 		MoarPanelsMats[key] = {}
@@ -567,6 +569,9 @@ local function GetOrDownload(url, name, flags, cb)	--callback: 1st arg is materi
 			MoarPanelsMats[key].w = cmat:Width()
 			MoarPanelsMats[key].h = cmat:Height()
 
+			MoarPanelsMats[key].flags = flags or "smooth"
+			MoarPanelsMats[key].path = "data/hdl/" .. name
+
 			MoarPanelsMats[key].fromurl = url
 		else 												--mat did not exist on disk: download it then load it in
 
@@ -579,6 +584,9 @@ local function GetOrDownload(url, name, flags, cb)	--callback: 1st arg is materi
 
 				MoarPanelsMats[key].w = cmat:Width()
 				MoarPanelsMats[key].h = cmat:Height()
+				MoarPanelsMats[key].flags = flags or "smooth"
+				MoarPanelsMats[key].path = fn
+
 				if cb then cb(MoarPanelsMats[key].mat, false) end
 
 			end, function(err)
@@ -629,7 +637,7 @@ function surface.DrawMaterial(url, name, x, y, w, h, rot)
 end
 
 function surface.DrawUVMaterial(url, name, x, y, w, h, u1, v1, u2, v2)
-	local mat = GetOrDownload(url, name, "smooth")
+	local mat = GetOrDownload(url, name .. "(noclamp)", "smooth noclamp")
 	if not mat then return end
 
 	if mat and mat.downloading or not mat.mat or mat.mat:IsError() then
