@@ -2,11 +2,55 @@ BaseWars.Menu = BaseWars.Menu or {
 	Tabs = {}, -- ["name"] = {onOpenFunc, onCloseFunc, onCreateTabFunc(bw_frame, tab), ["Order"] = ?, ["IsDefault"] = true/false}
 
 	Frame = nil, --will be a panel
+
+	Fonts = {}
 }
 
 if IsValid(BaseWars.Menu.Frame) then BaseWars.Menu.Frame:Remove() end
 
 local PopoutTime = 0
+local fonts = BaseWars.Menu.Fonts
+
+function BaseWars.Menu.ReScale()
+
+	local scale = ScrH() / 1080
+
+	fonts.Sizes = fonts.Sizes or {}
+	local sz = fonts.Sizes
+
+	sz.Big = 20 + 16 * scale
+	sz.MediumBig = 16 + 16 * scale
+	sz.Medium = 8 + 16 * scale
+	sz.Small = 8 + 12 * scale
+
+	for k,v in pairs(sz) do
+		surface.CreateFont("BWMenu_" .. k, {
+			font = "Open Sans Regular",
+			size = v
+		})
+
+		fonts[k] = "BWMenu_" .. k
+	end
+	
+	fonts.BoldSizes = fonts.BoldSizes or {}
+	local bsz = fonts.BoldSizes
+
+	bsz.Small = 8 + 16 * scale
+	bsz.Medium = 16 + 12 * scale
+
+	for k,v in pairs(bsz) do
+		surface.CreateFont("BWMenu_Bold" .. k, {
+			font = "Open Sans SemiBold",
+			size = v
+		})
+
+		fonts["Bold" .. k] = "BWMenu_Bold" .. k
+	end
+end
+
+BaseWars.Menu.ReScale()
+
+hook.Add("OnScreenSizeChanged", "BWMenuScale", BaseWars.Menu.ReScale)
 
 local function CreateBWFrame()
 	local f = vgui.Create("NavFrame")

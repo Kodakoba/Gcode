@@ -3,14 +3,19 @@ BaseWars.Menu.Tabs["Raids"] = tab
 
 
 local function onOpen(navpnl, tabbtn, prevPnl)
-	if IsValid(prevPnl) then prevPnl:PopInShow() return end
 	local f = BaseWars.Menu.Frame
 
-	local pnl = vgui.Create("Panel", f)
+	if IsValid(prevPnl) then
+		prevPnl:PopInShow()
+		f:PositionPanel(prevPnl)
+		return prevPnl
+	end
+
+	local pnl = vgui.Create("Panel", f, "Raids Canvas")
 	f:PositionPanel(pnl)
-	pnl:Debug()
 
 	tab.Panel = pnl
+	return pnl
 end
 
 local function onClose(navpnl, tabbtn, prevPnl)
@@ -23,7 +28,6 @@ local function onCreateTab(f, tab)
 end
 
 
-	
 tab[1] = onOpen
 tab[2] = onClose
 tab[3] = onCreateTab
