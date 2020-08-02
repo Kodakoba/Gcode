@@ -559,12 +559,11 @@ function NavPanel:PositionPanel(pnl)
 end
 
 function NavPanel:SetActivePanel(pnl, nopopout, noanim) --nil is acceptable as pnl
-	print("SetActivePanel:", self.ActivePnl)
 	if IsValid(self.ActivePnl) and not self.ActivePnl.__navNoPopout then
-		self.ActivePnl:PopOut(nil, nil, function(_, self)
+		self.ActivePnl.__popOut = self.ActivePnl:PopOut(nil, nil, function(_, self)
 			self:SetVisible(false)
 		end)
-		self.ActivePnl:MoveBy(0, 24, 0.1, 0, 0.2)
+		self.ActivePnl.__move = self.ActivePnl:MoveBy(0, 24, 0.1, 0, 0.2)
 	end
 
 	self.ActivePnl = pnl
@@ -572,6 +571,15 @@ function NavPanel:SetActivePanel(pnl, nopopout, noanim) --nil is acceptable as p
 	if pnl then
 		pnl.__navNoPopout = nopopout
 		self:PositionPanel(pnl)
+
+		if self.ActivePnl.__move then
+			self.ActivePnl.__move:Stop()
+		end
+
+		if self.ActivePnl.__popOut then
+			self.ActivePnl.__popOut:Stop()
+		end
+
 		if not noanim then pnl:PopIn() end
 
 		pnl:Show()
