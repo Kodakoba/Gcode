@@ -33,7 +33,7 @@ function button:Init()
 	self.LabelColor = Color(255, 255, 255)
 	self.RBRadius = 8
 	self.HoverColor = self.Color:Copy()
-	self.HoverColorGenerated = color_black:Copy()
+	self.HoverColorGenerated = self.Color:Copy()
 	self.Icon = nil --[[
 	{
 		IconURL = "",
@@ -117,12 +117,12 @@ function button:HoverLogic()
 
 		local bg = self.Color
 
-		local fr = math.min(bg.r*hm, 255)
-		local fg = math.min(bg.g*hm, 255)
-		local fb = math.min(bg.b*hm, 255)
-
 		if self.HoverColorGenerated ~= self.Color then
-			self.HoverColor:Set(fr, fg, fb)
+			local h, s, v = self.Color:ToHSV()
+			s = math.min(s * hm, 1)
+			v = math.min( math.max(v, 0.08) * hm, 1)
+
+			draw.ColorModHSV(self.HoverColor, h, s, v)
 			self.HoverColorGenerated:Set(self.Color:Unpack())
 		end
 
