@@ -28,44 +28,6 @@ BaseWars.Config = {
 			Offset 		= Vector(0, 0, 16),
 		},
 	},
-		
-
-	Drugs = {
-		DoubleJump = {
-			JumpHeight 	= Vector(0, 0, 320),
-			Duration	= 120,
-		},
-		Steroid = {
-			Walk 		= 330,
-			Run 		= 580,
-			Duration	= 120,
-		},
-		Regen = {
-			Duration 	= 30,
-		},
-		Adrenaline = {
-			Mult		= 1.5,
-			Duration	= 120,
-		},
-		PainKiller = {
-			Mult 		= .75,
-			Duration	= 80,
-		},
-		Rage = {
-			Mult 		= 1.5,
-			Duration	= 120,
-		},
-		Shield = {
-
-		},
-		Antidote = {
-
-		},
-		CookTime	= 30,
-	},
-
-
-
 
 	Notifications = {
 		LinesAmount = 11,
