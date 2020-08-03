@@ -1,9 +1,6 @@
 include("shared.lua")
 AddCSLuaFile("shared.lua")
 
-local blue = Color(40, 120, 250)
-local green = Color(80, 200, 80)
-
 hdl.DownloadFile("https://i.imgur.com/SpRAhWY.jpg", "crafting/bp_line.jpg", function(fn)
 	local mat = Material(fn, "noclamp")
 

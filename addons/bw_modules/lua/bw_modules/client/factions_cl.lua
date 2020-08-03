@@ -10,8 +10,6 @@ local facs = Factions
 local facmeta = Networkable:extend()
 
 function facmeta:Initialize(id, name, col, haspw)
-	print("faction initializer got", self, " for init")
-
 	self = self:SetNetworkableID("Faction:" .. id)
 
 	self.id = id

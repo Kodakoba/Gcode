@@ -5,6 +5,8 @@ Factions = Factions or {}
 Factions.Factions = Factions.Factions or {}
 Factions.FactionIDs = Factions.FactionIDs or {}
 
+Factions.MaxMembers = 4
+
 local facs = Factions
 
 
