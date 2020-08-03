@@ -27,6 +27,7 @@ function table.KeysToValue(tbl)
 end
 table.KeysToValues = table.KeysToValue
 
+
 --[[
 	Weak tables
 ]]
@@ -220,6 +221,8 @@ function table.InsertVararg(t, ...)
 end
 
 if not table.Shuffle then
+	-- may be implemented in future gmod versions
+	-- lifted from a pull request
 
 	function table.Shuffle( t )
 		local n = #t
@@ -232,6 +235,27 @@ if not table.Shuffle then
 
 end
 
+if not table.Filter then
+	-- turns out plogs had this already
+
+	function table.Filter(tab, func)
+		local c = 1
+
+		for i=1, #tab do
+			if func(tab[i]) ~= false then
+				tab[c] = tab[i]
+				c = c + 1
+			end
+		end
+
+		for i=c, #tab do
+			tab[i] = nil
+		end
+
+		return tab
+	end
+
+end
 
 function eval(var, ...)
 

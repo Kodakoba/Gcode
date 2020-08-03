@@ -29,6 +29,23 @@ function math.Length(num) --length of number in base 10, kind of works for retar
 	return (ret > 14 and 0 or 1) + ret
 end
 
+-- reverse math.clamp basically lol
+-- if a number is not within [min; max], returns it
+
+-- otherwise, returns either the min or max (whichever one's closer)
+function math.Exclude(num, min, max)
+	if num >= max or num <= min then
+		return num
+	else
+		local rng = max - min
+		if num - rng * 0.5 < min then
+			return min
+		else
+			return max
+		end
+	end
+end
+
 function bit.bool(bool)
 	return bool and 1 or 0
 end
