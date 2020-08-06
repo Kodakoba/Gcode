@@ -1,4 +1,7 @@
+
 local COLOR = FindMetaTable("Color")
+local MATRIX = FindMetaTable("VMatrix")
+local VECTOR = FindMetaTable("Vector")
 
 Colors = Colors or {}
 
@@ -42,4 +45,9 @@ end
 
 function IsMaterial(m)
 	return type(m) == "IMaterial"	--we can't really compare m.MetaName because m might not even be a table
+end
+
+local mx = Matrix()
+function MATRIX:Reset()
+	self:Set(mx)
 end
