@@ -380,6 +380,10 @@ local vowels = {
 	["u"] = true,
 }
 
+function hex(t)
+	return ("%p"):format(t)
+end
+
 function string.IsVowel(char)
 	return (not not vowels[string.lower(char:sub(1, 1))])
 end

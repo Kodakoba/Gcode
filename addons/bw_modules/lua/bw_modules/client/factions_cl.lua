@@ -7,17 +7,20 @@ Factions.FactionIDs = Factions.FactionIDs or {}
 
 local facs = Factions
 
-local facmeta = Networkable:extend()
+Factions.meta = Factions.meta or Networkable:extend()
+local facmeta = Factions.meta
 
 function facmeta:Initialize(id, name, col, haspw)
-	self = self:SetNetworkableID("Faction:" .. id)
+	self:SetNetworkableID("Faction:" .. id)
 
 	self.id = id
 	self.name = name
 	self.col = col
 	self.haspw = haspw
 
-	return self
+	self:On("NetworkedChanged", function()
+		hook.Run("FactionsUpdate", self)
+	end)
 end
 
 function facmeta:InRaid()
@@ -141,7 +144,7 @@ function PLAYER:InFaction(ply2)
 end
 
 function Factions.RequestCreate(name, pw, col)
-	if not Factions.CanCreate(name, pw, col) then return false end
+	if not Factions.CanCreate(name, pw, col, LocalPlayer()) then return false end
 
 	net.Start("Factions")
 		net.WriteUInt(1, 4) -- 'create'

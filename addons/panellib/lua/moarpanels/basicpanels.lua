@@ -104,3 +104,19 @@ for k,v in pairs(families) do
 	end
 
 end
+
+Emitter.HookPaint = function(what)
+	
+	if not what.Paint then
+		what.Paint = function(self, ...)
+			self:Emit("Paint", ...)
+		end
+	end
+
+	if not what.Think then
+		what.Think = function(self, ...)
+			self:Emit("Think", ...)
+		end
+	end
+
+end

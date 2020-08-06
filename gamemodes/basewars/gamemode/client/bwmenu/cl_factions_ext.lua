@@ -113,11 +113,13 @@ local function createFactionActions(f, fac)
 
 	draw.ColorModHSV(bordCol, h, s, (v < 0.3 and s < 0.1) and 0.06 or v)
 	function pnl:Paint(w, h)
-		surface.SetDrawColor(col:Unpack())
-		surface.DrawRect(0, 0, w, h)
+		surface.DisableClipping(true)
+			surface.SetDrawColor(col:Unpack())
+			surface.DrawRect(0, 0, w, h)
 
-		surface.SetDrawColor(bordCol:Unpack())
-		self:DrawGradientBorder(w, h, 3, 3)
+			surface.SetDrawColor(bordCol:Unpack())
+			self:DrawGradientBorder(w, h, 3, 3)
+		surface.DisableClipping(false)
 	end
 
 end
@@ -128,7 +130,6 @@ local oldNewFac
 
 local function createNewFaction(f)
 	if IsValid(oldNewFac) then
-		print("valid, showing")
 		f:SetPanel(oldNewFac)
 		return
 	end
@@ -136,7 +137,6 @@ local function createNewFaction(f)
 	local pnl = vgui.Create("Panel", f)
 	f:SetPanel(pnl)
 	oldNewFac = pnl
-	print("Creating new")
 	pnl.IsNewFaction = true
 
 	local name
@@ -149,7 +149,7 @@ local function createNewFaction(f)
 		local nm = name:GetValue()
 		local pw = pw:GetValue()
 
-		local can, why = Factions.CanCreate(nm, pw, col:GetColor())
+		local can, why = Factions.CanCreate(nm, pw, col:GetColor(), LocalPlayer())
 
 		if not can then
 			err = why
@@ -353,12 +353,70 @@ function align(f, pnl)
 		pnl.__selMove:Stop()
 	end
 
+	pnl:SetAlpha(0)
 	pnl:MoveBy(8, 0, 0.2, 0, 0.3)
 	pnl:PopInShow()
 
 	print("aligning to", f)
 	f.FactionFrame = pnl
 end
+
+-- returns a sorted table of {fac_name, fac_obj}
+
+local function getSortedFactions()
+	local facs = Factions.Factions
+	local sorted = {}
+
+	for name, dat in pairs(facs) do
+		sorted[#sorted + 1] = {name, dat}
+	end
+
+	
+
+	table.sort(sorted, function(a, b)
+
+		local name1, name2 = a[1], a[2]
+		local a, b = a[2], b[2] --we're looking at facs
+
+		local memb1 = a:GetMembers()
+		local memb2 = b:GetMembers()
+
+		local a_has_friends = false
+		local b_has_friends = false
+
+		local a_has_more = #memb1 > #memb2
+		local b_has_more = not a_has_more
+
+		local me = LocalPlayer()
+
+		for k,v in ipairs(memb1) do
+			if v == me then return true end --auto-move to the top
+
+			if v:GetFriendStatus() == "friend" then
+				a_has_friends = true
+				break
+			end
+		end
+
+		for k,v in ipairs(memb2) do
+			if v == me then return false end --vi lost
+
+			if v:GetFriendStatus() == "friend" then
+				b_has_friends = true
+				break
+			end
+		end
+
+		if a_has_friends and not b_has_friends then return true end 	-- first sort by friends
+
+		if not a_has_more and not b_has_more then return name1 < name2 end -- if member counts are equal, sort alphabetically as a backup plan
+		return a_has_more												-- sort by member counts
+	end)
+
+
+	return sorted
+end
+
 --[[------------------------------]]
 --	   		Factions Tab
 --[[------------------------------]]
@@ -394,48 +452,7 @@ local function onOpen(navpnl, tabbtn, prevPnl, noanim)
 
 	tab.Panel = pnl
 
-	local facs = Factions.Factions
-	local sorted = {}
-
-	for name, dat in pairs(facs) do
-		sorted[#sorted + 1] = {name, dat}
-	end
-
 	local me = LocalPlayer()
-
-	table.sort(sorted, function(a, b)
-
-		local name1, name2 = a[1], a[2]
-		local a, b = a[2], b[2] --we're looking at facs
-
-		local memb1 = a:GetMembers()
-		local memb2 = b:GetMembers()
-
-		local a_has_friends = false
-		local b_has_friends = false
-
-		local a_has_more = #memb1 > #b:GetMembers()
-		local b_has_more = not a_has_more
-
-		for k,v in ipairs(memb1) do
-			if v:GetFriendStatus() == "friend" then
-				a_has_friends = true
-				break
-			end
-		end
-
-		for k,v in ipairs(memb2) do
-			if v:GetFriendStatus() == "friend" then
-				b_has_friends = true
-				break
-			end
-		end
-
-		if a_has_friends and not b_has_friends then return true end 	-- first sort by friends
-
-		if not a_has_more and not b_has_more then return name1 < name2 end -- if member counts are equal, sort alphabetically as a backup plan
-		return a_has_more												-- sort by member counts
-	end)
 
 	local newH = math.floor(pnl:GetTall() * 0.08 / 2) * 2 + 1
 
@@ -456,12 +473,9 @@ local function onOpen(navpnl, tabbtn, prevPnl, noanim)
 		return facPad / 2 + (num - 1) * (facHeight + facPad)
 	end
 
-	for k,v in ipairs(sorted) do
-		local name = v[1]
-		local fac = v[2]
-
+	function scr:AddButton(fac, num)
 		local btn = vgui.Create("FButton", scr)
-		btn:SetPos(8, scr:GetFactionY(k))
+		btn:SetPos(8, scr:GetFactionY(num))
 		btn:SetSize(scr:GetWide() - 16, facHeight)
 		btn.DrawShadow = false
 
@@ -488,8 +502,63 @@ local function onOpen(navpnl, tabbtn, prevPnl, noanim)
 		function btn:DoClick()
 			pnl:SetFaction(self.Faction)
 		end
+
+		scr.Factions[fac:GetName()] = btn
+
+		return btn
 	end
 
+	local sorted = getSortedFactions()
+
+	for k,v in ipairs(sorted) do
+		local fac = v[2]
+
+		scr:AddButton(fac, k)
+	end
+
+	_FACS = scr.Factions
+
+	hook.Add("FactionsUpdate", scr, function()
+		local sorted = getSortedFactions()
+		print("sorted:")
+		for k,v in ipairs(sorted) do
+			printf("%d: %s", k, v[1])
+		end
+
+		for k,v in pairs(scr.Factions) do
+			v.Sorted = false
+		end
+
+
+		for k,v in ipairs(sorted) do
+
+			local name, fac = v[1], v[2]
+			print("checking fac", name)
+			if IsValid(scr.Factions[name]) then
+				print('button existed, kewl')
+				scr.Factions[name].Sorted = true
+				print("moving", name, "to", k)
+				local desY = scr:GetFactionY(k)
+				scr.Factions[name]:MoveTo(8, desY, 0.3, 0, 0.2)
+			else
+				print("new button alert")
+				local btn = scr:AddButton(fac, k)
+				btn.Sorted = true
+				btn.FacNum = k
+			end
+		end
+
+		for name, btn in pairs(scr.Factions) do
+			if IsValid(btn) then
+				if not btn.Sorted then -- if Sorted is false that means we didn't go over that button and, thus, the faction doesn't exist anymore
+					btn:PopOut()
+					scr.Factions[name] = nil
+				end
+			end
+		end
+
+	end)
+	
 	pnl:InvalidateLayout(true)
 
 	local newFac = vgui.Create("FButton", pnl)

@@ -28,15 +28,23 @@ function PLAYER:GetFactionName()
 end
 
 
-function Factions.CanCreate(name, pw, col)
+function Factions.CanCreate(name, pw, col, ply)
+	if not name then
+		return false, "Can't create a faction without a name!"
+	end
+
 	local nmLen = utf8.len(name)
-	local pwLen = utf8.len(pw)
+	local pwLen = pw and utf8.len(pw)
+
+	if ply:InFaction() then
+		return false, "Can't create a new faction while in one!"
+	end
 
 	if nmLen < 5 or nmLen > 32 then
 		return false, "Faction names must be 5-32 characters long."
 	end
 
-	if pw ~= "" and (pwLen < 5 or pwLen > 32) then
+	if pw and pw ~= "" and (pwLen < 5 or pwLen > 32) then
 		return false, "Faction passwords must be 5-32 characters long."
 	end
 

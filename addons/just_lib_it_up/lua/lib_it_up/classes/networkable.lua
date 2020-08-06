@@ -397,13 +397,17 @@ if SERVER then
 	end)
 
 
-	function nw:Network() 	--networks everything in the next tick
+	function nw:Network(now) 	--networks everything in the next tick (or right now)
 							--currently unfinished for filtered networking
 		if not self.Filter then
-			timer.Adjust("NetworkableNetwork", 0, 0, function()
+			if not now then
+				timer.Adjust("NetworkableNetwork", 0, 0, function()
+					NetworkAll()
+					timer.Adjust("NetworkableNetwork", update_freq, 0, NetworkAll)
+				end)
+			else
 				NetworkAll()
-				timer.Adjust("NetworkableNetwork", update_freq, 0, NetworkAll)
-			end)
+			end
 		else
 			local anyone_missing = false
 			for k, ply in ipairs(self.Filter) do

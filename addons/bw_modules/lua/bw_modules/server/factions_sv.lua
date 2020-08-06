@@ -218,7 +218,7 @@ function facs.RandomizeOwner(name)
 	end
 
 	facs.Factions[name].own = own
-	print('updating owner')
+
 	net.Start("Factions")
 		net.WriteUInt(4, 4)	--update leader
 		net.WriteUInt(facs.Factions[name].id, 24)
@@ -230,10 +230,14 @@ local cooldowns = {}
 function facs.CreateFac(ply, name, pw, col)
 	if cooldowns[ply] and CurTime() - cooldowns[ply] < 1 then return end
 
+	pw = pw and utf8.sub(pw, 0, 32)
+	name = utf8.sub(name, 0, 32)
+
+	if not Factions.CanCreate(name, pw, col, ply) then print("err can't create fac:", Factions.CanCreate(name, pw, col, ply)) return end
+
 	ValidFactions()
 
-	local pw = string.sub(pw, 0, 16)
-	local name = string.sub(name, 0, 64)
+	
 
 	if not name or name == "" then error('uh') return end
 	if pw == "" then pw = nil end
@@ -250,6 +254,9 @@ function facs.CreateFac(ply, name, pw, col)
 
 	cooldowns[ply] = CurTime()
 
+	fac:Update()
+	fac:Network(true)
+
 	net.Start("Factions")
 		net.WriteUInt(2, 4)	--update
 		net.WriteUInt(id, 24)
@@ -263,7 +270,7 @@ function facs.CreateFac(ply, name, pw, col)
 
 	net.Broadcast()
 
-	fac:Update()
+	
 end
 
 PLAYER.CreateFaction = facs.CreateFac
@@ -347,7 +354,7 @@ net.Receive("Factions", function(_, ply)
 		pw = pw:gsub("%c", "")
 		col.a = 255
 
-		local can, err = facs.CanCreate(name, pw, col)
+		local can, err = facs.CanCreate(name, pw, col, ply)
 		if not can then
 			if ply.canCreateFacCD and CurTime() - ply.canCreateFacCD < 1 then return end
 			ply:ChatAddText(Color(220, 75, 75), "Failed to create faction!\n", err)

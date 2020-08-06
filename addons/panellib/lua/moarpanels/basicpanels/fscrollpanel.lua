@@ -115,9 +115,14 @@ end
 
 function FScrollPanel:Paint(w, h)
 	self:PrePaint(w, h)
-	self:Draw(w, h)
+		self:Draw(w, h)
 	self:PostPaint(w, h)
+
 	self:Emit("Paint", w, h)
+end
+
+function FScrollPanel:Think()
+	self:Emit("Think")
 end
 
 function FScrollPanel:DrawBorder(w, h, bt, bb, br, bl)
