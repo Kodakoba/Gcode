@@ -17,6 +17,7 @@ function TE:Init()
 	self.HTextColor = Colors.LightGray:Copy()
 	self.CursorColor = color_white:Copy()
 	self.PHTextColor = color_white:Copy()
+	self.PHTextAlpha = 50
 
 	self.PHTextFrac = 1
 	self.RBRadius = 6
@@ -98,7 +99,7 @@ function TE:Paint(w,h)
 		self.PHTextColorGen = self.TextColor
 
 		self:To("PHTextFrac", (self.Focus and 0) or 1, 0.2, 0, 0.15)
-		self.PHTextColor.a = 125 * self.PHTextFrac
+		self.PHTextColor.a = self.PHTextAlpha * self.PHTextFrac
 
 		draw.SimpleText(self:GetPlaceholderText(), self:GetFont(), 4, h/2, self.PHTextColor, 0, 1)
 	end
