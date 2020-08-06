@@ -219,7 +219,7 @@ function nw:Invalidate()
 
 	cache[self.NetworkableID] = nil
 
-	if self.NumberID and numToID[self.NumberID] == self then numToID[self.NumberID] = nil end
+	if self.NumberID and numToID[self.NumberID] == self.NetworkableID then numToID[self.NumberID] = nil end
 
 	IDToNum[self.NetworkableID] = nil
 	_NetworkableChanges[self.NetworkableID] = nil
