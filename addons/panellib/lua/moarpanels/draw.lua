@@ -906,6 +906,24 @@ local function GetSpawnIcon()
 	return MoarPanelsSpawnIcon
 end
 
+local szs = {64, 128, 256, 512}
+
+local upscale = function(w, h)
+	for i=1, #szs do
+		if w < szs[i] then
+			w = szs[i]
+		end
+
+		if h < szs[i] then
+			h = szs[i]
+		end
+	end
+
+	w, h = math.min(w, 512), math.min(h, 512)
+
+	return w, h
+end
+
 function draw.DrawOrRender(pnl, mdl, x, y, w, h)
 
 	local icname = mdl
@@ -923,6 +941,7 @@ function draw.DrawOrRender(pnl, mdl, x, y, w, h)
 		if mdls[mdl]:IsError() then
 			local spic = GetSpawnIcon()
 
+			spic:SetSize(upscale(w, h))
 			spic:SetModel(mdl)
 			spic:RebuildSpawnIcon()
 			mdls[mdl] = true
@@ -932,12 +951,13 @@ function draw.DrawOrRender(pnl, mdl, x, y, w, h)
 				--mdls[mdl] = Material(ic)
 				if amt == 1 then spic:Remove() end
 			end)
+			return
 
+		else
+			print("not err")
 		end
 
 		draw.DrawLoading(pnl, x + w/2, y + h/2, w, h)
-
-		return
 	elseif isbool(mdls[mdl]) then
 		draw.DrawLoading(pnl, x + w/2, y + h/2, w, h)
 		return

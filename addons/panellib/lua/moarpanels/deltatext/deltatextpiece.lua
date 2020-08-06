@@ -6,6 +6,9 @@
 
 DeltaTextPiece = DeltaTextPiece or Object:extend()
 
+local function hex(t)
+	return ("%p"):format(t)
+end
 
 local function NewFragment(text, col)
 	return {
@@ -533,6 +536,56 @@ function pmeta:Reset()
 	end
 end
 
+function pmeta:RemoveFragment(num)
+	local frag
+
+	for k,v in pairs(self.Fragments) do --find the frag we'll be replacing
+		if not v.Fading and v.ID == num then
+			frag = v
+			break
+		end
+	end
+
+	if not frag then return false end
+
+	for k,v in pairs(self.Fragments) do 	--shift every other ID down
+		if not v.Fading and v ~= frag and v.ID > num then
+			v.ID = v.ID - 1
+		end
+	end
+
+
+	local dropstr = self:GetDropStrength()
+
+	frag.RewindTextPos = true
+	frag.Fading = true
+	frag.LerpFromLast = 1
+
+	frag.LerpNext = 0
+	local a = frag.Alpha
+
+	self:CreateAnimation(hex(frag) .. "SubText", function(fr)
+		frag.OffsetY = fr * dropstr
+		frag.Alpha = a - fr*a
+
+		frag.LerpNext = fr
+
+	end, function()
+
+		local found = false
+
+		for k,v in pairs(self.Fragments) do 	--this is done like this because the keys might change by the time the animation finishes
+			if v == frag then
+				table.remove(self.Fragments, k)
+				break
+			end
+		end
+
+	end)
+
+	return frag
+end
+
 --[[
 	The first argument is the number of a fragment you're going to be changing. Text MUST be fragmented for this!
 	The second argument is the string you're going to be changing the fragment to.
@@ -575,13 +628,13 @@ function pmeta:ReplaceText(num, rep, onend, nolerp)
 	newfrag.AlignY = frag.AlignY
 	newfrag.Color = frag.Color
 
-	self:StopAnimation(frag.ID .. "AddText" .. frag.Text)	--in case it existed
+	self:StopAnimation(hex(frag) .. "AddText")	--in case it existed
 
 	local dropstr = self:GetDropStrength()
 
 	local a = frag.Alpha
 
-	self:CreateAnimation(num .. "SubText" .. frag.Text, function(fr)
+	self:CreateAnimation(hex(frag) .. "SubText", function(fr)
 		frag.OffsetY = fr * dropstr
 		frag.Alpha = a - fr*a
 
@@ -605,8 +658,7 @@ function pmeta:ReplaceText(num, rep, onend, nolerp)
 
 	local appstr = self:GetLiftStrength()
 
-	self:CreateAnimation(num .. "AddText" .. newfrag.Text, function(fr)
-		frag.RewindTextPos = true	--to prevent the new fragment's X pos being impacted by the one we're removing.
+	self:CreateAnimation(hex(newfrag) .. "AddText", function(fr)
 		newfrag.RewindTextPos = false
 
 
