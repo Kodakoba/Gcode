@@ -32,8 +32,9 @@ function button:Init()
 
 	self.LabelColor = Color(255, 255, 255)
 	self.RBRadius = 8
-	self.HoverColor = self.Color:Copy()
-	self.HoverColorGenerated = self.Color:Copy()
+	self.HoverColor = nil
+	self.HoverColorGenerated = nil
+
 	self.Icon = nil --[[
 	{
 		IconURL = "",
@@ -122,8 +123,15 @@ function button:HoverLogic()
 			s = math.min(s * hm, 1)
 			v = math.min( math.max(v, 0.08) * hm, 1)
 
-			draw.ColorModHSV(self.HoverColor, h, s, v)
-			self.HoverColorGenerated:Set(self.Color:Unpack())
+			local hovcol = self.HoverColor or self.Color:Copy()
+			draw.ColorModHSV(hovcol, h, s, v)
+			self.HoverColor = hovcol
+			if self.HoverColorGenerated then
+				self.HoverColorGenerated:Set(self.Color:Unpack())
+			else
+				self.HoverColorGenerated = self.Color:Copy()
+			end
+
 		end
 
 		LC(self.drawColor, self.HoverColor, 10) --this just looks better, idfk
@@ -226,8 +234,8 @@ function button:PaintIcon(x, y, tw, th)
 
 	local ic = self.Icon
 
-	local iW = ic.IconW or 24
-	local iH = ic.IconH or 24
+	local iW = ic.IconW or self:GetWide() - (self.RBRadius or 8)
+	local iH = ic.IconH or self:GetTall() - (self.RBRadius or 8)
 	local ioff = ic.IconX or (self.Label and 4) or 0
 
 	local col = ic.IconColor or color_white
@@ -245,12 +253,17 @@ function button:PaintIcon(x, y, tw, th)
 		iY = y
 	end
 
-	if ic.IconMat then
-		surface.SetMaterial(ic.IconMat)
-		surface.DrawTexturedRect(iX, iY, iW, iH)
-	elseif ic.IconURL then
-		surface.DrawMaterial(ic.IconURL, ic.IconName, iX, iY, iW, iH, ic.IconRotation)
-	end
+	render.PushFilterMin(TEXFILTER.ANISOTROPIC)
+
+		if ic.IconMat then
+			print(iX, iY, iW, iH)
+			surface.SetMaterial(ic.IconMat)
+			surface.DrawTexturedRect(iX, iY, iW, iH)
+		elseif ic.IconURL then
+			surface.DrawMaterial(ic.IconURL, ic.IconName, iX, iY, iW, iH, ic.IconRotation)
+		end
+
+	render.PopFilterMin()
 end
 
 local AYToTextY = {
