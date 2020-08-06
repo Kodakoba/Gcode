@@ -139,3 +139,15 @@ function PLAYER:InFaction(ply2)
 	end
 	return false --???
 end
+
+function Factions.RequestCreate(name, pw, col)
+	if not Factions.CanCreate(name, pw, col) then return false end
+
+	net.Start("Factions")
+		net.WriteUInt(1, 4) -- 'create'
+		net.WriteString(name)
+		net.WriteString(pw)
+		net.WriteColor(col)
+	net.SendToServer()
+
+end

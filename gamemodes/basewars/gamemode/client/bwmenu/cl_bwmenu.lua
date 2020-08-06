@@ -21,6 +21,7 @@ function BaseWars.Menu.ReScale()
 	sz.Big = 20 + 16 * scale
 	sz.MediumBig = 16 + 16 * scale
 	sz.Medium = 10 + 16 * scale
+	sz.MediumSmall = 10 + 12 * scale
 	sz.Small = 8 + 12 * scale
 
 	for k,v in pairs(sz) do

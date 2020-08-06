@@ -1,4 +1,6 @@
 local tab = {}
+local fonts = BaseWars.Menu.Fonts
+
 BaseWars.Menu.Tabs["Factions"] = tab
 
 --[[------------------------------]]
@@ -6,12 +8,12 @@ BaseWars.Menu.Tabs["Factions"] = tab
 --[[------------------------------]]
 
 -- dim the provided color
-local dim = function(col, amt, sat)
+local dim = function(col, amt, sat, safe)
 	local ch, cs, cv = col:ToHSV()
 	cv = cv * (amt or 0.8)
 
 	-- color is very close to Color(50, 50, 50) which is the scrollpanel color
-	if cs < 0.15 and (cv > 0.15 and cv < 0.25) then
+	if safe and cs < 0.15 and (cv > 0.15 and cv < 0.25) then
 		-- if it's sufficiently bright, make it gray
 		-- otherwise, make it pitch black
 		cv = (cv >= 0.2) and 0.35 or 0.05
@@ -21,7 +23,7 @@ local dim = function(col, amt, sat)
 end
 
 -- return a dimmed copy of the color
-local getDimmed = function(col, amt, sat)
+local getDimmed = function(col, amt, sat, safe)
 	col = col:Copy()
 	dim(col, amt, sat)
 	return col
@@ -76,14 +78,14 @@ local function facBtnPaint(self, w, h)
 			surface.DrawUVMaterial("https://i.imgur.com/y9uYf4Y.png", "whitestripes.png", 0, 0, w, h, u, 0, u + 0.5, 0.125)
 		end)
 
-		draw.SimpleText(self.Faction.name, BaseWars.Menu.Fonts.BoldSmall, w/2, 2, col, 1)
+		draw.SimpleText(self.Faction.name, fonts.BoldSmall, w/2, 2, col, 1)
 
 	local x, y = self:LocalToScreen(0, 0)
 	frac = self.MembFrac or 0
 
 	render.SetScissorRect(x + w * frac, y, x + w, y + h, true)
 
-		draw.SimpleText(self.Faction.name, BaseWars.Menu.Fonts.BoldSmall, w/2, 2, color_white, 1)
+		draw.SimpleText(self.Faction.name, fonts.BoldSmall, w/2, 2, color_white, 1)
 	render.SetScissorRect(0, 0, 0, 0, false)
 end
 
@@ -96,20 +98,18 @@ end
 local function createFactionActions(f, fac)
 	local pnl = vgui.Create("Panel", f)
 	f.FactionFrame = pnl
-	pnl:SetPos(f.FactionScroll.X + f.FactionScroll:GetWide(), 0)
-								--    V because it'll move to the right by 8px
-	pnl:SetSize(f:GetWide() - pnl.X - 8, f:GetTall())
 
-	pnl:MoveBy(8, 0, 0.2, 0, 0.3)
-	pnl:PopIn()
+	pnl.Faction = fac
 
-	local col = getDimmed(fac:GetColor(), 0.2, 0.3)
+	f:SetPanel(pnl)
 
-	local h,s,v = col:ToHSV()
+	local col = getDimmed(fac:GetColor(), 0.2, 0.3, true)
+
+	local h, s, v = col:ToHSV()
 	draw.ColorModHSV(col, h, s, math.max(v, 0.15))
 
 	local bordCol = fac:GetColor():Copy()
-	local h,s,v = bordCol:ToHSV()
+	h, s, v = bordCol:ToHSV()
 
 	draw.ColorModHSV(bordCol, h, s, (v < 0.3 and s < 0.1) and 0.06 or v)
 	function pnl:Paint(w, h)
@@ -120,27 +120,245 @@ local function createFactionActions(f, fac)
 		self:DrawGradientBorder(w, h, 3, 3)
 	end
 
-	return pnl
+end
+
+-- Creating a new faction
+
+local oldNewFac
+
+local function createNewFaction(f)
+	if IsValid(oldNewFac) then
+		print("valid, showing")
+		f:SetPanel(oldNewFac)
+		return
+	end
+
+	local pnl = vgui.Create("Panel", f)
+	f:SetPanel(pnl)
+	oldNewFac = pnl
+	print("Creating new")
+	pnl.IsNewFaction = true
+
+	local name
+	local pw
+	local col
+
+	local err
+
+	function pnl:ValidateData()
+		local nm = name:GetValue()
+		local pw = pw:GetValue()
+
+		local can, why = Factions.CanCreate(nm, pw, col:GetColor())
+
+		if not can then
+			err = why
+			return
+		end
+
+		-- we're all good
+		err = nil
+	end
+
+	local errDT = DeltaText()
+	errDT.AlignX = 1
+
+	local txCol = Color(220, 65, 65)
+
+	local fragNum
+
+	local pieces = {}
+
+	local bgCol = Colors.DarkGray:Copy()
+	local gradCol = color_black:Copy()
+
+	function pnl:Paint(w, h)
+		-- bg
+		surface.SetDrawColor(bgCol)
+		surface.DrawRect(0, 0, w, h)
+
+		surface.SetDrawColor(gradCol)
+		self:DrawGradientBorder(w, h, 3, 3)
+
+		-- drawing faction name
+		local tx = name:GetValue()
+		surface.SetFont(fonts.BoldMedium)
+		local newW, tH = surface.GetTextSize(tx)
+		self:To("TextW", newW, 0.2, 0, 0.2)
+		local tw = self.TextW or 0
+
+		surface.SetTextPos(w/2 - tw/2, h * 0.1 - tH / 2)
+		local txcol = col:GetColor():Copy()
+		local th, ts, tv = txcol:ToHSV()
+		if tv < 0.1 then
+			ts = ts * tv / 0.1
+		end
+		draw.ColorModHSV(txcol, th, ts, math.Clamp(tv, 0.2, 0.8))
+
+		surface.SetTextColor(txcol.r, txcol.g, txcol.b, txcol.a)
+		surface.DrawText(tx)
+
+		-- drawing errors
+
+		self:ValidateData()
+
+		if err then
+			if pieces[err] then
+				-- we had that error created; just activate it
+				errDT:ActivateElement(pieces[err])
+			else
+				-- we never had an element for this error: create one
+
+				local sizes = {12, 14, 16, 18, 20, 22, 24, 28, 32, 36, 48, 64, 72, 96, 128}
+				local picked = "OSB18"
+
+				for i=1, #sizes do
+					surface.SetFont("OSB" .. sizes[i])
+					local tw = surface.GetTextSize(err)
+
+					if tw < w * 0.9 then
+						picked = "OSB" .. sizes[i]
+					else
+						break
+					end
+				end
+
+				local elem, num = errDT:AddText(err)
+				elem:SetDropStrength(18)
+				elem:SetLiftStrength(18)
+				elem.Font = picked
+				elem.Color = txCol
+				pieces[err] = num
+			end
+		else
+			if errDT:GetCurrentElement() then
+				errDT:DisappearCurrentElement()
+			end
+		end
+
+		errDT:Paint(w/2, h * 0.8)
+
+		--draw.SimpleText(tx, fonts.BoldMedium, w/2, h * 0.1, col:GetColor(), 1, 1)
+	end
+
+	local entryCanvas = vgui.Create("InvisPanel", pnl)
+
+	name = vgui.Create("FTextEntry", entryCanvas)
+	name:SetSize(pnl:GetWide() * 0.8, 32)
+	name:SetPlaceholderText("Faction name...")
+	name:SetUpdateOnType(true)
+
+	pw = vgui.Create("FTextEntry", entryCanvas)
+	pw:SetSize(pnl:GetWide() * 0.7, 32)
+	pw:SetPlaceholderText("Password...")
+
+	pw.Y = name.Y + name:GetTall() + 8
+
+	col = vgui.Create("DColorMixer", entryCanvas)
+	col:SetPalette(false)
+	col:SetAlphaBar(false)
+	col:SetWangs(false)
+	col.Y = pw.Y + pw:GetTall() + 8
+
+	col:SetSize(pnl:GetWide() * 0.6, pnl:GetTall() * 0.4)
+
+	local COLOR = FindMetaTable("Color") --roobat
+
+	function col:ValueChanged(c)
+		setmetatable(c, COLOR)
+
+		gradCol:Set(c)
+		local dimmed = getDimmed(c, 0.2, 0.5)
+		bgCol:Set(dimmed)
+	end
+
+	local totalH = name:GetTall() + 8 + pw:GetTall() + 8 + col:GetTall()
+
+	entryCanvas:SetSize(pnl:GetWide(), totalH)
+
+	entryCanvas:Center()
+	name:CenterHorizontal()
+	pw:CenterHorizontal()
+	col:CenterHorizontal()
+
+	pnl:ValidateData()
+
+	errDT:CycleNext()
+
+	local doEet = vgui.Create("FButton", pnl)
+	doEet:Dock(BOTTOM)
+	doEet:SetTall(pnl:GetTall() * 0.075)
+	doEet:DockMargin(pnl:GetWide() * 0.2, 0, pnl:GetWide() * 0.2, pnl:GetTall() * 0.02)
+
+	local good = Color(70, 180, 80)
+	local bad = Colors.Button:Copy()
+
+	function doEet:Think()
+		if err then
+			self:SetColor(bad)
+		else
+			self:SetColor(good)
+		end
+	end
+
+	function doEet:DoClick()
+		if err then return end
+		
+		Factions.RequestCreate(name:GetValue(), pw:GetValue(), col:GetColor())
+
+		hook.Add("FactionsUpdate", pnl, function()
+			if Factions.Factions[name:GetValue()] then
+				pnl:Remove()
+			end
+		end)
+	end
+
+	local isize = doEet:GetTall() * 0.6
+	doEet:SetIcon("https://i.imgur.com/dO5eomW.png", "plus.png", isize, isize)
+	doEet.Label = " Create"
 end
 
 local function onSelectAction(f, fac, new)
-	if IsValid(f.FactionFrame) then
-		f.FactionFrame:MoveBy(16, 0, 0.2, 0, 1.4)
-		f.FactionFrame:PopOut()
-	end
+
+	local old = IsValid(f.FactionFrame) and f.FactionFrame
+	local valid = old and old:IsValid() and old:IsVisible()
 
 	if not new then
+		print("not new")
+		if valid and old.Faction == fac then return end -- don't create a new frame if it's the same fac as before
+
 		if LocalPlayer():Team() ~= fac.id then
-			f.FactionFrame = createFactionActions(f, fac)
+			createFactionActions(f, fac)
 		else
-			f.FactionFrame = createOwnFactionActions(f, fac)
+			createOwnFactionActions(f, fac)
 		end
 	else
-		f.FactionFrame = createNewFaction(f)
+		if not valid or not old.IsNewFaction then
+			createNewFaction(f)
+		end
 	end
 
+	if valid then
+		old.__selMove = old:MoveBy(16, 0, 0.2, 0, 1.4)
+		old:PopOutHide()
+	end
 end
 
+function align(f, pnl)
+	pnl:SetPos(f.FactionScroll.X + f.FactionScroll:GetWide(), 0)
+								--    V because it'll move to the right by 8px
+	pnl:SetSize(f:GetWide() - pnl.X - 8, f:GetTall())
+
+	if pnl.__selMove then
+		pnl.__selMove:Stop()
+	end
+
+	pnl:MoveBy(8, 0, 0.2, 0, 0.3)
+	pnl:PopInShow()
+
+	print("aligning to", f)
+	f.FactionFrame = pnl
+end
 --[[------------------------------]]
 --	   		Factions Tab
 --[[------------------------------]]
@@ -167,6 +385,12 @@ local function onOpen(navpnl, tabbtn, prevPnl, noanim)
 	pnl.SetFaction = function(self, fac)
 		onSelectAction(self, fac, false)
 	end
+
+	pnl.CreateNewFaction = function(self)
+		onSelectAction(self, nil, true)
+	end
+
+	pnl.SetPanel = align
 
 	tab.Panel = pnl
 
@@ -276,8 +500,12 @@ local function onOpen(navpnl, tabbtn, prevPnl, noanim)
 	local isize = math.floor(newFac:GetTall() * 0.6 / 2) * 2 + 1
 	newFac:SetIcon("https://i.imgur.com/dO5eomW.png", "plus.png", isize, isize)
 	newFac.Label = "Create a faction"
-	newFac.Font = BaseWars.Menu.Fonts.Medium
+	newFac.Font = fonts.Medium
 	newFac.HovMult = 1.1
+
+	function newFac:DoClick()
+		pnl:CreateNewFaction()
+	end
 	return pnl
 end
 

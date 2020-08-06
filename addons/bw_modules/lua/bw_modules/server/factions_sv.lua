@@ -1,8 +1,8 @@
-BaseWars.Factions = BaseWars.Factions or {}
+Factions = Factions or {}
 
 util.AddNetworkString("Factions")
 
-local facs = BaseWars.Factions
+local facs = Factions
 
 local PLAYER = debug.getregistry().Player
 
@@ -10,7 +10,8 @@ facs.Players = facs.Players or {}
 facs.Factions = facs.Factions or {}
 facs.FactionIDs = facs.FactionIDs or {}
 
-facmeta = Networkable:extend()
+Factions.meta = Factions.meta or Networkable:extend()
+local facmeta = Factions.meta
 
 function facmeta:InRaid()
 	return self.Raided or self.Raider
@@ -203,7 +204,7 @@ function facs.RandomizeOwner(name)
 			end
 		end
 
-		v:Invalidate()
+		fac:Invalidate()
 
 		facs.FactionIDs[facs.Factions[name].id] = nil
 		facs.Factions[name] = nil
@@ -342,6 +343,18 @@ net.Receive("Factions", function(_, ply)
 		local pw = net.ReadString()
 		local col = net.ReadColor()
 
+		name = name:gsub("%c", "")
+		pw = pw:gsub("%c", "")
+		col.a = 255
+
+		local can, err = facs.CanCreate(name, pw, col)
+		if not can then
+			if ply.canCreateFacCD and CurTime() - ply.canCreateFacCD < 1 then return end
+			ply:ChatAddText(Color(220, 75, 75), "Failed to create faction!\n", err)
+			ply.canCreateFacCD = CurTime()
+			return
+		end
+
 		facs.CreateFac(ply, name, pw, col)
 	elseif mode == 2 then
 		facs.LeaveFac(ply)
@@ -406,10 +419,4 @@ end
 
 function PLAYER:FactionMembers()
 	return (not self:GetFaction() and {self}) or (self:GetFaction() and self:GetFaction().memvals)
-end
-
-Factions = BaseWars.Factions
-
-for k,v in pairs(facs.Factions) do --update
-	setmetatable(v, facmeta)
 end
