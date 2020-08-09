@@ -32,9 +32,14 @@ function button:Init()
 
 	self.LabelColor = Color(255, 255, 255)
 	self.RBRadius = 8
+<<<<<<< HEAD
 	self.HoverColor = nil
 	self.HoverColorGenerated = nil
 
+=======
+	self.HoverColor = self.Color:Copy()
+	self.HoverColorGenerated = color_black:Copy()
+>>>>>>> parent of 472137a... improve hover color gen (rgb -> hsv)
 	self.Icon = nil --[[
 	{
 		IconURL = "",
@@ -118,11 +123,11 @@ function button:HoverLogic()
 
 		local bg = self.Color
 
-		if self.HoverColorGenerated ~= self.Color then
-			local h, s, v = self.Color:ToHSV()
-			s = math.min(s * hm, 1)
-			v = math.min( math.max(v, 0.08) * hm, 1)
+		local fr = math.min(bg.r*hm, 255)
+		local fg = math.min(bg.g*hm, 255)
+		local fb = math.min(bg.b*hm, 255)
 
+<<<<<<< HEAD
 			local hovcol = self.HoverColor or self.Color:Copy()
 			draw.ColorModHSV(hovcol, h, s, v)
 			self.HoverColor = hovcol
@@ -132,6 +137,11 @@ function button:HoverLogic()
 				self.HoverColorGenerated = self.Color:Copy()
 			end
 
+=======
+		if self.HoverColorGenerated ~= self.Color then
+			self.HoverColor:Set(fr, fg, fb)
+			self.HoverColorGenerated:Set(self.Color:Unpack())
+>>>>>>> parent of 472137a... improve hover color gen (rgb -> hsv)
 		end
 
 		LC(self.drawColor, self.HoverColor, 10) --this just looks better, idfk
