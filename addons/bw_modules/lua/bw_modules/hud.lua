@@ -4,7 +4,7 @@ MODULE.Name 	= "HUD"
 MODULE.Author 	= "grmx"
 MODULE.Realm 	= 2
 
-BaseWars.HUD = {} 
+BaseWars.HUD = {}
 
 local MODULE = BaseWars.HUD
 local tag = "BaseWars.HUD"
@@ -17,9 +17,9 @@ local floor = math.floor
 local round = math.Round
 
 
-local draw = draw 
+local draw = draw
 
-local fade = true 
+local fade = true
 
 local backcol = Color(40, 40, 40)
 local hdcol = Color(30, 30, 30)
@@ -50,7 +50,7 @@ end
 local function AlphaColors(alpha, ...)
 	local cols = {...}
 
-	for k,v in ipairs(cols) do 
+	for k,v in ipairs(cols) do
 		v.a = alpha
 	end
 end
@@ -175,7 +175,7 @@ local function DrawStructureInfo()
 		if dead or rebooting then
 			toH = toH + 18
 		end
-	
+
 		anims:MemberLerp(anims, "Height", toH, 0.3, 0, 0.3)
 
 		local h = anims.Height or toH
@@ -255,13 +255,13 @@ local function DrawStructureInfo()
 
 
 		cam.PopModelMatrix()
-		if not ok then 
+		if not ok then
 			print("err #2 >:(", err)
 		end
 
 	end)
-	
-	if not ok then 
+
+	if not ok then
 		print("Err #3 >:(", err)
 	end
 	render.PopFilterMin()
@@ -270,16 +270,16 @@ end
 local vm2 = Matrix()
 
 local ela
-local dead = false 
+local dead = false
 
 local left
 
 local CreateElastic
 
 CreateElastic = function(func, off)
-	ela = Animations.InElastic(0.8, off, func, function() 
-		if not dead then ela = nil return end 
-		CreateElastic(func, 0.2) 
+	ela = Animations.InElastic(0.8, off, func, function()
+		if not dead then ela = nil return end
+		CreateElastic(func, 0.2)
 	end, 0.7, 1.4, 2)
 end
 
@@ -293,10 +293,10 @@ local function DrawDeathCoolDown()
 	dead = true
 
 	local t = me:GetRespawnTime()
-	if not t then return end 
+	if not t then return end
 
 	local dt = me:GetDeathTime()
-	if not dt then return end 
+	if not dt then return end
 
 	left = t - CurTime()
 
@@ -325,13 +325,13 @@ local function DrawDeathCoolDown()
 
 			draw.Circle(ScrW()/2, ScrH() - 192, 56, 32, leftfrac*100)
 
-		render.SetStencilReferenceValue(2) 
+		render.SetStencilReferenceValue(2)
 
 			draw.Circle(ScrW()/2, ScrH() - 192, 32, 32)
 
 		render.SetStencilCompareFunction(STENCIL_NOTEQUAL)
-	
-			draw.MaterialCircle(ScrW()/2, ScrH() - 192, 92)	
+
+			draw.MaterialCircle(ScrW()/2, ScrH() - 192, 92)
 
 		render.SetStencilReferenceValue(1)
 
@@ -342,7 +342,7 @@ local function DrawDeathCoolDown()
 
 	render.SetStencilEnable(false)
 
-	if not ela then 
+	if not ela then
 		CreateElastic(function(fr)
 			rot = fr*360
 		end, math.abs(left)%1 - 0.1)
@@ -350,7 +350,7 @@ local function DrawDeathCoolDown()
 
 	local a = 255
 
-	if left-1 <= 0 then 
+	if left-1 <= 0 then
 		a = (math.max(left, 0)^4)*255
 	end
 
@@ -365,7 +365,7 @@ local function DrawDeathCoolDown()
 	vm2:SetTranslation(Vector(ScrW()/2, ScrH() - 192))
 	vm2:Translate(Vector((tw-txw)/2 - tw/2, -th/2, 0))
 
-	
+
 
 	cam.PushModelMatrix(vm2)
 		local ok, err = pcall(function()

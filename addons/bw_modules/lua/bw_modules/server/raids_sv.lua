@@ -14,10 +14,10 @@ raidmeta = {}
 raidmeta.__index = raidmeta
 
 raid.OngoingRaids = raid.OngoingRaids or {} --{[RaidID] = RaidMeta}
-local cur = raid.OngoingRaids 
+local cur = raid.OngoingRaids
 
 raid.Participants = raid.Participants or {}		--Participants as {[player] = RaidMeta}
-local part = raid.Participants 
+local part = raid.Participants
 
 local lowseq = table.LowestSequential
 
@@ -39,7 +39,7 @@ function raidmeta:new(rder, rded, fac)
 	setmetatable(new, raidmeta)
 
 	new.Events = {}
-	new.FactionRaid = fac 
+	new.FactionRaid = fac
 
 	new.Raiders = {} --just strings for logging
 	new.Raided = {}
@@ -52,17 +52,17 @@ function raidmeta:new(rder, rded, fac)
 	local id = lowseq(raid.OngoingRaids) + 1
 
 	raid.OngoingRaids[id] = new
-	new.ID = id 
+	new.ID = id
 
 	local part = raid.Participants
 
 	local date = Date()
 
-	if fac then 
+	if fac then
 		local ers = {}
 		local sids = {}
 
-		for k,v in pairs(rder.members) do 
+		for k,v in pairs(rder.members) do
 			ers[#ers+1] = k:Nick() .. (" (%s)"):format(k:SteamID())
 			part[k] = new
 			part[k:SteamID64()] = new
@@ -71,10 +71,10 @@ function raidmeta:new(rder, rded, fac)
 		end
 
 		rder.Raiders = true
-		rder.Raided = false 
+		rder.Raided = false
 
 		local ed = {}
-		for k,v in pairs(rded.members) do 
+		for k,v in pairs(rded.members) do
 			ed[#ed+1] = k:Nick() .. (" (%s)"):format(k:SteamID())
 			part[k] = new
 			part[k:SteamID64()] = new
@@ -84,30 +84,30 @@ function raidmeta:new(rder, rded, fac)
 		end
 
 		rded.Raided = true
-		rded.Raiders = false 
+		rded.Raiders = false
 
-		new.Raiders = ers 
+		new.Raiders = ers
 		new.Raided = ed
 		new:LogEvent(1, {[[raider faction "]] .. rder.name .. [["]], [[raided faction "]] .. rded.name .. [["]], date })
 		new:LogList(2, new.Raiders)
 		new:LogList(3, new.Raided)
 		new.SteamIDs = sids
-	else 
+	else
 		new.Raiders = rder:Nick() .. (" (%s)"):format(rder:SteamID())
 		new.Raided = rded:Nick() .. (" (%s)"):format(rded:SteamID())
 
 		new._Raiders = rder
 		new._Raided = rded
-		local sids = {} 
+		local sids = {}
 
-		sids[rder:SteamID64()] = 1 
+		sids[rder:SteamID64()] = 1
 		sids[rded:SteamID64()] = 2
 		new.SteamIDs = sids
 
-		part[rder] = new 
+		part[rder] = new
 		part[rder:SteamID64()] = new
 
-		part[rded] = new 
+		part[rded] = new
 		part[rded:SteamID64()] = new
 
 		new:LogEvent(1, {[[raider player "]] .. new.Raiders .. [["]], [[raided player "]] .. new.Raided .. [["]], date })
@@ -127,22 +127,22 @@ function raidmeta:LogList(id, info)
 
 	local str = Time() .. ":\n"
 
-	for k,v in pairs(info) do 
-		local add = isstring(v) and v 
-		if not add and IsPlayer(v) then 
+	for k,v in pairs(info) do
+		local add = isstring(v) and v
+		if not add and IsPlayer(v) then
 			add = v:Nick() .. (" (%s)"):format(v:SteamID())
 		end
 
 		str = str .. add
 	end
 
-	if isnumber(id) then 
+	if isnumber(id) then
 		local pre = lang[id]
-		
 
-		if not pre then 
+
+		if not pre then
 			self.Events[#self.Events + 1] = "Missing language for ID " .. id .. "!\nInfo: " .. str
-		else 
+		else
 			self.Events[#self.Events + 1] = pre .. str
 		end
 
@@ -154,23 +154,23 @@ end
 
 function raidmeta:LogEvent(id, info)
 
-	if isnumber(id) and istable(info) then 
+	if isnumber(id) and istable(info) then
 
 		local pre = lang[id]
-		if not pre then 
+		if not pre then
 			pre = "Missing language for ID " .. id .. "!\nInfo: " .. table.concat(info, "\n")
-			self.Events[#self.Events + 1] = Time() .. ": " .. pre 
+			self.Events[#self.Events + 1] = Time() .. ": " .. pre
 			return
 		end
 		local s = string.format(pre, unpack(info))
 
 		self.Events[#self.Events + 1] = Time() .. ": " .. s
-	elseif isnumber(id) and isstring(info) then 
+	elseif isnumber(id) and isstring(info) then
 
 		local pre = lang[id]
-		if not pre then 
+		if not pre then
 			pre = "Missing language for ID " .. id .. "!\nInfo: " .. table.concat(info, "\n")
-			self.Events[#self.Events + 1] = Time() .. ": " .. pre 
+			self.Events[#self.Events + 1] = Time() .. ": " .. pre
 			return
 		end
 		local s = string.format(pre, info)
@@ -202,70 +202,70 @@ function raidmeta:GetID()
 end
 
 function raidmeta:Stop()
-	
-	local r = self 
 
-	if not r.FactionRaid then 
+	local r = self
+
+	if not r.FactionRaid then
 		local k1 = IsPlayer(r._Raiders) and r._Raiders:SetNWBool("Raided", false)
 		local k2 = IsPlayer(r._Raided) and r._Raided:SetNWBool("Raided", false)
 
-		raid.Participants[r._Raiders] = nil 
+		raid.Participants[r._Raiders] = nil
 		raid.Participants[r._Raided] = nil
 
-		if IsPlayer(r._Raiders) then 
-			raid.Participants[r._Raiders:SteamID64()] = nil 
-		end 
+		if IsPlayer(r._Raiders) then
+			raid.Participants[r._Raiders:SteamID64()] = nil
+		end
 
 		if IsPlayer(r._Raided) then
-			raid.Participants[r._Raided:SteamID64()] = nil 
+			raid.Participants[r._Raided:SteamID64()] = nil
 		end
 
-		for k,v in pairs(raid.OngoingRaids) do 
-			if v==r then 
-				raid.OngoingRaids[k] = nil 
-			end 
+		for k,v in pairs(raid.OngoingRaids) do
+			if v==r then
+				raid.OngoingRaids[k] = nil
+			end
 		end
 
-	else 
+	else
 		local fac1
-		for k,v in pairs(r._Raiders) do 
+		for k,v in pairs(r._Raiders) do
 			if IsPlayer(k) then k:SetNWBool("Raided", false) else continue end
 			raid.Participants[k] = nil
 			raid.Participants[k:SteamID64()] = nil
-			if k:GetFaction() then 
+			if k:GetFaction() then
 				fac1 = k:GetFaction()
 			end
 		end
 
 		local fac2
 
-		for k,v in pairs(r._Raided) do 
+		for k,v in pairs(r._Raided) do
 			if IsPlayer(k) then k:SetNWBool("Raided", false) else continue end
 			raid.Participants[k] = nil
 			raid.Participants[k:SteamID64()] = nil
-			if k:GetFaction() then 
+			if k:GetFaction() then
 				fac2 = k:GetFaction()
 			end
 		end
 
-		
-		if fac2 then 
-			fac2.Raided = nil 
-			fac2.Raiders = nil 
-		end 
-		if fac1 then 
-			fac1.Raiders = nil 
-			fac1.Raided = nil 
+
+		if fac2 then
+			fac2.Raided = nil
+			fac2.Raiders = nil
+		end
+		if fac1 then
+			fac1.Raiders = nil
+			fac1.Raided = nil
 		end
 
-		for k,v in pairs(raid.OngoingRaids) do 
-			if v==r then 
-				raid.OngoingRaids[k] = nil 
-			end 
+		for k,v in pairs(raid.OngoingRaids) do
+			if v==r then
+				raid.OngoingRaids[k] = nil
+			end
 		end
 	end
 
-	for k,v in pairs(self:GetSteamID64()) do 
+	for k,v in pairs(self:GetSteamID64()) do
 		raid.Participants[k] = nil
 	end
 
@@ -277,7 +277,7 @@ function raidmeta:Stop()
 end
 
 function PLAYER:RaidedCooldown()
-	local oncd = false 
+	local oncd = false
 	if raid.Cooldowns[self:SteamID64()] and CurTime() - raid.Cooldowns[self:SteamID64()] < RaidCoolDown then oncd = true end
 
 	return oncd
@@ -288,7 +288,7 @@ function PLAYER:IsRaided()
 
 	if not part then return false end
 	return part._Raided==self or part._Raided[self] or false
-end 
+end
 
 function PLAYER:IsRaider()
 	local part = raid.Participants[self]
@@ -311,9 +311,9 @@ function PLAYER:IsEnemy(ply2)
 	if not part then return false end
 
 	local part2 = raid.Participants[ply2]
-	if not part2 then return false end 
+	if not part2 then return false end
 
-	if part ~= part2 then  return false end --not in the same raid 
+	if part ~= part2 then  return false end --not in the same raid
 
 	local enemies = (self:IsRaided() and not ply2:IsRaided()) or (ply2:IsRaided() and not self:IsRaided())
 
@@ -324,7 +324,7 @@ end
 
 function raid.Stop(rder) --rder = player OR RaidMeta
 
-	if IsPlayer(rder) then 
+	if IsPlayer(rder) then
 		if not raid.Participants[rder] then print('Nope') return end
 
 		local r = raid.Participants[rder]
@@ -345,25 +345,25 @@ function raid.Start(rder, rded, fac)
 	if part[rder] then return false, "You are in a raid already!" end--print("Stopped on start: rder") raid.Stop(part[rder]) end
 	if part[rded] then return false, "Target is in a raid already!" end--print("Stopped on start: rded") raid.Stop(part[rded]) end
 
-	if not rder:IsRaidable() then return false, "You are not raidable!" end 
+	if not rder:IsRaidable() then return false, "You are not raidable!" end
 	if not rded:IsRaidable() then return false, "Target is not raidable!" end
 
-	if fac then 
+	if fac then
 		local rtbl = raidmeta:new(rder, rded, fac)
 		local involved = {}
 
-		for k,v in pairs(rder.members) do 
+		for k,v in pairs(rder.members) do
 			k:SetNWBool("Raided", true)
 			involved[k] = true
 		end
 
-		for k,v in pairs(rded.members) do 
+		for k,v in pairs(rded.members) do
 			k:SetNWBool("Raided", true)
 			involved[k] = true
 		end
 
 		rtbl.Involved = involved
-		
+
 		net.Start("Raid")
 			net.WriteUInt(2, 4)
 			net.WriteUInt(rder.id, 24)
@@ -372,15 +372,15 @@ function raid.Start(rder, rded, fac)
 			net.WriteUInt(rtbl:GetID(), 16)
 		net.Broadcast()
 
-		return rtbl 
+		return rtbl
 	end
 	print('starting')
 	local rtbl = raidmeta:new(rder, rded, fac)
 
 	local inv = {}
 
-	inv[rder] = true 
-	inv[rded] = true 
+	inv[rder] = true
+	inv[rded] = true
 
 	rder:SetNWBool("Raided", true)
 	rded:SetNWBool("Raided", true)
@@ -404,7 +404,7 @@ end)
 
 
 hook.Add("PlayerDisconnected", "RaidLog", function(ply) --aiaiai
-	if part[ply] then 
+	if part[ply] then
 		local r = part[ply]
 
 		local raider = r._Raiders[ply] or r._Raiders == ply
@@ -413,16 +413,16 @@ hook.Add("PlayerDisconnected", "RaidLog", function(ply) --aiaiai
 		local str = "%s ( %s )"
 		str = str:format(ply:Nick(), ply:SteamID())
 		print("Logging", str)
-		if raider then 
+		if raider then
 			r:LogEvent(10, str)
-			if istable(r._Raiders) then 
+			if istable(r._Raiders) then
 				local anyoneleft = false
 
-				for k,v in pairs(r._Raiders) do 
-					if k~=ply and IsValid(k) then anyoneleft = true return end 
+				for k,v in pairs(r._Raiders) do
+					if k~=ply and IsValid(k) then anyoneleft = true return end
 				end
 
-				if not anyoneleft then 
+				if not anyoneleft then
 					print("Stopping raid cause all raiders left")
 					raid.Stop(r)
 				end
@@ -432,9 +432,9 @@ hook.Add("PlayerDisconnected", "RaidLog", function(ply) --aiaiai
 				print("Stopping raid cause raider ply left")
 				raid.Stop(r)
 			end
-		elseif raided then 
+		elseif raided then
 			r:LogEvent(11, str)
-		else 
+		else
 			r:LogEvent(12, str)
 		end
 
@@ -445,13 +445,13 @@ end)
 function PLAYER:IsRaidable()
 	local sid = self:SteamID64()
 
-	if not BWOwners[self] then return end 
+	if not BWOwners[self] then return end
 
-	if self:GetLevel() < 75 then return false end 
-	
+	if self:GetLevel() < 75 then return false end
+
 	BWOwners[self]:clean()
 
-	for k,v in ipairs(BWOwners[self]) do 
+	for k,v in ipairs(BWOwners[self]) do
 
 		local class = (isentity(v) and v:GetClass()) or v
 		local e = scripted_ents.Get(class)
@@ -464,8 +464,8 @@ function PLAYER:IsRaidable()
 end
 
 function raid.WasInRaid(sid)
-	if raid.Participants[sid] then return raid.Participants[sid] end 
-	return false 
+	if raid.Participants[sid] then return raid.Participants[sid] end
+	return false
 end
 
 hook.Add("PlayerSpawnObject", "RaidPropsPrevent", function(ply, mdl, skin)
@@ -488,25 +488,25 @@ net.Receive("Raid", function(_, ply)
 	--3 = concede
 	print('Received raid request, mode', mode)
 
-	if mode == 1 then 
+	if mode == 1 then
 		local ent = net.ReadEntity()
 		if not IsPlayer(ent) then return end
-		if ent:RaidedCooldown() then print('on cd') return end 
-		if ply:InRaid() or ent:InRaid() then print('Ply in raid already') return end 
-		if ply:InFaction() or ent:InFaction() then print("one of em is in a faction") return end 
+		if ent:RaidedCooldown() then print('on cd') return end
+		if ply:InRaid() or ent:InRaid() then print('Ply in raid already') return end
+		if ply:InFaction() or ent:InFaction() then print("one of em is in a faction") return end
 
 		local ok, err = raid.Start(ply, ent, false)
-		if not ok then 
+		if not ok then
 			print("returning no")
 			ReportFail(ply, err)
 		end
-	elseif mode == 2 then 
+	elseif mode == 2 then
 		local fac = net.ReadUInt(24)
 
-		if not ply:GetFaction() or not Factions.GetFaction(fac) then print('Not faction 1 or not faction 2:', ply:GetFaction(), Factions.GetFaction(fac), fac) ReportFail(ply, "Something's gone wrong...\nThis faction doesn't exist anymore?") return end 
-		
+		if not ply:GetFaction() or not Factions.GetFaction(fac) then print('Not faction 1 or not faction 2:', ply:GetFaction(), Factions.GetFaction(fac), fac) ReportFail(ply, "Something's gone wrong...\nThis faction doesn't exist anymore?") return end
+
 		local oncd, rem = Factions.GetFaction(fac):RaidedCooldown()
-		if oncd then print('on cd') ReportFail(ply, cdf:format(rem)) return end 
+		if oncd then print('on cd') ReportFail(ply, cdf:format(rem)) return end
 
 		local fac1 = ply:GetFaction()
 		local fac2 = Factions.GetFaction(fac)
@@ -515,16 +515,16 @@ net.Receive("Raid", function(_, ply)
 		print("Mode 2; starting raid(?)")
 		local ok, err = raid.Start(ply:GetFaction(), Factions.GetFaction(fac), true)
 
-		if not ok then 
+		if not ok then
 			print("returning no")
 			ReportFail(ply, err)
 		end
 
 	elseif mode==3 then
-		if not raid.Participants[ply] then print("Ply is not participating in raid") return false end 
+		if not raid.Participants[ply] then print("Ply is not participating in raid") return false end
 		if ply:IsRaided() then print("Not stopping raid from raided") return false end --do not accept concedes from raided
 
-		if ply:IsRaider() then 
+		if ply:IsRaider() then
 			raid.Stop(ply)
 		end
 	end
@@ -532,8 +532,8 @@ net.Receive("Raid", function(_, ply)
 end)
 
 hook.Add("Think", "RaidsThink", function()
-	for k,v in pairs(raid.OngoingRaids) do 
-		if CurTime() - v.Start > RaidDuration then 
+	for k,v in pairs(raid.OngoingRaids) do
+		if CurTime() - v.Start > RaidDuration then
 			raid.Stop(v)
 		end
 	end
@@ -542,11 +542,11 @@ end)
 hook.Add("PlayerDeath", "RaidsDeath", function(ply, by, atk)
 	local side = ply:GetSide()
 
-	if side then 
+	if side then
 
 		local delay = side * 5 + 5	--raided get (2*5) + 5 = 15s
 		ply:SetRespawnTime(delay)
-		
+
 	end
 
 end)

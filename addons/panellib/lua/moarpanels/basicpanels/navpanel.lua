@@ -159,8 +159,6 @@ function NavbarChoice:Draw(w, h)
 	--  otherwise centers				otherwise, becomes the left edge of visible area (area that's not clipped by parent)
 	ix = Lerp(frac, nav.RetractedSize/2 - iw/2, 8) + Lerp(frac, nav:GetWide() - nav.RetractedSize, 0)
 
-	
-
 	self.Icon:Paint(ix, h/2 - ih/2, iw, ih)
 
 	local frac = self:GetExpFrac(nav.ExpandFrac, 0.9, 0.5) 	--different frac; more eased so text goes to the right faster than the icon

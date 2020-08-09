@@ -22,11 +22,11 @@ BaseWars.Printers.Update = BaseWars.Printers.Add
 
 timer.Create("BW_Printers", 1, 0, function()
 
-	for k,v in pairs(mt) do 
-		if not IsValid(k) then mt[k] = nil continue end 
+	for k,v in pairs(mt) do
+		if not IsValid(k) then mt[k] = nil continue end
 		if k.IsPowered and not k:IsPowered() then continue end
-		if v.func then v.func(k) continue end 
-		
+		if v.func then v.func(k) continue end
+
 		k.Money = math.min(k.Money + BaseWars.Printers.GetPrintRate(k), v.cap)
 
 		if k.NetworkVars then k:NetworkVars() end
