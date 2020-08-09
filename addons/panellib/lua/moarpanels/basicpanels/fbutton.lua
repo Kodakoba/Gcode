@@ -126,16 +126,14 @@ function button:HoverLogic()
 		local hovcol = self.HoverColor or Color(fr, fg, fb)
 		self.HoverColor = hovcol
 
-		if self.HoverColorGenerated then
-			self.HoverColorGenerated:Set(self.Color:Unpack())
-		else
-			self.HoverColorGenerated = self.Color:Copy()
-		end
-
 
 		if self.HoverColorGenerated ~= self.Color then
 			self.HoverColor:Set(fr, fg, fb)
-			self.HoverColorGenerated:Set(self.Color:Unpack())
+			if self.HoverColorGenerated then
+				self.HoverColorGenerated:Set(self.Color:Unpack())
+			else
+				self.HoverColorGenerated = self.Color:Copy()
+			end
 		end
 
 		LC(self.drawColor, self.HoverColor, 10) --this just looks better, idfk
