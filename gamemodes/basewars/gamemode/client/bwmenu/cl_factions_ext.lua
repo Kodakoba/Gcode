@@ -371,8 +371,6 @@ local function getSortedFactions()
 		sorted[#sorted + 1] = {name, dat}
 	end
 
-	
-
 	table.sort(sorted, function(a, b)
 
 		local name1, name2 = a[1], a[2]
@@ -520,10 +518,7 @@ local function onOpen(navpnl, tabbtn, prevPnl, noanim)
 
 	hook.Add("FactionsUpdate", scr, function()
 		local sorted = getSortedFactions()
-		print("sorted:")
-		for k,v in ipairs(sorted) do
-			printf("%d: %s", k, v[1])
-		end
+
 
 		for k,v in pairs(scr.Factions) do
 			v.Sorted = false
@@ -533,15 +528,13 @@ local function onOpen(navpnl, tabbtn, prevPnl, noanim)
 		for k,v in ipairs(sorted) do
 
 			local name, fac = v[1], v[2]
-			print("checking fac", name)
+
 			if IsValid(scr.Factions[name]) then
-				print('button existed, kewl')
+
 				scr.Factions[name].Sorted = true
-				print("moving", name, "to", k)
 				local desY = scr:GetFactionY(k)
 				scr.Factions[name]:MoveTo(8, desY, 0.3, 0, 0.2)
 			else
-				print("new button alert")
 				local btn = scr:AddButton(fac, k)
 				btn.Sorted = true
 				btn.FacNum = k
@@ -549,23 +542,22 @@ local function onOpen(navpnl, tabbtn, prevPnl, noanim)
 		end
 
 		for name, btn in pairs(scr.Factions) do
-			if IsValid(btn) then
-				if not btn.Sorted then -- if Sorted is false that means we didn't go over that button and, thus, the faction doesn't exist anymore
-					btn:PopOut()
-					scr.Factions[name] = nil
-				end
+			if IsValid(btn) and not btn.Sorted then
+				-- if Sorted is false that means we didn't go over that button and, thus, the faction doesn't exist anymore
+				btn:PopOut()
+				scr.Factions[name] = nil
 			end
 		end
 
 	end)
-	
+
 	pnl:InvalidateLayout(true)
 
 	local newFac = vgui.Create("FButton", pnl)
 	newFac:SetPos(scr.X + 8, scr.Y + scr:GetTall() + 4)
 	newFac:SetSize(scr:GetWide() - 16, newH)
 	newFac:SetColor(Color(60, 190, 60))
-	local scale = f.Scale
+
 	local isize = math.floor(newFac:GetTall() * 0.6 / 2) * 2 + 1
 	newFac:SetIcon("https://i.imgur.com/dO5eomW.png", "plus.png", isize, isize)
 	newFac.Label = "Create a faction"

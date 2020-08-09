@@ -135,3 +135,4 @@ end)
 
 include("cl_factions_ext.lua")
 include("cl_raids_ext.lua")
+include("cl_settings_ext.lua")
