@@ -10,7 +10,7 @@ AddCSLuaFile()
 
 		just lib it up, and uh...
 
-	It's a long process you know to get your whole code in there.
+	It's a long process, you know, to get your whole code in there.
 	But it's an intense feeling for the other dev; I think for myself too.
 
 ]]
@@ -20,14 +20,13 @@ ENTITY = FindMetaTable("Entity")
 PANEL = FindMetaTable("Panel")
 WEAPON = FindMetaTable("Weapon")
 
-HexLib = "HexlibLoaded"
-LibItUp = "LibbedItUp"
+LibItUp = {}
 
 local path = "lib_it_up/"
 
-_CL = 1
-_SH = 2
-_SV = 3
+local _CL = 1
+local _SH = 2
+local _SV = 3
 
 local loading = true
 
@@ -54,16 +53,11 @@ local includes = {
 
 }
 
-
 function IncludeFolder(name, realm, nofold)	--This function will be used both by addons and by LibItUp,
 											-- so we'll only count files when we're loading
 	local file, folder = file.Find( name, "LUA" )
 
-	local tbl = string.Explode("/", name)
-	tbl[#tbl] = nil	--strip the last path
-
-	local pathname = table.concat(tbl, "/")
-	if #tbl > 0 then pathname = pathname .. "/" end 	--if table length is > 0, then we are currently including a folder
+	local pathname = name:match("(.+/).+")
 
 	--[[
 		Include all found lua files
@@ -109,8 +103,6 @@ loading = false
 
 hook.Run("LibbedItUp")
 hook.Run("LibItUp")
-
-hook.Run("HexlibLoaded")	--legacy
 
 FInc.Recursive("lib_deps/sh_*.lua", _SH, true)
 
