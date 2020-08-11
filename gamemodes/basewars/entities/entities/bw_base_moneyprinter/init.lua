@@ -5,15 +5,15 @@ include("shared.lua")
 function ENT:Init()
 
     local me = BWEnts[self]
-    
-    me.Power = 0 
+
+    me.Power = 0
     me.MaxPower = self.PowerCapacity
 
     self.time = CurTime()
     self.time_p = CurTime()
 
     self:SetCapacity(self.Capacity)
-    
+
     self.Money = 0
     self.Multiplier = 1
     self:SetHealth(self.PresetMaxHealth or 100)
@@ -26,15 +26,15 @@ function ENT:Init()
     self.Level = 1
     self:SetLevel(1)
 
-    self.Overclockable = true 
-    self.Overclocker = false    
+    self.Overclockable = true
+    self.Overclocker = false
     self.Mods = {}
 
-    if self.TTR and self.CurrentValue then 
-        self.PrintAmount = math.Round(self.CurrentValue / self.TTR) 
+    if self.TTR and self.CurrentValue then
+        self.PrintAmount = math.Round(self.CurrentValue / self.TTR)
     end
 
-    self:SetPrintAmount(self.PrintAmount) 
+    self:SetPrintAmount(self.PrintAmount)
 
     if not self.BypassMaster then
         BaseWars.Printers.Add(self)
@@ -52,7 +52,7 @@ function ENT:NetworkMods()
 end
 
 function ENT:Overclock(lv, mult)
-    if not self.Overclockable or self.Overclocker then return false end 
+    if not self.Overclockable or self.Overclocker then return false end
     self.Overclockable = false
     self.Overclocker = lv
     self:SetMultiplier(self.Multiplier * mult)
@@ -72,8 +72,8 @@ net.Receive("OverclockPrinter", function(_, ply)
     local uid = net.ReadUInt(32)
     if not pr or not IsValid(pr) or not pr.IsPrinter or not pr.Overclock then return end --printer invalid
     if not pr.CPPIGetOwner or pr:CPPIGetOwner() ~= ply then return end --owner invalid
-    if not pr.Overclockable then return end --cant overclock 
-    
+    if not pr.Overclockable then return end --cant overclock
+
     if not uid or not ply:HasItem(uid) then return end --uid invalid
 
     local it = ply:HasItem(uid)
@@ -83,7 +83,7 @@ net.Receive("OverclockPrinter", function(_, ply)
 
     local var = it:GetPermaStat("var", 1)
     pr:Overclock(var, OverclockGetMult(var))
-    if it:GetPermaStat("uses", 1337) <= 0 then 
+    if it:GetPermaStat("uses", 1337) <= 0 then
         it:Delete()
     end
 end)
@@ -91,9 +91,9 @@ end)
 function ENT:Upgrade(ply)
 
     if ply then
-        if ply~=self:CPPIGetOwner() then 
+        if ply~=self:CPPIGetOwner() then
             ply:Notify("You can't upgrade others' printers!", BASEWARS_NOTIFICATION_ERROR)
-            return false 
+            return false
         end
 
         local lvl = self:GetLevel()
@@ -105,7 +105,7 @@ function ENT:Upgrade(ply)
         if plyM < calcM then
             ply:Notify(BaseWars.LANG.UpgradeNoMoney, BASEWARS_NOTIFICATION_ERROR)
 
-            return false 
+            return false
         end
 
         if lvl >= self.MaxLevel then
@@ -120,16 +120,16 @@ function ENT:Upgrade(ply)
 
         self.Level = self.Level + 1
         self:SetLevel(self.Level)
-        
+
         self:EmitSound("replay/rendercomplete.wav")
-        
+
         self:SetPrintAmount( BaseWars.Printers.GetPrintRate(self) )
     end
-        
+
 end
 
 function ENT:NetworkVars()
-    
+
     local me = BWEnts[self]
     local t = self:GetTable()
 
@@ -147,7 +147,7 @@ function ENT:PlayerTakeMoney(ply, suppress)
 
     if can == false then
             if msg then ply:Notify(msg, BASEWARS_NOTIFICATION_ERROR) end
-        return 
+        return
     end
 
     self:SetNWMoney(0)
@@ -162,7 +162,7 @@ function ENT:PlayerTakeMoney(ply, suppress)
 
     hook.Run("BaseWars_PlayerEmptyPrinter", ply, self, money)
 
-    return money 
+    return money
 end
 
 function ENT:UseFunc(activator, caller, usetype, value, suppress)

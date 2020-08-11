@@ -33,7 +33,7 @@ end
 function ENT:DerivedDataTables()
 
 	slot = 2
-	
+
 	self:MakeFloat("Capacity")
 	self:SetCapacity(self.Capacity)
 
@@ -46,8 +46,7 @@ function ENT:DerivedDataTables()
 	self:SetMultiplier(1)
 
 	self:MakeFloat("PrintAmount")
-	self:SetPrintAmount(self.PrintAmount)
-	
+
 	self:MakeFloat("UpgradeValue")
 
 	self:NetworkVar("String", 1, "Mods")
