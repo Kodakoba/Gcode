@@ -1,13 +1,8 @@
-MODULE = BaseWars.HUD or {}
+local MODULE = BaseWars.HUD or {}
 
 MODULE.Name 	= "HUD"
 MODULE.Author 	= "grmx"
 MODULE.Realm 	= 2
-
-BaseWars.HUD = {}
-
-local MODULE = BaseWars.HUD
-local tag = "BaseWars.HUD"
 
 if SERVER then return end
 
@@ -34,24 +29,11 @@ local lastX, lastY = 0, 0
 local lastent
 
 
-local function DrawScalingBox(rad, x, y, w, h, col)
-	rad = math.min(rad, h/2, w/2)
-
-	draw.RoundedBox(rad, x, y, w, h, col)
-end
-
-local function DrawScalingPolyBox(rad, x, y, w, h, col)
-	rad = math.min(rad, h/2, w/2)
-
-	draw.RoundedPolyBox(rad, x, y, w, h, col)
-end
-
-
-local function AlphaColors(alpha, ...)
+local function AlphaColors(a, ...)
 	local cols = {...}
 
 	for k,v in ipairs(cols) do
-		v.a = alpha
+		v.a = a
 	end
 end
 
