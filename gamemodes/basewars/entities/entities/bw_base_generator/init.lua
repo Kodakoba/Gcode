@@ -94,13 +94,14 @@ end
 
 function ENT:ConnectTo(ent)
 	print("hotwiring", self, "to", ent)
-	if not ent.PowerType == "Consumer" then return end
+	if ent.PowerType ~= "Consumer" then return end
 
 	local grid = self:GetGrid()
 	local count = table.Count(grid.AllEntities)
 
 	if count > 2 then print("more than 2 ents", count) return end
 	if count == 2 and #grid.Consumers == 1 then
+		-- this was a generator + consumer pair; disconnect old consumer & add a new one in its' place
 		grid:RemoveConsumer(grid.Consumers[1])
 	elseif #grid.Consumers > 1 then
 		print("more than 2 consumers or some shit?", #grid.Consumers)
@@ -116,14 +117,22 @@ function ENT:ConnectTo(ent)
 	end
 
 	other_grid:RemoveConsumer(ent)
+
 	grid:AddConsumer(ent)
 
+	self:SetLine(NULL)
 	self:SetHotwired(ent)
-	print("added successfully")
 end
 
 function ENT:Disconnect()
+	local grid = self:GetGrid()
+	if not grid or not grid.AllEntities[self:EntIndex()] then print("no grid or not in grid", grid) return end
 
+	grid:RemoveGenerator(self)
+	self:SetHotwired(NULL)
+	self:SetLine(NULL)
+
+	PowerGrid:new(self:CPPIGetOwner()):AddGenerator(self)
 end
 
 net.Receive("ConnectGenerator", function(_, ply)

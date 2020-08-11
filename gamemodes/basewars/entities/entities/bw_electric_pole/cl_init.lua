@@ -105,6 +105,8 @@ function ENT:CreateBaseScroll(pnl, name, icon)
 		curSizeAnim:On("Think", function(_, fr)
 			self.SizeFrac = fr
 		end)
+
+		self:Emit("Hover")
 	end
 
 	function scr:OnUnhover()
@@ -113,6 +115,8 @@ function ENT:CreateBaseScroll(pnl, name, icon)
 		curSizeAnim:On("Think", function(_, fr)
 			self.SizeFrac = 1 - fr
 		end)
+
+		self:Emit("Unhover")
 	end
 
 	return scr
@@ -125,7 +129,7 @@ function ENT:CreateGeneratorsScroll(pnl, me)
 		name = "electricity.png"
 	})
 
-	scr.X = pnl:GetWide() / 2 - scr:GetWide() - 8
+	scr.X = pnl:GetWide() / 2 - scr:GetWide() - 12
 	scr.Y = pnl.CircleY - scr:GetTall() / 2
 
 	local grid = self:GetGrid()
@@ -222,7 +226,7 @@ function ENT:CreateConsumersScroll(pnl, me)
 		name = "electricity.png"
 	})
 
-	scr.X = pnl:GetWide() / 2 + 8
+	scr.X = pnl:GetWide() / 2 + 12
 	scr.Y = pnl.CircleY - scr:GetTall() / 2
 
 	local grid = self:GetGrid()
@@ -315,17 +319,21 @@ function ENT:QMOnBeginClose(qm, self, pnl)
 
 	if IsValid(qm.GenScroll) then
 		qm.GenScroll:PopOut(nil, nil, BlankFunc)
-
 		qm.GenScroll.AlphaOverride = true
 	end
+
 	if IsValid(qm.ConsumerScroll) then
 		qm.ConsumerScroll:PopOut(nil, nil, BlankFunc)
-
 		qm.ConsumerScroll.AlphaOverride = true
+	end
+
+	if IsValid(qm.ConnectBtn) then
+		qm.ConnectBtn.GoAway = true
 	end
 end
 
 function ENT:QMOnReopen(qm, self, pnl)
+
 	if IsValid(qm.GenScroll) then
 		qm.GenScroll:AlphaTo(120, 0.1, 0, function()
 			qm.GenScroll.AlphaOverride = false
@@ -333,12 +341,17 @@ function ENT:QMOnReopen(qm, self, pnl)
 
 		qm.GenScroll.AlphaOverride = true
 	end
+
 	if IsValid(qm.ConsumerScroll) then
 		qm.ConsumerScroll:AlphaTo(120, 0.1, 0, function()
 			qm.ConsumerScroll.AlphaOverride = false
 		end)
 
 		qm.ConsumerScroll.AlphaOverride = true
+	end
+
+	if IsValid(qm.ConnectBtn) then
+		qm.ConnectBtn.GoAway = false
 	end
 end
 
@@ -359,7 +372,16 @@ function ENT:QMThink(qm, self, pnl)
 	cloud.Font = "OSB36"
 	cloud:Popup(popup)
 	cloud:SetLabel(curtip)
-	cloud:SetAbsPos(pnl:LocalToScreen(425, 130))
+
+	local y = qm.GenScroll and qm.GenScroll:IsValid() and qm.GenScroll.Y - 48
+
+	if y then
+		y = select(2, pnl:LocalToScreen(0, y))
+	else
+		y = ScrH() * 0.2
+	end
+
+	cloud:SetAbsPos(ScrW() / 2, y)
 end
 
 function ENT:OpenShit(qm, self, pnl)
@@ -372,6 +394,7 @@ function ENT:OpenShit(qm, self, pnl)
 	local me = BWEnts[self]
 
 	pnl.CircleX = x
+
 
 	local gens = self:CreateGeneratorsScroll(pnl, me)
 
@@ -386,6 +409,51 @@ function ENT:OpenShit(qm, self, pnl)
 	consumers:AlphaTo(120, 0.1):On("End", function()
 		consumers.AlphaOverride = false
 	end)
+
+	local con = vgui.Create("FButton", pnl)
+	con:SetSize(gens:GetWide() * 0.75, pnl:GetTall() * 0.1)
+	con:CenterHorizontal()
+	con.Y = consumers.Y + consumers:GetTall() + 12
+
+	con:AlphaTo(120, 0.1):On("End", function()
+		con.AlphaOverride = false
+	end)
+
+	con.Unrolled = 0
+	con.AlwaysDrawShadow = true
+	con:SetColor(Color(40, 135, 230))
+	con.Label = "Connect..."
+	con.Font = "OSB32"
+	function con.Hover(_, self)
+		self.Unrolled = self.Unrolled + 1
+	end
+
+	function con.Unhover(_, self)
+		self.Unrolled = self.Unrolled - 1
+	end
+
+	local origY = con.Y
+
+	function con:Think()
+		if self.Unrolled > 0 or self.GoAway then
+			self:To("Alpha", 0, 0.2, 0, 0.3)
+		else
+			self:To("Alpha", 255, 0.3, 0, 0.3)
+		end
+
+		self:SetAlpha(self.Alpha or 0)
+		self.Y = math.max(origY,
+			gens.Y + gens:GetTall() / 1.5 + 12,
+			consumers.Y + consumers:GetTall() / 1.5 + 12)
+	end
+
+	gens:On("Hover", con, con.Hover, con)
+	gens:On("Unhover", con, con.Unhover, con)
+
+	consumers:On("Hover", con, con.Hover, con)
+	consumers:On("Unhover", con, con.Unhover, con)
+
+	qm.ConnectBtn = con
 	--qm:AddPopIn(consumers, consumers.X, consumers.Y + pnl.CircleSize, 0, 32)
 
 end

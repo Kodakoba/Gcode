@@ -64,65 +64,72 @@ local function OpenShit(qm, self, pnl)
 	end
 
 
-	local con = vgui.Create("FButton", pnl)
-	con:SetSize(128, 48)
+	if not IsValid(pnl.ConnectBtn) then
+		local con = vgui.Create("FButton", pnl)
+		pnl.ConnectBtn = con
+		con:SetSize(128, 48)
 
-	con.X = pnl.CircleX + pnl.CircleSize + 64
-	con.Y = pnl.CircleY - 24
+		con.X = pnl.CircleX + pnl.CircleSize + 64
+		con.Y = pnl.CircleY - 24
 
-	con:CenterHorizontal(0.7)
+		con:CenterHorizontal(0.7)
 
-	con:SetMouseInputEnabled(true)
-	con.AlwaysDrawShadow = true
-	con:SetLabel("Connect to...")
+		con:SetMouseInputEnabled(true)
+		con.AlwaysDrawShadow = true
+		con:SetLabel("Connect to...")
 
-	pnl.HookUp = con
+		pnl.HookUp = con
 
-	qm:AddPopIn(con, con.X, con.Y, 64, 0)
+		qm:AddPopIn(con, con.X, con.Y, 64, 0)
 
-	function con:DoClick()
-		DrawCable = ent
+		function con:DoClick()
+			DrawCable = ent
+		end
 	end
 
-	if IsValid(self:GetHotwired()) then
+	if not IsValid(pnl.DisconnectBtn) then
 
-		local disc = vgui.Create("FButton", pnl)
-		disc:SetSize(128, 48)
+		if IsValid(self:GetHotwired()) or IsValid(self:GetLine()) then
 
-		disc.X = pnl.CircleX - pnl.CircleSize - 64 - 64
-		disc.Y = pnl.CircleY - 24
+			local disc = vgui.Create("FButton", pnl)
+			pnl.DisconnectBtn = disc
+			disc:SetSize(128, 48)
 
-		disc:PopIn()
-		disc.AlwaysDrawShadow = true
-		disc:SetLabel("Disconnect")
-		pnl.Disconnect = disc
+			disc.X = pnl.CircleX - pnl.CircleSize - 64 - 64
+			disc.Y = pnl.CircleY - 24
 
-		function disc:DoClick()
-			net.Start("ConnectGenerator")
-				net.WriteBool(true)
-				net.WriteEntity(ent)
-			net.SendToServer()
+			disc:PopIn()
+			disc.AlwaysDrawShadow = true
+			disc:SetLabel("Disconnect")
+			pnl.Disconnect = disc
 
-			sound.PlayFile("data/hdl/sfx/wire_disconnect.dat", "noplay", function(ch)
-				if not IsValid(ch) then return end
+			function disc:DoClick()
+				net.Start("ConnectGenerator")
+					net.WriteBool(true)
+					net.WriteEntity(ent)
+				net.SendToServer()
 
-				ch:SetPos(ent:GetPos())
-				ch:Set3DFadeDistance(500, 1200)
-				ch:SetVolume(3)
-				ch:Play()
-			end)
+				sound.PlayFile("data/hdl/sfx/wire_disconnect.dat", "noplay", function(ch)
+					if not IsValid(ch) then return end
 
-			self:PopOut()
+					ch:SetPos(ent:GetPos())
+					ch:Set3DFadeDistance(500, 1200)
+					ch:SetVolume(3)
+					ch:Play()
+				end)
 
-			PreviewCable = false
-			PreviewFinalCablePoint = nil
+				self:PopOut()
 
-			pnl.Disconnect = nil
-			ent.ExpectedDisconnect = true
+				PreviewCable = false
+				PreviewFinalCablePoint = nil
 
+				pnl.Disconnect = nil
+				ent.ExpectedDisconnect = true
+
+			end
+
+			qm:AddPopIn(disc, disc.X, disc.Y, -64, 0)
 		end
-
-		qm:AddPopIn(disc, disc.X, disc.Y, -64, 0)
 	end
 
 	function pnl:OnActive()

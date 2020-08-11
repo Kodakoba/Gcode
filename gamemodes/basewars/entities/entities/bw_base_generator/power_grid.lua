@@ -2,6 +2,12 @@ AddCSLuaFile()
 
 PowerGrid = PowerGrid or Networkable:extend()--Emitter:extend()
 
+--[[
+
+ networked:
+	0: PowerStored
+
+]]
 function PowerGrid.UpdateIDs()
 	for k, grid in pairs(PowerGrids) do
 		--if grid.ID == k then continue end
@@ -78,7 +84,7 @@ end
 
 if CLIENT then
 	PowerGrid:On("NetworkedChanged", "UpdateVars", function(self)
-		self.PowerStored = self.Networked.PowerStored or self.PowerStored
+		self.PowerStored = self.Networked[0] or self.PowerStored
 	end)
 end
 
@@ -164,7 +170,12 @@ for k,v in pairs(accessors) do
 
 		if grid == self or self.AllEntities[ent:EntIndex()] then return end --print(Realm(), "nope not adding", grid == self, ent:GetGridID(), self.AllEntities[ent:EntIndex()], ent, debug.traceback()) return end --nope
 
-		--First add the ent to a new grid
+		-- First remove from old grid
+		if grid and grid ~= self then
+			grid["Remove" .. ent.PowerType] (grid, ent)
+		end
+
+		-- Then add to new one
 
 		local t = self[v.tbl]
 		t[#t + 1] = ent
@@ -179,11 +190,6 @@ for k,v in pairs(accessors) do
 
 		self.AllEntities[ent:EntIndex()] = ent
 
-		--Only then remove
-		if grid and grid ~= self then
-			grid["Remove" .. ent.PowerType] (grid, ent)
-		end
-
 		self:Emit("GridChanged", ent, ...)
 		self:Emit("Added" .. v.emit, ent, ...)
 
@@ -192,7 +198,7 @@ for k,v in pairs(accessors) do
 
 	PowerGrid["Remove" .. k] = function(self, ent, new)
 		local t = self[v.tbl]
-		if not self.AllEntities[ent:EntIndex()] then print("What", ent, ent:EntIndex()) return end
+		if not self.AllEntities[ent:EntIndex()] then print("Can't remove", ent, "since it wasn't in AllEntities", ent:EntIndex()) return end
 
 		for k,v in ipairs(t) do --remove from PowerType table (generator / powerline / battery)
 			if v == ent then
@@ -207,7 +213,7 @@ for k,v in pairs(accessors) do
 			self.AllEntities[ent:EntIndex()] = nil
 		end]]
 
-		--if ent.SetLine then ent:SetLine(NULL) end
+		if ent.SetLine then ent:SetLine(NULL) end
 
 		self.Connections = self.Connections - 1
 
@@ -351,7 +357,7 @@ function ENTITY:GetGrid()
 end
 
 function PowerGrid:UpdatePower()
-	self:Set("PowerStored", self.PowerStored)
+	self:Set(0, self.PowerStored)
 end
 
 function PowerGrid:AddPower(pw)
