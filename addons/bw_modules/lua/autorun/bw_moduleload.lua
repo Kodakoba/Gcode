@@ -4,6 +4,7 @@ function IncludeBasewarsModules()
 	local modules = 0
 
 	local function incrementModule()
+		MODULE = {}
 		modules = modules + 1
 	end
 
