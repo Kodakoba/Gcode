@@ -103,13 +103,14 @@ function SWEP:CheckMoves(owner, mv, dir)
 
 
 			self:SetSuperMoving(true)
+			OverrideAfterDash = UnPredictedCurTime() - CurTime()
 
 			if SERVER then
 				self:StopDash()
 
 				--self.Owner:SetNetworkOrigin(mv:GetOrigin())
 				--mv:SetVelocity(vel)
-				owner:SetPos(mv:GetOrigin())
+				--owner:SetPos(mv:GetOrigin())
 
 				return vel
 
@@ -123,7 +124,7 @@ function SWEP:CheckMoves(owner, mv, dir)
 
 				mv:SetVelocity(vel)
 
-				self.StoppedDash = CurTime()
+				self.StoppedDash = UnPredictedCurTime() - CurTime()
 
 				--self:StopDash()
 
@@ -178,7 +179,7 @@ function SWEP:CheckMoves(owner, mv, dir)
 
 				mv:SetVelocity(vel)
 
-				--self.StoppedDash = CurTime()
+				self.StoppedDash = CurTime()
 
 				return vel
 			end
@@ -280,15 +281,14 @@ hook.Add("FinishMove", "Dash", function(ply, mv, cmd)
 	end
 
 	local t =  DashTable[ply]
-	
+
 	local self = t.wep
+
 	if not IsValid(self) then
 		DashTable[ply] = nil
-		self.StoppedDash = nil
-		self.Dashed = false
 		return
 	end
-	--local CurTime = UnPredictedCurTime
+
 	local time = t.t
 
 	if t.smooth then
@@ -296,17 +296,15 @@ hook.Add("FinishMove", "Dash", function(ply, mv, cmd)
 	end
 
 	local endtime = OverrideDashEnd or time + self.DashTime
+	local was = OverrideDashEnd
 
-	local curt = CurTime()
-
-	
-
+	local curt = CurTime()--UnPredictedCurTime()
+	local afterdash = OverrideAfterDash or UnPredictedCurTime() - CurTime()
 	local d = t.dir
-	local vel = mv:GetVelocity()
 
 	local newvel = t.newvel or d * 800
 
-	if curt - time < 0 then return end
+	if curt - time < 0 and CurTime() - time < 0 then return end
 
 	if curt > endtime then
 
@@ -316,26 +314,24 @@ hook.Add("FinishMove", "Dash", function(ply, mv, cmd)
 		end
 
 		if SERVER then
-			self:SetDashEndTime(0)
-			self:SetDashing(false)
-			self.EndSuperMove = true
+			self:StopDash()
+		else
+			if curt + afterdash < endtime then
+				return
+			end
+			self:StopDash()
 		end
 
-		DashTable[ply] = nil
-		OverrideDashEnd = nil
-		OverrideDashFinalVel = nil
-		self.StoppedDash = nil
-		self.Dashed = false
 	end
 
 	local changed = self:CheckMoves(ply, mv, d)
-
+	if was then print("fuck") return true end
 	if isvector(changed) then
 		ply:SetVelocity(-mv:GetVelocity() + changed)
 	elseif curt < endtime then
 		mv:SetVelocity(newvel)
 	end
-	
+
 end)
 
 local trails = {}
@@ -426,12 +422,16 @@ function SWEP:StopDash()
 	local owner = self:GetOwner()
 
 	self:SetDashing(false)
-
+	self.Dashed = false
 
 	self:SetDashEndTime(0)
+	self:SetDashing(false)
+
 	self.Moved = false
 	self.EndSuperMove = true
 	self.StoppedDash = nil
+
+	OverrideAfterDash = nil
 
 	DashTable[owner] = nil
 
