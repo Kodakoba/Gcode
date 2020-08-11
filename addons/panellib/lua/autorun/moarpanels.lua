@@ -1,6 +1,6 @@
 
 --moshi moshi calling all retards
-if not HexLib then require("autorun/!!libitup") end
+if not LibItUp then include("!!libitup.lua") end
 
 AddCSLuaFile()
 
