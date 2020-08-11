@@ -79,13 +79,33 @@ PLAYER.GetNextRespawn = PLAYER.GetRespawnTime
 if SERVER then
 	util.AddNetworkString("FullLoad")
 
-	FullyLoaded = {}
+	FullyLoaded = FullyLoaded or {}
+
+	-- wait for either the client's net message or source's Move hook
 
 	net.Receive("FullLoad", function(_, ply)
 		if FullyLoaded[ply] then return end
 
 		FullyLoaded[ply] = true
 		hook.Run("PlayerFullyLoaded", ply)
+	end)
+
+	hook.Add("PlayerInitialSpawn", "PlayerFullyLoaded", function(ply)
+							-- V what if someone else uses that hook with `ply` as identifier
+		hook.OnceRet("SetupMove", "FullLoad:" .. hex(), function(mv_ply, _, cmd)
+
+			if mv_ply == ply and not cmd:IsForced() then
+				if FullyLoaded[ply] then return end
+
+				FullyLoaded[ply] = true
+				hook.Run("PlayerFullyLoaded", ply)
+			end
+
+			local should_remove = mv_ply == ply and not cmd:IsForced()
+
+			return should_remove
+		end)
+
 	end)
 
 else
@@ -112,17 +132,7 @@ else
 
 	end)
 
-
-	net.Receive("FullLoad", function(len)
-		if FullLoadRan then return end
-
-		FullLoadSent = true
-		FullLoadRan = true
-
-		hook.Run("PlayerFullyLoaded", LocalPlayer())
-
-	end)
-
+	-- clientside PlayerInitialSpawn basically
 
 	gameevent.Listen("player_info") --smh my head
 	local ran = {}
