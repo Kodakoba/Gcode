@@ -1257,6 +1257,7 @@ local rets = {
 
 function draw.HSVToColor(hue, saturation, value)
 	value = math.Clamp(value, 0, 1)
+	saturation = math.Clamp(saturation, 0, 1)
 	if saturation == 0 then
 		return value * 255, value * 255, value * 255
 	end
@@ -1282,4 +1283,5 @@ end
 
 function draw.ColorModHSV(col, h, s, v)
 	col.r, col.g, col.b = draw.HSVToColor(h, s, v)
+	return col
 end
