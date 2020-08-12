@@ -3,13 +3,13 @@ AddCSLuaFile()
 local path = "darkhud/"
 
 local load = function()
-	IncludeFolder(path .. "*.lua", _CL)
+	FInc.Recursive(path .. "*.lua", _CL)
 end
-dload = load 
+dload = load
 
-if HexLib then 
+if LibItUp then
 	load()
 else
-	hook.Add("HexLibLoaded", "DarkHUD", load)
+	hook.Add("LibbedItUp", "DarkHUD", load)
 end
 
