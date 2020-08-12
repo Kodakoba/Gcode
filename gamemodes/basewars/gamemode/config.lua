@@ -111,24 +111,12 @@ BaseWars.Config = {
 BaseWars.Config.EXPMult = 1
 
 
-BaseWars.SpawnList = {}
-BaseWars.SpawnList.Models = {}
-BaseWars.SpawnList.Models.Entities = {}
-BaseWars.SpawnList.Models.Loadout = {}
-BaseWars.SpawnList.Models.Printers = {}
-
-local WEAPONS = {}
-
-local t = {}
-BaseWars.Dafuq = t
-local logmeta = {}
 
 BaseWars.SpawnList = {}
-BaseWars.SpawnList.Models = {}
-BaseWars.SpawnList.Models.Entities = setmetatable({}, logmeta)
-BaseWars.SpawnList.Models.Loadout = setmetatable({}, logmeta)
-BaseWars.SpawnList.Models.Printers = setmetatable({}, logmeta)
-BaseWars.SpawnList.Models.Recreational = setmetatable({}, logmeta)
+BaseWars.SpawnList.Entities = {}
+BaseWars.SpawnList.Loadout = {}
+BaseWars.SpawnList.Printers = {}
+BaseWars.SpawnList.Recreational = {}
 
 
 local k = 1000
@@ -137,21 +125,21 @@ local b = m * 1000
 
 local add = BaseWars.AddToSpawn
 
-local sl = BaseWars.SpawnList.Models 
+local sl = BaseWars.SpawnList
 
 local function AddCat(cat, typ, class, name, price, lv, mdl)
 	local t = {}
 
-	t.ClassName = class 
-	t.Price = price 
-	t.Model = mdl 
-	t.Level = lv 
+	t.ClassName = class
+	t.Price = price
+	t.Model = mdl
+	t.Level = lv
 
 	t.Name = name
 
 	t = add(t)
 
-	local t2 = sl[cat][typ] or setmetatable({}, logmeta)
+	local t2 = sl[cat][typ] or {}
 
 	sl[cat][typ] = t2
 
