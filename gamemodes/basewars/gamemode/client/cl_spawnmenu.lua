@@ -16,6 +16,8 @@ local function IsGroup(ply, group)
 
 end
 
+local SpawnlistCanvas
+
 local tohide = {}
 
 hook.Add("OnSpawnMenuClose", "RemoveClouds", function()	--grrrrrrrrrr
@@ -58,11 +60,136 @@ local treetabs = {
 
 --https://i.imgur.com/s5Xbx2b.png
 
+--local b = bench("btns", 600)
+
 local function createSubCategory(canv, name, items)
-	local pnl = vgui.Create("DPanel", canv)
+	local pnl = vgui.Create("InvisPanel", canv) --holder for diconlayout
 	pnl:Dock(TOP)
 	pnl:DockMargin(0, 8, 0, 4)
-	pnl:SetTall(96)
+	pnl:SetWide(canv:GetWide())
+	pnl:SetTall(5000)
+
+	local pnlcol = Colors.LightGray:Copy()
+	pnlcol.a = 160
+
+
+
+	local ics = vgui.Create("DIconLayout", pnl)
+	ics:Dock(BOTTOM)
+	ics:DockMargin(4, 0, 4, 8)
+
+	ics:SetSpaceX(4)
+	ics:SetSpaceY(4)
+	ics:SetBorder(4)
+
+	local icscol = Color(205, 205, 205)
+
+	function pnl:Paint(w, h)
+		draw.RoundedBox(8, 0, 0, w, h, pnlcol)
+
+		-- holy shit diconlayout sucks
+		local iX, iY = ics:GetPos()
+		local iW, iH = ics:GetSize()
+		draw.RoundedBoxEx(8, iX, iY, iW, iH + 4, icscol, true, true, true, true)
+	end
+
+	local its = table.Copy(items)
+
+	table.sort(its, function(a, b)
+		if a.Level == b.Level then
+			return a.Price < b.Price
+		else
+			return a.Level < b.Level
+		end
+	end)
+
+	local ply = LocalPlayer()
+
+	local ply_money, ply_level = ply:GetMoney(), ply:GetLevel()
+	function pnl:Think()
+		ply_money, ply_level = ply:GetMoney(), ply:GetLevel()
+	end
+
+	for _, dat in ipairs(its) do
+		local id = dat.ID
+		local name, lv, price = dat.Name, dat.Level, dat.Price
+		local mdl = dat.Model
+		local btn = ics:Add("FButton")
+		btn:SetSize(76, 76)
+		btn:DockPadding(8, 8, 8, 8)
+
+		btn.Shadow.MaxSpread = 1.1
+		btn.Shadow.Intensity = 1
+		btn.Shadow.HoverSpeed = 0.1
+		btn.Shadow.UnhoverSpeed = 0.1
+		btn.Shadow.UnhoverEase = 1.2
+
+		btn.Shadow.Color = Color(230, 230, 230)
+		local rand = math.random()
+
+		local sic = btn:Add("SpawnIcon")
+		sic:SetModel(mdl)
+		sic:Dock(FILL)
+		sic:SetMouseInputEnabled(false)
+
+		function btn:Demask(x, y, w, h)
+			draw.RoundedStencilBox(8, x + 3, y + 3, w - 6, h - 6, color_white)
+		end
+		function btn:Mask(x, y, w, h)
+			surface.SetDrawColor(color_white:Unpack())
+			surface.DrawRect(x, y, w, h)
+		end
+
+		local drawBtn = btn.DrawButton
+
+		function btn:DrawButton(...)
+			local w, h = self:GetSize()
+			draw.BeginMask(self.Mask, self, ...)
+			draw.DeMask(self.Demask, self, ...)
+			draw.DrawOp()
+			drawBtn(self, ...)
+			draw.FinishMask()
+		end
+
+		local enoughColor = Color(60, 200, 60, 220)
+		local notEnoughColor = Color(200, 60, 60, 230)
+		local wayEnoughColor = Color(45, 115, 220, 230)
+		local barelyEnoughColor = Color(220, 210, 110, 240)
+
+		function btn:PrePaint(w, h)
+			--b:Open()
+
+			local enough, way_enough, barely_enough = ply_money >= price, ply_money > price * 50, ply_money < price * 3
+			local enough_lv = ply_level >= lv
+
+			local col = Colors.Red
+
+			if enough and enough_lv then
+				if way_enough then
+					col = wayEnoughColor
+				elseif barely_enough then
+					col = barelyEnoughColor
+				else
+					col = enoughColor
+				end
+			else
+				col = notEnoughColor
+			end
+
+			draw.RoundedBox(8, 2, 2, w - 4, h - 4, col)
+		end
+
+		function btn:PostPaint(w, h)
+			--b:Close():print()
+		end
+	end
+
+	local perf_layout = ics.PerformLayout --BWERGH
+
+	function ics:PerformLayout(w, h)
+		perf_layout(self, w, h)
+		pnl:SetTall(ics:GetTall() + 8 + 32)
+	end
 end
 
 local function openCategory(pnl, btn)
@@ -72,11 +199,20 @@ local function openCategory(pnl, btn)
 		return
 	end
 
+	if IsValid(pnl.OpenCategory) and pnl.OpenCategory.Category == cat then return end
+
 	local canv = vgui.Create("FScrollPanel", pnl)
 	canv:SetSize(pnl:GetSize())
+
+	pnl:On("PerformLayout", canv, function(self, w, h)
+		canv:SetSize(w, h)
+	end)
+
 	canv.NoDraw = true
 	canv:GetCanvas():DockPadding(8, 36, 8, 4)
+	canv.Category = cat
 
+	pnl.OpenCategory = canv
 
 	local boxcol = Colors.Gray:Copy()
 	boxcol.a = 210
@@ -119,15 +255,20 @@ local function openCategory(pnl, btn)
 
 	pnl:AddCatCanvas(canv)
 
-	for subcat, items in pairs(SpawnList[cat]) do
-		print("creating subcat", subcat)
-		local b = createSubCategory(canv, subcat, items)
+	for subcat, items in SortedPairs(SpawnList[cat]) do
+		createSubCategory(canv, subcat, items)
 	end
+
+	return canv
 end
 
 local function MakeSpawnList()
 
 	local pnl = vgui.Create("InvisPanel")	-- main canvas for the entire basewars tab
+	pnl:Dock(FILL)
+	SpawnlistCanvas = pnl
+
+	
 
 	local its -- items list on the right; predefined
 
@@ -139,34 +280,74 @@ local function MakeSpawnList()
 	cats.GradBorder = true
 	cats.BackgroundColor = Color(200, 200, 200)
 
+	local active
+
 	for k,v in SortedPairsByMemberValue(treetabs, "Name") do
 		local tab = vgui.Create("FButton", cats)
 		tab:Dock(TOP)
 		tab:SetTall(32)
-		tab:DockMargin(0, 0, 0, 0)
+		tab:DockMargin(0, 0, 0, 4)
 		tab.NoDraw = true
 		tab.Category = v.Name
 		tab.Icon = v.Icon
 
+		local ic = IsIcon(v.Icon) and v.Icon
+
+		local col = Colors.LightGray:Copy()
+		local sel_col = Color(40, 140, 230)
+
+		local unsel_X = 6
+		local sel_X = 20
+
+		local ic_tx_padding = 4
+		local box_padding = 2
+
+		local font = "BS28"
+
+		tab.IconX = unsel_X
+
 		if IsIcon(v.Icon) then
-			v.Icon:SetColor(Colors.LightGray)
+			v.Icon:SetColor(col)
 			v.Icon:SetFilter(true)
 		end
 
+		local box_col = Colors.LightGray:Copy()
+		box_col.a = 120
+
+		local fullW = 0
+
+		surface.SetFont(font)
+		local txW = surface.GetTextSize(v.Name)
+		local icW = ic and ((ic:GetSize()) + ic_tx_padding) or 0
+
+		fullW = txW + icW
 		function tab:PostPaint(w, h)
-			local x = 4
+			--draw.RoundedBox(8, self.IconX - box_padding, 0, fullW + box_padding*2, h, box_col)
+
+			if active == self then
+				self:To("IconX", sel_X, 0.2, 0, 0.15)
+				self:LerpColor(col, sel_col, 0.3, 0, 0.3)
+			else
+				self:To("IconX", unsel_X, 0.2, 0, 0.2)
+				self:LerpColor(col, Colors.LightGray, 0.3, 0, 0.3)
+			end
+
+			local x = math.Round(self.IconX)
 
 			if IsIcon(v.Icon) then
 				local iw, ih = v.Icon:GetSize()
 				v.Icon:Paint(x, h/2 - ih/2)
-				x = x + iw + 4
+				x = x + iw + ic_tx_padding
 			end
 
-			draw.SimpleText(v.Name, "BS28", x, h/2, Colors.LightGray, 0, 1)
+			draw.SimpleText(v.Name, "BS28", x, h/2, col, 0, 1)
 		end
 
 		function tab:DoClick()
-			openCategory(its, tab)
+			local new = openCategory(its, tab)
+			if new then
+				active = self
+			end
 		end
 	end
 
@@ -174,15 +355,32 @@ local function MakeSpawnList()
 	its:Dock(FILL)
 	its:SetColor(Color(130, 130, 130))
 
+
+	function its:PostPaint(w, h)
+		surface.SetDrawColor(Colors.Red)
+		surface.DrawOutlinedRect(0, 0, w, h)
+
+		local x, y = self:LocalToScreen(0, 0)
+		BSHADOWS.SetScissor(x, y, w, h)
+	end
+
+	function its:PaintOver()
+		BSHADOWS.SetScissor()
+	end
+
+	function its:PerformLayout(w, h)
+		self:Emit("PerformLayout", w, h)
+	end
+
 	function its:AddCatCanvas(new)
 		if IsValid(self.oldCanvas) then
-			self.oldCanvas:To("Y", 16, 0.2, 0, 1.8)
+			self.oldCanvas:To("X", 16, 0.2, 0, 1.6)
 			self.oldCanvas:PopOut(0.15, 0.05)
-			self.oldCanvas:SetZPos(15)
+			self.oldCanvas:SetZPos(-15)
 		end
 
 		self.oldCanvas = new
-		new:PopIn()
+		new:PopIn(0.15, 0.05)
 		new.X = new.X - 16
 		new:To("X", 0, 0.3, 0, 0.3)
 	end

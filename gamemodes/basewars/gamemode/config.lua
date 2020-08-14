@@ -144,6 +144,7 @@ local function AddCat(cat, typ, class, name, price, lv, mdl)
 	sl[cat][typ] = t2
 
 	t2[#t2 + 1] = t
+	t.ID = #t2
 
 	return t
 end
