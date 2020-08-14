@@ -454,6 +454,85 @@ end
 
 local rbexcache = muldim:new(true)
 
+local corners = {
+	tex_corner8		= "gui/corner8",
+	tex_corner16	= "gui/corner16",
+	tex_corner32	= "gui/corner32",
+	tex_corner64	= "gui/corner64",
+	tex_corner512	= "gui/corner512"
+}
+
+for name, mat in pairs(corners) do
+	corners[name] = CreateMaterial("alphatest_" .. mat:gsub("gui/", ""), "UnlitGeneric", {
+	    ["$basetexture"] = mat,
+	    ["$alphatest"] = 1,
+	    ["$alphatestreference"] = 0.5,
+	})
+end
+
+local math_Round = math.Round
+local surface_DrawRect = surface.DrawRect
+local surface_DrawTexturedRectUV = surface.DrawTexturedRectUV
+local surface_SetDrawColor = surface.SetDrawColor
+
+function draw.RoundedStencilBox(bordersize, x, y, w, h, col, tl, tr, bl, br)
+	if tl == nil then tl = true end
+	if tr == nil then tr = true end
+	if bl == nil then bl = true end
+	if br == nil then br = true end
+
+	if col then surface_SetDrawColor(col:Unpack()) end
+
+	-- Do not waste performance if they don't want rounded corners
+	if ( bordersize <= 0 ) then
+		surface_DrawRect( x, y, w, h )
+		return
+	end
+
+	x = math_Round( x )
+	y = math_Round( y )
+	w = math_Round( w )
+	h = math_Round( h )
+	bordersize = math.min( math_Round( bordersize ), math.floor( w / 2 ) )
+
+	-- Draw as much of the rect as we can without textures
+	surface_DrawRect( x + bordersize, y, w - bordersize * 2, h )
+	surface_DrawRect( x, y + bordersize, bordersize, h - bordersize * 2 )
+	surface_DrawRect( x + w - bordersize, y + bordersize, bordersize, h - bordersize * 2 )
+
+	local tex = corners.tex_corner8
+	if ( bordersize > 8 ) then tex = corners.tex_corner16 end
+	if ( bordersize > 16 ) then tex = corners.tex_corner32 end
+	if ( bordersize > 32 ) then tex = corners.tex_corner64 end
+	if ( bordersize > 64 ) then tex = corners.tex_corner512 end
+
+	surface.SetMaterial( tex )
+
+	if ( tl ) then
+		surface_DrawTexturedRectUV( x, y, bordersize, bordersize, 0, 0, 1, 1 )
+	else
+		surface_DrawRect( x, y, bordersize, bordersize )
+	end
+
+	if ( tr ) then
+		surface_DrawTexturedRectUV( x + w - bordersize, y, bordersize, bordersize, 1, 0, 0, 1 )
+	else
+		surface_DrawRect( x + w - bordersize, y, bordersize, bordersize )
+	end
+
+	if ( bl ) then
+		surface_DrawTexturedRectUV( x, y + h -bordersize, bordersize, bordersize, 0, 1, 1, 0 )
+	else
+		surface_DrawRect( x, y + h - bordersize, bordersize, bordersize )
+	end
+
+	if ( br ) then
+		surface_DrawTexturedRectUV( x + w - bordersize, y + h - bordersize, bordersize, bordersize, 1, 1, 0, 0 )
+	else
+		surface_DrawRect( x + w - bordersize, y + h - bordersize, bordersize, bordersize )
+	end
+
+end
 
 --mostly useful for stencils
 
