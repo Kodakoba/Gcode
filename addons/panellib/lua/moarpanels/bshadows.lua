@@ -90,6 +90,24 @@ BSHADOWS.BeginShadow = function(x, y, w, h)
     --Now leave the rest to the user to draw onto the surface
 end
 
+BSHADOWS.ScissorRect = {}
+
+BSHADOWS.SetScissor = function(x, y, w, h)
+    BSHADOWS.ScissorRect.x = x
+    BSHADOWS.ScissorRect.y = y
+    BSHADOWS.ScissorRect.w = w
+    BSHADOWS.ScissorRect.h = h
+end
+
+local screct = BSHADOWS.ScissorRect
+
+local function scissor()
+    render.SetScissorRect(screct.x, screct.y, screct.x + screct.w, screct.y + screct.h, true)
+end
+local function unscissor()
+    render.SetScissorRect(0, 0, 0, 0, false)
+end
+
 --This will draw the shadow, and mirror any other draw calls the happened during drawing the shadow
 BSHADOWS.EndShadow = function(intensity, spread, blur, opacity, direction, distance, _shadowOnly, color, color2)
 
@@ -152,19 +170,27 @@ BSHADOWS.EndShadow = function(intensity, spread, blur, opacity, direction, dista
     shmat:SetFloat("$alpha", opacity / 255)
 
     --first draw the shadow
+    local screct = BSHADOWS.ScissorRect
+
+   
 
     render.SetMaterial(shmat)
-
+    if screct.x then scissor() end
     for i = 1, math.ceil(intensity) do
-        render.DrawScreenQuadEx(xOffset + curX, yOffset + curY, curW or ScrW(), curH or ScrH())
+            -- https://github.com/Facepunch/garrysmod-issues/issues/4635
+        if screct.x then scissor() end
+            render.DrawScreenQuadEx(xOffset + curX, yOffset + curY, curW or ScrW(), curH or ScrH())
+        if screct.x then unscissor() end
     end
-
+    
  	--then whatever the user has drawn
 
     if not _shadowOnly then
         mat:SetTexture('$basetexture', CurRT)
         render.SetMaterial(mat)
-        render.DrawScreenQuadEx(curX, curY, curW or ScrW(), curH or ScrH())
+        if screct.x then scissor() end
+            render.DrawScreenQuadEx(curX or screct.x, curY or screct.y, curW or screct.w or ScrW(), curH or screct.h or ScrH())
+        if screct.x then unscissor() end
     end
 
     if offsetted then
