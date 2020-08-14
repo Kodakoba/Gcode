@@ -120,3 +120,34 @@ Emitter.HookPaint = function(what)
 	end
 
 end
+
+function vgui.ToPrePostPaint(tbl)
+	tbl.PrePaint = tbl.PrePaint or BlankFunc
+	tbl.Draw = tbl.Draw or BlankFunc
+	tbl.PostPaint = tbl.PostPaint or BlankFunc
+
+	function tbl:Paint(w, h)
+		self:PrePaint(w, h)
+		self:Draw(w, h)
+		self:PostPaint(w, h)
+		self:Emit("Paint", w, h)
+	end
+end
+
+
+
+concommand.Add("ColorPicker", function()
+	local f = vgui.Create("FFrame")
+	f:SetSize(500, 400)
+	f:Center()
+	f.Shadow = {}
+	f:MakePopup()
+	f:PopIn()
+
+	local col = vgui.Create("DColorMixer", f)
+	col:SetSize(400, 300)
+	col:Center()
+	function col:ValueChanged(col)
+		f.HeaderColor = col
+	end
+end)

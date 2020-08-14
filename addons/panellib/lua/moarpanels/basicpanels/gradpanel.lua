@@ -20,7 +20,9 @@ function PANEL:SetColor(col, g, b, a)
 	c.a = a or 255
 end
 
-function PANEL:Paint(w, h)
+vgui.ToPrePostPaint(PANEL)
+
+function PANEL:Draw(w, h)
 	surface.SetDrawColor(self.Color:Unpack())
 	surface.DrawRect(0, 0, w, h)
 
