@@ -59,7 +59,7 @@ function META:AddCloud(name, text)
 		if text then cl:SetText(text) end
 		cl.RemoveWhenDone = true
 		cl:Popup(true)
-
+		cl:Bond(self)
 		return cl, true
 	end
 end

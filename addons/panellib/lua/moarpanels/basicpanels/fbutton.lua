@@ -80,7 +80,7 @@ end
 
 function button:SetColor(col, g, b, a)
 	if IsColor(col) then
-		self.Color = col
+		self.Color:Set(col)
 		if g then 	--if 2nd arg, that means apply now
 			self.drawColor = col:Copy()
 		end
