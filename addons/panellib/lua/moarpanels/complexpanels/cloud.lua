@@ -7,7 +7,12 @@
 	Cloud:SetColor(col, g, b, a)
 	Cloud:SetTextColor(col, g, b, a)
 
-	Cloud:AddFormattedText(txt, col, font, overy, num)	--num: index for tbl(can replace texts); overy = y offset(leave nil to default)
+	Cloud:AddFormattedText(txt, col, font, overy, num, align)	
+
+		--	num: index for tbl(can replace texts);
+			overy = y offset for the next text (yes, next, not prev) (leave nil to default)
+			align = 1/2 - 1 for mid, 2 for right
+	
 	Cloud:AddSeparator(col, offx, offy, num)
 	Cloud:ClearFormattedText()
 
@@ -29,10 +34,12 @@
 		Cloud.Color
 		Cloud.TextColor
 
+		Cloud.AlignLabel = 1/2 -- 1 for middle, 2 for right
+
 		Cloud.Middle 	-- 0-1 (or less/more for full zane)
 
-		Cloud.YAlign	--like text aligns, except the cloud aligns there : 0/1/2
-						--by default it's 2 which means align by bottom (because it's a cloud)
+		Cloud.YAlign	-- like text aligns, except the cloud aligns there : 0/1/2
+						-- by default it's 2 which means align by bottom (because it's a cloud)
 
 		Cloud.ToX = 0	-- by how much XY cloud will move when it's popped up
 		Cloud.ToY = 0	-- use these to make s w e e t pop-in animations
@@ -165,12 +172,18 @@ end
 function Cloud:Paint()
 
 	if not self.FullInitted then return end
-	if self.Bonded and not IsValid(self.Bonded) then self:Remove() return end
+	if self.Bonded and (not self.Bonded:IsValid() or not self.Bonded:IsVisible()) then self:Remove() return end
 
 	local prevent = self:PrePaint()
 	if prevent == true then return end
 
 	if self:GetAlpha() <= 1 then return end
+
+	if self.LastThink ~= FrameNumber() then
+		self:Think()
+		self:AnimationThinkInternal()
+		if not self:IsValid() then return end
+	end
 
 	local cw = math.min(math.max(self.MaxWidth, self.LabelWidth + 16, self.MinW), self.MaxW)
 
@@ -238,7 +251,10 @@ function Cloud:Paint()
 		end
 
 		-- the box of the cloud
-		draw.RoundedBox(4, xoff - cw*self.Middle, finY, cw, boxh, self.Color)
+		local X = xoff - cw*self.Middle
+		local Y = finY
+
+		draw.RoundedBox(4, X, Y, cw, boxh, self.Color)
 
 		if self.Shadow then
 			local int = self.Shadow.intensity or 3
@@ -250,10 +266,21 @@ function Cloud:Paint()
 			BSHADOWS.EndShadow(int, spr, blur, alpha, 0, 1, nil, color)
 
 			xoff, finY = oldX, oldY
+
+			X = xoff - cw*self.Middle
+			Y = finY
 		end
 
 		-- draw the label
-		draw.DrawText(lab, self.Font, xoff + 8 - cw*self.Middle,  finY + 2, self.TextColor, 0)
+		local labX = X + 8
+
+		if self.AlignLabel == 1 then
+			labX = X + cw / 2
+		elseif self.AlignLabel == 2 then
+			labX = X + cw - 8
+		end
+
+		draw.DrawText(lab, self.Font, labX, Y + 2, self.TextColor, self.AlignLabel)
 
 		local offy = finY + ch + 2
 
@@ -268,7 +295,7 @@ function Cloud:Paint()
 			local sx = sep.offx
 			local sy = sep.offy
 
-			surface.DrawLine(xoff - cw*self.Middle + sx, offy + sy, (xoff - cw*self.Middle) + cw - sx, offy + sy)
+			surface.DrawLine(X + sx, offy + sy, X + cw - sx, offy + sy)
 			offy = offy + sy*2
 		end
 
@@ -279,15 +306,21 @@ function Cloud:Paint()
 
 			if ispanel(v) then
 				if not v.NoCloudFit and v:GetWide() ~= cw then v:SetWide(cw) end
-				local scrX, scrY = self:LocalToScreen(xoff - cw*self.Middle, offy)
+				local scrX, scrY = self:LocalToScreen(X, offy)
 				v:PaintAt(scrX + v.X, scrY)
 				offy = offy + v:GetTall()
 			else
 
 				local font = v.Font or self.DescFont
-				local tx = xoff + 8 - cw*self.Middle
+				local tx = xoff + (v.X or 8) - cw*self.Middle
 				-- text first
-				draw.DrawText(v.Text, font, xoff + 8 - cw*self.Middle,  offy, v.Color, 0)
+				if v.Align == 1 then
+					tx = X + cw / 2
+				elseif v.Align == 2 then
+					tx = X + cw - 8
+				end
+
+				draw.DrawText(v.Text, font, tx, offy, v.Color, v.Align or 0)
 
 				offy = offy + v.YOff
 
@@ -300,7 +333,7 @@ function Cloud:Paint()
 					local sx = sep.offx
 					local sy = sep.offy
 
-					surface.DrawLine(xoff - cw*self.Middle + sx, offy + sy, (xoff - cw * self.Middle) + cw - sx, offy + sy)
+					surface.DrawLine(X + sx, offy + sy, X + cw - sx, offy + sy)
 					offy = offy + sy*2
 				end
 
@@ -312,7 +345,7 @@ function Cloud:Paint()
 	self:PostPaint()
 end
 
-function Cloud:AddFormattedText(txt, col, font, overy, num) --if you're updating the text, for example, you can use "num" to position it where you want it
+function Cloud:AddFormattedText(txt, col, font, overy, num, align) --if you're updating the text, for example, you can use "num" to position it where you want it
 
 	local wid = (self.MaxW or self.MaxWidth or self.MinW)
 	local nd = string.WordWrap2(txt, wid, font or self.Font)
@@ -354,6 +387,8 @@ function Cloud:AddFormattedText(txt, col, font, overy, num) --if you're updating
 		tbl.Continuation = true
 	end
 
+	tbl.X = 8
+	tbl.Align = align
 
 	self.DoneText[key] = tbl
 
@@ -398,14 +433,17 @@ end
 
 function Cloud:SetRelPos(x, y)
 	local myx, myy = self:GetPos()
-	local sx, sy = x - myx, y - myy
 
-	self.OffsetX = sx
-	self.OffsetY = sy
+	local sx = x and x - myx
+	local sy = y and y - myy
+
+	self.OffsetX = sx or self.OffsetX
+	self.OffsetY = sy or self.OffsetY
 
 end
 
 function Cloud:Think()
+	self.LastThink = FrameNumber()
 
 	if self.Active then
 		self:To("Frac", 1, self.AppearTime, 0, self.AppearEase)
