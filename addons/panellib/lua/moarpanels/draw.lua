@@ -32,8 +32,10 @@ local function LerpColor(frac, col1, col2, src)
 	col1.g = Lerp(frac, src.g, col2.g)
 	col1.b = Lerp(frac, src.b, col2.b)
 
-	if src.a ~= col2.a then
-		col1.a = Lerp(frac, src.a, col2.a)
+	local sA, c1A, c2A = src.a, col1.a, col2.a
+
+	if sA ~= c2A or c1A ~= c2A then
+		col1.a = Lerp(frac, sA, c2A)
 	end
 
 end
@@ -875,6 +877,30 @@ function draw.GetRT(name, w, h)
 	return rt
 end
 
+local state = false
+	
+local anis = TEXFILTER.ANISOTROPIC
+
+function draw.EnableFilters(min, mag)
+	if min == nil then min = true end
+	if mag == nil then mag = true end
+
+	if state then return end
+	state = true
+
+	if mag then render.PushFilterMag(anis) end
+	if min then render.PushFilterMin(anis) end
+end
+
+function draw.DisableFilters(min, mag)
+	if min == nil then min = true end
+	if mag == nil then mag = true end
+
+	state = false
+
+	if mag then render.PopFilterMag() end
+	if min then render.PopFilterMin() end
+end
 function draw.RenderOntoMaterial(name, w, h, func, rtfunc, matfunc, pre_rt, pre_mat, has2d, x, y)
 
 	local rt
