@@ -113,21 +113,60 @@ BaseWars.Config.EXPMult = 1
 
 
 BaseWars.SpawnList = {}
-BaseWars.SpawnList.Entities = {}
-BaseWars.SpawnList.Loadout = {}
-BaseWars.SpawnList.Printers = {}
-BaseWars.SpawnList.Recreational = {}
 
 
 local k = 1000
 local m = k * 1000
 local b = m * 1000
 
+local function CreateCategory(cat)
+	local t = {
+		Name = cat,
+		Items = {},
+		Subcategories = {},
+		Priority = 0,
+
+		Icon = nil
+	}
+
+	BaseWars.SpawnList[cat] = t
+	return t
+end
+
+local function CreateSubcategory(cat, subcat)
+	local t = {
+		Name = subcat,
+		Items = {},
+
+		Priority = 0,
+		Icon = nil
+	}
+
+	BaseWars.SpawnList[cat].Subcategories[subcat] = t
+	return t
+end
+
+local cEnts = CreateCategory("Entities")
+local cLoadout = CreateCategory("Loadout")
+local cPrinters = CreateCategory("Printers")
+local cRecreational = CreateCategory("Recreational")
+
+if CLIENT then
+	if not Icon then
+		include("lib_it_up/classes/icon.lua")
+	end
+
+	cEnts.Icon = Icon("https://i.imgur.com/1a5sZQc.png", "entities56.png"):SetSize(28, 28)
+	--cLoadout.Icon = Icon("https://i.imgur.com/1a5sZQc.png", "entities56.png"):SetSize(28, 28)
+	cPrinters.Icon = Icon("https://i.imgur.com/vzrqPxk.png", "coins_pound64.png"):SetSize(28, 28)
+	cRecreational.Icon = Icon("https://i.imgur.com/tKMbV5S.png", "gamepad56.png"):SetSize(28, 28)
+end
+
 local add = BaseWars.AddToSpawn
 
 local sl = BaseWars.SpawnList
 
-local function AddCat(cat, typ, class, name, price, lv, mdl)
+local function AddItem(cat, typ, class, name, price, lv, mdl)
 	local t = {}
 
 	t.ClassName = class
@@ -139,12 +178,14 @@ local function AddCat(cat, typ, class, name, price, lv, mdl)
 
 	t = add(t)
 
-	local t2 = sl[cat][typ] or {}
+	local cat_t = sl[cat] or CreateCategory(cat)
+	local subcat_t = cat_t.Subcategories[typ] or CreateSubcategory(cat, typ)
 
-	sl[cat][typ] = t2
+	cat_t.Items[#cat_t.Items + 1] = t
+	subcat_t.Items[#subcat_t.Items + 1] = t
 
-	t2[#t2 + 1] = t
-	t.ID = #t2
+	t.CatID = #cat_t.Items
+	t.SubcatID = #subcat_t.Items
 
 	return t
 end
@@ -159,7 +200,7 @@ local function AddLoadout(typ, class, name, price, lv, mdl, nongun)
 	name = name or wep.PrintName
 	if not name then error("wtf is the name " .. class) return end 
 
-	local t = AddCat("Loadout", typ, class, name, price, lv, mdl)
+	local t = AddItem("Loadout", typ, class, name, price, lv, mdl)
 
 	if not nongun then t.Gun = true end
 end
@@ -167,7 +208,7 @@ end
 
 local function AddPrinters(typ, class, name, price, lv, mdl, lim)
 
-	local t = AddCat("Printers", typ, class, name, price, lv, mdl, lim)
+	local t = AddItem("Printers", typ, class, name, price, lv, mdl, lim)
 
 	t.Limit = 1
 
@@ -176,12 +217,12 @@ end
 
 local function AddRecreational(typ, class, name, price, lv, mdl, lim)
 
-	local t = AddCat("Recreational", typ, class, name, price, lv, mdl, lim)
+	local t = AddItem("Recreational", typ, class, name, price, lv, mdl, lim)
 
 end
 
 local function AddEntities(typ, class, name, price, lv, mdl, lim)
-	local t = AddCat("Entities", typ, class, name, price, lv, mdl, lim)
+	local t = AddItem("Entities", typ, class, name, price, lv, mdl, lim)
 end
 
 local function GSL(t)

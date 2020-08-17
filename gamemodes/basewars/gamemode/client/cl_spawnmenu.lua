@@ -30,39 +30,15 @@ hook.Add("OnSpawnMenuClose", "RemoveClouds", function()	--grrrrrrrrrr
 
 end)
 
-if not Icon then
-	include("lib_it_up/classes/icon.lua")
-end
 
-local treetabs = {
-
-	entities = {
-		Name = "Entities",
-		Icon = Icon("https://i.imgur.com/1a5sZQc.png", "entities56.png"):SetSize(28, 28),
-	},
-
-	loadout = {
-		Name = "Loadout",
-		Icon = "icon16/gun.png",
-	},
-
-	printers = {
-		Name = "Printers",
-		Icon = Icon("https://i.imgur.com/vzrqPxk.png", "coins_pound64.png"):SetSize(28, 28),
-	},
-
-	recreational = {
-		Name = "Recreational",
-		Icon = Icon("https://i.imgur.com/tKMbV5S.png", "gamepad56.png"):SetSize(28, 28),
-	},
-
-}
 
 --https://i.imgur.com/s5Xbx2b.png
 
 --local b = bench("btns", 600)
 
-local function createSubCategory(canv, name, items)
+local function createSubCategory(canv, cat_name, subcat_name, data)
+	local items = data.Items
+
 	local pnl = vgui.Create("InvisPanel", canv) --holder for diconlayout
 	pnl:Dock(TOP)
 	pnl:DockMargin(0, 8, 0, 4)
@@ -90,9 +66,14 @@ local function createSubCategory(canv, name, items)
 		-- holy shit diconlayout sucks
 		local iX, iY = ics:GetPos()
 		local iW, iH = ics:GetSize()
-		draw.RoundedBoxEx(8, iX, iY, iW, iH + 4, icscol, true, true, true, true)
+		draw.RoundedBox(8, iX, iY, iW, iH + 4, icscol)
+
+		draw.EnableFilters()
 	end
 
+	function pnl:PaintOver()
+		draw.DisableFilters()
+	end
 	local its = table.Copy(items)
 
 	table.sort(its, function(a, b)
@@ -111,25 +92,33 @@ local function createSubCategory(canv, name, items)
 	end
 
 	for _, dat in ipairs(its) do
-		local id = dat.ID
 		local name, lv, price = dat.Name, dat.Level, dat.Price
 		local mdl = dat.Model
 		local btn = ics:Add("FButton")
 		btn:SetSize(76, 76)
-		btn:DockPadding(8, 8, 8, 8)
 
 		btn.Shadow.MaxSpread = 1.1
-		btn.Shadow.Intensity = 1
+		btn.Shadow.Alpha = 150
+		btn.Shadow.Intensity = 2
 		btn.Shadow.HoverSpeed = 0.1
 		btn.Shadow.UnhoverSpeed = 0.1
 		btn.Shadow.UnhoverEase = 1.2
 
-		btn.Shadow.Color = Color(230, 230, 230)
+		hook.Add("OnSpawnMenuClose", btn, function()
+			btn:RemoveCloud("description")
+		end)
+
+		btn:SetDoubleClickingEnabled(false)
+
+		btn.Shadow.Color = color_white:Copy()
+
 		local rand = math.random()
 
 		local sic = btn:Add("SpawnIcon")
 		sic:SetModel(mdl)
-		sic:Dock(FILL)
+		sic:SetSize(76 - 12, 76 - 12)
+		sic:Center()
+
 		sic:SetMouseInputEnabled(false)
 
 		function btn:Demask(x, y, w, h)
@@ -151,10 +140,13 @@ local function createSubCategory(canv, name, items)
 			draw.FinishMask()
 		end
 
-		local enoughColor = Color(60, 200, 60, 220)
-		local notEnoughColor = Color(200, 60, 60, 230)
-		local wayEnoughColor = Color(45, 115, 220, 230)
-		local barelyEnoughColor = Color(220, 210, 110, 240)
+		local enoughColor = Color(50, 240, 50, 150)
+		local notEnoughColor = Color(220, 50, 50, 150)
+		local wayEnoughColor = Color(35, 95, 255, 180)
+		local barelyEnoughColor = Color(220, 210, 110, 150)
+
+		local moneytxCol = notEnoughColor:Copy()
+		local curCol = Colors.Red:Copy()
 
 		function btn:PrePaint(w, h)
 			--b:Open()
@@ -162,25 +154,79 @@ local function createSubCategory(canv, name, items)
 			local enough, way_enough, barely_enough = ply_money >= price, ply_money > price * 50, ply_money < price * 3
 			local enough_lv = ply_level >= lv
 
-			local col = Colors.Red
+			local col = curCol
+			local txcol
+
+			draw.LerpColor(1, curCol, enoughColor, barelyEnoughColor)
 
 			if enough and enough_lv then
 				if way_enough then
 					col = wayEnoughColor
+					txcol = Colors.Money
 				elseif barely_enough then
-					col = barelyEnoughColor
+					--col = barelyEnoughColor
+
+					draw.LerpColor(self.HoverFrac or 0, curCol, barelyEnoughColor, enoughColor)
+
+					txcol = barelyEnoughColor
 				else
 					col = enoughColor
+					txcol = Colors.Money
 				end
 			else
 				col = notEnoughColor
 			end
 
+			moneytxCol:Set(txcol or col)
+			moneytxCol.a = 255
+
 			draw.RoundedBox(8, 2, 2, w - 4, h - 4, col)
 		end
 
-		function btn:PostPaint(w, h)
-			--b:Close():print()
+		local lastHovFrac = nil
+
+		function btn:Think()
+			if self.HoverFrac ~= lastHovFrac then
+				local sz = 76 - 12 + 4 * self.HoverFrac
+				sic:SetSize(sz, sz)
+				sic:Center()
+				lastHovFrac = self.HoverFrac
+			end
+		end
+		function btn:OnHover()
+			self:To("HoverFrac", 1, 0.2, 0, 0.2)
+			local cl, new = self:AddCloud("description")
+			
+			if new then
+				cl.Font = "OS22"
+				cl.MaxW = 450
+				cl.AlignLabel = 1
+				cl:AddSeparator(nil, 8)
+				cl:AddFormattedText(Language.Currency .. BaseWars.NumberFormat(price), moneytxCol, "OSB20", 18, nil, 1)
+				cl:AddFormattedText(Language.Level .. " " .. lv, Colors.Level, "OSB20", nil, nil, 1)
+				cl:SetRelPos(self:GetWide() / 2)
+				cl.ToY = -8
+
+				cl:SetText(name)
+			end
+		end
+
+		function btn:OnUnhover()
+			self:To("HoverFrac", 0, 0.2, 0, 0.2)
+			self:RemoveCloud("description")
+		end
+
+		function btn:DoClick()
+			self:SetColor(color_white, true)
+			self.Shadow.MaxSpread = 1.7
+			self.Shadow.Alpha = 255
+
+			self:LerpColor(self.Color, Colors.Button, 0.3, 0.07, 0.3, true)
+			self:LerpColor(self.drawColor, Colors.Button, 0.3, 0.07, 0.3, true)
+			self:MemberLerp(self.Shadow, "MaxSpread", 1.1, 0.3, 0.13, 0.3, true)
+
+			RunConsoleCommand("basewars_spawn", cat_name, dat.CatID)
+			--self:LerpColor(self.drawColor, Colors.Button, 0.3, 0.15, 0.3)
 		end
 	end
 
@@ -255,8 +301,8 @@ local function openCategory(pnl, btn)
 
 	pnl:AddCatCanvas(canv)
 
-	for subcat, items in SortedPairs(SpawnList[cat]) do
-		createSubCategory(canv, subcat, items)
+	for subname, data in SortedPairs(SpawnList[cat].Subcategories) do
+		createSubCategory(canv, cat, subname, data)
 	end
 
 	return canv
@@ -267,8 +313,6 @@ local function MakeSpawnList()
 	local pnl = vgui.Create("InvisPanel")	-- main canvas for the entire basewars tab
 	pnl:Dock(FILL)
 	SpawnlistCanvas = pnl
-
-	
 
 	local its -- items list on the right; predefined
 
@@ -282,7 +326,7 @@ local function MakeSpawnList()
 
 	local active
 
-	for k,v in SortedPairsByMemberValue(treetabs, "Name") do
+	for k,v in SortedPairs(SpawnList) do
 		local tab = vgui.Create("FButton", cats)
 		tab:Dock(TOP)
 		tab:SetTall(32)

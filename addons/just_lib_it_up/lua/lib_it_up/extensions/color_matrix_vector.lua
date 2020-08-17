@@ -18,7 +18,9 @@ Colors.LightGray = Color(65, 65, 65)
 Colors.LighterGray = Color(75, 75, 75)
 
 Colors.Sky = Color(50, 150, 250)
+
 Colors.Money = Color(100, 220, 100)
+Colors.Level = Color(110, 110, 250)
 
 Colors.DarkWhite = Color(220, 220, 220) --yes, dark white
 Colors.Blue = Color(60, 140, 200)

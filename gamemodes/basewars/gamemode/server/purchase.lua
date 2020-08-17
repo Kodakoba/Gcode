@@ -60,27 +60,23 @@ local function LimitDeduct(ent, class, ply)
 	ent.Bought = true
 end
 
-function BWSpawn(ply, cat, subcat, num)
-	num = tonumber(num)
+function BWSpawn(ply, cat, catID)
+	catID = tonumber(catID)
 
 	if not ply:Alive() then ply:Notify(Language.DeadBuy, BASEWARS_NOTIFICATION_ERROR) return end
 
 	local l = BaseWars.SpawnList
 	if not l then print("no spawnlist") return end
 
-	if not cat or not num then print("no cat or num") return end
+	if not cat or not catID then print("no cat or num") return end
 
 	-- category -> subcategory -> item number
 
 	local i = l[cat]
 	if not i then print("no cat:", cat) return end
 
-	i = i[subcat]
-	if not i then print("no subcat:", subcat) return end
-
-	i = i[num]
-
-	if not i then print("no item:", num) return end
+	i = i.Items[catID]
+	if not i then print("no item with catid:", catID, cat) return end
 
 	local item = i.Name
 	local model, price, ent, sf, lim, vip, trust = i.Model, i.Price, i.ClassName, i.UseSpawnFunc, i.Limit, i.vip, i.trust
@@ -289,7 +285,8 @@ end
 
 concommand.Add("basewars_spawn",function(ply,_,args)
 	if not IsValid(ply) then return end
-	BWSpawn(ply, args[1], args[2], args[3], args[4])
+			    -- cat   | itemID (catID)
+	BWSpawn(ply, args[1], args[2])
 end)
 
 
