@@ -257,13 +257,13 @@ end
 --[[---------------------------------------------------------
 	Name: ColorTo
 -----------------------------------------------------------]]
-function meta:ColorTo( col, length, delay, callback )
+function meta:ColorTo( col, length, delay, callback, ease )
 
 	-- We can only use this on specific panel types!
 	if ( !self.SetColor ) then return end
 	if ( !self.GetColor ) then return end
 
-	local anim = self:NewAnimation( length, delay, nil, callback )
+	local anim = self:NewAnimation( length, delay, ease, callback )
 	anim.Color = col
 	anim.Think = ColorThink
 
@@ -281,11 +281,17 @@ end
 --[[---------------------------------------------------------
 	Name: AlphaTo
 -----------------------------------------------------------]]
-function meta:AlphaTo( alpha, length, delay, callback )
+function meta:AlphaTo( alpha, length, delay, callback, ease )
 
-	local anim = self:NewAnimation( length, delay, nil, callback )
+	local anim = self:NewAnimation( length, delay, ease, callback )
 	anim.Alpha = alpha
 	anim.Think = AlphaThink
+
+	if self.m_AnimList.AlphaTo then
+		self.m_AnimList.AlphaTo:Stop()
+	end
+
+	self.m_AnimList.AlphaTo = anim
 
 	return anim
 end
