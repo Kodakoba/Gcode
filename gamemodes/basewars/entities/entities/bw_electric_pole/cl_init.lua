@@ -316,7 +316,6 @@ function ENT:CreateConsumersScroll(pnl, me)
 end
 
 function ENT:QMOnBeginClose(qm, self, pnl)
-
 	if IsValid(qm.GenScroll) then
 		qm.GenScroll:PopOut(nil, nil, BlankFunc)
 		qm.GenScroll.AlphaOverride = true
@@ -499,11 +498,11 @@ end
 local cab = Material("cable/cable2")
 local lightning = Material("trails/electric")
 
---local b = bench("cables", 600)
+local b = bench("cables", 600)
 
 hook.Add("PostDrawTranslucentRenderables", "DrawPoleCables", function(d, sb)
 
-	--b:Open()
+	if Profiling then b:Open() end
 
 	if sb then return end--or #poles <= 0 then return end
 
@@ -592,5 +591,5 @@ hook.Add("PostDrawTranslucentRenderables", "DrawPoleCables", function(d, sb)
 
 	end
 
-	--b:Close():print()
+	if Profiling then b:Close():print() end
 end)
