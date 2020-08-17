@@ -401,9 +401,6 @@ local function MakeSpawnList()
 
 
 	function its:PostPaint(w, h)
-		surface.SetDrawColor(Colors.Red)
-		surface.DrawOutlinedRect(0, 0, w, h)
-
 		local x, y = self:LocalToScreen(0, 0)
 		BSHADOWS.SetScissor(x, y, w, h)
 	end

@@ -12,9 +12,9 @@ _NetworkableCache = _NetworkableCache or {}-- _NetworkableCache or {}
 _NetworkableNumberToID = _NetworkableNumberToID or {} --[num] = name
 _NetworkableIDToNumber = _NetworkableIDToNumber or {} --[name] = num
 
-_NetworkableChanges = muldim:new()-- _NetworkableChanges or muldim:new()
+_NetworkableChanges = _NetworkableChanges or muldim:new()-- _NetworkableChanges or muldim:new()
 
-_NetworkableAwareness = muldim:new() --[ply] = {'ID', 'ID'} , not numberids
+_NetworkableAwareness = _NetworkableAwareness or muldim:new() --[ply] = {'ID', 'ID'} , not numberids
 
 Networkable.Verbose = true
 
@@ -283,14 +283,20 @@ if SERVER then
 		local v_encoder, v_encoderID, v_additionalArg = determineEncoder(val_typ, val)
 
 		-- write key encoderID and the encoded key
-		net.WriteUInt(k_encoderID, encoderIDLength).Description = "Changed key encoder ID"
+		local op = net.WriteUInt(k_encoderID, encoderIDLength)
 		k_encoder(key, k_additionalArg)
 
+		if net.ActiveNetstack then
+			op.Description = "Changed key encoder ID"
+		end
 		-- write val encoderID and the encoded val
 
-		net.WriteUInt(v_encoderID, encoderIDLength).Description = "Changed value encoder ID"
+		op = net.WriteUInt(v_encoderID, encoderIDLength)
 		v_encoder(val, v_additionalArg)
 
+		if net.ActiveNetstack then
+			op.Description = "Changed value encoder ID"
+		end
 	end
 
 	util.AddNetworkString("NetworkableSync")
@@ -313,9 +319,12 @@ if SERVER then
 
 		for _, ply in ipairs(everyone) do
 			for numID, nameID in pairs(numToID) do
-				if added[nameID] then print("was added", nameID) continue end
+				if added[nameID] then continue end
 
 				if not _NetworkableAwareness[ply] or not _NetworkableAwareness[ply][nameID] then
+					local obj = _NetworkableCache[nameID]
+					if obj.Filter then continue end
+
 					newids[#newids + 1] = numID
 					_NetworkableAwareness:Set(true, ply, nameID)
 					added[nameID] = true
@@ -336,6 +345,8 @@ if SERVER then
 				end
 			end
 		end
+
+		if #newids == 0 and changes_count == 0 then return end
 
 		local nw = netstack:new()
 
@@ -397,8 +408,8 @@ if SERVER then
 	end)
 
 
-	function nw:Network(now) 	--networks everything in the next tick (or right now)
-							--currently unfinished for filtered networking
+	function nw:Network(now) 	--networks everything in the next tick (or right now if `now` is true OR networkable has a filter)
+
 		if not self.Filter then
 			if not now then
 				timer.Adjust("NetworkableNetwork", 0, 0, function()
@@ -409,8 +420,21 @@ if SERVER then
 				NetworkAll()
 			end
 		else
+			if not _NetworkableChanges[self.NetworkableID] then return end
+
 			local anyone_missing = false
-			for k, ply in ipairs(self.Filter) do
+			local nw = {}
+
+			for k, ply in ipairs(player.GetAll()) do
+				if self:Filter(ply) ~= false then
+					nw[#nw + 1] = ply
+					print("networking to", ply)
+				else
+					print("not networking to", ply)
+				end
+			end
+
+			for k, ply in ipairs(nw) do
 				if not _NetworkableAwareness[ply] or not _NetworkableAwareness[ply][self.NetworkableID] then anyone_missing = true break end --awh
 			end
 
@@ -420,7 +444,17 @@ if SERVER then
 					WriteIDPair(self.NumberID, true)
 				end
 
-				net.WriteUInt(1, 16)
+				net.WriteUInt(1, 8) --amount of changed networkable objects (just self)
+				net.WriteUInt(IDToNumber(self.NetworkableID), 24) -- self's NetworkableID
+				net.WriteUInt(table.Count(_NetworkableChanges[self.NetworkableID]), 8) -- amt of changes in self
+
+				for k,v in pairs(_NetworkableChanges[self.NetworkableID]) do 
+					WriteChange(k, v)
+				end
+
+				_NetworkableChanges[self.NetworkableID] = nil
+
+			net.Send(nw)
 		end
 	end
 
