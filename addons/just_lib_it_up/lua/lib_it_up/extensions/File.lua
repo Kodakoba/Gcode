@@ -16,19 +16,33 @@ function file.GetFile(path)
 	return path:match(".+/(.+%.%w+)")
 end
 
+-- matches / at the end too
 function file.GetPath(path)
 	return path:match("(.+/).+")
 end
 
-function file.ForEveryFile(path, where, func)
+function file.ForEveryFile(path, where, func, recurse)
+
+	local wildcard = path:match("[^/]+$")
+	local path = file.GetPath(path)
 
 	if isfunction(where) then
+		recurse = func
 		func = where
 		where = "LUA"
 	end
 
-	for k,v in ipairs(file.Find(path, where)) do
-		func(v)
+	local files, folders = file.Find(path .. wildcard, where)
+
+	for k,v in ipairs(files) do
+		local full_path = path .. v
+		func(full_path)
+	end
+
+	if recurse ~= false then
+		for k,v in ipairs(folders) do
+			file.ForEveryFile(path .. v .. "/" .. wildcard, where, func, true)
+		end
 	end
 end
 
