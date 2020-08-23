@@ -129,11 +129,11 @@ local l3 = "Took %.3fs."
 l2 = l2:format(files)
 l3 = l3:format(t2 - t1)
 
-local longest_line = math.ceil(math.max(#l1, #l2, #l3) / 2) * 2 + 1 -- bring to closest odd number
+local longest_line = math.ceil(math.max(#l1, #l2, #l3) / 2) * 2 + 2
 
 local function calcWidth(tx)
-	local amt1 = math.floor( (longest_line - #tx) / 2)
-	local amt2 = math.ceil( (longest_line - #tx) / 2)
+	local amt1 = math.floor( (longest_line - #tx) / 2 )
+	local amt2 = math.ceil( (longest_line - #tx) / 2 )
 	local spaces1 = (" "):rep(amt1)
 	local spaces2 = (" "):rep(amt2)
 
