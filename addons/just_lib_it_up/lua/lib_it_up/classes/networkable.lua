@@ -169,9 +169,10 @@ function nw:SetNetworkableID(id)
 	}
 
 	if SERVER then
-		numToID[#numToID + 1] = id
-		IDToNum[id] = #numToID
-		self.NumberID = #numToID
+		local key = #numToID + 1
+		numToID[key] = id
+		IDToNum[id] = key
+		self.NumberID = key
 	end
 
 	cache[id] = self
