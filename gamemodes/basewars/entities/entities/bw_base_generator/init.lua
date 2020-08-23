@@ -94,34 +94,44 @@ end
 
 function ENT:ConnectTo(ent)
 	print("hotwiring", self, "to", ent)
-	if ent.PowerType ~= "Consumer" then return end
+	if ent.PowerType ~= "Consumer" and ent.PowerType ~= "Line" then return end
 
 	local grid = self:GetGrid()
-	local count = table.Count(grid.AllEntities)
-
-	if count > 2 then print("more than 2 ents", count) return end
-	if count == 2 and #grid.Consumers == 1 then
-		-- this was a generator + consumer pair; disconnect old consumer & add a new one in its' place
-		grid:RemoveConsumer(grid.Consumers[1])
-	elseif #grid.Consumers > 1 then
-		print("more than 2 consumers or some shit?", #grid.Consumers)
-		return
-	end
-
 	local other_grid = ent:GetGrid()
 
-	for k,v in ipairs(other_grid.Generators) do
-		if v:GetHotwired() == ent then
-			v:SetHotwired(Entity(0))
+	if ent.PowerType == "Consumer" then
+
+		local count = table.Count(grid.AllEntities)
+
+		if count > 2 then print("more than 2 ents", count) return end
+		if count == 2 and #grid.Consumers == 1 then
+			-- this was a generator + consumer pair; disconnect old consumer & add a new one in its' place
+			grid:RemoveConsumer(grid.Consumers[1])
+		elseif #grid.Consumers > 1 then
+			print("more than 2 consumers or some shit?", #grid.Consumers)
+			return
 		end
+
+
+		for k,v in ipairs(other_grid.Generators) do
+			if v:GetHotwired() == ent then
+				v:SetHotwired(Entity(0))
+			end
+		end
+
+		other_grid:RemoveConsumer(ent)
+
+		grid:AddConsumer(ent)
+
+		self:SetLine(NULL)
+		self:SetHotwired(ent)
+
+	else
+		grid:RemoveGenerator(self)
+		other_grid:AddGenerator(self)
+		self:SetLine(ent)
 	end
 
-	other_grid:RemoveConsumer(ent)
-
-	grid:AddConsumer(ent)
-
-	self:SetLine(NULL)
-	self:SetHotwired(ent)
 end
 
 function ENT:Disconnect()
