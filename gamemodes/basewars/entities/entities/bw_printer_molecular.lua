@@ -2,8 +2,8 @@ AddCSLuaFile()
 ENT.Base = "bw_base_moneyprinter"
 
 ENT.Skin = 0
-ENT.PowerRequired = 100
-ENT.PowerCapacity = 10000
+
+ENT.PowerRequired = 250
 
 ENT.Capacity 		= 60000000
 ENT.PrintInterval 	= 1
