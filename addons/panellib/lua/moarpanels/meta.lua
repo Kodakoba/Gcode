@@ -163,21 +163,28 @@ end
 
 --CW has its' own LerpColor which seems to work differently from this
 --src will be the source color from which the lerp starts
-local function LerpColor(frac, col1, col2, src)
+local LerpColor
 
-	col1.r = Lerp(frac, src.r, col2.r)
-	col1.g = Lerp(frac, src.g, col2.g)
-	col1.b = Lerp(frac, src.b, col2.b)
+if not draw.LerpColor then
+	function LerpColor(frac, col1, col2, src)
 
-	if src.a ~= col2.a then
-		col1.a = Lerp(frac, src.a, col2.a)
+		col1.r = Lerp(frac, src.r, col2.r)
+		col1.g = Lerp(frac, src.g, col2.g)
+		col1.b = Lerp(frac, src.b, col2.b)
+
+		local sA, c1A, c2A = src.a, col1.a, col2.a
+
+		if sA ~= c2A or c1A ~= c2A then
+			col1.a = Lerp(frac, sA, c2A)
+		end
+
 	end
-
+else
+	LerpColor = draw.LerpColor
 end
 
-draw.LerpColor = LerpColor
-
-local function LerpColorFrom(frac, col1, col2, col3) --the difference is that the result is written into col3 instead, acting like classic lerp
+-- the difference between this and LerpColor is that the result is written into col3 instead
+local function LerpColorFrom(frac, col1, col2, col3)
 	col3.r = Lerp(frac, col1.r, col2.r)
 	col3.g = Lerp(frac, col1.g, col2.g)
 	col3.b = Lerp(frac, col1.b, col2.b)
@@ -187,7 +194,6 @@ local function LerpColorFrom(frac, col1, col2, col3) --the difference is that th
 	end
 end
 
-draw.LerpColorFrom = LerpColorFrom
 
 --[[
 	Because colors are tables, instead of giving a key you can give LerpColor a color as the first arg,
