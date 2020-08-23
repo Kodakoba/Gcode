@@ -27,9 +27,10 @@ local BWAddons={
     284266415,
 
     2131057232, -- arccw base(d on what)
-    2179387416, -- arccw arknights charms because aerach lmao
+    2179387416, -- arccw arknights charms because aerach
     2131058270, -- arccw cs+
-    2176333528, -- arccw insurgency
+    --2176333528, -- arccw insurgency
+    2135529088, -- arccw mw2
 }
 
 
@@ -44,17 +45,17 @@ end
 local function DownloadFolder(str, mask)
     local files, folders=file.Find(str .. (mask and "/" .. mask or "/*"),"MOD","namedesc")
 
-    local root = false 
+    local root = false
 
-    if subdirs == 0 and debuggingDownloads then 
+    if subdirs == 0 and debuggingDownloads then
         root = true
         MsgC(Color(150, 150, 230), "Adding root folder: ", Color(200, 200, 200), str, "\n")
         subdirs = subdirs + 1
-    end 
+    end
 
     for k,v in pairs(files) do
 
-        if not string.find(v, "ztmp") then 
+        if not string.find(v, "ztmp") then
             resource.AddSingleFile(str .. "/" .. v)
             if debuggingDownloads then
                 MsgC(Color(160, 230, 80), indent(subdirs), "Added file: ", Color(220, 220, 220), str .. "/" .. v .. "\n")
@@ -63,7 +64,7 @@ local function DownloadFolder(str, mask)
 
     end
 
-    if not table.IsEmpty(folders) then 
+    if not table.IsEmpty(folders) then
 
         for k,v in pairs(folders) do
 
@@ -73,14 +74,14 @@ local function DownloadFolder(str, mask)
             end
 
             DownloadFolder(str .. "/" .. v)
-            
+
             subdirs = subdirs - 1
         end
 
     end
 
-    if root and debuggingDownloads then 
-        subdirs = subdirs - 1 
+    if root and debuggingDownloads then
+        subdirs = subdirs - 1
         print("\n")
     end
 end
