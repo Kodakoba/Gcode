@@ -368,51 +368,49 @@ AddLoadout("Melee", "csgo_default_knife", "Knife", 10*k, 5, "models/weapons/w_cs
 
 -- Shit-tier --
 
-AddLoadout("Pistols", "cw_g4p_glock17", "Glock 17", 10*k, 5, "models/weapons/w_pist_glock18.mdl")
-AddLoadout("Pistols", "cw_g4p_usp40", "USP", 12.5*k, 5, "models/weapons/w_pist_usp.mdl")
-AddLoadout("Pistols", "cw_m1911", "M1911", 15*k, 7, "models/weapons/cw_pist_m1911.mdl")
+AddLoadout("Pistols", "arccw_fml_fas_ots33", "OTS 33", 10*k, 5, "models/weapons/arccw/fml/fas1/w_ots33.mdl")
+AddLoadout("Pistols", "arccw_fml_fas_g20", "Glock 20", 12.5*k, 5, "models/weapons/arccw/fml/fas1/w_g20.mdl")
+AddLoadout("Pistols", "arccw_makarov", "PM", 15*k, 7, "models/weapons/arccw/w_pmt.mdl")
+AddLoadout("Pistols", "arccw_uspmatch", "USP Match", 15*k, 7, "models/weapons/arccw/w_uspmatch.mdl")
 
-AddLoadout("Pistols", "cw_g4p_fiveseven", "FiveSeven", 25*k, 10, "models/weapons/w_pist_fiveseven.mdl")
+AddLoadout("Shotguns", "arccw_db", "Sawn-off", 25 * k, 10, "models/weapons/arccw/w_sawnoff.mdl")
+AddLoadout("Shotguns", "arccw_shorty", "M3", 50 * k, 15, "models/weapons/w_shot_m3super90.mdl")
+AddLoadout("Shotguns", "arccw_shorty", "arccw_fml_fas_m870", 60 * k, 20, "models/weapons/arccw/fml/fas1/w_m870.mdl")
 
-AddLoadout("Shotguns", "cw_shorty", "Serbu Shorty", 25 * k, 10, "models/weapons/cw2_super_shorty.mdl")
+AddLoadout("Pistols", "arccw_fml_fas_deagle", "Deagle", 25*k, 15, "models/weapons/arccw/fml/fas1/w_deagle.mdl")
+AddLoadout("Pistols", "arccw_mw2_anaconda", ".44 Magnum", 35*k, 20, "models/weapons/arccw/fesiugmw2/worldmodels/w_mw2_44magnum_2.mdl")
 
-AddLoadout("Pistols", "cw_deagle", "Deagle", 25*k, 15, "models/weapons/w_pist_deagle.mdl")
-AddLoadout("Pistols", "cw_mr96", "MR96", 35*k, 20, "models/weapons/w_pist_deagle.mdl")
-AddLoadout("Pistols", "weapon_bf4_44rt", ".44 Magnum", 35*k, 25, "models/weapons/w_4ist_deagle.mdl")
-AddLoadout("Pistols", "cw_g4p_mp412_rex", "MP412", 50*k, 25, "models/weapons/w_pist_deagle.mdl")
+AddLoadout("SMGs", "arccw_mw2_tmp", "TMP", 30*k, 15, "models/weapons/arccw/fesiugmw2/worldmodels/w_mw2_m9_2a.mdl")
+AddLoadout("SMGs", "arccw_mw2_miniuzi", "Mini Uzi", 50*k, 20, "models/weapons/arccw/fesiugmw2/worldmodels/w_mw2_uzi_2a.mdl")
+AddLoadout("SMGs", "arccw_fml_fas_mp5", "HK MP5", 75*k, 30, "models/weapons/arccw/fml/fas1/w_mp5.mdl")
+AddLoadout("SMGs", "arccw_fml_fas_extra_comando9", "Commando 9 (?)", 90*k, 30, "models/weapons/arccw/fml/fas1/w_commando9.mdl")
+AddLoadout("SMGs", "arccw_vector", "Vector", 100*k, 30, "models/weapons/arccw/w_vector.mdl")
 
-AddLoadout("SMGs", "cw_mac11", "MAC-11", 50*k, 20, "models/weapons/w_smg_mp5.mdl")
-
-AddLoadout("SMGs", "cw_mp5", "HK MP5", 75*k, 25, "models/weapons/w_smg_p90.mdl")
-AddLoadout("Shotguns", "cw_m3super90", "M3", 75 * k, 25, "models/weapons/w_shot_m3super90.mdl")
-AddLoadout("Sniper Rifles", "cw_g4p_g2contender", "G2 Contender", k * 50, 25, "models/weapons/w_snip_scout.mdl")
+AddLoadout("Sniper Rifles", "arccw_contender", "G2 Contender", k * 50, 25, "models/weapons/arccw/w_contender.mdl")
 
 -- Low-Mid tier --
 
-AddLoadout("Pistols", "cw_blackops3_38", "BloodHound", 65*k, 30, "models/loyalists/blackops3/38/w_pistol_38.mdl")
-AddLoadout("Pistols", "cw_blackops3_mr6", "MR6", 75*k, 35, "models/loyalists/blackops3/mr6/w_pistol_mr6.mdl")
 
-AddLoadout("SMGs", "cw_g4p_magpul_masada", "Magpul Masada", 100*k, 30, "models/weapons/w_smg_p90.mdl")
+AddLoadout("Assault Rifles", "arccw_ins2_ak74", "AK-74", 75*k, 30, "models/weapons/arccw/fml/fas1/w_ak47.mdl")
+-- the insurgency AK74 sucks dick compared to FA:S AK47
 
-AddLoadout("Assault Rifles", "cw_g3a3", "G3A3", 100*k, 30, "models/weapons/w_rif_ak47.mdl")
+AddLoadout("Assault Rifles", "arccw_fml_fas_ak47", "AK-47", 100*k, 35, "models/weapons/arccw/fml/fas1/w_ak47.mdl")
+AddLoadout("Assault Rifles", "arccw_fml_fas_g36c", "G36", 125*k, 35, "models/weapons/arccw/fml/fas1/w_g36c.mdl")
 
-AddLoadout("Assault Rifles", "cw_ak74", "AK-74", 125*k, 35, "models/weapons/w_rif_ak47.mdl")
-AddLoadout("Assault Rifles", "cw_g4p_g36c", "G36", 125*k, 35, "models/weapons/w_rif_ak47.mdl")
+AddLoadout("Assault Rifles", "arccw_fml_fas_famas", "FAMAS", 150*k, 40, "models/weapons/arccw/fml/fas1/w_famas.mdl")
+AddLoadout("Assault Rifles", "arccw_fml_fas_g3a3", "G3A3", 150*k, 40, "models/weapons/arccw/fml/fas1/w_g3a3.mdl")
 
-AddLoadout("Assault Rifles", "cw_vss", "VSS/AS VAL", 150*k, 40, "models/cw2/rifles/w_vss.mdl")
-AddLoadout("SMGs", "cw_killdrix_acre", "ACR-E", 125*k, 40, "models/weapons/killdrix/w_acre.mdl")
+AddLoadout("SMGs", "arccw_mw2_ump45", "UMP45", 125*k, 40, "models/weapons/arccw/fesiugmw2/worldmodels/w_mw2_uzi_2a.mdl")
+AddLoadout("SMGs", "arccw_fml_fas_sterling", "C1-9mm", 125*k, 40, "models/weapons/arccw/fml/fas1/w_sterling.mdl")
 
-AddLoadout("SMGs", "cw_aacgsm", "Honey Badger", 125*k, 45, "models/cw2/gsm/w_gsm_aac.mdl")
-
-AddLoadout("Assault Rifles", "cw_sg55x", "SG552", 125*k, 50, "models/weapons/w_rif_sg552.mdl")
 AddLoadout("Assault Rifles", "cw_g4p_fn_fal", "FN FAL", 125*k, 50, "models/weapons/w_rif_m4a1.mdl")
 AddLoadout("Assault Rifles", "cw_m14", "M14", 125*k, 50, "models/weapons/w_cstm_m14.mdl")
 
 
 -- Mid tier --
 
-AddLoadout("Sniper Rifles", "cw_g4p_awm", "AWM", 250 * k, 60, "models/weapons/w_snip_awp.mdl")
-AddLoadout("Sniper Rifles", "cw_g4p_m98b", "Barett M98B", 350 * k, 60, "models/weapons/w_snip_awp.mdl")
+AddLoadout("Sniper Rifles", "arccw_fml_fas_m24", "M24", 200 * k, 50,"models/weapons/arccw/fml/fas1/w_m24.mdl")
+AddLoadout("Sniper Rifles", "arccw_fml_fas_m82", "Barett M82", 350 * k, 60, "models/weapons/arccw/fml/fas1/w_m82.mdl")
 
 AddLoadout("Assault Rifles", "cw_g4p_an94", "G36", 200*k, 65, "models/weapons/w_rif_ak47.mdl")
 AddLoadout("Assault Rifles", "cw_tr09_tar21", "TAR-21", 300*k, 65, "models/weapons/therambotnic09/w_cw2_tar21.mdl")
@@ -424,11 +422,11 @@ AddLoadout("Assault Rifles", "cw_g4p_masada_acr", "ACR", 350*k, 100, "models/wea
 
 -- Mid-Top tier --
 
-AddLoadout("Assault Rifles", "cw_tr09_auga3", "AUG A3", 350*k, 125, "models/weapons/therambotnic09/w_cw2_auga3.mdl")
+AddLoadout("Assault Rifles", "arccw_fml_fas_m14", "M14", 350*k, 125, "models/weapons/arccw/fml/fas1/w_m14.mdl")
 
 AddLoadout("Assault Rifles", "cw_g4p_xm8", "XM8", 500*k, 150, "models/weapons/w_rif_m4a1.mdl")
 AddLoadout("Assault Rifles", "cw_g4p_m4a1", "M4A1", 750*k, 175, "models/weapons/w_rif_m4a1.mdl")
-
+AddLoadout("Assault Rifles", "arccw_fml_fas_sg550", "SG550", 250*k, 50, "models/weapons/arccw/fml/fas1/w_sg550.mdl")
 
 -- Top-tier --
 

@@ -17,7 +17,7 @@ print("fake player count on refresh:", serversecure.RefreshInfoCache())
 local debuggingDownloads = false
 
 
-local BWAddons={
+local BWAddons = {
     160250458, --wire
     922947756, --synths
 
@@ -29,8 +29,10 @@ local BWAddons={
     2131057232, -- arccw base(d on what)
     2179387416, -- arccw arknights charms because aerach
     2131058270, -- arccw cs+
-    --2176333528, -- arccw insurgency
+    2176333528, -- arccw insurgency
     2135529088, -- arccw mw2
+    2175261690, -- arccw fa:s 1
+    2131161276, -- arccw m9k "extras"
 }
 
 
