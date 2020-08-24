@@ -398,7 +398,7 @@ function CheckStore(src)
 	if file.Exists(path,'DATA') then return end
 	if not file.IsDir("luadev_hist",'DATA') then file.CreateDir("luadev_hist",'DATA') end
 	
-	file.Write(path,tostring(src),'DATA')
+	--file.Write(path,tostring(src),'DATA')
 end
 
 function ToServer(data)
