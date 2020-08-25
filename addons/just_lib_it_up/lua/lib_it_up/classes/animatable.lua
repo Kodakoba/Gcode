@@ -1,13 +1,50 @@
 if not Emitter then include('emitter.lua') end
 Animatable = Animatable or Emitter:callable()
-AnimatableObjects = AnimatableObjects or {}
+AnimatableObjects = AnimatableObjects or setmetatable({}, {__mode = "v"}) -- dont keep references to prevent leaking
+AnimatableObjects.Dirty = false -- if true, next Think will sequentialize the table
+
 local objs = AnimatableObjects
+
+local function GCProxy(t)
+	local ud = newproxy(true)
+	local mt = getmetatable(ud)
+
+	
+	mt.__gc = function()
+		AnimatableObjects.Dirty = true -- only like this because __gc gets called _after_ the entry has been deleted from the table
+	end
+
+	mt.__index = t
+	mt.__newindex = t
+
+	objs[#objs + 1] = ud
+
+	return ud
+end
 
 AnimMeta = Emitter:extend()
 
 if SERVER then return end --bruh
 
 hook.Add("Think", "AnimatableThink", function()
+
+	if objs.Dirty then
+		local oldObjs = objs
+		oldObjs.Dirty = nil
+
+		objs = setmetatable({}, {__mode = "v"})
+		AnimatableObjects = objs
+
+		local i = 1
+
+		for k,v in pairs(oldObjs) do
+			if not isnumber(k) then continue end
+
+			objs[i] = v
+			i = i + 1
+		end
+	end
+
 	for k,v in ipairs(objs) do
 		v:AnimationThink()
 	end
@@ -43,7 +80,9 @@ function Animatable:Initialize(auto_think)
 	self.m_AnimList = {}
 
 	if auto_think ~= false then
-		objs[#objs + 1] = self
+		local ud = GCProxy(self)
+		--objs[#objs + 1] = ud
+		return ud
 	end
 
 end
