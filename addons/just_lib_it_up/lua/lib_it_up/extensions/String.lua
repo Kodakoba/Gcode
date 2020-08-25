@@ -248,12 +248,15 @@ function string.WordWrap2(txt, wid, font)
 		local curwid = 0
 		local line = 1
 
-		for word in string.gmatch(txt, ".-%s") do
-
+		for word in string.gmatch(txt, "[%s%c%p]*[^%s%c%p]*[%s%c%p]*") do
 			local r2, w2, lines, didwrap = WrapWord(word, curwid, nil, wid, line)
 
 			if didwrap == 1 then
-				ret = ret:gsub("%s$", "") --whoops, that space shouldn't be there
+				ret = ret:gsub("%s$", "")
+			elseif not didwrap then
+				if r2:match("[\r\n]") then
+					w2 = 0
+				end
 			end
 
 			ret = ret .. r2
@@ -263,20 +266,6 @@ function string.WordWrap2(txt, wid, font)
 			wrapped = wrapped or didwrap
 		end
 
-		local lastword = txt:match("[^%s]+$")
-
-		if lastword then
-			local r2, w2, _, didwrap = WrapWord(lastword, curwid, nil, wid, line)
-
-			if didwrap == 1 then
-				ret = ret:gsub("%s$", "") --whoops, that space shouldn't be there
-			end
-
-			ret = ret .. r2
-			curwid = w2
-			wrapped = wrapped or didwrap
-
-		end
 
 		return ret, curwid, wrapped
 	else
@@ -286,31 +275,20 @@ function string.WordWrap2(txt, wid, font)
 		local needwid = wid
 		local curwid = 0
 
-		for word in string.gmatch(txt, ".-%s") do
+		for word in string.gmatch(txt, "[%s%c%p]*[^%s%c%p]*[%s%c%p]*") do
 			local r2, w2, _, didwrap = WrapWord(word, curwid, needwid)
 
 			if didwrap == 1 then
 				ret = ret:gsub("%s$", "")
+			elseif not didwrap then
+				if r2:match("[\r\n]") then
+					w2 = 0
+				end
 			end
 
 			ret = ret .. r2
 			curwid = w2
 
-			wrapped = wrapped or didwrap
-		end
-
-		local lastword = txt:match("[^%s]+$")
-
-		if lastword then
-			local r2, w2, _, didwrap = WrapWord(lastword, curwid, needwid)
-
-			if didwrap == 1 then
-				ret = ret:gsub("%s$", "")
-			end
-
-			ret = ret .. r2
-
-			curwid = w2
 			wrapped = wrapped or didwrap
 		end
 
