@@ -2,6 +2,20 @@ MoarPanelsMats = MoarPanelsMats or {}
 
 setfenv(0, _G) --never speak to me or my son
 
+local math_Round = math.Round
+local surface_DrawRect = surface.DrawRect
+local surface_DrawTexturedRect = surface.DrawTexturedRect
+local surface_DrawTexturedRectRotated = surface.DrawTexturedRectRotated
+local surface_DrawTexturedRectUV = surface.DrawTexturedRectUV
+local surface_SetDrawColor = surface.SetDrawColor
+local surface_SetMaterial = surface.SetMaterial
+local surface_SetTextColor = surface.SetTextColor
+local surface_SetTextPos = surface.SetTextPos
+local surface_DrawText = surface.DrawText
+local surface_GetTextSize = surface.GetTextSize
+local surface_SetFont = surface.SetFont
+local surface_DisableClipping = DisableClipping
+
 MoarPanelsMats.gu = Material("vgui/gradient-u")
 MoarPanelsMats.gd = Material("vgui/gradient-d")
 MoarPanelsMats.gr = Material("vgui/gradient-r")
@@ -56,7 +70,7 @@ local sizes = {}
 
 function surface.CharSizes(tx, font, unicode)
 	local szs = {}
-	surface.SetFont(font)
+	surface_SetFont(font)
 	local cache = sizes[font] or {}
 	sizes[font] = cache
 
@@ -67,7 +81,7 @@ function surface.CharSizes(tx, font, unicode)
 			local sz = cache[char]
 
 			if not sz then
-				sz = (surface.GetTextSize(char))
+				sz = (surface_GetTextSize(char))
 				cache[char] = sz
 			end
 
@@ -80,7 +94,7 @@ function surface.CharSizes(tx, font, unicode)
 			local sz = cache[char]
 
 			if not sz then
-				sz = (surface.GetTextSize(char))
+				sz = (surface_GetTextSize(char))
 				cache[char] = sz
 			end
 
@@ -97,7 +111,7 @@ end
 
 function draw.LegacyLoading(x, y, w, h)
 	local size = math.min(w, h)
-	surface.SetMaterial(spinner)
+	surface_SetMaterial(spinner)
 	surface.DrawTexturedRectRotated(x, y, size, size, -(CurTime() * 360) % 360)
 end
 
@@ -144,7 +158,7 @@ function draw.DrawLoading(pnl, x, y, w, h)
 	local dur = 2 --seconds
 	local vm = Matrix()
 
-	if clipping then surface.DisableClipping(true) end
+	if clipping then surface_DisableClipping(true) end
 
 	render.PushFilterMag( TEXFILTER.ANISOTROPIC )
 	render.PushFilterMin( TEXFILTER.ANISOTROPIC )
@@ -156,7 +170,7 @@ function draw.DrawLoading(pnl, x, y, w, h)
 		local r = w*a
 		local mat = (r > 160 and cout) or (r > 64 and cout128) or (r < 64 and cout64) or cout64
 
-		surface.SetMaterial(mat)
+		surface_SetMaterial(mat)
 
 		local vec = Vector(sx, sy)
 
@@ -169,13 +183,13 @@ function draw.DrawLoading(pnl, x, y, w, h)
 		cam.PushModelMatrix(vm)
 
 		pcall(function()
-			surface.SetDrawColor(Color(255, 255, 255, (1 - a)*255))
-			surface.DrawTexturedRect(x - w/2, y - h/2, w, h)	--i aint gotta explain shit where the 1.05 came from
+			surface_SetDrawColor(Color(255, 255, 255, (1 - a)*255))
+			surface_DrawTexturedRect(x - w/2, y - h/2, w, h)	--i aint gotta explain shit where the 1.05 came from
 		end)
 
 		cam.PopModelMatrix(vm)
 	end
-	if clipping then surface.DisableClipping(false) end
+	if clipping then surface_DisableClipping(false) end
 	render.PopFilterMin()
 	render.PopFilterMag()
 end
@@ -437,7 +451,7 @@ function draw.RoundedPolyBox(rad, x, y, w, h, col, notr, nobr, nobl, notl)
 		coords for post-rounded corners
 	]]
 
-	surface.SetDrawColor(col:Unpack())
+	surface_SetDrawColor(col:Unpack())
 	draw.NoTexture()
 
 	local cache = rbcache:Get(rad, x, y, w, h, notr, nobr, nobl, notl)
@@ -472,11 +486,6 @@ for name, mat in pairs(corners) do
 	})
 end
 
-local math_Round = math.Round
-local surface_DrawRect = surface.DrawRect
-local surface_DrawTexturedRectUV = surface.DrawTexturedRectUV
-local surface_SetDrawColor = surface.SetDrawColor
-
 function draw.RoundedStencilBox(bordersize, x, y, w, h, col, tl, tr, bl, br)
 	if tl == nil then tl = true end
 	if tr == nil then tr = true end
@@ -508,7 +517,7 @@ function draw.RoundedStencilBox(bordersize, x, y, w, h, col, tl, tr, bl, br)
 	if ( bordersize > 32 ) then tex = corners.tex_corner64 end
 	if ( bordersize > 64 ) then tex = corners.tex_corner512 end
 
-	surface.SetMaterial( tex )
+	surface_SetMaterial( tex )
 
 	if ( tl ) then
 		surface_DrawTexturedRectUV( x, y, bordersize, bordersize, 0, 0, 1, 1 )
@@ -572,7 +581,7 @@ end
 
 function draw.RoundedPolyBoxEx(rad, x, y, w, h, col, notr, nobr, nobl, notl)
 
-	surface.SetDrawColor(col)
+	surface_SetDrawColor(col)
 	draw.NoTexture()
 
 	local cache = rbexcache:Get(rad, x, y, w, h, notr, nobr, nobl, notl)
@@ -622,7 +631,7 @@ function draw.RotatedBox(x, y, x2, y2, w)
 			y = y + cos*w,
 		}
 
-	surface.DrawPoly(poly)
+	surface_DrawPoly(poly)
 end
 
 draw.Line = draw.RotatedBox
@@ -706,12 +715,12 @@ function surface.DrawMaterial(url, name, x, y, w, h, rot)
 		return false
 	end
 
-	surface.SetMaterial(mat.mat)
+	surface_SetMaterial(mat.mat)
 
 	if rot then
-		surface.DrawTexturedRectRotated(x, y, w, h, rot)
+		surface_DrawTexturedRectRotated(x, y, w, h, rot)
 	else
-		surface.DrawTexturedRect(x, y, w, h)
+		surface_DrawTexturedRect(x, y, w, h)
 	end
 
 	return mat
@@ -726,13 +735,11 @@ function surface.DrawUVMaterial(url, name, x, y, w, h, u1, v1, u2, v2)
 		return
 	end
 
-	surface.SetMaterial(mat.mat)
+	surface_SetMaterial(mat.mat)
 
-	surface.DrawTexturedRectUV(x, y, w, h, u1, v1, u2, v2)
+	surface_DrawTexturedRectUV(x, y, w, h, u1, v1, u2, v2)
 
 end
-
-surface.PaintMaterial = Deprecated or function() print("surface.PaintMaterial is deprecated", debug.traceback()) end
 
 function draw.DrawMaterialCircle(x, y, rad)	--i hate it but its the only way to make an antialiased circle on clients with no antialiasing set
 	if rad < 64 then
@@ -1068,8 +1075,8 @@ function draw.DrawOrRender(pnl, mdl, x, y, w, h)
 		return
 	end
 
-	surface.SetMaterial(mdls[mdl])
-	surface.DrawTexturedRect(x, y, w, h)
+	surface_SetMaterial(mdls[mdl])
+	surface_DrawTexturedRect(x, y, w, h)
 
 end
 
@@ -1277,11 +1284,11 @@ end
 
 function surface.DrawNewlined(tx, x, y, first_x, first_y)
 	local i = 0
-	local _, th = surface.GetTextSize(tx:gsub("\n", ""))
+	local _, th = surface_GetTextSize(tx:gsub("\n", ""))
 
 	for s in tx:gmatch("[^\n]+") do
-		surface.SetTextPos(first_x or x, (first_y or y) + i*th)
-		surface.DrawText(s)
+		surface_SetTextPos(first_x or x, (first_y or y) + i*th)
+		surface_DrawText(s)
 		i = i + 1
 
 		first_x, first_y = nil, nil
@@ -1295,15 +1302,15 @@ function draw.DrawGIF(url, name, x, y, dw, dh, frw, frh, start, frametime, pnl)
 
 	if mat and (not mat.mat or mat.downloading or mat.mat:IsError()) then
 		if mat.mat and mat.mat:IsError() and not mat.downloading then
-			surface.SetMaterial(bad)
-			surface.DrawTexturedRect(x, y, dw, dh)
+			surface_SetMaterial(bad)
+			surface_DrawTexturedRect(x, y, dw, dh)
 		else
 			draw.DrawLoading(pnl, x + dw/2, y + dh/2, dw, dh)
 		end
 		return
 	end
 
-	surface.SetMaterial(mat.mat)
+	surface_SetMaterial(mat.mat)
 	local w, h = mat.w, mat.h
 
 	frw = frw or mat.frw
@@ -1345,7 +1352,7 @@ function draw.DrawGIF(url, name, x, y, dw, dh, frw, frh, start, frametime, pnl)
 	local u2, v2 = endX / (w - 1), endY / (h - 1)			--ALL OF THIS JUST WORKS
 
 															--i spent 4 days fixing this and turns out i just needed to sub 1 PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands PepeHands
-	surface.DrawTexturedRectUV(x, y, dw, dh, u1, v1, u2, v2)
+	surface_DrawTexturedRectUV(x, y, dw, dh, u1, v1, u2, v2)
 end
 
 -- THANK U BASED GigsD4X
@@ -1389,4 +1396,47 @@ end
 function draw.ColorModHSV(col, h, s, v)
 	col.r, col.g, col.b = draw.HSVToColor(h, s, v)
 	return col
+end
+
+
+function draw.SimpleText2( text, font, x, y, colour, xalign, yalign )
+
+	text	= tostring( text )
+	x		= x			or 0
+	y		= y			or 0
+	xalign	= xalign	or TEXT_ALIGN_LEFT
+	yalign	= yalign	or TEXT_ALIGN_TOP
+
+	if font then surface_SetFont( font ) end
+
+	local w, h
+
+	if xalign ~= TEXT_ALIGN_LEFT or yalign ~= TEXT_ALIGN_TOP then
+		w, h = surface_GetTextSize( text )
+
+		if ( xalign == TEXT_ALIGN_CENTER ) then
+			x = x - w / 2
+		elseif ( xalign == TEXT_ALIGN_RIGHT ) then
+			x = x - w
+		end
+
+		if ( yalign == TEXT_ALIGN_CENTER ) then
+			y = y - h / 2
+		elseif ( yalign == TEXT_ALIGN_BOTTOM ) then
+			y = y - h
+		end
+	end
+
+	surface_SetTextPos(x, y)
+
+	if colour then
+		surface_SetTextColor(colour.r, colour.g, colour.b, colour.a)
+	else
+		surface_SetTextColor( 255, 255, 255, 255 )
+	end
+
+	surface_DrawText(text)
+
+	return w, h
+
 end
