@@ -48,8 +48,10 @@ function ENT:DerivedDataTables()
 	self:MakeFloat("PrintAmount")
 
 	self:MakeFloat("UpgradeValue")
+	self.GetUpgradeCost = self.GetUpgradeValue --oops
+	self.SetUpgradeCost = self.SetUpgradeValue
 
-	self:NetworkVar("String", 1, "Mods")
+	self:NetworkVar("Entity", 1, "PrinterRack") --ew
 
 	slot = 2
 end

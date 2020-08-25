@@ -125,6 +125,7 @@ function ENT:AddPrinter(slot, ent)
 	ent:SetAngles(ang)
 	ent:SetMoveType(MOVETYPE_NONE)
 	ent:SetParent(self)
+	ent:SetPrinterRack(self)
 	ent.IsInRack = true
 
 	self:NetworkPrinters()
@@ -205,6 +206,7 @@ function ENT:Eject(num)
 		ent.IsInRack = false
 
 		ent:SetParent(nil)
+		ent:SetPrinterRack(NULL)
 		ent:SetMoveType(MOVETYPE_VPHYSICS)
 		ent:SetPos(ent:GetPos() + ang:Forward() * 56)
 		ent:SetGravity(1)

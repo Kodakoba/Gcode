@@ -133,8 +133,8 @@ end
 
 function ENT:SetupDataTables()
 
-	self:NetworkVar("Bool", 1, "Powered")
-	self:NetworkVar("Float", 1, "RebootTime")
+	self:NetworkVar("Bool", 0, "Powered")
+	self:NetworkVar("Float", 0, "RebootTime")
 
 	self:NetworkVar("Int", 0, "GridID")
 

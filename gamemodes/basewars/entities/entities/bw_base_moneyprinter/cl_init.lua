@@ -1,13 +1,23 @@
 AddCSLuaFile()
 include("shared.lua")
 
-ENT.ContextInteractable = true
-
-function ENT:Init()
+function ENT:CLInit()
 
     if not self.FontColor then self.FontColor = color_white:Copy() end
     if not self.BackColor then self.BackColor = color_black:Copy() end
 
+    self:On("DrawCable", "CablesInRack", self.ShouldDrawInRack)
+
+    self:On("DTChanged", "Upgrading", function(self, key, old, new)
+        if key == "Level" and new > 1 and self:CPPIGetOwner() == LocalPlayer() then
+            cookie.Set("PrinterUpgraded", "1")
+        end
+    end)
+
+end
+
+function BaseWars.EverUpgraded()
+    return cookie.GetNumber("PrinterUpgraded", 0) ~= 0
 end
 
 local wpad = 32
@@ -15,42 +25,15 @@ local wpad = 32
 
 local yoff = 90
 local barH = 32
-function ENT:GetModsTable()
-    return util.JSONToTable(self:GetMods()) or {}
-end
-function ENT:CanInteractItem(item)
-    if item:GetID() ~= ItemIDs.OverClocker then return false end
-    if self:GetModsTable().o then return false, "Already overclocked!" end
-    return true
+
+function ENT:ShouldDrawInRack()
+    if self:GetPrinterRack():IsValid() then
+        return false
+    end
 end
 
-function ENT:OnItemHover(item)
-    local can, err = self:CanInteractItem(item)
-    if not can then return err, false end
 
-    return "Overclock " .. self.PrintName
-end
-
-function ENT:InteractItem(item, slot)
-
-    if not self:CanInteractItem(item) then return false end
-
-    net.Start("OverclockPrinter")
-        net.WriteEntity(self)
-        net.WriteUInt(item:GetUID(), 32)
-    net.SendToServer()
-
-    return true
-end
-
-function ENT:ContextInteractItem(item, slot)
-
-    local ok = self:InteractItem(item)
-    if ok==false then return true end
-
-end
-
-function ENT:DrawMoneyBar(pos, ang, scale, me, pwd)
+function ENT:DrawMoneyBar(pos, ang, scale, w, h, me, pwd)
 
     if me.TTR then me.PrintAmount = self:GetNWInt("UpgradeCost", 0) / me.TTR  end
 
@@ -83,56 +66,34 @@ function ENT:DrawMoneyBar(pos, ang, scale, me, pwd)
 
 end
 
-function ENT:DrawMisc(pos, ang, scale, me, pwd)
+local blk = Color(0, 0, 0, 250)
 
+function ENT:DrawMisc(pos, ang, scale, w, h, me, pwd)
 
-    local w, h = 236*2, 80*2
+    local nameW, nameH = w * 0.75, h * 0.2
+    local nameX, nameY = (w - nameW) / 2, h * 0.075
 
-    surface.SetDrawColor(Color(0, 0, 0, 250))
-    surface.DrawRect(0, 0, w, h)
+    surface.SetDrawColor(blk)
+    surface.DrawRect(nameX, nameY, nameW, nameH)
 
     if pwd then
-        draw.SimpleText(self.PrintName, "TW72", w/2, yoff - 36, color_white, 1, 1)
-        draw.SimpleText("Lv. " .. me.dt.Level, "TW72", w/2, yoff + 24, color_white, 1, 1)
-        local mods = me.dt.Mods
-        mods = util.JSONToTable(mods)
-        surface.SetDrawColor(Color(0, 0, 0, 220))
-        if mods then
-            surface.DrawRect(40, h + 60, w - 80, 120)
-            local col = Color(255, 0, 0)
-            local mat = mods.o --overclocker
-            local over = Inventory.Crafting.utils.cats.Economy[1].vars
-            local col = Color(255, 0, 0)
 
-            for k,v in pairs(over) do
-                if v.id == mat then
-                    col = v.col or Color(200, 200, 200)
-                    break
-                end
-            end
-
-            surface.SetDrawColor(col)
-            surface.DrawMaterial("https://i.imgur.com/DKw6IDz.png", "overclock.png", (w-80)/2 - 20, h + 60, 120, 120 )
-
-            local tbl = {o = {}}
-            tbl.o.col = col
-            tbl.o.name = "overclock.png"
-            tbl.o.url = "https://i.imgur.com/DKw6IDz.png"
-
-            self.Mods = tbl --for other ents
-        end
-
-        if self:Health()/self:GetMaxHealth() < 0.25 then
+        draw.SimpleText2(self.PrintName, "TW72", w/2, nameY, color_white, 1)
+        draw.SimpleText2("Lv. " .. me.dt.Level, nil, w/2, nameY + nameH, color_white, 1, 4)
+       
+        if self:Health() / self:GetMaxHealth() < 0.25 then
             local sin = math.abs(math.sin(CurTime()*2))
             local col = Color(170 + sin*75, 40 + sin*40, 40 + sin*40)
 
-            surface.DrawRect(w/2 - 180, h + 200, 360, 80)
-            draw.SimpleText("Critical damage!", "TWB72", w/2, h + 240, col, 1, 1)
+            local x, y = nameX + nameW/2 - 180, nameY + nameH + 40
+
+            surface.DrawRect(x, y, 360, 80)
+            draw.SimpleText("Critical damage!", "TWB72", w/2, y + 40, col, 1, 1)
         end
     end
 end
 
-function ENT:DrawStats(pos, ang, scale, me, pwd)
+function ENT:DrawStats(pos, ang, scale, w, h, me, pwd)
     local w, h = 450, 75
 
     surface.SetDrawColor(Color(0, 0, 0, 250))
@@ -161,81 +122,122 @@ function ENT:DrawStats(pos, ang, scale, me, pwd)
 
 end
 
+local mBarAngle = Angle()
 
-function ENT:GetMoneyBarPos()
+function ENT:GetMoneyBarPos(pos, eAng, dirs)
 
-    local pos = self:GetPos()
-    local ang = self:GetAngles()
-    --Vector (17.3935546875, -11.271484375, -1.4185791015625)
-    pos = pos + ang:Up() * 1.8
-    pos = pos + ang:Forward() * 16.5
-    pos = pos + ang:Right() * 11.74
+    mBarAngle:Set(eAng)
 
-    ang:RotateAroundAxis(ang:Up(), 90)
-    ang:RotateAroundAxis(ang:Forward(), 90)
-    return pos, ang, 0.025
+    pos = pos + dirs[1] * 1.8
+    pos = pos + dirs[2] * 16.5
+    pos = pos + dirs[3] * 11.74
 
-end
+    mBarAngle:RotateAroundAxis(dirs[1], 90)
+    mBarAngle:RotateAroundAxis(dirs[3], -90)
 
-
-function ENT:GetMiscPos()
-
-    local pos = self:GetPos()
-    local ang = self:GetAngles()
-    --Vector (17.3935546875, -11.271484375, -1.4185791015625)
-    pos = pos + ang:Up() * 2.7
-    pos = pos + ang:Forward() * -15
-    pos = pos + ang:Right() * 11.74
-
-    ang:RotateAroundAxis(ang:Up(), 90)
-    --ang:RotateAroundAxis(ang:Forward(), 90)
-    return pos, ang, 0.05
+    return pos, mBarAngle, 0.025
 
 end
 
-function ENT:GetStatsPos()
+local miscAngle = Angle()
 
-    local pos = self:GetPos()
-    local ang = self:GetAngles()
-    --Vector (17.3935546875, -11.271484375, -1.4185791015625)
-    pos = pos + ang:Up() * 2
-    pos = pos + ang:Forward() * 17.08
-    pos = pos + ang:Right() * -3.2
+function ENT:GetMiscPos(pos, eAng, dirs)
 
-    ang:RotateAroundAxis(ang:Up(), 90)
-    ang:RotateAroundAxis(ang:Forward(), 90)
-    return pos, ang, 0.025
+    miscAngle:Set(eAng)
+
+    pos = pos + dirs[1] * 2.5
+    pos = pos + dirs[2] * -16.99
+    pos = pos + dirs[3] * 14.89
+
+    miscAngle:RotateAroundAxis(dirs[1], 90)
+
+    local scale = 0.05
+    local mul = 1 / 0.05
+    local w, h = 29.8 * mul, 32.85 * mul
+    return pos, miscAngle, scale, w, h
 
 end
+
+local statsAngle = Angle()
+
+function ENT:GetStatsPos(pos, eAng, dirs)
+
+    statsAngle:Set(eAng)
+
+    pos = pos + dirs[1] * 2
+    pos = pos + dirs[2] * 17.08
+    pos = pos + dirs[3] * -3.2
+
+    statsAngle:RotateAroundAxis(dirs[1], 90)
+    statsAngle:RotateAroundAxis(dirs[3], -90)
+    return pos, statsAngle, 0.025
+
+end
+
+local lp
+
+function ENT:ShouldDrawDisplay()
+    if not lp then lp = LocalPlayer() end
+
+    local dist = lp:GetPos():DistToSqr(self:GetPos())
+    if dist > 65536 then return false end
+
+    return true
+end
+
+local angDirs = {
+    -- up, forward, right
+}
+
+function ENT:GetCachedPos(moneyBar, misc, stats)
+    -- O M E G A O P T I M I Z E
+    local ePos, eAng = self:GetPos(), self:GetAngles()
+    angDirs[1], angDirs[2], angDirs[3] = eAng:Up(), eAng:Forward(), eAng:Right()
+
+    if moneyBar then
+        moneyBar[1], moneyBar[2], moneyBar[3], moneyBar[4], moneyBar[5] = self:GetMoneyBarPos(ePos, eAng, angDirs)
+    end
+
+    if misc then
+        misc[1], misc[2], misc[3], misc[4], misc[5] = self:GetMiscPos(ePos, eAng, angDirs)
+    end
+
+    if stats then
+        stats[1], stats[2], stats[3], stats[4], stats[5] = self:GetStatsPos(ePos, eAng, angDirs)
+    end
+end
+
+local mBar, misc, stats = {}, {}, {}
 
 function ENT:Draw()
 
     self:DrawModel()
+    if not self:ShouldDrawDisplay() then return end
 
-    local dist = LocalPlayer():GetPos():DistToSqr(self:GetPos())
-    if dist > 65536 then return end
+    self:GetCachedPos(mBar, misc, stats)
 
-    local pos, ang, scale = self:GetMoneyBarPos()
-    local me = self:GetTable() --i hate this but its omegaoptimization
 
+    local me = self:GetTable()
     local pwd = self:GetPower()
 
+    local pos, ang, scale, w, h = mBar[1], mBar[2], mBar[3], mBar[4], mBar[5]
+
     cam.Start3D2D(pos, ang, scale)
-        local ok, err = pcall(self.DrawMoneyBar, self, pos, ang, scale, me, pwd)
+        local ok, err = pcall(self.DrawMoneyBar, self, pos, ang, scale, w, h, me, pwd)
         if not ok then print('Printers error:', err) end
     cam.End3D2D()
 
-    local pos, ang, scale = self:GetMiscPos()
+    pos, ang, scale, w, h = misc[1], misc[2], misc[3], misc[4], misc[5]
 
     cam.Start3D2D(pos, ang, scale)
-        local ok, err = pcall(self.DrawMisc, self, pos, ang, scale, me, pwd)
+        local ok, err = pcall(self.DrawMisc, self, pos, ang, scale, w, h, me, pwd)
         if not ok then print('Printers error:', err) end
     cam.End3D2D()
 
-    local pos, ang, scale = self:GetStatsPos()
+    pos, ang, scale, w, h = stats[1], stats[2], stats[3], stats[4], stats[5]
 
     cam.Start3D2D(pos, ang, scale)
-        local ok, err = pcall(self.DrawStats, self, pos, ang, scale, me, pwd)
+        local ok, err = pcall(self.DrawStats, self, pos, ang, scale, w, h, me, pwd)
         if not ok then print('Printers error:', err) end
     cam.End3D2D()
 end

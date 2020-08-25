@@ -33,6 +33,11 @@ function ENT:IsPowered(val)
 	return self:GetPowered()
 end
 
+function ENT:Disconnect()
+	self:GetGrid():RemoveConsumer(self)
+	PowerGrid:new(self:CPPIGetOwner()):AddConsumer(self)
+end
+
 if SERVER then
 
 	function ENT:CheckCableDistance(bwe)

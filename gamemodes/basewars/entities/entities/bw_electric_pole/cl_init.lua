@@ -525,7 +525,9 @@ hook.Add("PostDrawTranslucentRenderables", "DrawPoleCables", function(d, sb)
 
 
 		for key, ent in pairs(grid.AllEntities) do
-			if ent.DrawCable == false then continue end
+			local res = ent:Emit("DrawCable")
+
+			if ent.DrawCable == false or res == false then continue end
 
 			local pos
 			local genpos
