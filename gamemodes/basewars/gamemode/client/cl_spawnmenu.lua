@@ -63,6 +63,16 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 	function pnl:Paint(w, h)
 		draw.RoundedBox(8, 0, 0, w, h, pnlcol)
 
+		local tX = 4
+
+		if data.Icon then
+			local iW, iH = data.Icon:GetSize()
+							-- V the top part is 32px iirc
+			data.Icon:Paint(tX, 16 - iH / 2)
+			tX = tX + iW + 4
+		end
+
+		draw.SimpleText(data.Name, "OSB28", tX, 16, color_white, 0, 1)
 		-- holy shit diconlayout sucks
 		local iX, iY = ics:GetPos()
 		local iW, iH = ics:GetSize()
@@ -104,6 +114,8 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 		btn.Shadow.UnhoverSpeed = 0.1
 		btn.Shadow.UnhoverEase = 1.2
 
+		btn.HoverFrac = 0
+
 		hook.Add("OnSpawnMenuClose", btn, function()
 			btn:RemoveCloud("description")
 		end)
@@ -116,8 +128,8 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 
 		local sic = btn:Add("SpawnIcon")
 		sic:SetModel(mdl)
-		sic:SetSize(76 - 12, 76 - 12)
-		sic:Center()
+		sic:SetSize(60, 60)
+		sic:SetPos(6, 16)
 
 		sic:SetMouseInputEnabled(false)
 
@@ -148,6 +160,32 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 		local moneytxCol = notEnoughColor:Copy()
 		local curCol = Colors.Red:Copy()
 
+		local shortName = name
+
+		surface.SetFont("BS14")
+
+		for i=1, #name do
+			local nm = name:sub(1, i)
+			local tW = surface.GetTextSize(nm)
+
+			if tW > btn:GetWide() - 8 then
+				shortName = nm:sub(1, -4) .. "..."
+				break
+			end
+		end
+
+		local shortNameCol = color_white:Copy()
+		local shortNameShadow = color_black:Copy()
+
+		function btn:PaintOver(w, h)
+			shortNameCol.a = (1 - self.HoverFrac) * 255
+			shortNameShadow.a = (1 - self.HoverFrac) * 255
+
+			draw.SimpleText(shortName, "BS14", w/2 + 1, 4 - 22 * self.HoverFrac + 1, shortNameShadow, 1)
+			draw.SimpleText(shortName, "BS14", w/2, 4 - 22 * self.HoverFrac, shortNameCol, 1)
+			
+		end
+
 		function btn:PrePaint(w, h)
 			--b:Open()
 
@@ -164,9 +202,9 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 					col = wayEnoughColor
 					txcol = Colors.Money
 				elseif barely_enough then
-					--col = barelyEnoughColor
+					col = barelyEnoughColor
 
-					draw.LerpColor(self.HoverFrac or 0, curCol, barelyEnoughColor, enoughColor)
+					--draw.LerpColor(self.HoverFrac, curCol, barelyEnoughColor, enoughColor)
 
 					txcol = barelyEnoughColor
 				else
@@ -187,16 +225,18 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 
 		function btn:Think()
 			if self.HoverFrac ~= lastHovFrac then
-				local sz = 76 - 12 + 4 * self.HoverFrac
+				local sz = 60 + 8 * self.HoverFrac
 				sic:SetSize(sz, sz)
-				sic:Center()
+				sic:CenterHorizontal()
+				sic.Y = self:GetTall() - sic:GetTall() - 4
 				lastHovFrac = self.HoverFrac
 			end
 		end
+
 		function btn:OnHover()
 			self:To("HoverFrac", 1, 0.2, 0, 0.2)
 			local cl, new = self:AddCloud("description")
-			
+
 			if new then
 				cl.Font = "OS22"
 				cl.MaxW = 450
@@ -228,6 +268,7 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 			RunConsoleCommand("basewars_spawn", cat_name, dat.CatID)
 			--self:LerpColor(self.drawColor, Colors.Button, 0.3, 0.15, 0.3)
 		end
+
 	end
 
 	local perf_layout = ics.PerformLayout --BWERGH
@@ -301,7 +342,7 @@ local function openCategory(pnl, btn)
 
 	pnl:AddCatCanvas(canv)
 
-	for subname, data in SortedPairs(SpawnList[cat].Subcategories) do
+	for subname, data in SortedPairsByMemberValue(SpawnList[cat].Subcategories, "Priority", true) do
 		createSubCategory(canv, cat, subname, data)
 	end
 
