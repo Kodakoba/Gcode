@@ -1,5 +1,15 @@
 -- garry suck my dick
 
+--[[
+	Emits:
+		"DTChanged"
+			[1] - Entity (self)
+			[2] - String (name of the DTVar changed)
+			[3] - Old value
+			[4] - New value
+			[5] - true/false - true if called from SetDT... ; false if received from a DT update
+]]
+
 ENTITY.oldInstallDataTable = ENTITY.oldInstallDataTable or ENTITY.InstallDataTable
 
 function ENTITY:OnDTVarChanged(...)
@@ -37,6 +47,21 @@ local typs = {
 
 local backTyps = table.KeysToValues(typs)
 local typLen = #backTyps
+
+
+local lua_typs = {
+	String = "",
+	Bool = true,
+	Float = 1,
+	Int = 1,
+	Vector = Vector(),
+	Angle = Angle(),
+	Entity = Entity(0),
+}
+
+for k,v in pairs(lua_typs) do
+	lua_typs[k] = type(v)
+end
 
 local OBBs = { -- add ent pos, min, max and center of its' obb to PVS
 	function(e, pos)
@@ -97,6 +122,11 @@ function ENTITY:QueueNotifyChange(ind, typ, name, old, new)
 	queue[self] = queue[self] or {}
 	local me = queue[self]
 
+	if lua_typs[typ] ~= type(new) then
+		errorf("EntityDT: mismatched types; expected %q for %q; received %q instead ( '%s' )\n%s", lua_typs[typ], name, type(new), new, debug.traceback(0, 4))
+		return
+	end
+
 	me[name] = {ind, typ, new}
 
 	local notify = self.NotifyDTVars
@@ -129,7 +159,7 @@ function ENTITY:InstallDataTable()
 			local old = GetFunc(ent, slot)
 			if old == val then return end --fuck off
 
-			ent:Emit("DTChanged", typename, old, val, true)
+			ent:Emit("DTChanged", name, old, val, true)
 			return ent[ "SetDT" .. typename ] (ent, slot, val)
 		end
 
