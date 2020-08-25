@@ -141,26 +141,57 @@ local function CreateSubcategory(cat, subcat)
 		Priority = 0,
 		Icon = nil
 	}
+				-- tier detection
+	if subcat:match("[%p%s]T(%d+)[%p%s]") then
+		t.Priority = -tonumber(subcat:match("[%p%s]T(%d+)[%p%s]"))
+		print("Matched priority", t.Priority, subcat)
+	end
 
 	BaseWars.SpawnList[cat].Subcategories[subcat] = t
 	return t
 end
 
-local cEnts = CreateCategory("Entities")
-local cLoadout = CreateCategory("Loadout")
-local cPrinters = CreateCategory("Printers")
-local cRecreational = CreateCategory("Recreational")
-
 if CLIENT then
 	if not Icon then
 		include("lib_it_up/classes/icon.lua")
 	end
+end
 
+local Icon = Icon or function() end
+
+local cEnts = CreateCategory("Entities")
+local cLoadout = CreateCategory("Loadout")
+
+	if CLIENT then
+		local scMelee = CreateSubcategory("Loadout", "Melee")
+		scMelee.Priority = 10
+
+		local scPistols = CreateSubcategory("Loadout", "Pistols")
+		scPistols.Priority = 9
+		scPistols.Icon = Icon("https://i.imgur.com/VkH8Yvy.png", "gun.png"):SetSize(24, 24)
+
+		local scShotguns = CreateSubcategory("Loadout", "Shotguns")
+		scShotguns.Priority = 8
+
+		local scSMGs = CreateSubcategory("Loadout", "SMGs")
+		scSMGs.Priority = 7
+
+		local scRifles = CreateSubcategory("Loadout", "Assault Rifles")
+		scRifles.Priority = 6
+	end
+
+local cPrinters = CreateCategory("Printers")
+local cRecreational = CreateCategory("Recreational")
+
+
+if CLIENT then
 	cEnts.Icon = Icon("https://i.imgur.com/1a5sZQc.png", "entities56.png"):SetSize(28, 28)
 	--cLoadout.Icon = Icon("https://i.imgur.com/1a5sZQc.png", "entities56.png"):SetSize(28, 28)
 	cPrinters.Icon = Icon("https://i.imgur.com/vzrqPxk.png", "coins_pound64.png"):SetSize(28, 28)
 	cRecreational.Icon = Icon("https://i.imgur.com/tKMbV5S.png", "gamepad56.png"):SetSize(28, 28)
 end
+
+local Icon = Icon or BlankFunc
 
 local add = BaseWars.AddToSpawn
 
@@ -403,8 +434,8 @@ AddLoadout("Assault Rifles", "arccw_fml_fas_g3a3", "G3A3", 150*k, 40, "models/we
 AddLoadout("SMGs", "arccw_mw2_ump45", "UMP45", 125*k, 40, "models/weapons/arccw/fesiugmw2/worldmodels/w_mw2_uzi_2a.mdl")
 AddLoadout("SMGs", "arccw_fml_fas_sterling", "C1-9mm", 125*k, 40, "models/weapons/arccw/fml/fas1/w_sterling.mdl")
 
-AddLoadout("Assault Rifles", "cw_g4p_fn_fal", "FN FAL", 125*k, 50, "models/weapons/w_rif_m4a1.mdl")
-AddLoadout("Assault Rifles", "cw_m14", "M14", 125*k, 50, "models/weapons/w_cstm_m14.mdl")
+--AddLoadout("Assault Rifles", "cw_g4p_fn_fal", "FN FAL", 125*k, 50, "models/weapons/w_rif_m4a1.mdl")
+--AddLoadout("Assault Rifles", "cw_m14", "M14", 125*k, 50, "models/weapons/w_cstm_m14.mdl")
 
 
 -- Mid tier --
@@ -412,30 +443,30 @@ AddLoadout("Assault Rifles", "cw_m14", "M14", 125*k, 50, "models/weapons/w_cstm_
 AddLoadout("Sniper Rifles", "arccw_fml_fas_m24", "M24", 200 * k, 50,"models/weapons/arccw/fml/fas1/w_m24.mdl")
 AddLoadout("Sniper Rifles", "arccw_fml_fas_m82", "Barett M82", 350 * k, 60, "models/weapons/arccw/fml/fas1/w_m82.mdl")
 
-AddLoadout("Assault Rifles", "cw_g4p_an94", "G36", 200*k, 65, "models/weapons/w_rif_ak47.mdl")
-AddLoadout("Assault Rifles", "cw_tr09_tar21", "TAR-21", 300*k, 65, "models/weapons/therambotnic09/w_cw2_tar21.mdl")
+--AddLoadout("Assault Rifles", "cw_g4p_an94", "G36", 200*k, 65, "models/weapons/w_rif_ak47.mdl")
+--AddLoadout("Assault Rifles", "cw_tr09_tar21", "TAR-21", 300*k, 65, "models/weapons/therambotnic09/w_cw2_tar21.mdl")
 
-AddLoadout("Assault Rifles", "cw_g4p_m16a2", "M16A2", 350*k, 80, "models/weapons/w_rif_m4a1.mdl")
-AddLoadout("Assault Rifles", "cw_tr09_qbz97", "QBZ-97", 350*k, 80, "models/weapons/therambotnic09/w_cw2_qbz97.mdl")
+--AddLoadout("Assault Rifles", "cw_g4p_m16a2", "M16A2", 350*k, 80, "models/weapons/w_rif_m4a1.mdl")
+--AddLoadout("Assault Rifles", "cw_tr09_qbz97", "QBZ-97", 350*k, 80, "models/weapons/therambotnic09/w_cw2_qbz97.mdl")
 
-AddLoadout("Assault Rifles", "cw_g4p_masada_acr", "ACR", 350*k, 100, "models/weapons/therambotnic09/w_cw2_qbz97.mdl")
+--AddLoadout("Assault Rifles", "cw_g4p_masada_acr", "ACR", 350*k, 100, "models/weapons/therambotnic09/w_cw2_qbz97.mdl")
 
 -- Mid-Top tier --
 
 AddLoadout("Assault Rifles", "arccw_fml_fas_m14", "M14", 350*k, 125, "models/weapons/arccw/fml/fas1/w_m14.mdl")
 
-AddLoadout("Assault Rifles", "cw_g4p_xm8", "XM8", 500*k, 150, "models/weapons/w_rif_m4a1.mdl")
-AddLoadout("Assault Rifles", "cw_g4p_m4a1", "M4A1", 750*k, 175, "models/weapons/w_rif_m4a1.mdl")
+--AddLoadout("Assault Rifles", "cw_g4p_xm8", "XM8", 500*k, 150, "models/weapons/w_rif_m4a1.mdl")
+--AddLoadout("Assault Rifles", "cw_g4p_m4a1", "M4A1", 750*k, 175, "models/weapons/w_rif_m4a1.mdl")
 AddLoadout("Assault Rifles", "arccw_fml_fas_sg550", "SG550", 250*k, 50, "models/weapons/arccw/fml/fas1/w_sg550.mdl")
 
 -- Top-tier --
 
-AddLoadout("SMGs", "cw_scorpin_evo3", "Scorpion Evo", 750*k, 200, "models/weapons/scorpion/w_ev03.mdl")
+--AddLoadout("SMGs", "cw_scorpin_evo3", "Scorpion Evo", 750*k, 200, "models/weapons/scorpion/w_ev03.mdl")
 
-AddLoadout("Assault Rifles", "cw_ar15", "AR15", 1250*k, 220, "models/weapons/w_rif_m4a1.mdl") --the AR15 is somehow better than M4A1
-AddLoadout("Assault Rifles", "cw_tr09_mk18", "MK18", 1.5*m, 220, "models/weapons/therambotnic09/w_cw2_mk18.mdl") 
-AddLoadout("Assault Rifles", "cw_kk_hk416", "HK416", 1.5*m, 260, "models/weapons/w_cwkk_hk416.mdl") 
-AddLoadout("Assault Rifles", "cw_covertible_ak12", "AK-12", 2.5*m, 300, "models/weapons/w_rif_covertible_ak12.mdl") 
+--AddLoadout("Assault Rifles", "cw_ar15", "AR15", 1250*k, 220, "models/weapons/w_rif_m4a1.mdl") --the AR15 is somehow better than M4A1
+--AddLoadout("Assault Rifles", "cw_tr09_mk18", "MK18", 1.5*m, 220, "models/weapons/therambotnic09/w_cw2_mk18.mdl") 
+--AddLoadout("Assault Rifles", "cw_kk_hk416", "HK416", 1.5*m, 260, "models/weapons/w_cwkk_hk416.mdl") 
+--AddLoadout("Assault Rifles", "cw_covertible_ak12", "AK-12", 2.5*m, 300, "models/weapons/w_rif_covertible_ak12.mdl") 
 
 
 ----
