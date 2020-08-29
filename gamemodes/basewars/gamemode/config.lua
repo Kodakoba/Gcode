@@ -144,7 +144,6 @@ local function CreateSubcategory(cat, subcat)
 				-- tier detection
 	if subcat:match("[%p%s]T(%d+)[%p%s]") then
 		t.Priority = -tonumber(subcat:match("[%p%s]T(%d+)[%p%s]"))
-		print("Matched priority", t.Priority, subcat)
 	end
 
 	BaseWars.SpawnList[cat].Subcategories[subcat] = t
@@ -163,8 +162,8 @@ local cEnts = CreateCategory("Entities")
 local cLoadout = CreateCategory("Loadout")
 
 	if CLIENT then
-		local scMelee = CreateSubcategory("Loadout", "Melee")
-		scMelee.Priority = 10
+		--local scMelee = CreateSubcategory("Loadout", "Melee")
+		--scMelee.Priority = 10
 
 		local scPistols = CreateSubcategory("Loadout", "Pistols")
 		scPistols.Priority = 9
@@ -387,15 +386,11 @@ AddEntities("Dispensers (T1)", "bw_dispenser_ammo", "Ammo Dispenser", k * 55, 30
 AddEntities("Dispensers (T1)", "bw_dispenser_armor2", "Armor Dispenser T2", m * 15, 1000, "models/props_combine/suit_charger001.mdl")
 AddEntities("Dispensers (T1)", "bw_dispenser_ammo2", "Ammo Dispenser T2", m * 10, 750, "models/props_lab/reciever_cart.mdl")
 
-----
-
-AddLoadout("Ammo Kits", "cw_ammo_kit_small", "Kit", 5*k, 10, "models/items/boxsrounds.mdl", true)
-AddLoadout("Ammo Kits", "cw_ammo_crate_small", "Crate", 35*k, 25, "models/Items/item_item_crate.mdl", true)
 
 ----
 
-AddLoadout("Melee", "weapon_crowbar", "Crowbar", 2.5*k, 3, "models/weapons/w_crowbar.mdl")
-AddLoadout("Melee", "csgo_default_knife", "Knife", 10*k, 5, "models/weapons/w_csgo_default.mdl")
+--AddLoadout("Melee", "weapon_crowbar", "Crowbar", 2.5*k, 3, "models/weapons/w_crowbar.mdl")
+--AddLoadout("Melee", "csgo_default_knife", "Knife", 10*k, 5, "models/weapons/w_csgo_default.mdl")
 
 -- Shit-tier --
 
