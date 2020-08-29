@@ -283,13 +283,14 @@ end
 -----------------------------------------------------------]]
 function meta:AlphaTo( alpha, length, delay, callback, ease )
 
+	if self.m_AnimList and self.m_AnimList.AlphaTo then
+		if self.m_AnimList.AlphaTo.Alpha == alpha then return end
+		self.m_AnimList.AlphaTo:Stop()
+	end
+
 	local anim = self:NewAnimation( length, delay, ease, callback )
 	anim.Alpha = alpha
 	anim.Think = AlphaThink
-
-	if self.m_AnimList.AlphaTo then
-		self.m_AnimList.AlphaTo:Stop()
-	end
 
 	self.m_AnimList.AlphaTo = anim
 

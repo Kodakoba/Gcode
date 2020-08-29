@@ -240,15 +240,16 @@ if not table.Filter then
 
 	function table.Filter(tab, func)
 		local c = 1
+		local len = #tab
 
-		for i=1, #tab do
+		for i=1, len do
 			if func(tab[i]) ~= false then
 				tab[c] = tab[i]
 				c = c + 1
 			end
 		end
 
-		for i=c, #tab do
+		for i=c, len do
 			tab[i] = nil
 		end
 

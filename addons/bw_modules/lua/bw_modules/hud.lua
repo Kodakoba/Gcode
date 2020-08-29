@@ -6,15 +6,7 @@ MODULE.Realm 	= 2
 
 if SERVER then return end
 
-
-local clamp = math.Clamp
-local floor = math.floor
-local round = math.Round
-
-
 local draw = draw
-
-local fade = true
 
 local backcol = Color(40, 40, 40)
 local hdcol = Color(30, 30, 30)
@@ -25,7 +17,6 @@ local w, h = 180, 55
 local headerH = 24
 
 local lastpos = Vector()
-local lastX, lastY = 0, 0
 local lastent
 
 
@@ -46,14 +37,7 @@ local gray = Color(40, 40, 40)
 local EntMaxHP = 0
 local EntHP = 0
 
-local HPFrac = 0
-
 local PWFG = Color(50, 140, 240)
-
-local EntMaxPW = 0
-local EntPW = 0
-
-local PWFrac = 0
 
 local vm = Matrix()
 
@@ -72,6 +56,12 @@ else
 	make()
 end
 
+local rebootingMaxWidth = 0
+local rebootingMaxText = "Rebooting..."
+
+surface.SetFont("OS18")
+rebootingMaxWidth = (surface.GetTextSize(rebootingMaxText))
+
 local function DrawStructureInfo()
 
 	local me = LocalPlayer()
@@ -89,8 +79,10 @@ local function DrawStructureInfo()
 
 		local wep = me:GetActiveWeapon()
 		local class = (IsValid(wep) and wep:GetClass())
-
-		local to = (class == "weapon_physgun" and ((input.IsMouseDown(MOUSE_LEFT) and not vgui.CursorVisible() and 140) or 240) ) or 250
+				-- not holding a physgun = 250,
+				-- holding an entity with the physgun = 140,
+				-- just have the physgun out = 230
+		local to = (class ~= 'weapon_physgun' and 250) or me:GetPhysgunningEntity() and 80 or 230
 		lastpos = ent:LocalToWorld(ent:OBBCenter())
 
 		dist = math.max(lastpos:Distance(trace.StartPos) - 96, 0)
@@ -100,7 +92,7 @@ local function DrawStructureInfo()
 
 		name = ent.PrintName or "wat"
 
-		if dist < 108 then anims:To("Alpha", to, 0.3, 0, 0.3) else anims:To("Alpha", 0, 0.3, 0, 0.3) end
+		if dist < 108 then anims:To("Alpha", to, 0.15, 0, 0.3) else anims:To("Alpha", 0, 0.3, 0, 0.3) end
 	end
 
 	alpha = anims.Alpha or 0
@@ -135,11 +127,7 @@ local function DrawStructureInfo()
 
 	local hpw = HPFrac * (w-12)
 
-	local bary = headerH + 8
-
 	local hpW = math.floor(math.max(hpw, 8))			--for nice rounding
-
-	local hph = math.ceil(14*scale)
 
 	--[[
 		Height Calculation
@@ -171,11 +159,7 @@ local function DrawStructureInfo()
 
 			local ok, err = pcall(function()
 
-				local x, y = 0, 0
-
-				local scale = 1
-
-				local round = math.min(6, headerH/2)
+				local round = math.min(6, headerH / 2)
 
 				AlphaColors(alpha, hdcol, backcol, HPBG, HPFG, PWFG, white, gray)
 
@@ -204,7 +188,6 @@ local function DrawStructureInfo()
 		cam.PushModelMatrix(vm)
 			local ok, err = pcall(function()
 
-				local x, y = 0, 0
 				local tx = Language("Health", EntHP, EntMaxHP)
 
 				draw.Masked(function()
@@ -218,7 +201,9 @@ local function DrawStructureInfo()
 				local tY = headerH + 26
 
 				if rebooting then
-					draw.SimpleText("Rebooting" .. ("."):rep((CurTime() * 3) % 2 + 1), "OS18", w/2, tY, white, 1, 5)
+					local _, tH = draw.SimpleText("Rebooting" .. ("."):rep((CurTime() * 3) % 3 + 1), "OS18", w/2, tY, white, 1, 5)
+					White()
+					draw.LegacyLoading(w / 2 + rebootingMaxWidth / 2 + 6 + 8, tY + tH / 2, 16, 16)
 					tY = tY + 18
 				elseif dead then
 					anims.NoPowerCol = anims.NoPowerCol or Color(200, 60, 60)

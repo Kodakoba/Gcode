@@ -293,21 +293,36 @@ local function OpenShit(qm, self, pnl)
 			self:SetKeepAlive(true)
 
 			if pnl.HookUp then
-				pnl.HookUp:AlphaTo(50, 0.2, 0)
+				pnl.HookUp:AlphaTo(50, 0.2, 0, nil, 0.3)
 			end
 
 			if pnl.Disconnect then
-				pnl.Disconnect:AlphaTo(50, 0.2, 0)
+				pnl.Disconnect:AlphaTo(50, 0.2, 0, nil, 0.3)
 			end
 
 			if self.Panels then
 				for k,v in ValidIPairs(self.Panels) do
-					v:AlphaTo(50, 0.2, 0)
+					v:AlphaTo(50, 0.2, 0, nil, 0.3)
 				end
 			end
 
 		else
 			pnl:GeneratorPaint(w, h)
+
+			if not self.Closing and self.Open then
+				pnl.HookUp:AlphaTo(255, 0.2, 0, nil, 0.3)
+				pnl.Disconnect:AlphaTo(255, 0.2, 0, nil, 0.3)
+				if self.Panels then
+					for k,v in ValidIPairs(self.Panels) do
+						v:AlphaTo(255, 0.2, 0, nil, 0.3)
+					end
+				end
+
+				if not vgui.CursorVisible() and IsValid(openedQM) then
+					openedQM:SetMouseInputEnabled(true)
+				end
+			end
+
 			self:SetKeepAlive(false)
 		end
 

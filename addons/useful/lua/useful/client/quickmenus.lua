@@ -91,6 +91,8 @@ function QMMeta:__OnClose(ent, pnl)
 		v.MoveOutAnim = btn:MoveBy(oX, oY, self:GetTime(), 0, 0.2)
 	end
 
+	self.Open = false
+	self.Closing = true
 end
 
 function QMMeta:__OnReopen(ent, pnl)
@@ -108,6 +110,13 @@ function QMMeta:__OnReopen(ent, pnl)
 		v.MoveInAnim = btn:MoveTo(v.X, v.Y, self:GetTime(), 0, 0.2)
 	end
 
+	self.Open = true
+	self.Closing = false
+end
+
+function QMMeta:__OnOpen(ent, pnl)
+	self.Open = true
+	self.Closing = false
 end
 
 --quick function for making fancy button pop-in & out animations without much hassle
@@ -252,7 +261,7 @@ local function CreateQuickMenu()
 				else
 					v.wasopened = true
 					v:OnOpen(v.ent, self)
-
+					v:__OnOpen(v.ent, self)
 				end
 
 				v.opened = true
@@ -387,12 +396,13 @@ hook.Add("Think", "QuickMenus", function()
 	local lp = LocalPlayer()
 
 	local using = lp:KeyDown(IN_USE)
+	local physgunning = lp:GetPhysgunningEntity()
 
 	local tr = lp:GetEyeTrace()
 
 	if not using then DoTimer() return end
 
-	if not IsValid(tr.Entity) then
+	if not IsValid(tr.Entity) or physgunning then
 
 		if openedQM then
 
@@ -406,7 +416,8 @@ hook.Add("Think", "QuickMenus", function()
 			DoTimer()
 		end
 
-	return end
+		return
+	end
 
 	local ent = tr.Entity
 	local qm = qmregistered[ent]

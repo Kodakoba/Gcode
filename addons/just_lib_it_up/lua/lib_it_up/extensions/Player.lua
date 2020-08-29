@@ -70,6 +70,25 @@ else
 		end
 	end
 
+	local physPlys = { --[=[   [ply] = {entity, hitPos}   ]=]  }
+
+	function PLAYER:GetPhysgunningEntity()
+		local t = physPlys[self]
+		return t and t[1], t and t[2]
+	end
+
+	hook.Add("DrawPhysgunBeam", "LibItUp_TrackPhysgun", function(ply, pgun, isEnabled, whomst, bone, where)
+		if isEnabled then
+			local t = physPlys[ply] or {}
+			physPlys[ply] = t
+
+			t[1] = whomst
+			t[2] = where
+		else
+			physPlys[ply] = nil
+		end
+
+	end)
 end
 
 PLAYER.GetNextRespawn = PLAYER.GetRespawnTime
