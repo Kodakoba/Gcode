@@ -23,20 +23,18 @@ MoarPanelsMats.gl = Material("vgui/gradient-l")
 MoarPanelsMats.g = Material("gui/gradient", "noclamp smooth")
 
 local spinner = Material("data/hdl/spinner.png")
+local spinner32 = Material("data/hdl/spinner32.png")
+
 local cout = Material("data/hdl/circle_outline256.png")
 local cout128 = Material("data/hdl/circle_outline128.png")
 local cout64 = Material("data/hdl/circle_outline64.png")
 local bad = Material("materials/icon16/cancel.png")
 
-hook.Add("InitPostEntity", "MoarPanels", function()
-
-	local _ = spinner:IsError() and hdl.DownloadFile("https://i.imgur.com/KHvsQ4u.png", "spinner.png", function(fn) spinner = Material(fn, "mips") end)
-
-	_ = cout:IsError() and hdl.DownloadFile("https://i.imgur.com/huBY9vo.png", "circle_outline256.png", function(fn) cout = Material(fn, "mips") end)
-	_ = cout128:IsError() and hdl.DownloadFile("https://i.imgur.com/mLZEMpW.png", "circle_outline128.png", function(fn) cout128 = Material(fn, "mips") end)
-	_ = cout64:IsError() and hdl.DownloadFile("https://i.imgur.com/kY0Isiz.png", "circle_outline64.png", function(fn) cout64 = Material(fn, "mips") end)
-
-end)
+local _ = spinner:IsError() and hdl.DownloadFile("https://i.imgur.com/KHvsQ4u.png", "spinner.png", function(fn) spinner = Material(fn, "mips") end)
+_ = spinner32:IsError() and hdl.DownloadFile("https://i.imgur.com/YMMrRhh.png", "spinner32.png", function(fn) spinner32 = Material(fn, "mips") end)
+_ = cout:IsError() and hdl.DownloadFile("https://i.imgur.com/huBY9vo.png", "circle_outline256.png", function(fn) cout = Material(fn, "mips") end)
+_ = cout128:IsError() and hdl.DownloadFile("https://i.imgur.com/mLZEMpW.png", "circle_outline128.png", function(fn) cout128 = Material(fn, "mips") end)
+_ = cout64:IsError() and hdl.DownloadFile("https://i.imgur.com/kY0Isiz.png", "circle_outline64.png", function(fn) cout64 = Material(fn, "mips") end)
 
 local circles = {rev = {}, reg = {}} --reverse and regular
 
@@ -111,7 +109,7 @@ end
 
 function draw.LegacyLoading(x, y, w, h)
 	local size = math.min(w, h)
-	surface_SetMaterial(spinner)
+	surface_SetMaterial(size < 32 and spinner32 or spinner)
 	surface.DrawTexturedRectRotated(x, y, size, size, -(CurTime() * 360) % 360)
 end
 
@@ -705,6 +703,10 @@ draw.Rect = surface.DrawRect
 draw.DrawRect = surface.DrawRect
 
 draw.Color = surface.SetDrawColor
+
+function White()
+	surface.SetDrawColor(255, 255, 255)
+end
 
 function surface.DrawMaterial(url, name, x, y, w, h, rot)
 	local mat = GetOrDownload(url, name)
@@ -1370,6 +1372,7 @@ local rets = {
 function draw.HSVToColor(hue, saturation, value)
 	value = math.Clamp(value, 0, 1)
 	saturation = math.Clamp(saturation, 0, 1)
+
 	if saturation == 0 then
 		return value * 255, value * 255, value * 255
 	end
@@ -1398,6 +1401,12 @@ function draw.ColorModHSV(col, h, s, v)
 	return col
 end
 
+function draw.ColorChangeHSV(col, h, s, v)
+	local ch, cs, cv = col:ToHSV()
+
+	col.r, col.g, col.b = draw.HSVToColor(ch + (h or 0), cs + (s or 0), cv + (v or 0))
+	return col
+end
 
 function draw.SimpleText2( text, font, x, y, colour, xalign, yalign )
 

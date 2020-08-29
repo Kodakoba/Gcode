@@ -20,7 +20,6 @@ function ENT:Init()
 
     self.rtb = 0
 
-    self:SetUpgradeCost(self.UpgradeCost)
     self:SetMultiplier(1)
 
     self.Level = 1
@@ -39,11 +38,6 @@ function ENT:Init()
     if not self.BypassMaster then
         BaseWars.Printers.Add(self)
     end
-end
-
-function ENT:SetUpgradeCost(val)
-    self.UpgradeCost = val
-    self:SetUpgradeValue(val)
 end
 
 function ENT:NetworkMods()

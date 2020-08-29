@@ -82,31 +82,6 @@ function ENT:DrawTipDisplay(w, h, a)
 	curTipY = contY + contH
 end
 
-local black = Color(0, 0, 0, 220)
-
-function ENT:DrawDisplay(w, h, a)
-	local upW, upH = 0, 64 + 18
-
-	local costMoney = self:GetUpgradeCost() or 0
-	costMoney = costMoney * self:GetLevel()
-	local cost = Language("Price", BaseWars.NumberFormat(costMoney))
-	local what = "Upgrade cost:"
-
-	surface.SetFont("OSB64")
-	local costW = surface.GetTextSize(cost)
-
-	surface.SetFont("OS24")
-	local whatW = surface.GetTextSize(what)
-
-	upW = math.max(costW, whatW) + 24
-
-	local upX, upY = w/2 - upW/2, h * 0.05 + a * (curTipY + 140)
-
-	draw.RoundedBox(16, upX, upY, upW, upH, black)
-	draw.SimpleText(what, "OS24", upX + upW / 2, upY, color_white, 1)
-	draw.SimpleText(cost, "OSB64", upX + upW / 2, upY + 18, color_white, 1)
-end
-
 function ENT:Draw()
 	self:DrawModel()
 	self:GetCachedPos(nil, misc, nil)
@@ -137,7 +112,8 @@ function ENT:Draw()
 			end
 		end
 
-		local ok, err = pcall(self.DrawDisplay, self, w, h, a)
+		local y = h * 0.05 + a * (curTipY + 140)
+		local ok, err = pcall(self.DrawUpgradeCost, self, y, w, h, a)
 
 		if not ok then
 			print("err", err)

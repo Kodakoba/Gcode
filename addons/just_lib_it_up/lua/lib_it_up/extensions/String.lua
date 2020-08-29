@@ -298,30 +298,43 @@ function string.WordWrap2(txt, wid, font)
 
 end
 
---[[function string.GetBetween(str, tag, num) --wtf is this
-	local pat = "%b" .. tag
-	local pat2 = tag[1] .. "(.+)" .. tag[2]
+-- faster than string.Comma :)
 
-	if num then
+function string.Comma2( number )
 
-		for i=1, 10000 do
+	local num = string.format( "%f", number )
 
-			local match = str:match(pat)
-			if not match then return end
+	local int, frac = num:match("^-?(%d+)%.?([^0%.]*)")
 
-			if match then
-				if i ~= num then
-					str = str:gsub(match:PatternSafe(), "")
-				else
-					return match:match(pat2)
-				end
-			end
-		end
+	local t = {}
 
-	else
-		return str:match(pat):match(pat2)
+	local len = #int
+	local odd = len % 3
+
+	local segs = math.floor( len / 3 )
+	local add = odd > 0 and 2 or 1
+
+	for i=1, segs do
+		t[segs - i + add] = int:sub(-i * 3, -i * 3 + 2)
 	end
-end]]
+
+	if odd > 0 then
+		t[1] = int:sub(1, odd)
+	end
+
+	local ret = table.concat(t, ",")
+
+	if frac ~= "" then
+		ret = ret .. "." .. frac
+	end
+
+	if number < 0 then
+		ret = "-" .. ret
+	end
+
+	return ret
+
+end
 
 function string.TimeParse(time) --this is broken i think
 

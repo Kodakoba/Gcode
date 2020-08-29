@@ -424,13 +424,13 @@ function BaseWars.NumberFormat(num)
 
 		if num >= Div or num <= -Div then
 
-			return string.Comma(math.Round(num / Div, 1)) .. " " .. Str
+			return string.Comma2(math.Round(num / Div, 1)) .. " " .. Str
 
 		end
 
 	end
 
-	return string.Comma(math.Round(num, 1))
+	return string.Comma2(math.Round(num, 1))
 
 end
 
