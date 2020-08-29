@@ -91,9 +91,14 @@ function ENT:PhysicsUpdate()
 	BWEnts[self].CheckDist = true
 end
 
+function ENT:OnConnectToLine(line)
+	self:SetHotwired(NULL)
+	self.Hotwired = nil
+
+	self:SetLine(line)
+end
 
 function ENT:ConnectTo(ent)
-	print("hotwiring", self, "to", ent)
 	if ent.PowerType ~= "Consumer" and ent.PowerType ~= "Line" then return end
 
 	local grid = self:GetGrid()
@@ -120,16 +125,32 @@ function ENT:ConnectTo(ent)
 		end
 
 		other_grid:RemoveConsumer(ent)
+		other_grid.Hotwired = nil
 
 		grid:AddConsumer(ent)
+		grid.Hotwired = {self, ent}
 
 		self:SetLine(NULL)
 		self:SetHotwired(ent)
 
+		grid:On("RemovedGenerator", "TrackHotwired", function(grid, rem)
+			if rem == self and grid.Hotwired and grid.Hotwired[1] == self then
+				grid.Hotwired = nil
+			end
+		end)
+
+		grid:On("RemovedConsumer", "TrackHotwired", function(grid, rem)
+			if rem == ent and grid.Hotwired and grid.Hotwired[2] == rem then
+				grid.Hotwired = nil
+			end
+		end)
 	else
 		grid:RemoveGenerator(self)
 		other_grid:AddGenerator(self)
 		self:SetLine(ent)
+
+		other_grid.Hotwired = nil
+		grid.Hotwired = nil
 	end
 
 end
@@ -139,6 +160,7 @@ function ENT:Disconnect()
 	if not grid or not grid.AllEntities[self:EntIndex()] then print("no grid or not in grid", grid) return end
 
 	grid:RemoveGenerator(self)
+	grid.Hotwired = nil
 	self:SetHotwired(NULL)
 	self:SetLine(NULL)
 
@@ -148,15 +170,16 @@ end
 net.Receive("ConnectGenerator", function(_, ply)
 	local disconnect = net.ReadBool()
 	local gen = net.ReadEntity()
+	if not gen:IsValid() or not gen.IsGenerator then return end
+
 	if not disconnect then
 		local ent = net.ReadEntity()
 
-		if not IsValid(gen) or not IsValid(ent) then return end
-		if (not gen.IsGenerator and not gen.Cableable) or not (ent.IsElectronic or ent.Connectable) then return end
+		if not ent:IsValid() then return end
+		if not gen.Cableable or not (ent.IsElectronic or ent.Connectable) then return end
 
 		gen:ConnectTo(ent)
 	else
-		if not IsValid(gen) or not gen.IsGenerator then return end
 		gen:Disconnect()
 	end
 

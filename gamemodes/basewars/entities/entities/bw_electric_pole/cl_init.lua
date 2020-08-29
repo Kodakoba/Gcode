@@ -525,9 +525,8 @@ hook.Add("PostDrawTranslucentRenderables", "DrawPoleCables", function(d, sb)
 
 
 		for key, ent in pairs(grid.AllEntities) do
-			local res = ent:Emit("DrawCable")
 
-			if ent.DrawCable == false or res == false then continue end
+			if ent.DrawCable == false then continue end
 
 			local pos
 			local genpos
@@ -541,9 +540,13 @@ hook.Add("PostDrawTranslucentRenderables", "DrawPoleCables", function(d, sb)
 				end
 			end
 
+			if pole.DrawCable == false then continue end
+
 			-- i understand that there are situations where both ents may be out of PVS
 			-- but the cable between them should draw, but i think performance is more important
 			if ent:IsDormant() and pole:IsDormant() then continue end
+
+			if pole:Emit("DrawCable") == false or ent:Emit("DrawCable") == false then continue end
 
 			if ent.PowerType == "Line" then
 				local pts = ent.ChainPoints
@@ -560,9 +563,6 @@ hook.Add("PostDrawTranslucentRenderables", "DrawPoleCables", function(d, sb)
 			local me = BWEnts[pole]
 			me.Cables = me.Cables or {}
 			--if not me.ThrowLightning then print("nope") continue end
-
-			
-
 
 			local them = BWEnts[ent]
 			local cab = me.Cables[ent]

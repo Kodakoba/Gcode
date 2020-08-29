@@ -157,17 +157,18 @@ end
 
 function ENT:OnChangeGridID(new)
 
-	if self.OldGridID == new or new <= 0 then print("Nope", new, self.OldGridID) return end
+	if self.OldGridID == new or new <= 0 then return end
 
 	self.OldGridID = new
 
 	local grid = PowerGrids[new]
+	PowerGridIDsToEnts.Add(self, new)
 
 	if not grid then
 		grid = PowerGrid:new(self:CPPIGetOwner(), new)
-		grid:AddConsumer(self)
+		grid:AddEntity(self)
 	else
-		grid:AddConsumer(self)
+		grid:AddEntity(self)
 	end
 
 end

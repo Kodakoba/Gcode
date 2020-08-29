@@ -13,13 +13,18 @@ poles = PowerPoles
 
 function ENT:Init(me)
 	me.ConnectDistanceSqr = self.ConnectDistance ^ 2
-	timer.Simple(0, function() self:PingGrids() end)
+
+	hook.Once("CPPIAssignOwnership", self, function(self, ply, ent)
+		if self == ent then
+			self:PingGrids(ply)
+		end
+	end)
 end
 
-function ENT:PingGrids()
+function ENT:PingGrids(ow)
 	local mypos = self:GetPos()
 	local cable = self.ConnectDistance ^ 2
-	local ow = self:CPPIGetOwner()
+	ow = ow or self:CPPIGetOwner()
 
 	local cur_grid
 
@@ -27,13 +32,14 @@ function ENT:PingGrids()
 
 	--find all grids we can even modify (eg owned by factionmates)
 	for _, grid in pairs(PowerGrids) do
-		if not grid.Owner or not grid.Owner:IsValid() or not grid.Owner:IsTeammate(ow) then continue end
+		if not grid.Owner or not grid.Owner:IsValid() or not grid.Owner:IsTeammate(ow) then printf("grid %d doesn't have a valid owner; ignoring", grid.ID) continue end
 		available_grids[#available_grids + 1] = grid
 	end
 
 	local chosen_pole
 
 	for _, grid in ipairs(available_grids) do
+		print("checking grid #" .. grid.ID .. " for availability to hook onto")
 		--try to find an existing grid we can use first
 		local mindist, minpole = math.huge
 
@@ -48,12 +54,13 @@ function ENT:PingGrids()
 		end
 
 		if minpole then
+			print("available:", minpole, grid)
 			cur_grid = grid --we found an existing grid we can connect to
 			chosen_pole = minpole
 		end
 	end
 
-	if not cur_grid then cur_grid = PowerGrid:new(ow) end --we're gonna have to create a new grid
+	if not cur_grid then print("no poles nearby; creating new grid") cur_grid = PowerGrid:new(ow) end --we're gonna have to create a new grid
 
 	cur_grid:AddLine(self, chosen_pole) --then connect ourselves to that grid
 
@@ -63,15 +70,18 @@ function ENT:PingGrids()
 
 	for _, grid in ipairs(available_grids) do
 		--connect every powerline-less generator and then consumer
-
+		print("checking grid #" .. grid.ID)
 		for _, gen in ipairs(grid.Generators) do
-			if gen.Grid and IsValid(gen:GetLine()) then print("gen has a line") continue end
+			if gen.Grid and gen:GetLine():IsValid() then print("gen has a line") continue end
 
 			local pos = gen:GetPos()
 			local dist = pos:DistToSqr(mypos)
 			if dist < cable then
-				print("yup connecting")
+				print("connecting", gen, "to pole")
+				gen:OnConnectToLine(self)
 				cur_grid:AddGenerator(gen, self)
+			else
+				print("gen too far:", dist, cable)
 			end
 		end
 

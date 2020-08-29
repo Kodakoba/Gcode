@@ -337,7 +337,7 @@ function ENT:CLInit()
 	self:OnChangeGridID(self:GetGridID())
 end
 
-function ENT:OnChangeGridID(new)
+--[[function ENT:OnChangeGridID(new)
 	if self.OldGridID == new or new <= 0 then return end
 
 	self.OldGridID = new
@@ -350,7 +350,7 @@ function ENT:OnChangeGridID(new)
 		grid:AddGenerator(self)
 	end
 
-end
+end]]
 
 function ENT:Think()
 	local p = LocalPlayer()
