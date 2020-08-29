@@ -6,12 +6,24 @@ Language = Language or {}
 
 Language.Currency = CURRENCY
 Language.CURRENCY = CURRENCY
-Language.Price = CURRENCY .. "%s"
+Language.Price = function(str)
+	if isnumber(str) then
+		return CURRENCY .. BaseWars.NumberFormat(str)
+	else
+		return CURRENCY .. str
+	end
+end
 
 Language.eval = function(self, key, ...)
-	if Language[key] then 
-		return Language[key]:format(...), true
+	local val = Language[key]
+	if val then
+		if isstring(val) then
+			return val:format(...), true
+		else
+			return val(...), true
+		end
 	end
+
 	return ("[Invalid language: %s]"):format(key), false
 end
 
