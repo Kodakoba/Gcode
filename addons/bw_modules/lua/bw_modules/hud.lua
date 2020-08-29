@@ -96,7 +96,7 @@ local function DrawStructureInfo()
 		dist = math.max(lastpos:Distance(trace.StartPos) - 96, 0)
 		lastent = ent
 		EntHP = ent:Health()
-		EntMaxHP = math.max(ent:GetMaxHealth(), 0)
+		EntMaxHP = math.max(ent:GetMaxHealth(), 1)
 
 		name = ent.PrintName or "wat"
 
