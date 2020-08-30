@@ -110,9 +110,9 @@ if SERVER then
 	end)
 
 	hook.Add("PlayerInitialSpawn", "PlayerFullyLoaded", function(ply)
-							-- V what if someone else uses that hook with `ply` as identifier
-		hook.OnceRet("SetupMove", "FullLoad:" .. hex(), function(mv_ply, _, cmd)
 
+		hook.OnceRet("SetupMove", ply, function(mv_ply, _, cmd)
+			if mv_ply ~= ply then return false end
 			if mv_ply == ply and not cmd:IsForced() then
 				if FullyLoaded[ply] then return end
 

@@ -310,24 +310,24 @@ function ENT:Draw()
 		if not ok then print('Printers error:', err) end
 	cam.End3D2D()
 
-	
+
 
 	pos, ang, scale, w, h = misc[1], misc[2], misc[3], misc[4], misc[5]
 
 	cam.Start3D2D(pos, ang, scale)
-		
+
 		ok, err = pcall(self.DrawMisc, self, pos, ang, scale, w, h, me, pwd)
 		if not ok then print('Printers misc. error:', err) end
-		
+
 
 		local y = h * 0.2 + h * 0.075 + h * 0.05
-		
+
 		ok, err = pcall(self.DrawUpgradeCost, self, y, w, h)
 		if not ok then print('Printers upgrade cost error:', err) end
 
 	cam.End3D2D()
 
-	
+
 
 
 	pos, ang, scale, w, h = stats[1], stats[2], stats[3], stats[4], stats[5]
@@ -337,5 +337,5 @@ function ENT:Draw()
 		if not ok then print('Printers error:', err) end
 	cam.End3D2D()
 
-	
+
 end

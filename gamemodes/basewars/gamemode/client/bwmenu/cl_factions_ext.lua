@@ -49,6 +49,19 @@ end
 local function facBtnPrePaint(self, w, h)
 	local max = Factions.MaxMembers
 	local fac = self.Faction
+	self.Shadow.Blur = 1
+
+	if LocalPlayer():GetFaction() == fac then
+		self.Shadow.Color = Colors.Money
+		self.AlwaysDrawShadow = true
+		self.Shadow.MaxSpread = 2
+		self.Shadow.MinSpread = 1
+		self.Shadow.Blur = 2
+	else
+		self.Shadow.Color = color_white
+		self.AlwaysDrawShadow = false
+		self.Shadow.MaxSpread = 1
+	end
 
 	local membs = fac:GetMembers()
 
@@ -56,18 +69,24 @@ local function facBtnPrePaint(self, w, h)
 	self:To("MembFrac", frac, 0.4, 0, 0.3)
 	frac = self.MembFrac or 0
 
-	draw.RoundedBox(self.RBRadius or 8, 0, 0, w, h, Colors.Gray)
+	--draw.RoundedBox(self.RBRadius or 8, 0, 0, w, h, Colors.Gray)
 
-	local x, y = self:LocalToScreen(0, 0)
-	render.SetScissorRect(x, y, x + w * frac, y + h, true)
+	--render.SetScissorRect(x, y, x + w * frac, y + h, true)
 end
 
 local function facBtnPaint(self, w, h)
+
+	local x, y = self:LocalToScreen(0, 0)
+	local frac = self.MembFrac or 0
+	local bgcol = self.FactionColor
+
+	render.SetScissorRect(x, y, x + w * frac, y + h, true)
+		draw.RoundedBox(self.RBRadius or 8, 0, 0, w, h, bgcol)
 		local fh, fs, fv = self.Faction:GetColor():ToHSV()
 		local col = pickFactionButtonTextColor(fh, fs, fv)
 
 		draw.Masked(function()
-			draw.RoundedPolyBox(self.RBRadius or 8, 0, 0, w, h, color_white)
+			draw.RoundedStencilBox(self.RBRadius or 8, 0, 0, w, h, color_white)
 		end, function()
 			local r, g, b = 20, 20, 20
 			if fv < 0.2 then
@@ -78,13 +97,15 @@ local function facBtnPaint(self, w, h)
 			surface.DrawUVMaterial("https://i.imgur.com/y9uYf4Y.png", "whitestripes.png", 0, 0, w, h, u, 0, u + 0.5, 0.125)
 		end)
 
-		draw.SimpleText(self.Faction.name, fonts.BoldSmall, w/2, 2, col, 1)
+	render.SetScissorRect(0, 0, 0, 0, false)
 
-	local x, y = self:LocalToScreen(0, 0)
+	
+
+	draw.SimpleText(self.Faction.name, fonts.BoldSmall, w/2, 2, col, 1)
+
 	frac = self.MembFrac or 0
 
 	render.SetScissorRect(x + w * frac, y, x + w, y + h, true)
-
 		draw.SimpleText(self.Faction.name, fonts.BoldSmall, w/2, 2, color_white, 1)
 	render.SetScissorRect(0, 0, 0, 0, false)
 end
@@ -93,10 +114,18 @@ end
 --	   	   Action Selection
 --[[------------------------------]]
 
--- Someone's faction
+local gu = Material("vgui/gradient-u")
+local gd = Material("vgui/gradient-d")
+local gr = Material("vgui/gradient-r")
+local gl = Material("vgui/gradient-l")
 
-local function createFactionActions(f, fac)
+
+local function createActionCanvas(f, fac)
 	local pnl = vgui.Create("Panel", f)
+	local bord = vgui.Create("Panel", pnl)
+	bord:Dock(FILL)
+	pnl.Main = bord
+
 	f.FactionFrame = pnl
 
 	pnl.Faction = fac
@@ -112,15 +141,74 @@ local function createFactionActions(f, fac)
 	h, s, v = bordCol:ToHSV()
 
 	draw.ColorModHSV(bordCol, h, s, (v < 0.3 and s < 0.1) and 0.06 or v)
-	function pnl:Paint(w, h)
+
+	function bord:Paint(w, h)
+		-- disabling clipping because otherwise when the panel fades to the right
+		-- the right edge will be invisible
+
+		-- this just looks better
+
 		surface.DisableClipping(true)
 			surface.SetDrawColor(col:Unpack())
 			surface.DrawRect(0, 0, w, h)
 
 			surface.SetDrawColor(bordCol:Unpack())
+
+			-- inlined DrawGradientBorder
+			local gw, gh = 3, 3
+			
+			surface.SetMaterial(gu)
+			surface.DrawTexturedRect(0, 0, w, gh)
+
+			if not self.NoDrawBottomGradient then
+				surface.SetMaterial(gd)
+				surface.DrawTexturedRect(0, h - gh, w, gh)
+			end
+
+
+			surface.SetMaterial(gr)
+			surface.DrawTexturedRect(w - gw, 0, gw, h)
+
+			surface.SetMaterial(gl)
+			surface.DrawTexturedRect(0, 0, gw, h)
+
+			--self:DrawGradientBorder(w, h, 3, 3)
+		surface.DisableClipping(false)
+
+		draw.SimpleText2(fac:GetName(), fonts.BoldMedium, w/2, h * 0.05, fac:GetColor(), 1)
+	end
+
+	return pnl
+end
+
+-- Your faction
+
+local function createOwnFactionActions(f, fac)
+	local canv = createActionCanvas(f, fac)
+	canv.Main.NoDrawBottomGradient = true
+
+	local plyList = vgui.Create("Panel", canv)
+	plyList:Dock(BOTTOM)
+	plyList:SetTall(canv:GetTall() * 0.15)
+
+	local col = Colors.DarkGray
+
+	function plyList:Paint(w, h)
+		surface.DisableClipping(true)
+			surface.SetDrawColor(col:Unpack())
+			surface.DrawRect(0, 0, w, h)
+
+			surface.SetDrawColor(color_black:Unpack())
 			self:DrawGradientBorder(w, h, 3, 3)
 		surface.DisableClipping(false)
 	end
+end
+
+
+-- Someone's faction
+
+local function createFactionActions(f, fac)
+	local canv = createActionCanvas(f, fac)
 
 end
 
@@ -324,7 +412,6 @@ local function onSelectAction(f, fac, new)
 	local valid = old and old:IsValid() and old:IsVisible()
 
 	if not new then
-		print("not new")
 		if valid and old.Faction == fac then return end -- don't create a new frame if it's the same fac as before
 
 		if LocalPlayer():Team() ~= fac.id then
@@ -357,7 +444,6 @@ function align(f, pnl)
 	pnl:MoveBy(8, 0, 0.2, 0, 0.3)
 	pnl:PopInShow()
 
-	print("aligning to", f)
 	f.FactionFrame = pnl
 end
 
@@ -459,8 +545,23 @@ local function onOpen(navpnl, tabbtn, prevPnl, noanim)
 
 	scr:Dock(LEFT)
 	scr:DockMargin(f.Scale > 0.75 and 8 or 4, 8, 0, newH + 4 + 4)
+
+	local vis
+
+	function scr:Think()
+		local newvis = self.VBar:IsVisible()
+		if vis ~= newvis then
+			for k,v in pairs(self.Factions) do --if vbar is visible, shorten the btn by 10
+				v:SetWide(scr:GetWide() - 16 - (newvis and 10 or 0))
+			end
+		end
+
+		vis = newvis
+	end
+
 	scr:SetWide(pnl:GetWide() * 0.4)
 	scr.GradBorder = true
+	scr.ScissorShadows = true
 
 	scr.Factions = {}
 
@@ -475,7 +576,7 @@ local function onOpen(navpnl, tabbtn, prevPnl, noanim)
 		local btn = vgui.Create("FButton", scr)
 		btn:SetPos(8, scr:GetFactionY(num))
 		btn:SetSize(scr:GetWide() - 16, facHeight)
-		btn.DrawShadow = false
+		--btn.DrawShadow = false
 
 		btn.Faction = fac
 
@@ -493,9 +594,11 @@ local function onOpen(navpnl, tabbtn, prevPnl, noanim)
 
 		draw.ColorModHSV(dimmed, ch, cs * 0.9, cv)
 
-		btn:SetColor(dimmed:Unpack())
+		btn:SetColor(Colors.Gray)
+		btn.FactionColor = dimmed
 		btn.PrePaint = facBtnPrePaint
 		btn.PostPaint = facBtnPaint
+		--btn.DrawButton = facBtnDraw
 
 		function btn:DoClick()
 			pnl:SetFaction(self.Faction)
@@ -563,10 +666,16 @@ local function onOpen(navpnl, tabbtn, prevPnl, noanim)
 	newFac.Label = "Create a faction"
 	newFac.Font = fonts.Medium
 	newFac.HovMult = 1.1
+	newFac.DisabledColor = Color(85, 85, 85)
 
 	function newFac:DoClick()
 		pnl:CreateNewFaction()
 	end
+
+	function newFac:Think()
+		self:SetDisabled(LocalPlayer():InFaction())
+	end
+
 	return pnl
 end
 
