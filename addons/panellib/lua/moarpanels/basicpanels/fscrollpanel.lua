@@ -11,7 +11,6 @@ local FScrollPanel = {}
 function FScrollPanel:Init()
 	local scroll = self.VBar
 
-
 	local dgray = Color(30,30,30)
 
 	function scroll:Paint(w,h)
@@ -36,6 +35,7 @@ function FScrollPanel:Init()
 		draw.RoundedBoxEx(4, 0, 0, w, h, Color(80,80,80), false, false, true, true)
 	end
 
+
 	self.Shadow = false --if used as a stand-alone panel
 
 	self.GradBorder = false
@@ -58,11 +58,18 @@ function FScrollPanel:Init()
 
 	self.BackgroundColor = Color(40, 40, 40)
 	self.ScrollPower = 1
+
+	self.ScissorShadows = false
 end
 
 
 function FScrollPanel:Draw(w, h)
 	if self.NoDraw then return end
+
+	if self.ScissorShadows then
+		local x, y = self:LocalToScreen(0, 0)
+		BSHADOWS.SetScissor(x, y, w, h)
+	end
 
 	local ebh, eth = 0, 0
 
@@ -168,11 +175,15 @@ end
 
 function FScrollPanel:PaintOver(w, h)
 	self:Emit("PaintOver", w, h)
+	if self.ScissorShadows then
+		BSHADOWS.SetScissor()
+	end
 
-	if not self.GradBorder then return end
+	if self.GradBorder then
+		local bl, bt, br, bb = self:GetBorders()
+		self:DrawBorder(w, h, bt, bb, br, bl)
+	end
 
-	local bl, bt, br, bb = self:GetBorders()
-	self:DrawBorder(w, h, bt, bb, br, bl)
 end
 
 function FScrollPanel:OnMouseWheeled( dlta )
@@ -188,6 +199,7 @@ function FScrollPanel:OnMouseWheeled( dlta )
 		anim.LastWheel = scroll.CurrentWheel
 		anim:On("Think", "OnWheel", function(self, fr)
 			local delta = scroll.CurrentWheel - self.LastWheel
+
 			self.LastWheel = scroll.CurrentWheel
 			scroll:OnMouseWheeled(delta)
 		end)

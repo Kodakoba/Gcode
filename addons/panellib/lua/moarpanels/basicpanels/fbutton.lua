@@ -9,8 +9,9 @@ local DIM = Color(30, 30, 30, 210)
 local button = {}
 
 function button:Init()
-	self.Color = Color(70, 70, 70)
-	self.drawColor = Color(70, 70, 70)
+	self.Color = Colors.Button:Copy()
+	self.drawColor = Colors.Button:Copy()
+	self.DisabledColor = Colors.Button:Copy()
 
 	self:SetText("")
 
@@ -31,6 +32,8 @@ function button:Init()
 	}
 
 	self.LabelColor = Color(255, 255, 255)
+	self.DisabledLabelColor = Color(255, 255, 255, 150)
+
 	self.RBRadius = 8
 
 	self.HoverColor = nil
@@ -98,6 +101,8 @@ function button:SetTextColor(col, g, b, a)
 
 	if IsColor(col) then
 		self.LabelColor = col
+		self.DisabledLabelColor = col:Copy()
+		self.DisabledLabelColor.a = 150
 		return
 	end
 
@@ -106,12 +111,15 @@ function button:SetTextColor(col, g, b, a)
 	c.g = g or 255
 	c.b = b or 255
 	c.a = a or 255
+
+	self.DisabledLabelColor = c:Copy()
+	self.DisabledLabelColor.a = 150
 end
 
-function button:HoverLogic()
+function button:HoverLogic(dis)
 	local shadow = self.Shadow
 
-	if self:IsHovered() or self.ForceHovered then
+	if (self:IsHovered() or self.ForceHovered) and not dis then
 
 		hov = true
 		local hm = self.HovMult
@@ -140,7 +148,7 @@ function button:HoverLogic()
 		--self:LerpColor(self.drawColor, self.HoverColor, 1.1, 0, 0.2)
 
 		if shadow.OnHover then
-			self:MemberLerp(shadow, "Spread", shadow.MaxSpread, shadow.HoverSpeed, 0, shadow.HoverEase)
+			self:MemberLerp(shadow, "Spread", shadow.MaxSpread / 2 or shadow.MaxSpread, shadow.HoverSpeed, 0, shadow.HoverEase)
 		end
 
 		if not self._IsHovered then
@@ -151,7 +159,7 @@ function button:HoverLogic()
 		self:ThinkHovered()
 	else
 
-		local bg = self.Color
+		local bg = dis and self.DisabledColor or self.Color
 
 		--self:LerpColor(self.drawColor, bg, 0.4, 0, 0.8)
 		LC(self.drawColor, bg)
@@ -240,7 +248,9 @@ function button:PaintIcon(x, y, tw, th)
 	local iH = ic.IconH or self:GetTall() - (self.RBRadius or 8)
 	local ioff = ic.IconX or (self.Label and 4) or 0
 
-	local col = ic.IconColor or color_white
+	local lblCol = self:GetDisabled() and self.DisabledLabelColor or self.LabelColor
+
+	local col = ic.IconColor or lblCol or color_white
 	surface.SetDrawColor(col.r, col.g, col.b, col.a)
 	local xoff = (self.Label and 1) or 0.5
 
@@ -277,36 +287,40 @@ local AYToTextY = {
 function button:Draw(w, h)
 
 	local shadow = self.Shadow
+	local disabled = self:GetDisabled()
 
 	self.drawColor = self.drawColor
 
 	local x, y = 0, 0
 
-	self:HoverLogic()
+	self:HoverLogic(disabled)
 
 	local spr = shadow.Spread or 0
 	local label = self.Label or nil
 
 	if not self.NoDraw then
 
-		if (self.DrawShadow and spr > 0.05) or self.AlwaysDrawShadow then
+		if (self.DrawShadow and spr > 0) or self.AlwaysDrawShadow then
 			BSHADOWS.BeginShadow()
 			x, y = self:LocalToScreen(0,0)
 		end
 
 		self:DrawButton(x, y, w, h)
 
-		if (self.DrawShadow and spr > 0.05) or self.AlwaysDrawShadow then
+		if (self.DrawShadow and spr > 0) or self.AlwaysDrawShadow then
 			local int = shadow.Intensity
 			local blur = shadow.Blur
+			local a = shadow.Alpha or 255
 
 			if self.AlwaysDrawShadow then
-				int = 3
-				spr = 1
-				blur = 1
+				--int = 3
+				spr = math.max(shadow.MinSpread or 0.3, spr)
+				--blur = 1
 			end
-
-			BSHADOWS.EndShadow(int, spr, blur or 2, self.Shadow.Alpha, self.Shadow.Dir, self.Shadow.Distance, nil, self.Shadow.Color, self.Shadow.Color2)
+			if spr < 0.2 then
+				a = a * (spr / 0.2)
+			end
+			BSHADOWS.EndShadow(int, spr, blur or 2, a, shadow.Dir, shadow.Distance, nil, shadow.Color, shadow.Color2)
 		end
 
 	end
@@ -322,10 +336,12 @@ function button:Draw(w, h)
 		local ay = self.TextAY or 1
 		local realAY = AYToTextY[ay] or 1
 
+		local lblCol = disabled and self.DisabledLabelColor or self.LabelColor
+
 		if label:find("\n") then
-			local tw = draw.DrawText(label, self.Font, tx, ty, self.LabelColor, ax)
+			local tw = draw.DrawText(label, self.Font, tx, ty, lblCol, ax)
 		else
-			local tw, th = draw.SimpleText(label, self.Font, tx, ty, self.LabelColor, ax, realAY)
+			local tw, th = draw.SimpleText(label, self.Font, tx, ty, lblCol, ax, realAY)
 
 			local iX = tx - tw * (ax/2)
 			local iY = ty + th * (ay/2)

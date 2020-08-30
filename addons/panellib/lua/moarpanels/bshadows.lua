@@ -176,10 +176,12 @@ BSHADOWS.EndShadow = function(intensity, spread, blur, opacity, direction, dista
 
     render.SetMaterial(shmat)
     if screct.x then scissor() end
+    local x, y = xOffset + curX, yOffset + curY
+
     for i = 1, math.ceil(intensity) do
             -- https://github.com/Facepunch/garrysmod-issues/issues/4635
         if screct.x then scissor() end
-            render.DrawScreenQuadEx(xOffset + curX, yOffset + curY, curW or ScrW(), curH or ScrH())
+            render.DrawScreenQuadEx(x, y, curW or ScrW(), curH or ScrH())
         if screct.x then unscissor() end
     end
     
