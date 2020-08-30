@@ -1,28 +1,46 @@
-local ID = 0
+__HookID = __HookID or 0
+
+-- difference between this and hook.Add(event, object) is that
+-- you are guaranteed a unique hook which won't overwrite other hooks
+-- with the same object and name (or get overwritten)
+
+function hook.Object(hookname, hookobj, cb)
+	local id = "hookObject" .. __HookID
+
+	hook.Add(hookname, id, function(...)
+		if not hookobj:IsValid() then hook.Remove(hookname, id) return end
+		cb(hookobj, ...)
+	end)
+
+	return id
+end
 
 function hook.Once(hookname, hookid, cb)
 
-	local args = {}
-
 	if isfunction(hookid) then
 		cb = hookid
-		hookid = "hookOnce" .. ID
-		ID = ID + 1
+		hookid = "hookOnce" .. __HookID
+		__HookID = __HookID + 1
 	end
 
 	local canIndex = isentity(hookid) or ispanel(hookid) or istable(hookid)
 
-	if canIndex and hookid.IsValid then
-		args[1] = hookid
+	if canIndex and hookid.IsValid then -- if we were given an object, create a unique object hook
 
-		hookid = ("hookOnce:%p"):format(hookid) .. ":" .. ID
-		ID = ID + 1
+		local id
+		local func = function(self, ...)
+			hook.Remove(hookname, id)
+			cb(self, ...)
+		end
+
+		id = hook.Object(hookname, hookid, func)
+
+		return
 	end
 
 	hook.Add(hookname, hookid, function(...)
-		table.InsertVararg(args, ...)
 		hook.Remove(hookname, hookid)
-		cb(unpack(args))
+		cb(...)
 	end)
 
 end
@@ -30,27 +48,36 @@ end
 
 function hook.OnceRet(hookname, hookid, cb)
 
-	local args = {}
-
 	if isfunction(hookid) then
 		cb = hookid
-		hookid = "hookOnceRet" .. ID
-		ID = ID + 1
+		hookid = "hookOnceRet" .. __HookID
+		__HookID = __HookID + 1
 	end
 
 	local canIndex = isentity(hookid) or ispanel(hookid) or istable(hookid)
 
 	if canIndex and hookid.IsValid then
-		args[1] = hookid
 
-		hookid = ("hookOnce:%p"):format(hookid) .. ":" .. ID
-		ID = ID + 1
+		local id
+		local func = function(self, ...)
+			local ok, ret = pcall(cb, self, ...)
+
+			if ret ~= false then
+				hook.Remove(hookname, id)
+				if not ok then
+					error(ret, 2)
+				end
+			end
+		end
+
+		id = hook.Object(hookname, hookid, func)
+
+		return
 	end
 
 	hook.Add(hookname, hookid, function(...)
-		table.InsertVararg(args, ...)
+		local ok, ret = pcall(cb, ...)
 
-		local ok, ret = pcall(cb, unpack(args))
 		if ret ~= false then
 			hook.Remove(hookname, hookid)
 			if not ok then
