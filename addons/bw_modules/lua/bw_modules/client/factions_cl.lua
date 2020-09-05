@@ -9,18 +9,60 @@ local facs = Factions
 
 Factions.meta = Factions.meta or Networkable:extend()
 local facmeta = Factions.meta
+facmeta.IsFaction = true
+
+function IsFaction(t)
+	local meta = getmetatable(t)
+
+	return meta and meta.IsFaction
+end
 
 function facmeta:Initialize(id, name, col, haspw)
-	self:SetNetworkableID("Faction:" .. id)
+	local new = self:SetNetworkableID("Faction:" .. id)
+	if new then self = new end
 
 	self.id = id
 	self.name = name
 	self.col = col
 	self.haspw = haspw
 
+	self:On("NetworkedVarChanged", "TrackMembers", function(_, key, old, new)
+		print("trackmembers: wtf is", _, _ == self)
+
+		if key == "Members" then
+			self:RunPlayerHooks(old, new)
+			return
+		end
+
+		if key == "Leader" then
+			hook.Run("FactionChangedLeader", self, old, new)
+			return
+		end
+	end)
+
 	self:On("NetworkedChanged", function()
 		hook.Run("FactionsUpdate", self)
 	end)
+
+	return new
+end
+
+function facmeta:RunPlayerHooks(old, new)
+	-- calculate who left & who joined
+	local old_plys = {}
+
+	for k, ply in ipairs(old) do
+		old_plys[ply] = true
+	end
+
+	for k, ply in ipairs(new) do
+		if not old_plys[ply] then hook.Run("FactionJoinedPlayer", self, ply) end
+		old_plys[ply] = nil
+	end
+
+	for left_ply, _ in pairs(old_plys) do
+		hook.Run("FactionLeftPlayer", self, left_ply)
+	end
 end
 
 function facmeta:InRaid()

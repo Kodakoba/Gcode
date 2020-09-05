@@ -2,6 +2,15 @@ setfenv(0, _G)
 
 if not muldim then include("multidim.lua") end
 
+--[[
+	Emits:
+		"NetworkedChanged" : `changes` table
+								[changed_key] = {old_val, new_val}
+
+		"NetworkedVarChanged" : key, old_val, new_val
+]]
+
+
 Networkable = Networkable or Emitter:callable()
 local nw = Networkable
 
@@ -133,9 +142,16 @@ end
 
 nw.AutoAssignID = true
 
-function nw:Initialize(id)
+function nw:Initialize(id, ...)
 	self.Networked = {}
 	self.LastSerialized = {} -- purely for networked tables
+
+	if self.__instance ~= nw then 	-- extension of Networkable; let's try to set the meta to it
+		if cache[id] then			-- in case we received nw data before the object was constructed
+			setmetatable(cache[id], self.__instance)
+			self:ChangeInitArgs(cache[id], id, ...) --eheheh
+		end
+	end
 
 	if not rawget(self.__instance, "AutoAssignID") then return end 	-- if this object is constructed from an Networkable extension,
 																	-- ignore the fact we don't have an ID
@@ -155,7 +171,7 @@ function nw:SetNetworkableID(id)
 		for k,v in pairs(cache[id]) do --basically copy
 			self[k] = v
 		end
-		return cache[id]
+		return setmetatable(cache[id], getmetatable(self))
 	end
 
 	local typ = type(id):lower()
@@ -516,19 +532,24 @@ if CLIENT then
 			local changed_keys = net.ReadUInt(8)	--amt of changed keys
 
 			local obj = cache[numToID[num_id]]
+			local changes = {}
 
 			printf("	amt of changed keys for %s(id: %d): %d", obj, num_id, changed_keys)
 
 			for key_i = 1, changed_keys do
 				printf("	reading change #%d", key_i)
-				local k,v = ReadChange()
-				if obj then obj.Networked[k] = v end
+				local k, v = ReadChange()
+				if obj then		-- [1] = old, [2] = new
+					changes[k] = {obj.Networked[k], v}
+					obj.Networked[k] = v
+					obj:Emit("NetworkedVarChanged", k, changes[k][1], v) -- key, old, new
+				end
 			end
 
 			print("	ID of obj:", numToID[num_id], num_id)
 			if obj then
 				obj.NumberID = num_id
-				obj:Emit("NetworkedChanged")
+				obj:Emit("NetworkedChanged", changes)
 			end
 		end
 	end)

@@ -13,6 +13,14 @@ facs.FactionIDs = facs.FactionIDs or {}
 Factions.meta = Factions.meta or Networkable:extend()
 local facmeta = Factions.meta
 
+facmeta.IsFaction = true
+
+function IsFaction(t)
+	local meta = getmetatable(t)
+
+	return meta and meta.IsFaction
+end
+
 function facmeta:InRaid()
 	return self.Raided or self.Raider
 end
@@ -309,15 +317,17 @@ PLAYER.LeaveFaction = facs.LeaveFac
 
 function facs.JoinFac(ply, name, pw, force)
 
-	local fac = facs.Factions[name]
+	local fac = facs.Factions[name] or (IsFaction(name) and name)
 	if not fac then return false, "No such factions exist!" end
 
-	if ply:InRaid() then return false end
+	if ply:InRaid() then return false, "Can't join a faction during a raid" end
+	if ply:InFaction() then return false, "Can't join a faction while in one!" end
 
 	fac:Join(ply, pw, force)
 
 	ValidFactions()
 end
+
 PLAYER.JoinFaction = facs.JoinFac
 
 
