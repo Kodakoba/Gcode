@@ -21,7 +21,7 @@ Colors.Sky = Color(50, 150, 250)
 
 Colors.Money = Color(100, 220, 100)
 Colors.Level = Color(110, 110, 250)
-
+Colors.Golden = Color(205, 160, 50)
 Colors.DarkWhite = Color(220, 220, 220) --yes, dark white
 Colors.Blue = Color(60, 140, 200)
 

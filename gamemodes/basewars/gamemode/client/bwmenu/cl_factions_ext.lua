@@ -190,8 +190,10 @@ local function createOwnFactionActions(f, fac)
 	local plyList = vgui.Create("Panel", canv)
 	plyList:Dock(BOTTOM)
 	plyList:SetTall(canv:GetTall() * 0.15)
+	plyList:InvalidateParent(true)
 
 	local col = Colors.DarkGray
+	local pX, pY = plyList:LocalToScreen(0, 0)
 
 	function plyList:Paint(w, h)
 		surface.DisableClipping(true)
@@ -201,6 +203,114 @@ local function createOwnFactionActions(f, fac)
 			surface.SetDrawColor(color_black:Unpack())
 			self:DrawGradientBorder(w, h, 3, 3)
 		surface.DisableClipping(false)
+
+		pX, pY = self:LocalToScreen(0, 0)
+	end
+
+	function plyList:PaintOver(w, h)
+		for k,v in pairs(self.Players) do
+			v:Emit("plyListPaintOver", v:GetSize())
+		end
+	end
+
+	plyList.Players = {}
+	local plys = plyList.Players
+	local amt = #fac:GetMembers()
+
+	local avSize = plyList:GetTall() * 0.8 -- the panels are square
+	local fullW = (avSize + 8) * amt - 8
+
+	local x = plyList:GetWide() / 2 - fullW / 2
+	local y = plyList:GetTall() * 0.1
+
+	local blk = Color(20, 20, 20)
+	local wht = color_white:Copy()
+	local gold = Colors.Golden:Copy()
+	local hov
+
+	for k, ply in ipairs(fac:GetMembers()) do
+		local av = vgui.Create("CircularAvatar", plyList)
+		local curX, curY = x, y
+
+		av:SetSize(avSize, avSize)
+		av:SetPos(x, y)
+		av:SetPlayer(ply, 128)
+		av.HovFrac = 0
+		av.Size = avSize
+		av.MY = y
+		av.Alpha = 255
+
+		local name = ply:Nick()
+		local col = wht
+		
+		av:On("PreDemaskPaint", function(self, w, h)
+
+
+			local ow = fac:GetLeader()
+			render.SetStencilCompareFunction(STENCIL_EQUAL)
+
+			if ow == ply then
+				col = gold
+				render.SetScissorRect(pX, pY, plyList:GetWide() + pX, plyList:GetTall() + pY, true)
+					DisableClipping(true)
+						draw.RoundedBox(self.Rounding, -2, -2, w + 4, h + 4, Colors.Golden)
+					DisableClipping(false)
+				render.SetScissorRect(0, 0, 0, 0, false)
+			else
+				col = wht
+			end
+		end)
+		av:On("plyListPaintOver", function(self, w, h)
+			local mx, my = plyList:ScreenToLocal(gui.MousePos())
+			local X, Y = self.X, self.Y
+
+			if math.PointIn2DBox(mx, my, curX, y, avSize, avSize) then
+				self:To("HovFrac", 1, 0.2, 0, 0.3)
+				hov = self
+			else
+				self:To("HovFrac", 0, 0.2, 0, 0.3)
+				if hov == self then hov = nil end
+			end
+
+			self.Rounding = 16 - 8 * self.HovFrac
+
+			self.Y = math.ceil(y + avSize * 0.25 * self.HovFrac)
+			--local sz = math.ceil(avSize - avSize * 0.25 * self.HovFrac)
+
+			--self:SetSize(sz, sz)
+			self.X = curX --+ avSize * 0.5 -- sz * 0.5
+
+			if hov and hov ~= self then
+				self:To("Alpha", 70, 0.3, 0, 0.2)
+			else
+				self:To("Alpha", 255, 0.3, 0, 0.2)
+			end
+
+			self:SetAlpha(self.Alpha)
+
+			if self.HovFrac > 0 then
+				blk.a = self.HovFrac * 230
+				wht.a = self.HovFrac * 255
+
+				render.SetScissorRect(pX, pY, plyList:GetWide() + pX, plyList:GetTall() + pY, true)
+					DisableClipping(true)
+						surface.SetFont("OS18")
+						local tw, th = surface.GetTextSize(name)
+
+						local tX = X + w/2 - tw/2
+						local tY = Y + -12 + 8 * self.HovFrac - th
+						surface.SetTextPos(tX, tY)
+						surface.SetTextColor(col:Unpack())
+						draw.RoundedBox(4, tX - 3, tY - 2, tw + 6, th + 4, blk)
+						surface.DrawText(name)
+						--draw.SimpleText2(name, "OS18", w/2, -12 + 8 * self.HovFrac, wht, 1, 4)
+					DisableClipping(false)
+				render.SetScissorRect(0, 0, 0, 0, false)
+			end
+		end)
+		x = x + avSize + 8
+
+		plyList.Players[ply] = av
 	end
 end
 

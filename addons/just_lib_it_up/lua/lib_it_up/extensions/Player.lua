@@ -111,7 +111,7 @@ if SERVER then
 
 	hook.Add("PlayerInitialSpawn", "PlayerFullyLoaded", function(ply)
 
-		hook.OnceRet("SetupMove", ply, function(mv_ply, _, cmd)
+		hook.OnceRet("SetupMove", ply, function(mv_ply, cmd)
 			if mv_ply ~= ply then return false end
 			if mv_ply == ply and not cmd:IsForced() then
 				if FullyLoaded[ply] then return end

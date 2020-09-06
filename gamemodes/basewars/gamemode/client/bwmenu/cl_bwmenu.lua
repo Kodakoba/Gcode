@@ -132,6 +132,12 @@ hook.Add("PlayerButtonDown", "BaseWarsMenu", function(ply, btn)
 
 end)
 
+concommand.Add("openBWMenu", function()
+	if IsValid(BaseWars.Menu.Frame) then return end
+	if math.abs(PopoutTime - CurTime()) <= 0.1 then return end
+
+	CreateBWFrame()
+end)
 
 include("cl_factions_ext.lua")
 include("cl_raids_ext.lua")
