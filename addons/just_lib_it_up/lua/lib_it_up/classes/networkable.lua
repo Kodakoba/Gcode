@@ -63,15 +63,18 @@ local ns = netstack:new()
 
 ns:Hijack(true)
 
+local _vONCache = {}
+
 local encoders = {
 	["string"] = {0, net.WriteString},
 	["entity"] = {1, net.WriteEntity},
 	["vector"] = {2, net.WriteVector},
 
-	["table"] = {3, function(t)
+	["table"] = {3, function(t, _, key)
 		--if t.Networkable_Encoder then return t:Networkable_Encoder() end
 
-		local vonned = von.serialize(t)
+		local vonned = _vONCache[key] or von.serialize(t)
+		_vONCache[key] = nil
 
 		net.WriteUInt(#vonned, 16)
 		net.WriteData(vonned, #vonned)
@@ -95,6 +98,7 @@ local decoders = {
 
 		local len = net.ReadUInt(16)
 		local von_data = net.ReadData(len)
+
 		local de_vonned = von.deserialize(von_data)
 
 		return de_vonned
@@ -145,6 +149,14 @@ nw.AutoAssignID = true
 function nw:Initialize(id, ...)
 	self.Networked = {}
 	self.LastSerialized = {} -- purely for networked tables
+
+	self:On("ShouldEncode", "TablesVOnCheck", function(self, k, v)
+		if istable(v) then
+			local von = von.serialize(v)
+			if self.LastSerialized[k] == von then return end
+			_vONCache[k] = von
+		end
+	end)
 
 	if self.__instance ~= nw then 	-- extension of Networkable; let's try to set the meta to it
 		if cache[id] then			-- in case we received nw data before the object was constructed
@@ -209,10 +221,11 @@ function nw:Set(k, v)
 
 	if istable(v) then --we have to check if tables are exact
 		local last_von = self.LastSerialized[v]
-		if last_von then
-			local new_von = von.serialize(v)
-			if last_von == new_von then --[[adios]] return end
-		end
+		local new_von = von.serialize(v)
+
+		if last_von == new_von then --[[ adios ]] return end
+
+		self.LastSerialized[v] = new_von
 	end
 
 	self.Networked[k] = v
@@ -301,7 +314,7 @@ if SERVER then
 
 		-- write key encoderID and the encoded key
 		local op = net.WriteUInt(k_encoderID, encoderIDLength)
-		k_encoder(key, k_additionalArg)
+		k_encoder(key, k_additionalArg, val)
 
 		if net.ActiveNetstack then
 			op.Description = "Changed key encoder ID"
@@ -309,7 +322,7 @@ if SERVER then
 		-- write val encoderID and the encoded val
 
 		op = net.WriteUInt(v_encoderID, encoderIDLength)
-		v_encoder(val, v_additionalArg)
+		v_encoder(val, v_additionalArg, key)
 
 		if net.ActiveNetstack then
 			op.Description = "Changed value encoder ID"
@@ -388,9 +401,22 @@ if SERVER then
 
 				changed = changed + 1
 				net.WriteUInt(IDToNumber(id), 24).Description = "IDToNumber"
-				net.WriteUInt(table.Count(changes), 8).Description = "Amount of changes in an object" --amount of changed values in the Networkable object
+
+				local changesAmt = 0
+				local writeChanges = {}
 
 				for k,v in pairs(changes) do
+					local should = obj:Emit("ShouldEncode", k, v) 	-- this should mostly be used for equality checks
+					if should == false then continue end 			-- keep in mind that if you return false the change will be lost to networking
+
+					changesAmt = changesAmt + 1
+
+					writeChanges[k] = v
+				end
+
+				net.WriteUInt(changesAmt, 8).Description = "Amount of changes in an object" --amount of changed values in the Networkable object
+
+				for k,v in pairs(writeChanges) do
 					WriteChange(k, v)
 				end
 
@@ -413,16 +439,16 @@ if SERVER then
 		net.Send(player.GetAll())
 	end
 
-	timer.Create("NetworkableNetwork", update_freq, 0, function()
+	local nwAll = function()
 		local ok, err = pcall(NetworkAll)
 		if not ok then
 			realPrint("NetworkableNetwork Error:", err)
 		end
-	end)
+	end
 
-	hook.Add("PlayerFullyLoaded", "NetworkableUpdate", function(ply)
-		NetworkAll()
-	end)
+	timer.Create("NetworkableNetwork", update_freq, 0, nwAll)
+
+	hook.Add("PlayerFullyLoaded", "NetworkableUpdate", nwAll)
 
 
 	function nw:Network(now) 	--networks everything in the next tick (or right now if `now` is true OR networkable has a filter)
@@ -430,11 +456,11 @@ if SERVER then
 		if not self.Filter then
 			if not now then
 				timer.Adjust("NetworkableNetwork", 0, 0, function()
-					NetworkAll()
-					timer.Adjust("NetworkableNetwork", update_freq, 0, NetworkAll)
+					nwAll()
+					timer.Adjust("NetworkableNetwork", update_freq, 0, nwAll)
 				end)
 			else
-				NetworkAll()
+				nwAll()
 			end
 		else
 			if not _NetworkableChanges[self.NetworkableID] then return end

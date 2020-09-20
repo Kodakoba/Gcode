@@ -1,5 +1,8 @@
 if not Emitter then include('emitter.lua') end
 Animatable = Animatable or Emitter:callable()
+
+Animetable = Animatable
+
 AnimatableObjects = AnimatableObjects or setmetatable({}, {__mode = "v"}) -- dont keep references to prevent leaking
 AnimatableObjects.Dirty = false -- if true, next Think will sequentialize the table
 
