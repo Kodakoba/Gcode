@@ -74,6 +74,7 @@ local function CreateBWFrame()
 		end)
 		self:SetMouseInputEnabled(false)
 		self:SetKeyboardInputEnabled(false)
+		self:Emit("Disappear")
 	end
 
 	function f:OnKeyCodePressed(key)

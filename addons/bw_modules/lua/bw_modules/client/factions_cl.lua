@@ -9,6 +9,10 @@ local facs = Factions
 
 Factions.meta = Factions.meta or Networkable:extend()
 local facmeta = Factions.meta
+facmeta.__tostring = function(self)
+	return ("[Faction %q]"):format(self.name)
+end
+
 facmeta.IsFaction = true
 
 function IsFaction(t)
@@ -27,8 +31,6 @@ function facmeta:Initialize(id, name, col, haspw)
 	self.haspw = haspw
 
 	self:On("NetworkedVarChanged", "TrackMembers", function(_, key, old, new)
-		print("trackmembers: wtf is", _, _ == self)
-
 		if key == "Members" then
 			self:RunPlayerHooks(old, new)
 			return
@@ -51,16 +53,23 @@ function facmeta:RunPlayerHooks(old, new)
 	-- calculate who left & who joined
 	local old_plys = {}
 
-	for k, ply in ipairs(old) do
-		old_plys[ply] = true
+	if old then
+		for k, ply in ipairs(old) do
+			old_plys[ply] = true
+		end
 	end
 
 	for k, ply in ipairs(new) do
-		if not old_plys[ply] then hook.Run("FactionJoinedPlayer", self, ply) end
+		if not old_plys[ply] then
+			self:Emit("JoinedPlayer", ply)
+			hook.Run("FactionJoinedPlayer", self, ply)
+		end
+
 		old_plys[ply] = nil
 	end
 
 	for left_ply, _ in pairs(old_plys) do
+		self:Emit("LeftPlayer", left_ply)
 		hook.Run("FactionLeftPlayer", self, left_ply)
 	end
 end
@@ -87,7 +96,7 @@ function facmeta:GetColor()
 end
 
 function facmeta:HasPassword()
-	return self.pw or false
+	return self.haspw or false
 end
 
 function facmeta:GetID()
@@ -125,7 +134,7 @@ net.Receive("Factions", function(len)
 			facs.FactionIDs[id] = {id = id, name = name, col = col, own = lead, pw = haspw}]]
 		end
 
-	elseif type==2 then -- update
+	elseif type == 2 then -- update
 
 		local id = net.ReadUInt(24)
 		local name = net.ReadString()
@@ -141,7 +150,7 @@ net.Receive("Factions", function(len)
 		facs.Factions[name] = fac
 		facs.FactionIDs[id] = fac
 
-	elseif type==3 then
+	elseif type == 3 then
 
 		local id = net.ReadUInt(24)
 		print("deleting faction #" .. id)
@@ -189,10 +198,25 @@ function Factions.RequestCreate(name, pw, col)
 	if not Factions.CanCreate(name, pw, col, LocalPlayer()) then return false end
 
 	net.Start("Factions")
-		net.WriteUInt(1, 4) -- 'create'
+		net.WriteUInt(Factions.CREATE, 4)
 		net.WriteString(name)
 		net.WriteString(pw)
 		net.WriteColor(col)
 	net.SendToServer()
 
+end
+
+function Factions.RequestKick(whomst)
+
+	net.Start("Factions")
+		net.WriteUInt(Factions.KICK, 4)
+		net.WriteEntity(whomst)
+	net.SendToServer()
+
+end
+
+function facs.RequestLeave()
+	net.Start("Factions")
+		net.WriteUInt(Factions.LEAVE, 4)
+	net.SendToServer()
 end

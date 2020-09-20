@@ -9,6 +9,17 @@ Factions.MaxMembers = 4
 
 local facs = Factions
 
+Factions.CREATE = 1		-- cl -> sv
+Factions.FULLUPDATE = 1 -- sv -> cl
+
+Factions.LEAVE = 2		-- cl -> sv
+Factions.UPDATE = 2 	-- sv -> cl
+
+Factions.JOIN = 3		-- cl -> sv
+Factions.DELETE = 3		-- sv -> cl
+
+Factions.KICK = 4
+
 
 local PLAYER = debug.getregistry().Player
 

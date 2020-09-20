@@ -58,24 +58,27 @@ function facmeta:RaidedCooldown()
 	return oncd, RaidCoolDown - (CurTime() - (self.RaidCooldown or 0))
 end
 
-function facmeta:Update()
+function facmeta:Update(now)
 	self:Set("Members", self.memvals)
 	self:Set("Leader", self.own)
+
+	if now then self:Network(true) end
 end
 
 function facmeta:Join(ply, pw, force)
 
-	if #self.memvals >= 4 then return false end
+	if #self.memvals >= 4 then return false, "Too many members!" end
 
-	if ply:InFaction() then return false end
-	if ply:InRaid() then return false end
+	if ply:InFaction() then return false, "Player is already in a faction!" end
+	if ply:InRaid() then return false, "Player is in a raid!" end
 
 	if self.pw and self.pw ~= pw and not force then
 		net.Start("Factions")
 			net.WriteUInt(10, 4) --hey buddy i think you got the wrong password
 		net.Send(ply)
 
-	return false end
+		return false, "wrong password boy"
+	end
 
 	self.members[ply] = true
 	self.memvals[#self.memvals + 1] = ply
@@ -84,7 +87,7 @@ function facmeta:Join(ply, pw, force)
 
 	ply:SetTeam(self:GetID())
 
-	self:Update()
+	self:Update(true)
 end
 
 function facmeta:Initialize(ply, id, name, pw, col)
@@ -124,47 +127,71 @@ function facmeta:IsRaidable()
 	return kk
 end
 
+function facmeta:ChangeOwnership(to)
+	to = to or table.SeqRandom(self.memvals)
+	if not to then
+		self:Remove()
+		error("Noone to change ownership to; killing faction")
+		return
+	end
+
+	self.own = to
+	self:Update(true)
+end
+
+function facmeta:RemovePlayer(ply)
+	self.members[ply] = nil
+	facs.Players[ply] = nil
+
+	table.RemoveByValue(self.memvals, ply)
+
+	ply:SetTeam(1)
+
+	if #self.memvals == 0 then
+		self:Remove()
+		return
+	end
+
+	if self.own == ply and #self.memvals > 0 then
+		self:ChangeOwnership()
+	end
+	self:Update(true)
+end
+
+function facmeta:Remove()
+	facs.Factions[self.name] = nil
+	facs.FactionIDs[self.id] = nil
+
+	for k,v in ipairs(self.memvals) do
+		v:SetTeam(1)
+		facs.Players[v] = nil
+	end
+
+	net.Start("Factions")
+		net.WriteUInt(3, 4)	--delete
+		net.WriteUInt(self.id, 24)
+	net.Broadcast()
+
+	self:Invalidate()
+end
+
 function ValidFactions()
 
 	for k,v in pairs(facs.Factions) do
-
-		--Members checking
-
-		local hasmems = false
-
-		for ply, num in pairs(v.members) do
-
-			if IsPlayer(ply) then hasmems = true end
-
-			if not IsValid(ply) then
-				v.members[num] = nil
-			end
-
-
-		end
 
 		table.Filter(v.members, function(v)
 			return v:IsValid()
 		end)
 
-		if not hasmems then
-			net.Start("Factions")
-				net.WriteUInt(3, 4)	--delete
-				net.WriteUInt(v.id, 24)
-			net.Broadcast()
-
-			v:Invalidate()
-
-			facs.FactionIDs[v.id] = nil
-			facs.Factions[k] = nil
-
+		if table.Count(v.members) == 0 then
+			v:Remove()
 			continue
 		end
 
 		--Owner checking
 
 		if not IsValid(v.own) then
-			facs.RandomizeOwner(v.name)
+			v:ChangeOwnership()
 		end
 
 		v:Update()
@@ -172,14 +199,6 @@ function ValidFactions()
 	end
 
 end
-
-function facs.InFaction(ply, ply2) --mostly unused, really...
-	if IsValid(ply2) then
-		return facs.Players[ply] == facs.Players[ply2]
-	end
-	return facs.Players[ply] or false
-end
-
 
 function facs.GetPlayerFaction(ply, ply2)
 	if IsPlayer(ply2) then
@@ -190,51 +209,19 @@ function facs.GetPlayerFaction(ply, ply2)
 		return facs.Factions[facs.Players[ply]] or false
 	end
 end
+
 PLAYER.GetFaction = facs.GetPlayerFaction
 PLAYER.InFaction = facs.GetPlayerFaction
 
 
 function facs.RandomizeOwner(name)
-	local fac = facs.Factions[name]
-	local ppl = {}
-	for k,v in pairs(fac.members) do
-		if IsValid(k) then
-			ppl[#ppl+1] = k
-		end
-	end
-	local own = table.Random(ppl)
-
-	if not own then
-
-		for k,v in pairs(fac.members) do  --???
-			if IsValid(v) then
-				facs.LeaveFac(v)
-			end
-		end
-
-		fac:Invalidate()
-
-		facs.FactionIDs[facs.Factions[name].id] = nil
-		facs.Factions[name] = nil
-
-		net.Start("Factions")
-			net.WriteUInt(3, 4)	--delete
-			net.WriteUInt(fac.id, 24)
-		net.Broadcast()
-
-		return
-	end
-
-	facs.Factions[name].own = own
-
-	net.Start("Factions")
-		net.WriteUInt(4, 4)	--update leader
-		net.WriteUInt(facs.Factions[name].id, 24)
-		net.WriteUInt(own:UserID(), 24)
-	net.Broadcast()
-
+	local fac = IsFaction(name) and name or facs.Factions[name]
+	fac:ChangeOwnership()
 end
+
+
 local cooldowns = {}
+
 function facs.CreateFac(ply, name, pw, col)
 	if cooldowns[ply] and CurTime() - cooldowns[ply] < 1 then return end
 
@@ -245,9 +232,7 @@ function facs.CreateFac(ply, name, pw, col)
 
 	ValidFactions()
 
-	
-
-	if not name or name == "" then error('uh') return end
+	if not name or name == "" then error('uh no name?') return end
 	if pw == "" then pw = nil end
 
 	local id = 101
@@ -262,8 +247,7 @@ function facs.CreateFac(ply, name, pw, col)
 
 	cooldowns[ply] = CurTime()
 
-	fac:Update()
-	fac:Network(true)
+	fac:Update(true)
 
 	net.Start("Factions")
 		net.WriteUInt(2, 4)	--update
@@ -278,39 +262,15 @@ function facs.CreateFac(ply, name, pw, col)
 
 	net.Broadcast()
 
-	
 end
 
 PLAYER.CreateFaction = facs.CreateFac
 
 function facs.LeaveFac(ply)
-
-	local name = facs.Players[ply]
-	if not name then return end
-
-	local fac = facs.Factions[name]
+	local fac = ply:GetFaction()
 	if not fac then return end
 
-
-	fac.members[ply] = nil
-
-	for k,v in pairs(fac.memvals) do
-		if v == ply then
-			table.remove(fac.memvals, k)
-			break
-		end
-	end
-
-	if fac.own == ply then
-		facs.RandomizeOwner(name)
-	end
-
-	facs.Players[ply] = nil
-	ply:SetTeam(1)
-
-	fac:Update()
-
-	ValidFactions()
+	fac:RemovePlayer(ply)
 end
 
 PLAYER.LeaveFaction = facs.LeaveFac
@@ -330,32 +290,31 @@ end
 
 PLAYER.JoinFaction = facs.JoinFac
 
+function facs.KickOut(ply)
+	local fac = ply:GetFaction()
+	if not fac then return end
+
+	fac:RemovePlayer(ply)
+
+	-- more logic if needed here; different from just leaving fac
+end
+
+PLAYER.KickFromFaction = facs.KickOut
 
 hook.Add("PlayerDisconnected", "FactionDisband", function(ply)
 	local fac = ply:GetFaction()
 	if not fac then return end
 
-	fac.members[ply] = nil
-	facs.Factions[ply] = nil
-	for k,v in pairs(fac.memvals) do
-		if v == ply then
-			table.remove(fac.memvals, k)
-			break
-		end
-	end
-
-	if fac.owner == ply then
-		facs.RandomizeOwner(fac.name)
-	end
-
-	fac:Update()
-	ValidFactions()
+	fac:RemovePlayer(ply)
 end)
 
 net.Receive("Factions", function(_, ply)
 
 	local mode = net.ReadUInt(4)
-	if mode == 1 then
+
+	if mode == Factions.CREATE then
+		-- Creating a faction
+
 		local name = net.ReadString()
 		local pw = net.ReadString()
 		local col = net.ReadColor()
@@ -373,9 +332,14 @@ net.Receive("Factions", function(_, ply)
 		end
 
 		facs.CreateFac(ply, name, pw, col)
-	elseif mode == 2 then
+
+	elseif mode == Factions.LEAVE then
+		-- Leaving a faction
+
 		facs.LeaveFac(ply)
-	elseif mode == 3 then
+
+	elseif mode == Factions.JOIN then
+		-- Joining a faction
 		local ok = facs.JoinFac(ply, net.ReadString(), net.ReadString())
 
 		if ok == false then
@@ -384,11 +348,32 @@ net.Receive("Factions", function(_, ply)
 			net.Send(ply)
 		end
 
+	elseif mode == Factions.KICK then
+		-- Kicking a faction member
+
+		local whomst = net.ReadEntity()
+		if not IsPlayer(whomst) then return end
+
+		if ply:GetFaction() ~= whomst:GetFaction() then
+			errorf("%s (%s) attempted to kick %s (%s) from a faction they are not in.", ply:Nick(), ply:SteamID64(), whomst:Nick(), whomst:SteamID64())
+			return
+		end
+
+		if ply:GetFaction():GetOwner() ~= ply then 
+			errorf("%s (%s) attempted to kick %s (%s) despite not being the leader.", ply:Nick(), ply:SteamID64(), whomst:Nick(), whomst:SteamID64())
+			return
+		end
+
+		whomst:KickFromFaction()
 	end
 
 end)
 
 hook.Add("PlayerInitialSpawn", "FactionNetwork", function(ply)
+	facs.FullUpdate()
+end)
+
+function facs.FullUpdate()
 	ValidFactions()
 
 	net.Start("Factions")
@@ -398,31 +383,17 @@ hook.Add("PlayerInitialSpawn", "FactionNetwork", function(ply)
 			net.WriteUInt(v.id, 24)
 			net.WriteString(v.name)
 			net.WriteColor(v.col)
-			--net.WriteUInt(v.own:UserID(), 24)
+
 			local haspw = false
 			if v.pw then haspw = true end
 			net.WriteBool(haspw)
 		end
-	net.Send(ply)
+	net.Broadcast()
+end
 
-end)
 
-ValidFactions()
+facs.FullUpdate()
 
-net.Start("Factions")
-	net.WriteUInt(1, 4)
-	net.WriteUInt(table.Count(facs.Factions), 16)
-	for k,v in pairs(facs.Factions) do
-		net.WriteUInt(v.id, 24)
-		net.WriteString(v.name)
-		net.WriteColor(v.col)
-		--net.WriteUInt(v.own:UserID(), 24)
-
-		local haspw = false
-		if v.pw then haspw = true end
-		net.WriteBool(haspw)
-	end
-net.Broadcast()
 
 function facs.GetFaction(id)
 	ValidFactions()

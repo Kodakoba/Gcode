@@ -181,12 +181,7 @@ local function createActionCanvas(f, fac)
 	return pnl
 end
 
--- Your faction
-
-local function createOwnFactionActions(f, fac)
-	local canv = createActionCanvas(f, fac)
-	canv.Main.NoDrawBottomGradient = true
-
+local function createMembersList(f, canv, fac)
 	local plyList = vgui.Create("Panel", canv)
 	plyList:Dock(BOTTOM)
 	plyList:SetTall(canv:GetTall() * 0.15)
@@ -208,43 +203,114 @@ local function createOwnFactionActions(f, fac)
 	end
 
 	function plyList:PaintOver(w, h)
-		for k,v in pairs(self.Players) do
+		local hov = 0
+		for k,v in ipairs(self.Players) do
 			v:Emit("plyListPaintOver", v:GetSize())
+			hov = math.max(hov, v.HovFrac)
 		end
+
+		self:SetTall(canv:GetTall() * 0.15 + hov * 16)
 	end
 
 	plyList.Players = {}
+
 	local plys = plyList.Players
 	local amt = #fac:GetMembers()
 
-	local avSize = plyList:GetTall() * 0.8 -- the panels are square
-	local fullW = (avSize + 8) * amt - 8
+	local avSize, fullW, x, y
+	avSize = plyList:GetTall() * 0.7 -- the panels are square
 
-	local x = plyList:GetWide() / 2 - fullW / 2
-	local y = plyList:GetTall() * 0.1
+	local function recalculate()
+		amt = #fac:GetMembers()
+		fullW = (avSize + 8) * amt - 8
+
+		x = plyList:GetWide() / 2 - fullW / 2
+		y = plyList:GetTall() - avSize * 0.6
+
+		for _, av in ipairs(plys) do
+			av:To("X", x, 0.3, 0.1, 0.3)
+			x = x + avSize + 8
+		end
+	end
+
+	recalculate()
 
 	local blk = Color(20, 20, 20)
 	local wht = color_white:Copy()
 	local gold = Colors.Golden:Copy()
 	local hov
 
-	for k, ply in ipairs(fac:GetMembers()) do
-		local av = vgui.Create("CircularAvatar", plyList)
+	local cur_mn
+
+	----------------------------------------------
+
+	local function createPlayer(ply)
+		local av = vgui.Create("DButton", plyList)
+		local real_av = vgui.Create("CircularAvatar", av)
 		local curX, curY = x, y
 
 		av:SetSize(avSize, avSize)
 		av:SetPos(x, y)
-		av:SetPlayer(ply, 128)
+
+		av.Player = ply
+		av.CurX, av.CurY = curX, curY
+
+		real_av:Dock(FILL)
+		real_av:SetPlayer(ply, 128)
+
 		av.HovFrac = 0
 		av.Size = avSize
 		av.MY = y
 		av.Alpha = 255
+		av.Faction = fac
+		av:SetText("")
+
+		real_av:SetMouseInputEnabled(false)
 
 		local name = ply:Nick()
 		local col = wht
-		
-		av:On("PreDemaskPaint", function(self, w, h)
 
+		fac:On("LeftPlayer", av, function(self, left)
+			if left ~= ply then return end
+
+			av:MoveBy(0, 16, 0.3, 0, 0.3)
+			av:PopOut()
+
+			for k,v in ipairs(plys) do
+				if v == av then
+					table.remove(plys, k)
+					break
+				end
+			end
+			recalculate()
+
+		end)
+
+
+		function av:DoClick()
+			local mn = vgui.Create("FMenu")
+			mn:SetPos(gui.MouseX() - 8, gui.MouseY() + 1)
+			mn:MoveBy(8, 0, 0.3, 0, 0.4)
+			mn:PopIn()
+
+			hook.Run("GenerateFactionOptions", self.Faction, ply, mn)
+			if table.IsEmpty(mn.Options) then mn:Remove() return end
+
+			mn:Open()
+
+			cur_mn = mn
+			mn.SelButton = self
+
+			BaseWars.Menu.Frame:On("Disappear", mn, function()
+				mn:SetMouseInputEnabled(false)
+				mn:SetKeyboardInputEnabled(false)
+				mn:PopOut()
+			end)
+		end
+
+		function av:Paint() end
+
+		real_av:On("PreDemaskPaint", function(self, w, h)
 
 			local ow = fac:GetLeader()
 			render.SetStencilCompareFunction(STENCIL_EQUAL)
@@ -256,15 +322,26 @@ local function createOwnFactionActions(f, fac)
 						draw.RoundedBox(self.Rounding, -2, -2, w + 4, h + 4, Colors.Golden)
 					DisableClipping(false)
 				render.SetScissorRect(0, 0, 0, 0, false)
+
+				av.Owner = true
 			else
 				col = wht
+
+				av.Owner = false
 			end
 		end)
+
 		av:On("plyListPaintOver", function(self, w, h)
 			local mx, my = plyList:ScreenToLocal(gui.MousePos())
 			local X, Y = self.X, self.Y
+			local y = plyList:GetTall() - avSize * 0.6
 
-			if math.PointIn2DBox(mx, my, curX, y, avSize, avSize) then
+			local valid = cur_mn and cur_mn:IsValid()
+			local is_sel = valid and cur_mn.SelButton == self
+
+			curX, curY = self:GetPos()
+
+			if is_sel or (not valid and math.PointIn2DBox(mx, my, curX, Y, avSize, plyList:GetTall() - Y)) then
 				self:To("HovFrac", 1, 0.2, 0, 0.3)
 				hov = self
 			else
@@ -274,13 +351,10 @@ local function createOwnFactionActions(f, fac)
 
 			self.Rounding = 16 - 8 * self.HovFrac
 
-			self.Y = math.ceil(y + avSize * 0.25 * self.HovFrac)
-			--local sz = math.ceil(avSize - avSize * 0.25 * self.HovFrac)
+			self.Y = math.ceil(y - (avSize * 0.5 + 4) * self.HovFrac)
+			--self.X = curX
 
-			--self:SetSize(sz, sz)
-			self.X = curX --+ avSize * 0.5 -- sz * 0.5
-
-			if hov and hov ~= self then
+			if hov and hov ~= self and hov:IsValid() then
 				self:To("Alpha", 70, 0.3, 0, 0.2)
 			else
 				self:To("Alpha", 255, 0.3, 0, 0.2)
@@ -290,7 +364,7 @@ local function createOwnFactionActions(f, fac)
 
 			if self.HovFrac > 0 then
 				blk.a = self.HovFrac * 230
-				wht.a = self.HovFrac * 255
+				col.a = self.HovFrac * 255
 
 				render.SetScissorRect(pX, pY, plyList:GetWide() + pX, plyList:GetTall() + pY, true)
 					DisableClipping(true)
@@ -298,10 +372,11 @@ local function createOwnFactionActions(f, fac)
 						local tw, th = surface.GetTextSize(name)
 
 						local tX = X + w/2 - tw/2
-						local tY = Y + -12 + 8 * self.HovFrac - th
+						local tY = math.Round(Y + -12 + 8 * self.HovFrac - th - (self.Owner and 2 or 0))
 						surface.SetTextPos(tX, tY)
 						surface.SetTextColor(col:Unpack())
-						draw.RoundedBox(4, tX - 3, tY - 2, tw + 6, th + 4, blk)
+
+						draw.RoundedBox(4, tX - 2, tY - 1, tw + 4, th + 2, blk)
 						surface.DrawText(name)
 						--draw.SimpleText2(name, "OS18", w/2, -12 + 8 * self.HovFrac, wht, 1, 4)
 					DisableClipping(false)
@@ -310,8 +385,98 @@ local function createOwnFactionActions(f, fac)
 		end)
 		x = x + avSize + 8
 
-		plyList.Players[ply] = av
+		plys[#plys + 1] = av
 	end
+
+	----------------------------------------------
+
+	fac:On("JoinedPlayer", plyList, function(fac, ply)
+		createPlayer(ply)
+		recalculate()
+	end)
+
+	for k, ply in ipairs(fac:GetMembers()) do
+		createPlayer(ply)
+	end
+
+	return plyList
+end
+
+-- Your faction
+
+local red = Color(190, 70, 70)
+local brighterred = Color(220, 100, 100)
+
+local function createOwnFactionActions(f, fac)
+	local canv = createActionCanvas(f, fac)
+	canv.Main.NoDrawBottomGradient = true
+
+	local w, h = canv:GetSize()
+
+	local plyList = createMembersList(f, canv, fac)
+
+	local leave = vgui.Create("FButton", canv.Main)
+
+	leave:SetWide(w * 0.4)
+	leave:SetTall(h * 0.08)
+
+	leave:SetPos(w / 2 - leave:GetWide() / 2, plyList.Y - leave:GetTall() - 8)
+
+	leave.Color = Color(180, 60, 60)
+
+	leave.HoldFrac = 0
+	leave.LeaveTime = 0.8
+
+	local x, y = leave:GetPos()
+	local maxShake = 4
+
+	function leave:Think()
+		if self:IsDown() then
+			self:To("HoldFrac", 1, self.LeaveTime, 0, 0.25)
+		else
+			self:To("HoldFrac", 0, self.LeaveTime / 2, 0.5, 0.2)
+		end
+
+		local shk = self.HoldFrac
+		if shk > 0 and not self.NoShake then
+			local sx, sy = math.random(shk * maxShake), math.random(shk * maxShake)
+
+			sx = sx - maxShake / 2
+			sy = sy - maxShake / 2
+
+			self:SetPos(x + sx, y + sy)
+
+			-- not == 1 because you can click it rapidly and easing won't make it reach 1
+			-- do i care? Yes.
+			if shk > 0.99 then
+				self:FullShake()
+			end
+		end
+	end
+
+	function leave:PostPaint(w, h)
+		local sx, sy = self:LocalToScreen(0, 0)
+		local fr = self.HoldFrac
+
+		render.SetScissorRect(sx, sy, sx + w * fr, sy + h, true)
+			draw.RoundedBox(self.RBRadius, 0, 0, w, h, brighterred)
+		render.SetScissorRect(0, 0, 0, 0, false)
+
+		draw.SimpleText("Leave Faction", self.Font, w/2, h/2, color_white, 1, 1)
+
+	end
+
+	function leave:FullShake()
+		if not fac then return end
+
+		self.NoShake = true
+		self.drawColor:Set(brighterred)
+
+		self:PopOut()
+
+		Factions.RequestLeave()
+	end
+
 end
 
 
@@ -319,7 +484,27 @@ end
 
 local function createFactionActions(f, fac)
 	local canv = createActionCanvas(f, fac)
+	canv.Main.NoDrawBottomGradient = true
 
+	local plyList = createMembersList(f, canv, fac)
+
+	if fac:HasPassword() then
+		local te = vgui.Create("FTextEntry", canv.Main)
+		te:SetSize(canv.Main:GetWide() * 0.5, 32)
+		te:SetPlaceholderText("Password...")
+		te:SetPos(canv.Main:GetWide() / 2 - te:GetWide() / 2 - 18, canv.Main:GetTall() - 36)
+		te:SetUpdateOnType(true)
+
+		local join = vgui.Create("DButton", canv.Main)
+		join:SetSize(32, 32)
+		join:SetPos(te.X + 4 + te:GetWide(), te.Y)
+	else
+		local join = vgui.Create("FButton", canv.Main)
+		join:SetSize(96, 36)
+		join:SetPos(canv.Main:GetWide() / 2 - join:GetWide() / 2, canv.Main:GetTall() - 52)
+		join:SetLabel("Join")
+		join:SetColor(Color(50, 150, 50))
+	end
 end
 
 -- Creating a new faction
@@ -516,6 +701,17 @@ local function createNewFaction(f)
 	doEet.Label = " Create"
 end
 
+local function removePanel(pnl, hide)
+	pnl.__selMove = pnl:MoveBy(16, 0, 0.2, 0, 1.4)
+
+	if hide then
+		pnl:PopOutHide()
+	else
+		pnl:PopOut()
+	end
+
+end
+
 local function onSelectAction(f, fac, new)
 
 	local old = IsValid(f.FactionFrame) and f.FactionFrame
@@ -536,10 +732,10 @@ local function onSelectAction(f, fac, new)
 	end
 
 	if valid then
-		old.__selMove = old:MoveBy(16, 0, 0.2, 0, 1.4)
-		old:PopOutHide()
+		removePanel(old, true)
 	end
 end
+
 
 function align(f, pnl)
 	pnl:SetPos(f.FactionScroll.X + f.FactionScroll:GetWide(), 0)
@@ -739,16 +935,18 @@ local function onOpen(navpnl, tabbtn, prevPnl, noanim)
 
 
 		for k,v in ipairs(sorted) do
-
+			-- compare currently existing factions vs. currently existing buttons
+			-- every button that has an existing faction will have their .Sorted member set to true
 			local name, fac = v[1], v[2]
 
 			if IsValid(scr.Factions[name]) then
 
 				scr.Factions[name].Sorted = true
 				local desY = scr:GetFactionY(k)
-				scr.Factions[name]:MoveTo(8, desY, 0.3, 0, 0.2)
+				scr.Factions[name]:MoveTo(8, desY, 0.3, 0, 0.3)
 			else
 				local btn = scr:AddButton(fac, k)
+				btn:PopIn()
 				btn.Sorted = true
 				btn.FacNum = k
 			end
@@ -757,8 +955,21 @@ local function onOpen(navpnl, tabbtn, prevPnl, noanim)
 		for name, btn in pairs(scr.Factions) do
 			if IsValid(btn) and not btn.Sorted then
 				-- if Sorted is false that means we didn't go over that button and, thus, the faction doesn't exist anymore
-				btn:PopOut()
+				--btn:PopOut()
+				local x, y = btn:GetPos()
+				btn:Dock(NODOCK)
+				btn:SetPos(x, y)
+				removePanel(btn)
 				scr.Factions[name] = nil
+			end
+
+		end
+
+		if pnl.FactionFrame and pnl.FactionFrame:IsValid() then
+			local ff = pnl.FactionFrame
+			if ff.Faction then
+				for k,v in ipairs(sorted) do if ff.Faction == v[2] then return end end -- currently open faction still exists; everythings ok
+				removePanel(ff) -- currently open faction does not exist anymore; yeet it
 			end
 		end
 
@@ -805,3 +1016,20 @@ tab[3] = onCreateTab
 
 tab.Order = math.huge
 tab.IsDefault = true
+
+
+
+hook.Add("GenerateFactionOptions", "BaseActions", function(faction, ply, mn)
+	local ow = faction:GetLeader()
+	if LocalPlayer() ~= ow then return end
+
+	if ply ~= LocalPlayer() then
+		local kick = mn:AddOption("Kick Member", function()
+			Factions.RequestKick(ply)
+		end)
+		kick.Color = Color(150, 30, 30)
+		
+	end
+
+	mn.WOverride = 250
+end)
