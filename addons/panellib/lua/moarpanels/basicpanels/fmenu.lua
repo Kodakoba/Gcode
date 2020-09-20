@@ -24,7 +24,10 @@ function FMO:PerformLayout()
 	end
 
 	DButton.PerformLayout( self )
+	
 	self.DragMouseRelease = function() return false end --Fuck you
+	self.Options = {}
+
 end
 vgui.Register("FMenuOption", FMO, "DMenuOption")
 
@@ -259,6 +262,7 @@ function FM:AddOption( strText, funcFunction )
 	if ( funcFunction ) then pnl.DoClick = funcFunction end
 
 	self:AddPanel( pnl )
+	self.Options[strText] = pnl
 
 	return pnl
 

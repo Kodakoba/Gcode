@@ -258,6 +258,10 @@ if not table.Filter then
 
 end
 
+function table.SeqRandom(t)
+	return t[math.random(1, #t)]
+end
+
 function eval(var, ...)
 
 	if isfunction(var) then

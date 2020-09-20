@@ -7,7 +7,7 @@ if not muldim then include("multidim.lua") end
 			creates an event listener for when :Emit(event_name) gets called
 			if id_name is provided, it MUST be a string, a number or something with an :IsValid() method
 			callback args are self + arguments passed from :Emit()
-			id_name functions kinda like hook.Add's identifier
+			id_name functions kinda like hook.Add's identifier, but, unlike hook.Add, passing it won't pass it to the callback
 
 			returns id_name where it put the emitter
 
@@ -133,7 +133,7 @@ function Emitter:Emit(event, ...)
 	if evs then
 		for k,v in pairs(evs) do
 			--if event name isn't a string, isn't a number and isn't valid then bail
-			if not (isstring(k) or isnumber(k) or IsValid(k)) then evs[k] = nil continue end
+			if not (isstring(k) or isnumber(k) or k:IsValid()) then evs[k] = nil continue end
 			--v[1] is the callback function
 			--every other key-value is what was passed by On
 

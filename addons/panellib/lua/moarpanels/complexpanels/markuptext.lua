@@ -6,7 +6,7 @@ local PANEL = {}
 function PANEL:Init()
 	self.Pieces = {}
 	self:SetKeyboardInputEnabled(true)
-	self:RequestFocus()
+	-- self:RequestFocus()
 end
 
 
