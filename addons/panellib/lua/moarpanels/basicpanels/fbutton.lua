@@ -246,6 +246,7 @@ function button:PaintIcon(x, y, tw, th)
 
 	local iW = ic.IconW or self:GetWide() - (self.RBRadius or 8)
 	local iH = ic.IconH or self:GetTall() - (self.RBRadius or 8)
+
 	local ioff = ic.IconX or (self.Label and 4) or 0
 
 	local lblCol = self:GetDisabled() and self.DisabledLabelColor or self.LabelColor
@@ -254,16 +255,16 @@ function button:PaintIcon(x, y, tw, th)
 	surface.SetDrawColor(col.r, col.g, col.b, col.a)
 	local xoff = (self.Label and 1) or 0.5
 
-	local iX
-	local iY
+	local iX = x
+	local iY = y
 
-	if not ic.IconRotation then
+	--[[if not ic.IconRotation then
 		iX = x - iW * xoff - ioff
 		iY = self:GetTall() / 2 - iH / 2
 	else
 		iX = x - ioff
 		iY = y
-	end
+	end]]
 
 	render.PushFilterMin(TEXFILTER.ANISOTROPIC)
 
@@ -335,18 +336,34 @@ function button:Draw(w, h)
 		local ax = self.TextAX or 1
 		local ay = self.TextAY or 1
 		local realAY = AYToTextY[ay] or 1
+		local ic = self.Icon
 
 		local lblCol = disabled and self.DisabledLabelColor or self.LabelColor
 
 		if label:find("\n") then
 			local tw = draw.DrawText(label, self.Font, tx, ty, lblCol, ax)
 		else
-			local tw, th = draw.SimpleText(label, self.Font, tx, ty, lblCol, ax, realAY)
+			local iW = ic and ic.IconW or 0
+			local iH = ic and ic.IconH or 0
 
-			local iX = tx - tw * (ax/2)
-			local iY = ty + th * (ay/2)
+			local iconX = ic and (ic.IconX or 4) or 0
 
-			self:PaintIcon(iX, iY, tw, th)
+			surface.SetFont(self.Font)
+			local tW, tH = surface.GetTextSize(label)
+						-- 			shhh
+			local fullW = iW + (iconX * 2) + tW
+
+			local iX = math.Round(tx - fullW * (ax / 2))
+			local iY = math.Round(ty - iH * (ay / 2))
+
+			self:PaintIcon(iX, iY, tW, tH)
+
+			local tX = math.Round(iX + iconX + iW)
+			local tY = math.Round(ty - tH * (ay / 2))
+
+			surface.SetTextPos(tX, tY)
+			surface.SetTextColor(lblCol:Unpack())
+			surface.DrawText(label)
 		end
 		return
 	end

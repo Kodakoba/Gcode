@@ -584,6 +584,10 @@ function NavPanel:SetActivePanel(pnl, nopopout, noanim) --nil is acceptable as p
 	end
 end
 
+function NavPanel:GetActivePanel()
+	return self.ActivePnl
+end
+
 function NavPanel:AddTab(name, onopen, onclose)
 	local tab = vgui.Create("NavbarChoice", self.Navbar)
 	tab:SetName(name)

@@ -37,6 +37,7 @@ function BaseWars.Menu.ReScale()
 	local bsz = fonts.BoldSizes
 
 	bsz.Small = 8 + 16 * scale
+	bsz.Tiny = 6 + 12 * scale
 	bsz.Medium = 16 + 12 * scale
 
 	for k,v in pairs(bsz) do
@@ -60,7 +61,7 @@ local function CreateBWFrame()
 
 	f.Scale = math.max(ScrH() / 1080, 0.6)
 	local sc = f.Scale
-	f:SetSize(sc * 800, sc * 600)
+	f:SetSize(sc * 700, sc * 500)
 	f:Center()
 	f:MakePopup()
 	f.Shadow = {}
@@ -139,6 +140,8 @@ concommand.Add("openBWMenu", function()
 
 	CreateBWFrame()
 end)
+
+include("cl_factions_mainframe_ext.lua")
 
 include("cl_factions_ext.lua")
 include("cl_raids_ext.lua")

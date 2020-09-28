@@ -245,7 +245,7 @@ function Factions.RequestCreate(name, pw, col)
 	return prom
 end
 
-function Factions.RequestKick(whomst)
+function facs.RequestKick(whomst)
 
 	net.Start("Factions")
 		net.WriteUInt(Factions.KICK, 4)
@@ -272,4 +272,57 @@ function facs.RequestJoin(fac, pw)
 	net.SendToServer()
 
 	return prom
+end
+
+
+function facs.GetSortedFactions()
+	local facs = Factions.Factions
+	local sorted = {}
+
+	for name, dat in pairs(facs) do
+		sorted[#sorted + 1] = {name, dat}
+	end
+
+	table.sort(sorted, function(a, b)
+
+		local name1, name2 = a[1], a[2]
+		local a, b = a[2], b[2] --we're looking at facs
+
+		local memb1 = a:GetMembers()
+		local memb2 = b:GetMembers()
+
+		local a_has_friends = false
+		local b_has_friends = false
+
+		local a_has_more = #memb1 > #memb2
+		local b_has_more = not a_has_more
+
+		local me = LocalPlayer()
+
+		for k,v in ipairs(memb1) do
+			if v == me then return true end --auto-move to the top
+
+			if v:GetFriendStatus() == "friend" then
+				a_has_friends = true
+				break
+			end
+		end
+
+		for k,v in ipairs(memb2) do
+			if v == me then return false end --vi lost
+
+			if v:GetFriendStatus() == "friend" then
+				b_has_friends = true
+				break
+			end
+		end
+
+		if a_has_friends and not b_has_friends then return true end 	-- first sort by friends
+
+		if not a_has_more and not b_has_more then return name1 < name2 end -- if member counts are equal, sort alphabetically as a backup plan
+		return a_has_more												-- sort by member counts
+	end)
+
+
+	return sorted
 end
