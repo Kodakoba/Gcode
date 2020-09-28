@@ -150,11 +150,11 @@ function nw:Initialize(id, ...)
 	self.Networked = {}
 	self.LastSerialized = {} -- purely for networked tables
 
-	self:On("ShouldEncode", "TablesVOnCheck", function(self, k, v)
+	self:On("ShouldEncode", "TablesvONCheck", function(self, k, v)
 		if istable(v) then
-			local von = von.serialize(v)
-			if self.LastSerialized[k] == von then return end
-			_vONCache[k] = von
+			local vonData = von.serialize(v)
+			if self.LastSerialized[k] == vonData then return end
+			_vONCache[k] = vonData
 		end
 	end)
 

@@ -8,27 +8,25 @@ Promise = Promise or Emitter:Callable()
 
 function Promise:Initialize(f, err)
 
-	local st = SysTime()
-
-	self.Coroutine = coroutine.create(function(resolve, err, ...)
+	self.__CoroFunction = function(resolve, err, ...)
 
 		local step = self.__CurrentStep
 
-		local ok, res = coroutine.resume(self.__Success[step], resolve, err, ...)
+		if self.__Success[step] then
+			local ok, res = coroutine.resume(self.__Success[step], resolve, err, ...)
 
-		if not ok then
-			if self.__Errors[step] then
-				self.__Errors[step](self, res)
-			else
+			if not ok then
 				error("Promise error: " .. res)
+			end
+
+			if step == self.__CurrentStep then -- we haven't resolved immediately; halt this coroutine
+				if coroutine.running() == self.Coroutine then coroutine.yield() end
 			end
 		end
 
-		if step == self.__CurrentStep then -- we haven't resolved immediately; halt this coroutine
-			if coroutine.running() == self.Coroutine then coroutine.yield() end
-		end
+	end
 
-	end)
+	self.Coroutine = coroutine.create(self.__CoroFunction)
 
 	self.__CurrentArgs = {}
 	self.__Success = {}
@@ -55,19 +53,34 @@ function Promise:Initialize(f, err)
 
 		if coroutine.running() == self.Coroutine then coroutine.yield() end
 	end
-	
-	self.__Error = function(...)
-		self.__Errors[self.__CurrentStep] (...)
 
-		self.__CurrentStep = self.__CurrentStep + 1
+	self.__Error = function(...)
+		self.__CurrentStep = self.__CurrentStep + 1 --next then's error
+		if self.__Errors[self.__CurrentStep] then self.__Errors[self.__CurrentStep] (...) end
+
+		
 		if coroutine.running() == self.Coroutine then coroutine.yield() end
 	end
 
 	self.CatchFunc = nil
 
-	if f or err then
-		self:Then(f, err)
+	if isfunction(f) or isfunction(err) then
+		self:Then(isfunction(f) and f, isfunction(err) and err)
 	end
+end
+
+function Promise:Rewind()
+	self.__CurrentStep = 1
+
+	self.Coroutine = coroutine.create(self.__CoroFunction)
+end
+
+function Promise:Reset()
+	self.__CurrentArgs = {}
+	self.__Success = {}
+	self.__Errors = {}
+
+	self:Rewind()
 end
 
 function Promise:Then(f, err)
@@ -84,6 +97,8 @@ function Promise:Catch(err)
 end
 
 function Promise:Exec(...)
+	local stat = coroutine.status(self.Coroutine)
+	if stat == "dead" then print("coroutine is dead") return self end --/shrug
 
 	local ok, err = coroutine.resume(self.Coroutine, self.__Resolve, self.__Error, ...)
 

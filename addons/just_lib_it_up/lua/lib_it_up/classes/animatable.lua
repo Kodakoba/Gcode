@@ -1,18 +1,26 @@
-if not Emitter then include('emitter.lua') end
+if not Promise then include('promise.lua') end
 Animatable = Animatable or Emitter:callable()
 
 Animetable = Animatable
 
 AnimatableObjects = AnimatableObjects or setmetatable({}, {__mode = "v"}) -- dont keep references to prevent leaking
+AnimatableIDs = AnimatableIDs or setmetatable({}, {__mode = "v"})
+
+function AnimatableObjects.ResetAll()
+	table.Empty(AnimatableObjects)
+	table.Empty(AnimatableIDs)
+end
+
 AnimatableObjects.Dirty = false -- if true, next Think will sequentialize the table
 
 local objs = AnimatableObjects
+
+-- prevent leaking animatables
 
 local function GCProxy(t)
 	local ud = newproxy(true)
 	local mt = getmetatable(ud)
 
-	
 	mt.__gc = function()
 		AnimatableObjects.Dirty = true -- only like this because __gc gets called _after_ the entry has been deleted from the table
 	end
@@ -25,7 +33,7 @@ local function GCProxy(t)
 	return ud
 end
 
-AnimMeta = Emitter:extend()
+AnimMeta = Promise:extend()
 
 if SERVER then return end --bruh
 
@@ -66,6 +74,8 @@ end
 
 function AnimMeta:Swap(length, delay, ease, callback)
 
+	self:Reset() --reset promise
+
 	self.StartTime = delay + SysTime()
 	self.EndTime = delay + length + SysTime()
 	self.Ease = ease
@@ -83,11 +93,38 @@ function Animatable:Initialize(auto_think)
 	self.m_AnimList = {}
 
 	if auto_think ~= false then
-		local ud = GCProxy(self)
+		local id = auto_think -- if auto_think isn't false consider it an ID
+		local ud = (id and AnimatableIDs[id]) or GCProxy(self)
+
+		if id then
+			ud:StopAnimations()
+			ud.__NameID = id
+			AnimatableIDs[id] = ud
+			local found = false
+			for k,v in pairs(objs) do
+				if v == ud then found = true end
+			end
+
+			if not found then
+				objs[#objs + 1] = ud
+			end
+		end
 		--objs[#objs + 1] = ud
 		return ud
 	end
 
+end
+
+function Animatable:StopAnimations()
+	for k,anim in ipairs(self.m_AnimList) do
+		if anim.Ended then continue end
+		if anim.OnEnd then anim:OnEnd( self ) end
+		anim:Emit("End")
+		anim:Exec() -- start promise :Then's
+		anim.Ended = true
+	end
+
+	self.m_AnimList = {}
 end
 
 function Animatable:AnimationThink()
@@ -119,9 +156,10 @@ function Animatable:AnimationThink()
 			if ( Fraction == 1 ) then
 
 				if not anim.Ended then
+					anim.Ended = true
 					if anim.OnEnd then anim:OnEnd( self ) end
 					anim:Emit("End")
-					anim.Ended = true
+					anim:Exec() -- start promise :Then's
 				end
 
 				if anim.Swappable then continue end
@@ -172,6 +210,8 @@ local function hex(t)
 end
 
 function Animatable:Lerp(key, val, dur, del, ease, forceswap)
+	if not isnumber(val) then errorf("Animation:Lerp : expected number as arg #2, got %s instead", type(val)) return end
+
 	local anims = self.__Animations or {}
 	self.__Animations = anims
 
@@ -210,6 +250,7 @@ end
 Animatable.To = Animatable.Lerp
 
 function Animatable:MemberLerp(tbl, key, val, dur, del, ease, forceswap)
+	if not isnumber(val) then errorf("Animation:MemberLerp : expected number as arg #3, got %s instead", type(val)) return end
 	local anims = self.__Animations or {}
 	self.__Animations = anims
 

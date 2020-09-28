@@ -55,9 +55,10 @@ function meta:AnimationThinkInternal()
 			if ( Fraction == 1 ) then
 
 				if not anim.Ended then
+					anim.Ended = true
 					if anim.OnEnd then anim:OnEnd( self ) end
 					anim:Emit("End")
-					anim.Ended = true
+					anim:Exec()
 				end
 
 				if anim.Swappable then continue end

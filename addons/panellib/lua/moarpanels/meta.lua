@@ -159,6 +159,7 @@ function META:MemberLerp(tbl, key, val, dur, del, ease, forceswap)
 		tbl[key] = Lerp(fr, from, val)
 	end
 
+	return anim
 end
 
 --CW has its' own LerpColor which seems to work differently from this
@@ -240,6 +241,7 @@ function META:LerpColor(key, val, dur, del, ease, forceswap)
 		end
 	end
 
+	return anim
 end
 
 
