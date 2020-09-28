@@ -89,7 +89,7 @@ function Cloud:Init()
 	self.AppearTime = 0.2
 	self.DisappearTime = 0.2
 
-	self.AppearEase = 0.7
+	self.AppearEase = 0.4
 	self.DisappearEase = 0.2
 	--self.Speed = 25
 
@@ -134,10 +134,10 @@ function Cloud:MoveAbove(pnl, px)
 end
 
 function Cloud:SetLabel(txt)
-	self.Label = txt
+	self.Label = tostring(txt)
 
 	surface.SetFont(self.Font)
-	self.LabelWidth = (surface.GetTextSize(txt))
+	self.LabelWidth = (surface.GetTextSize(self.Label))
 
 end
 

@@ -20,6 +20,29 @@ Factions.DELETE = 3		-- sv -> cl
 
 Factions.KICK = 4
 
+Factions.Errors = {}
+local err = Factions.Errors
+local id = 0
+
+local function makeErr(s)
+	err[id] = LocalString(s, id)
+
+	id = id + 1
+
+	return err[id - 1]
+end
+
+Factions.Errors.Generic 		= 	makeErr("Something went wrong.")
+Factions.Errors.BadPassword 	= 	makeErr("Incorrect password!")
+Factions.Errors.NamelessFac 	= 	makeErr("Can't create a faction without a name!")
+Factions.Errors.AlreadyIn 		= 	makeErr("Can't create a new faction while in one!")
+Factions.Errors.NameLength 		= 	makeErr("Faction names must be 5-32 characters long.")
+Factions.Errors.PasswordLength 	= 	makeErr("Faction passwords must be 5-32 characters long.")
+Factions.Errors.NameExists 		= 	makeErr("A faction with this name already exists.")
+Factions.Errors.NoFac 			= 	makeErr("No such factions exist!")
+Factions.Errors.JoinInRaid 		= 	makeErr("Can't join a faction while being raided!")
+Factions.Errors.JoinInFac 		= 	makeErr("Can't join a faction while already in one!")
+
 
 local PLAYER = debug.getregistry().Player
 
@@ -41,26 +64,38 @@ end
 
 function Factions.CanCreate(name, pw, col, ply)
 	if not name then
-		return false, "Can't create a faction without a name!"
+		return false, Factions.Errors.NamelessFac
 	end
 
 	local nmLen = utf8.len(name)
 	local pwLen = pw and utf8.len(pw)
 
 	if ply:InFaction() then
-		return false, "Can't create a new faction while in one!"
+		return false, Factions.Errors.AlreadyIn
 	end
 
 	if nmLen < 5 or nmLen > 32 then
-		return false, "Faction names must be 5-32 characters long."
+		return false, Factions.Errors.NameLength
 	end
 
 	if pw and pw ~= "" and (pwLen < 5 or pwLen > 32) then
-		return false, "Faction passwords must be 5-32 characters long."
+		return false, Factions.Errors.PasswordLength
 	end
 
 	if Factions.Factions[name] then
-		return false, "A faction with this name already exists."
+		return false, Factions.Errors.NameExists
+	end
+
+	return true
+end
+
+function Factions.CanJoin(ply, fac)
+	if ply:InFaction() then
+		return false, Factions.Errors.JoinInFac
+	end
+
+	if ply:InRaid() or fac:InRaid() then
+		return false, Factions.Errors.JoinInRaid
 	end
 
 	return true

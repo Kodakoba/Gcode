@@ -2,7 +2,7 @@
 local btnPaint = function(self, w, h)
 	local col = self.Color
 	surface.SetDrawColor(col.r, col.g, col.b, col.a)
-	surface.DrawMaterial("https://i.imgur.com/jFHSu7s.png", "arr_right.png", w/2, h/2, w, h, self.Rotation)
+	surface.DrawMaterial("https://i.imgur.com/jFHSu7s.png", "arr_right.png", w - 20, 10, 20, 20, self.Rotation)
 end
 
 local holderPaint = function(self, w, h)
@@ -268,7 +268,7 @@ function Navbar:Init()
 	self.ShowHolder = showHolder
 
 	local show = vgui.Create("DButton", showHolder)
-	show:SetSize(20, 20)
+	show:SetSize(240, 20)
 	show:CenterVertical()
 	show:SetText("")
 	show.Color = color_white:Copy()
@@ -435,7 +435,7 @@ function Navbar:PerformLayout(w, h)
 
 	if IsValid(show) and self.LastWidth ~= w then
 		show:SetWide(w)
-		self.ShowBtn.X = w - 24
+		self.ShowBtn.X = w - self.ShowBtn:GetWide()
 	end
 
 	self.LastWidth = w

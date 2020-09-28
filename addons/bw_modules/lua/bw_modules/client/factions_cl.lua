@@ -1,5 +1,34 @@
 local tag = "BaseWars.Factions"
 
+local CurUniqueID = 0
+
+local function uid()
+	CurUniqueID = CurUniqueID + 1
+	return CurUniqueID % 256
+end
+
+local Promises = {}
+
+local function promise()
+	local prom
+	prom = Promise():Then(function(good, bad)
+		local ok = net.ReadBool()
+		local whyNot = not ok and net.ReadLocalString(Factions.Errors)
+
+		if not ok then
+			bad(whyNot)
+		else
+			good(ok)
+		end
+	end)
+
+	local uid = uid()
+
+	Promises[uid] = prom
+
+	return prom, uid
+end
+
 Factions = Factions or {}
 
 Factions.Factions = Factions.Factions or {}
@@ -166,7 +195,13 @@ net.Receive("Factions", function(len)
 	end
 
 	if type==10 then
-		if FacErrorReceiver then FacErrorReceiver() end
+
+		local echo_uid = net.ReadUInt(8)
+		if Promises[echo_uid] then
+			Promises[echo_uid]:Exec()
+			Promises[echo_uid] = nil
+		end
+
 		return
 	end
 	hook.Run("FactionsUpdate")
@@ -197,13 +232,17 @@ end
 function Factions.RequestCreate(name, pw, col)
 	if not Factions.CanCreate(name, pw, col, LocalPlayer()) then return false end
 
+	local prom, uid = promise()
+
 	net.Start("Factions")
 		net.WriteUInt(Factions.CREATE, 4)
+		net.WriteUInt(uid, 8)
 		net.WriteString(name)
 		net.WriteString(pw)
 		net.WriteColor(col)
 	net.SendToServer()
 
+	return prom
 end
 
 function Factions.RequestKick(whomst)
@@ -219,4 +258,18 @@ function facs.RequestLeave()
 	net.Start("Factions")
 		net.WriteUInt(Factions.LEAVE, 4)
 	net.SendToServer()
+end
+
+function facs.RequestJoin(fac, pw)
+	local prom, uid = promise()
+
+	net.Start("Factions")
+		net.WriteUInt(Factions.JOIN, 4)
+		net.WriteUInt(uid, 8)
+		net.WriteUInt(fac:GetID(), 24)
+		net.WriteBool(pw and true or false)
+		if pw then net.WriteString(pw) end
+	net.SendToServer()
+
+	return prom
 end

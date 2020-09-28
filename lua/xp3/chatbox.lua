@@ -121,7 +121,7 @@ function chatbox.ParseInto(feed, ...)
 	end
 
 	for i, v in next, tbl do
-		if IsColor(v) or istable(v) then
+		if IsColor(v) or (istable(v) and v.r and v.g and v.b) then
 			feed:InsertColorChange(v.r, v.g, v.b, 255)
 		elseif isentity(v) then
 			if v:IsPlayer() then

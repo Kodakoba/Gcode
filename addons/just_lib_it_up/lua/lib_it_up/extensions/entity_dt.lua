@@ -59,6 +59,10 @@ local lua_typs = {
 	Entity = Entity(0),
 }
 
+local aliases = {
+	["Player"] = type(Entity(0))
+}
+
 for k,v in pairs(lua_typs) do
 	lua_typs[k] = type(v)
 end
@@ -122,8 +126,11 @@ function ENTITY:QueueNotifyChange(ind, typ, name, old, new)
 	queue[self] = queue[self] or {}
 	local me = queue[self]
 
-	if lua_typs[typ] ~= type(new) then
-		errorf("EntityDT: mismatched types; expected %q for %q; received %q instead ( '%s' )\n%s", lua_typs[typ], name, type(new), new, debug.traceback(0, 4))
+	local vartyp = type(new)
+	vartyp = aliases[vartyp] or vartyp
+
+	if lua_typs[typ] ~= vartyp then
+		errorf("EntityDT: mismatched types; expected %q for %q; received %q instead ( '%s' )\n%s", lua_typs[typ], name, vartyp, new, debug.traceback(0, 4))
 		return
 	end
 

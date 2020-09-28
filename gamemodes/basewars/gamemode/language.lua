@@ -62,6 +62,34 @@ Language.PrinterUpgradeTip = "Type /upg or /upgrade while looking at a printer t
 Language.PrinterUpgradeTipFont = "OS28"
 
 setmetatable(Language, Language)
+
+LocalString = Object:callable()
+
+function LocalString:Initialize(str, id)
+	self.Str = str
+	self.ID = id
+	self.IsString = isstring(str)
+end
+
+function LocalString:__tostring()
+	return self.Str
+end
+
+function LocalString:__call(...)
+	if self.IsString then return self.Str:format(...) end
+	return self.Str(...)
+end
+
+function LocalString:Write()
+	net.WriteUInt(self.ID, 8)
+end
+
+function net.ReadLocalString(lang)
+	if not lang then error("ReadLocalString requires a language table!") return end
+	local id = net.ReadUInt(8)
+	return lang[id]
+end
+
 --[[
 	Raids.
 ]]

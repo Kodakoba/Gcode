@@ -1,11 +1,16 @@
 local tab = {}
 local fonts = BaseWars.Menu.Fonts
+local createFactionActions --bwergh
 
 BaseWars.Menu.Tabs["Factions"] = tab
 
 --[[------------------------------]]
 --	   	   	   Helpers
 --[[------------------------------]]
+
+
+
+local anim = Animatable("BWMenu")
 
 -- dim the provided color
 local dim = function(col, amt, sat, safe)
@@ -114,290 +119,19 @@ end
 --	   	   Action Selection
 --[[------------------------------]]
 
-local gu = Material("vgui/gradient-u")
-local gd = Material("vgui/gradient-d")
-local gr = Material("vgui/gradient-r")
-local gl = Material("vgui/gradient-l")
-
-
 local function createActionCanvas(f, fac)
-	local pnl = vgui.Create("Panel", f)
-	local bord = vgui.Create("Panel", pnl)
-	bord:Dock(FILL)
-	pnl.Main = bord
+	local pnl = vgui.Create("FactionPanel", f)
 
 	f.FactionFrame = pnl
-
-	pnl.Faction = fac
-
 	f:SetPanel(pnl)
 
-	local col = getDimmed(fac:GetColor(), 0.2, 0.3, true)
-
-	local h, s, v = col:ToHSV()
-	draw.ColorModHSV(col, h, s, math.max(v, 0.15))
-
-	local bordCol = fac:GetColor():Copy()
-	h, s, v = bordCol:ToHSV()
-
-	draw.ColorModHSV(bordCol, h, s, (v < 0.3 and s < 0.1) and 0.06 or v)
-
-	function bord:Paint(w, h)
-		-- disabling clipping because otherwise when the panel fades to the right
-		-- the right edge will be invisible
-
-		-- this just looks better
-
-		surface.DisableClipping(true)
-			surface.SetDrawColor(col:Unpack())
-			surface.DrawRect(0, 0, w, h)
-
-			surface.SetDrawColor(bordCol:Unpack())
-
-			-- inlined DrawGradientBorder
-			local gw, gh = 3, 3
-			
-			surface.SetMaterial(gu)
-			surface.DrawTexturedRect(0, 0, w, gh)
-
-			if not self.NoDrawBottomGradient then
-				surface.SetMaterial(gd)
-				surface.DrawTexturedRect(0, h - gh, w, gh)
-			end
-
-
-			surface.SetMaterial(gr)
-			surface.DrawTexturedRect(w - gw, 0, gw, h)
-
-			surface.SetMaterial(gl)
-			surface.DrawTexturedRect(0, 0, gw, h)
-
-			--self:DrawGradientBorder(w, h, 3, 3)
-		surface.DisableClipping(false)
-
-		draw.SimpleText2(fac:GetName(), fonts.BoldMedium, w/2, h * 0.05, fac:GetColor(), 1)
-	end
+	pnl:SetFaction(fac)
 
 	return pnl
 end
 
 local function createMembersList(f, canv, fac)
-	local plyList = vgui.Create("Panel", canv)
-	plyList:Dock(BOTTOM)
-	plyList:SetTall(canv:GetTall() * 0.15)
-	plyList:InvalidateParent(true)
-
-	local col = Colors.DarkGray
-	local pX, pY = plyList:LocalToScreen(0, 0)
-
-	function plyList:Paint(w, h)
-		surface.DisableClipping(true)
-			surface.SetDrawColor(col:Unpack())
-			surface.DrawRect(0, 0, w, h)
-
-			surface.SetDrawColor(color_black:Unpack())
-			self:DrawGradientBorder(w, h, 3, 3)
-		surface.DisableClipping(false)
-
-		pX, pY = self:LocalToScreen(0, 0)
-	end
-
-	function plyList:PaintOver(w, h)
-		local hov = 0
-		for k,v in ipairs(self.Players) do
-			v:Emit("plyListPaintOver", v:GetSize())
-			hov = math.max(hov, v.HovFrac)
-		end
-
-		self:SetTall(canv:GetTall() * 0.15 + hov * 16)
-	end
-
-	plyList.Players = {}
-
-	local plys = plyList.Players
-	local amt = #fac:GetMembers()
-
-	local avSize, fullW, x, y
-	avSize = plyList:GetTall() * 0.7 -- the panels are square
-
-	local function recalculate()
-		amt = #fac:GetMembers()
-		fullW = (avSize + 8) * amt - 8
-
-		x = plyList:GetWide() / 2 - fullW / 2
-		y = plyList:GetTall() - avSize * 0.6
-
-		for _, av in ipairs(plys) do
-			av:To("X", x, 0.3, 0.1, 0.3)
-			x = x + avSize + 8
-		end
-	end
-
-	recalculate()
-
-	local blk = Color(20, 20, 20)
-	local wht = color_white:Copy()
-	local gold = Colors.Golden:Copy()
-	local hov
-
-	local cur_mn
-
-	----------------------------------------------
-
-	local function createPlayer(ply)
-		local av = vgui.Create("DButton", plyList)
-		local real_av = vgui.Create("CircularAvatar", av)
-		local curX, curY = x, y
-
-		av:SetSize(avSize, avSize)
-		av:SetPos(x, y)
-
-		av.Player = ply
-		av.CurX, av.CurY = curX, curY
-
-		real_av:Dock(FILL)
-		real_av:SetPlayer(ply, 128)
-
-		av.HovFrac = 0
-		av.Size = avSize
-		av.MY = y
-		av.Alpha = 255
-		av.Faction = fac
-		av:SetText("")
-
-		real_av:SetMouseInputEnabled(false)
-
-		local name = ply:Nick()
-		local col = wht
-
-		fac:On("LeftPlayer", av, function(self, left)
-			if left ~= ply then return end
-
-			av:MoveBy(0, 16, 0.3, 0, 0.3)
-			av:PopOut()
-
-			for k,v in ipairs(plys) do
-				if v == av then
-					table.remove(plys, k)
-					break
-				end
-			end
-			recalculate()
-
-		end)
-
-
-		function av:DoClick()
-			local mn = vgui.Create("FMenu")
-			mn:SetPos(gui.MouseX() - 8, gui.MouseY() + 1)
-			mn:MoveBy(8, 0, 0.3, 0, 0.4)
-			mn:PopIn()
-
-			hook.Run("GenerateFactionOptions", self.Faction, ply, mn)
-			if table.IsEmpty(mn.Options) then mn:Remove() return end
-
-			mn:Open()
-
-			cur_mn = mn
-			mn.SelButton = self
-
-			BaseWars.Menu.Frame:On("Disappear", mn, function()
-				mn:SetMouseInputEnabled(false)
-				mn:SetKeyboardInputEnabled(false)
-				mn:PopOut()
-			end)
-		end
-
-		function av:Paint() end
-
-		real_av:On("PreDemaskPaint", function(self, w, h)
-
-			local ow = fac:GetLeader()
-			render.SetStencilCompareFunction(STENCIL_EQUAL)
-
-			if ow == ply then
-				col = gold
-				render.SetScissorRect(pX, pY, plyList:GetWide() + pX, plyList:GetTall() + pY, true)
-					DisableClipping(true)
-						draw.RoundedBox(self.Rounding, -2, -2, w + 4, h + 4, Colors.Golden)
-					DisableClipping(false)
-				render.SetScissorRect(0, 0, 0, 0, false)
-
-				av.Owner = true
-			else
-				col = wht
-
-				av.Owner = false
-			end
-		end)
-
-		av:On("plyListPaintOver", function(self, w, h)
-			local mx, my = plyList:ScreenToLocal(gui.MousePos())
-			local X, Y = self.X, self.Y
-			local y = plyList:GetTall() - avSize * 0.6
-
-			local valid = cur_mn and cur_mn:IsValid()
-			local is_sel = valid and cur_mn.SelButton == self
-
-			curX, curY = self:GetPos()
-
-			if is_sel or (not valid and math.PointIn2DBox(mx, my, curX, Y, avSize, plyList:GetTall() - Y)) then
-				self:To("HovFrac", 1, 0.2, 0, 0.3)
-				hov = self
-			else
-				self:To("HovFrac", 0, 0.2, 0, 0.3)
-				if hov == self then hov = nil end
-			end
-
-			self.Rounding = 16 - 8 * self.HovFrac
-
-			self.Y = math.ceil(y - (avSize * 0.5 + 4) * self.HovFrac)
-			--self.X = curX
-
-			if hov and hov ~= self and hov:IsValid() then
-				self:To("Alpha", 70, 0.3, 0, 0.2)
-			else
-				self:To("Alpha", 255, 0.3, 0, 0.2)
-			end
-
-			self:SetAlpha(self.Alpha)
-
-			if self.HovFrac > 0 then
-				blk.a = self.HovFrac * 230
-				col.a = self.HovFrac * 255
-
-				render.SetScissorRect(pX, pY, plyList:GetWide() + pX, plyList:GetTall() + pY, true)
-					DisableClipping(true)
-						surface.SetFont("OS18")
-						local tw, th = surface.GetTextSize(name)
-
-						local tX = X + w/2 - tw/2
-						local tY = math.Round(Y + -12 + 8 * self.HovFrac - th - (self.Owner and 2 or 0))
-						surface.SetTextPos(tX, tY)
-						surface.SetTextColor(col:Unpack())
-
-						draw.RoundedBox(4, tX - 2, tY - 1, tw + 4, th + 2, blk)
-						surface.DrawText(name)
-						--draw.SimpleText2(name, "OS18", w/2, -12 + 8 * self.HovFrac, wht, 1, 4)
-					DisableClipping(false)
-				render.SetScissorRect(0, 0, 0, 0, false)
-			end
-		end)
-		x = x + avSize + 8
-
-		plys[#plys + 1] = av
-	end
-
-	----------------------------------------------
-
-	fac:On("JoinedPlayer", plyList, function(fac, ply)
-		createPlayer(ply)
-		recalculate()
-	end)
-
-	for k, ply in ipairs(fac:GetMembers()) do
-		createPlayer(ply)
-	end
+	local plyList = canv.MembersList
 
 	return plyList
 end
@@ -407,20 +141,23 @@ end
 local red = Color(190, 70, 70)
 local brighterred = Color(220, 100, 100)
 
-local function createOwnFactionActions(f, fac)
-	local canv = createActionCanvas(f, fac)
-	canv.Main.NoDrawBottomGradient = true
+local function createOwnFactionActions(f, fac, canv)
+	if not canv then
+		canv = createActionCanvas(f, fac)
+		canv.Main.NoDrawBottomGradient = true
+	end
+
+	local plyList = canv.MembersList
 
 	local w, h = canv:GetSize()
-
-	local plyList = createMembersList(f, canv, fac)
-
 	local leave = vgui.Create("FButton", canv.Main)
+	canv.LeaveBtn = leave
 
 	leave:SetWide(w * 0.4)
 	leave:SetTall(h * 0.08)
 
 	leave:SetPos(w / 2 - leave:GetWide() / 2, plyList.Y - leave:GetTall() - 8)
+
 
 	leave.Color = Color(180, 60, 60)
 
@@ -428,7 +165,19 @@ local function createOwnFactionActions(f, fac)
 	leave.LeaveTime = 0.8
 
 	local x, y = leave:GetPos()
+	local origX, origY = x, y
+
 	local maxShake = 4
+
+	plyList:On("Hovered", leave, function(_, is_hov, shiftby)
+		if is_hov then
+			leave:To("Y", origY - shiftby, 0.4, 0, 0.3)
+			y = origY - shiftby
+		else
+			leave:To("Y", origY, 0.4, 0, 0.3)
+			y = origY
+		end
+	end)
 
 	function leave:Think()
 		if self:IsDown() then
@@ -472,38 +221,264 @@ local function createOwnFactionActions(f, fac)
 		self.NoShake = true
 		self.drawColor:Set(brighterred)
 
-		self:PopOut()
+		self:To("Y", canv.Main:GetTall() + 4, 0.3, 0, 0.3):Then(function()
+			self:Remove()
+		end)
+
+		createFactionActions(f, fac, canv)
+		local pw, join = canv.PasswordEntry, canv.JoinBtn
+
+		if IsValid(pw) then
+			local pwY = pw.Y
+			pw.Y = canv.Main:GetTall() + 4
+			pw:To("Y", pwY, 0.3, 0.3, 0.2)
+		end
+
+		if IsValid(join) then
+			local jnY = join.Y
+			join.Y = canv.Main:GetTall() + 4
+			join:To("Y", jnY, 0.3, pw and 0.4 or 0.3, 0.2)
+		end
 
 		Factions.RequestLeave()
 	end
 
 end
 
+local good = Color(50, 150, 50)
+local bad = Colors.Button
+local bad_red = Color(180, 80, 80)
+
+local function canJoin(btn, ply, fac)
+	local can, err = Factions.CanJoin(ply, fac)
+	if not can then
+		if btn:IsHovered() then
+			local cl, new = btn:AddCloud("err")
+
+			if cl and new then
+				cl.Font = "OS20"
+				cl.MaxW = 400
+				cl.AlignLabel = 1
+
+				cl:SetTextColor(bad_red)
+				cl:SetRelPos(btn:GetWide() / 2)
+				cl.ToY = -8
+
+				cl:SetText(err)
+			end
+		else
+			btn:RemoveCloud("err")
+		end
+
+	else
+		btn:RemoveCloud("err")
+	end
+
+	return can
+end
 
 -- Someone's faction
 
-local function createFactionActions(f, fac)
-	local canv = createActionCanvas(f, fac)
-	canv.Main.NoDrawBottomGradient = true
+-- (this is a predefined local)
+function createFactionActions(f, fac, canv)
+	if not canv then
+		canv = createActionCanvas(f, fac)
+		canv.Main.NoDrawBottomGradient = true
+	end
 
-	local plyList = createMembersList(f, canv, fac)
+	local plyList = canv.MembersList
 
 	if fac:HasPassword() then
 		local te = vgui.Create("FTextEntry", canv.Main)
+		canv.PasswordEntry = te
 		te:SetSize(canv.Main:GetWide() * 0.5, 32)
 		te:SetPlaceholderText("Password...")
 		te:SetPos(canv.Main:GetWide() / 2 - te:GetWide() / 2 - 18, canv.Main:GetTall() - 36)
 		te:SetUpdateOnType(true)
+		te.Shake = 0
+		local teX = te.X
+		local startShake = 0
+
+		function te:Think()								-- 2.4 waves/s
+			local x = math.sin((CurTime() - startShake) * 2.4 * 2*math.pi) * self.Shake * 12
+			self.X = teX + x
+		end
 
 		local join = vgui.Create("DButton", canv.Main)
 		join:SetSize(32, 32)
 		join:SetPos(te.X + 4 + te:GetWide(), te.Y)
+		join.ArrX = 0
+		join:SetText("")
+		canv.JoinBtn = join
+		local y = te.Y
+
+		plyList:On("Hovered", join, function(_, hov, amt)
+			if join.Clicked then return end
+			join:To("Y", y - (hov and amt or 0), 0.3, 0, 0.3)
+			te:To("Y", y - (hov and amt or 0), 0.3, 0, 0.3)
+		end)
+
+		local t = join:GetTable()
+
+		local arrSize = join:GetWide() - 8
+
+		local can = canJoin(join, LocalPlayer(), fac)
+		
+		local canCol = color_white
+		local cantCol = Colors.LighterGray
+
+		local col = can and canCol:Copy() or cantCol:Copy()
+
+		function join:Paint(w, h)
+			surface.SetDrawColor(col:Unpack())
+			local x = t.ArrX
+
+			surface.DrawMaterial("https://i.imgur.com/jFHSu7s.png", "arr_right.png", 4 + x, 4, arrSize, arrSize)
+
+			if not self.Clicked then
+				if self:IsHovered() then
+					anim:MemberLerp(t, "ArrX", 4, 0.2, 0, 0.4)
+				else
+					anim:MemberLerp(t, "ArrX", 0, 0.2, 0, 0.4)
+				end
+			end
+
+			local can = canJoin(self, LocalPlayer(), fac)
+
+			if not can then
+				self:LerpColor(col, cantCol, 0.4, 0, 0.3)
+				self:SetDisabled(true)
+			else
+				self:LerpColor(col, canCol, 0.4, 0, 0.3)
+				self:SetDisabled(false)
+			end
+		end
+
+		function join:DoClick()
+
+			local arrResume
+			local arrResetNow = false -- if true, arrow animation will reset immediately
+			local arrRemove
+
+			Factions.RequestJoin(fac, te:GetValue()):Then(function()
+				arrRemove = true
+				te:LerpColor(te.TextColor, Color(30, 170, 30), 0.1, 0, 0.2)
+				te:LerpColor(te.PHTextColor, Color(60, 160, 60), 0.1, 0, 0.2)
+				te:LerpColor(te.HTextColor, Color(70, 160, 70), 0.1, 0, 0.2)
+				te:LerpColor(te.BGColor, Color(40, 75, 40), 0.1, 0, 0.2)
+				local where = te.Y + te:GetTall() + 12
+				te:To("Y", where, 0.25, 0.5, 5):Then(function()
+					te:Remove()
+					createOwnFactionActions(f, fac, canv)
+					local prev = canv.LeaveBtn.Y
+					canv.LeaveBtn.Y = where
+					canv.LeaveBtn:To("Y", prev, 0.3, 0, 0.3)
+				end)
+				join:Remove()
+			end, function(err)
+
+				local bad_pw = err == Factions.Errors.BadPassword
+
+				if bad_pw then
+					arrResetNow = true
+
+					startShake = CurTime()
+
+					local bad = Colors.DarkerRed
+					local regular = color_white
+						te:LerpColor(te.TextColor, bad, 0.1, 0, 0.2):Then(function()
+							te:LerpColor(te.TextColor, regular, 0.3, 0.5, 0.3)
+						end)
+
+					local bad = Color(165, 10, 10)
+					local regular = color_white
+						te:LerpColor(te.PHTextColor, bad, 0.1, 0, 0.2):Then(function()
+							te:LerpColor(te.PHTextColor, regular, 0.3, 0.5, 0.3)
+						end)
+
+					local bad = Color(75, 40, 40)
+					local regular = Color(40, 40, 40)
+						te:LerpColor(te.BGColor, bad, 0.1, 0, 0.2):Then(function()
+							te:LerpColor(te.BGColor, regular, 0.3, 0.5, 0.3)
+						end)
+
+					local bad = Color(170, 80, 80)
+					local regular = Colors.LightGray
+						te:LerpColor(te.HTextColor, bad, 0.1, 0, 0.2):Then(function()
+							te:LerpColor(te.HTextColor, regular, 0.3, 0.5, 0.3)
+						end)
+
+					te:To("Shake", 1, 0.2, 0, 0.3):Then(function()
+						te:To("Shake", 0, 0.3, 0.3, 1):Then(coroutine.Resumer())
+						coroutine.yield()
+						arrResume()
+						startShake = 0
+					end)
+				end
+
+			end)
+
+			local dur = math.max(LocalPlayer():Ping() / 1000, 0.1)
+
+			arrAnim = anim:MemberLerp(t, "ArrX", join:GetWide() - 4, dur, 0, 3):Then(function()
+				if not arrResetNow then
+					arrResume = coroutine.Resumer()
+					coroutine.yield()
+				end
+
+				if arrRemove then join:Remove() return end
+				t.ArrX = -arrSize - 4
+				anim:MemberLerp(t, "ArrX", 0, 0.25, 0, 0.3)
+
+				self.Clicked = false
+			end)
+
+			self.Clicked = true
+		end
 	else
 		local join = vgui.Create("FButton", canv.Main)
 		join:SetSize(96, 36)
 		join:SetPos(canv.Main:GetWide() / 2 - join:GetWide() / 2, canv.Main:GetTall() - 52)
 		join:SetLabel("Join")
-		join:SetColor(Color(50, 150, 50))
+		canv.JoinBtn = join
+
+		local origY = join.Y
+
+		plyList:On("Hovered", join, function(_, is_hov, shiftby)
+			if is_hov then
+				join:To("Y", origY - shiftby, 0.4, 0, 0.3)
+			else
+				join:To("Y", origY, 0.4, 0, 0.3)
+			end
+		end)
+
+
+		local lp = LocalPlayer()
+
+		function join:Think()
+			local can = canJoin(self, lp, fac)
+
+			if not can then self:SetColor(bad) else self:SetColor(good) end
+		end
+
+		local where = join.Y + 52 + 4
+
+		function join:DoClick()
+
+			Factions.RequestJoin(fac):Then(function()
+				self:To("Y", where, 0.3, 0, 4):Then(function()
+					self:Remove()
+				end)
+
+				createOwnFactionActions(f, fac, canv)
+				local prev = canv.LeaveBtn.Y
+				canv.LeaveBtn.Y = where
+				canv.LeaveBtn:To("Y", prev, 0.3, 0.2, 0.3)
+			end, function(err)
+				chat.AddText(Color(180, 90, 90), "Something went wrong!\n", tostring(err))
+			end)
+
+		end
 	end
 end
 
@@ -585,13 +560,14 @@ local function createNewFaction(f)
 
 		self:ValidateData()
 
+		local err = err and tostring(err) 
+
 		if err then
 			if pieces[err] then
 				-- we had that error created; just activate it
 				errDT:ActivateElement(pieces[err])
 			else
 				-- we never had an element for this error: create one
-
 				local sizes = {12, 14, 16, 18, 20, 22, 24, 28, 32, 36, 48, 64, 72, 96, 128}
 				local picked = "OSB18"
 

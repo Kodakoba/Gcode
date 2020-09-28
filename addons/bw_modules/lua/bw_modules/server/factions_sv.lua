@@ -75,6 +75,7 @@ function facmeta:Join(ply, pw, force)
 	if self.pw and self.pw ~= pw and not force then
 		net.Start("Factions")
 			net.WriteUInt(10, 4) --hey buddy i think you got the wrong password
+			Factions.Errors[1]:Write()
 		net.Send(ply)
 
 		return false, "wrong password boy"
@@ -275,17 +276,22 @@ end
 
 PLAYER.LeaveFaction = facs.LeaveFac
 
-function facs.JoinFac(ply, name, pw, force)
+function facs.JoinFac(ply, id, pw, force)
 
-	local fac = facs.Factions[name] or (IsFaction(name) and name)
-	if not fac then return false, "No such factions exist!" end
+	local fac = facs.FactionIDs[id] or (IsFaction(id) and id)
+	if not fac then return false, Factions.Errors.NoFac end
 
-	if ply:InRaid() then return false, "Can't join a faction during a raid" end
-	if ply:InFaction() then return false, "Can't join a faction while in one!" end
+	if ply:InRaid() then return false, Factions.Errors.JoinInRaid end
+	if ply:InFaction() then return false, Factions.Errors.JoinInFac end
+
+	if fac.pw and fac.pw ~= pw then
+		return false, Factions.Errors.BadPassword
+	end
 
 	fac:Join(ply, pw, force)
 
 	ValidFactions()
+	return true
 end
 
 PLAYER.JoinFaction = facs.JoinFac
@@ -308,13 +314,32 @@ hook.Add("PlayerDisconnected", "FactionDisband", function(ply)
 	fac:RemovePlayer(ply)
 end)
 
+local function throwError(ply, uid, lang)
+	lang = lang or Factions.Errors.Generic
+	net.Start("Factions")
+		net.WriteUInt(10, 4)
+		net.WriteUInt(uid, 8)
+		net.WriteBool(false)
+		lang:Write()
+	net.Send(ply)
+end
+
+local function throwSuccess(ply, uid)
+	net.Start("Factions")
+		net.WriteUInt(10, 4)
+		net.WriteUInt(uid, 8)
+		net.WriteBool(true)
+	net.Send(ply)
+end
+
 net.Receive("Factions", function(_, ply)
 
 	local mode = net.ReadUInt(4)
+	local reqID
 
 	if mode == Factions.CREATE then
 		-- Creating a faction
-
+		reqID = net.ReadUInt(8)
 		local name = net.ReadString()
 		local pw = net.ReadString()
 		local col = net.ReadColor()
@@ -325,14 +350,15 @@ net.Receive("Factions", function(_, ply)
 
 		local can, err = facs.CanCreate(name, pw, col, ply)
 		if not can then
-			if ply.canCreateFacCD and CurTime() - ply.canCreateFacCD < 1 then return end
+			throwError(ply, reqID, err)
+			--[[if ply.canCreateFacCD and CurTime() - ply.canCreateFacCD < 1 then return end
 			ply:ChatAddText(Color(220, 75, 75), "Failed to create faction!\n", err)
-			ply.canCreateFacCD = CurTime()
+			ply.canCreateFacCD = CurTime()]]
 			return
 		end
 
 		facs.CreateFac(ply, name, pw, col)
-
+		throwSuccess(ply, reqID)
 	elseif mode == Factions.LEAVE then
 		-- Leaving a faction
 
@@ -340,12 +366,20 @@ net.Receive("Factions", function(_, ply)
 
 	elseif mode == Factions.JOIN then
 		-- Joining a faction
-		local ok = facs.JoinFac(ply, net.ReadString(), net.ReadString())
+		reqID = net.ReadUInt(8)
+
+		local id = net.ReadUInt(24)
+		local has_pw = net.ReadBool()
+		local pw
+
+		if has_pw then pw = net.ReadString() end
+
+		local ok, why = facs.JoinFac(ply, id, pw)
 
 		if ok == false then
-			net.Start("Factions")
-			net.WriteUInt(10, 4)
-			net.Send(ply)
+			throwError(ply, reqID, why)
+		else
+			throwSuccess(ply, reqID)
 		end
 
 	elseif mode == Factions.KICK then
@@ -359,7 +393,7 @@ net.Receive("Factions", function(_, ply)
 			return
 		end
 
-		if ply:GetFaction():GetOwner() ~= ply then 
+		if ply:GetFaction():GetOwner() ~= ply then
 			errorf("%s (%s) attempted to kick %s (%s) despite not being the leader.", ply:Nick(), ply:SteamID64(), whomst:Nick(), whomst:SteamID64())
 			return
 		end
