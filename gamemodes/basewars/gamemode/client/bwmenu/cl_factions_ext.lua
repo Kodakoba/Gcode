@@ -59,7 +59,6 @@ local leavingProgressRed = Color(220, 100, 100)
 local function createOwnFactionActions(f, fac, canv)
 	if not canv then
 		canv = createActionCanvas(f, fac)
-		canv.Main.NoDrawBottomGradient = true
 	end
 
 	local plyList = canv.MembersList
@@ -68,7 +67,7 @@ local function createOwnFactionActions(f, fac, canv)
 	local leave = vgui.Create("FButton", canv.Main)
 	canv.LeaveBtn = leave
 
-	canv:AddElement("FactionActions", leave)
+	canv:AddElement("Exclusive", leave)
 
 	leave:SetWide(w * 0.4)
 	leave:SetTall(h * 0.08)
@@ -201,16 +200,19 @@ end
 
 -- (this is a predefined local)
 function createFactionActions(f, fac, canv)
+	local oldCanv = true
 	if not canv then
 		canv = createActionCanvas(f, fac)
 		canv.Main.NoDrawBottomGradient = true
+		oldCanv = false
 	end
 
 	local plyList = canv.MembersList
 
 	if fac:HasPassword() then
 		local te = vgui.Create("FTextEntry", canv.Main)
-		canv:AddElement("JoinFaction", te)
+		canv:AddElement("Exclusive", te)
+		if oldCanv then te:PopIn(nil, 0.1) end
 
 		canv.PasswordEntry = te
 		te:SetSize(canv.Main:GetWide() * 0.5, 32)
@@ -226,12 +228,23 @@ function createFactionActions(f, fac, canv)
 			self.X = teX + x
 		end
 
+		function te:Disappear(delayed)
+			canv.PasswordEntry = nil
+			local where = te.Y + te:GetTall() + 12
+			self:PopOut(0.2)
+			return self:To("Y", where, 0.25, delayed and 0.5 or 0, 2):Then(function()
+				self:Remove()
+			end)
+		end
+
 		local join = vgui.Create("DButton", canv.Main)
-		canv:AddElement("JoinFaction", te)
+		canv:AddElement("Exclusive", join)
 		join:SetSize(32, 32)
 		join:SetPos(te.X + 4 + te:GetWide(), te.Y)
 		join.ArrX = 0
 		join:SetText("")
+		if oldCanv then join:PopIn(nil, 0.1) end
+
 		canv.JoinBtn = join
 		local y = te.Y
 
@@ -278,7 +291,9 @@ function createFactionActions(f, fac, canv)
 		end
 
 		function join:Disappear()
-			self:To("Y", canv.Main:GetTall() + 4, 0.3, 0, 0.3):Then(function()
+			canv.JoinBtn = nil
+			self:PopOut(0.3)
+			self:To("Y", canv.Main:GetTall() + 4, 0.3, 0, 3):Then(function()
 				self:Remove()
 			end)
 
@@ -298,8 +313,7 @@ function createFactionActions(f, fac, canv)
 				te:LerpColor(te.HTextColor, Color(70, 160, 70), 0.1, 0, 0.2)
 				te:LerpColor(te.BGColor, Color(40, 75, 40), 0.1, 0, 0.2)
 				local where = te.Y + te:GetTall() + 12
-				te:To("Y", where, 0.25, 0.5, 5):Then(function()
-					te:Remove()
+				te:Disappear(true):Then(function()
 					createOwnFactionActions(f, fac, canv)
 					local prev = canv.LeaveBtn.Y
 					canv.LeaveBtn.Y = where
@@ -368,11 +382,13 @@ function createFactionActions(f, fac, canv)
 		end
 	else
 		local join = vgui.Create("FButton", canv.Main)
-		canv:AddElement("JoinFaction", join)
+		canv:AddElement("Exclusive", join)
 		join:SetSize(96, 36)
 		join:SetPos(canv.Main:GetWide() / 2 - join:GetWide() / 2, canv.Main:GetTall() - 52)
 		join:SetLabel("Join")
 		canv.JoinBtn = join
+
+		if oldCanv then join:PopIn(nil, 0.1) end
 
 		local origY = join.Y
 
@@ -394,6 +410,7 @@ function createFactionActions(f, fac, canv)
 		end
 
 		function join:Disappear()
+			canv.JoinBtn = nil
 			self:To("Y", canv.Main:GetTall() + 4, 0.3, 0, 0.3):Then(function()
 				self:Remove()
 			end)
@@ -626,17 +643,17 @@ local function removePanel(pnl, hide)
 
 end
 
-local function onSelectAction(f, fac, new)
+local function onSelectAction(f, fac, new, reuseCanvas)
 	local old = IsValid(f.FactionFrame) and f.FactionFrame
 	local valid = old and old:IsValid() and old:IsVisible()
 
 	if not new then
-		if valid and old.Faction == fac then return end -- don't create a new frame if it's the same fac as before
+		if valid and old.Faction == fac and not reuseCanvas then return end -- don't create a new frame if it's the same fac as before
 
 		if LocalPlayer():Team() ~= fac.id then
-			createFactionActions(f, fac)
+			createFactionActions(f, fac, reuseCanvas and old)
 		else
-			createOwnFactionActions(f, fac)
+			createOwnFactionActions(f, fac, reuseCanvas and old)
 		end
 	else
 		if not valid or not old.IsNewFaction then
@@ -644,136 +661,20 @@ local function onSelectAction(f, fac, new)
 		end
 	end
 
-	if valid then
+	if valid and not reuseCanvas then
 		removePanel(old, true)
 	end
 end
 
-
-function align(f, pnl)
-	pnl:SetPos(f.FactionScroll.X + f.FactionScroll:GetWide(), 0)
-								--    V because it'll move to the right by 8px
-	pnl:SetSize(f:GetWide() - pnl.X - 8, f:GetTall())
-
-	if pnl.__selMove then
-		pnl.__selMove:Stop()
-	end
-
-	pnl:SetAlpha(0)
-	pnl:MoveBy(8, 0, 0.2, 0, 0.3)
-	pnl:PopInShow()
-
-	f.FactionFrame = pnl
-end
-
---[[------------------------------]]
---	   		Factions Tab
---[[------------------------------]]
-
-local function onOpen(navpnl, tabbtn, prevPnl, noanim)
-	local f = BaseWars.Menu.Frame
-
-	if IsValid(prevPnl) then
-		if noanim then
-			prevPnl:Show()
-		else
-			prevPnl:Show()
-			prevPnl:PopInShow()
-		end
-
-		f:PositionPanel(prevPnl)
-
-		return prevPnl
-	end
-
-	local pnl = vgui.Create("Panel", f, "Factions Canvas")
-	f:PositionPanel(pnl)
-	pnl.IsFactionsCanvas = true
-
-	pnl.SetFaction = function(self, fac)
-		onSelectAction(self, fac, false)
-	end
-
-	pnl.CreateNewFaction = function(self)
-		onSelectAction(self, nil, true)
-	end
-
-	pnl.SetPanel = align
-
-	tab.Panel = pnl
-
-	local scr = vgui.Create("FactionsList", pnl)
-	scr:Dock(LEFT)
-	scr:SetWide(pnl:GetWide() * 0.34)
-
-	pnl.FactionScroll = scr
-
-	local me = LocalPlayer()
-
-	local newH = math.floor(pnl:GetTall() * 0.08 / 2) * 2 + 1
-
-
-	hook.Add("FactionsUpdate", scr, function()
-		local sorted = Factions.GetSortedFactions()
-		local facs = scr:GetFactions()
-
-		for k,v in pairs(facs) do
-			v.Sorted = false
-		end
-
-		for k,v in ipairs(sorted) do
-			-- compare currently existing factions vs. currently existing buttons
-			-- every button that has an existing faction will have their .Sorted member set to true
-			local name, fac = v[1], v[2]
-
-			if IsValid(facs[name]) then
-
-				facs[name].Sorted = true
-				local desY = scr:GetScroll():GetFactionY(k)
-				facs[name]:MoveTo(8, desY, 0.3, 0, 0.3)
-			else
-				local btn = scr:AddFaction(fac, k)
-				btn:PopIn()
-				btn.Sorted = true
-				btn.FacNum = k
-			end
-		end
-
-		for name, btn in pairs(facs) do
-			if IsValid(btn) and not btn.Sorted then
-				-- if Sorted is false that means we didn't go over that button and, thus, the faction doesn't exist anymore
-				--btn:PopOut()
-				local x, y = btn:GetPos()
-				btn:Dock(NODOCK)
-				btn:SetPos(x, y)
-				removePanel(btn)
-				facs[name] = nil
-			end
-
-		end
-
-		if pnl.FactionFrame and pnl.FactionFrame:IsValid() then
-			local ff = pnl.FactionFrame
-			if ff.Faction then
-				for k,v in ipairs(sorted) do if ff.Faction == v[2] then return end end -- currently open faction still exists; everythings ok
-				removePanel(ff) -- currently open faction does not exist anymore; yeet it
-			end
-		end
-
-	end)
-
-	pnl:InvalidateLayout(true)
-	scr:InvalidateChildren(true)
-
-	scr:PopulateFactions()
-
-	scr:On("FactionClicked", function(_, fac)
-		pnl:SetFaction(fac)
-	end)
+local function createNewFactionButton(pnl, scr, noanim)
 
 	local newFac = vgui.Create("FButton", scr)
-	--newFac:SetPos(scr.X + 8, scr.Y + scr:GetTall() + 4)
+	local newH = math.floor(pnl:GetTall() * 0.08 / 2) * 2 + 1
+
+	newFac:Dock(BOTTOM)
+	newFac:DockMargin(8, 0, 8, 4)
 	newFac:SetSize(scr:GetWide() - 16, newH)
+
 	newFac:SetColor(Color(60, 190, 60))
 
 	local isize = math.floor(newFac:GetTall() * 0.5 / 2) * 2 + 1
@@ -783,27 +684,88 @@ local function onOpen(navpnl, tabbtn, prevPnl, noanim)
 	newFac.HovMult = 1.1
 	newFac.DisabledColor = Color(85, 85, 85)
 
-	newFac:Dock(BOTTOM)
-	newFac:DockMargin(8, 4, 8, 4)
+	if not noanim then
+		newFac:SizeTo(-1, newH, 0.3, 0, 0.3)
+		newFac:SetTall(0)
+	end
+
 	function newFac:DoClick()
-		pnl:CreateNewFaction()
+		onSelectAction(pnl, nil, true)
 	end
 
 	function newFac:Think()
 		self:SetDisabled(LocalPlayer():InFaction())
 	end
 
-	return pnl
+	pnl.NewFaction = newFac
 end
 
-local function onClose(navpnl, tabbtn, prevPnl)
-	tab.Panel:PopOutHide()
+--[[------------------------------]]
+--	   		Factions Tab
+--[[------------------------------]]
+
+local function onOpen(navpnl, tabbtn, _, noanim)
+	local f = BaseWars.Menu.Frame
+	local prev = f.FactionsPanel
+	local pnl, scr
+
+	if IsValid(prev) then
+		pnl, scr = prev, prev:GetScroll()
+
+		if not pnl:IsVisible() then
+			if noanim then
+				pnl:Show()
+			else
+				pnl:PopInShow()
+			end
+		end
+
+		f:PositionPanel(pnl)
+
+		if IsValid(pnl.FactionFrame) then
+			pnl.FactionFrame:RemoveElements("Exclusive")
+			onSelectAction(pnl, pnl.FactionFrame.Faction, false, true)
+		end
+		
+
+	else
+		pnl, scr = BaseWars.Menu.CreateFactionList(f)
+		pnl:PopIn(nil, 0.1)
+	end
+
+	function pnl:FactionClicked(fac)
+		onSelectAction(self, fac, false)
+	end
+
+	if not IsValid(pnl.NewFaction) then
+		createNewFactionButton(pnl, scr, noanim)
+	end
+	
+	tabbtn.Panel = pnl
+	f.FactionsPanel = pnl
+
+	return pnl, true, true 	-- 2nd arg = don't pop panels out automatically; we'll handle it
+							-- 3rd arg = don't pop in the panel automatically; we'll handle it
+end
+
+local function onClose(navpnl, tabbtn, prevPnl, newTab)
+	local pnl = tabbtn.Panel
+
+	if not newTab or not newTab.UsesFactions then
+		pnl:PopOutHide()
+	end
+
+	if IsValid(pnl.FactionFrame) then
+		pnl.FactionFrame:RemoveElements("Exclusive")
+	end
 end
 
 local function onCreateTab(f, tab)
 	local ic = tab:SetIcon("https://i.imgur.com/JzTfIuf.png", "faction_64.png", 55 / 64) --the pic is 64x51
 	tab:SetDescription("Team up with other players")
 	ic.Size = tab.IconSize * 1.1
+
+	tab.UsesFactions = true
 end
 
 tab[1] = onOpen

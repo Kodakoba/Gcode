@@ -328,7 +328,7 @@ end
 
 function Navbar:OnSelect(btn, noanim)
 	if IsValid(self.ActiveBtn) then
-		self.ActiveBtn:Emit("Deselect", self, noanim)
+		self.ActiveBtn:Emit("Deselect", btn, noanim)
 		self.ActiveBtn.Active = false
 	end
 
@@ -589,7 +589,7 @@ function NavPanel:GetActivePanel()
 end
 
 function NavPanel:AddTab(name, onopen, onclose)
-	local tab = vgui.Create("NavbarChoice", self.Navbar)
+	local tab = vgui.Create("NavbarChoice", self.Navbar, "Navbar Choice: " .. name)
 	tab:SetName(name)
 	tab.NavPanel = self
 
