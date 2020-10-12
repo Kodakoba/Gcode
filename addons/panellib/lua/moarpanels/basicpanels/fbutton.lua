@@ -148,7 +148,7 @@ function button:HoverLogic(dis)
 		--self:LerpColor(self.drawColor, self.HoverColor, 1.1, 0, 0.2)
 
 		if shadow.OnHover then
-			self:MemberLerp(shadow, "Spread", shadow.MaxSpread / 2 or shadow.MaxSpread, shadow.HoverSpeed, 0, shadow.HoverEase)
+			self:MemberLerp(shadow, "Spread", shadow.MaxSpread, shadow.HoverSpeed, 0, shadow.HoverEase)
 		end
 
 		if not self._IsHovered then
@@ -341,7 +341,26 @@ function button:Draw(w, h)
 		local lblCol = disabled and self.DisabledLabelColor or self.LabelColor
 
 		if label:find("\n") then
-			local tw = draw.DrawText(label, self.Font, tx, ty, lblCol, ax)
+			surface.SetFont(self.Font)
+			surface.SetTextColor(lblCol:Unpack())
+
+			local lines = amtNewlines(label) + 1
+			local lH, lY
+
+			for s, num in eachNewline(label) do
+				s = s:gsub("^%s+", "")
+				local tW, tH = surface.GetTextSize(s)
+				tH = self.TextHeight or tH
+
+				if not lH then
+					lH = tH * lines
+					lY = ty - lH * (ay / 2)
+				end
+
+				surface.SetTextPos(w / 2 - tW * (ax / 2), lY + tH * (num - 1))
+				surface.DrawText(s)
+			end
+			--local tw = draw.DrawText(label, self.Font, tx, ty, lblCol, ax)
 		else
 			local iW = ic and ic.IconW or 0
 			local iH = ic and ic.IconH or 0

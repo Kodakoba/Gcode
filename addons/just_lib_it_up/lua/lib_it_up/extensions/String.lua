@@ -30,6 +30,10 @@ function eachNewline(s) --meant to be used as 'for s in eachNewline(tx) do...'
 	end
 end
 
+function amtNewlines(s)
+	return select(2, s:gsub("[\r\n]", ""))
+end
+
 function string.WordWrap(name, w, font)	-- this should be deprecated cuz it sucks
 
 	surface.SetFont(font or "RL18")
