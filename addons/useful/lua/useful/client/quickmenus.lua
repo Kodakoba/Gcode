@@ -300,7 +300,9 @@ local function CreateQuickMenu()
 	local shrinking = false
 
 	function p:Paint(w, h)
-
+		self.Fraction = frac
+	
+		self:Emit("PrePaint", w, h)
 		local midX, midY = self.CircleX, self.CircleY
 
 		if not midX or not midY then
@@ -370,6 +372,7 @@ local function CreateQuickMenu()
 		end
 
 
+		self:Emit("PostPaint", w, h)
 
 		qm:Paint(qm.ent, self)
 	end
