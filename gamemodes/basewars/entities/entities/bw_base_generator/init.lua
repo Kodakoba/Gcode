@@ -133,6 +133,8 @@ function ENT:ConnectTo(ent)
 		self:SetLine(NULL)
 		self:SetHotwired(ent)
 
+		ent:SetLine(NULL)
+		
 		grid:On("RemovedGenerator", "TrackHotwired", function(grid, rem)
 			if rem == self and grid.Hotwired and grid.Hotwired[1] == self then
 				grid.Hotwired = nil

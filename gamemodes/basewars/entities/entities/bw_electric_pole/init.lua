@@ -84,15 +84,18 @@ function ENT:PingGrids(ow)
 				print("gen too far:", dist, cable)
 			end
 		end
-
+		print("consumers ^", PrintTable(grid.Consumers))
 		for _, ent in ipairs(grid.Consumers) do
-			if ent.Grid and IsValid(ent:GetLine()) then continue end
+			print("consumer:", ent)
+			if ent.Grid and IsValid(ent:GetLine()) then print('ent has grid alreay and a line', ent:GetLine()) continue end
 
 			local pos = ent:GetPos()
 			local dist = pos:DistToSqr(mypos)
 			if dist < cable then
 				if ent.Grid then ent.Grid:Remove() end
 				cur_grid:AddConsumer(ent, self)
+			else
+				print("too far")
 			end
 		end
 
