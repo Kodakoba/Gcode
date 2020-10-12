@@ -15,6 +15,8 @@ AddCSLuaFile()
 
 ]]
 
+__LibName = "libitup"
+
 PLAYER = FindMetaTable("Player")
 ENTITY = FindMetaTable("Entity")
 PANEL = FindMetaTable("Panel")
