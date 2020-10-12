@@ -5,6 +5,9 @@ SWEP.PrintName = "Hands"
 SWEP.DrawCrosshair = false
 SWEP.HoldType = "normal"
 
+SWEP.UseHands = true
+SWEP.ViewModel = "models/weapons/c_arms.mdl"
+
 SWEP.Primary.ClipSize      = -1
 SWEP.Primary.DefaultClip   = -1
 SWEP.Primary.Automatic     = false
@@ -15,19 +18,24 @@ SWEP.Secondary.DefaultClip = -1
 SWEP.Secondary.Automatic   = false
 SWEP.Secondary.Ammo        = "none"
 
+
 SWEP.AutoSwitchTo	= false
 SWEP.AutoSwitchFrom	= true
 SWEP.Weight 		= 1
 
 function SWEP:Deploy()
 	self:SetHoldType(self.HoldType)
+	local vm = self:GetOwner():GetViewModel()
+	if vm:IsValid() then
+		vm:SendViewModelMatchingSequence( 0 )
+	end
 end
 
 function SWEP:CanPrimaryAttack() return false end
 function SWEP:CanSecondaryAttack() return false end
 function SWEP:Reload() return false end
 
-function SWEP:PreDrawViewModel() return true end
+--function SWEP:PreDrawViewModel() return true end
 function SWEP:DrawWorldModel() return false end
 
 function SWEP:CustomAmmoDisplay() return {} end
@@ -61,6 +69,10 @@ function SWEP:PrimaryAttack()
     Ent:Fire("lock")
 	ply:EmitSound("npc/metropolice/gear" .. math.random(1, 7) .. ".wav")
 	
+end
+
+function SWEP:PreDrawViewModel(vm)
+	--return true
 end
 
 function SWEP:SecondaryAttack()
