@@ -12,6 +12,7 @@ ENT.PowerType = "Consumer"
 
 ENT.PowerRequired = 20
 ENT.PowerCapacity = 1000
+ENT.EmitUnusableBeeps = true
 
 ENT.ConnectDistance = 550
 
@@ -128,11 +129,11 @@ if SERVER then
 
 		if self:CheckUsable() == false then return end
 
-		if not self:IsPowered() or self:BadlyDamaged() then
-
+		if (not self:IsPowered() or self:BadlyDamaged()) and (not self.LastUnusuableBeep or CurTime() - self.LastUnusuableBeep > 1) and self.EmitUnusableBeeps then
+			self.LastUnusuableBeep = CurTime()
 			self:EmitSound("buttons/button10.wav")
-
-		return end
+			return
+		end
 
 		self:UseFunc(activator, caller, usetype, value)
 
