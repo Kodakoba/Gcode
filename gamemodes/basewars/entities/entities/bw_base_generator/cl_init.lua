@@ -310,8 +310,12 @@ local function OpenShit(qm, self, pnl)
 			pnl:GeneratorPaint(w, h)
 
 			if not self.Closing and self.Open then
-				pnl.HookUp:AlphaTo(255, 0.2, 0, nil, 0.3)
-				pnl.Disconnect:AlphaTo(255, 0.2, 0, nil, 0.3)
+				if pnl.HookUp then
+					pnl.HookUp:AlphaTo(255, 0.2, 0, nil, 0.3)
+				end
+				if pnl.Disconnect then
+					pnl.Disconnect:AlphaTo(255, 0.2, 0, nil, 0.3)
+				end
 				if self.Panels then
 					for k,v in ValidIPairs(self.Panels) do
 						v:AlphaTo(255, 0.2, 0, nil, 0.3)
