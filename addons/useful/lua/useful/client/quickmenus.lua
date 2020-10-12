@@ -11,8 +11,12 @@ local iqmr = QuickMenus.IRegistered
 openedQM = nil --panel
 
 local ENTITY = FindMetaTable("Entity")
-local QMObj = {}
-local QMMeta = {}
+local QMObj = QuickMenus.Obj or {}
+local QMMeta = QuickMenus.Meta or {}
+
+QuickMenus.Obj = QMObj
+QuickMenus.Meta = QMMeta
+
 QMObj.__index = QMMeta
 
 setmetatable(QMObj, QMMeta)
@@ -22,6 +26,8 @@ AccessorFunc(QMMeta, "dist", "UseDistance")
 AccessorFunc(QMMeta, "time", "Time")
 AccessorFunc(QMMeta, "KeepAlive", "KeepAlive")
 AccessorFunc(QMMeta, "ent", "Entity")
+
+local CreateQuickMenu
 
 --[[
 	Functions for override
@@ -64,6 +70,11 @@ function QMMeta:Paint(ent, pnl)
 
 end
 
+function QMMeta:Close()
+	self.wasopened = false
+	if openedQM and openedQM:IsValid() then openedQM:Remove() end
+	openedQM = CreateQuickMenu()
+end
 
 --[[
 	Internal functions
@@ -211,7 +222,7 @@ end
 
 local opened
 
-local function CreateQuickMenu()
+function CreateQuickMenu()
 	local p = vgui.Create("DPanel")
 	p:SetSize(600, 400)
 	p:Center()
@@ -282,15 +293,14 @@ local function CreateQuickMenu()
 
 		end
 
-		self.CurrentQM = (qm and qm.progress == 1 and qm)
-
-
-		if not active and not hastime then
-
+		if not qm or (not active and not hastime) then
 			self:Remove()
 			openedQM = nil
 			return
 		end
+
+		self.CurrentQM = (qm and qm.progress == 1 and qm)
+
 	end
 
 	local size = 64
@@ -374,7 +384,7 @@ local function CreateQuickMenu()
 
 		self:Emit("PostPaint", w, h)
 
-		qm:Paint(qm.ent, self)
+		if qm then qm:Paint(qm.ent, self) end
 	end
 
 
