@@ -239,7 +239,7 @@ function button:DrawLabel(x, y, w, h, label)
 
 end
 
-function button:PaintIcon(x, y, tw, th)
+function button:PaintIcon(x, y)
 	if not istable(self.Icon) then return end
 
 	local ic = self.Icon
@@ -268,15 +268,20 @@ function button:PaintIcon(x, y, tw, th)
 
 	render.PushFilterMin(TEXFILTER.ANISOTROPIC)
 
-		if ic.IconMat then
-			print(iX, iY, iW, iH)
-			surface.SetMaterial(ic.IconMat)
-			surface.DrawTexturedRect(iX, iY, iW, iH)
-		elseif ic.IconURL then
-			surface.DrawMaterial(ic.IconURL, ic.IconName, iX, iY, iW, iH, ic.IconRotation)
-		end
+		local ok, err = pcall(function()
+			if ic.IconMat then
+				surface.SetMaterial(ic.IconMat)
+				surface.DrawTexturedRect(iX, iY, iW, iH)
+			elseif ic.IconURL then
+				surface.DrawMaterial(ic.IconURL, ic.IconName, iX, iY, iW, iH, ic.IconRotation)
+			end
+		end)
 
 	render.PopFilterMin()
+
+	if not ok then
+		error(err)
+	end
 end
 
 local AYToTextY = {
@@ -339,17 +344,25 @@ function button:Draw(w, h)
 		local ic = self.Icon
 
 		local lblCol = disabled and self.DisabledLabelColor or self.LabelColor
+		local newlines = amtNewlines(label)
 
-		if label:find("\n") then
+		local iW = ic and ic.IconW or 0
+		local iH = ic and ic.IconH or 0
+		local iconX = ic and (ic.IconX or 4) or 0
+
+		if newlines > 0 then
 			surface.SetFont(self.Font)
 			surface.SetTextColor(lblCol:Unpack())
 
-			local lines = amtNewlines(label) + 1
+			local lines = newlines + 1
 			local lH, lY
+
+			local tWMax = 0
 
 			for s, num in eachNewline(label) do
 				s = s:gsub("^%s+", "")
 				local tW, tH = surface.GetTextSize(s)
+				tWMax = math.max(tWMax, tW)
 				tH = self.TextHeight or tH
 
 				if not lH then
@@ -357,15 +370,19 @@ function button:Draw(w, h)
 					lY = ty - lH * (ay / 2)
 				end
 
-				surface.SetTextPos(w / 2 - tW * (ax / 2), lY + tH * (num - 1))
+				surface.SetTextPos(tx - tW * (ax / 2) + (iW + iconX) / 2, lY + tH * (num - 1))
 				surface.DrawText(s)
 			end
+
+			local iX = math.Round(tx - (iW + iconX) / 2 - tWMax * (ax / 2))
+			local iY = math.Round(lY + lH / 2 - iH / 2)
+
+			--White()
+			--surface.DrawOutlinedRect(iX, iY, tWMax + iW + iconX, 32)
+
+			self:PaintIcon(iX, iY)
 			--local tw = draw.DrawText(label, self.Font, tx, ty, lblCol, ax)
 		else
-			local iW = ic and ic.IconW or 0
-			local iH = ic and ic.IconH or 0
-
-			local iconX = ic and (ic.IconX or 4) or 0
 
 			surface.SetFont(self.Font)
 			local tW, tH = surface.GetTextSize(label)
@@ -375,7 +392,7 @@ function button:Draw(w, h)
 			local iX = math.Round(tx - fullW * (ax / 2))
 			local iY = math.Round(ty - iH * (ay / 2))
 
-			self:PaintIcon(iX, iY, tW, tH)
+			self:PaintIcon(iX, iY)
 
 			local tX = math.Round(iX + iconX + iW)
 			local tY = math.Round(ty - tH * (ay / 2))
@@ -387,7 +404,7 @@ function button:Draw(w, h)
 		return
 	end
 
-	self:PaintIcon(w/2, h/2, 0, 0)
+	self:PaintIcon(w/2, h/2)
 
 end
 
