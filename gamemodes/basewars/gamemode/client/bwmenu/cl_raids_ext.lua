@@ -24,20 +24,33 @@ local function createActionCanvas(f, fac)
 end
 
 local function createRaidActions(pnl, fac, canv)
-	local old = true
+	local old = true -- = the canvas already existed, aka they switched from faction tab to raid tab
+
 	if not canv then
 		old = false
 		canv = createActionCanvas(pnl, fac)
 	end
+
+	local can = false
+
+	if fac == LocalPlayer():GetFaction() then return end
+
 	local mn = canv.Main
 
 	local raid = vgui.Create("FButton", mn)
 	raid:SetSize(mn:GetWide() * 0.4, 36)
 	raid:Center()
-	raid.Y = mn:GetTall() - 44
 	raid.Label = "Start raid!"
-	if not old then raid:PopIn(nil, 0.1) end
-	raid:SetColor(Color(180, 70, 70))
+
+	if old then
+		local old = mn:GetTall() - 44
+		raid.Y = mn:GetTall() + 8
+		raid:To("Y", old, 0.2, 0, 0.3)
+	else
+		raid.Y = mn:GetTall() - 44
+	end
+
+	raid:SetColor(Color(180, 70, 70), true)
 
 	raid:SetIcon("https://i.imgur.com/xyrD9OM.png", "salilsawaarim.png", 24, 24)
 	raid.Icon.IconX = 8

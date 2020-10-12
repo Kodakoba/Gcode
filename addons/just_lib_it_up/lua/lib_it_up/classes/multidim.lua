@@ -1,7 +1,7 @@
 --rip your RAM
 setfenv(0, _G)
 
-muldim = Class:callable()
+muldim = muldim or Class:callable()
 local mmeta = muldim.Meta
 
 local weak = muldim:Callable()
@@ -36,7 +36,7 @@ function mmeta:Set(val, ...)
 	local curvar = self
 
 	for k,v in ipairs(ks) do
-		local nextkey = next(ks, k)
+		local nextkey = ks[k + 1]
 
 		if not curvar[v] then
 
@@ -51,6 +51,37 @@ function mmeta:Set(val, ...)
 
 			if not nextkey then
 				curvar[v] = val
+			end
+
+		end
+
+		curvar = curvar[v]
+	end
+
+	return val, curvar
+end
+
+function mmeta:Insert(val, ...)
+	local ks = {...}
+	local curvar = self
+
+	for k,v in ipairs(ks) do
+		local nextkey = ks[k + 1]
+
+		if not curvar[v] then
+
+			if nextkey then
+				curvar[v] = muldim:new()
+			else
+				curvar[v] = muldim:new()
+				curvar[v][1] = val
+				return val, curvar
+			end
+
+		else
+
+			if not nextkey then
+				curvar[v][#curvar[v] + 1] = val
 			end
 
 		end

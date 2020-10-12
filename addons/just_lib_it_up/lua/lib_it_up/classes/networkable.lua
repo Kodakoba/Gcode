@@ -209,7 +209,10 @@ function nw:SetNetworkableID(id)
 end
 
 function nw:Set(k, v)
-	if self.Valid == false then return end
+	if self.Valid == false then
+		error("Attempted to set a networked var on an invalid Networkable!", 2)
+		return
+	end
 
 	if not self.NetworkableID then
 		error("Set a NetworkableID first!")
@@ -258,6 +261,7 @@ function nw:Invalidate()
 		ids[self.NetworkableID] = nil
 	end
 
+	self:Emit("Invalidated")
 end
 
 

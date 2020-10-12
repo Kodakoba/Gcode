@@ -61,8 +61,12 @@ hook.Add("Think", "AnimatableThink", function()
 	end
 end)
 
-function AnimMeta:Stop()
+function AnimMeta:Remove()
 	self.Parent.m_AnimList[self.Key] = nil
+end
+
+function AnimMeta:Stop()
+	self:Remove()
 	self:Emit("Stop")
 	self:Emit("End")
 end
@@ -116,7 +120,7 @@ function Animatable:Initialize(auto_think)
 end
 
 function Animatable:StopAnimations()
-	for k,anim in ipairs(self.m_AnimList) do
+	for k,anim in pairs(self.m_AnimList) do
 		if anim.Ended then continue end
 		if anim.OnEnd then anim:OnEnd( self ) end
 		anim:Emit("End")
@@ -222,14 +226,13 @@ function Animatable:Lerp(key, val, dur, del, ease, forceswap)
 
 	if anims[key] then
 		anim = anims[key]
+
 		if anim.ToVal == val and not forceswap then return anim, false end --don't re-create animation if we're already lerping to that anyways
 
 		anim.ToVal = val
 		anim:Swap(dur, del, ease)
-
 	else
 		anim = self:NewAnimation(dur, del, ease)
-
 		anim:SetSwappable(true)
 
 		anim.ToVal = val
@@ -238,6 +241,7 @@ function Animatable:Lerp(key, val, dur, del, ease, forceswap)
 
 	anim:On("End", "RemoveAnim", function()
 		anims[key] = nil
+		anim:Remove()
 	end)
 
 	anim.Think = function(anim, self, fr)
