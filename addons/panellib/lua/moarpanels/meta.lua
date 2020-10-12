@@ -305,9 +305,9 @@ end
 
 function META:PopOut(dur, del, rem)
 
-	local func = rem or function(_, self)
+	local func = rem or (rem ~= false and function(_, self)
 		if IsValid(self) then self:Remove() end
-	end
+	end)
 
 	return self:AlphaTo(0, dur or 0.1, del or 0, func)
 end
@@ -322,6 +322,48 @@ function META:PopOutHide(dur, del, rem)
 		self:Hide()
 		if rem then rem(_, self) end
 	end)
+end
+
+-- yes this is ugly, shut up
+
+local function xMove(fr)
+	return math.cos(fr * math.pi / 2) - 1
+end
+
+local function xMoveRev(fr)
+	return math.cos(fr * math.pi / 2 + math.pi / 2)
+end
+
+local function yMove(fr)
+	return math.sin(fr * math.pi / 2)
+end
+
+local function yMoveRev(fr)
+	return 1 + math.sin(fr * math.pi / 2 - math.pi / 2)
+end
+
+
+function META:CircleMoveTo(toX, toY, len, ease, rev)
+	
+	if self.__circleAnim then
+		self.__circleAnim:Stop()
+	end
+
+	local anim = self:NewAnimation(len, 0, ease)
+	self.__circleAnim = anim
+
+	local fromX, fromY = self:GetPos()
+
+	local f1, f2 = rev and xMoveRev or xMove, rev and yMoveRev or yMove
+
+	local fx = (toX - fromX)
+	local fy = (toY - fromY)
+	anim.Think = function(self, pnl, fr)
+		local x = fromX - fx * f1(fr)
+		local y = fromY + fy * f2(fr)
+
+		pnl:SetPos(x, y)
+	end
 end
 
 --[[

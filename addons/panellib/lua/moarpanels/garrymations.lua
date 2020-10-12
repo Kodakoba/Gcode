@@ -37,20 +37,20 @@ function meta:AnimationThinkInternal()
 			local Fraction = math.TimeFraction( anim.StartTime, anim.EndTime, systime )
 			Fraction = math.Clamp( Fraction, 0, 1 )
 
-			if ( anim.Think ) then
+			local Frac = Fraction ^ anim.Ease
 
-				local Frac = Fraction ^ anim.Ease
-
-				-- Ease of -1 == ease in out
-				if ( anim.Ease < 0 ) then
-					Frac = Fraction ^ ( 1.0 - ( ( Fraction - 0.5 ) ) )
-				elseif ( anim.Ease > 0 && anim.Ease < 1 ) then
-					Frac = 1 - ( ( 1 - Fraction ) ^ ( 1 / anim.Ease ) )
-				end
-
-				anim:Think( self, Frac )
-				anim:Emit("Think", Frac)
+			-- Ease of -1 == ease in out
+			if ( anim.Ease < 0 ) then
+				Frac = Fraction ^ ( 1.0 - ( ( Fraction - 0.5 ) ) )
+			elseif ( anim.Ease > 0 && anim.Ease < 1 ) then
+				Frac = 1 - ( ( 1 - Fraction ) ^ ( 1 / anim.Ease ) )
 			end
+
+			if ( anim.Think ) then
+				anim:Think( self, Frac )
+			end
+
+			anim:Emit("Think", Frac)
 
 			if ( Fraction == 1 ) then
 
