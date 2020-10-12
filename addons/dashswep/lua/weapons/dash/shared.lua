@@ -6,13 +6,16 @@ SWEP.Purpose			= ""
 
 SWEP.Spawnable			= true
 
-SWEP.ViewModel			= "models/weapons/v_pistol.mdl"
+SWEP.ViewModel			= "models/weapons/c_pistol.mdl"
 SWEP.WorldModel		= "models/weapons/w_pistol.mdl"
 SWEP.DrawAmmo = false
+SWEP.UseHands = true
 
 SWEP.IsDash = true
 SWEP.Primary.Automatic = false
 SWEP.DashTime = 0.3
+
+local clprint = CLIENT and print or BlankFunc
 
 function SWEP:SetupDataTables()
 
@@ -22,65 +25,63 @@ function SWEP:SetupDataTables()
 	self:NetworkVar("Bool", 1, "SuperMoving")
 
 	self:NetworkVar("Float", 0, "DashEndTime")
-
 end
+
 DashTable = {}
+
 function SWEP:Initialize()
 	if CLIENT then
 		hdl.DownloadFile("http://vaati.net/Gachi/shared/whoosh.ogg", "whoosh.dat")
-		self:SetPredictable(false)
+		self:SetPredictable(true)
 		self.Dashed = false
 	end
 end
 
 hook.Add("GetFallDamage", "DashFall", function(ply)
-	if ply:GetActiveWeapon():GetClass() == "dash" then --and ply:GetActiveWeapon():GetDashTime() - CurTime() > -5 then
-		--ply:EmitSound("dash/land.ogg", 70, 100, 1, CHAN_AUTO)
+	if ply:GetActiveWeapon():GetClass() == "dash" then
 		return 0
 	end
-
- end)
-
-function SWEP:Reload()
-	self:SetDashCharges(1)
-	self.Dashed = false
-end
-
+end)
 
 function SWEP:Think()
 
-	if self:GetOwner():IsOnGround() and not DashTable[self:GetOwner()] and self:GetDashCharges() ~= 1 and not (CLIENT and self:GetDashing()) then --hmmmmmmmmmmmmmmmm
-
-		self:SetDashCharges(1)
-		if CLIENT then
-			self.Dashed = false
+	if self:GetOwner():IsOnGround() and self:GetDashCharges() ~= 1 then
+		local dashing = (SERVER and DashTable[self:GetOwner()]) or (CLIENT and self:GetDashing())
+		if not dashing then
+			self:SetDashCharges(1)
+			if CLIENT then
+				self.Dashed = false
+			end
 		end
 	end
 
 end
 
 local OverrideDashEnd
-local OverrideDashFinalVel
 
 function SWEP:CheckMoves(owner, mv, dir)
 
-	local jumping = mv:KeyDown(IN_JUMP)
-	local ducked = mv:KeyDown(IN_DUCK)
-
-	if not jumping or OverrideDashEnd then return end
-	if not IsFirstTimePredicted() then return end
-
 	local dt = DashTable[owner]
 	if not dt then return end --ok?
+
+	local jumping = mv:KeyDown(IN_JUMP) -- or dt.Jumped
+	local ducked = 	mv:KeyDown(IN_DUCK)  -- or dt.Ducked
+
+	--if not IsFirstTimePredicted() and self.SuperMovingVelocity then self:StopDash() return end
+
+	if not self:GetDashing() then return end
+
+	if not jumping or OverrideDashEnd then return end
+
+	local pos = mv:GetOrigin()
 
 	if dt.ground then
 
 		if dt.jump or dt.down then return end
 
-
 		local tr = util.TraceHull({
-			start = owner:GetPos() + Vector(0, 0, 8),
-			endpos = owner:GetPos() - Vector(0, 0, 16),
+			start = pos + Vector(0, 0, 8),
+			endpos = pos - Vector(0, 0, 16),
 			filter = owner,
 			mins = Vector( -16, -16, -4 ),
 			maxs = Vector( 16, 16, 4 ),
@@ -102,33 +103,22 @@ function SWEP:CheckMoves(owner, mv, dir)
 			end
 
 
-			self:SetSuperMoving(true)
+			--self.SuperMoving = true
+
 			OverrideAfterDash = UnPredictedCurTime() - CurTime()
 
 			if SERVER then
 				self:StopDash()
+				self:SetSuperMoving(true)
+				self.SuperMovingVelocity = vel
+				owner:GetCurrentCommand():RemoveKey(IN_JUMP)
+				return
+			else
+				self:SetSuperMoving(true)
+				self.SuperMovingVelocity = vel
+				self:SetDashing(false)
 
-				--self.Owner:SetNetworkOrigin(mv:GetOrigin())
-				--mv:SetVelocity(vel)
-				--owner:SetPos(mv:GetOrigin())
-
-				return vel
-
-			elseif not self.StoppedDash then
-
-				--owner:SetVelocity(vel)
-				dt.newvel = vel/2
-
-				--OverrideDashEnd = CurTime()
-				--OverrideDashFinalVel = vel
-
-				mv:SetVelocity(vel)
-
-				self.StoppedDash = UnPredictedCurTime() - CurTime()
-
-				--self:StopDash()
-
-				return vel
+				return
 			end
 
 		end
@@ -138,13 +128,16 @@ function SWEP:CheckMoves(owner, mv, dir)
 		if dt.jump or not dt.down then return end --Player must've dashed without space and dashed downwards
 
 		local tr = util.TraceHull({
-			start = owner:GetPos() + Vector(0, 0, 8),
-			endpos = owner:GetPos() - Vector(0, 0, 24),
+			start = pos + Vector(0, 0, 12),
+			endpos = pos - Vector(0, 0, 24),
 			filter = owner,
-			mins = Vector( -16, -16, -8 ),
+			mins = Vector( -16, -16, -4 ),
 			maxs = Vector( 16, 16, 8 ),
 			mask = MASK_SOLID
 		})
+
+		_Hull1 = mv:GetOrigin() + Vector(0, 0, 8)
+		_Hull2 = mv:GetOrigin() - Vector(0, 0, 24)
 
 		if tr.Hit then
 
@@ -161,44 +154,38 @@ function SWEP:CheckMoves(owner, mv, dir)
 
 			vel = dir * mul
 			vel.z = math.max(vel.z * (dir.z > 0.6 and (0.5 / (1 - dir.z)) or 1), 400)
+			_HIT = true
 
 			if SERVER then
-
 				self:StopDash()
+				self:SetSuperMoving(true)
+				self.SuperMovingVelocity = vel
+				owner:GetCurrentCommand():RemoveKey(IN_JUMP)
+				return
+			else
+				self:SetSuperMoving(true)
+				self.SuperMovingVelocity = vel
+				self:SetDashing(false)
 
-				owner:SetPos(mv:GetOrigin())
-
-				--mv:SetVelocity(vel)
-				return vel
-
-			elseif not self.StoppedDash then
-
-				--self:StopDash()
-
-				dt.newvel = vel/2
-
-				mv:SetVelocity(vel)
-
-				self.StoppedDash = CurTime()
-
-				return vel
+				return
 			end
 
 		end
+
 	end
 
 end
 
-CreateConVar("dash_smooth", 0,
-	FCVAR_ARCHIVE + FCVAR_CLIENTCMD_CAN_EXECUTE + FCVAR_USERINFO,
-	"Makes Dashing smoother at the cost of dash time/distance.\n	The higher your ping is, the more dash time you sacrifice.\n	Blame Source.", 0, 1)
-
 function SWEP:PrimaryAttack()
 	local owner = self:GetOwner()
 
-	if not IsFirstTimePredicted() or DashTable[owner] then return end
+	if self:GetDashCharges() <= 0 then return end
 
-	if self:GetDashCharges() <= 0 or self.Dashed then return end
+	if not IsFirstTimePredicted() then
+		self:SetDashing(true)
+		self:SetDashCharges(self:GetDashCharges() - 1)
+		return
+	end
 
 	self:SetDashCharges(self:GetDashCharges() - 1)
 
@@ -209,6 +196,7 @@ function SWEP:PrimaryAttack()
 	end
 
 	if SERVER then self:SetDashEndTime(CurTime() + self.DashTime) end
+
 	self:SetDashing(true)
 	local dir = owner:EyeAngles():Forward()
 	local z = dir.z
@@ -218,33 +206,13 @@ function SWEP:PrimaryAttack()
 		dir.z = 0.1
 	end
 
-	local sub = owner:GetInfo("dash_smooth")
-	local smooth = tonumber(sub) == 1
+	DashTable[owner] = {
+		t = CurTime(),
+		dir = dir,
+		wep = self,
+		ground = owner:IsOnGround(),
+	}
 
-	if CLIENT then
-		DashTable[owner] = {
-			t = CurTime(),
-			dir = dir,
-			wep = self,
-			ground = owner:IsOnGround(),
-		}
-
-	else
-		if smooth then
-			sub = owner:Ping() / 1000
-		else
-			sub = 0
-		end
-
-		DashTable[owner] = {
-			t = CurTime(),
-			dir = dir,
-			wep = self,
-			ground = owner:IsOnGround(),
-			smooth = smooth
-		}
-
-	end
 	local dt = DashTable[owner]
 
 
@@ -253,9 +221,7 @@ function SWEP:PrimaryAttack()
 	dt.jump = owner:KeyDown(IN_JUMP)
 	dt.down = dir.z < -0.15
 
-	--
-
-	self:SetNextPrimaryFire(UnPredictedCurTime() + 0.4)
+	self:SetNextPrimaryFire(CurTime() + 0.4)
 
 end
 
@@ -280,7 +246,7 @@ hook.Add("FinishMove", "Dash", function(ply, mv, cmd)
 		return
 	end
 
-	local t =  DashTable[ply]
+	local t = DashTable[ply]
 
 	local self = t.wep
 
@@ -295,40 +261,36 @@ hook.Add("FinishMove", "Dash", function(ply, mv, cmd)
 		time = time - ply:Ping() / 1000
 	end
 
-	local endtime = OverrideDashEnd or time + self.DashTime
-	local was = OverrideDashEnd
-
-	local curt = CurTime()--UnPredictedCurTime()
+	local curt = CurTime()
 	local afterdash = OverrideAfterDash or UnPredictedCurTime() - CurTime()
 	local d = t.dir
 
 	local newvel = t.newvel or d * 800
 
-	if curt - time < 0 and CurTime() - time < 0 then return end
+	self:CheckMoves(ply, mv, d)
 
-	if curt > endtime then
+	if self:GetSuperMoving() then
 
-		if OverrideDashFinalVel then
-			mv:SetVelocity(OverrideDashFinalVel)
-			self:SetSuperMoving(false)
-		end
+		mv:SetMaxSpeed(10e9)
+		mv:SetVelocity(self.SuperMovingVelocity)
+
+		self:SetSuperMoving(false)
+		return
+	end
+
+	local endtime = OverrideDashEnd or time + self.DashTime
+
+	if curt > endtime and self:GetDashing() then
 
 		if SERVER then
 			self:StopDash()
 		else
-			if curt + afterdash < endtime then
-				return
-			end
-			self:StopDash()
+			self:SetDashing(false)
 		end
 
 	end
 
-	local changed = self:CheckMoves(ply, mv, d)
-	if was then print("fuck") return true end
-	if isvector(changed) then
-		ply:SetVelocity(-mv:GetVelocity() + changed)
-	elseif curt < endtime then
+	if curt < endtime and self:GetDashing() then
 		mv:SetVelocity(newvel)
 	end
 
@@ -426,6 +388,8 @@ function SWEP:StopDash()
 
 	self:SetDashEndTime(0)
 	self:SetDashing(false)
+	self:SetSuperMoving(false)
+	self.SuperMovingVelocity = nil
 
 	self.Moved = false
 	self.EndSuperMove = true
