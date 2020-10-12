@@ -3,8 +3,8 @@ local function stim(ply)
 end
 
 Stims.Bind:On("Activate", "BeginStim", function(self, ply)
-	if not ply:Alive() then return end
-
+	if not ply:Alive() or ply:Health() >= ply:GetMaxHealth() then return end
+	if hook.Run("CanUseStimpak", ply) == false then return end
 
 	local dat = stim(ply)
 
@@ -26,25 +26,12 @@ Stims.Bind:On("Activate", "BeginStim", function(self, ply)
 	end
 
 	local can = VManip:PlayAnim("stim_inject_start")
-	if not can then print("can't") return end -- trust the client, YEET
+	if not can then return end -- trust the client, YEET
 
 	net.Start("ProcStim")
 	net.SendToServer()
 
-	Stims.Active[ply] = {
-		Active = true,
-		Working = false,
-		Started = CurTime(),
-
-		WorkTime = STIMPAK_WORK_TIME,
-		DeinjectTime = STIMPAK_REMOVE_TIME,
-
-		Heal = 50,
-		HealTime = 1,
-		LastHeal = 0,
-	}
-
-
+	Stims.AddStim(ply)
 end)
 
 

@@ -379,9 +379,9 @@ AddEntities("Structures (T1)", "bw_spawnpoint", "Spawnpoint", k * 25, 0, "models
 
 AddEntities("Dispensers (T1)", "bw_vendingmachine", "Vending Machine", k * 20, 10, "models/props_interiors/VendingMachineSoda01a.mdl")
 --AddEntities("Dispensers (T1)", "bw_weaponcrafter", "Weapons Crafter", k * 500, 10, "models/props_combine/combine_mortar01b.mdl")
-AddEntities("Dispensers (T1)", "bw_healthpad2", "Health Pad T2", m * 150, 1500, "models/props_lab/teleplatform.mdl")
-AddEntities("Dispensers (T1)", "bw_healthpad", "Health Pad", m * 10, 150, "models/props_lab/teleplatform.mdl")
-AddEntities("Dispensers (T1)", "bw_dispenser_health", "Armor Dispenser", k * 25, 50, "models/props_combine/health_charger001.mdl")
+--AddEntities("Dispensers (T1)", "bw_healthpad2", "Health Pad T2", m * 150, 1500, "models/props_lab/teleplatform.mdl")
+--AddEntities("Dispensers (T1)", "bw_healthpad", "Health Pad", m * 10, 150, "models/props_lab/teleplatform.mdl")
+AddEntities("Dispensers (T1)", "bw_dispenser_health", "Health Dispenser", k * 25, 50, "models/props_combine/health_charger001.mdl")
 AddEntities("Dispensers (T1)", "bw_dispenser_ammo", "Ammo Dispenser", k * 55, 30, "models/props_lab/reciever_cart.mdl")
 AddEntities("Dispensers (T1)", "bw_dispenser_armor2", "Armor Dispenser T2", m * 15, 1000, "models/props_combine/suit_charger001.mdl")
 AddEntities("Dispensers (T1)", "bw_dispenser_ammo2", "Ammo Dispenser T2", m * 10, 750, "models/props_lab/reciever_cart.mdl")

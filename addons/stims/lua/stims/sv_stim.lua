@@ -7,7 +7,8 @@ end
 util.AddNetworkString("ProcStim")
 
 net.Receive("ProcStim", function(_, ply)
-	if not ply:Alive() then return end
+	if not ply:Alive() or ply:Health() >= ply:GetMaxHealth() then return end
+	if hook.Run("CanUseStimpak", ply) == false then return end
 
 	local dat = stim(ply)
 
