@@ -52,10 +52,13 @@ end
 facmeta.GetOwner = facmeta.GetLeader
 
 function facmeta:RaidedCooldown()
-	local oncd = false
-	if self.RaidCooldown and CurTime() - self.RaidCooldown < RaidCoolDown then oncd = true end
+	local cd = self.RaidCooldown
 
-	return oncd, RaidCoolDown - (CurTime() - (self.RaidCooldown or 0))
+	if cd and CurTime() - cd < Raids.FactionCooldown then
+		return true, Raids.FactionCooldown - (CurTime() - cd)
+	end
+
+	return false
 end
 
 function facmeta:Update(now)
@@ -91,6 +94,11 @@ function facmeta:Join(ply, pw, force)
 	self:Update(true)
 end
 
+function facmeta:OnRaided()
+	self.RaidCooldown = CurTime()
+	self:Set("RaidCooldown", self.RaidCooldown)
+end
+
 function facmeta:Initialize(ply, id, name, pw, col)
 
 	if not id or not name then error('what??? ' .. tostring(id) .. " " .. tostring(name)) return false end --for real?
@@ -114,6 +122,8 @@ function facmeta:Initialize(ply, id, name, pw, col)
 	ply:SetTeam(id)
 
 	self:SetNetworkableID("Faction:" .. id)
+
+	self:On("Raided", "CooldownTracker", self.OnRaided)
 end
 
 function facmeta:IsRaidable()

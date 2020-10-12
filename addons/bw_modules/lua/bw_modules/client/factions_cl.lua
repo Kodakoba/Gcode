@@ -132,6 +132,16 @@ function facmeta:GetID()
 	return self.id
 end
 
+function facmeta:RaidedCooldown()
+	local cd = self:Get("RaidCooldown")
+
+	if cd and CurTime() - cd < Raids.FactionCooldown then
+		return true, Raids.FactionCooldown - (CurTime() - cd)
+	end
+
+	return false
+end
+
 local PLAYER = debug.getregistry().Player
 
 net.Receive("Factions", function(len)

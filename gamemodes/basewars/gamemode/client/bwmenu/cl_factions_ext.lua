@@ -726,11 +726,10 @@ local function onOpen(navpnl, tabbtn, _, noanim)
 			pnl.FactionFrame:RemoveElements("Exclusive")
 			onSelectAction(pnl, pnl.FactionFrame.Faction, false, true)
 		end
-		
 
 	else
 		pnl, scr = BaseWars.Menu.CreateFactionList(f)
-		pnl:PopIn(nil, 0.1)
+		pnl:PopIn()
 	end
 
 	function pnl:FactionClicked(fac)

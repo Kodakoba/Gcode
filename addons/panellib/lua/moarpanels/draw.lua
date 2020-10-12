@@ -636,58 +636,56 @@ draw.Line = draw.RotatedBox
 
 local function GetOrDownload(url, name, flags, cb)	--callback: 1st arg is material, 2nd arg is boolean: was the material loaded from cache?
 	if url == "-" or name == "-" then return false end
+	if not name then error("no name! disaster averting") return end
 
 	local key = name:gsub("%.png$", "")
-
 	local mat = MoarPanelsMats[key]
-	if not name then error("no name! disaster averting") return end
 
 	name = name:gsub("%(.+%)", "")
 
 	if not mat or (mat.failed and mat.failed ~= url) then 	--mat was not loaded
 
-		MoarPanelsMats[key] = {}
+		mat = {}
+		MoarPanelsMats[key] = mat
 
 		if file.Exists("hdl/" .. name, "DATA") then 		--mat existed on disk: load it in
 
 			local cmat = Material("data/hdl/" .. name, flags or "smooth")
 
-			MoarPanelsMats[key].mat = cmat
+			mat.mat = cmat
 
-			MoarPanelsMats[key].w = cmat:Width()
-			MoarPanelsMats[key].h = cmat:Height()
+			mat.w = cmat:Width()
+			mat.h = cmat:Height()
 
-			MoarPanelsMats[key].flags = flags or "smooth"
-			MoarPanelsMats[key].path = "data/hdl/" .. name
+			mat.flags = flags or "smooth"
+			mat.path = "data/hdl/" .. name
 
-			MoarPanelsMats[key].fromurl = url
+			mat.fromurl = url
 		else 												--mat did not exist on disk: download it then load it in
 
-			MoarPanelsMats[key].downloading = true
+			mat.downloading = true
 
 			hdl.DownloadFile(url, name or "unnamed.dat", function(fn)
-				MoarPanelsMats[key].downloading = false
+				mat.downloading = false
 				local cmat = Material(fn, flags or "smooth")
-				MoarPanelsMats[key].mat = cmat
+				mat.mat = cmat
 
-				MoarPanelsMats[key].w = cmat:Width()
-				MoarPanelsMats[key].h = cmat:Height()
-				MoarPanelsMats[key].flags = flags or "smooth"
-				MoarPanelsMats[key].path = fn
+				mat.w = cmat:Width()
+				mat.h = cmat:Height()
+				mat.flags = flags or "smooth"
+				mat.path = fn
 
-				if cb then cb(MoarPanelsMats[key].mat, false) end
+				if cb then cb(mat.mat, false) end
 
 			end, function(err)
 
-				MoarPanelsMats[key].mat = Material("materials/icon16/cancel.png")
-				MoarPanelsMats[key].failed = url
-				MoarPanelsMats[key].downloading = false
+				mat.mat = Material("materials/icon16/cancel.png")
+				mat.failed = url
+				mat.downloading = false
 				errorf("Failed to download! URL: %s\n Error: %s", url, err)
 			end)
 
 		end
-
-		mat = MoarPanelsMats[key]
 
 	else --mat was already preloaded
 
@@ -911,6 +909,7 @@ end
 function draw.FinishMask()
 	render.SetStencilEnable(false)
 end
+
 
 function draw.Masked(mask, op, demask, deop, ...)
 
