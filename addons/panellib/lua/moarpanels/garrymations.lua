@@ -33,6 +33,10 @@ function meta:AnimationThinkInternal()
 		if anim.Ended then continue end
 
 		if ( systime >= anim.StartTime ) then
+			if not anim.Started then
+				anim.Started = true
+				anim:Emit("Start")
+			end
 
 			local Fraction = math.TimeFraction( anim.StartTime, anim.EndTime, systime )
 			Fraction = math.Clamp( Fraction, 0, 1 )
@@ -287,6 +291,11 @@ function meta:AlphaTo( alpha, length, delay, callback, ease )
 	if self.m_AnimList and self.m_AnimList.AlphaTo then
 		if self.m_AnimList.AlphaTo.Alpha == alpha then return end
 		self.m_AnimList.AlphaTo:Stop()
+	end
+
+	if isnumber(callback) then --garry is un-based
+		ease = callback
+		callback = nil
 	end
 
 	local anim = self:NewAnimation( length, delay, ease, callback )

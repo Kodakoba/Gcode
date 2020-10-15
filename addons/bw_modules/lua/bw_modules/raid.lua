@@ -59,7 +59,9 @@ end
 
 function raid.CanRaidPlayer(ply, ply2)
 	local fac = ply:GetFaction()
+
 	if fac then return false, err.CantHaveAFaction end
+	if ply == ply2 then return false, err.RaidingSelf end
 
 	if ply2:RaidedCooldown() then
 		return false, err.RaidedOnCooldown
