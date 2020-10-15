@@ -91,18 +91,18 @@ end
 
 function AddPartizone(tab)
 	if not tab.IsPartizone then error("AddPartizone attempted to add a non-partizone object!") return end 
-	local name = tab.Name 
-	
+	local name = tab.Name
+
 	if not IsValid(Partizones[name]) then
 		local me = ents.Create("partizone_brush")
 
 		me.ZoneName = name
 
-		me.TouchFunc = tab.TouchFunc 
-		me.EndTouchFunc = tab.EndTouchFunc 
-		me.StartTouchFunc = tab.StartTouchFunc 
+		me.TouchFunc = tab.TouchFunc
+		me.EndTouchFunc = tab.EndTouchFunc
+		me.StartTouchFunc = tab.StartTouchFunc
 
-		me.Partizone = tab 
+		me.Partizone = tab
 
 		Partizones[name] = me
 

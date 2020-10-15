@@ -127,14 +127,10 @@ Partizones = PawwtizOwOnes
 
 local function HexLibLoaded( ... )
 
-	PawwtizOwOne = Object:extend()
+	PawwtizOwOne = Object:callable()
 	Partizone = PawwtizOwOne
 
-	PawwtizOwOneMethOwOds = PawwtizOwOne.Meta
-
-	getmetatable(PawwtizOwOne).__call = PawwtizOwOne.new
-
-	PawwtizOwOneMethOwOds.initialize = function(self, name, pos1, pos2)
+	PawwtizOwOne.initialize = function(self, name, pos1, pos2)
 	    self.IsPartizone = true
 
 	    self[1] = pos1
@@ -145,7 +141,7 @@ local function HexLibLoaded( ... )
 	    PawwtizOwOnePOwOints[name] = self
 	end
 
-	PawwtizOwOneMethOwOds.SetBounds = function(self, pos1, pos2)
+	PawwtizOwOne.SetBounds = function(self, pos1, pos2)
 		OrderVectors(pos1, pos2)
 
 		self[1] = pos1
@@ -160,35 +156,35 @@ local function HexLibLoaded( ... )
 		return self
 	end
 
-	function PawwtizOwOneMethOwOds:GetBounds()
+	function PawwtizOwOne:GetBounds()
 		return self[1], self[2]
 	end
 
-	function PawwtizOwOneMethOwOds:GetEntity()
+	function PawwtizOwOne:GetEntity()
 		return PawwtizOwOnes[self.Name]
 	end
 
-	PawwtizOwOneMethOwOds.SetOnSpawn = function(self, func)
+	PawwtizOwOne.SetOnSpawn = function(self, func)
 	    self.OnSpawn = func
 	    return self
 	end
 
-	PawwtizOwOneMethOwOds.SetStartTouchFunc = function(self, func)
+	PawwtizOwOne.SetStartTouchFunc = function(self, func)
 	    self.StartTouchFunc = func
 	    return self
 	end
 
-	PawwtizOwOneMethOwOds.SetEndTouchFunc = function(self, func)
+	PawwtizOwOne.SetEndTouchFunc = function(self, func)
 	    self.EndTouchFunc = func
 	    return self
 	end
 
-	PawwtizOwOneMethOwOds.SetTouchFunc = function(self, func)
+	PawwtizOwOne.SetTouchFunc = function(self, func)
 	    self.Touch = func
 	    return self
 	end
 
-	function PawwtizOwOneMethOwOds:Inherit(name)
+	function PawwtizOwOne:Inherit(name)
 		local t = PawwtizOwOne(name)
 
 		for k,v in pairs(self) do 

@@ -32,10 +32,10 @@ zone:SetOnSpawn(function(self)
 
 	local p1, p2 = zone:GetBounds()
 
-	for k,v in pairs(ents.FindInBox(p1,p2)) do 
+	for k,v in pairs(ents.FindInBox(p1,p2)) do
 
-		if IsValid(v) and v.GetClass and v:GetClass()=="ambient_generic" then 
-			v:Remove() 
+		if IsValid(v) and v.GetClass and v:GetClass() == "ambient_generic" then
+			v:Remove()
 		end
 
 	end
@@ -44,7 +44,7 @@ end)
 
 zone:SetStartTouchFunc(function(self, ent)	--Started touch
 
-	if not ip(ent) then 
+	if not ip(ent) then
 
 		local ow = owner(ent)
 		if not ow then return end
