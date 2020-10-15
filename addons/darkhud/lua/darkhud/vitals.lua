@@ -1,172 +1,28 @@
-setfenv(1, _G)
 
-DarkHUD = DarkHUD or {}
-local wasvalid = false
 
 local render = render
 local surface = surface
-
-if DarkHUD.Essentials then DarkHUD.Essentials:Remove() DarkHUD.Essentials = nil wasvalid = true end
-
-
-
---[[------------------------------]]
---	  		Fonts setup
---[[------------------------------]]
-
-	DarkHUD.Fonts = DarkHUD.Fonts or {}
-
-	local fonts = DarkHUD.Fonts
-	fonts.NameFont = "Open Sans Semibold"
-	fonts.FactionFont = "Open Sans"
-
-	fonts.MoneyFont = "Open Sans"
-
-	fonts.VitalsNumberFont = "Open Sans"
-
---[[------------------------------]]
---	  	Used/not used setup
---[[------------------------------]]
-
-	DarkHUD.EverUsed = false
-
-	sql.Query("CREATE TABLE IF NOT EXISTS DarkHUD(used TEXT, settings TEXT)")
-	DarkHUD.Used = DarkHUD.Used or sql.Query("SELECT used FROM DarkHUD")
-	local used = DarkHUD.Used
-
-	if not used then used = {} sql.Query("INSERT INTO DarkHUD(used, settings) VALUES('[]', '[]')") end
-	if used and used[1] and used[1].used then used = util.JSONToTable(used[1].used) end
-
-	function DarkHUD.SetUsed(key, val)
-		used[key] = val
-
-		local str = SQLStr(util.TableToJSON(used))
-		local q = ("UPDATE DarkHUD SET used = %s"):format(str)
-		sql.Query(q)
-	end
-
-
 local dh = DarkHUD
-
---[[------------------------------]]
---	  Scaling & Rescaling setup
---[[------------------------------]]
-
-	local scale = 0
-	local hsc = 0
-
-	function DarkHUD.ReScale()
-		scale = ScrH() / 1080 * 0.9
-		hsc = scale
+local fonts = DarkHUD.Fonts
 
 
-		fonts.NameHeight = 40 * scale
-		fonts.FactionHeight = 16 + 12 * scale
-		fonts.MoneyHeight = 28 * scale
-		fonts.VitalsNumberHeight = 12 + 16 * scale
 
-		surface.CreateFont("DarkHUD_Name", {
-			font = fonts.NameFont,
-			size = fonts.NameHeight
-		})
+local scale = DarkHUD.Scale
 
-		surface.CreateFont("DarkHUD_Faction", {
-			font = fonts.FactionFont,
-			size = fonts.FactionHeight
-		})
+DarkHUD:On("Rescale", "VitalsResize", function(self, new)
+	scale = new
 
-		surface.CreateFont("DarkHUD_Money", {
-			font = fonts.MoneyFont,
-			size = fonts.MoneyHeight
-		})
+	local f = DarkHUD.Vitals
+	if not IsValid(f) then return end
 
-		surface.CreateFont("DarkHUD_VitalsNumber", {
-			font = fonts.VitalsNumberFont,
-			size = fonts.VitalsNumberHeight
-		})
+	f:ResizeElements()
+end)
 
-		dh.PaddingX = 16 + scale * 36
-		dh.PaddingY = 16 + hsc * 24
+function DarkHUD.CreateVitals()
+	if DarkHUD.Vitals then DarkHUD.Vitals:Remove() end
+	DarkHUD.Vitals = vgui.Create("FFrame")
 
-		local f = DarkHUD.Essentials
-		if not IsValid(f) then print("bruh invalid darkhud, can't resize bruhbruh") return end
-
-		f:ResizeElements()
-	end
-
-	DarkHUD.ReScale()
-
-	hook.Add("OnScreenSizeChanged", "DarkHUD_Scale", DarkHUD.ReScale)
-
-
-local tex_corner8	= surface.GetTextureID( "gui/corner8" )
-local tex_corner16	= surface.GetTextureID( "gui/corner16" )
-local tex_corner32	= surface.GetTextureID( "gui/corner32" )
-local tex_corner64	= surface.GetTextureID( "gui/corner64" )
-local tex_corner512	= surface.GetTextureID( "gui/corner512" )
-
-function draw.RoundedBoxExEx( bordersize, x, y, w, h, color, btl, btr, bbl, bbr )
-
-	surface.SetDrawColor( color.r, color.g, color.b, color.a )
-
-	-- Do not waste performance if they don't want rounded corners
-	if ( bordersize <= 0 ) then
-		surface.DrawRect( x, y, w, h )
-		return
-	end
-
-	x = math.floor( x )
-	y = math.floor( y )
-	w = math.floor( w )
-	h = math.floor( h )
-	bordersize = math.min( math.floor( bordersize ), math.floor( w / 2 ) )
-
-	-- Draw as much of the rect as we can without textures
-	surface.DrawRect( x + bordersize, y, w - bordersize * 2, h )
-	surface.DrawRect( x, y + bordersize, bordersize, h - bordersize * 2 )
-	surface.DrawRect( x + w - bordersize, y + bordersize, bordersize, h - bordersize * 2 )
-
-	local tex = tex_corner8
-	if ( bordersize > 8 ) then tex = tex_corner16 end
-	if ( bordersize > 16 ) then tex = tex_corner32 end
-	if ( bordersize > 32 ) then tex = tex_corner64 end
-	if ( bordersize > 64 ) then tex = tex_corner512 end
-
-	surface.SetTexture( tex )
-
-	if ( btl ) then
-		surface.DrawTexturedRectUV( x, y, btl, btl, 0, 0, 1, 1 )
-	else
-		surface.DrawRect( x, y, bordersize, bordersize )
-	end
-
-	if ( btr ) then
-		surface.DrawTexturedRectUV( x + w - bordersize, y, btr, btr, 1, 0, 0, 1 )
-		surface.DrawRect(x + w - bordersize, y + btr, btr, h-btr*2)
-	else
-		surface.DrawRect( x + w - bordersize, y, bordersize, bordersize )
-	end
-
-	if ( bbl ) then
-		surface.DrawTexturedRectUV( x, y + h - bbl, bbl, bbl, 0, 1, 1, 0 )
-	else
-		surface.DrawRect( x, y + h - bordersize, bordersize, bordersize )
-	end
-
-	if ( bbr ) then
-		surface.DrawTexturedRectUV( x + w - bordersize, y + h - bbr, bbr, bbr, 1, 1, 0, 0 )
-	else
-		surface.DrawRect( x + w - bordersize, y + h - bordersize, bordersize, bordersize )
-	end
-
-
-end
-
-function DarkHUD.Create()
-	if DarkHUD.Essentials then DarkHUD.Essentials:Remove() DarkHUD.Essentials = nil end
-	DarkHUD.Essentials = vgui.Create("FFrame")
-
-	local f = DarkHUD.Essentials
+	local f = DarkHUD.Vitals
 	if not IsValid(f) then return false end --?
 	f:SetPaintedManually(true)
 	f.HeaderSize = 24
@@ -174,7 +30,7 @@ function DarkHUD.Create()
 	local hs = f.HeaderSize
 
 
-	f:SetSize(scale*500, hsc*200)
+	f:SetSize(scale*500, scale*200)
 	local fw, fh = f:GetSize()
 
 	f:SetPos(dh.PaddingX, ScrH() - fh - dh.PaddingY)
@@ -212,8 +68,9 @@ function DarkHUD.Create()
 	av:SetPaintedManually(true)
 
 	function f:ResizeElements()
+		fw, fh = scale * 500, scale * 200
 
-		self:SetSize(scale*500, hsc*200)
+		self:SetSize(fw, fh)
 		self:SetPos(dh.PaddingX, ScrH() - fh - dh.PaddingY)
 
 		vls:SetSize(f:GetWide(), f:GetTall() - hs - 12 - 64*scale)
@@ -229,7 +86,7 @@ function DarkHUD.Create()
 
 	local tcol = Color(100, 100, 100)
 
-	f.Shadow = {spread = 0.8, intensity = 4}
+	f.Shadow = {spread = 0.9, intensity = 2}
 
 	local pl, pm = LocalPlayer():GetLevel(), LocalPlayer():GetMoney()
 
@@ -251,6 +108,8 @@ function DarkHUD.Create()
 			lvCol:Set(Colors.Green)
 			pld = {amt = lvl - pl, y = 0, ct = CurTime(), boxcol = boxcol:Copy()}
 		end
+
+		-- track money changes for money popups
 
 		if pm ~= mon then
 			PopupMoney = CurTime()
@@ -282,7 +141,7 @@ function DarkHUD.Create()
 		pl, pm, pe = lvl, mon
 	end
 
-	local popups = Animatable:new()
+	local popups = Animatable:new("DarkHUD_Vitals")
 
 	popups.MoneyFrac = 0
 	popups.MoneyColor = color_white:Copy()
@@ -387,7 +246,6 @@ function DarkHUD.Create()
 
 			end
 		DisableClipping(false)
-		
 	end
 
 	local lastfac
@@ -410,14 +268,19 @@ function DarkHUD.Create()
 		av:PaintManual()
 	end
 
+	local factionIconCol = Color(255, 255, 255, 220)
+	local factionTextCol = Color(255, 255, 255, 20)
+	local defaultCol = Color(100, 100, 100)
+
+	local curTeamCol = defaultCol:Copy()
+
 	function f:PostPaint(w, h)
 		local x, y = av:GetPos()
 		local w2, h2 = av:GetSize()
 
 		local nameY = f.HeaderSize - fonts.NameHeight * 0.1
-		draw.SimpleText(me:Nick(), "DarkHUD_Name", x + w2 + 12, nameY, tcol, 0, 5)
-
-		surface.SetDrawColor(Color(255, 255, 255, 220))
+		draw.SimpleText(me:Nick(), "DarkHUD_Name", x + w2 + 12, nameY, curTeamCol, 0, 5)
+		surface.SetDrawColor(factionIconCol:Unpack())
 		--surface.DrawOutlinedRect(x + w2 + 12, nameY, w, h)
 
 		local fac = me:GetFactionName()
@@ -427,18 +290,18 @@ function DarkHUD.Create()
 			facname = faclen(lastfac)
 		end
 																												--  V i'm getting tired of source's retarded text-height-calculation
-		local _, fach = draw.SimpleText(facname, "DarkHUD_Faction", x + w2 + 12 + 20 + 8, nameY + fonts.NameHeight - 2, Color(255, 255, 255, 20), 0, 5)
+		draw.SimpleText(facname, "DarkHUD_Faction", x + w2 + 12 + 20 + 8, nameY + fonts.NameHeight - 2, factionTextCol, 0, 5)
 
 		surface.DrawMaterial("https://i.imgur.com/5BQxS4m.png", "faction.png", x + w2 + 12, nameY + fonts.NameHeight + 2, 24, 24)
 
 		local tm = me:Team()
-		local col = (tm~=0 and team.GetColor(tm)) or Color(100, 100, 100)
-		tcol = LC(tcol, col, 15)
+		local col = tm ~= 0 and team.GetColor(tm) or defaultCol
+		self:LerpColor(curTeamCol, col, 0.5, 0, 0.3)
 
 		draw.Masked(Mask, Paint, nil, nil, av, x, y, w2, h2)
 
 
-		surface.SetDrawColor(tcol)
+		surface.SetDrawColor(curTeamCol:Unpack())
 		surface.DrawMaterial("https://i.imgur.com/VMZue2h.png", "circle_outline.png", x-3, y-3, w2+6, h2+6)
 	end
 
@@ -454,7 +317,6 @@ function DarkHUD.Create()
 
 		local x, y = 12, av.Y
 		y = y - hs
-		local w2, h2 = av:GetSize()
 
 		--self:SetSize(f:GetWide(), f:GetTall() - hs)
 
@@ -508,7 +370,7 @@ function DarkHUD.Create()
 
 			elseif round then
 
-				draw.RoundedBoxExEx(rndrad, avx, barY, hpw*hpfr, barH, Color(240, 70, 70), rndrad, round, rndrad, round)
+				DarkHUD.RoundedBoxCorneredSize(rndrad, avx, barY, hpw*hpfr, barH, Color(240, 70, 70), rndrad, round, rndrad, round)
 
 			end
 
@@ -537,7 +399,7 @@ function DarkHUD.Create()
 
 			elseif round then
 
-				draw.RoundedBoxExEx(rndrad, avx, barY, hpw*arfr, barH, Color(40, 120, 255), rndrad, round, rndrad, round)
+				DarkHUD.RoundedBoxCorneredSize(rndrad, avx, barY, hpw*arfr, barH, Color(40, 120, 255), rndrad, round, rndrad, round)
 
 			end
 
@@ -577,17 +439,15 @@ function DarkHUD.Create()
 
 end
 
-hook.Add("InitPostEntity", "HUDCreate", function()
-	DarkHUD.Create()
-end)
+local used = DarkHUD.Used
 
-hook.Add("OnContextMenuOpen", "DarkHUD", function()
-	local f = DarkHUD.Essentials
+hook.Add("OnContextMenuOpen", "DarkHUD_Vitals", function()
+	local f = DarkHUD.Vitals
 
 	if not IsValid(f) then
 		DarkHUD.Create()
-		f = DarkHUD.Essentials
-		if not IsValid(DarkHUD.Essentials) then return end
+		f = DarkHUD.Vitals
+		if not IsValid(DarkHUD.Vitals) then return end
 	end
 
 	if not used["ContextMenu"] then
@@ -603,8 +463,8 @@ hook.Add("OnContextMenuOpen", "DarkHUD", function()
 
 end)
 
-hook.Add("OnContextMenuClose", "DarkHUD", function()
-	local f = DarkHUD.Essentials
+hook.Add("OnContextMenuClose", "DarkHUD_Vitals", function()
+	local f = DarkHUD.Vitals
 	if not IsValid(f) then return end
 
 	if IsValid(f.Vitals) and IsValid(f.Economy) then
@@ -616,18 +476,29 @@ hook.Add("OnContextMenuClose", "DarkHUD", function()
 
 end)
 
-hook.Add("HUDPaint", "DarkHUD", function()
-	local f = DarkHUD.Essentials
+hook.Add("HUDPaint", "DarkHUD_Vitals", function()
+	local f = DarkHUD.Vitals
 
 	if not IsValid(f) then
-		DarkHUD.Create()
-		f = DarkHUD.Essentials
-		if not IsValid(DarkHUD.Essentials) then return end
+		DarkHUD.CreateVitals()
+		f = DarkHUD.Vitals
+		if not IsValid(DarkHUD.Vitals) then return end
 	end
 
 	f:PaintManual()
 
 end)
-if wasvalid then
-	DarkHUD.Create()
+
+local wasvalid = false
+
+if DarkHUD.Vitals then
+	DarkHUD.Vitals:Remove()
+	DarkHUD.Vitals = nil
+	wasvalid = true
 end
+
+if wasvalid then
+	DarkHUD.CreateVitals()
+end
+
+DarkHUD:On("Ready", "CreateVitals", DarkHUD.CreateVitals)

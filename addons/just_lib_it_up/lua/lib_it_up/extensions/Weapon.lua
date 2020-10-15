@@ -41,4 +41,12 @@ if CLIENT then
         return origin + (right * transformed.x) + (up * transformed.y) + (fwd * transformed.z)
 
     end
+
+    hook.Add("EntityFireBullets", "ThankYouBasedGarry", function(whomst, bullet)
+        whomst:Emit("FiredBullet", bullet)
+        local wep = whomst:GetActiveWeapon()
+        if wep:IsValid() then
+            wep:Emit("FiredBullet", bullet)
+        end
+    end)
 end

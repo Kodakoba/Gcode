@@ -157,11 +157,26 @@ function Emitter:RemoveListener(event, name)
 	self.__Events:Set(nil, event, name)
 end
 
+Emitter.RemoveListener = Emitter.RemoveListeners
+
+function Emitter:GetListeners(event, name)
+	local evs = self.__Events
+	if not evs then return false end
+
+	if name then return evs[event] and evs[event][name] end
+	return evs[event]
+end
+
+Emitter.GetListener = Emitter.GetListeners
+
 function MakeEmitter(t)
 	t.On = Emitter.On
 	t.Emit = Emitter.Emit
 	t.Once = Emitter.Once
 	t.RemoveListener = Emitter.RemoveListener
+	t.RemoveListeners = Emitter.RemoveListener
+	t.GetListener = Emitter.GetListener
+	t.GetListeners = Emitter.GetListener
 end
 
 MakeEmitter(FindMetaTable("Entity"))
