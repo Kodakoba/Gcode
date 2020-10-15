@@ -231,6 +231,12 @@ function CreateQuickMenu()
 
 	local qm	--the quick menu with maximum progress
 
+	local size = 64
+	local pad = 6
+
+	local shrinkanim
+	local shrinking = false
+
 	function p:Think()
 
 		maxperc = 0
@@ -239,7 +245,9 @@ function CreateQuickMenu()
 
 		local hastime = false
 
-		for k=#iqmr, 1, -1 do--k,v in ipairs(iqmr) do
+		-- iterate all QM's, find the 'most active'
+
+		for k=#iqmr, 1, -1 do
 
 			local v = iqmr[k]
 
@@ -248,50 +256,23 @@ function CreateQuickMenu()
 				continue
 			end
 
-			if v.active then
-				active = true
+			active = active or v.active
+			hastime = hastime or v.progress > 0
 
-				if v.wasopened and not v.opened then
-					v:OnRehold()
-				end
-			end
-
-			if v.progress > 0 then
-				hastime = true
-				v:Think(v.ent, self)
-			else
-				v:OnFullClose(v.ent, self)
-				v.wasopened = false
-			end
-
-			if v.progress == 1 and not v.opened and not self.CurrentQM then 	--progress = 100%, not open and no more opened quickmenus
-
-				if v.wasopened then
-					v:OnReopen(v.ent, self)
-					v:__OnReopen(v.ent, self)
-				else
-					v.wasopened = true
-					v:OnOpen(v.ent, self)
-					v:__OnOpen(v.ent, self)
-				end
-
-				v.opened = true
-				opened = v
-			end
-
-			if v.progress ~= 1 and v.opened then
-				v:OnClose(v.ent, self)
-				v:__OnClose(v.ent, self)
-				v.opened = false
-			end
 
 			maxperc = math.max(v.progress, maxperc)
 
+			if v.progress == 0 then
+				v.wasopened = false
+			end
 			if v.progress == maxperc then
 				qm = v
 			end
 
 		end
+
+		-- check if we should even keep the panel open and
+		-- whether we should shrink the circle now
 
 		if not qm or (not active and not hastime) then
 			self:Remove()
@@ -299,56 +280,7 @@ function CreateQuickMenu()
 			return
 		end
 
-		self.CurrentQM = (qm and qm.progress == 1 and qm)
-
-	end
-
-	local size = 64
-	local pad = 6
-
-	local shrinkanim
-	local shrinking = false
-
-	function p:Paint(w, h)
-		self.Fraction = frac
-	
-		self:Emit("PrePaint", w, h)
-		local midX, midY = self.CircleX, self.CircleY
-
-		if not midX or not midY then
-
-			local x, y = self:ScreenToLocal(ScrW()/2, ScrH()/2)	--w, h might change and the circle always needs to draw in the middle
-																--(unless overridden with self.CircleX, self.CircleY)
-			midX, midY = midX or x, midY or y
-
-			self.CircleX = midX
-			self.CircleY = midY
-
-		end
-
-		local perc = (maxperc^2)*100
-
-		local mask = function()
-			draw.Circle(midX, midY, size+6, 32, perc)
-		end
-
-		local a = perc
-
-		self.Alpha = a
-
-		local op = function()
-			surface.SetDrawColor(Color(250, 250, 250, a*3))
-			draw.MaterialCircle(midX, midY, (size-pad)*2 )
-		end
-
-		surface.SetDrawColor(Color(10, 10, 10, math.min(a*2.35, 150)))
-		draw.MaterialCircle(midX, midY, size*2)
-
-		draw.Masked(mask, op)
-
-		self.CircleSize = size
-
-		if perc==100 and not shrinking then
+		if maxperc == 1 and not shrinking then
 			shrinking = true
 
 			if shrinkanim then
@@ -366,7 +298,7 @@ function CreateQuickMenu()
 				size = 64 - 24*frac
 			end
 
-		elseif shrinking and perc~=100 then
+		elseif shrinking and maxperc < 1 then
 
 			shrinkanim:Swap(0.1, 0, 0.4)
 
@@ -381,6 +313,112 @@ function CreateQuickMenu()
 
 		end
 
+		-- and only then run all the individual QMs' logic
+
+		for k,v in ipairs(iqmr) do
+			local progress = v.progress
+
+			if v.active then
+				if v.wasopened and not v.opened then
+					-- im unsure what this does now, lol
+					v:OnRehold()
+				end
+			end
+
+			if progress > 0 then
+				-- we think only if progress is > 0, aka we still exist
+				hastime = true
+				v:Think(v.ent, self)
+			else
+				-- otherwise we just either close completely and await reactivation or don't think
+				if v.wasopened then
+					print("was opened", v)
+					v.wasopened = false
+					v:OnFullClose(v.ent, self)
+					
+				end
+				continue
+			end
+
+			--progress = 100%, not open and no more opened quickmenus
+			if progress == 1 and not v.opened and not self.CurrentQM then 	
+				-- run either first open or reopen functions
+				v.opened = true
+				opened = v
+
+				if v.wasopened then
+					v:OnReopen(v.ent, self)
+					v:__OnReopen(v.ent, self)
+				else
+					v.wasopened = true
+					v:OnOpen(v.ent, self)
+					v:__OnOpen(v.ent, self)
+				end
+
+				
+			end
+
+			if progress ~= 1 and v.opened then
+				v.opened = false
+				-- progress dropped from 1 to < 1: run closing functions (not full close)
+				v:OnClose(v.ent, self)
+				v:__OnClose(v.ent, self)
+			end
+		end
+
+		self.CurrentQM = qm.progress == 1 and qm
+	end
+
+	local circleOuterCol = Color(10, 10, 10)
+	p.CircleOuterColor = circleOuterCol
+
+	p.CircleInnerColor = Color(250, 250, 250)
+	p.MaxInnerAlpha = 255
+
+	function p:Paint(w, h)
+		self.Fraction = frac
+
+		self:Emit("PrePaint", w, h)
+		local midX, midY = self.CircleX, self.CircleY
+
+		if not midX or not midY then
+
+			local x, y = self:ScreenToLocal(ScrW()/2, ScrH()/2)	--w, h might change and the circle always needs to draw in the middle
+																--(unless overridden with self.CircleX, self.CircleY)
+			midX, midY = midX or x, midY or y
+
+			self.CircleX = midX
+			self.CircleY = midY
+
+		end
+
+		local perc = (maxperc^2)
+
+		local mask = function()
+			draw.Circle(midX, midY, size+6, 32, perc * 100)
+		end
+
+		self.Alpha = perc * 100
+		self.QMFrac = perc
+
+		local op = function()
+			surface.SetDrawColor(self.CircleInnerColor:Unpack())
+			draw.MaterialCircle(midX, midY, (size-pad)*2 )
+		end
+
+		self.CircleOuterColor.a = perc * 100
+		self.CircleInnerColor.a = perc * self.MaxInnerAlpha -- don't forget to reset it in your QM's closer
+
+		if qm and qm.MaxInnerAlpha then
+			self:To("MaxInnerAlpha", qm.MaxInnerAlpha, qm:GetTime() * (1 - perc))
+		end
+
+		surface.SetDrawColor(self.CircleOuterColor:Unpack())
+		draw.MaterialCircle(midX, midY, size*2)
+
+		draw.Masked(mask, op)
+
+		self.CircleSize = size
 
 		self:Emit("PostPaint", w, h)
 
