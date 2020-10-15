@@ -94,7 +94,6 @@ function DarkHUD.CreateAmmo()
 			self:To("Y", ScrH(), 0.15, 0, 4)
 		end
 
-		
 	end)
 
 	function f:MaskHeader(w, h)

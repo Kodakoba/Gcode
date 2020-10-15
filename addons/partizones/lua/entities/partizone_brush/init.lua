@@ -166,5 +166,3 @@ end
 
 hook.Add("InitPostEntity", "PartizonesSpawn", ReloadPartizones)
 hook.Add("PostCleanupMap", "PartizonesSpawn", ReloadPartizones)
-
-hook.Run("PartizoneLoaded")

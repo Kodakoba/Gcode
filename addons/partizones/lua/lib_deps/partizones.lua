@@ -116,7 +116,7 @@ local function ParentZone(name, vec1, vec2)
 end
 
 if CLIENT then
-	AddPawwtizOwOne = function() end
+	AddPartizone = function() end
 end
 
 PawwtizOwOnePOwOints = PawwtizOwOnePOwOints or {}
@@ -125,112 +125,106 @@ PartizonePoints = PawwtizOwOnePOwOints
 PawwtizOwOnes = PawwtizOwOnes or {}
 Partizones = PawwtizOwOnes
 
-local function HexLibLoaded( ... )
+PawwtizOwOne = Object:callable()
+Partizone = PawwtizOwOne
 
-	PawwtizOwOne = Object:callable()
-	Partizone = PawwtizOwOne
+PawwtizOwOne.initialize = function(self, name, pos1, pos2)
+    self.IsPartizone = true
 
-	PawwtizOwOne.initialize = function(self, name, pos1, pos2)
-	    self.IsPartizone = true
+    self[1] = pos1
+    self[2] = pos2
 
-	    self[1] = pos1
-	    self[2] = pos2
+    self.Name = name
 
-	    self.Name = name
+    PawwtizOwOnePOwOints[name] = self
+end
 
-	    PawwtizOwOnePOwOints[name] = self
+PawwtizOwOne.SetBounds = function(self, pos1, pos2)
+	OrderVectors(pos1, pos2)
+
+	self[1] = pos1
+	self[2] = pos2
+
+	local ent = PawwtizOwOnes[self.Name]
+
+	if IsValid(ent) then
+		ent:SetBrushBounds(pos1, pos2)
 	end
 
-	PawwtizOwOne.SetBounds = function(self, pos1, pos2)
-		OrderVectors(pos1, pos2)
+	return self
+end
 
-		self[1] = pos1
-		self[2] = pos2
+function PawwtizOwOne:GetBounds()
+	return self[1], self[2]
+end
 
-		local ent = PawwtizOwOnes[self.Name]
+function PawwtizOwOne:GetEntity()
+	return PawwtizOwOnes[self.Name]
+end
 
-		if IsValid(ent) then
-			ent:SetBrushBounds(pos1, pos2)
-		end
+PawwtizOwOne.SetOnSpawn = function(self, func)
+    self.OnSpawn = func
+    return self
+end
 
-		return self
+PawwtizOwOne.SetStartTouchFunc = function(self, func)
+    self.StartTouchFunc = func
+    return self
+end
+
+PawwtizOwOne.SetEndTouchFunc = function(self, func)
+    self.EndTouchFunc = func
+    return self
+end
+
+PawwtizOwOne.SetTouchFunc = function(self, func)
+    self.Touch = func
+    return self
+end
+
+function PawwtizOwOne:Inherit(name)
+	local t = PawwtizOwOne(name)
+
+	for k,v in pairs(self) do
+		t[k] = v
 	end
+	t.Name = name
+	return t
+end
 
-	function PawwtizOwOne:GetBounds()
-		return self[1], self[2]
+
+FInc.Recursive("partizones/*.lua", _SH, false, function(s)
+	if s:find("^cl_") or s:find("^sv_") then return false, false end
+end)
+FInc.Recursive("partizones/sv_*.lua", _SV)
+FInc.Recursive("partizones/cl_*.lua", _CL)
+
+
+for k,v in pairs(PawwtizOwOnePOwOints) do
+	OrderVectors(v[1], v[2])
+end
+
+--[[
+if CLIENT then
+
+	IncludeLuaFolder("*.lua", _SH)
+	IncludeLuaFolder("client/*.lua", _CL)
+
+	for k,v in pairs(PawwtizOwOnePOwOints) do
+		OrderVectors(v[1], v[2])
 	end
-
-	function PawwtizOwOne:GetEntity()
-		return PawwtizOwOnes[self.Name]
-	end
-
-	PawwtizOwOne.SetOnSpawn = function(self, func)
-	    self.OnSpawn = func
-	    return self
-	end
-
-	PawwtizOwOne.SetStartTouchFunc = function(self, func)
-	    self.StartTouchFunc = func
-	    return self
-	end
-
-	PawwtizOwOne.SetEndTouchFunc = function(self, func)
-	    self.EndTouchFunc = func
-	    return self
-	end
-
-	PawwtizOwOne.SetTouchFunc = function(self, func)
-	    self.Touch = func
-	    return self
-	end
-
-	function PawwtizOwOne:Inherit(name)
-		local t = PawwtizOwOne(name)
-
-		for k,v in pairs(self) do
-			t[k] = v
-		end
-		t.Name = name
-		return t
-	end
-
-	if CLIENT then
+else
 
 		IncludeLuaFolder("*.lua", _SH)
+		IncludeLuaFolder("server/*.lua", _SV)
 		IncludeLuaFolder("client/*.lua", _CL)
 
 		for k,v in pairs(PawwtizOwOnePOwOints) do
 			OrderVectors(v[1], v[2])
 		end
-	else
 
-		hook.Add("PartizoneLoaded", "AddPartizones", function()
-			IncludeLuaFolder("*.lua", _SH)
-			IncludeLuaFolder("server/*.lua", _SV)
-			IncludeLuaFolder("client/*.lua", _CL)
-
-			for k,v in pairs(PawwtizOwOnePOwOints) do
-				OrderVectors(v[1], v[2])
-			end
-		end)
-
-	end
-
-end
+end]]
 
 if SERVER then
-
-	hook.Add("InitPostEntity", "Parti", function()
-		ReloadPartizones()
-		HexLibLoaded()
-	end)
-
-	if CurTime() > 20 then
-		ReloadPartizones()
-		--if not Partizone then HexLibLoaded() end
-		HexLibLoaded()
-	end
-
-else
-	HexLibLoaded()
+	ReloadPartizones()
 end
