@@ -26,7 +26,7 @@ function ENT:QMOnBeginClose(qm, self, pnl)
 	local midX, midY = pnl:GetWide() / 2, pnl:GetTall() / 2
 
 
-	local healBtn = pnl.HealBtn
+	--[[local healBtn = pnl.HealBtn
 
 	local x = midX - healBtn:GetWide() - pnl.CircleSize - 24
 	local y = midY - healBtn:GetTall() / 2
@@ -34,7 +34,7 @@ function ENT:QMOnBeginClose(qm, self, pnl)
 	healBtn:CircleMoveTo(x, y, 0.3, 0.4, true)
 	healBtn:PopOut(0.2):Then(function()
 		qm:Close()
-	end)
+	end)]]
 
 	local stimBtn = pnl.GiveStimBtn
 
@@ -45,6 +45,8 @@ function ENT:QMOnBeginClose(qm, self, pnl)
 	stimBtn:PopOut(0.2):Then(function()
 		qm:Close()
 	end)
+
+	pnl.Closing = true
 end
 
 local blur = Material( "pp/blurscreen" )
@@ -52,37 +54,68 @@ blur:SetFloat("$blur", 2)
 blur:Recompute()
 
 function ENT:QMOnReopen(qm, self, pnl)
-	pnl:MemberLerp(blk, "a", 160, 0.3, 0, 0.3)
+	local minput = not not pnl.ShouldMouse
+	pnl:SetMouseInputEnabled(minput)
 
-	local healBtn = pnl.HealBtn
+	pnl:MemberLerp(blk, "a", minput and 160 or 90, 0.3, 0, 0.3)
+
+	--[[local healBtn = pnl.HealBtn
 	healBtn:CircleMoveTo(healBtn.ToX, healBtn.ToY, 0.3, 0.4)
-	healBtn:PopIn(0.2)
+	healBtn:PopIn(0.2)]]
 
 	local stimBtn = pnl.GiveStimBtn
 	stimBtn:CircleMoveTo(stimBtn.ToX, stimBtn.ToY, 0.3, 0.4)
-	stimBtn:PopIn(0.2)
+	stimBtn:AlphaTo(pnl.StimAlpha, 0.3, 0, 0.3)
+
+	pnl.Closing = false
 end
 
 function ENT:OpenShit(qm, self, pnl)
 
 	--pnl:SetSize(850, 600)	--cant fit
 	--pnl:CenterHorizontal()
+	print("opening shite", qm)
 
+	pnl:SetMouseInputEnabled(false)
 	pnl:On("PrePaint", function(self, w, h)
 		local x, y = self:LocalToScreen(0, 0)
 
 		DisableClipping(true)
 			surface.SetDrawColor(blk:Unpack())
 			surface.DrawRect(-ScrW(), -ScrH(), ScrW() * 2, ScrH() * 2)
-			render.UpdateScreenEffectTexture()
-			surface.SetMaterial(blur)
-			for i = -1, 1 do
-				surface.DrawTexturedRect(-x + i, -y + i, ScrW(), ScrH())
+
+			if self:IsMouseInputEnabled() then
+				-- only blur if the user wants to interact with the dispenser
+				render.UpdateScreenEffectTexture()
+				surface.SetMaterial(blur)
+				for i = -1, 1 do
+					surface.DrawTexturedRect(-x + i, -y + i, ScrW(), ScrH())
+				end
 			end
+
 		DisableClipping(false)
+
+		--[[if self:IsMouseInputEnabled() and not pnl.Closing then
+			pnl:MemberLerp(blk, "a", 160, 0.3, 0, 0.3)
+		end]]
+
+		if input.IsMouseDown(MOUSE_RIGHT) and not self:IsMouseInputEnabled() then
+			self:SetMouseInputEnabled(true)
+			self.ShouldMouse = true
+			pnl:MemberLerp(blk, "a", 160, 0.3, 0, 0.3)
+			if pnl.GiveStimBtn and pnl.GiveStimBtn:IsValid() then
+				local b = pnl.GiveStimBtn
+				b:PopIn(nil, nil, nil, true)
+				b:MemberLerp(b.Shadow, "Intensity", 4, 0.2, 0, 0.3)
+				b:MemberLerp(b.Shadow, "MinSpread", 1.2, 0.2, 0, 0.3)
+
+				pnl.StimAlpha = 255
+				qm.MaxInnerAlpha = 255
+			end
+		end
 	end)
 
-	pnl:MemberLerp(blk, "a", 160, 0.3, 0, 0.3)
+	pnl:MemberLerp(blk, "a", 90, 0.3, 0, 0.3)
 
 	local give_stim = vgui.Create("FButton", pnl)
 		give_stim:SetSize(200, 60)
@@ -90,9 +123,9 @@ function ENT:OpenShit(qm, self, pnl)
 		--give_stim.Y = give_stim.Y - pnl.CircleSize / 2 - give_stim:GetTall() / 2 - 22
 
 		give_stim.AlwaysDrawShadow = true
-		give_stim.Shadow.Intensity = 4
+		give_stim.Shadow.Intensity = 1
 		give_stim.Shadow.MaxSpread = 2
-		give_stim.Shadow.MinSpread = 1.2
+		give_stim.Shadow.MinSpread = 0.6
 		give_stim.Shadow.Blur = 1
 
 		give_stim.Label = "give me a stim,\nbartender"
@@ -112,13 +145,17 @@ function ENT:OpenShit(qm, self, pnl)
 		give_stim:SetIcon("https://i.imgur.com/0SwgoHs.png", "adrenaline_shot.png", 32, 32)
 		give_stim:CircleMoveTo(toX, toY, 0.3, 0.4)
 
-		give_stim:PopIn(0.2)
+		give_stim:SetAlpha(0)
+		give_stim:AlphaTo(120, 0.1, 0)
 
 		pnl.GiveStimBtn = give_stim
+		pnl.StimAlpha = 120
+		qm.MaxInnerAlpha = 120
+
 	--qm:AddPopIn(give_stim, give_stim.X, give_stim.Y, 0, -32)
 
 
-	local healBtn = vgui.Create("FButton", pnl)
+	--[[local healBtn = vgui.Create("FButton", pnl)
 		healBtn:SetSize(200, 60)
 		healBtn.AlwaysDrawShadow = true
 		healBtn.Shadow.Intensity = 3
@@ -148,7 +185,8 @@ function ENT:OpenShit(qm, self, pnl)
 
 		healBtn:PopIn(0.2)
 
-		pnl.HealBtn = healBtn
+		pnl.HealBtn = healBtn]]
+
 	--qm:AddPopIn(give_stim, give_stim.X, give_stim.Y, 0, 32)
 end
 

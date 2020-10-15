@@ -92,7 +92,8 @@ AddNPC( {
 	Class = "npc_citizen",
 	Category = Category,
 	Model = "models/odessa.mdl",
-	KeyValues = { citizentype = CT_UNIQUE, SquadName = "resistance" }
+	KeyValues = { citizentype = CT_UNIQUE, SquadName = "resistance" },
+	Weapons = { "" }
 }, "npc_odessa" )
 
 AddNPC( {
@@ -116,7 +117,8 @@ AddNPC( {
 	Name = "Citizen",
 	Class = "npc_citizen",
 	Category = Category,
-	KeyValues = { citizentype = CT_DOWNTRODDEN, SquadName = "resistance" }
+	KeyValues = { citizentype = CT_DOWNTRODDEN, SquadName = "resistance" },
+	Weapons = { "" } -- Tells the spawnmenu that this NPC can use weapons
 } )
 
 if ( IsMounted( "ep2" ) ) then
@@ -477,8 +479,7 @@ if ( IsMounted( "ep2" ) ) then
 end
 
 
-
-if ( IsMounted( "hl1" ) ) then
+if ( IsMounted( "hl1" ) || IsMounted( "hl1mp" ) ) then
 
 	Category = "Half-Life: Source"
 
@@ -495,7 +496,7 @@ if ( IsMounted( "hl1" ) ) then
 	AddNPC( { Name = "Cockroach", Class = "monster_cockroach", Category = Category } )
 	AddNPC( { Name = "Houndeye", Class = "monster_houndeye", Category = Category } )
 	AddNPC( { Name = "Scientist", Class = "monster_scientist", Category = Category, KeyValues = { body = "-1" } } )
-	AddNPC( { Name = "Snark", Class = "monster_snark", Category = Category } )
+	AddNPC( { Name = "Snark", Class = "monster_snark", Category = Category, Offset = 6, NoDrop = true } )
 	AddNPC( { Name = "Zombie", Class = "monster_zombie", Category = Category } )
 	AddNPC( { Name = "Headcrab", Class = "monster_headcrab", Category = Category } )
 	AddNPC( { Name = "Controller", Class = "monster_alien_controller", Category = Category, NoDrop = true } )

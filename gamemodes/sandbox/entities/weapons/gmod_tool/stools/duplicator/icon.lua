@@ -14,11 +14,6 @@ hook.Add( "PostRender", "RenderDupeIcon", function()
 
 	local FOV = 17
 
-	-- Rendering icon the way we do is kinda bad and wil crash the game with too many entities in the dupe
-	-- Try to mitigate that to some degree by not rendering the outline when we are above 800 entities
-	-- 1000 was tested without problems, but we want to give it some space as 1000 was tested in "perfect conditions" with nothing else happening on the map
-	local DoDisableOutline = table.Count( Dupe.Entities ) > 800
-
 	--
 	-- This is gonna take some cunning to look awesome!
 	--
@@ -48,12 +43,12 @@ hook.Add( "PostRender", "RenderDupeIcon", function()
 	-- Create a bunch of entities we're gonna use to render.
 	--
 	local entities = {}
-
+	local i = 0
 	for k, v in pairs( Dupe.Entities ) do
 
 		if ( v.Class == "prop_ragdoll" ) then
 
-			entities[k] = ClientsideRagdoll( v.Model or "error.mdl", RENDERGROUP_OTHER )
+			entities[ k ] = ClientsideRagdoll( v.Model or "error.mdl", RENDERGROUP_OTHER )
 
 			if ( istable( v.PhysicsObjects ) ) then
 
@@ -76,6 +71,7 @@ hook.Add( "PostRender", "RenderDupeIcon", function()
 			entities[ k ] = ClientsideModel( v.Model or "error.mdl", RENDERGROUP_OTHER )
 
 		end
+		i = i + 1
 
 	end
 
@@ -92,7 +88,10 @@ hook.Add( "PostRender", "RenderDupeIcon", function()
 	--
 	render.SuppressEngineLighting( true )
 
-	if ( !DoDisableOutline ) then
+	-- Rendering icon the way we do is kinda bad and will crash the game with too many entities in the dupe
+	-- Try to mitigate that to some degree by not rendering the outline when we are above 800 entities
+	-- 1000 was tested without problems, but we want to give it some space as 1000 was tested in "perfect conditions" with nothing else happening on the map
+	if ( i < 800 ) then
 		local BorderSize	= CamDist * 0.004
 		local Up			= EyeAng:Up() * BorderSize
 		local Right			= EyeAng:Right() * BorderSize
@@ -107,13 +106,16 @@ hook.Add( "PostRender", "RenderDupeIcon", function()
 
 				view.origin = CamPos + Up * math.sin( i ) + Right * math.cos( i )
 
+				-- Set the skin and bodygroups
+				entities[ k ]:SetSkin( v.Skin or 0 )
+				for bg_k, bg_v in pairs( v.BodyG or {} ) do entities[ k ]:SetBodygroup( bg_k, bg_v ) end
+
 				cam.Start( view )
 
 					render.Model( {
 						model	= v.Model,
 						pos		= v.Pos,
-						angle	= v.Angle,
-
+						angle	= v.Angle
 					}, entities[ k ] )
 
 				cam.End()
@@ -142,8 +144,7 @@ hook.Add( "PostRender", "RenderDupeIcon", function()
 				render.Model( {
 					model	= v.Model,
 					pos		= v.Pos,
-					angle	= v.Angle,
-					skin	= v.Skin
+					angle	= v.Angle
 				}, entities[ k ] )
 
 				cam.End()
@@ -192,8 +193,7 @@ hook.Add( "PostRender", "RenderDupeIcon", function()
 		render.Model( {
 			model	= v.Model,
 			pos		= v.Pos,
-			angle	= v.Angle,
-			skin	= v.Skin
+			angle	= v.Angle
 		}, entities[ k ] )
 
 		render.MaterialOverride( nil )

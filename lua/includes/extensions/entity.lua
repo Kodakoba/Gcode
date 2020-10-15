@@ -9,9 +9,6 @@ AccessorFunc( meta, "m_bPlayPickupSound", "ShouldPlayPickupSound" )
 --
 -- Entity index accessor. This used to be done in engine, but it's done in Lua now because it's faster
 --
-
---local cached = {}
-
 function meta:__index( key )
 
 	--
@@ -24,8 +21,6 @@ function meta:__index( key )
 	-- Search the entity table
 	--
 	local tab = self:GetTable()
-	--cached[self] = tab
-	
 	if ( tab ) then
 		local val = tab[ key ]
 		if ( val != nil ) then return val end
@@ -323,7 +318,8 @@ function meta:InstallDataTable()
 	--
 	self.NetworkVarElement = function( ent, typename, index, element, name, other_data )
 
-		ent.DTVar( ent, typename, index, name, keyname )
+		local datatab = ent.DTVar( ent, typename, index, name, keyname )
+		datatab.element = element
 
 		ent[ "Set" .. name ] = function( self, value )
 			local old = self.dt[ name ]
@@ -384,7 +380,11 @@ function meta:InstallDataTable()
 			-- Don't try to save entities (yet?)
 			if ( v.typename == "Entity" ) then continue end
 
-			dt[ k ] = v.GetFunc( ent, v.index )
+			if ( v.element ) then
+				dt[ k ] = v.GetFunc( ent, v.index )[ v.element ]
+			else
+				dt[ k ] = v.GetFunc( ent, v.index )
+			end
 
 		end
 
@@ -410,11 +410,16 @@ function meta:InstallDataTable()
 			-- If it contains this entry
 			if ( tab[ k ] == nil ) then continue end
 
+			-- Support old saves/dupes with incorrectly saved data
+			if ( v.element && ( isangle( tab[ k ] ) || isvector( tab[ k ] ) ) ) then
+				tab[ k ] = tab[ k ][ v.element ]
+			end
+
 			-- Set it.
 			if ( ent[ "Set" .. k ] ) then
 				ent[ "Set" .. k ]( ent, tab[ k ] )
 			else
-				v.SetFunc( ent, v.index, tab[k] )
+				v.SetFunc( ent, v.index, tab[ k ] )
 			end
 
 		end
