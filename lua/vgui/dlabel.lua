@@ -164,9 +164,12 @@ function PANEL:OnMousePressed( mousecode )
 
 	end
 
+	-- Do not do selections if playing is spawning things while moving
+	local isPlyMoving = LocalPlayer && ( LocalPlayer():KeyDown( IN_FORWARD ) || LocalPlayer():KeyDown( IN_BACK ) || LocalPlayer():KeyDown( IN_MOVELEFT ) || LocalPlayer():KeyDown( IN_MOVERIGHT ) )
+
 	-- If we're selectable and have shift held down then go up
 	-- the parent until we find a selection canvas and start box selection
-	if ( self:IsSelectable() && mousecode == MOUSE_LEFT && input.IsShiftDown() ) then
+	if ( self:IsSelectable() && mousecode == MOUSE_LEFT && ( input.IsShiftDown() || input.IsControlDown() ) && !isPlyMoving ) then
 
 		return self:StartBoxSelection()
 
@@ -213,8 +216,7 @@ function PANEL:OnMouseReleased( mousecode )
 
 	end
 
-	--if ( !self.Hovered ) then return end fuck you fuck you fuck you fuck you fuck you fuck you 
-	if not self.Hovered and vgui.GetHoveredPanel() ~= self then return end
+	if ( !self.Hovered ) then return end
 
 	--
 	-- For the purposes of these callbacks we want to

@@ -180,7 +180,7 @@ function PANEL:Think()
 
 	end
 
-	if ( self.Hovered && self:GetDraggable() && mousey < ( screenY + (self.DraggableH or 24) ) ) then
+	if ( self.Hovered && self:GetDraggable() && mousey < ( screenY + 24 ) ) then
 		self:SetCursor( "sizeall" )
 		return
 	end
@@ -215,7 +215,7 @@ function PANEL:OnMousePressed()
 		return
 	end
 
-	if ( self:GetDraggable() && gui.MouseY() < ( screenY + (self.DraggableH or 24) ) ) then
+	if ( self:GetDraggable() && gui.MouseY() < ( screenY + 24 ) ) then
 		self.Dragging = { gui.MouseX() - self.x, gui.MouseY() - self.y }
 		self:MouseCapture( true )
 		return
