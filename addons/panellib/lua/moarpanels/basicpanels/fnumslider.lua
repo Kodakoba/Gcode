@@ -77,6 +77,9 @@ function PANEL:Init()
 
 	self.Slider.PositionKnob = function(self, knob, x, y)
 
+		local magnetRange = 8
+		local sideRange = magnetRange / 2
+
 		if knob.ShiftDown then
 			local w = self:GetWide()
 			local knobw = knob:GetWide()
@@ -84,16 +87,19 @@ function PANEL:Init()
 			w = w - knobw
 
 			local notches = self:GetNotches()
+			if notches <= 0 then return end
 
-			local interv = w / notches
+			local interv = w / (notches + 1)
 			local oneval = w / ((numslider:GetMax() - numslider:GetMin()) * (10 ^ math.max(numslider:GetDecimals() - 1, 0)))
+
+			sideRange = math.ceil(math.max(interv / 2, 8) / 2)
 
 			local lockX = x
 
 			for i = 1, notches do
-				local x = i*interv - oneval + knobw/2
+				local x = i*interv + knobw/2
 
-				local near = lockX - self.Knob:GetWide()/2 - 4 < x and lockX + self.Knob:GetWide()/2 + 4 > x --covered by button on the right
+				local near = lockX - self.Knob:GetWide()/2 - sideRange < x and lockX + self.Knob:GetWide()/2 + sideRange > x --covered by button on the right
 
 				if near then
 					lockX = x
@@ -109,9 +115,13 @@ function PANEL:Init()
 	self.Slider.Knob:SetWide(8)
 	self.Slider.Knob:SetKeyboardInputEnabled(true)
 
-	local col = Colors.DarkGray:Copy()
-	local hovcol = Color(40, 40, 40)
-	local holdcol = Color(25, 25, 25)
+	
+
+	local unhovCol = Color(25, 25, 25)
+	local hovcol = Color(36, 36, 36)
+	local holdcol = Color(15, 15, 15)
+
+	local col = unhovCol:Copy()
 
 	local hov, held = false, false
 
@@ -123,7 +133,7 @@ function PANEL:Init()
 
 	local hgts = slanim.SliderHeights
 	local fracs = slanim.TextFrac
-
+	local notchColor = Color(35, 105, 155)
 	local txCol = color_white:Copy()
 
 	self.Slider.Paint = function(self, w, h)
@@ -138,10 +148,17 @@ function PANEL:Init()
 			lerp = hovcol
 			hov = true
 		else
-			lerp = Colors.DarkGray
+			lerp = unhovCol
 			hov, held = false, false
 		end
 
+		if held then
+			self.Knob:To("Hgt", 14, 0.15, 0, 0.3)
+		else
+			self.Knob:To("Hgt", 10, 0.15, 0, 0.3)
+		end
+
+		self.Knob:SetTall(self.Knob.Hgt or 12)
 		self:LerpColor(col, lerp, 0.2, 0, 0.3)
 		local knobw = self.Knob:GetWide()
 		w = w - knobw
@@ -149,16 +166,16 @@ function PANEL:Init()
 
 		local notches = self:GetNotches()
 
-		local interv = w / notches
-		local oneval = w / ((numslider:GetMax() - numslider:GetMin()) * (10 ^ math.max(numslider:GetDecimals() - 1, 0)))
+		local interv = w / (notches + 1)
+		--local oneval = w / ((numslider:GetMax() - numslider:GetMin()) * (10 ^ math.max(numslider:GetDecimals() - 1, 0)))
 
-		surface.SetDrawColor(color_black)
+		surface.SetDrawColor(notchColor:Unpack())
 
 		
-		for i = 1, notches do
-			if interv*i == oneval then continue end --don't draw @ x = 0
+		for i=1, notches do
+			--if interv*i == oneval then continue end --don't draw @ x = 0
 			local h = 12
-			local x = i*interv - oneval + knobw/2
+			local x = i * interv + knobw/2
 
 			local near = self.Knob.X - self.Knob:GetWide()/2 - 4 < x and self.Knob.X + self.Knob:GetWide()/2 + 4 > x --covered or soon-to-be-covered on left/right
 
@@ -381,11 +398,11 @@ function PANEL:UpdateNotches()
 	local range = self:GetRange()
 	self.Slider:SetNotches( nil )
 
-	if ( range < self:GetWide() / 4 ) then
-		return self.Slider:SetNotches( range )
-	else
-		self.Slider:SetNotches( self:GetWide() / 8 )
-	end
+	--if ( range < self:GetWide() / 4 ) then
+		--return self.Slider:SetNotches( range )
+	--else
+		self.Slider:SetNotches( math.min(math.ceil(self:GetWide() / 32 ), 3) )
+	--end
 
 end
 

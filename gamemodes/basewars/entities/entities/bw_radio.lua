@@ -5,14 +5,14 @@ ENT.Type = "anim"
 ENT.PrintName = "Radio"
 
 ENT.Model = "models/props/cs_office/radio.mdl"
-ENT.IsRadio = true 
+ENT.IsRadio = true
 
 if SERVER then
 	function ENT:Initialize()
 
-		
+
 		self:SetModel(self.Model)
-		self:PhysicsInit(SOLID_VPHYSICS)     
+		self:PhysicsInit(SOLID_VPHYSICS)
 		self:SetMoveType(MOVETYPE_VPHYSICS)
 		self:SetSolid(SOLID_VPHYSICS)
 		self:SetMaxHealth(0)
@@ -29,8 +29,8 @@ if SERVER then
 		dmg:ScaleDamage(0)
 	end
 
-	hook.Add("EntityTakeDamage", "No", function(ent, dmg)
-		if ent.IsRadio then dmg:SetDamage(0) return true end 
+	hook.Add("EntityTakeDamage", "don't hurt me :(", function(ent, dmg)
+		if ent.IsRadio then dmg:SetDamage(0) return true end
 	end)
 
 else
@@ -40,6 +40,7 @@ else
 		qm.OnOpen = function(self, ent, pnl)
 			local p = pnl:Add("FFrame")
 			p:SetSize(400, 100)
+			p:SetDraggable(false)
 
 			p:Center()
 
@@ -49,7 +50,7 @@ else
 
 			p.Shadow = {}
 
-			local sl = p:Add("DNumSlider")
+			local sl = p:Add("FNumSlider")
 			sl:SetSize(350, 50)
 			sl:Center()
 
@@ -64,7 +65,7 @@ else
 			sl.Label:SetFont("TW24")
 
 			sl.OnValueChanged = function(self, val)
-				PZVolume = val 
+				PZVolume = val
 			end
 
 			qm:AddPopIn(p, p.X, p.Y, 0, 48)
