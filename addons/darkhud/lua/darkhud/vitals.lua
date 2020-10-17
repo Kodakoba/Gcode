@@ -13,14 +13,13 @@ fonts.VitalsNumberFont = "Open Sans"
 
 local scale = DarkHUD.Scale
 
+local log = Logger("DarkHUD Vitals", Color(150, 90, 90))
 
 local function createFonts()
 	fonts.NameHeight = 40 * scale
 	fonts.FactionHeight = 16 + 12 * scale
 	fonts.MoneyHeight = 28 * scale
 	fonts.VitalsNumberHeight = 12 + 16 * scale
-
-	
 
 	surface.CreateFont("DarkHUD_Name", {
 		font = fonts.NameFont,
@@ -46,21 +45,24 @@ end
 createFonts()
 
 DarkHUD:On("Rescale", "VitalsResize", function(self, new)
-	scale = new
+	log("	Rescaling", DarkHUD.Vitals)
 
+	scale = new
+	createFonts()
+
+	log("	New scale: %f", scale)
 	local f = DarkHUD.Vitals
-	if not IsValid(f) then return end
+	if not IsValid(f) then log("Invalid panel.") return end
 
 	f:ResizeElements()
-
 end)
 
 function DarkHUD.CreateVitals()
 	if DarkHUD.Vitals then DarkHUD.Vitals:Remove() end
-	DarkHUD.Vitals = vgui.Create("FFrame")
+	DarkHUD.Vitals = vgui.Create("FFrame", nil, "DarkHUD - Vitals")
 
 	local f = DarkHUD.Vitals
-	if not IsValid(f) then return false end --?
+	if not IsValid(f) then log("Failed to create vitals frame?") return false end --?
 	f:SetPaintedManually(true)
 	f.HeaderSize = 24
 
@@ -515,26 +517,16 @@ end)
 
 hook.Add("HUDPaint", "DarkHUD_Vitals", function()
 	local f = DarkHUD.Vitals
-
-	if not IsValid(f) then
-		DarkHUD.CreateVitals()
-		f = DarkHUD.Vitals
-		if not IsValid(DarkHUD.Vitals) then return end
-	end
+	if not IsValid(f) then return end
 
 	f:PaintManual()
-
 end)
 
 local wasvalid = false
 
-if DarkHUD.Vitals then
+if IsValid(DarkHUD.Vitals) then
 	DarkHUD.Vitals:Remove()
 	DarkHUD.Vitals = nil
-	wasvalid = true
-end
-
-if wasvalid then
 	DarkHUD.CreateVitals()
 end
 

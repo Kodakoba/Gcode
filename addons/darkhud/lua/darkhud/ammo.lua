@@ -58,13 +58,20 @@ end
 
 createFonts()
 
-DarkHUD:On("Rescale", "VitalsResize", function(self, new)
+local log = Logger("DarkHUD Ammo", Color(190, 175, 10))
+
+DarkHUD:On("Rescale", "AmmoResize", function(self, new)
+	log("Rescaling %s", DarkHUD.Ammo)
 	scale = new
-
+	log("	New scale: %f", scale)
 	local f = DarkHUD.Ammo
-	if not IsValid(f) then return end
 
-	f:ResizeElements()
+	if not IsValid(f) then
+		DarkHUD.CreateAmmo()
+	else
+		f:ResizeElements()
+	end
+
 	createFonts()
 end)
 
@@ -73,20 +80,25 @@ function DarkHUD.CreateAmmo()
 
 	local me = LocalPlayer()
 
-	DarkHUD.Ammo = vgui.Create("FFrame")
+	DarkHUD.Ammo = vgui.Create("FFrame", nil, "DarkHUD - Ammo")
 	local f = DarkHUD.Ammo
 	f:SetCloseable(false, true)
 	f.Shadow = {spread = 0.9, intensity = 2}
 	f:SetSize(scale * 500, scale * 120)
 	f:SetPos(ScrW() - f:GetWide() - dh.PaddingX, ScrH() - f:GetTall() - dh.PaddingY)
+	f.HeaderSize = scale * 32
 
 	local rad = f.RBRadius or 8
 	local fX, fY = f:GetPos()
+
 	function f:ResizeElements()
+		log("	ResizeElements %f", scale)
 		f:SetSize(scale * 500, scale * 120)
 		f:SetPos(ScrW() - f:GetWide() - dh.PaddingX, ScrH() - f:GetTall() - dh.PaddingY)
-
+		log("	Setpos: %d - %d - %d = %d (%d)", ScrW(), f:GetWide(), dh.PaddingX, ScrW() - f:GetWide() - dh.PaddingX, f.X)
+		log("	Setpos: %d - %d - %d = %d (%d)", ScrH(), f:GetTall(), dh.PaddingY, ScrH() - f:GetTall() - dh.PaddingY, f.Y)
 		fX, fY = f:GetPos()
+		f.HeaderSize = scale * 32
 	end
 
 	f.AmmoFrac = 0
@@ -117,12 +129,12 @@ function DarkHUD.CreateAmmo()
 	local fired = FrameNumber()
 
 	function f.OnFire(wep, self)
-		local recoil = (wep.ArcCW and wep.Recoil * wep.VisualRecoilMult) or 0.3
+		local recoil = (wep.ArcCW and wep.Recoil * wep.VisualRecoilMult) or 0.05
 
 		if fired == FrameNumber() then return end -- deal with shotguns 'n shit
 
 		if f.RecoilAnim then f.RecoilAnim:Stop() end
-		f.Recoil = f.Recoil + (recoil * 20) ^ 0.4
+		f.Recoil = f.Recoil + (recoil * 20) ^ 0.4 * scale
 		f.RecoilAnim = f:To("Recoil", 0, (recoil * 0.4)^0.1, 0, 0.3, true)
 
 		fired = FrameNumber()
@@ -177,7 +189,7 @@ function DarkHUD.CreateAmmo()
 		local reserve = (valid and me:GetAmmoCount(wep:GetPrimaryAmmoType())) or lastVars.reserve or -1
 		lastVars.reserve = reserve
 
-		local weaponName = (valid and wep:GetPrintName()) or lastVars.weaponName
+		local weaponName = (valid and wep:GetPrintName()) or lastVars.weaponName or "-"
 		if valid and wep:IsEngine() then
 			weaponName = language.GetPhrase(weaponName) or weaponName
 		end
@@ -194,6 +206,7 @@ function DarkHUD.CreateAmmo()
 			end)
 
 			self.AmmoMissingFrac = 0 -- don't add the 'missing' bar when switching between guns (and lerping clips)
+			self.ReserveAmmo = reserve
 		elseif self.LastChangedWeapon == wep and valid then
 			self.AmmoMissingFrac = math.max(self.AmmoFrac, self.AmmoMissingFrac)
 		end
@@ -344,6 +357,14 @@ function DarkHUD.CreateAmmo()
 		surface.SetFont("DarkHUD_AmmoMagazine")
 		magW = surface.GetTextSize(clip)
 		ammoW = ammoW + magW
+
+		if not self.ReserveAmmo or self.Gone then
+			self.ReserveAmmo = reserve
+		else
+			self:To("ReserveAmmo", reserve, 0.5, 0, 0.3)
+		end
+
+		reserve = math.floor(self.ReserveAmmo)
 
 		surface.SetFont("DarkHUD_AmmoReserve")
 		resW = surface.GetTextSize(reserve)

@@ -48,7 +48,17 @@ end
 local scale = 0
 DarkHUD.Scale = 0
 
-function DarkHUD.ReScale()
+local log = Logger("DarkHUD", Color(70, 70, 70))
+
+
+function DarkHUD.ReScale(first)
+
+	if first == true then
+		log("First rescaling...")
+	else
+		log("Resolution changed; rescaling...")
+	end
+
 	scale = ScrH() / 1080 * 0.9
 	DarkHUD.Scale = scale
 
@@ -59,7 +69,7 @@ function DarkHUD.ReScale()
 
 end
 
-DarkHUD.ReScale()
+DarkHUD.ReScale(true)
 
 local tex_corner8	= surface.GetTextureID( "gui/corner8" )
 local tex_corner16	= surface.GetTextureID( "gui/corner16" )
