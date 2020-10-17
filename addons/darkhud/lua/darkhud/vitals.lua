@@ -5,9 +5,45 @@ local surface = surface
 local dh = DarkHUD
 local fonts = DarkHUD.Fonts
 
+fonts.NameFont = "Open Sans Semibold"
+fonts.FactionFont = "Open Sans"
+fonts.MoneyFont = "Open Sans"
+fonts.VitalsNumberFont = "Open Sans"
 
 
 local scale = DarkHUD.Scale
+
+
+local function createFonts()
+	fonts.NameHeight = 40 * scale
+	fonts.FactionHeight = 16 + 12 * scale
+	fonts.MoneyHeight = 28 * scale
+	fonts.VitalsNumberHeight = 12 + 16 * scale
+
+	
+
+	surface.CreateFont("DarkHUD_Name", {
+		font = fonts.NameFont,
+		size = fonts.NameHeight
+	})
+
+	surface.CreateFont("DarkHUD_Faction", {
+		font = fonts.FactionFont,
+		size = fonts.FactionHeight
+	})
+
+	surface.CreateFont("DarkHUD_Money", {
+		font = fonts.MoneyFont,
+		size = fonts.MoneyHeight
+	})
+
+	surface.CreateFont("DarkHUD_VitalsNumber", {
+		font = fonts.VitalsNumberFont,
+		size = fonts.VitalsNumberHeight
+	})
+end
+
+createFonts()
 
 DarkHUD:On("Rescale", "VitalsResize", function(self, new)
 	scale = new
@@ -16,6 +52,7 @@ DarkHUD:On("Rescale", "VitalsResize", function(self, new)
 	if not IsValid(f) then return end
 
 	f:ResizeElements()
+
 end)
 
 function DarkHUD.CreateVitals()

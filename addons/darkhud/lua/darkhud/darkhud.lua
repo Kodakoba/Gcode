@@ -11,13 +11,6 @@ local dh = DarkHUD
 DarkHUD.Fonts = DarkHUD.Fonts or {}
 
 local fonts = DarkHUD.Fonts
-fonts.NameFont = "Open Sans Semibold"
-fonts.FactionFont = "Open Sans"
-
-fonts.MoneyFont = "Open Sans"
-
-fonts.VitalsNumberFont = "Open Sans"
-
 
 
 --[[------------------------------]]
@@ -58,31 +51,6 @@ DarkHUD.Scale = 0
 function DarkHUD.ReScale()
 	scale = ScrH() / 1080 * 0.9
 	DarkHUD.Scale = scale
-
-	fonts.NameHeight = 40 * scale
-	fonts.FactionHeight = 16 + 12 * scale
-	fonts.MoneyHeight = 28 * scale
-	fonts.VitalsNumberHeight = 12 + 16 * scale
-
-	surface.CreateFont("DarkHUD_Name", {
-		font = fonts.NameFont,
-		size = fonts.NameHeight
-	})
-
-	surface.CreateFont("DarkHUD_Faction", {
-		font = fonts.FactionFont,
-		size = fonts.FactionHeight
-	})
-
-	surface.CreateFont("DarkHUD_Money", {
-		font = fonts.MoneyFont,
-		size = fonts.MoneyHeight
-	})
-
-	surface.CreateFont("DarkHUD_VitalsNumber", {
-		font = fonts.VitalsNumberFont,
-		size = fonts.VitalsNumberHeight
-	})
 
 	dh.PaddingX = 16 + scale * 36
 	dh.PaddingY = 16 + scale * 24

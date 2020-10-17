@@ -15,6 +15,7 @@ local surface_DrawText = surface.DrawText
 local surface_GetTextSize = surface.GetTextSize
 local surface_SetFont = surface.SetFont
 local surface_DisableClipping = DisableClipping
+local surface_DrawPoly = surface.DrawPoly
 
 MoarPanelsMats.gu = Material("vgui/gradient-u")
 MoarPanelsMats.gd = Material("vgui/gradient-d")
@@ -55,7 +56,7 @@ end
 draw.LerpColor = LerpColor
 
 local function BenchPoly(...)	--shh
-	surface.DrawPoly(...)
+	surface_DrawPoly(...)
 end
 
 local ipairs = ipairs

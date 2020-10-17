@@ -87,7 +87,7 @@ local families = {
 
 FontFamilies = families
 
-local sizes = {12, 14, 16, 18, 20, 22, 24, 28, 32, 36, 48, 64, 72, 96, 128}
+local sizes = {12, 14, 16, 18, 20, 22, 24, 28, 32, 36, 44, 48, 56, 64, 72, 96, 128}
 
 for k,v in pairs(families) do
 
@@ -134,7 +134,36 @@ function vgui.ToPrePostPaint(tbl)
 	end
 end
 
+-- only works with fonts made above ^
+function Fonts.PickFont(fam, txt, wid, hgt, start_size)
+	start_size = start_size or 128
+	hgt = hgt or wid
 
+	local picked = fam .. start_size
+
+	for i=#sizes, 1, -1 do
+		local sz = sizes[i]
+
+		if sz > start_size then continue end
+
+		surface.SetFont(fam .. sz)
+		local tw = surface.GetTextSize(txt)
+
+		if tw <= wid and sz < hgt then
+			return fam .. sz, sz
+		end
+	end
+
+	return picked
+end
+
+function Fonts.ClosestSize(h)
+	for i=#sizes, 1, -1 do
+		if sizes[i] <= h then
+			return sizes[i]
+		end
+	end
+end
 
 concommand.Add("ColorPicker", function()
 	local f = vgui.Create("FFrame")
