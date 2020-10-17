@@ -50,3 +50,17 @@ if CLIENT then
         end
     end)
 end
+
+--local cache = {}
+
+function WEAPON:IsEngine()
+    --[[if cache[self] ~= nil then
+        return cache[self]
+    else
+        cache[self] = not not not weapons.GetStored(self:GetClass()) -- nil -> true; table -> false
+        return cache[self]
+    end]]
+
+    -- https://i.imgur.com/CKG07Ef.png
+    return not self:IsScripted()
+end
