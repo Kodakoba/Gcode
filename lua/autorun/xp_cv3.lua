@@ -1,4 +1,4 @@
-color_white = Color(255,255,255,255)
+local color_white = Color(255, 255, 255, 255) -- if something goes wrong we're not destroying the global color_white
 
 chathud = chathud or {}
 
@@ -142,8 +142,8 @@ local function do_hook()
 		if not IsValid(chatbox.frame) then chatbox.Build() end
 
 		if type == "chat" then
-			chatbox.ParseInto(chatbox.GetChatFeed(), green, name, color_white, ": " .. text)
-			chathud:AddText(green, name, color_white, ": " .. text)
+			chatbox.ParseInto(chatbox.GetChatFeed(), green, name, color_white:Copy(), ": " .. text)
+			chathud:AddText(green, name, color_white:Copy(), ": " .. text)
 		return end
 
 		if type == "darkrp" then return end -- Compat for some weird stuff with darkrp
@@ -214,14 +214,14 @@ do -- chatbox
 		if not IsValid(chatbox.frame) then chatbox.Build() end
 
 		chatbox.AddDMTab(ply)
-		chatbox.ParseInto(chatbox.GetDMFeed(ply), LocalPlayer(), color_white, ": ", text)
+		chatbox.ParseInto(chatbox.GetDMFeed(ply), LocalPlayer(), color_white:Copy(), ": ", text)
 	end)
 
 	hook.Add("ReceiveDM", "chatbox.dm_receive", function(ply, text)
 		if not IsValid(chatbox.frame) then chatbox.Build() end
 
 		chatbox.AddDMTab(ply)
-		chatbox.ParseInto(chatbox.GetDMFeed(ply), ply, color_white, ": ", text)
+		chatbox.ParseInto(chatbox.GetDMFeed(ply), ply, color_white:Copy(), ": ", text)
 	end)
 
 	hook.Add("HUDPaint", "chathud", function()

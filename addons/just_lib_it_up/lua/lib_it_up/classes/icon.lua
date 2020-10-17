@@ -43,7 +43,7 @@ function Icon:Initialize(url, name)
 	self.W, self.H = 16, 16
 
 	self.Filter = nil
-	self.Color = color_white
+	self.Color = color_white:Copy()
 end
 
 function Icon:SetColor(col)

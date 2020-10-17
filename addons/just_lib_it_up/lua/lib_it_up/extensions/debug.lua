@@ -52,7 +52,7 @@ function Log(mod, str, ...)
 		tbl[#tbl + 1] = str
 	end
 
-	tbl[#tbl + 1] = color_white
+	tbl[#tbl + 1] = color_white:Copy()
 	tbl[#tbl + 1] = "\n"
 
 

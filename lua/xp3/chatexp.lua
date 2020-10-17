@@ -30,17 +30,17 @@ chatexp.Modes = {
 			end,
 			Handle = function(tbl, ply, msg, dead, mode_data)
 				if dead then
-					tbl[#tbl + 1] = color_red
+					tbl[#tbl + 1] = color_red:Copy()
 					tbl[#tbl + 1] = "*DEAD* "
 				end
 
 				tbl[#tbl + 1] = ply -- ChatHUD parses this automaticly
-				tbl[#tbl + 1] = color_white
+				tbl[#tbl + 1] = color_white:Copy()
 				tbl[#tbl + 1] = ": "
-				tbl[#tbl + 1] = color_white
+				tbl[#tbl + 1] = color_white:Copy()
 
 				if msg:StartWith(">") and #msg > 1 then
-					tbl[#tbl + 1] = color_greentext
+					tbl[#tbl + 1] = color_greentext:Copy()
 				end
 
 				tbl[#tbl + 1] = msg
@@ -53,20 +53,20 @@ chatexp.Modes = {
 			end,
 			Handle = function(tbl, ply, msg, dead, mode_data)
 				if dead then
-					tbl[#tbl + 1] = color_red
+					tbl[#tbl + 1] = color_red:Copy()
 					tbl[#tbl + 1] = "*DEAD* "
 				end
 
-				tbl[#tbl + 1] = color_green
+				tbl[#tbl + 1] = color_green:Copy()
 				tbl[#tbl + 1] = "(TEAM) "
 
 				tbl[#tbl + 1] = ply -- ChatHUD parses this automaticly
-				tbl[#tbl + 1] = color_white
+				tbl[#tbl + 1] = color_white:Copy()
 				tbl[#tbl + 1] = ": "
-				tbl[#tbl + 1] = color_white
+				tbl[#tbl + 1] = color_white:Copy()
 
 				if msg:StartWith(">") and #msg > 1 then
-					tbl[#tbl + 1] = color_greentext
+					tbl[#tbl + 1] = color_greentext:Copy()
 				end
 
 				tbl[#tbl + 1] = msg
