@@ -59,6 +59,8 @@ end
 
 PawwtizOwOneM⎝⎠╲╱╲╱⎝⎠sic = {
 	[1] = {
+		name = "Hotel",
+
 		⎝⎠╲╱╲╱⎝⎠wwl = {
 			"http://vaati.net/Gachi/shared/DropItLikeItsGachi.mp3",
 			"http://vaati.net/Gachi/shared/MALDING%20MANOR.mp3",
@@ -81,6 +83,8 @@ PawwtizOwOneM⎝⎠╲╱╲╱⎝⎠sic = {
 	},
 
 	[2] = {
+		name = "Elevator",
+
 		⎝⎠╲╱╲╱⎝⎠wwl = {"http://vaati.net/Gachi/shared/PrettyNiceDayLoope.mp3"},
 		name = {"NiceDay"},
 		pOwOs = Vector(-7187.9111328125, -9354.96875, 192.23675537109),
@@ -106,6 +110,7 @@ PawwtizOwOneM⎝⎠╲╱╲╱⎝⎠sic = {
 	}
 }
 
+PartizoneMusic = PawwtizOwOneM⎝⎠╲╱╲╱⎝⎠sic
 
 local function ParentZone(name, vec1, vec2)
 	local tbl = istable(PawwtizOwOnePOwOints[name]) and table.Copy(PawwtizOwOnePOwOints[name])
@@ -113,10 +118,6 @@ local function ParentZone(name, vec1, vec2)
 	tbl[1] = vec1
 	tbl[2] = vec2
 	return tbl
-end
-
-if CLIENT then
-	AddPartizone = function() end
 end
 
 PawwtizOwOnePOwOints = PawwtizOwOnePOwOints or {}
@@ -192,17 +193,63 @@ function PawwtizOwOne:Inherit(name)
 	return t
 end
 
+function AddPartizone(tab)
+	if not tab.IsPartizone then error("AddPartizone attempted to add a non-partizone object!") return end
+	local name = tab.Name
 
-FInc.Recursive("partizones/*.lua", _SH, false, function(s)
-	if s:find("^cl_") or s:find("^sv_") then return false, false end
-end)
-FInc.Recursive("partizones/sv_*.lua", _SV)
-FInc.Recursive("partizones/cl_*.lua", _CL)
+	if not IsValid(Partizones[name]) then
 
+		local me = ents.Create("partizone_brush")
 
-for k,v in pairs(PawwtizOwOnePOwOints) do
-	OrderVectors(v[1], v[2])
+		me.ZoneName = name
+
+		me.TouchFunc = tab.TouchFunc
+		me.EndTouchFunc = tab.EndTouchFunc
+		me.StartTouchFunc = tab.StartTouchFunc
+
+		me.Partizone = tab
+
+		Partizones[name] = me
+
+		me:Spawn()
+
+		me:SetBrushBounds(tab[1], tab[2])
+	else
+
+		local me = Partizones[name]
+
+		me:SetBrushBounds(tab[1], tab[2])
+
+		me.TouchFunc = tab.TouchFunc
+		me.EndTouchFunc = tab.EndTouchFunc
+		me.StartTouchFunc = tab.StartTouchFunc
+
+		me:ReloadDummy()
+
+		me.Partizone = tab
+
+	end
+
 end
+
+if CLIENT then
+	AddPartizone = function() end
+end
+
+local function loadPartizones()
+	FInc.Recursive("partizones/*.lua", _SH, false, function(s)
+		if s:find("^cl_") or s:find("^sv_") then return false, false end
+	end)
+	FInc.Recursive("partizones/sv_*.lua", _SV)
+	FInc.Recursive("partizones/cl_*.lua", _CL)
+
+
+	for k,v in pairs(PawwtizOwOnePOwOints) do
+		OrderVectors(v[1], v[2])
+	end
+end
+
+
 
 --[[
 if CLIENT then
@@ -226,5 +273,10 @@ else
 end]]
 
 if SERVER then
-	ReloadPartizones()
+	if ReloadPartizones then ReloadPartizones() end
+	hook.Add("PostCleanupMap", "PartizonesSpawn", function()
+		ReloadPartizones()
+	end)
 end
+
+hook.Add("InitPostEntity", "PartizonesSpawn", loadPartizones)

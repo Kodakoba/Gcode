@@ -32,10 +32,13 @@ zone:SetOnSpawn(function(self)
 
 	local p1, p2 = zone:GetBounds()
 
-	for k,v in pairs(ents.FindInBox(p1,p2)) do
+	for k,v in ipairs(ents.FindInBox(p1, p2)) do
 
-		if IsValid(v) and v.GetClass and v:GetClass() == "ambient_generic" then
-			v:Remove()
+		if v:GetClass() == "ambient_generic" then
+
+			--v:Remove() 	--holy based, this causes random players to become the bearers of earrape
+			local snd = v:GetSaveTable().message
+			if snd:find("piano") then v:StopSound(snd) end
 		end
 
 	end
@@ -71,6 +74,17 @@ zone:SetStartTouchFunc(function(self, ent)	--Started touch
 
 	--entity entered is a player
 
+	-- stop the piano music, dumbass source
+	local p1, p2 = zone:GetBounds()
+
+	for k,v in ipairs(ents.FindInBox(p1, p2)) do
+
+		if v:GetClass() == "ambient_generic" then
+			local snd = v:GetSaveTable().message
+			if snd:find("piano") then v:StopSound(snd) end
+		end
+
+	end
 
 	local ply = ent
 

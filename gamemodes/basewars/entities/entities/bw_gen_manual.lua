@@ -15,9 +15,9 @@ ENT.TransmitRate 	= 25
 ENT.Sounds 			= {Sound("physics/flesh/flesh_squishy_impact_hard1.wav"), Sound("physics/flesh/flesh_squishy_impact_hard2.wav"), Sound("physics/flesh/flesh_squishy_impact_hard3.wav"), Sound("physics/flesh/flesh_squishy_impact_hard4.wav")}
 ENT.Color			= Color(0, 0, 0, 255)
 
-ENT.IsManualGen 	= true 
+ENT.IsManualGen 	= true
 
-if SERVER then util.AddNetworkString("ManualGen") end 
+if SERVER then util.AddNetworkString("ManualGen") end
 
 function ENT:GenPower()
 
@@ -71,7 +71,7 @@ function ENT:GenerateOptions(qm, pnl)
 	pw.Y = pw.Y + pnl.CircleSize
 
 	local w, h = pw:GetContentSize()
-	local ent = self 
+	local ent = self
 
 	function pw:Paint(w, h)
 		if not IsValid(ent) then pnl:Remove() return end

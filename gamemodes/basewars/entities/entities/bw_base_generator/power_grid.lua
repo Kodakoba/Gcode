@@ -320,14 +320,14 @@ for k,v in pairs(accessors) do
 
 		self.Connections = self.Connections - 1
 
-		if CLIENT then 
+		if CLIENT and PowerGridIDsToEnts[self.ID] then
+
 			for k,v in ipairs(PowerGridIDsToEnts[self.ID]) do
 				if v == ent then
 					table.remove(PowerGridIDsToEnts[self.ID], k)
 					break
 				end
 			end
-
 			--clprint("Removing", ent, "grid #" .. self.ID, self.Connections)
 			--PrintTable(self.AllEntities)
 		end

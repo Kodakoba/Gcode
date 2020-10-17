@@ -65,6 +65,7 @@ else
 			sl.Label:SetFont("TW24")
 
 			sl.OnValueChanged = function(self, val)
+				cookie.Set("HotelRadioVolume", val)	-- cookie lib takes care of ratelimiting for me
 				PZVolume = val
 			end
 

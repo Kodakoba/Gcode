@@ -10,10 +10,11 @@ function ENT:Initialize()
 	self:ReloadDummy()
 
 	if self.Partizone.OnSpawn then self.Partizone.OnSpawn(self) end
+	self:AddEFlags( EFL_FORCE_CHECK_TRANSMIT )
 end
 
 function ENT:ReloadDummy()
-	if IsValid(self.Dummy) then self.Dummy:Remove() end 
+	if IsValid(self.Dummy) then self.Dummy:Remove() end
 
 	local d = ents.Create("partizone_dummy")
 
@@ -29,8 +30,12 @@ function ENT:ReloadDummy()
 
 end
 
+function ENT:UpdateTransmitState()
+	return TRANSMIT_NEVER
+end
+
 function ENT:CheckCoolDown()
-	if CurTime() - self.Created < 2 then return false end 
+	if CurTime() - self.Created < 2 then return false end
 	return true
 end
 
@@ -39,21 +44,21 @@ function ENT:SetBrushBounds(p1, p2)
 
 	local mid = (p1 + p2) / 2
 
-	self:SetPos(mid) 
+	self:SetPos(mid)
 
 	self:SetCollisionBoundsWS(p1, p2)	--seems like even though the coordinates are in world,
 										--it still depends on the entity's position, so you gotta setpos first
 
-	self.P1 = p1 
+	self.P1 = p1
 	self.P2 = p2
 
 	local d = self.Dummy
-	if not IsValid(d) then return end 
+	if not IsValid(d) then return end
 
 	d:SetPos(mid)
 
-	d.P1 = p1 
-	d.P2 = p2 
+	d.P1 = p1
+	d.P2 = p2
 
 
 end
@@ -62,7 +67,7 @@ end
 	Name: StartTouch
 -----------------------------------------------------------]]
 function ENT:StartTouch(ent)
-	if not self:CheckCoolDown() then return end 
+	if not self:CheckCoolDown() then return end
 	local me = self.Partizone
 	if me.StartTouchFunc then me.StartTouchFunc(self, ent) end
 
@@ -72,7 +77,7 @@ end
 	Name: EndTouch
 -----------------------------------------------------------]]
 function ENT:EndTouch(ent)
-	if not self:CheckCoolDown() then return end 
+	if not self:CheckCoolDown() then return end
 
 	local me = self.Partizone
 	if me.EndTouchFunc then me.EndTouchFunc(self, ent) end
@@ -83,77 +88,53 @@ end
 	Name: Touch
 -----------------------------------------------------------]]
 function ENT:Touch(ent)
-	if not self:CheckCoolDown() then return end 
+	if not self:CheckCoolDown() then return end
 
 	local me = self.Partizone
 	if me.TouchFunc then me.TouchFunc(self, ent) end
 end
 
-function AddPartizone(tab)
-	if not tab.IsPartizone then error("AddPartizone attempted to add a non-partizone object!") return end 
-	local name = tab.Name
+local function loadPartizones()
+	FInc.Recursive("partizones/*.lua", _SH, false, function(s)
+		if s:find("^cl_") or s:find("^sv_") then return false, false end
+	end)
+	FInc.Recursive("partizones/sv_*.lua", _SV)
+	FInc.Recursive("partizones/cl_*.lua", _CL)
 
-	if not IsValid(Partizones[name]) then
-		local me = ents.Create("partizone_brush")
 
-		me.ZoneName = name
-
-		me.TouchFunc = tab.TouchFunc
-		me.EndTouchFunc = tab.EndTouchFunc
-		me.StartTouchFunc = tab.StartTouchFunc
-
-		me.Partizone = tab
-
-		Partizones[name] = me
-
-		me:Spawn()
-
-		me:SetBrushBounds(tab[1], tab[2])
-
-	else 
-
-		local me = Partizones[name]
-
-		me:SetBrushBounds(tab[1], tab[2])
-
-		me.TouchFunc = tab.TouchFunc 
-		me.EndTouchFunc = tab.EndTouchFunc 
-		me.StartTouchFunc = tab.StartTouchFunc
-
-		me:ReloadDummy()
-
-		me.Partizone = tab 
-
+	for k,v in pairs(PawwtizOwOnePOwOints) do
+		OrderVectors(v[1], v[2])
 	end
-
 end
 
 function ReloadPartizones()
 
-	for k,v in pairs(Partizones) do 
+	loadPartizones()
 
-		if IsValid(v) then 
+	for k,v in pairs(Partizones) do
 
-			if IsValid(v.Dummy) then 
+		if IsValid(v) then
+
+			if IsValid(v.Dummy) then
 				v.Dummy:Remove()
 			end
 
-			v:Remove() 
-			Partizones[k] = nil 
+			v:Remove()
+			Partizones[k] = nil
 		end
 
 	end
 
-	for k,v in pairs(PartizonePoints) do 
+	for k,v in pairs(PartizonePoints) do
 		local me = ents.Create("partizone_brush")
 
 		me.ZoneName = k
 
-		me.TouchFunc = v.TouchFunc 
-		me.EndTouchFunc = v.EndTouchFunc 
-		me.StartTouchFunc = v.StartTouchFunc 
+		me.TouchFunc = v.TouchFunc
+		me.EndTouchFunc = v.EndTouchFunc
+		me.StartTouchFunc = v.StartTouchFunc
 
-		me.Partizone = v 
+		me.Partizone = v
 
 		Partizones[me.ZoneName] = me
 
@@ -163,6 +144,3 @@ function ReloadPartizones()
 		me:SetBrushBounds(v[1], v[2])
 	end
 end
-
-hook.Add("InitPostEntity", "PartizonesSpawn", ReloadPartizones)
-hook.Add("PostCleanupMap", "PartizonesSpawn", ReloadPartizones)
