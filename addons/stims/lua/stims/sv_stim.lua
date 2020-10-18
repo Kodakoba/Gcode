@@ -27,7 +27,6 @@ net.Receive("ProcStim", function(_, ply)
 end)
 
 --Stims.Bind:On("Activate", "BeginStim", function(self, ply)
-	
 
 --end)
 

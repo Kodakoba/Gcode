@@ -1,5 +1,5 @@
 function file.Here(lv)
-	lv = lv or 2 
+	lv = lv or 2
 	local source = debug.getinfo(lv).source
 
 	return source:match(".+/lua/(.+/).+%.lua")
@@ -12,13 +12,15 @@ function file.Me(lv)
 	return source:match(".+/lua/.+/(.+%.lua)")
 end
 
+
+
 function file.GetFile(path)
-	return path:match(".+/(.+%.%w+)")
+	return path:match("[^/]+$")
 end
 
 -- matches / at the end too
 function file.GetPath(path)
-	return path:match("(.+/).+")
+	return path:match("(.+/).+") or ""
 end
 
 function file.ForEveryFile(path, where, func, recurse)

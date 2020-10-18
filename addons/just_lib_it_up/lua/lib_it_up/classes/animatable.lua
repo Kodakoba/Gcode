@@ -97,7 +97,7 @@ function Animatable:Initialize(auto_think)
 	self.m_AnimList = {}
 
 	if auto_think ~= false then
-		local id = auto_think -- if auto_think isn't false consider it an ID
+		local id = auto_think ~= true and auto_think -- if auto_think isn't a bool consider it an ID
 		local ud = (id and AnimatableIDs[id]) or GCProxy(self)
 
 		if id then

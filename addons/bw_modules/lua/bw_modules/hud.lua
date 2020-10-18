@@ -146,7 +146,7 @@ local function DrawStructureInfo()
 			toH = toH + 18
 		end
 
-		anims:MemberLerp(anims, "Height", toH, 0.3, 0, 0.3)
+		anims:To("Height", toH, 0.3, 0, 0.3)
 
 		local h = anims.Height or toH
 

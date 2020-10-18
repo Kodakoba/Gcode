@@ -28,7 +28,7 @@ end
 
 function ENT:DerivedDataTables()
 
-	self:NetworkVar("Float", 0, "NextFinish")
+	self:NetworkVar("Float", 1, "NextFinish")
 	self:NetworkVar("Int", 1, "Level")
 	self:NetworkVar("Bool", 2, "Jammed")
 

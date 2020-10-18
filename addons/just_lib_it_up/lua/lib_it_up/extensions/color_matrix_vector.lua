@@ -45,6 +45,10 @@ function COLOR:Copy()
 	return Color(self.r, self.g, self.b, self.a)
 end
 
+function COLOR:ModHSV(h, s, v)
+	return draw.ColorChangeHSV(self, h, s, v)
+end
+COLOR.HSVMod = COLOR.ModHSV
 function IsMaterial(m)
 	return type(m) == "IMaterial"	--we can't really compare m.MetaName because m might not even be a table
 end

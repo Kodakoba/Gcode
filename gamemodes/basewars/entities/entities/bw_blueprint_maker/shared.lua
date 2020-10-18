@@ -13,6 +13,6 @@ ENT.BlueprintMaker = true
 
 function ENT:DerivedDataTables()
 
-	self:NetworkVar("Float", 0, "NextFinish")
+	self:NetworkVar("Float", 1, "NextFinish")
 
 end

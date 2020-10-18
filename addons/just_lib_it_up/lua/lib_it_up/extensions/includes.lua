@@ -61,26 +61,48 @@ local BlankFunc = function() end
 
 -- if both returns are `false`, regardless of realm it'll just not do anything at all
 
-function FInc.Recursive(name, realm, nofold, callback)	--even though with "nofold" it's not really recursive
-	if not NeedToInclude(realm) then return end
-	callback = callback or BlankFunc
 
-	local file, folder = file.Find( name, "LUA" )
+-- tfw searching a folder takes 200ms
+
+FInc.CachedSearches = FInc.CachedSearches or {}
+local cached_searches = FInc.CachedSearches
+
+function FInc.Recursive(name, realm, nofold, decider, callback)	--even though with "nofold" it's not really recursive
+	if not NeedToInclude(realm) then return end
+	decider = decider or BlankFunc
+	callback = callback or BlankFunc
+	local b = bench("file.Find: " .. name)
+	b:Open()
+
+	local cache = (cached_searches[name] and CurTime() - cached_searches[name][1] < 0.2) and cached_searches[name]
+
+	local files, folders
+
+	if cache then
+		files, folders = unpack(cache, 2)
+	else
+		files, folders = file.Find( name, "LUA" )
+		cached_searches[name] = {CurTime(), files, folders}
+	end
+
+	b:Close()
+	if b:Read() > 0.05 then
+		b:print()
+	end
+	b:Reset()
 
 	local path = name:match("(.+/).+$") or ""
 	local wildcard = name:match(".+/(.+)$")
 
-	for k,v in pairs(file) do
+	for k,v in pairs(files) do
 		if not v:match(".+%.lua$") then continue end --if file doesn't end with .lua, ignore it
 		local inc_name = path .. v
 		if inc_name:match("extensions/includes%.lua") then continue end --don't include yourself
 
-		if loading then files = files + 1 end
-
 		if includes[realm] then
-			local cl, sv = callback (inc_name)
+			local cl, sv = decider (inc_name)
 			includes[realm] (inc_name, cl, sv)
-
+			callback(inc_name)
 		else
 			ErrorNoHalt("Could not include file " .. inc_name .. "; fucked up realm?\n")
 			continue
@@ -89,7 +111,7 @@ function FInc.Recursive(name, realm, nofold, callback)	--even though with "nofol
 	end
 
 	if not nofold then
-		for k,v in pairs(folder) do
+		for k,v in pairs(folders) do
 
 			-- path/ .. found_folder  .. /  .. wildcard_used
 			-- muhaddon/newfolder/*.lua

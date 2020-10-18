@@ -23,7 +23,9 @@ PANEL = FindMetaTable("Panel")
 WEAPON = FindMetaTable("Weapon")
 
 LibItUp = {}
-LibItUp.DependenciesFolder = "lib_deps"
+local libTbl = LibItUp
+
+libTbl.DependenciesFolder = "lib_deps"
 
 local path = "lib_it_up/"
 
@@ -36,7 +38,7 @@ local loading = true
 local files = 0
 
 local includes = {
-	[_CL] = function()
+	[_CL] = function(name)
 		if SERVER then
 			AddCSLuaFile(name)
 		else
@@ -101,6 +103,14 @@ include(path .. "classes.lua") -- base class goes first
 IncludeFolder(path .. "extensions/*", _SH) -- then extensions
 IncludeFolder(path .. "classes/*", _SH)
 
+IncludeFolder(path .. "libraries/*.lua", _SH)
+IncludeFolder(path .. "libraries/client/*", _CL)
+IncludeFolder(path .. "libraries/server/*", _SV)
+
+IncludeFolder(path .. "thirdparty/*.lua", _SH)
+IncludeFolder(path .. "thirdparty/client/*", _CL)
+IncludeFolder(path .. "thirdparty/server/*", _SV)
+
 loading = false
 
 local t2 = SysTime()
@@ -110,21 +120,67 @@ local deps_t1 = SysTime()
 hook.Run("LibbedItUp")
 hook.Run("LibItUp")
 
-FInc.Recursive("lib_deps/sh_*.lua", _SH, true)
-FInc.Recursive("lib_deps/*.lua", _SH, true, function(s)
-	if s:match("^cl_") or s:match("^sh_") or s:match("^sv_") then return false, false end
-end)
 
-FInc.Recursive("lib_deps/cl_*.lua", _CL, true)
-FInc.Recursive("lib_deps/sv_*.lua", _SV, true)
-
-FInc.Recursive("lib_deps/client/*", _CL)
-FInc.Recursive("lib_deps/server/*", _SV)
-
+local initCallbacks = {}
 
 hook.Add("InitPostEntity", "InittedGlobal", function()
 	EntityInitted = true
+
+	for _, v in ipairs(initCallbacks) do
+		v[1](unpack(v, 2))
+	end
+
+	initCallbacks = {}
 end)
+
+function libTbl.OnInitEntity(cb, ...)
+	if EntityInitted then
+		cb(...)
+	else
+		initCallbacks[#initCallbacks + 1] = {cb, ...}
+	end
+end
+
+libTbl.LoadedDeps = libTbl.LoadedDeps or {}
+libTbl.DepsCallbacks = libTbl.DepsCallbacks or muldim:new()
+
+local depsCallback = libTbl.DepsCallbacks
+
+function libTbl.OnLoaded(file, cb, ...)
+	if libTbl.LoadedDeps[file] then
+		cb(...)
+	else
+		depsCallback:GetOrSet(file):Insert({cb, ...})
+	end
+end
+
+
+local function onLoad(s)
+	--printf("Loaded %s %s %.2fs. after start...", s, Realm(true, true), SysTime() - s1)
+	local fn = file.GetFile(s)
+
+	if depsCallback[fn] then
+		for k,v in ipairs(depsCallback[fn]) do
+			v[1](unpack(v, 2))
+		end
+
+		depsCallback[fn] = nil
+	end
+
+	libTbl.LoadedDeps[fn] = true
+end
+
+FInc.Recursive("lib_deps/sh_*.lua", _SH, true, nil, onLoad)
+FInc.Recursive("lib_deps/*.lua", _SH, true, function(s) --decider
+	if s:match("^cl_") or s:match("^sh_") or s:match("^sv_") then return false, false end
+end, onLoad)
+
+FInc.Recursive("lib_deps/cl_*.lua", _CL, true, nil, onLoad)
+FInc.Recursive("lib_deps/sv_*.lua", _SV, true, nil, onLoad)
+
+FInc.Recursive("lib_deps/client/*", _CL, false, nil, onLoad)
+FInc.Recursive("lib_deps/server/*", _SV, false, nil, onLoad)
+
 
 local deps_t2 = SysTime()
 

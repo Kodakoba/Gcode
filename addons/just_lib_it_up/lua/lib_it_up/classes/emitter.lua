@@ -153,7 +153,7 @@ function Emitter:Emit(event, ...)
 
 end
 
-function Emitter:RemoveListener(event, name)
+function Emitter:RemoveListeners(event, name)
 	self.__Events:Set(nil, event, name)
 end
 
