@@ -1,8 +1,0 @@
-"VertexlitGeneric"
-{
-	"$basetexture" "grp/rack/rack"
-
-	"$surfaceprop" "metal"
-	"$model" 1
-	
-}

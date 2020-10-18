@@ -1010,7 +1010,6 @@ function draw.GetRT(name, w, h)
 end
 
 local state = false
-	
 local anis = TEXFILTER.ANISOTROPIC
 
 function draw.EnableFilters(min, mag)
