@@ -1,4 +1,9 @@
 
+--[[
+	DarkHUD:On("VitalsFramePainted")
+	DarkHUD:On("VitalsBarsPainted")
+	DarkHUD:On("VitalsEconomyPainted")
+]]
 
 local render = render
 local surface = surface
@@ -342,6 +347,8 @@ function DarkHUD.CreateVitals()
 
 		surface.SetDrawColor(curTeamCol:Unpack())
 		surface.DrawMaterial("https://i.imgur.com/VMZue2h.png", "circle_outline.png", x-3, y-3, w2+6, h2+6)
+
+		DarkHUD:Emit("VitalsFramePainted", w, h)
 	end
 
 	vls.HPFrac = 0
@@ -444,6 +451,7 @@ function DarkHUD.CreateVitals()
 
 			draw.SimpleText(LocalPlayer():Armor(), "DarkHUD_VitalsNumber", avx + (w - avx * 2 - 48) + 4, barY + barH/2 - 1, Color(255, 255, 255), 0, 1)
 
+			DarkHUD:Emit("VitalsBarsPainted", w, h)
 	end
 
 	function ecn:Paint(w,h)
@@ -474,6 +482,8 @@ function DarkHUD.CreateVitals()
 
 		draw.RoundedBox(rndrad, expBoxX, expBoxY, 180*scale, barH, Color(75, 75, 75))
 		draw.RoundedBox(rndrad, expBoxX, expBoxY, 180*scale * (LocalPlayer():GetXP() / LocalPlayer():GetXPNextLevel()), barH, Color(140, 80, 220))
+
+		DarkHUD:Emit("VitalsEconomyPainted", w, h)
 	end
 
 end

@@ -129,9 +129,13 @@ if SERVER then
 
 		if self:CheckUsable() == false then return end
 
-		if (not self:IsPowered() or self:BadlyDamaged()) and (not self.LastUnusuableBeep or CurTime() - self.LastUnusuableBeep > 1) and self.EmitUnusableBeeps then
-			self.LastUnusuableBeep = CurTime()
-			self:EmitSound("buttons/button10.wav")
+		if (not self:IsPowered() or self:BadlyDamaged()) then
+
+			if (not self.LastUnusuableBeep or CurTime() - self.LastUnusuableBeep > 1) and self.EmitUnusableBeeps then
+				self.LastUnusuableBeep = CurTime()
+				self:EmitSound("buttons/button10.wav")
+			end
+
 			return
 		end
 

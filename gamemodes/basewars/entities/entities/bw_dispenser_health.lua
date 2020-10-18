@@ -12,17 +12,34 @@ ENT.Model = "models/props_combine/health_charger001.mdl"
 ENT.Sound = Sound("HL1/fvox/blip.wav")
 ENT.EmitUnusableBeeps = false
 
+ENT.StimRegenTime = 30
+ENT.MaxStims = 5
+
 function ENT:Init()
 	self:SetModel(self.Model)
 	self:SetHealth(500)
 
 	self:SetUseType(CONTINUOUS_USE)
+
+	self.NextStim = CurTime() + self.StimRegenTime
+end
+
+function ENT:DerivedDataTables()
+	self:NetworkVar("Int", 1, "Charges")
+	self:SetCharges(0)
+
+	self:NetworkVar("Float", 1, "NextCharge")
+	self:SetNextCharge(CurTime() + self.StimRegenTime)
+
+	self:NetworkVar("Bool", 1, "Halted")
 end
 
 local blk = Color(0, 0, 0, 0)
 
 function ENT:QMOnBeginClose(qm, self, pnl)
 	pnl:MemberLerp(blk, "a", 0, 0.3, 0, 0.3)
+	pnl:To("MouseFrac", 0, 0.3, 0, 0.3)
+
 	local midX, midY = pnl:GetWide() / 2, pnl:GetTall() / 2
 
 
@@ -58,7 +75,7 @@ function ENT:QMOnReopen(qm, self, pnl)
 	pnl:SetMouseInputEnabled(minput)
 
 	pnl:MemberLerp(blk, "a", minput and 160 or 90, 0.3, 0, 0.3)
-
+	pnl:To("MouseFrac", minput and 1 or 0, 0.3, 0, 0.3)
 	--[[local healBtn = pnl.HealBtn
 	healBtn:CircleMoveTo(healBtn.ToX, healBtn.ToY, 0.3, 0.4)
 	healBtn:PopIn(0.2)]]
@@ -72,11 +89,15 @@ end
 
 function ENT:OpenShit(qm, self, pnl)
 
+	local ent = self
+
 	--pnl:SetSize(850, 600)	--cant fit
 	--pnl:CenterHorizontal()
-	print("opening shite", qm)
+	local give_stim
 
 	pnl:SetMouseInputEnabled(false)
+	pnl.MouseFrac = 0
+	pnl.PowerFrac = 0
 	pnl:On("PrePaint", function(self, w, h)
 		local x, y = self:LocalToScreen(0, 0)
 
@@ -103,6 +124,8 @@ function ENT:OpenShit(qm, self, pnl)
 			self:SetMouseInputEnabled(true)
 			self.ShouldMouse = true
 			pnl:MemberLerp(blk, "a", 160, 0.3, 0, 0.3)
+			pnl:To("MouseFrac", 1, 0.3, 0, 0.3)
+
 			if pnl.GiveStimBtn and pnl.GiveStimBtn:IsValid() then
 				local b = pnl.GiveStimBtn
 				b:PopIn(nil, nil, nil, true)
@@ -113,11 +136,30 @@ function ENT:OpenShit(qm, self, pnl)
 				qm.MaxInnerAlpha = 255
 			end
 		end
+
+		if self.ShouldMouse then
+			DisableClipping(true)
+				local chargeStr = ent:GetCharges() .. "/" .. ent.MaxStims
+				local col = lazy.Get("StimCntCol") or lazy.Set("StimCntCol", color_white:Copy())
+				col.a = math.min(pnl.MouseFrac, pnl.PowerFrac + 0.05 + math.random() * 0.02) * 255
+
+				draw.SimpleText(Language("ChargesCounter", chargeStr), "BSSB36", give_stim.X + give_stim:GetWide() / 2,
+					give_stim.Y - 4, col, 1, 4)
+
+				local col = lazy.Get("NextStimCntCol") or lazy.Set("NextStimCntCol", color_white:Copy())
+				col.a = math.min(pnl.MouseFrac, pnl.PowerFrac) * 65
+
+				local nextCharge = math.max(ent:GetNextCharge() - CurTime(), 0)
+				draw.SimpleText(Language("NextCharge", nextCharge), "BS24", give_stim.X + give_stim:GetWide() / 2,
+					give_stim.Y - 4 - 32, col, 1, 4)
+
+			DisableClipping(false)
+		end
 	end)
 
 	pnl:MemberLerp(blk, "a", 90, 0.3, 0, 0.3)
 
-	local give_stim = vgui.Create("FButton", pnl)
+	give_stim = vgui.Create("FButton", pnl)
 		give_stim:SetSize(200, 60)
 		give_stim:Center()
 		--give_stim.Y = give_stim.Y - pnl.CircleSize / 2 - give_stim:GetTall() / 2 - 22
@@ -152,6 +194,54 @@ function ENT:OpenShit(qm, self, pnl)
 		pnl.StimAlpha = 120
 		qm.MaxInnerAlpha = 120
 
+		local canUse = ent:IsPowered() and ent:GetCharges() > 1
+
+		if not canUse then
+			give_stim:SetColor(Colors.Button, true)
+		else
+			give_stim:SetColor(Colors.Sky, true)
+		end
+
+		function give_stim:Think()
+			if not ent:IsValid() then return end --thonk
+			
+			local pw = ent:IsPowered()
+			canUse = pw and ent:GetCharges() > 1
+
+			pnl:To("PowerFrac", pw and 1 or 0, 0.3, 0, 0.3)
+
+			if not canUse then
+				self:SetColor(Colors.Button)
+			else
+				self:SetColor(Colors.Sky:Copy():ModHSV(0, -0.1, -0.2))
+			end
+		end
+
+		function give_stim:OnHover()
+			if not canUse then
+				local why = (not ent:IsPowered() and Language.NoPower) or Language.NoCharges
+				local cl, new = self:AddCloud("err", why)
+				if new then
+					cl:SetFont("OS24")
+					cl:SetText(why)
+					cl:SetTextColor(Colors.DarkerRed)
+					cl:SetRelPos(self:GetWide() / 2, 0)
+					cl.ToY = -8
+				end
+			end
+		end
+
+		function give_stim:OnUnhover()
+			self:RemoveCloud("err")
+		end
+
+		function give_stim:DoClick()
+			if not ent:IsPowered() or ent:GetCharges() < 1 then return end
+
+			net.Start("HealthDispenser")
+				net.WriteEntity(ent)
+			net.SendToServer()
+		end
 	--qm:AddPopIn(give_stim, give_stim.X, give_stim.Y, 0, -32)
 
 
@@ -206,19 +296,80 @@ end
 function ENT:CheckUsable()
 
 	if self.Time and self.Time + 0.5 > CurTime() then return false end
-	
+
 end
 
-function ENT:UseFunc(ply)
-	
-	if not IsPlayer(ply) then return end
-	
-	self.Time = CurTime()
-	
-	local hp = ply:Health()
-	if hp >= ply:GetMaxHealth() then return end
-	
-	ply:SetHealth(math.min(hp + 10, math.max(ply:Health(), ply:GetMaxHealth())))
-	self:EmitSound(self.Sound, 100, 60)
-	
+if SERVER then
+
+	function ENT:Think()
+		if not self:IsPowered() then
+			self:Halt()
+			return
+		elseif self:GetCharges() < self.MaxStims then
+			if self.Halted then
+				self:SetNextStim()
+			end
+			self:Halt(false)
+		end
+
+		if not self.Halted and CurTime() > self.NextStim then
+
+			if self:GetCharges() < self.MaxStims then
+				self:SetNextStim(self.NextStim + self.StimRegenTime)
+				self:SetCharges(self:GetCharges() + 1)
+			else
+				self:Halt()
+			end
+
+		end
+	end
+
+	function ENT:UseFunc(ply)
+
+		if not IsPlayer(ply) then return end
+
+		self.Time = CurTime()
+
+		local hp = ply:Health()
+		if hp >= ply:GetMaxHealth() then return end
+
+		ply:SetHealth(math.min(hp + 10, math.max(ply:Health(), ply:GetMaxHealth())))
+		self:EmitSound(self.Sound, 100, 60)
+
+	end
+
+	function ENT:Halt(b)
+		self.Halted = (b == nil and true) or b
+		self:SetHalted(self.Halted)
+	end
+
+	function ENT:SetNextStim(when)
+		when = when or CurTime() + self.StimRegenTime
+		self.NextStim = when
+		self:SetNextCharge(when)
+	end
+
+	function ENT:TakeStim(ply)
+		local ok = ply:AddStims()
+		if ok == false then return end
+
+		self:SetCharges(self:GetCharges() - 1)
+
+		if self.Halted and self:GetCharges() >= self.MaxStims then
+			self:SetNextStim()
+			self:Halt(false)
+		end
+	end
+
+	util.AddNetworkString("HealthDispenser")
+
+	net.Receive("HealthDispenser", function(len, ply)
+		local ent = net.ReadEntity()
+
+		if ply:GetPos():Distance(ent:GetPos()) > 256 then return end
+		if not ent:IsPowered() then return end
+		if ent:GetCharges() < 1 then return end
+
+		ent:TakeStim(ply)
+	end)
 end

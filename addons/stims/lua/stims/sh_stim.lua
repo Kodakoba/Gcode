@@ -40,3 +40,50 @@ end
 function Stims.SetStim(ply, dat)
 	Stims.PlayerStims[ply] = dat
 end
+
+function PLAYER:GetStims()
+	return self:GetNW2Int("Stimpaks", 0)
+end
+
+function PLAYER:GetMaxStims()
+	return 2
+end
+
+function PLAYER:AddStims(num)
+	if self:GetStims() >= self:GetMaxStims() then return false end
+	self:SetNW2Int("Stimpaks", self:GetStims() + (num or 1))
+	return true
+end
+
+function PLAYER:TakeStims(num)
+	if self:GetStims() <= 0 then return false end
+	self:SetNW2Int("Stimpaks", self:GetStims() - (num or 1))
+	return true
+end
+
+function PLAYER:GetStimCooldown(num)
+	return 5
+end
+
+function PLAYER:IsOnStimCooldown()
+	local lastUsed = self:GetNW2Float("UsedStimpak", 0)
+	local left = self:GetStimCooldown(num) - (CurTime() - (lastUsed or 0))
+	local frac = math.min((self:GetStimCooldown(num) - left) / self:GetStimCooldown(num), 1)
+
+	return left > 0, left, frac
+end
+
+hook.Add("CanUseStimpak", "CountCheck", function(ply)
+	if ply:GetStims() < 0 then return false end
+end)
+
+hook.Add("CanUseStimpak", "CooldownCheck", function(ply)
+	if ply:IsOnStimCooldown() then return false end
+end)
+
+
+
+hook.Add("PlayerUsedStimpak", "UseStim", function(ply, dat)
+	ply:TakeStims(1)
+	ply:SetNW2Float("UsedStimpak", CurTime())
+end)

@@ -35,6 +35,7 @@ Language.__call = Language.eval
 
 
 Language.NoPower 		= "No power!"
+Language.NoCharges 		= "No charges!"
 Language.NoHealth 		= "Low health!"
 Language.NoPrinters 	= "Target does not have enough printers!"
 
@@ -61,6 +62,8 @@ Language.Tip = "Tip!"
 Language.PrinterUpgradeTip = "Type /upg or /upgrade while looking at a printer to upgrade it.\nYou can specify how many levels you want to upgrade something by.\nTry it now!"
 Language.PrinterUpgradeTipFont = "OS28"
 
+Language.ChargesCounter = "Charges: %s"
+Language.NextCharge = "next charge in %.1fs."
 setmetatable(Language, Language)
 
 LocalString = Object:callable()
