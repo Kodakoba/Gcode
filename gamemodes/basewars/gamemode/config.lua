@@ -356,16 +356,21 @@ AddEntities("Consumables (T1)", "bw_entityarmor2", "Heavy Armor Kit", m * 125, 0
 
 -- Generators (T1)--
 
-AddEntities("Generators (T1)", "bw_gen_joke", "Numismatic Reactor", m * 150, 3000, "models/props_c17/cashregister01a.mdl")
+AddEntities("Generators (T1)", "bw_gen_manual", "Manual Generator", 250, 0, "models/props_c17/TrapPropeller_Engine.mdl")
+AddEntities("Generators (T1)", "bw_gen_solar", "Solar Panel", k * 1.5, 1, "models/props_lab/miniteleport.mdl")
+AddEntities("Generators (T1)", "bw_gen_gas", "Gas Generator", k * 5, 5, "models/xqm/hydcontrolbox.mdl")
+
+AddEntities("Generators (T1)", "bw_electric_pole", "Power Pole", k * 10, 5, "models/grp/powerpole/powerpole.mdl")
+
 AddEntities("Generators (T1)", "bw_gen_coalfired", "Coal Fired Generator", k * 20, 50, "models/props_wasteland/laundry_washer003.mdl")
-AddEntities("Generators (T1)", "bw_gen_hydroelectric", "Hydroelectric Reactor", m * 5, 1250, "models/props_wasteland/laundry_washer001a.mdl")
-AddEntities("Generators (T1)", "bw_gen_solar", "Solar Panel", k * 5, 15, "models/props_lab/miniteleport.mdl")
-AddEntities("Generators (T1)", "bw_gen_combustion", "Combustion Reactor", m * 500, 3000, "models/props_c17/substation_transformer01a.mdl")
 AddEntities("Generators (T1)", "bw_gen_fission", "Fission Reactor", k * 75, 100, "models/props/de_nuke/equipment1.mdl")
 AddEntities("Generators (T1)", "bw_gen_fusion", "Fusion Reactor", k * 300, 500, "models/maxofs2d/thruster_propeller.mdl")
-AddEntities("Generators (T1)", "bw_gen_manual", "Manual Generator", 250, 0, "models/props_c17/TrapPropeller_Engine.mdl")
-AddEntities("Generators (T1)", "bw_electric_pole", "Power Pole", k * 10, 5, "models/grp/powerpole/powerpole.mdl")
-AddEntities("Generators (T1)", "bw_gen_gas", "Gas Generator", k * 1.5, 5, "models/xqm/hydcontrolbox.mdl")
+
+AddEntities("Generators (T1)", "bw_gen_joke", "Numismatic Reactor", m * 150, 3000, "models/props_c17/cashregister01a.mdl")
+AddEntities("Generators (T1)", "bw_gen_hydroelectric", "Hydroelectric Reactor", m * 5, 1250, "models/props_wasteland/laundry_washer001a.mdl")
+AddEntities("Generators (T1)", "bw_gen_combustion", "Combustion Reactor", m * 500, 3000, "models/props_c17/substation_transformer01a.mdl")
+
+
 
 
 -- Structures (T1)--

@@ -156,8 +156,10 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 		local notEnoughColor = Color(220, 50, 50, 150)
 		local wayEnoughColor = Color(35, 95, 255, 180)
 		local barelyEnoughColor = Color(220, 210, 110, 150)
+		local notEvenCloseColor = Color(85, 85, 85)
 
 		local moneytxCol = notEnoughColor:Copy()
+		local leveltxCol = Colors.Level:Copy()
 		local curCol = Colors.Red:Copy()
 
 		local shortName = name
@@ -183,7 +185,6 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 
 			draw.SimpleText(shortName, "BS14", w/2 + 1, 4 - 22 * self.HoverFrac + 1, shortNameShadow, 1)
 			draw.SimpleText(shortName, "BS14", w/2, 4 - 22 * self.HoverFrac, shortNameCol, 1)
-			
 		end
 
 		function btn:PrePaint(w, h)
@@ -193,30 +194,36 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 			local enough_lv = ply_level >= lv
 
 			local col = curCol
-			local txcol
+			local txcol = Colors.Money
 
 			draw.LerpColor(1, curCol, enoughColor, barelyEnoughColor)
 
-			if enough and enough_lv then
-				if way_enough then
-					col = wayEnoughColor
-					txcol = Colors.Money
-				elseif barely_enough then
-					col = barelyEnoughColor
+			if enough then
+				txcol = Colors.Money
 
-					--draw.LerpColor(self.HoverFrac, curCol, barelyEnoughColor, enoughColor)
-
-					txcol = barelyEnoughColor
+				if enough_lv then
+					if way_enough then
+						col = wayEnoughColor
+					elseif barely_enough then
+						col = barelyEnoughColor
+						txcol = barelyEnoughColor
+					else
+						col = enoughColor
+					end
 				else
-					col = enoughColor
-					txcol = Colors.Money
+					col = notEnoughColor
 				end
+
 			else
-				col = notEnoughColor
+				col = enough_lv and notEnoughColor or notEvenCloseColor
+				txcol = notEnoughColor
 			end
 
 			moneytxCol:Set(txcol or col)
 			moneytxCol.a = 255
+
+			leveltxCol:Set(enough_lv and Colors.Level or notEnoughColor)
+			leveltxCol.a = 255
 
 			draw.RoundedBox(8, 2, 2, w - 4, h - 4, col)
 		end
@@ -243,7 +250,7 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 				cl.AlignLabel = 1
 				cl:AddSeparator(nil, 8)
 				cl:AddFormattedText(Language.Currency .. BaseWars.NumberFormat(price), moneytxCol, "OSB20", 18, nil, 1)
-				cl:AddFormattedText(Language.Level .. " " .. lv, Colors.Level, "OSB20", nil, nil, 1)
+				cl:AddFormattedText(Language.Level .. " " .. lv, leveltxCol, "OSB20", nil, nil, 1)
 				cl:SetRelPos(self:GetWide() / 2)
 				cl.ToY = -8
 

@@ -24,7 +24,7 @@ function ENT:CLInit()
 
 	self:On("DTChanged", "Upgrading", function(self, key, old, new)
 		if key == "Level" and new > 1 and self:CPPIGetOwner() == LocalPlayer() then
-			cookie.Set("PrinterUpgraded", "1")
+			cookie.Set("PrinterUpgraded", 1)
 		end
 	end)
 
@@ -93,7 +93,9 @@ function ENT:DrawUpgradeCost(y, w, h)
 
 	local upX, upY = w/2 - upW/2, y
 
-	rect(upX, upY, upW, upH, black)
+	setDrawColor(black:Unpack())
+	rect(upX, upY, upW, upH)
+
 	--draw.RoundedBox(16, upX, upY, upW, upH, black)
 
 	simpleText(what, "OS24", upX + upW / 2, upY, white, 1)

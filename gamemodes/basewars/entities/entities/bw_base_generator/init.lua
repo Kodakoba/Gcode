@@ -60,7 +60,6 @@ function ENT:UpdateTransmitState()
 end
 
 function ENT:Think()
-
 	if not self.TransmitTime or CurTime() - self.TransmitTime < 0.5 then 
 		self:AddEFlags( EFL_FORCE_CHECK_TRANSMIT )
 	else
@@ -68,23 +67,29 @@ function ENT:Think()
 	end
 
 	self:CheckCableDistance()
+	self:Emit("Think")
 end
+
 function ENT:CheckCableDistance(bwe)
 	bwe = bwe or BWEnts[self]
-	local line = self:GetLine()
 
-	if bwe.CheckDist and IsValid(line) then
+
+	if bwe.CheckDist then
+		local line = self:GetLine()
+		if not line:IsValid() then line = self:GetHotwired() end
+		if not line:IsValid() then return end
+
 		local pos = self:GetPos()
 		local pos2 = line:GetPos()
 
 		if pos:DistToSqr(pos2) > math.min(bwe.ConnectDistanceSqr, BWEnts[line].ConnectDistanceSqr) then
-			self:SetLine(NULL)
-			local grid = PowerGrid:new(self:CPPIGetOwner())
-			grid:AddGenerator(self)
+			self:Disconnect()
 		else
 			bwe.CheckDist = nil
 		end
 	end
+
+	bwe.CheckDist = false
 end
 
 function ENT:PhysicsUpdate()
@@ -157,9 +162,11 @@ function ENT:ConnectTo(ent)
 
 end
 
-function ENT:Disconnect()
+function ENT:Disconnect(filter_out)
 	local grid = self:GetGrid()
 	if not grid or not grid.AllEntities[self:EntIndex()] then print("no grid or not in grid", grid) return end
+
+	local hw = self:GetHotwired()
 
 	grid:RemoveGenerator(self)
 	grid.Hotwired = nil
@@ -167,6 +174,16 @@ function ENT:Disconnect()
 	self:SetLine(NULL)
 
 	PowerGrid:new(self:CPPIGetOwner()):AddGenerator(self)
+
+	net.Start("ConnectGenerator")
+		net.WriteEntity(self)
+		if hw:IsValid() then net.WriteEntity(hw) else net.WriteEntity(self) end
+
+		local filt = RecipientFilter()
+		filt:AddPVS(self:LocalToWorld(self:OBBCenter()))
+		if filter_out then filt:RemovePlayer(filter_out) end
+
+	net.Send( filt )
 end
 
 net.Receive("ConnectGenerator", function(_, ply)
@@ -182,7 +199,7 @@ net.Receive("ConnectGenerator", function(_, ply)
 
 		gen:ConnectTo(ent)
 	else
-		gen:Disconnect()
+		gen:Disconnect(ply)
 	end
 
 end)

@@ -584,11 +584,7 @@ hook.Add("PostDrawTranslucentRenderables", "DrawCables", function(d, sb)
 
 end)
 
-function ENT:OnDisconnect(was)
-
-	if self.ExpectedDisconnect then self.ExpectedDisconnect = false return end
-	if not IsValid(was) then return end --?
-
+function ENT:PlayDisconnect(was)
 	sound.PlayFile("data/hdl/sfx/wire_disconnect.dat", "noplay 3d", function(ch)
 		if not IsValid(ch) then return end
 
@@ -597,6 +593,13 @@ function ENT:OnDisconnect(was)
 		ch:SetVolume(3)
 		ch:Play()
 	end)
+end
+
+function ENT:OnDisconnect(was)
+	if self.ExpectedDisconnect then self.ExpectedDisconnect = false return end
+	if not IsValid(was) then return end --?
+
+	self:PlayDisconnect(was)
 
 	if self==PreviewCable then
 		PreviewCable = false
@@ -605,6 +608,15 @@ function ENT:OnDisconnect(was)
 	end
 
 end
+
+
+net.Receive("ConnectGenerator", function()
+	-- really just a listener for disconnects
+	local gen = net.ReadEntity()
+	local from = net.ReadEntity()
+
+	gen:PlayDisconnect(from)
+end)
 
 function ENT:OnConnect(who)
 
