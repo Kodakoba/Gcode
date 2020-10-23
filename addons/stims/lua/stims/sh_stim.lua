@@ -49,8 +49,9 @@ function PLAYER:GetMaxStims()
 	return 2
 end
 
-function PLAYER:AddStims(num)
-	if self:GetStims() >= self:GetMaxStims() then return false end
+function PLAYER:AddStims(num, ignore)
+	if self:GetStims() >= self:GetMaxStims() and not ignore then return false end
+	local add = ignore and num or math.min(self:GetMaxStims() - self:GetStims(), num)
 	self:SetNW2Int("Stimpaks", self:GetStims() + (num or 1))
 	return true
 end

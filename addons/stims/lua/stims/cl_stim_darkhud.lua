@@ -5,17 +5,22 @@ local function hookDarkHUD()
 	circCol = Colors.DarkGray:Copy()
 
 	local fontName = "Open Sans Bold"
+	local scale = math.max(DarkHUD.Scale, 1)
 
 	surface.CreateFont("DarkHUD_Stims", {
 		font = fontName,
-		size = 18 * DarkHUD.Scale
+		size = 18 * scale
 	})
 
 	dh:On("Rescale", "StimRescale", function(_, new)
+		new = math.max(new, 1) -- 1 is max scale
+
 		surface.CreateFont("DarkHUD_Stims", {
 			font = fontName,
 			size = 18 * new
 		})
+
+		scale = new
 	end)
 
 	local mask = function(x, y, sz, frac)
@@ -36,8 +41,7 @@ local function hookDarkHUD()
 	local cdBoxColor = Colors.Gray:Copy()
 
 	dh:On("AmmoPainted", "PaintStims", function(_, pnl, w, h)
-		local scale = dh.Scale
-		local size = (h - pnl.HeaderSize) / 3 * 2
+		local size = 44 * scale
 
 		local me = LocalPlayer()
 
@@ -60,12 +64,12 @@ local function hookDarkHUD()
 
 		local sX, sY = 4, -4 - size
 
-		sX = math.floor(sX - pnl.ShakeX / 3) -- counteract the shaking a bit
+	sX = math.floor(sX - pnl.ShakeX / 3) -- counteract the shaking a bit
 		sY = math.floor(sY - pnl.ShakeY / 3)
 
 		local gsX, gsY = sX + x, sY + y -- global/toscreen'd stimX, stimY
 
-		local circSize = math.floor(24 * scale)
+		local circSize = math.floor(20 * scale)
 
 		draw.EnableFilters(true, false)
 
