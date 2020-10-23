@@ -1479,57 +1479,6 @@ function draw.DrawGIF(url, name, x, y, dw, dh, frw, frh, start, frametime, pnl)
 	surface_DrawTexturedRectUV(x, y, dw, dh, u1, v1, u2, v2)
 end
 
--- THANK U BASED GigsD4X
--- https://gist.github.com/GigsD4X/8513963
-
-local rets = {
-	function(v, p, q, t) return v, t, p end,
-	function(v, p, q, t) return q, v, p end,
-	function(v, p, q, t) return p, v, t end,
-	function(v, p, q, t) return p, q, v end,
-	function(v, p, q, t) return t, p, v end,
-	function(v, p, q, t) return v, p, q end
-}
-
-function draw.HSVToColor(hue, saturation, value)
-	value = math.Clamp(value, 0, 1)
-	saturation = math.Clamp(saturation, 0, 1)
-
-	if saturation == 0 then
-		return value * 255, value * 255, value * 255
-	end
-
-	hue = hue % 360
-
-	local hue_sector, hue_sector_offset = math.modf(hue / 60)
-
-	-- in the gist, hue_sector_offset is a negative value, so to use modf
-	-- and compensate for it, i changed the signs in maths below
-
-	-- also  *255 because gmod
-
-	local p = value * ( 1 - saturation ) * 255
-	local q = value * ( 1 - saturation * hue_sector_offset ) * 255
-	local t = value * ( 1 - saturation * ( 1 - hue_sector_offset ) ) * 255
-
-	value = value * 255
-	--also utilize a jump table here
-
-	return rets[hue_sector + 1] (value, p, q, t)
-end
-
-function draw.ColorModHSV(col, h, s, v)
-	col.r, col.g, col.b = draw.HSVToColor(h, s, v)
-	return col
-end
-
-function draw.ColorChangeHSV(col, h, s, v)
-	local ch, cs, cv = col:ToHSV()
-
-	col.r, col.g, col.b = draw.HSVToColor(ch + (h or 0), cs + (s or 0), cv + (v or 0))
-	return col
-end
-
 function draw.SimpleText2( text, font, x, y, colour, xalign, yalign )
 
 	text	= tostring( text )

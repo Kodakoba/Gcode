@@ -25,6 +25,62 @@ Colors.Golden = Color(205, 160, 50)
 Colors.DarkWhite = Color(220, 220, 220) --yes, dark white
 Colors.Blue = Color(60, 140, 200)
 
+-- THANK U BASED GigsD4X
+-- https://gist.github.com/GigsD4X/8513963
+
+local rets = {
+	function(v, p, q, t) return v, t, p end,
+	function(v, p, q, t) return q, v, p end,
+	function(v, p, q, t) return p, v, t end,
+	function(v, p, q, t) return p, q, v end,
+	function(v, p, q, t) return t, p, v end,
+	function(v, p, q, t) return v, p, q end
+}
+
+local function HSVToColorRGB(hue, saturation, value)
+	value = math.Clamp(value, 0, 1)
+	saturation = math.Clamp(saturation, 0, 1)
+
+	if saturation == 0 then
+		return value * 255, value * 255, value * 255
+	end
+
+	hue = hue % 360
+
+	local hue_sector, hue_sector_offset = math.modf(hue / 60)
+
+	-- in the gist, hue_sector_offset is a negative value, so to use modf
+	-- and compensate for it, i changed the signs in maths below
+
+	-- also  *255 because gmod
+
+	local p = value * ( 1 - saturation ) * 255
+	local q = value * ( 1 - saturation * hue_sector_offset ) * 255
+	local t = value * ( 1 - saturation * ( 1 - hue_sector_offset ) ) * 255
+
+	value = value * 255
+	--also utilize a jump table here
+
+	return rets[hue_sector + 1] (value, p, q, t)
+end
+
+local function ColorModHSV(col, h, s, v)
+	col.r, col.g, col.b = HSVToColorRGB(h, s, v)
+	return col
+end
+
+local function ColorChangeHSV(col, h, s, v)
+	local ch, cs, cv = col:ToHSV()
+
+	col.r, col.g, col.b = HSVToColorRGB(ch + (h or 0), cs + (s or 0), cv + (v or 0))
+	return col
+end
+
+if CLIENT then
+	draw.ColorModHSV = ColorModHSV
+	draw.ColorChangeHSV = ColorChangeHSV
+end
+
 function COLOR:Set(col, g, b, a)
 
 	if IsColor(col) then
@@ -46,8 +102,9 @@ function COLOR:Copy()
 end
 
 function COLOR:ModHSV(h, s, v)
-	return draw.ColorChangeHSV(self, h, s, v)
+	return ColorChangeHSV(self, h, s, v)
 end
+
 COLOR.HSVMod = COLOR.ModHSV
 function IsMaterial(m)
 	return type(m) == "IMaterial"	--we can't really compare m.MetaName because m might not even be a table
