@@ -4,8 +4,17 @@ function IncludeBasewarsModules()
 	local modules = 0
 
 	local function incrementModule()
-		MODULE = {}
 		modules = modules + 1
+		print("loaded module:", MODULE.Name)
+
+		if MODULE.Name then
+			hook.Run("BasewarsModuleLoaded", MODULE.Name)
+		end
+
+	end
+
+	local function moduleLoaded(p)
+		MODULE = {}
 	end
 
 	local rlm = Realm(true, true)
@@ -19,11 +28,17 @@ function IncludeBasewarsModules()
 
 	local s = SysTime()
 
-		FInc.Recursive(path .. "*.lua", _SH, true, incrementModule)
-		FInc.Recursive(path .. "server/*.lua", _SV, nil, incrementModule)
-		FInc.Recursive(path .. "client/*.lua", _CL, nil, incrementModule)
+		FInc.Recursive(path .. "*.lua", _SH, true, moduleLoaded, incrementModule)
+		FInc.Recursive(path .. "server/*.lua", _SV, nil, moduleLoaded, incrementModule)
+		FInc.Recursive(path .. "client/*.lua", _CL, nil, moduleLoaded, incrementModule)
 
 	s = SysTime() - s
 
 	Modules.Log("Loaded %d modules %s in %.2f s!", modules, rlm, s )
+
+	MODULE = {} -- autorefresh support
+end
+
+if EntityInitted then
+	IncludeBasewarsModules()
 end
