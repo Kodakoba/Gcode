@@ -60,7 +60,7 @@ function ENT:UpdateTransmitState()
 end
 
 function ENT:Think()
-	if not self.TransmitTime or CurTime() - self.TransmitTime < 0.5 then 
+	if not self.TransmitTime or CurTime() - self.TransmitTime < 0.5 then
 		self:AddEFlags( EFL_FORCE_CHECK_TRANSMIT )
 	else
 		self:RemoveEFlags( EFL_FORCE_CHECK_TRANSMIT )
@@ -139,7 +139,7 @@ function ENT:ConnectTo(ent)
 		self:SetHotwired(ent)
 
 		ent:SetLine(NULL)
-		
+
 		grid:On("RemovedGenerator", "TrackHotwired", function(grid, rem)
 			if rem == self and grid.Hotwired and grid.Hotwired[1] == self then
 				grid.Hotwired = nil

@@ -62,7 +62,10 @@ hook.Add("Think", "AnimatableThink", function()
 end)
 
 function AnimMeta:Remove()
-	self.Parent.m_AnimList[self.Key] = nil
+	local ans = self.Parent.m_AnimList
+	if ans[self.Key] == self then
+		ans[self.Key] = nil
+	end
 end
 
 function AnimMeta:Stop()

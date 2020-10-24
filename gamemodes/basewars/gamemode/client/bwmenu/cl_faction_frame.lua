@@ -101,14 +101,14 @@ function FAC:Init()
 		bord.Paint = self.CanvasPaint
 	end)
 
-
-	self.Elements = muldim:new()
 end
 
 
 local hovHeight = 16 -- members list will expand by (hovHeight)px up when a member is hovered
 
 function FAC:CreateMemberList()
+	if self.Faction == Factions.NoFaction then return end -- nuh-uh, that one's custom
+
 	local facPnl = self
 	local fac = self.Faction
 
@@ -342,21 +342,6 @@ function FAC:SetFaction(fac)
 
 	self:CreateMemberList()
 	self:Emit("FactionSet", fac)
-end
-
-function FAC:AddElement(name, pnl)
-	table.insert(self.Elements:GetOrSet(name), pnl)
-end
-
-function FAC:GetElements(name)
-	return self.Elements:GetOrSet(name)
-end
-
-function FAC:RemoveElements(name)
-	for k,v in ipairs(self.Elements:GetOrSet(name)) do
-		if not IsValid(v) then continue end
-		v:Disappear()
-	end
 end
 
 vgui.Register("FactionPanel", FAC, "Panel")

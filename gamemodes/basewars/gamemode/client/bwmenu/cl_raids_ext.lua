@@ -2,6 +2,8 @@ local tab = {}
 BaseWars.Menu.Tabs["Raids"] = tab
 
 local function removePanel(pnl, hide)
+	if pnl.__selMove then pnl.__selMove:Stop() end
+
 	pnl.__selMove = pnl:MoveBy(16, 0, 0.2, 0, 1.4)
 
 	if hide then
@@ -13,7 +15,7 @@ local function removePanel(pnl, hide)
 end
 
 local function createActionCanvas(f, fac)
-	local pnl = vgui.Create("FactionPanel", f)
+	local pnl = vgui.Create("FactionPanel", f, "Canvas for " .. tostring(fac))
 
 	f.FactionFrame = pnl
 	f:SetPanel(pnl)
@@ -26,7 +28,7 @@ end
 local function createRaidActions(pnl, fac, canv)
 	local old = true -- = the canvas already existed, aka they switched from faction tab to raid tab
 
-	if not canv then
+	if not canv or canv.Faction ~= fac then
 		old = false
 		canv = createActionCanvas(pnl, fac)
 	end
@@ -45,7 +47,7 @@ local function createRaidActions(pnl, fac, canv)
 	if old then
 		local old = mn:GetTall() - 44
 		raid.Y = mn:GetTall() + 8
-		raid:To("Y", old, 0.2, 0, 0.3)
+		raid:To("Y", old, 0.3, 0, 0.3)
 	else
 		raid.Y = mn:GetTall() - 44
 	end
@@ -56,6 +58,8 @@ local function createRaidActions(pnl, fac, canv)
 	raid.Icon.IconX = 8
 
 	function raid:Disappear()
+		local mn = canv.Main
+
 		self:PopOut(0.2)
 		self:To("Y", mn:GetTall() + 8, 0.25, 0, 3):Then(function()
 			self:Remove()
@@ -65,9 +69,32 @@ local function createRaidActions(pnl, fac, canv)
 	canv:AddElement("Exclusive", raid)
 end
 
+local function createFactionlessActions(pnl, fac, scr, oldcanv)
+	if oldcanv and oldcanv ~= pnl.NoFactionRaidCanvas then
+		removePanel(oldcanv)
+	end
+
+	local canv = pnl.NoFactionRaidCanvas or createActionCanvas(pnl, fac)
+
+	scr:AddElement("NoFaction", canv)
+	pnl.NoFactionRaidCanvas = canv
+
+	if IsValid(pnl.NoFactionRaidCanvas) then
+		pnl.NoFactionRaidCanvas:PopInShow()
+	end
+
+	pnl:SetPanel(canv)
+
+	function canv:Disappear()
+		removePanel(self, true)
+	end
+end
+
 local function onOpen(navpnl, tabbtn, _, noanim)
 	local f = BaseWars.Menu.Frame
-	local pnl, scr = f.FactionsPanel	-- pnl : holder for everythingg, scr: panel holding a scrollpanel in it
+
+	local pnl = f.FactionsPanel	-- pnl : holder for everythingg, scr: panel holding a scrollpanel in it
+	local scr = IsValid(pnl) and pnl.FactionScroll.FactionScroll --kek
 
 	if IsValid(pnl) then
 
@@ -99,14 +126,33 @@ local function onOpen(navpnl, tabbtn, _, noanim)
 		end
 
 		if IsValid(pnl.FactionFrame) then
-			createRaidActions(pnl, pnl.FactionFrame.Faction, pnl.FactionFrame)
+			if pnl.FactionFrame == pnl.NoFactionRaidCanvas then
+				createFactionlessActions(pnl, pnl.FactionFrame.Faction, scr)
+			else
+				createRaidActions(pnl, pnl.FactionFrame.Faction, pnl.FactionFrame)
+			end
 		end
 	else
 		pnl, scr = BaseWars.Menu.CreateFactionList(f)
 	end
 
+	local noFac = scr:AddButton(Factions.NoFaction)
+	scr:AddElement("NoFaction", noFac)
+
 	function pnl:FactionClicked(fac, ...)
-		createRaidActions(pnl, fac)
+		local old = IsValid(pnl.FactionFrame) and pnl.FactionFrame
+
+		if old and old.Faction == fac then return end
+		if old and old.Faction ~= fac then
+			removePanel(old, true)
+		end
+
+		if fac:GetID() == -1 then
+			createFactionlessActions(pnl, fac, scr, ...)
+			return
+		end
+
+		createRaidActions(pnl, fac, pnl.FactionFrame)
 	end
 
 	tabbtn.Panel = pnl

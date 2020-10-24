@@ -68,8 +68,6 @@ local function facBtnPaint(self, w, h)
 
 	render.SetScissorRect(0, 0, 0, 0, false)
 
-	
-
 	draw.SimpleText(self.Faction.name, fonts.BoldTiny, w/2, 2, col, 1)
 
 	frac = self.MembFrac or 0
@@ -106,6 +104,7 @@ function FACSCROLL:AddButton(fac, num)
 	local btn = vgui.Create("FButton", self)
 
 	local facPad, facHeight = self.FactionPadding, self.FactionHeight
+	num = num or (table.Count(self.Factions) + 1)
 
 	btn:SetPos(8, self:GetFactionY(num))
 	btn:SetSize(self:GetWide() - 16, facHeight)
@@ -128,20 +127,27 @@ function FACSCROLL:AddButton(fac, num)
 
 	draw.ColorModHSV(dimmed, ch, cs * 0.9, cv)
 
-	btn:SetColor(Colors.Gray)
+	btn:SetColor(Colors.Gray, true)
 	btn.FactionColor = dimmed
 	btn.PrePaint = facBtnPrePaint
 	btn.PostPaint = facBtnPaint
 	--btn.DrawButton = facBtnDraw
+
+	self.Factions[fac:GetName()] = btn
 
 	function btn.DoClick(btn)
 		self:FactionClicked(btn.Faction)
 		--pnl:SetFaction(self.Faction)
 	end
 
-	self.Factions[fac:GetName()] = btn
+	local scr = self
 
-	return btn
+	function btn:Disappear()
+		self:PopOut()
+		scr.Factions[fac:GetName()] = nil
+	end
+
+	return btn, num
 end
 
 vgui.Register("FactionsScroll", FACSCROLL, "FScrollPanel")
@@ -215,13 +221,14 @@ vgui.Register("FactionsList", FAC, "Panel")
 
 
 local function align(f, pnl)
+	if pnl.__selMove then
+		pnl.__selMove:Stop()
+		pnl.__selMove = nil
+	end
+
 	pnl:SetPos(f.FactionScroll.X + f.FactionScroll:GetWide(), 0)
 								--    V because it'll move to the right by 8px
 	pnl:SetSize(f:GetWide() - pnl.X - 8, f:GetTall())
-
-	if pnl.__selMove then
-		pnl.__selMove:Stop()
-	end
 
 	pnl:SetAlpha(0)
 	pnl:MoveBy(8, 0, 0.2, 0, 0.3)

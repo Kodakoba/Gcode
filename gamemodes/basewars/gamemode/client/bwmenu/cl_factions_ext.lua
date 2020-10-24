@@ -411,9 +411,12 @@ function createFactionActions(f, fac, canv)
 
 		function join:Disappear()
 			canv.JoinBtn = nil
-			self:To("Y", canv.Main:GetTall() + 4, 0.3, 0, 0.3):Then(function()
-				self:Remove()
-			end)
+			local anim, new = self:To("Y", canv.Main:GetTall() + 4, 0.3, 0, 0.3)
+			if new then
+				anim:Then(function()
+					self:Remove()
+				end)
+			end
 
 			self.Removing = true
 		end
@@ -647,6 +650,11 @@ local function onSelectAction(f, fac, new, reuseCanvas)
 	local old = IsValid(f.FactionFrame) and f.FactionFrame
 	local valid = old and old:IsValid() and old:IsVisible()
 
+	if fac == Factions.NoFaction then
+		f.FactionFrame:Disappear()
+		return
+	end
+
 	if not new then
 		if valid and old.Faction == fac and not reuseCanvas then return end -- don't create a new frame if it's the same fac as before
 
@@ -732,6 +740,8 @@ local function onOpen(navpnl, tabbtn, _, noanim)
 		pnl:PopIn()
 	end
 
+	scr.FactionScroll:RemoveElements("NoFaction")
+
 	function pnl:FactionClicked(fac)
 		onSelectAction(self, fac, false)
 	end
@@ -739,7 +749,7 @@ local function onOpen(navpnl, tabbtn, _, noanim)
 	if not IsValid(pnl.NewFaction) then
 		createNewFactionButton(pnl, scr, noanim)
 	end
-	
+
 	tabbtn.Panel = pnl
 	f.FactionsPanel = pnl
 
