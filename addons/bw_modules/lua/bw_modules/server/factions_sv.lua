@@ -1,4 +1,5 @@
 Factions = Factions or {}
+MODULE.Name = "FactionsSV"
 
 util.AddNetworkString("Factions")
 
@@ -112,14 +113,21 @@ function facmeta:Initialize(ply, id, name, pw, col)
 	self.col = col
 	self.pw = pw
 	self.own = ply
-	self.members = {[ply] = true}
-	self.memvals = {ply}
+
+	self.members = {}
+	self.memvals = {}
+
+	if IsPlayer(ply) then
+		facs.Players[ply] = name
+		ply:SetTeam(id)
+		self.memvals[1] = ply
+		self.members[ply] = true
+	elseif ply ~= false then
+		error("Attempted to create a faction with no player; use `false` as the first arg if this is intentional.")
+	end
 
 	facs.Factions[name] = self
-	facs.Players[ply] = name
 	facs.FactionIDs[id] = self
-
-	ply:SetTeam(id)
 
 	self:SetNetworkableID("Faction:" .. id)
 

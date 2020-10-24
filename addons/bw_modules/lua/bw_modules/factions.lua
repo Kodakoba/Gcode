@@ -1,4 +1,5 @@
 local tag = "BaseWars.Factions"
+MODULE.Name = "FactionsSH"
 
 Factions = Factions or {}
 
@@ -100,3 +101,19 @@ function Factions.CanJoin(ply, fac)
 
 	return true
 end
+
+hook.Add("BasewarsModuleLoaded", "CreateEmptyFaction", function(nm)
+	if nm ~= "FactionsSV" and nm ~= "FactionsCL" then return end
+
+	local fac
+
+	if CLIENT then
+		fac = Factions.meta:new(-1, "No Faction", Color(100, 100, 100))
+		Factions.Factions[fac:GetName()] = fac
+		Factions.FactionIDs[fac:GetID()] = fac
+	else
+		fac = Factions.meta:new(false, -1, "No Faction", nil, Color(100, 100, 100))
+	end
+
+	Factions.NoFaction = fac
+end)

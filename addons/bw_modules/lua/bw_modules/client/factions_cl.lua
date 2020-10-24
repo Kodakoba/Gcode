@@ -1,4 +1,5 @@
 local tag = "BaseWars.Factions"
+MODULE.Name = "FactionsCL"
 
 local CurUniqueID = 0
 
@@ -108,7 +109,7 @@ function facmeta:InRaid()
 end
 
 function facmeta:GetMembers()
-	return self:Get("Members")
+	return self:Get("Members") or {}
 end
 
 function facmeta:GetLeader()
@@ -290,6 +291,7 @@ function facs.GetSortedFactions()
 	local sorted = {}
 
 	for name, dat in pairs(facs) do
+		if dat:GetID() == -1 then continue end
 		sorted[#sorted + 1] = {name, dat}
 	end
 
