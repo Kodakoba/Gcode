@@ -298,6 +298,31 @@ function META:RemoveHook(event, name)
 	self.__Events:Set(nil, event, name)
 end
 
+
+function META:AddElement(name, pnl)
+	self.Elements = self.Elements or muldim:new()
+	table.insert(self.Elements:GetOrSet(name), pnl)
+end
+
+function META:GetElements(name)
+	self.Elements = self.Elements or muldim:new()
+	return self.Elements:GetOrSet(name)
+end
+
+function META:RemoveElements(name)
+	self.Elements = self.Elements or muldim:new()
+	for k,v in ipairs(self.Elements:GetOrSet(name)) do
+		if not IsValid(v) then continue end
+		if v.Disappear then
+			v:Disappear()
+		else
+			print(v, "didn't implement a 'Disappear' method; popping out.")
+			v:PopOut()
+		end
+	end
+end
+
+
 function META:PopIn(dur, del, func, noalpha)
 	if not noalpha then self:SetAlpha(0) end
 	return self:AlphaTo(255, dur or 0.1, del or 0, (isfunction(func) and func) or BlankFunc)
