@@ -740,8 +740,6 @@ local function onOpen(navpnl, tabbtn, _, noanim)
 		pnl:PopIn()
 	end
 
-	scr.FactionScroll:RemoveElements("NoFaction")
-
 	function pnl:FactionClicked(fac)
 		onSelectAction(self, fac, false)
 	end

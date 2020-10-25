@@ -162,7 +162,7 @@ end
 
 local function onClose(navpnl, tabbtn, prevPnl, newTab)
 	local pnl = tabbtn.Panel
-
+	pnl.FactionScroll.FactionScroll:RemoveElements("NoFaction")
 	if not newTab or not newTab.UsesFactions then
 		pnl:PopOutHide()
 	end

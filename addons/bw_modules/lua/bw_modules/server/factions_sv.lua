@@ -30,6 +30,10 @@ function facmeta:GetMembers()
 	return self.memvals
 end
 
+function facmeta:IsMember(ply)
+	return self.members[ply]
+end
+
 function facmeta:GetName()
 	return self.name
 end
