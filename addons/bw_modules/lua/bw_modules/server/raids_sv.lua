@@ -221,8 +221,8 @@ function raid.Start(rder, rded, fac)
 	local oncd, rem = rded:RaidedCooldown()
 	if oncd then print('on cd') return false, cdf:format(rem) end
 
-	if part[rder] then return false, "You are in a raid already!" end--print("Stopped on start: rder") raid.Stop(part[rder]) end
-	if part[rded] then return false, "Target is in a raid already!" end--print("Stopped on start: rded") raid.Stop(part[rded]) end
+	if raid.IsParticipant(rder) then return false, "You are in a raid already!" end--print("Stopped on start: rder") raid.Stop(part[rder]) end
+	if raid.IsParticipant(rded) then return false, "Target is in a raid already!" end--print("Stopped on start: rded") raid.Stop(part[rded]) end
 
 	if not rder:IsRaidable() then return false, "You are not raidable!" end
 	if not rded:IsRaidable() then return false, "Target is not raidable!" end
@@ -285,8 +285,7 @@ end)
 function PLAYER:IsRaidable()
 	local sid = self:SteamID64()
 
-	if not BWOwners[self] then return end
-
+	if not BWOwners[self] then return false end -- no entities
 	if self:GetLevel() < 75 then return false end
 
 	BWOwners[self]:clean()
@@ -294,10 +293,11 @@ function PLAYER:IsRaidable()
 	for k,v in ipairs(BWOwners[self]) do
 
 		local class = (isentity(v) and v:GetClass()) or v
+
 		local e = scripted_ents.GetStored(class)
 		if not e then print('didnt find', v, "; raids sv") continue end --??
 
-		if e.IsValidRaidable then return true end
+		if e.t.IsValidRaidable then return true end
 	end
 
 	return false
@@ -329,12 +329,13 @@ net.Receive("Raid", function(_, ply)
 
 	if mode == 1 then
 		local ent = net.ReadEntity()
-		if not IsPlayer(ent) then return end
+		if not IsPlayer(ent) then print(ent, "not player") return end
 		if ent:RaidedCooldown() then print('on cd') return end
 		if ply:InRaid() or ent:InRaid() then print('Ply in raid already') return end
 		if ply:InFaction() or ent:InFaction() then print("one of em is in a faction") return end
-
+		print("starting on", ply, ent)
 		local ok, err = raid.Start(ply, ent, false)
+		print("ok?", ok, err)
 		if not ok then
 			print("returning no")
 			ReportFail(ply, err)

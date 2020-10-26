@@ -21,27 +21,33 @@ BWEnts = BWEnts or {}
 
 BWOwners = BWOwners or {}
 
+local function getEntry(ply)
+	local t = BWOwners[ply]
+	if t then
+		t:clean()
+		t:sequential()
+		return t
+	else
+		t = ValidSeqIterable()
+		BWOwners[ply] = t
+		return t
+	end
+end
+
 hook.Add("PlayerAuthed", "RefreshOwner", function(ply, sid, uid)
 
 	local sid64 = util.SteamIDTo64(sid) --ply:SteamID64()
 
-	local t = BWOwners[sid64]
+	local t = getEntry(sid64)
 
-	if t then
-		t:clean()
-		for k,v in ipairs(t) do
-			local _, entsid = v:CPPIGetOwner()
+	for k,v in ipairs(t) do
+		local _, entsid = v:CPPIGetOwner()
 
-			if entsid == sid then
-				v.CPPIOwner = ply
-			else
-				t[k] = nil
-			end
+		if entsid == sid then
+			v.CPPIOwner = ply
+		else
+			t[k] = nil
 		end
-
-		t:sequential()
-	else
-		t = ValidSeqIterable()
 	end
 
 	BWOwners[ply] = t
@@ -49,25 +55,22 @@ hook.Add("PlayerAuthed", "RefreshOwner", function(ply, sid, uid)
 end)
 
 hook.Add("PlayerDisconnected", "SaveOwners", function(ply)
-
 	local sid64 = ply:SteamID64()
 
-	for k,v in pairs(BWOwners) do
-		if k==ply then
-			BWOwners[sid64] = v
-			for k,v in v:pairs() do
-				v.BWOwner = sid64
-			end
-			BWOwners[k] = nil
+	if BWOwners[ply] then
+		BWOwners[sid64] = BWOwners[ply]
+		for k,v in BWOwners[ply]:pairs() do
+			v.BWOwner = sid64
 		end
 	end
 
+	BWOwners[ply] = nil
 end)
 
 hook.Add("CPPIAssignOwnership", "BWRecalculateOwner", function(ply, ent)
+	print("assigned ownership of", ent, "to", ply)
 	if not IsValid(ply) then return end
 	if not BWEnts[ent] or not ent.CPPIOwner then return end 	--not a bw ent or owner not assigned yet
-
 
 	local prev = ent:CPPIGetOwner()
 
@@ -81,8 +84,7 @@ hook.Add("CPPIAssignOwnership", "BWRecalculateOwner", function(ply, ent)
 	end
 
 	if IsPlayer(ply) then
-		local t = BWOwners[ply]
-		if not t then return end
+		local t = getEntry(ply)
 		t:add(ent)
 	end
 
