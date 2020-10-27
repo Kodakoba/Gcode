@@ -435,7 +435,7 @@ function GM:ScoreboardShow()
 	scr = vgui.Create("FScrollPanel", sb)
 
 	scr:Dock(FILL)
-	scr.BackgroundColor = Color(0, 0, 0, 0)
+	scr.BackgroundColor = Color(0, 0, 0, 110)
 	scr:GetCanvas():DockPadding(16, 4, 16, 8)
 
 	local v = scr:GetVBar()

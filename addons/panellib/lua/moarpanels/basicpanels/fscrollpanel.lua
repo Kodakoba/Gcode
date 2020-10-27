@@ -23,22 +23,25 @@ function FScrollPanel:Init()
 	local up = scroll.btnUp
 	local down = scroll.btnDown
 
+	local gripCol = Color(60, 60, 60)
+	local btnCol = Color(80, 80, 80)
+
 	function grip:Paint(w,h)
-		draw.RoundedBox(4,0,0,w,h,Color(60,60,60))
+		draw.RoundedBox(4, 0, 0, w, h, gripCol)
 	end
 
 	function up:Paint(w,h)
-		draw.RoundedBoxEx(4, 0, 0, w, h, Color(80,80,80), true, true)
+		draw.RoundedBoxEx(4, 0, 0, w, h, btnCol, true, true)
 	end
 
 	function down:Paint(w,h)
-		draw.RoundedBoxEx(4, 0, 0, w, h, Color(80,80,80), false, false, true, true)
+		draw.RoundedBoxEx(4, 0, 0, w, h, btnCol, false, false, true, true)
 	end
 
 
 	self.Shadow = false --if used as a stand-alone panel
 
-	self.GradBorder = false
+	self.GradBorder = true
 
 	self.BorderColor = Color(20, 20, 20)
 	self.RBRadius = 0

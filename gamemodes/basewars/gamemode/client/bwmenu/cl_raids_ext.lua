@@ -85,6 +85,13 @@ local function createFactionlessActions(pnl, fac, scr, oldcanv)
 
 	pnl:SetPanel(canv)
 
+	canv:InvalidateLayout(true)
+
+	local scr = vgui.Create("FScrollPanel", canv)
+	scr:Dock(FILL)
+
+	scr:DockMargin(0, canv:GetTall() * 0.05 * 2 + BaseWars.Menu.Fonts.BoldSizes.Medium, 0, 0)
+
 	function canv:Disappear()
 		removePanel(self, true)
 	end

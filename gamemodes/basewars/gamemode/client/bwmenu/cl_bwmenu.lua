@@ -13,8 +13,8 @@ local fonts = BaseWars.Menu.Fonts
 
 function BaseWars.Menu.ReScale()
 
-	local scale = ScrH() / 1080
-
+	local scale = math.max(ScrH() / 1080 * 0.4 + 0.6, ScrH() / 1080)	-- 60% is the minimum size, the other 40% is influenced by scale
+																		-- i can't say much about higher resolutions, doing this blindly p much
 	fonts.Sizes = fonts.Sizes or {}
 	local sz = fonts.Sizes
 
@@ -40,6 +40,8 @@ function BaseWars.Menu.ReScale()
 	bsz.Tiny = 6 + 12 * scale
 	bsz.Medium = 16 + 12 * scale
 
+	BaseWars.Menu.Scale = scale
+
 	for k,v in pairs(bsz) do
 		surface.CreateFont("BWMenu_Bold" .. k, {
 			font = "Open Sans SemiBold",
@@ -59,7 +61,7 @@ local function CreateBWFrame()
 
 	BaseWars.Menu.Frame = f
 
-	f.Scale = math.max(ScrH() / 1080, 0.6)
+	f.Scale = BaseWars.Menu.Scale
 	local sc = f.Scale
 	f:SetSize(sc * 700, sc * 500)
 	f:Center()

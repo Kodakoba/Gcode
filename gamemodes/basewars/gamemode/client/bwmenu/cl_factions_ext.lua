@@ -8,6 +8,16 @@ BaseWars.Menu.Tabs["Factions"] = tab
 --	   	   	   Helpers
 --[[------------------------------]]
 
+local function removePanel(pnl, hide)
+	pnl.__selMove = pnl:MoveBy(16, 0, 0.2, 0, 1.4)
+
+	if hide then
+		pnl:PopOutHide()
+	else
+		pnl:PopOut()
+	end
+
+end
 
 
 local anim = Animatable("BWMenu")
@@ -450,8 +460,14 @@ local function createNewFaction(f)
 		return
 	end
 
-	local pnl = vgui.Create("Panel", f)
+	local pnl = vgui.Create("Panel", f, "New Faction canvas")
 	f:SetPanel(pnl)
+	f:AddElement("Exclusive", pnl)
+
+	function pnl:Disappear()
+		removePanel(self, true)
+	end
+
 	oldNewFac = pnl
 	pnl.IsNewFaction = true
 
@@ -635,23 +651,22 @@ local function createNewFaction(f)
 	doEet.Label = " Create"
 end
 
-local function removePanel(pnl, hide)
-	pnl.__selMove = pnl:MoveBy(16, 0, 0.2, 0, 1.4)
-
-	if hide then
-		pnl:PopOutHide()
-	else
-		pnl:PopOut()
-	end
-
-end
-
 local function onSelectAction(f, fac, new, reuseCanvas)
 	local old = IsValid(f.FactionFrame) and f.FactionFrame
 	local valid = old and old:IsValid() and old:IsVisible()
 
 	if fac == Factions.NoFaction then
 		f.FactionFrame:Disappear()
+		return
+	end
+
+	print("new, valid, old", new, valid, old)
+
+	if new then
+		if not valid or not old.IsNewFaction then
+			-- only create if the current panel isn't valid OR isn't the `new faction` panel
+			createNewFaction(f)
+		end
 		return
 	end
 
@@ -663,10 +678,7 @@ local function onSelectAction(f, fac, new, reuseCanvas)
 		else
 			createOwnFactionActions(f, fac, reuseCanvas and old)
 		end
-	else
-		if not valid or not old.IsNewFaction then
-			createNewFaction(f)
-		end
+
 	end
 
 	if valid and not reuseCanvas then
@@ -698,7 +710,13 @@ local function createNewFactionButton(pnl, scr, noanim)
 	end
 
 	function newFac:DoClick()
-		onSelectAction(pnl, nil, true)
+		if IsValid(pnl.FactionFrame) and pnl.FactionFrame:IsVisible() and pnl.FactionFrame.IsNewFaction then
+			print("valid, fuck off")
+			pnl.FactionFrame:Disappear()
+		else
+			print("invalid, create anew")
+			onSelectAction(pnl, nil, true)
+		end
 	end
 
 	function newFac:Think()
@@ -732,7 +750,7 @@ local function onOpen(navpnl, tabbtn, _, noanim)
 
 		if IsValid(pnl.FactionFrame) then
 			pnl.FactionFrame:RemoveElements("Exclusive")
-			onSelectAction(pnl, pnl.FactionFrame.Faction, false, true)
+			onSelectAction(pnl, pnl.FactionFrame.Faction, pnl.FactionFrame.IsNewFaction, true)
 		end
 
 	else
@@ -758,6 +776,7 @@ end
 local function onClose(navpnl, tabbtn, prevPnl, newTab)
 	local pnl = tabbtn.Panel
 
+	pnl:RemoveElements("Exclusive")
 	if not newTab or not newTab.UsesFactions then
 		pnl:PopOutHide()
 	end
