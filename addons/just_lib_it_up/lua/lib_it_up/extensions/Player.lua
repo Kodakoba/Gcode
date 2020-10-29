@@ -170,8 +170,8 @@ else
 				if ran[uid] then hook.Remove("Think", "ValidatePlayer" .. uid) return end
 
 				local ply = Player(uid)
-									--YIKERS
-				if ply:IsValid() and ply:Team() ~= 0 then
+									-- YIKERS 			-- DOUBLE YIKERS
+				if ply:IsValid() and ply:Team() ~= 0 and ply:Nick() ~= "unconnected" then
 					runHook(ply, uid)
 				end
 			end)

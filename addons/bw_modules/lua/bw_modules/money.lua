@@ -7,8 +7,8 @@ end
 if CLIENT then
 	local function hookPly(ply)
 		ply:SetNetworkedVarProxy("BasewarsMoney", function(self, _, old, new)
-			if math.floor(old) == math.floor(new) then return end --???? ok gmod RETARD
-			print(old, new)
+			if old and math.floor(old) == math.floor(new) then return end --???? ok gmod RETARD
+
 			self:Emit("MoneyChanged", old, new)
 			hook.Run("MoneyChanged", self, old, new)
 		end)
