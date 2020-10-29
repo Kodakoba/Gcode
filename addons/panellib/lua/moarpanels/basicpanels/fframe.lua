@@ -428,7 +428,7 @@ end
 
 function PANEL:Paint(w, h)
 	self:PrePaint(w, h)
-	self:DrawHeaderPanel(w, h)
+	if not self.NoDraw then self:DrawHeaderPanel(w, h) end
 	self:PostPaint(w, h)
 end
 

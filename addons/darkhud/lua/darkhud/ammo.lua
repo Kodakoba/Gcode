@@ -182,6 +182,8 @@ function DarkHUD.CreateAmmo()
 	end
 
 	function f:PostPaint(w, h)
+		self.NoDraw = self.Gone
+
 		if self.Gone then
 			goto emit
 		end
