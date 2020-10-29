@@ -297,9 +297,9 @@ function BaseWars.Menu.CreateFactionList(f)
 		end
 
 		for name, btn in pairs(facs) do
-			if IsValid(btn) and not btn.Sorted then
+			if IsValid(btn) and not btn.Sorted and btn.Faction ~= Factions.NoFaction then
 				-- if Sorted is false that means we didn't go over that button and, thus, the faction doesn't exist anymore
-				--btn:PopOut()
+
 				local x, y = btn:GetPos()
 				btn:Dock(NODOCK)
 				btn:SetPos(x, y)
@@ -311,7 +311,7 @@ function BaseWars.Menu.CreateFactionList(f)
 
 		if pnl.FactionFrame and pnl.FactionFrame:IsValid() then
 			local ff = pnl.FactionFrame
-			if ff.Faction then
+			if ff.Faction and ff.Faction ~= Factions.NoFaction then
 				for k,v in ipairs(sorted) do if ff.Faction == v[2] then return end end -- currently open faction still exists; everythings ok
 				removePanel(ff) -- currently open faction does not exist anymore; yeet it
 			end

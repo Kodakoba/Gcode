@@ -8,6 +8,8 @@ Factions.FactionIDs = Factions.FactionIDs or {}
 
 Factions.MaxMembers = 4
 
+Factions.FactionlessTeamID = 1
+
 local facs = Factions
 
 Factions.CREATE = 1		-- cl -> sv

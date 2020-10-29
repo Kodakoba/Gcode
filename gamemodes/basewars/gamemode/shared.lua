@@ -430,7 +430,7 @@ function BaseWars.NumberFormat(num)
 
 	end
 
-	return string.Comma2(math.Round(num, 1))
+	return string.Comma2(math.Round(num))
 
 end
 

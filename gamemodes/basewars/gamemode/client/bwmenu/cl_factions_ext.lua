@@ -711,10 +711,8 @@ local function createNewFactionButton(pnl, scr, noanim)
 
 	function newFac:DoClick()
 		if IsValid(pnl.FactionFrame) and pnl.FactionFrame:IsVisible() and pnl.FactionFrame.IsNewFaction then
-			print("valid, fuck off")
 			pnl.FactionFrame:Disappear()
 		else
-			print("invalid, create anew")
 			onSelectAction(pnl, nil, true)
 		end
 	end

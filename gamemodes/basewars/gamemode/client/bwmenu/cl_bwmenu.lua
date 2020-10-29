@@ -23,6 +23,7 @@ function BaseWars.Menu.ReScale()
 	sz.Medium = 10 + 16 * scale
 	sz.MediumSmall = 10 + 12 * scale
 	sz.Small = 8 + 12 * scale
+	sz.Small = 6 + 12 * scale
 
 	for k,v in pairs(sz) do
 		surface.CreateFont("BWMenu_" .. k, {

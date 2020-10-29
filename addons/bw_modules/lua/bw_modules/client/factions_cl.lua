@@ -149,7 +149,7 @@ net.Receive("Factions", function(len)
 
 	local type = net.ReadUInt(4)
 
-	print(('CL: Factions: Type %s; size: %s bytes'):format(type, len/8))
+	printf('CL: Factions: Type %s; size: %s bytes', type, len/8)
 
 	if type == 1 then -- full update
 

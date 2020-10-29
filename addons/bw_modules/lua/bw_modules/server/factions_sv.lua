@@ -192,6 +192,7 @@ function facmeta:Remove()
 
 	net.Start("Factions")
 		net.WriteUInt(3, 4)	--delete
+		print("Deleting faction", self.id)
 		net.WriteUInt(self.id, 24)
 	net.Broadcast()
 
