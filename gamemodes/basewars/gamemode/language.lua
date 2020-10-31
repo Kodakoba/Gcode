@@ -42,6 +42,8 @@ Language.NoPrinters 	= "Target does not have enough printers!"
 Language.PayOutOwner 	= "You got " .. Language.Currency .. "%s for the destruction of your %s"
 Language.PayOut 		= "You got " .. Language.Currency .. "%s for destroying a %s!"
 
+Language.You 			= "You"
+
 Language.Level 			= "Level"
 
 Language.WelcomeBackCrash = "Welcome back!"

@@ -107,6 +107,7 @@ function FACSCROLL:AddButton(fac, num)
 	num = num or (table.Count(self.Factions) + 1)
 
 	btn:SetPos(8, self:GetFactionY(num))
+
 	btn:SetSize(self:GetWide() - 16, facHeight)
 
 	--btn.DrawShadow = false
@@ -166,6 +167,7 @@ function FAC:Init()
 
 	scr:Dock(FILL)
 	scr:DockMargin(4, 0, 4, 4)
+	scr:InvalidateParent(true)
 end
 
 function FAC:PopulateFactions()
@@ -195,14 +197,15 @@ local vis
 function FAC:Think()
 	local scr = self.FactionScroll
 
-	local newvis = scr:IsVisible()
+	--[[local newvis = scr:IsVisible()
 	if vis ~= newvis then
 		for k,v in pairs(scr.Factions) do --if vbar is visible, shorten the btn by 10
+			print("newvis:", newvis)
 			v:SetWide(scr:GetWide() - 16 - (newvis and 10 or 0))
 		end
 	end
 
-	vis = newvis
+	vis = newvis]]
 
 	self:Emit("Think")
 end

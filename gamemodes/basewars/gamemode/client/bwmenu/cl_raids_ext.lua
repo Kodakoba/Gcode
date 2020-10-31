@@ -72,22 +72,41 @@ end
 local function createFactionlessOption(pnl, scr, num, ply)
 	local canv = pnl.NoFactionRaidCanvas
 
-	local p = vgui.Create("GradPanel", scr)
+	local p = vgui.Create("GradPanel", scr, "PlayerFrame for " .. tostring(ply))
+	p.GradSize = 2
+
 	local hgt = 64 * BaseWars.Menu.Scale
-	p.Y = (num - 1) * hgt
+
+	local y = 0
+
+	for i=1, num - 1 do
+		local p = scr.PlayerFrames[i]
+		y = y + p:GetTall()
+	end
+
+	p.Y = y
 	p:SetSize(canv:GetWide(), hgt)
 	p:SetColor(Colors.DarkGray)
 
 	local av = vgui.Create("CircularAvatar", p)
 	av:Dock(LEFT)
 	av:DockMargin(hgt / 12, hgt / 12, 0, hgt / 12)
-	av:InvalidateParent(true)
-	av:SetWide(av:GetTall())
-					-- pick best size
-	av:SetPlayer( ply, (av:GetTall() <= 64 and 64 or 128) )
+
+	function av:Resize()
+		av:InvalidateParent(true)
+		av:SetWide(av:GetTall())
+							-- pick best size
+		av:SetPlayer( ply, (av:GetTall() <= 64 and 64 or 128) )
+	end
+
+	av:Resize()
 	av.Rounding = 8 * BaseWars.Menu.Scale
 
+	p.Avatar = av
+
 	local nm = ply:Nick()
+	local lastnm = ply:Nick()
+
 	p.Money = ply:GetMoney()
 
 	function p:Disappear()
@@ -111,12 +130,29 @@ local function createFactionlessOption(pnl, scr, num, ply)
 	end
 
 	p:On("Paint", "DrawName", function(self, w, h)
-		local _, tH = draw.SimpleText(nm, BaseWars.Menu.Fonts.MediumSmall, av.X + av:GetWide() + 6, av.Y, color_white, 0, 5)
+		local tW, tH = draw.SimpleText(nm, BaseWars.Menu.Fonts.MediumSmall, av.X + av:GetWide() + 6, av.Y, color_white, 0, 5)
+
+		if ply == LocalPlayer() then
+			draw.SimpleText("  (" .. Language.You:lower() .. "!)", BaseWars.Menu.Fonts.Small, av.X + av:GetWide() + 6 + tW, av.Y + tH * 0.875, Colors.LighterGray, 0, 4)
+		end
+
+
 		draw.SimpleText(Language("Price", self.Money), BaseWars.Menu.Fonts.Small, av.X + av:GetWide() + 6, av.Y + tH * 0.75 + 2, Colors.LighterGray, 0, 5)
 	end)
 
-	function p:Shuffle(newID)
-		self:To("Y", (newID - 1) * hgt, 0.3, 0, 0.3)
+	function p:Shuffle(newID, now)
+		local y = 0
+
+		for i=1, newID - 1 do
+			local p = scr.PlayerFrames[i]
+			y = y + p:GetTall()
+		end
+
+		if now then
+			self.Y = y
+		else
+			self:To("Y", y, 0.3, 0, 0.3)
+		end
 	end
 
 	return p
@@ -128,15 +164,20 @@ local function createFactionlessActions(pnl, fac, scr, oldcanv)
 		removePanel(oldcanv)
 	end
 
-	local canv = pnl.NoFactionRaidCanvas or createActionCanvas(pnl, fac)
+	local canv = pnl.NoFactionRaidCanvas
 
-	scr:AddElement("NoFaction", canv)
-	pnl.NoFactionRaidCanvas = canv
 
-	if IsValid(pnl.NoFactionRaidCanvas) then
-		pnl.NoFactionRaidCanvas:PopInShow()
+	if IsValid(canv) then
+		canv:PopInShow()
+		canv:Emit("Reappear")
+		pnl:SetPanel(canv)
+		print("valid, reappeatring")
+		return
 	end
 
+	canv = createActionCanvas(pnl, fac)
+	scr:AddElement("NoFaction", canv)
+	pnl.NoFactionRaidCanvas = canv
 	pnl:SetPanel(canv)
 
 	canv:InvalidateLayout(true)
@@ -149,10 +190,17 @@ local function createFactionlessActions(pnl, fac, scr, oldcanv)
 	local plyFrames = {}  -- [num] = frame
 	local plyToFrame = {} -- [ply] = frame
 
+	scr.PlayerFrames = plyFrames
+
 	local function createPlyFrame(k, ply)
 		local p = createFactionlessOption(pnl, scr, k, ply)
 		plyFrames[k] = p
 		plyToFrame[ply] = p
+
+		if ply == LocalPlayer() then
+			p:SetTall(p:GetTall() * 0.75)
+			p.Avatar:Resize()
+		end
 
 		p:On("Disappear", function()
 			local where = 0
@@ -177,7 +225,6 @@ local function createFactionlessActions(pnl, fac, scr, oldcanv)
 	local plys = {}
 
 	for k, ply in ipairs(team.GetPlayers(1)) do
-		if ply == LocalPlayer() then continue end -- well you can't really raid yourself mate
 		i = i + 1
 		plys[i] = ply
 	end
@@ -188,21 +235,13 @@ local function createFactionlessActions(pnl, fac, scr, oldcanv)
 		table.Filter(plys, IsValid)
 
 		table.sort(plys, function(a, b)
-			local dist = a:GetMoney() - curMoney
-			if dist > 0 then -- the player has more money than localplayer; lower the distance so people with more money are closer to the top
-				dist = dist / 4
-			end
+			local m1, m2 = a:GetMoney(), b:GetMoney()
 
-			local dist2 = b:GetMoney() - curMoney
-			if dist2 > 0 then
-				dist2 = dist2 / 4
-			end
-
-			if dist == dist2 then
+			if m1 == m2 then
 				return a:Nick() < b:Nick() --alphabetical
 			end
 
-			return dist > dist2
+			return m1 > m2
 		end)
 
 		PrintTable(plys)
@@ -222,6 +261,7 @@ local function createFactionlessActions(pnl, fac, scr, oldcanv)
 				createPlyFrame(k, ply)
 			else
 				plyToFrame[v]:Shuffle(k)
+				plyFrames[k] = plyToFrame[v]
 			end
 		end
 	end)
@@ -231,10 +271,34 @@ local function createFactionlessActions(pnl, fac, scr, oldcanv)
 			sortPlayers()
 			for k,v in ipairs(plys) do
 				plyToFrame[v]:Shuffle(k)
+				plyFrames[k] = plyToFrame[v]
 			end
 		end)
 	end)
 
+	canv:On("Reappear", "RetrackPlayers", function()
+		sortPlayers()
+		local rem = {}
+		for k,v in ipairs(plys) do
+			rem[v] = true
+			plyToFrame[v]:Shuffle(k, true)
+			plyFrames[k] = plyToFrame[v]
+		end
+
+		-- remove invalid players' frames instantly upon reopen
+		for ply, fr in pairs(plyToFrame) do
+			if not rem[ply] then -- the player is gone
+				fr:Remove()
+				for num, f2 in ipairs(plyFrames) do
+					if fr == f2 then
+						table.remove(plyFrames, num)
+						break
+					end
+				end
+			end
+		end
+
+	end)
 	function canv:Disappear()
 		removePanel(self, true)
 	end
