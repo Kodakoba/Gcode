@@ -58,10 +58,11 @@ end
 	end
 
 function raid.CanGenerallyRaid(ply, nonfac)
-	if bit.bxor(ply:GetFaction() and 1 or 0, nonfac and 1 or 0) == 0 then -- either 0:0 or 1:1
+	if bit.bxor(ply:GetFaction() and 1 or 0, nonfac and 1 or 0) == 0 then
 		return false, nonfac and err.CantHaveAFaction or err.NeedAFaction
 	end
 
+	return true
 end
 
 function raid.CanRaidPlayer(ply, ply2)

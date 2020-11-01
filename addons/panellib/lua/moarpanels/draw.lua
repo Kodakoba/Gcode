@@ -39,16 +39,16 @@ _ = cout64:IsError() and hdl.DownloadFile("https://i.imgur.com/kY0Isiz.png", "ci
 
 local circles = {rev = {}, reg = {}} --reverse and regular
 
-local function LerpColor(frac, col1, col2, src)
+local function LerpColor(frac, col, dest, src)
 
-	col1.r = Lerp(frac, src.r, col2.r)
-	col1.g = Lerp(frac, src.g, col2.g)
-	col1.b = Lerp(frac, src.b, col2.b)
+	col.r = Lerp(frac, src.r, dest.r)
+	col.g = Lerp(frac, src.g, dest.g)
+	col.b = Lerp(frac, src.b, dest.b)
 
-	local sA, c1A, c2A = src.a, col1.a, col2.a
+	local sA, c1A, c2A = src.a, col.a, dest.a
 
 	if sA ~= c2A or c1A ~= c2A then
-		col1.a = Lerp(frac, sA, c2A)
+		col.a = Lerp(frac, sA, c2A)
 	end
 
 end

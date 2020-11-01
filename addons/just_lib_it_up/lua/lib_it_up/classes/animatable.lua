@@ -263,7 +263,7 @@ function Animatable:MemberLerp(tbl, key, val, dur, del, ease, forceswap)
 
 	local as_str = hex(tbl)
 
-	local anim = anims[key .. as_str]
+	local anim = anims[tostring(key) .. as_str]
 	local from = tbl[key] or 0
 
 	if tbl[key] == val then return false, false end
@@ -281,11 +281,11 @@ function Animatable:MemberLerp(tbl, key, val, dur, del, ease, forceswap)
 
 		anim.ToVal = val
 		anim.FromTable = tbl
-		anims[key .. as_str] = anim
+		anims[tostring(key) .. as_str] = anim
 	end
 
 	anim:On("End", "RemoveAnim", function()
-		anims[key] = nil
+		anims[tostring(key) .. as_str] = nil
 	end)
 
 	anim.Think = function(anim, self, fr)

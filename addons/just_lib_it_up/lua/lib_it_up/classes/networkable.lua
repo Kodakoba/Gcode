@@ -219,6 +219,11 @@ function nw:Set(k, v)
 		return
 	end
 
+	if CLIENT then -- don't bother
+		self.Networked[k] = v
+		return self
+	end
+
 	if v == nil then v = fakeNil end --lul
 	if self.Networked[k] == v and not istable(v) then --[[adios]] return end
 
@@ -309,7 +314,8 @@ if SERVER then
 		obj.NetworkableIDEncoder.Func(name, obj.NetworkableIDEncoder.IDArg)
 	end
 
-	local function WriteChange(key, val)
+	local function WriteChange(key, val, obj, ...)
+
 		local key_typ = type(key):lower()
 		local val_typ = type(val):lower()
 
@@ -324,6 +330,12 @@ if SERVER then
 			op.Description = "Changed key encoder ID"
 		end
 		-- write val encoderID and the encoded val
+
+		print("writechange", obj)
+		local res = obj:Emit("WriteChangeValue", key, val, ...)
+		print(res)
+
+		if res == false then print("not writing change serverside", key, val) return end
 
 		op = net.WriteUInt(v_encoderID, encoderIDLength)
 		v_encoder(val, v_additionalArg, key)
@@ -421,7 +433,7 @@ if SERVER then
 				net.WriteUInt(changesAmt, 8).Description = "Amount of changes in an object" --amount of changed values in the Networkable object
 
 				for k,v in pairs(writeChanges) do
-					WriteChange(k, v)
+					WriteChange(k, v, obj)
 				end
 
 				_NetworkableChanges[id] = nil
@@ -496,7 +508,7 @@ if SERVER then
 				net.WriteUInt(table.Count(_NetworkableChanges[self.NetworkableID]), 8) -- amt of changes in self
 
 				for k,v in pairs(_NetworkableChanges[self.NetworkableID]) do 
-					WriteChange(k, v)
+					WriteChange(k, v, self, nw)
 				end
 
 				_NetworkableChanges[self.NetworkableID] = nil
@@ -519,7 +531,7 @@ if CLIENT then
 		return num, name
 	end
 
-	local function ReadChange()
+	local function ReadChange(obj)
 		local k_encID = net.ReadUInt(encoderIDLength)
 
 		local k_dec = decoderByID[k_encID]
@@ -529,6 +541,12 @@ if CLIENT then
 		end
 
 		local decoded_key = k_dec[2](k_dec[3])
+
+
+		if obj then
+			local customValue = obj:Emit("ReadChangeValue", decoded_key)
+			if customValue ~= nil then return decoded_key, customValue end
+		end
 
 		local v_encID = net.ReadUInt(encoderIDLength)
 
@@ -568,7 +586,7 @@ if CLIENT then
 
 			for key_i = 1, changed_keys do
 				printf("	reading change #%d", key_i)
-				local k, v = ReadChange()
+				local k, v = ReadChange(obj)
 				if obj then		-- [1] = old, [2] = new
 					changes[k] = {obj.Networked[k], v}
 					obj.Networked[k] = v
