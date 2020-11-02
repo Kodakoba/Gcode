@@ -716,6 +716,8 @@ function surface.DrawMaterial(url, name, x, y, w, h, rot)
 		return false
 	end
 
+	if x == 0 then print(mat.mat) end
+
 	surface_SetMaterial(mat.mat)
 
 	if rot then
@@ -892,13 +894,13 @@ function draw.BeginMask(mask, ...)
 
 		render.SetStencilReferenceValue( 1 ) --include
 
-		mask(...)
+		if mask then mask(...) end
 
 end
 
 function draw.DeMask(demask, ...) --requires mask to be started
 	render.SetStencilReferenceValue( 0 ) --exclude
-	demask(...)
+	if demask then demask(...) end
 end
 
 function draw.DrawOp()

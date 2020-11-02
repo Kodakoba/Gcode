@@ -83,6 +83,8 @@ local families = {
 	["BreezeSans Bold"] = "BSB",
 
 	["DejaVu Sans"] = "DV",
+
+	["Sydnie"] = "SYD"
 }
 
 FontFamilies = families

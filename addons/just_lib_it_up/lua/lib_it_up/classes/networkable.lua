@@ -203,6 +203,7 @@ function nw:SetNetworkableID(id)
 		self.NumberID = key
 	end
 
+	if cache[id] then error("How") end
 	cache[id] = self
 
 	return self
@@ -218,6 +219,8 @@ function nw:Set(k, v)
 		error("Set a NetworkableID first!")
 		return
 	end
+
+	if not _NetworkableCache[self.NetworkableID] then self:SetNetworkableID(self.NetworkableID) end -- maybe resetall happened
 
 	if CLIENT then -- don't bother
 		self.Networked[k] = v
@@ -568,6 +571,7 @@ if CLIENT then
 			printf("	new pair: %d = %s", num_id, id)
 			if not cache[id] then --that object doesn't exist clientside; create it ahead of time
 				cache[id] = Networkable(id)
+				print("!!! created networkable via net !!!")
 			end
 			numToID[num_id] = id
 		end
@@ -591,6 +595,8 @@ if CLIENT then
 					changes[k] = {obj.Networked[k], v}
 					obj.Networked[k] = v
 					obj:Emit("NetworkedVarChanged", k, changes[k][1], v) -- key, old, new
+				else
+					print("failed to find object with numID", num_id)
 				end
 			end
 

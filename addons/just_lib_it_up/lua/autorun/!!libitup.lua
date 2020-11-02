@@ -96,42 +96,6 @@ function IncludeFolder(name, realm, nofold)	--This function will be used both by
 
 end
 
-local t1 = SysTime()
-
-include(path .. "classes.lua") -- base class goes first
-
-IncludeFolder(path .. "extensions/*", _SH) -- then extensions
-IncludeFolder(path .. "classes/*", _SH)
-
-IncludeFolder(path .. "libraries/*.lua", _SH)
-IncludeFolder(path .. "libraries/client/*", _CL)
-IncludeFolder(path .. "libraries/server/*", _SV)
-
-IncludeFolder(path .. "thirdparty/*.lua", _SH)
-IncludeFolder(path .. "thirdparty/client/*", _CL)
-IncludeFolder(path .. "thirdparty/server/*", _SV)
-
-loading = false
-
-local t2 = SysTime()
-
-local deps_t1 = SysTime()
-
-hook.Run("LibbedItUp")
-hook.Run("LibItUp")
-
-
-local initCallbacks = {}
-
-hook.Add("InitPostEntity", "InittedGlobal", function()
-	EntityInitted = true
-
-	for _, v in ipairs(initCallbacks) do
-		v[1](unpack(v, 2))
-	end
-
-	initCallbacks = {}
-end)
 
 function libTbl.OnInitEntity(cb, ...)
 	if EntityInitted then
@@ -153,6 +117,43 @@ function libTbl.OnLoaded(file, cb, ...)
 		depsCallback:GetOrSet(file):Insert({cb, ...})
 	end
 end
+
+local t1 = SysTime()
+
+include(path .. "classes.lua") -- base class goes first
+
+IncludeFolder(path .. "extensions/*", _SH) -- then extensions
+IncludeFolder(path .. "classes/*", _SH)
+
+IncludeFolder(path .. "libraries/*.lua", _SH)
+IncludeFolder(path .. "libraries/client/*", _CL)
+IncludeFolder(path .. "libraries/server/*", _SV)
+
+IncludeFolder(path .. "thirdparty/*.lua", _SH)
+IncludeFolder(path .. "thirdparty/client/*", _CL)
+IncludeFolder(path .. "thirdparty/server/*", _SV)
+
+loading = false
+
+local t2 = SysTime()
+
+local deps_t1 = SysTime()
+
+hook.Run("LibbedItUp", libTbl)
+hook.Run("LibItUp", libTbl)
+
+
+local initCallbacks = {}
+
+hook.Add("InitPostEntity", "InittedGlobal", function()
+	EntityInitted = true
+
+	for _, v in ipairs(initCallbacks) do
+		v[1](unpack(v, 2))
+	end
+
+	initCallbacks = {}
+end)
 
 
 local function onLoad(s)
