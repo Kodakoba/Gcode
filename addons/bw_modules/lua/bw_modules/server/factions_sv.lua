@@ -182,6 +182,8 @@ function facmeta:RemovePlayer(ply)
 end
 
 function facmeta:Remove()
+	if self == Factions.NoFaction then return end
+
 	facs.Factions[self.name] = nil
 	facs.FactionIDs[self.id] = nil
 
@@ -202,6 +204,7 @@ end
 function ValidFactions()
 
 	for k,v in pairs(facs.Factions) do
+		if v == Factions.NoFaction then continue end
 
 		table.Filter(v.members, function(v)
 			return v:IsValid()

@@ -30,7 +30,7 @@ end
 Language.__index = function(self, key)
 	return ("[Invalid language: %s]"):format(key)
 end
-Language.__call = Language.eval 
+Language.__call = Language.eval
 
 
 
