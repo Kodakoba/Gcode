@@ -15,7 +15,9 @@ if not CLIENT then return end
 		be careful, if you're using rotation then it uses surface.DrawTexturedRectRotated instead of just texturedrect
 		this means xy will be not the top left but the middle of the icon now
 ]]
-Icon = Icon or Class:callable()
+
+Icon = Icon or Animatable:callable()
+Icon.AutoInitialize = false
 
 function Icon:Initialize(url, name)
 	if not url then error("Icon.Initialize: expected IMaterial in arg #1 or URL + name, got nothing instead") return end
@@ -44,6 +46,8 @@ function Icon:Initialize(url, name)
 
 	self.Filter = nil
 	self.Color = color_white:Copy()
+
+	self.__parent.Initialize(self, self)
 end
 
 function Icon:SetColor(col)
@@ -88,6 +92,7 @@ end
 function Icon:Paint(x, y, w, h, rot)
 	w = w or self.W
 	h = h or self.H
+	rot = rot or self.Rotation
 
 	if not w or not h then
 		error("Width or Height not given!")

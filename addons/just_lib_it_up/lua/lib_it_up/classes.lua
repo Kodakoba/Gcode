@@ -1,7 +1,9 @@
 AddCSLuaFile()
+
 --[[----------------------------------]]
 --  Idea shamelessly stolen from Luvit
 --[[----------------------------------]]
+
 setfenv(0, _G)
 
 BlankFunc = function() end
@@ -41,7 +43,14 @@ local function getInitFunc(self)
 end
 
 local function rawgetInitFunc(self)
-	return rawget(self, "Initialize") or rawget(self, "initialize") or (rawget(self, "Meta") and (rawget(self, "Initialize") or rawget(self, "initialize")))
+	return 	(rawget(self, "Initialize") or rawget(self, "initialize") or
+				(
+					rawget(self, "Meta") and
+					(
+						rawget(self.Meta, "Initialize") or rawget(self.Meta, "initialize")
+					)
+				)
+			)
 end
 
 local lv = 0
@@ -105,6 +114,7 @@ function Class:extend(...)
 	end
 
 	new.__parent = old
+	new.__super = old
 	new.__instance = new
 	local curobj
 
@@ -128,7 +138,7 @@ function Class:extend(...)
 
 		local args = Class.__args
 
-		if self.__init then 							--recursively call the parents' __init's
+		if self.__init and rawget(new, "AutoInitialize") ~= false then 	--recursively call the parents' __init's
 			if Class.Debugging then
 				print("found __init in", self.Name)
 				print("Calling with args:", unpack(args, 1, table.maxn(args)))
@@ -148,7 +158,7 @@ function Class:extend(...)
 											--this way we call :Initialize() starting from the oldest one and going up to the most recent one
 
 		if func then
-			if Class.Debugging then 
+			if Class.Debugging then
 				print("Rawgot init function from", new.Name)
 				print("Calling with args:", unpack(args, 1, table.maxn(args)))
 			end

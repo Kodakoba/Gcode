@@ -1,7 +1,4 @@
 
-
-
-local gens = BaseWars.Generators
 local SpawnList = BaseWars.SpawnList
 
 local function IsGroup(ply, group)
@@ -29,10 +26,6 @@ hook.Add("OnSpawnMenuClose", "RemoveClouds", function()	--grrrrrrrrrr
 	end
 
 end)
-
-
-
---https://i.imgur.com/s5Xbx2b.png
 
 --local b = bench("btns", 600)
 
@@ -123,8 +116,6 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 		btn:SetDoubleClickingEnabled(false)
 
 		btn.Shadow.Color = color_white:Copy()
-
-		local rand = math.random()
 
 		local sic = btn:Add("SpawnIcon")
 		sic:SetModel(mdl)
