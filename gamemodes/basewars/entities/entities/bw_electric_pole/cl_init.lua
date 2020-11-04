@@ -129,8 +129,8 @@ function ENT:CreateGeneratorsScroll(pnl, me)
 		name = "electricity.png"
 	})
 
-	scr.X = pnl:GetWide() / 2 - scr:GetWide() - 12
-	scr.Y = pnl.CircleY - scr:GetTall() / 2
+	scr.X = pnl:GetWide() / 2 - scr:GetWide() - 24
+	scr.Y = pnl.CircleY - scr:GetTall() * 0.75
 
 	local grid = self:GetGrid()
 	local total = 0
@@ -226,8 +226,8 @@ function ENT:CreateConsumersScroll(pnl, me)
 		name = "electricity.png"
 	})
 
-	scr.X = pnl:GetWide() / 2 + 12
-	scr.Y = pnl.CircleY - scr:GetTall() / 2
+	scr.X = pnl:GetWide() / 2 + 24
+	scr.Y = pnl.CircleY - scr:GetTall() * 0.75
 
 	local grid = self:GetGrid()
 	local total = 0
@@ -429,6 +429,10 @@ function ENT:OpenShit(qm, self, pnl)
 
 	function con.Unhover(_, self)
 		self.Unrolled = self.Unrolled - 1
+	end
+
+	function con.DoClick()
+		DrawCable = self
 	end
 
 	local origY = con.Y

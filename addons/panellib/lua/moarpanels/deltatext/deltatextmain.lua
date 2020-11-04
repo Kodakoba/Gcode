@@ -241,11 +241,7 @@ function DeltaText:ActivateElement(num) 	--this skips certain elements from the 
 	end
 end
 
-function DeltaText:Paint(x, y)
-
-	--[[
-		Grab text full width
-	]]
+function DeltaText:GetWide()
 	local tw = 0
 
 	surface.SetFont(self.Font)
@@ -258,6 +254,13 @@ function DeltaText:Paint(x, y)
 
 		tw = tw + tp:GetWide()--(surface.GetTextSize(tp:GetText(true)))
 	end
+
+	return tw
+end
+
+function DeltaText:Paint(x, y)
+
+	local tw = self:GetWide()
 
 	self.LastFont = nil
 

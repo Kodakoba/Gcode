@@ -123,7 +123,7 @@ function ENT:Think()
 end
 
 function ENT:ConnectTo(ent)
-
+	print("not implemented: adding", ent, "to pole connection")
 end
 
 function ENT:Disconnect(ent)

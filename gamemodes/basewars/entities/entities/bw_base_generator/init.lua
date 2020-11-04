@@ -189,13 +189,14 @@ end
 net.Receive("ConnectGenerator", function(_, ply)
 	local disconnect = net.ReadBool()
 	local gen = net.ReadEntity()
-	if not gen:IsValid() or not gen.IsGenerator then return end
+
+	if not gen:IsValid() or (not gen.IsGenerator and not gen.IsPole) then return end
 
 	if not disconnect then
 		local ent = net.ReadEntity()
 
 		if not ent:IsValid() then return end
-		if not gen.Cableable or not (ent.IsElectronic or ent.Connectable) then return end
+		if not gen.Cableable and not (ent.IsElectronic or ent.Connectable) then return end
 
 		gen:ConnectTo(ent)
 	else

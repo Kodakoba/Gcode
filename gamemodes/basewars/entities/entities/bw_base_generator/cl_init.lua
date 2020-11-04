@@ -8,18 +8,13 @@ include("shared.lua")
 local upd = false
 
 local using = false
-local usingwho
 
 local looking = {}
-
-local dist = 0
 
 local usingtime = 0
 
 
 local halos = {}
-
-local drawoptions = false
 
 GeneratorPanel = GeneratorPanel
 SplineStrength = 10
@@ -28,12 +23,14 @@ if IsValid(GeneratorPanel) then GeneratorPanel:Remove() end
 
 local TimeToOpenPanel = 0.4
 
-DrawCable = DrawCable or false
+DrawCable = DrawCable or false	-- Entity: from
 
 DrawCableDist = DrawCableDist or nil
-DrawCableEntity = DrawCableEntity or nil
+DrawCableEntity = DrawCableEntity or nil 	-- Entity: to
 
 local function OpenShit(qm, self, pnl)
+
+	GeneratorPanel = pnl
 
 	local tim = 0
 
@@ -212,79 +209,13 @@ local function OpenShit(qm, self, pnl)
 
 	function pnl:ConnectPaint(w, h)
 		self:SetMouseInputEnabled(false)
-		--[[
-		if self.HookUp then
-			al = 255
-			self.HookUp:PopOut()
-			self.HookUp = nil
-		end
 
-		if self.Disconnect then
-			self.Disconnect:PopOut()
-			self.Disconnect = nil
-		end
-
-		if self.Panels then
-			for k,v in ValidIPairs(self.Panels) do
-				v:PopOut()
-			end
-		end
-		]]
 		self:GeneratorPaint(w, h)
-
-		al = L(al, 0, 15, true)
-
-		local basestr = (DrawCableClass and ("Connect to ")) or "Connect to..."
-		local str = (DrawCableClass and basestr .. DrawCableClass) or "Connect to..."
-
-
-
-		if DrawCableClass then
-			txfrac = L(txfrac*rndmul, rndmul, 15, true) / rndmul 	--so to 1
-		else
-			txfrac = L(txfrac*rndmul, 0, 25, true) / rndmul
-		end
-
-		if DrawCableDist and DrawCableDist > ent.ConnectDistance then
-			toofar = L(toofar*rndmul, rndmul, 15, true) / rndmul
-		else
-			toofar = L(toofar*rndmul, 0, 25, true) / rndmul
-		end
-
-		surface.SetFont("OSB32")
-
-		local btw, bth = surface.GetTextSize(basestr)
-		local ctw, cth = surface.GetTextSize(DrawCableClass or str)
-
-		local rbx = w/2 - btw/2 - ctw*txfrac/2 - 8
-		local rbw = btw + ctw*txfrac + 16
-
-		local bgcol = Color(50 + (70*toofar), 50, 50, 220)
-
-		draw.RoundedBox(8, rbx, h/2 + 16, rbw, bth + 4, bgcol)
-
-		local txa = txfrac^3 * 255
-
-		surface.SetTextColor(color_white)
-
-		local basex = rbx + 8
-
-		surface.SetTextPos(basex, h/2 + bth/2)
-		surface.DrawText(basestr)
-
-		surface.SetTextColor(ColorAlpha(Color(50, 150, 250), txa))
-
-		surface.SetTextPos(rbx + btw*(txfrac^0.9) + (surface.GetTextSize(" ")), h/2 + cth/2)
-		surface.DrawText(DrawCableClass or "")
-
-		draw.SimpleText("Too far!", "OSB32", offX + w/2 + 1, h/2 + 40 + 12*toofar + 1, Color(0, 0, 0, 205*toofar - hilite*20), 1, 5)
-		draw.SimpleText("Too far!", "OSB32", offX + w/2, h/2 + 40 + 12*toofar, Color(210 + hilite*40, 30 + hilite*50, 30 + hilite*50, 255*toofar), 1, 5)
-
 	end
 
 
 	function qm:Paint(ent)
-		if not IsValid(pnl) then return end
+		if not IsValid(pnl) then self:SetKeepAlive(false) return end
 
 		local w, h = pnl:GetSize()
 
@@ -372,6 +303,7 @@ end
 end]]
 
 function ENT:Think()
+	-- what the actual fuck is this
 	local p = LocalPlayer()
 	local ent = self
 	if not upd then
@@ -380,7 +312,6 @@ function ENT:Think()
 	end
 
 	if not using then return end
-	--^ this is for fun; this kind of caching barely impacts pefromance, probably
 
 	local tr = p:GetEyeTrace()
 	if tr.Entity ~= self or tr.Fraction*32768 > 192 then looking[self] = nil return end
@@ -393,38 +324,8 @@ function ENT:Think()
 	usingtime = math.min(usingtime + FrameTime(), TimeToOpenPanel)
 	dist = tr.Fraction*32768
 
-	drawoptions = true
-
-	if not IsValid(GeneratorPanel) then
-		GeneratorPanel = vgui.Create("InvisPanel")
-
-		local pnl = GeneratorPanel
-		pnl:SetSize(600, 400)
-		pnl:Center()
-
-	end
-
 end
 
-hook.Add("Think", "gennies", function()
-
-	if ((not using or table.IsEmpty(looking)) or dist > 192 ) and not DrawCable then
-
-		usingtime = math.max(usingtime - FrameTime(), 0)
-		drawoptions = false
-		if usingtime == 0 and IsValid(GeneratorPanel) then
-			--GeneratorPanel:Remove()
-
-			PreviewCable = false
-			PreviewFinalCablePoint = nil
-
-		end
-
-	end
-
-	upd = false
-
-end)
 
 hook.Add("PreDrawHalos", "Generators", function()
 	if not using then return end
@@ -477,8 +378,10 @@ function GenerateCable(from, to, h, qual)
 	return beams
 end
 
-hook.Add("PostDrawTranslucentRenderables", "DrawCables", function(d, sb)
+local hp = Vector()
 
+hook.Add("PostDrawTranslucentRenderables", "DrawCables", function(d, sb)
+	if d or sb then return end
 	if not IsValid(DrawCable) and not IsValid(PreviewCable) then DrawCable = nil PreviewCable = nil return end --generator probably doesn't exist anymore, nil it so the new panel doesn't bug out
 
 	local tr = util.TraceLine({
@@ -495,7 +398,7 @@ hook.Add("PostDrawTranslucentRenderables", "DrawCables", function(d, sb)
 
 	DrawCableTrace = longtr
 
-	local hp = Vector()
+	
 
 	local fcpent = FinalCablePoint or PreviewFinalCablePoint
 	local fcp = tr.HitPos
@@ -635,15 +538,13 @@ function ENT:OnConnect(who)
 
 end
 
-local rad = 24
-
 hook.Add("PostDrawTranslucentRenderables", "DrawConnectPrompt", function(d, sb)
 	if not DrawCable or not DrawCableTrace then return end
 	local tr = DrawCableTrace
 
 	local e = IsValid(tr.Entity) and tr.Entity
 
-	if e and (e.IsElectronic or e.Connectable) then
+	if e and (e.Cableable or (e.IsElectronic or e.Connectable)) then
 		DrawCableClass = e.PrintName or e:GetClass()
 		DrawCableEntity = e
 		FinalCablePoint = e
@@ -659,6 +560,7 @@ hook.Add("PostDrawTranslucentRenderables", "DrawConnectPrompt", function(d, sb)
 		DrawCableDist = e:GetPos():Distance(DrawCable:GetPos())
 	else
 		DrawCableClass = nil
+		DrawCableEntity = nil
 		FinalCablePoint = nil
 		NoSpline = false
 		--DrawCableDist = nil
@@ -674,16 +576,18 @@ local wasRMB = false
 
 local dur = 0.1	--tremor squad
 
+local anim
+
+
 hook.Add("StartCommand", "StopConnectingCable", function(ply, cmd)
 	local wL, wR = wasLMB, wasRMB
 	wasLMB, wasRMB = cmd:KeyDown(IN_ATTACK), cmd:KeyDown(IN_ATTACK2)
 
-	local wasLMB, wasRMB = wL, wR
 
 	if not cmd:KeyDown(IN_ATTACK) and not cmd:KeyDown(IN_ATTACK2) then return end
 
 
-	if (DrawCable or (preventRMBs and (CurTime() - preventRMBs < dur))) and cmd:KeyDown(IN_ATTACK2) and not wasRMB then
+	if (DrawCable or (preventRMBs and (CurTime() - preventRMBs < dur))) and cmd:KeyDown(IN_ATTACK2) and not wR then
 		cmd:RemoveKey(IN_ATTACK2)
 
 		DrawCable = false
@@ -691,20 +595,30 @@ hook.Add("StartCommand", "StopConnectingCable", function(ply, cmd)
 		FinalCablePoint = nil
 
 		preventRMBs = preventRMBs or CurTime()
-	elseif preventRMBs and (wasRMB or (CurTime() - preventRMBs > dur)) then
+	elseif preventRMBs and (wR or (CurTime() - preventRMBs > dur)) then
 		preventRMBs = nil
 	end
 
-	if (DrawCable or (preventLMBs and (CurTime() - preventLMBs < dur))) and cmd:KeyDown(IN_ATTACK) and not wasLMB and IsValid(DrawCableEntity) then
+	local preventLMB = (DrawCable or (preventLMBs and (CurTime() - preventLMBs < dur))) and cmd:KeyDown(IN_ATTACK)
+	if preventLMB then cmd:RemoveKey(IN_ATTACK) end
+
+	if preventLMB and not wL then
+		print('yess')
+		if not IsValid(DrawCableEntity) then
+			wasLMB = false
+			anim:Emit("Refuse")
+			return
+		end
+
 		if DrawCableEntity:GetPos():Distance(DrawCable:GetPos()) > DrawCable.ConnectDistance then
 			if IsValid(GeneratorPanel) then
 				GeneratorPanel:Refuse()
-			else
-
 			end
+
+			anim:Emit("Refuse")
 			return
 		end
-		cmd:RemoveKey(IN_ATTACK)
+		
 
 		net.Start("ConnectGenerator")
 			net.WriteBool(false)
@@ -731,11 +645,8 @@ hook.Add("StartCommand", "StopConnectingCable", function(ply, cmd)
 		FinalCablePoint = nil
 
 		preventLMBs = preventLMBs or CurTime()
-		--if IsValid(GeneratorPanel) then
-		--	GeneratorPanel:Remove()
-		--end
 
-	elseif preventLMBs and (wasLMB or (CurTime() - preventLMBs < dur)) then
+	elseif preventLMBs and (wL or (CurTime() - preventLMBs < dur)) then
 		cmd:RemoveKey(IN_ATTACK)
 	else
 		preventLMBs = nil
@@ -743,6 +654,88 @@ hook.Add("StartCommand", "StopConnectingCable", function(ply, cmd)
 
 
 
+end)
+
+
+local boxCol = Color(50, 50, 50, 220)
+
+local blkCol = Color(0, 0, 0)
+local redCol = Color(210, 30, 30)
+
+local dt
+
+local yOffset = 32
+
+hook.Add("HUDPaint", "DrawPreviewCable", function()
+	if not DrawCable then return end
+	local sw, sh = ScrW(), ScrH()
+
+	anim = anim or Animatable("Cables")
+
+	if not dt then
+		dt = DeltaText()
+
+		local dtext = dt:AddText("")
+		dtext.Animation.Length = 0.2
+		dtext:SetColor(Colors.DarkWhite:Copy())
+		dt.BText = dtext
+
+		local base = dtext:AddFragment("Connect to")
+		local what = dtext:AddFragment("...")
+
+		dt.ConnectWhat = what
+
+		dt:SetAlignment(1)
+		dt:SetFont("OSB32")
+		dtext:SetLiftStrength(-18)
+		dt:CycleNext()
+	end
+
+
+	if DrawCableClass then
+		anim:To("Frac", 1, 0.4, 0, 0.3)
+		local _, frag = dt.BText:ReplaceText(dt.ConnectWhat, " " .. DrawCableClass)
+		if frag then frag.Color = Colors.Sky end
+	else
+		anim:To("Frac", 0, 0.3, 0, 0.3)
+		local _, frag = dt.BText:ReplaceText(dt.ConnectWhat, "...")
+		if frag then frag.Color = Colors.DarkWhite end
+	end
+
+	if DrawCableDist and DrawCableDist > DrawCable.ConnectDistance then
+		anim:To("FarFrac", 1, 0.4, 0, 0.3)
+	else
+		anim:To("FarFrac", 0, 0.3, 0, 0.3)
+	end
+
+	local txFrac = anim.Frac or 0
+	local farFrac = anim.FarFrac or 0
+
+	surface.SetFont("OSB32")
+
+	local rbx = sw/2 - dt:GetWide() / 2 - 4
+	local rbw = dt:GetWide() + 8
+
+	boxCol.r = 50 + (70 * farFrac)
+
+	draw.RoundedBox(8, rbx, sh/2 + yOffset, rbw, 32 + 4, boxCol)
+
+	dt:Paint(sw/2, sh/2 + yOffset + 32 * 0.125 / 2)
+
+	if farFrac > 0 then
+
+		blkCol.a = farFrac * 250
+		redCol.a = farFrac * 255
+
+		draw.SimpleText("Too far!", "OSB32",
+					rbx + rbw / 2 + 1,
+					sh / 2 + yOffset + 36 + farFrac * 16 + 1,
+					blkCol, 1, 5)
+		draw.SimpleText("Too far!", "OSB32",
+					rbx + rbw / 2,
+					sh / 2 + yOffset + 36 + farFrac * 16,
+					redCol, 1, 5)
+	end
 end)
 
 --def not stolen from factorio
