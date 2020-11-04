@@ -96,6 +96,9 @@ function IncludeFolder(name, realm, nofold)	--This function will be used both by
 
 end
 
+local initCallbacks = {}
+
+
 
 function libTbl.OnInitEntity(cb, ...)
 	if EntityInitted then
@@ -105,8 +108,18 @@ function libTbl.OnInitEntity(cb, ...)
 	end
 end
 
+hook.Add("InitPostEntity", "InittedGlobal", function()
+	EntityInitted = true
+
+	for _, v in ipairs(initCallbacks) do
+		v[1](unpack(v, 2))
+	end
+
+	initCallbacks = {}
+end)
+
 libTbl.LoadedDeps = libTbl.LoadedDeps or {}
-libTbl.DepsCallbacks = libTbl.DepsCallbacks or muldim:new()
+libTbl.DepsCallbacks = libTbl.DepsCallbacks or {}
 
 local depsCallback = libTbl.DepsCallbacks
 
@@ -114,13 +127,17 @@ function libTbl.OnLoaded(file, cb, ...)
 	if libTbl.LoadedDeps[file] then
 		cb(...)
 	else
-		depsCallback:GetOrSet(file):Insert({cb, ...})
+		local t = depsCallback[file] or {}
+		depsCallback[file] = t
+		t[#t + 1] = {cb, ...}
 	end
 end
 
+include(path .. "classes.lua") -- base class goes first
+
 local t1 = SysTime()
 
-include(path .. "classes.lua") -- base class goes first
+-- then we include everything
 
 IncludeFolder(path .. "extensions/*", _SH) -- then extensions
 IncludeFolder(path .. "classes/*", _SH)
@@ -141,19 +158,6 @@ local deps_t1 = SysTime()
 
 hook.Run("LibbedItUp", libTbl)
 hook.Run("LibItUp", libTbl)
-
-
-local initCallbacks = {}
-
-hook.Add("InitPostEntity", "InittedGlobal", function()
-	EntityInitted = true
-
-	for _, v in ipairs(initCallbacks) do
-		v[1](unpack(v, 2))
-	end
-
-	initCallbacks = {}
-end)
 
 
 local function onLoad(s)
