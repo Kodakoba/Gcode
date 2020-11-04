@@ -4,7 +4,7 @@ setfenv(1, _G)
 
 local col = Color(255, 200, 0, 255)
 local Msg = function(...) MsgC(col, ...)  end
-local surface = surface 
+local surface = surface
 
 local color_none = Color(0, 0, 0, 0)
 
@@ -13,12 +13,12 @@ local utflen = function(s)
 end
 
 local Run = function(func, ...)	--kinda like eval
-	if isfunction(func) then 
+	if isfunction(func) then
 		return func(...)
 	end
 end
 
-local Emote = chathud.Emote 
+local Emote = chathud.Emote
 
 chathud.oldShadow = chathud.oldShadow or false
 
@@ -86,13 +86,13 @@ function chathud.CreateFFZShortcuts(update)
 						name=_
 					end
 				continue
-				end 
+				end
 			end
 			if not name then return end
 
 			if istable(name["emoticons"]) then
 				for num, cont in pairs(name["emoticons"]) do
-					if (cont.name) and not chathud.Shortcuts[cont.name] and not blacklist[cont.name] then 
+					if (cont.name) and not chathud.Shortcuts[cont.name] and not blacklist[cont.name] then
 						local url
 						if cont.urls[4] then url=cont.urls[4] elseif cont.urls[2] then url=cont.urls[2] else url=cont.urls[1] end
 
@@ -126,12 +126,12 @@ function chathud.CreateFFZShortcuts(update)
 							name=_
 						end
 						continue
-					end 
+					end
 				end
 
 				if istable(name["emoticons"]) then
 					for num, cont in pairs(name["emoticons"]) do
-						if (cont.name) and not chathud.Shortcuts[cont.name] and not blacklist[cont.name] then 
+						if (cont.name) and not chathud.Shortcuts[cont.name] and not blacklist[cont.name] then
 							local url
 
 							if cont.urls[4] then url=cont.urls[4] elseif cont.urls[2] then url=cont.urls[2] else url=cont.urls[1] end
@@ -152,10 +152,10 @@ function chathud.CreateFFZShortcuts(update)
 
 				hook.Run("ChatHUDFFZUpdated", Emotes.Collections.FFZ)
 			end,
-		function() 
-			print("send help") 
+		function()
+			print("send help")
 		end)
-		
+
 	end
 
 
@@ -163,7 +163,7 @@ function chathud.CreateFFZShortcuts(update)
 	local found = file.Find("emoticon_cache/ffz_global_emotes_*.dat", "DATA")
 
 	for k,chan in pairs(chathud.FFZChannels) do
-		if table.HasValue(found,"ffz_global_emotes_"..string.lower(chan)..".dat") then 
+		if table.HasValue(found,"ffz_global_emotes_"..string.lower(chan)..".dat") then
 			ReadChannelInfo("emoticon_cache/ffz_global_emotes_"..string.lower(chan)..".dat", string.lower(chan))
 		else
 			DownloadChannelInfo(string.lower(chan))
@@ -209,8 +209,8 @@ local function env(msg, spec)
 		st = msg.SendTime,
 	}
 
-	if spec then 
-		env.__index = _G 
+	if spec then
+		env.__index = _G
 		env.env = env
 		setmetatable(env, env)
 	end
@@ -224,8 +224,8 @@ local badlua = {
 	["do"] = true,
 	["end"] = true,
 	["if"] = true,
-	["function"] = true, 
-	["repeat"] = true, 
+	["function"] = true,
+	["repeat"] = true,
 	["until"] = true
 }
 
@@ -236,23 +236,23 @@ local function CompileExpression(str, msg, special, preenv)
 	if not special then --special messages don't get all the checks and can run unrestricted codez
 
 		local ch = str:match("[^=1234567890%-%+%*/%%%^%(%)%.A-z%s]")
-	
+
 		if ch then 	--disallow strings and string methods ( e.g. ("Stinky poopy"):rep(999) )
 					--fun fact; the string library may not be in the envinroment but string methods will still work!
 			return "expression: invalid character " .. ch
 		end
 
-		for word in str:gmatch("(.-)[%p%s]") do 
+		for word in str:gmatch("(.-)[%p%s]") do
 			if badlua[word] then return "simple expressions please" end
 		end
 
-		for word in str:gmatch("[%p%s](.-)") do 
+		for word in str:gmatch("[%p%s](.-)") do
 			if badlua[word] then return "simple expressions please" end
 		end
 	end
 
 	local compiled = CompileString("return (" .. str .. ")", "expression", false)
-	
+
 	if isstring(compiled) then
 		compiled = CompileString(str, "expression", false)
 	end
@@ -293,33 +293,33 @@ local lastarg = "([^,%s?]+)$"	--match last arg in a tag
 function ParseTags(str, special)
 
 	local tags = {} --this contains strings (regular text) and tables (tags)
-	
+
 	local prevtagwhere
 	local env 		--envinroment for expressions, it's shared for one message
 
-	for s1 in string.gmatch(str, ":(.-):") do --shortcuts, then tags 
+	for s1 in string.gmatch(str, ":(.-):") do --shortcuts, then tags
 
-		if chathud.Shortcuts[s1] then 
+		if chathud.Shortcuts[s1] then
 			str = str:gsub((":%s:"):format(s1), chathud.Shortcuts[s1], 1)
 		end
-		
+
 	end
 
 	for tag, argsstr in string.gmatch( str, tagptrn ) do
 		local OGargsstr = argsstr --argsstr will be changed
 
 		local chTag = chathud.TagTable[tag]
-		if chTag and chTag.NoRegularUse and not special then continue end 
+		if chTag and chTag.NoRegularUse and not special then continue end
 
 
 		local starts = str:find(tag, prevtagwhere or 1, true)
-		if starts then starts = starts - 1 end --add the "<" which doesn't get matched 
+		if starts then starts = starts - 1 end --add the "<" which doesn't get matched
 
 		local ends = starts
 
 		if argsstr then --V for "="		 v for ">"
 			ends = starts + #tag + 1 + #argsstr + 1
-		else 		
+		else
 			ends = starts + #tag + 1 --1 for ">"
 		end
 
@@ -331,31 +331,31 @@ function ParseTags(str, special)
 			if not isend or not chathud.TagTable[isend] then print("no such tag to end:", tag, isend) continue end
 
 			for k,v in ipairs(table.Reverse(tags)) do
-				if not istable(v) then continue end  
-				if v.tag == isend and not v.ends and not v.ender then 
+				if not istable(v) then continue end
+				if v.tag == isend and not v.ends and not v.ender then
 					--create an ender tag, which will disable tag at k
-					v.ends = starts 
+					v.ends = starts
 
 					str = str:gsub(tag:PatternSafe(), "", 1)
 
 					local key = #tags + 1
 
-					if prevtagwhere then 
+					if prevtagwhere then
 						tags[key] = str:sub(prevtagwhere, starts+utflen(str)-2)	--if ender, put text first ender later
 						key = key + 1
 					end
 
 					tags[key] = {
-						tag = isend, 
-						ender = true, 
+						tag = isend,
+						ender = true,
 						ends = v.realkey,	--ends tag with key v.realkey
 						realkey = key
 					}
-					
+
 					prevtagwhere = starts + 2 --+2 for <>
 
 					break
-				end 
+				end
 			end
 
 			continue
@@ -365,16 +365,16 @@ function ParseTags(str, special)
 			SendTime = CurTime(),
 		}
 
-		if not prevtagwhere then 
+		if not prevtagwhere then
 			tags[#tags + 1] = str:sub(1, starts - utflen(str)) --utflen decides whether or not sub 2 chars
 		end
 
 		local args = {}
-		
+
 
 		if argsstr then
 			local lastargpos = 0
-			
+
 			for arg in argsstr:gmatch(expptrn) do 	--First parse all the expression args
 
 		        local starts, ends = argsstr:find(arg, lastargpos, true)
@@ -394,12 +394,12 @@ function ParseTags(str, special)
 		        local func, newenv = CompileExpression(arg, info, special, env)				-- like this handy expression we just compiled!
 		        env = env or newenv
 
-				if isstring(func) then 
+				if isstring(func) then
 					printf("Expression error: %s", func)
 					continue
-				end 
+				end
 
-				args[#args + 1] = func 
+				args[#args + 1] = func
 		    end
 
 		    local offset = 0
@@ -408,30 +408,30 @@ function ParseTags(str, special)
 		    for arg in argsstr:gmatch(valptrn) do 	--Then parse all static args (non-expressions)
 		        i = i + 1
 		        if arg == "-" then continue end --this also increments i, basically offsetting arg by +1
-		        if not chTag.args[i] then break end 
+		        if not chTag.args[i] then break end
 
 		        local typ = chTag.args[i].type
-				if not chathud.TagTypes[typ] then printf("Unknown argument type! '%s'", typ) break end 
+				if not chathud.TagTypes[typ] then printf("Unknown argument type! '%s'", typ) break end
 
-				local ret = chathud.TagTypes[typ](arg)	
+				local ret = chathud.TagTypes[typ](arg)
 
 				if ret then table.insert(args, i, ret) end --if conversion to type succeeded
-		        
+
 		    end
 
-		    
+
 
 			local lastargstr = argsstr:match(lastarg)
 
 			if lastargstr and lastargstr ~= "-" then
-				args[i+1] = lastargstr 
+				args[i+1] = lastargstr
 			end
 
 		end
-		
+
 		local key = #tags + 1
 
-		if prevtagwhere then 
+		if prevtagwhere then
 			tags[key] = str:sub(prevtagwhere + utflen(str) - 1, starts-1)
 			key = key + 1
 		end
@@ -439,22 +439,22 @@ function ParseTags(str, special)
 
 		for k,v in ipairs(chTag.args) do --clamp values to mins/maxs
 			if isnumber(args[k]) then
-				if v.min then 
+				if v.min then
 					args[k] = math.max(args[k], v.min)
-				end 
-				if v.max then 
+				end
+				if v.max then
 					args[k] = math.min(args[k], v.max)
 				end
 			end
 
 			if not args[k] then 		--if that arg didnt exist set it to default
-				args[k] = v.default 
-			end 
+				args[k] = v.default
+			end
 
 		end
 
 		tags[key] = {
-			tag = tag, 
+			tag = tag,
 			args = args,
 			starts = starts,
 			realkey = key --for ender to keep track due to table reversing
@@ -476,11 +476,11 @@ function ParseTags(str, special)
 end
 
 function chathud:AddMarkup()
-	
+
 end
 
 function chathud:CleanupOldMarkups()
-	
+
 end
 
 local consoleColor = Color(106, 90, 205, 255)
@@ -492,21 +492,21 @@ local names = {}
 function chathud:AddText(...)
 
 	local cont = {...}
-	local special = false 
+	local special = false
 
-	if cont[1] == true then 
+	if cont[1] == true then
 		table.remove(cont, 1)
-		special = true 
+		special = true
 	end
 
 	local time = CurTime()
 	local nw = 0
 
-	
 
-	local msgstarted = false 
-	local entparsed = false 
-	local hasentity = false 
+
+	local msgstarted = false
+	local entparsed = false
+	local hasentity = false
 
 	local name = ""	--sender name
 
@@ -520,18 +520,18 @@ function chathud:AddText(...)
 
 	for k,v in ipairs(cont) do
 
-		--[[ 
-			Parse entity name. 
-			Usually the sender, except on very rare occasions. 
+		--[[
+			Parse entity name.
+			Usually the sender, except on very rare occasions.
 		]]
 
-		if isentity(v) then 
+		if isentity(v) then
 			fulltxt = fulltxt .. ((v.Nick and v:Nick()) or "Console")
 			hasentity = true
 			continue
 		end
 
-		if not isstring(v) then continue end 
+		if not isstring(v) then continue end
 
 		fulltxt = fulltxt .. v
 	end
@@ -539,25 +539,25 @@ function chathud:AddText(...)
 
 	local curwidth = 0
 
-	local merged = {} --final table, containing everything 
+	local merged = {} --final table, containing everything
 
 	local namewid = 0
 
-	for k,v in ipairs(cont) do 
+	for k,v in ipairs(cont) do
 
-		--[[ 
-			Parse entity name and color.  
+		--[[
+			Parse entity name and color.
 		]]
 
-		if isentity(v) then 
+		if isentity(v) then
 			local col = GAMEMODE.GetTeamColor and GAMEMODE:GetTeamColor(v)
 
-			merged[#merged + 1] = col 
+			merged[#merged + 1] = col
 
 			local n = IsValid(v) and (
-				(v.Nick and v:Nick()) or 
+				(v.Nick and v:Nick()) or
 
-				(	(v.GetName and v:GetName()) or 
+				(	(v.GetName and v:GetName()) or
 					(v.GetClass and v:GetClass())
 				)
 			) or "Console"
@@ -567,18 +567,18 @@ function chathud:AddText(...)
 			merged[#merged + 1] = n
 
 			name = name .. names[v]
-			entparsed = true 
+			entparsed = true
 			surface.SetFont("CH_Text")
 			namewid = math.min(chathud.NameLeeway, (surface.GetTextSize(name)))
 
 			continue
 		end
 
-		if IsTag(v) then 
+		if IsTag(v) then
 			local tag = {}
 
 			tag.tag = v.Name
-			tag.args = v.Args 
+			tag.args = v.Args
 			tag.starts = #curtext
 			tag.realkey = #merged + 1
 
@@ -597,14 +597,14 @@ function chathud:AddText(...)
 
 			surface.SetFont("CH_Text")
 
-			for k2,tg in pairs(tags) do 
+			for k2,tg in pairs(tags) do
 
 				if isstring(tg) then
 					local tw, th = surface.GetTextSize(tg)
 
 					local str, newwid, wrapped = string.WordWrap2(tg, {chathud.W - curwidth, chathud.W - (namewid * chathud.WrapStyle)})
 
-					if wrapped then 
+					if wrapped then
 						curwidth = (newwid or tw)
 					else
 						curwidth = curwidth + (newwid or tw)
@@ -612,7 +612,7 @@ function chathud:AddText(...)
 
 					wrappedtxt = wrappedtxt .. str
 					merged[#merged + 1] = str
-					continue 
+					continue
 				end
 
 				if istable(tg) then 	--tag
@@ -620,11 +620,11 @@ function chathud:AddText(...)
 				end
 			end
 
-				
+
 		end
 
-		if IsColor(v) then 
-			merged[#merged + 1] = v 
+		if IsColor(v) then
+			merged[#merged + 1] = v
 		end
 	end
 
@@ -663,7 +663,7 @@ function chathud:Think()
 end
 
 function chathud:PerformLayout()
-	
+
 end
 
 surface.CreateFont("CH_Text", {
@@ -700,7 +700,7 @@ chathud.WrapStyle = 1  --1 = consider nickname, 0 = ignore nickname start from 0
 local shadowfont = "CH_TextShadow"
 
 local function DrawText(txt, buffer, a)
-	if not txt then return false end 
+	if not txt then return false end
 
 	local font = buffer.font or "CH_Text"
 	a = a or buffer.a
@@ -719,15 +719,15 @@ local function DrawText(txt, buffer, a)
 
 	local dat = buffer.hist
 
-	if buffer.RequiresRewrap then 
+	if buffer.RequiresRewrap then
 
-		if not (dat.cache and dat.cache[buffer.RequiresRewrap]) then 	
+		if not (dat.cache and dat.cache[buffer.RequiresRewrap]) then
 
 			local tx, newlines = txt:gsub("-?\n", "")	--de-wrap text
 			txt = tx
 
 			dat.cache = dat.cache or {}
-			local newtx = string.WordWrap2(txt, {chathud.W - buffer.x, chathud.W}, font)	
+			local newtx = string.WordWrap2(txt, {chathud.W - buffer.x, chathud.W}, font)
 
 			local newnewlines = select(2, newtx:gsub("%c", ""))
 
@@ -743,9 +743,9 @@ local function DrawText(txt, buffer, a)
 
 	local tx, ty = buffer.x, buffer.y + (dat.heights[buffer.curline] or buffer.curh)/2 - h/2
 
-	for s in string.gmatch(txt, "(.-)\n") do 
-	
-		if shouldpaint then 
+	for s in string.gmatch(txt, "(.-)\n") do
+
+		if shouldpaint then
 
 			surface.SetFont(shadowfont)
 			surface.SetTextColor( ColorAlpha(Color(0, 0, 0), a) )
@@ -764,7 +764,7 @@ local function DrawText(txt, buffer, a)
 			surface.SetTextPos(tx, ty)
 
 			surface.DrawText(s)
-		else 
+		else
 			surface.SetFont(font)
 		end
 
@@ -775,7 +775,7 @@ local function DrawText(txt, buffer, a)
 		tx = buffer.x
 
 		buffer.h = buffer.h + buffer.curh
-		buffer.y = buffer.y + buffer.curh 			--add that 
+		buffer.y = buffer.y + buffer.curh 			--add that
 
 		ty = buffer.y + (dat.heights[buffer.curline+1] or buffer.curh)/2 - h/2
 
@@ -790,7 +790,7 @@ local function DrawText(txt, buffer, a)
 
 	if lastword then
 
-		if shouldpaint then 
+		if shouldpaint then
 
 			surface.SetFont(shadowfont)
 			surface.SetTextColor( ColorAlpha(Color(0,0,0), a) )
@@ -808,7 +808,7 @@ local function DrawText(txt, buffer, a)
 			surface.SetTextPos(tx, ty)
 
 			surface.DrawText(lastword)
-		else 
+		else
 			surface.SetFont(font)
 		end
 
@@ -826,31 +826,31 @@ chathud.DrawText = DrawText
 local frstY = 0
 local frstnum = 0
 
-chathud.Filter = true 
+chathud.Filter = true
 chathud.FadeTime = 5
-chathud.Bench = false 
+chathud.Bench = false
 
 function chathud:TagPanic()
-	for k,v in pairs(self.History) do 
-		v.TagPanic = true 
+	for k,v in pairs(self.History) do
+		v.TagPanic = true
 	end
 end
 
 function chathud:Draw()
-	if #self.History < 1 then return end 
+	if #self.History < 1 then return end
 
-	local b 
+	local b
 
-	if chathud.Bench and #self.History > 1 then 
+	if chathud.Bench and #self.History > 1 then
 		b = bench("ChatHUD"):Open()
 	end
 
-	local x, y = self.x, self.y 
-	local chh = chathud.CharH 
+	local x, y = self.x, self.y
+	local chh = chathud.CharH
 
-	local isfirst = true 
+	local isfirst = true
 
-	if chathud.Filter then 
+	if chathud.Filter then
 		render.PushFilterMag( TEXFILTER.ANISOTROPIC )
 		render.PushFilterMin( TEXFILTER.ANISOTROPIC )
 	end
@@ -858,14 +858,14 @@ function chathud:Draw()
 
 	local ok, err = pcall(function()
 		for i = #self.History, 1, -1 do
-			local histnum = i 
+			local histnum = i
 			local dat = self.History[i]
 		--for histnum,dat in SortedPairs(self.History, true) do
 
 			local mult = -2500
 
-			if CurTime() - dat.t > chathud.FadeTime then 
-				mult = 120 
+			if CurTime() - dat.t > chathud.FadeTime then
+				mult = 120
 			end
 
 			if y < (self.y-220) then --if the message is too high up, start erasing it
@@ -885,13 +885,13 @@ function chathud:Draw()
 			local name = dat.name
 
 			local text = dat.text
-			
+
 
 			local cols = {}
-				
-			if isfirst then 
-				frstnum = histnum 
-				frstY = 0  
+
+			if isfirst then
+				frstnum = histnum
+				frstY = 0
 			end
 			--[[
 
@@ -912,11 +912,11 @@ function chathud:Draw()
 					This includes tags, texts, colors and entities.
 				]]
 
-				for k,v in ipairs(dat.c) do 
+				for k,v in ipairs(dat.c) do
 
 					--Parse color in data:
 
-					if IsColor(v) then 
+					if IsColor(v) then
 						drawq[#drawq+1] = {color = true, cont = v}
 						continue
 					end
@@ -926,25 +926,25 @@ function chathud:Draw()
 						Handles shitty language exploits("#VAC_ConnectionRefusedDetail")
 					]]
 
-					if isstring(v) then 
+					if isstring(v) then
 
-						if drawq[#drawq] and drawq[#drawq].string then 
+						if drawq[#drawq] and drawq[#drawq].string then
 
 							local str = v
 
-							if drawq[#drawq].san then 
+							if drawq[#drawq].san then
 
 								str = v:sub(2)
 
-								if language.GetPhrase(sub) == sub then 
-									drawq[#drawq].san = nil 
-								end 
+								if language.GetPhrase(sub) == sub then
+									drawq[#drawq].san = nil
+								end
 
 							end
 
 							drawq[#drawq].cont = drawq[#drawq].cont .. str
 
-						else 
+						else
 
 							local sub = string.sub(v, 2)
 							local san = false
@@ -956,22 +956,22 @@ function chathud:Draw()
 							if san then
 								drawq[#drawq+1] = {cont = "#", string = true, san = true}
 								drawq[#drawq+1] = {cont = sub, string = true, san = true}
-							else 
+							else
 								drawq[#drawq+1] = {cont = v, string = true}
 							end
-						
+
 						end
 
 						continue
 					end
 
-					
-					if istable(v) then 
 
-						--TODO: Tag add to draw 
+					if istable(v) then
+
+						--TODO: Tag add to draw
 						local func
 
-						if v.ender then 
+						if v.ender then
 							local tagbuf = {} --for storing data within the tag's function
 
 							func = function(buf)
@@ -980,7 +980,7 @@ function chathud:Draw()
 							end
 
 							drawq[#drawq+1] = {name = v.tag, func = func, ender = v.ends}
-						else 
+						else
 							local chTag = chathud.TagTable[v.tag]
 							if not chTag then printf("No such tag: %s", v.tag) continue end --???
 
@@ -989,9 +989,9 @@ function chathud:Draw()
 								local args = {}
 								v.errs = v.errs or {}
 
-								for key, val in pairs(v.args) do 
-									if v.errs[key] then continue end 
-									if not chTag.args[key] then continue end 
+								for key, val in pairs(v.args) do
+									if v.errs[key] then continue end
+									if not chTag.args[key] then continue end
 
 									local arg = chTag.args[key]
 
@@ -1000,11 +1000,11 @@ function chathud:Draw()
 
 									local min, max = arg.min, arg.max
 
-									if isfunction(val) then 
+									if isfunction(val) then
 										local ok, ret = pcall(val)
-										if not ok then printf("Tag error! %s", ret) v.errs[key] = true continue end 
+										if not ok then printf("Tag error! %s", ret) v.errs[key] = true continue end
 
-										if not ret then 
+										if not ret then
 
 											if not v.ComplainedAboutReturning and not arg.default then
 												--print("Tag function must return a value! Defaulting to", val)
@@ -1016,33 +1016,33 @@ function chathud:Draw()
 										elseif ret then
 											ret = chathud.TagTypes[typ](ret) or default
 
-											if min then 
+											if min then
 												ret = math.max(min, ret)
-											end 
+											end
 
-											if max then 
+											if max then
 												ret = math.min(max, ret)
 											end
 
-											args[key] = ret 
+											args[key] = ret
 
 										end
 
-									else 
+									else
 										val = chathud.TagTypes[typ](val) or default
 
-										if min then 
+										if min then
 											val = math.max(min, val)
-										end 
+										end
 
-										if max then 
+										if max then
 											val = math.min(max, val)
 										end
 
-										args[key] = val 
+										args[key] = val
 
 									end
-								end 
+								end
 
 								return args
 							end
@@ -1056,7 +1056,7 @@ function chathud:Draw()
 								Run(chTag.Draw, tagbuf, buf, buf, args)
 								Run(chTag.ModifyBuffer, tagbuf, buf, buf, args)
 
-							end 
+							end
 
 							drawq[#drawq+1] = {
 								name = v.tag,
@@ -1085,7 +1085,7 @@ function chathud:Draw()
 					--functions are ignored
 
 				end
-				dat.DrawQ = drawq 
+				dat.DrawQ = drawq
 			end
 
 			--[[
@@ -1094,7 +1094,7 @@ function chathud:Draw()
 			drawq = table.Copy(dat.DrawQ)
 
 			local lastseg = 0
-			
+
 
 			local a = dat.a
 
@@ -1105,19 +1105,19 @@ function chathud:Draw()
 			if not txh then
 				local amtoflines = dat.newlines
 
-				if not amtoflines then 
+				if not amtoflines then
 					amtoflines = 1 + select(2, string.gsub(dat.wrappedtxt, "%c", ""))
 					dat.newlines = amtoflines
 				end
 
-				txh = amtoflines * chh 
+				txh = amtoflines * chh
 			end
 
-			
+
 
 			buffer.y = y - txh
-			buffer.x = x 
-			buffer.h = 0 
+			buffer.x = x
+			buffer.h = 0
 			buffer.curh = chh 	--Current line H: useful for emotes and such
 			buffer.w = 0
 			buffer.hist = dat
@@ -1125,10 +1125,10 @@ function chathud:Draw()
 			buffer.curline = 1
 			buffer.fgColor = dat.color
 
-			if not dat.Evaluated then 	
-				buffer.EvaluationPaint = true 
+			if not dat.Evaluated then
+				buffer.EvaluationPaint = true
 				buffer.fgColor = color_none
-				dat.Evaluated = true 
+				dat.Evaluated = true
 				a = 0
 			end
 
@@ -1138,15 +1138,15 @@ function chathud:Draw()
 
 			local curH = 0
 
-			for k,v in ipairs(drawq) do 
+			for k,v in ipairs(drawq) do
 
-				if v.string then 
+				if v.string then
 					DrawText(v.cont, buf, a)
 					continue
 				end
 
-				if v.color and not buffer.EvaluationPaint then 
-					buffer.fgColor = v.cont 
+				if v.color and not buffer.EvaluationPaint then
+					buffer.fgColor = v.cont
 					continue
 				end
 
@@ -1157,15 +1157,15 @@ function chathud:Draw()
 
 					dat.heights[buffer.curline] = math.max(dat.heights[buffer.curline] or 0, buffer.curh)
 
-					if buffer.x > chathud.W then 
+					if buffer.x > chathud.W then
 						buffer.x = x + (dat.namewid * chathud.WrapStyle)
 						buffer.y = buffer.y + buffer.curh
 						curH = curH + buffer.curh
-						
+
 						dat.heights[buffer.curline] = buffer.curh
 						buffer.curline = buffer.curline + 1
 
-						buffer.curh = chh 
+						buffer.curh = chh
 					end
 
 					if buffer.x ~= x_before then --fuck
@@ -1174,11 +1174,11 @@ function chathud:Draw()
 				end
 			end
 
-			for k,v in ipairs(drawq) do 
+			for k,v in ipairs(drawq) do
 
 				-- not an ender, doesn't end later, has a run-func and end-func
 
-				if not v.ender and not v.ends and v.func and v.TagEnd and not dat.TagPanic then 
+				if not v.ender and not v.ends and v.func and v.TagEnd and not dat.TagPanic then
 					v.TagEnd(v.tagbuf, v.tagbuf, buffer, v.getargs and v.getargs())
 				end
 			end
@@ -1193,17 +1193,17 @@ function chathud:Draw()
 		end
 
 	end) --End PCall
-	
-	if chathud.Filter then 
+
+	if chathud.Filter then
 		render.PopFilterMag()
 		render.PopFilterMin()
 	end
 
-	if not ok then 
+	if not ok then
 		ErrorNoHalt(("[ChatHUD] Error during rendering! %s\n"):format(err))
 	end
 
-	if chathud.Bench then 
+	if chathud.Bench then
 		b:Close()
 		print(b)
 	end
@@ -1315,8 +1315,8 @@ end
 emote_json = emote_json
 emote_data = emote_data
 
-local failed = false 
-local forced = false 
+local failed = false
+local forced = false
 
 file.CreateDir("hdl/emotes")
 
@@ -1326,7 +1326,7 @@ local function ParseEmotes(js)
 
 	--[[
 	collections:
-		{	
+		{
 			collection = "collection_name",
 			collectionname = "Nice Collection Name",
 			collectiondescription = "description" OR: {
@@ -1361,7 +1361,7 @@ local function ParseEmotes(js)
 
 		local data = collection.data
 
-		for k,v in ipairs(data[1]) do 
+		for k,v in ipairs(data[1]) do
 			chathud.Emotes[v] = Emote(v, url:format(v))
 									:SetAnimated(true)
 									:AddToCollection("Animated")
@@ -1369,7 +1369,7 @@ local function ParseEmotes(js)
 									:AddShortcut()
 		end
 
-		for k,v in ipairs(data[2]) do 
+		for k,v in ipairs(data[2]) do
 			chathud.Emotes[v] = Emote(v, url:format(v))
 									:SetStatic(true)
 									:AddToCollection("Static")
@@ -1379,14 +1379,14 @@ local function ParseEmotes(js)
 
 	end
 
-	
+
 
 	if forced then
-		for k,v in pairs(chathud.Emotes) do 
-			MoarPanelsMats[v:GetHDLPath()] = nil 
+		for k,v in pairs(chathud.Emotes) do
+			MoarPanelsMats[v:GetHDLPath()] = nil
 		end
 		MsgC(Color(100, 220, 100), "[ChatHUD] Loaded emote data successfully! Also unloaded cached emotes.\n")
-	elseif failed then 
+	elseif failed then
 		MsgC(Color(100, 220, 100), "[ChatHUD] Loaded cached emote data successfully!\n\n")
 	else
 		MsgC(Color(100, 220, 100), "[ChatHUD] Loaded emote data successfully!\n")
@@ -1398,60 +1398,60 @@ local function ParseEmotes(js)
 end
 
 function UpdateEmotes()
-	if failed and not file.Exists("emoticon_cache/emote_info.dat", "DATA") and not forced then 
-		MsgC(Color(200, 50, 50), "[ChatHUD] Failed to update emote data and failed to load cached emote data, since it doesn't exist.\n") 
-		return 
-	end 
+	if failed and not file.Exists("emoticon_cache/emote_info.dat", "DATA") and not forced then
+		MsgC(Color(200, 50, 50), "[ChatHUD] Failed to update emote data and failed to load cached emote data, since it doesn't exist.\n")
+		return
+	end
 
-	if failed and file.Exists("emoticon_cache/emote_info.dat", "DATA") then 
+	if failed and file.Exists("emoticon_cache/emote_info.dat", "DATA") then
 		local data = file.Read("emoticon_cache/emote_info.dat", "DATA")
 		ParseEmotes(js)
 		MsgC(Color(220, 220, 10), "[ChatHUD] Loaded cached emote data. Keep in mind it may be outdated.\n")
 		return
 	end
-	
+
 	MsgC(Color(100, 220, 100), "\n[ChatHUD] Loading new emote data...\n")
 
 	hdl.DownloadFile("https://vaati.net/Gachi/emotes/emotes_list.dat", "-emoticon_cache/emote_info.dat", function(fn, body)
 		if body:find("404 -") then error("Emotes list 404'd!") return end
 		ParseEmotes(body)
 
-		forced = false	
+		forced = false
 		failed = false
 
-	end, function() 
-		failed = true 
+	end, function()
+		failed = true
 		forced = false
 		MsgC(Color(250, 55, 55), "\n[ChatHUD] Failed to get emote data!\n")
 
-		if file.Exists("emoticon_cache/emote_info.dat", "DATA") then 
+		if file.Exists("emoticon_cache/emote_info.dat", "DATA") then
 			local data = file.Read("emoticon_cache/emote_info.dat", "DATA")
 			MsgC(Color(220, 220, 10), "[ChatHUD] We'll use cached emote data. Keep in mind, it may be outdated.\n")
 			ParseEmotes(data)
 		else
-			MsgC(Color(200, 50, 50), "[ChatHUD] You don't have any cached emote data, so emotes will be pretty much disabled.\nYou can try doing emotes_update to re-attempt fetching data.\n") 
-		end 
+			MsgC(Color(200, 50, 50), "[ChatHUD] You don't have any cached emote data, so emotes will be pretty much disabled.\nYou can try doing emotes_update to re-attempt fetching data.\n")
+		end
 
 
 	end, true)
 end
 
-hook.Add("HUDPaint", "ChatHUDEmotes", function() 
+hook.Add("HUDPaint", "ChatHUDEmotes", function()
 	hook.Remove("HUDPaint", "ChatHUDEmotes")
 
-	timer.Simple(5, UpdateEmotes) 
+	timer.Simple(5, UpdateEmotes)
 	chathud.CreateFFZShortcuts()
 end)
 
 function DeleteEmotes()
-	if not emote_data then print("No emotes data to use!") return end 
-	for k,v in pairs(chathud.Emotes) do 
+	if not emote_data then print("No emotes data to use!") return end
+	for k,v in pairs(chathud.Emotes) do
 		if not v:GetName() then continue end
 
 		local name = ("hdl/emotes/%s"):format(v:GetName())
-		
 
-		if file.Exists(name .. ".png", "DATA") then 
+
+		if file.Exists(name .. ".png", "DATA") then
 			file.Delete(name .. ".png")
 			file.Delete(name .. "_info.png")
 		end
@@ -1464,10 +1464,10 @@ concommand.Add("emotes_update", function() failed = false forced = true UpdateEm
 concommand.Add("emotes_clearemotes", function() DeleteEmotes() end)
 
 function chathud:GetEmoticon(emoticon)
-	if not chathud.Emotes then return false end 
+	if not chathud.Emotes then return false end
 
 	local emote = chathud.Emotes[emoticon]
-	if not emote then return false end --emote doesnt exist 
+	if not emote then return false end --emote doesnt exist
 
 	return emote:GetURL()
 end

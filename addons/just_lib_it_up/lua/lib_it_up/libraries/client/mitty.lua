@@ -94,9 +94,7 @@ local function RTRender(make2d, rt, func) --if make2d, make ur own 2d context
 
 			render.Clear(0, 0, 0, 0)
 			render.OverrideAlphaWriteEnable(true, true)
-
-			local ok, err = pcall(func, w, h)
-
+				local ok, err = pcall(func, w, h)
 			render.OverrideAlphaWriteEnable(false, false)
 
 		if make2d then
@@ -133,9 +131,6 @@ local function CreateRTAndMat(dec)
 
 	return mat, rt
 end
-
-local handle = util.GetPixelVisibleHandle()
-local vis = 0
 
 hook.Add("PostDrawTranslucentRenderables", "mittyvis", function(sb, dpth)
 	if sb or dpth then return end

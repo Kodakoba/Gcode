@@ -1284,7 +1284,7 @@ local function ParseGIFInfo(_, name, info)
 
 	local tbl = {}
 
-	local cmat = Material("data/" .. path:format(name):lower()  .. ".png", "smooth")
+	local cmat = Material("data/" .. path:format(name):lower()  .. ".png", "smooth ignorez")
 
 	tbl.mat = cmat
 
