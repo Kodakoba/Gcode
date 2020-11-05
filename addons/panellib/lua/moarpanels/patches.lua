@@ -15,7 +15,7 @@ dlabel.OnMouseReleased = function(self, mousecode)
 	if ( self:DragMouseRelease( mousecode ) ) then
 		return
 	end
-	
+
 	if ( self:IsSelectable() && mousecode == MOUSE_LEFT ) then
 
 		local canvas = self:GetSelectionCanvas()
@@ -25,7 +25,7 @@ dlabel.OnMouseReleased = function(self, mousecode)
 
 	end
 
-	-- FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU 
+	-- FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU
 	if not self.Hovered and vgui.GetHoveredPanel() ~= self then return end
 
 	self.Depressed = true

@@ -240,7 +240,7 @@ local function OpenShit(qm, self, pnl)
 		else
 			pnl:GeneratorPaint(w, h)
 
-			if not self.Closing and self.Open then
+			--[[if not self.Closing and self.Open then
 				if pnl.HookUp then
 					pnl.HookUp:AlphaTo(255, 0.2, 0, nil, 0.3)
 				end
@@ -256,7 +256,7 @@ local function OpenShit(qm, self, pnl)
 				if not vgui.CursorVisible() and IsValid(openedQM) then
 					openedQM:SetMouseInputEnabled(true)
 				end
-			end
+			end]]
 
 			self:SetKeepAlive(false)
 		end
@@ -282,7 +282,7 @@ end
 function ENT:CLInit()
 	local qm = self:SetQuickInteractable()
 	qm.OnOpen = OpenShit
-	qm.OnReopen = OpenShit
+	--qm.OnReopen = OpenShit
 
 	self:OnChangeGridID(self:GetGridID())
 end
@@ -544,12 +544,12 @@ hook.Add("PostDrawTranslucentRenderables", "DrawConnectPrompt", function(d, sb)
 
 	local e = IsValid(tr.Entity) and tr.Entity
 
-	if e and (e.Cableable or (e.IsElectronic or e.Connectable)) then
+	if e and (e.Cableable or (e.IsElectronic or e.Connectable)) and e ~= DrawCable then
 		DrawCableClass = e.PrintName or e:GetClass()
 		DrawCableEntity = e
 		FinalCablePoint = e
 
-		if e.UseSpline~=nil then
+		if e.UseSpline ~= nil then
 			NoSpline = not e.UseSpline
 		end
 		if e.SplineStrength then
@@ -557,7 +557,10 @@ hook.Add("PostDrawTranslucentRenderables", "DrawConnectPrompt", function(d, sb)
 		else
 			SplineStrength = 10
 		end
-		DrawCableDist = e:GetPos():Distance(DrawCable:GetPos())
+		local pos = e.ConnectPoint and e:LocalToWorld(e.ConnectPoint) or e:GetPos()
+		local pos2 = DrawCable.ConnectPoint and DrawCable:LocalToWorld(DrawCable.ConnectPoint) or DrawCable:GetPos()
+
+		DrawCableDist = pos:Distance(pos2)
 	else
 		DrawCableClass = nil
 		DrawCableEntity = nil
@@ -603,14 +606,19 @@ hook.Add("StartCommand", "StopConnectingCable", function(ply, cmd)
 	if preventLMB then cmd:RemoveKey(IN_ATTACK) end
 
 	if preventLMB and not wL then
-		print('yess')
+
 		if not IsValid(DrawCableEntity) then
 			wasLMB = false
 			anim:Emit("Refuse")
 			return
 		end
 
-		if DrawCableEntity:GetPos():Distance(DrawCable:GetPos()) > DrawCable.ConnectDistance then
+		local maxDist = math.min(DrawCable.ConnectDistance, DrawCableEntity.ConnectDistance)
+
+		local pos = DrawCableEntity.ConnectPoint and DrawCableEntity:LocalToWorld(DrawCableEntity.ConnectPoint) or DrawCableEntity:GetPos()
+		local pos2 = DrawCable.ConnectPoint and DrawCable:LocalToWorld(DrawCable.ConnectPoint) or DrawCable:GetPos()
+
+		if pos:Distance(pos2) > maxDist then
 			if IsValid(GeneratorPanel) then
 				GeneratorPanel:Refuse()
 			end
@@ -618,7 +626,6 @@ hook.Add("StartCommand", "StopConnectingCable", function(ply, cmd)
 			anim:Emit("Refuse")
 			return
 		end
-		
 
 		net.Start("ConnectGenerator")
 			net.WriteBool(false)
@@ -702,7 +709,13 @@ hook.Add("HUDPaint", "DrawPreviewCable", function()
 		if frag then frag.Color = Colors.DarkWhite end
 	end
 
-	if DrawCableDist and DrawCableDist > DrawCable.ConnectDistance then
+	local maxDist = DrawCable.ConnectDistance
+
+	if IsValid(DrawCableEntity) then
+		maxDist = math.min(maxDist, DrawCableEntity.ConnectDistance)
+	end
+
+	if DrawCableDist and DrawCableDist > maxDist then
 		anim:To("FarFrac", 1, 0.4, 0, 0.3)
 	else
 		anim:To("FarFrac", 0, 0.3, 0, 0.3)

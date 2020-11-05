@@ -424,11 +424,12 @@ function Cloud:AddPanel(p, num)
 end
 
 function Cloud:SetAbsPos(x, y)
+	-- does not work properly
+	print("reminder: Cloud:SetAbsPos does not work properly")
 	local sx, sy = self:ScreenToLocal(x, y)
 
 	self.OffsetX = sx
 	self.OffsetY = sy
-
 end
 
 function Cloud:SetRelPos(x, y)

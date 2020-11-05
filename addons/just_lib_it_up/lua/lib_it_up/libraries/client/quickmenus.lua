@@ -262,13 +262,18 @@ function CreateQuickMenu()
 
 			maxperc = math.max(v.progress, maxperc)
 
-			if v.progress == 0 then
+			--[[if v.progress == 0 then
 				v.wasopened = false
-			end
+			end]]
+
 			if v.progress == maxperc then
 				qm = v
 			end
 
+			if v.progress == 0 and v.wasopened then
+				v.wasopened = false
+				v:OnFullClose(v.ent, self)
+			end
 		end
 
 		-- check if we should even keep the panel open and
@@ -329,15 +334,6 @@ function CreateQuickMenu()
 				-- we think only if progress is > 0, aka we still exist
 				hastime = true
 				v:Think(v.ent, self)
-			else
-				-- otherwise we just either close completely and await reactivation or don't think
-				if v.wasopened then
-					print("was opened", v)
-					v.wasopened = false
-					v:OnFullClose(v.ent, self)
-					
-				end
-				continue
 			end
 
 			--progress = 100%, not open and no more opened quickmenus

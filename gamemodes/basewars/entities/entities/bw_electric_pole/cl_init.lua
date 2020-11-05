@@ -180,16 +180,20 @@ function ENT:CreateGeneratorsScroll(pnl, me)
 		end
 
 		function disc:OnHover()
-			popup = true
 			curtip = "Disconnect " .. name
-			hovd = self
+
+			local cl, new = self:AddCloud("tip", curtip)
+			if new then
+				cl:SetFont("OSB36")
+				cl.ToY = -8
+				local x, y = self:ScreenToLocal(ScrW() / 2, pnl.Y + scr.Y - 8)
+				cl:SetRelPos(x, y)
+				cl.MaxW = 500
+			end
 		end
 
 		function disc:OnUnhover()
-			if hovd == self then
-				popup = false
-				hovd = nil
-			end
+			self:RemoveCloud("tip")
 		end
 	end
 
@@ -277,16 +281,20 @@ function ENT:CreateConsumersScroll(pnl, me)
 		end
 
 		function disc:OnHover()
-			popup = true
 			curtip = "Disconnect " .. name
-			hovd = self
+
+			local cl, new = self:AddCloud("tip", curtip)
+			if new then
+				cl.ToY = -8
+				cl:SetFont("OSB36")
+				local x, y = self:ScreenToLocal(ScrW() / 2, pnl.Y + scr.Y - 8)
+				cl:SetRelPos(x, y)
+				cl.MaxW = 500
+			end
 		end
 
 		function disc:OnUnhover()
-			if hovd == self then
-				popup = false
-				hovd = nil
-			end
+			self:RemoveCloud("tip")
 		end
 	end
 
@@ -316,53 +324,57 @@ function ENT:CreateConsumersScroll(pnl, me)
 end
 
 function ENT:QMOnBeginClose(qm, self, pnl)
-	if IsValid(qm.GenScroll) then
-		qm.GenScroll:PopOut(nil, nil, BlankFunc)
-		qm.GenScroll.AlphaOverride = true
+	if IsValid(self.GenScroll) then
+		self.GenScroll:PopOut(nil, nil, BlankFunc)
+		self.GenScroll.AlphaOverride = true
 	end
 
-	if IsValid(qm.ConsumerScroll) then
-		qm.ConsumerScroll:PopOut(nil, nil, BlankFunc)
-		qm.ConsumerScroll.AlphaOverride = true
+	if IsValid(self.ConsumerScroll) then
+		self.ConsumerScroll:PopOut(nil, nil, BlankFunc)
+		self.ConsumerScroll.AlphaOverride = true
 	end
 
-	if IsValid(qm.ConnectBtn) then
-		qm.ConnectBtn.GoAway = true
+	if IsValid(self.ConnectBtn) then
+		self.ConnectBtn.GoAway = true
 	end
 end
 
 function ENT:QMOnReopen(qm, self, pnl)
 
-	if IsValid(qm.GenScroll) then
-		qm.GenScroll:AlphaTo(120, 0.1, 0, function()
-			qm.GenScroll.AlphaOverride = false
+	if IsValid(self.GenScroll) then
+		self.GenScroll:AlphaTo(120, 0.1, 0, function()
+			self.GenScroll.AlphaOverride = false
 		end)
 
-		qm.GenScroll.AlphaOverride = true
+		self.GenScroll.AlphaOverride = true
 	end
 
-	if IsValid(qm.ConsumerScroll) then
-		qm.ConsumerScroll:AlphaTo(120, 0.1, 0, function()
-			qm.ConsumerScroll.AlphaOverride = false
+	if IsValid(self.ConsumerScroll) then
+		self.ConsumerScroll:AlphaTo(120, 0.1, 0, function()
+			self.ConsumerScroll.AlphaOverride = false
 		end)
 
-		qm.ConsumerScroll.AlphaOverride = true
+		self.ConsumerScroll.AlphaOverride = true
 	end
 
-	if IsValid(qm.ConnectBtn) then
-		qm.ConnectBtn.GoAway = false
+	if IsValid(self.ConnectBtn) then
+		self.ConnectBtn.GoAway = false
 	end
 end
 
 function ENT:QMOnClose(qm, self, pnl)
 	if pnl.Cloud then pnl.Cloud:Remove() pnl.NoCloud = true end
+
+	if self.GenScroll:IsValid() then self.GenScroll:Remove() end
 end
 
 function ENT:QMThink(qm, self, pnl)
 
-	if pnl.NoCloud then return end --just in case
+	--[[if pnl.NoCloud then return end --just in case
 
-	pnl.Cloud = pnl.Cloud or vgui.Create("Cloud")
+	local cl = pnl:AddCloud(curtip)
+	cl:SetLabel(curtip)
+	--pnl.Cloud = pnl.Cloud or vgui.Create("Cloud")
 
 	local cloud = pnl.Cloud
 
@@ -372,7 +384,7 @@ function ENT:QMThink(qm, self, pnl)
 	cloud:Popup(popup)
 	cloud:SetLabel(curtip)
 
-	local y = qm.GenScroll and qm.GenScroll:IsValid() and qm.GenScroll.Y - 48
+	local y = self.GenScroll and self.GenScroll:IsValid() and self.GenScroll.Y - 48
 
 	if y then
 		y = select(2, pnl:LocalToScreen(0, y))
@@ -380,7 +392,7 @@ function ENT:QMThink(qm, self, pnl)
 		y = ScrH() * 0.2
 	end
 
-	cloud:SetAbsPos(ScrW() / 2, y)
+	cloud:SetAbsPos(ScrW() / 2, y)]]
 end
 
 function ENT:OpenShit(qm, self, pnl)
@@ -397,14 +409,14 @@ function ENT:OpenShit(qm, self, pnl)
 
 	local gens = self:CreateGeneratorsScroll(pnl, me)
 
-	qm.GenScroll = gens
+	self.GenScroll = gens
 	gens:AlphaTo(120, 0.1):On("End", function()
 		gens.AlphaOverride = false
 	end)
 	--qm:AddPopIn(gens, gens.X, gens.Y + pnl.CircleSize, 0, 32)
 
 	local consumers = self:CreateConsumersScroll(pnl, me)
-	qm.ConsumerScroll = consumers
+	self.ConsumerScroll = consumers
 	consumers:AlphaTo(120, 0.1):On("End", function()
 		consumers.AlphaOverride = false
 	end)
@@ -456,7 +468,7 @@ function ENT:OpenShit(qm, self, pnl)
 	consumers:On("Hover", con, con.Hover, con)
 	consumers:On("Unhover", con, con.Unhover, con)
 
-	qm.ConnectBtn = con
+	self.ConnectBtn = con
 	--qm:AddPopIn(consumers, consumers.X, consumers.Y + pnl.CircleSize, 0, 32)
 
 end

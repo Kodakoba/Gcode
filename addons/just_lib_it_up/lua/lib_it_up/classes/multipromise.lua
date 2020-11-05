@@ -5,16 +5,14 @@ MultiPromise = MultiPromise or Emitter:Callable()
 
 function MultiPromise:Initialize(f)
 	self.CurrentCoroutine = nil
-	local st = SysTime()
 
 	self.Coroutine = coroutine.create(function(resolve, err)
-		print("coroutine launched, checkin'", resolve, err)
 
-		while SysTime() - st < 1 do
+		while true do
 			local step = self.__CurrentStep
 			self.CurrentCoroutine = self.__Success[step]
 			local ok, res = coroutine.resume(self.__Success[step], resolve, err, unpack(self.__CurrentArgs))
-			print("ran corou")
+
 			if not ok and self.__Errors[step] then
 				self.__Errors[step](self, res)
 			end
@@ -32,7 +30,6 @@ function MultiPromise:Initialize(f)
 	self.__CurrentStep = 1
 
 	self.__Resolve = function(...)
-		local cor = self.CurrentCoroutine
 		local cur_cor = coroutine.running()
 		self.__CurrentStep = self.__CurrentStep + 1
 		self.__CurrentArgs = {...}
@@ -46,7 +43,7 @@ function MultiPromise:Initialize(f)
 		--coroutine.resume(self.Coroutine, self.Resolve, self.Error, ...)
 
 	end
-	
+
 	self.__Error = function(...)
 		self.__Errors[self.__CurrentStep] (...)
 	end

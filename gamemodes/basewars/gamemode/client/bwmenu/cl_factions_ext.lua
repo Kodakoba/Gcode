@@ -660,8 +660,6 @@ local function onSelectAction(f, fac, new, reuseCanvas)
 		return
 	end
 
-	print("new, valid, old", new, valid, old)
-
 	if new then
 		if not valid or not old.IsNewFaction then
 			-- only create if the current panel isn't valid OR isn't the `new faction` panel

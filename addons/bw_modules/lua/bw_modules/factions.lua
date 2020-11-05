@@ -111,11 +111,12 @@ hook.Add("BasewarsModuleLoaded", "CreateEmptyFaction", function(nm)
 
 	if CLIENT then
 		fac = Factions.meta:new(-1, "No Faction", Color(100, 100, 100))
-		Factions.Factions[fac:GetName()] = fac
-		Factions.FactionIDs[fac:GetID()] = fac
 	else
 		fac = Factions.meta:new(false, -1, "No Faction", nil, Color(100, 100, 100))
 	end
 
 	Factions.NoFaction = fac
+
+	Factions.Factions["No Faction"] = nil
+	Factions.FactionIDs[-1] = nil
 end)

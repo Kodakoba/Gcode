@@ -123,7 +123,11 @@ function ENT:Think()
 end
 
 function ENT:ConnectTo(ent)
-	print("not implemented: adding", ent, "to pole connection")
+	if ent.IsGenerator then
+		ent:ConnectTo(self)
+	else
+		print("not implemented: adding", ent, "to pole connection")
+	end
 end
 
 function ENT:Disconnect(ent)

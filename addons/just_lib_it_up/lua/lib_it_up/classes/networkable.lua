@@ -25,7 +25,7 @@ _NetworkableChanges = _NetworkableChanges or muldim:new()-- _NetworkableChanges 
 
 _NetworkableAwareness = _NetworkableAwareness or muldim:new() --[ply] = {'ID', 'ID'} , not numberids
 
-Networkable.Verbose = true
+Networkable.Verbose = false
 
 local realPrint = print
 local print = function(...)

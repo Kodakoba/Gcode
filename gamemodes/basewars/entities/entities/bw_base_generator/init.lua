@@ -198,6 +198,12 @@ net.Receive("ConnectGenerator", function(_, ply)
 		if not ent:IsValid() then return end
 		if not gen.Cableable and not (ent.IsElectronic or ent.Connectable) then return end
 
+		local maxDist = math.min(ent.ConnectDistance, gen.ConnectDistance)
+		local pos = ent.ConnectPoint and ent:LocalToWorld(ent.ConnectPoint) or ent:GetPos()
+		local pos2 = gen.ConnectPoint and gen:LocalToWorld(gen.ConnectPoint) or gen:GetPos()
+
+		if pos:Distance(pos2) > maxDist then return end
+
 		gen:ConnectTo(ent)
 	else
 		gen:Disconnect(ply)
