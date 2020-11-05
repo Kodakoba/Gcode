@@ -1,5 +1,5 @@
 local PLAYER = FindMetaTable("Player")
-print('--SQL extension loaded!--')
+
 sql.Debugging = false
 
 function sql.isPlayer(ply)
@@ -56,11 +56,11 @@ function PLAYER:GetUID(dbl)
 	if not sid then return end
 	local ret
 
-	if not sql.UIDs[sid] then 
+	if not sql.UIDs[sid] then
 		local r, err = sql.Check("SELECT PlayerUID FROM player_IDs WHERE SteamID64=='".. sid .."'", true)
 		if not r and not err and not dbl then return self:AssignUID(true) end
 		if not r then return end
-		ret = r[1].PlayerUID 
+		ret = r[1].PlayerUID
 		sql.UIDs[sid] = ret
 		sql.BackUIDs[ret] = sid
 	else
@@ -71,45 +71,46 @@ function PLAYER:GetUID(dbl)
 
 end
 
-PLAYER.GetPUID = PLAYER.GetUID 
+PLAYER.GetPUID = PLAYER.GetUID
 
 function sql.GetByPUID(puid, ply)
 
-	if not sql.BackUIDs[puid] then 
+	if not sql.BackUIDs[puid] then
 		local r, err = sql.Check("SELECT SteamID64 FROM player_IDs WHERE PlayerUID=='".. puid .."'", true)
-		if not r then return false end 
-		
-		if r then 
-			if ply then 
+		if not r then return false end
+
+		if r then
+			if ply then
 				return player.GetBySteamID64(r[1].SteamID64), r[1].SteamID64
-			else 
+			else
 				return r[1].SteamID64
 			end
 		end
-	else 
+	else
 
-		if ply then 
+		if ply then
 			return player.GetBySteamID64(sql.BackUIDs[puid]), sql.BackUIDs[puid]
-		else 
+		else
 			return sql.BackUIDs[puid]
 		end
 	end
 
 end
+
 function sql.GetPUID(ply)
-	if isstring(ply) then 
+	if isstring(ply) then
 		local r, err = sql.Check("SELECT PlayerUID FROM player_IDs WHERE SteamID64=='".. ply .."'", true)
 
-		if not r and not err then 
+		if not r and not err then
 			local uid = sql.AssignUID(ply, true)
 
 			return uid
 		end
 
-		if r and not err then return r[1].PlayerUID end 
+		if r and not err then return r[1].PlayerUID end
 
 		return false
 	end
-	if not ply or not IsValid(ply) or not ply:IsPlayer() then return false end 
+	if not ply or not IsValid(ply) or not ply:IsPlayer() then return false end
 	return ply:GetUID()
 end

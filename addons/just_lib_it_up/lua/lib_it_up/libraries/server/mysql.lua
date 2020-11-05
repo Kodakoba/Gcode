@@ -1,4 +1,3 @@
-
 require("mysqloo")
 
 __MYSQL_INFO = {"127.0.0.1", "root", "31415", "master"}
@@ -55,9 +54,9 @@ end
 
 
 
-concommand.Add("reconnect_mysql", function(p) 
-
+concommand.Add("reconnect_mysql", function(p)
 	if IsValid(ply) and not ply:IsSuperAdmin() then return end
+
 	rsDB = mysqloo.connect(unpack(__MYSQL_INFO))
 
 	rsDB.onConnected = function(self)
