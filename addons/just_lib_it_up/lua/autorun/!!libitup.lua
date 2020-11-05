@@ -1,4 +1,3 @@
-do return end
 
 AddCSLuaFile()
 
