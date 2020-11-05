@@ -422,9 +422,8 @@ function GM:ScoreboardShow()
 			self.PoppedUp = true
 		end
 
-		for k,v in pairs(player.GetAll()) do
+		for k,v in ipairs(player.GetAll()) do
 			if not frs[v] then
-				print('new in a hook')
 				local f = NewPlayerFrame(v)
 				f:PopIn()
 			end
@@ -444,7 +443,7 @@ function GM:ScoreboardShow()
 
 	local pteams = {}
 
-	for k,v in pairs(player.GetAll()) do
+	for k,v in ipairs(player.GetAll()) do
 		if not pteams[v:Team()] then pteams[v:Team()] = {} end
 
 		local team = pteams[v:Team()]
