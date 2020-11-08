@@ -225,11 +225,17 @@ function Animatable:Lerp(key, val, dur, del, ease, forceswap)
 	local anim
 	local from = self[key] or 0
 
-	if self[key] == val then return false, false end
+	local oldAnim = anims[key]
 
-	if anims[key] then
-		anim = anims[key]
+	--print(key, self[key], val, oldAnim, oldAnim and oldAnim.ToVal, val)
+	if self[key] == val then
+		if not oldAnim or oldAnim.ToVal == val then
+			return false, false
+		end
+	end
 
+	if oldAnim then
+		anim = oldAnim
 		if anim.ToVal == val and not forceswap then return anim, false end --don't re-create animation if we're already lerping to that anyways
 
 		anim.ToVal = val
@@ -266,7 +272,11 @@ function Animatable:MemberLerp(tbl, key, val, dur, del, ease, forceswap)
 	local anim = anims[tostring(key) .. as_str]
 	local from = tbl[key] or 0
 
-	if tbl[key] == val then return false, false end
+	if tbl[key] == val then
+		if not anim or anim.ToVal == val then
+			return false, false
+		end
+	end
 
 	if anim then
 		if anim.ToVal == val and not forceswap then return anim, false end
