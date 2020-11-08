@@ -602,7 +602,7 @@ function pmeta:ReplaceText(num, rep, onend, nolerp)
 
 	newfrag.Alpha = 0
 	newfrag.ID = num
-	newfrag.LerpFromLast = 0
+	newfrag.LerpFromLast = nolerp and 1 or 0
 	--newfrag.RewindTextPos = true
 
 	local frag
@@ -635,8 +635,8 @@ function pmeta:ReplaceText(num, rep, onend, nolerp)
 	local a = frag.Alpha
 
 	self:CreateAnimation(hex(frag) .. "SubText", function(fr)
-		frag.OffsetY = fr * dropstr
-		frag.Alpha = a - fr*a
+		frag.OffsetY = nolerp and dropstr or fr * dropstr
+		frag.Alpha = nolerp and 0 or a - fr*a
 
 		frag.LerpNext = fr
 		newfrag.LerpFromLast = fr --doing it in the fading _out_ looks better than doing it on fading _in_
@@ -662,8 +662,8 @@ function pmeta:ReplaceText(num, rep, onend, nolerp)
 		newfrag.RewindTextPos = false
 
 
-		newfrag.OffsetY = appstr - (fr * appstr)
-		newfrag.Alpha = fr*255
+		newfrag.OffsetY = nolerp and 0 or appstr - (fr * appstr)
+		newfrag.Alpha = nolerp and 255 or fr * 255
 
 	end,
 
