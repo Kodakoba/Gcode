@@ -4,18 +4,18 @@ local gr = Color(70, 230, 145)
 local red = Color(210, 80, 90)
 local blu = Color(50, 120, 210)
 
-local w, h = ScrW() * 0.5, ScrH() * 0.5
+local dw, dh = ScrW() * 0.5, ScrH() * 0.5
 
-local brt = draw.GetRT("Blurs", w, h)
+local brt = draw.GetRT("Blurs", dw, dh)
 
 local vec = Vector()
-local v2 = Vector(0, h / 2)
+local v2 = Vector(0, dh / 2)
 
 local m1 = Matrix()
 
 local t = 0--math.random() * 10000
 
-local function blurs()
+local function blurs(w, h)
 	local sin = math.sin(CurTime() * 0.2)
 	local cos = math.cos(CurTime() * 0.12)
 
@@ -23,6 +23,10 @@ local function blurs()
 
 	m1:Reset()
 	local sw, sh = ScrW(), ScrH()
+
+	w = w or dw
+	h = h or dh
+
 	local mat = draw.RenderOntoMaterial("blurs", w, h, function()
 		local w, h = sw, sh
 		m1:Translate(v2)
@@ -59,7 +63,7 @@ local function blurs()
 	end, nil, nil, nil, true)
 
 	surface.SetMaterial(mat)
-	surface.SetDrawColor(Color(255, 255, 255, 220))
+	surface.SetDrawColor( lazy.GetSet("celwhite", Color, 255, 255, 255, 220) )
 
 	local speed = sin * 0.01 + 0.006
 	t = t + FrameTime() * speed
@@ -69,14 +73,14 @@ local function blurs()
 
 	surface.DrawTexturedRect(math.ceil(x) - (flip and w or 0), 0, w, h)
 	surface.DrawTexturedRectUV(math.ceil(x) - (flip and 0 or w), 0, w, h, 1, 0, 0, 1)
-
-	draw.SimpleText("hey fuckhead", "OSB48", w/2, h/2, color_white, 1, 1)
 end
 
-hook.Add("HUDPaint", "a", function()
+CelestialBlur = blurs
 
+hook.Add("HUDPaint", "a", function()
+	do return end
 	surface.SetDrawColor(bg:Unpack())
-	surface.DrawRect(0, 0, w, h)
+	surface.DrawRect(0, 0, dw, dh)
 
 	blurs()
 end)
