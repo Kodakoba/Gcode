@@ -651,7 +651,7 @@ local function GetOrDownload(url, name, flags, cb)	--callback: 1st arg is materi
 
 		if file.Exists("hdl/" .. name, "DATA") then 		--mat existed on disk: load it in
 
-			local cmat = Material("data/hdl/" .. name, flags or "smooth")
+			local cmat = Material("data/hdl/" .. name, flags or "smooth ignorez")
 
 			mat.mat = cmat
 
@@ -668,7 +668,7 @@ local function GetOrDownload(url, name, flags, cb)	--callback: 1st arg is materi
 
 			hdl.DownloadFile(url, name or "unnamed.dat", function(fn)
 				mat.downloading = false
-				local cmat = Material(fn, flags or "smooth")
+				local cmat = Material(fn, flags or "smooth ignorez")
 				mat.mat = cmat
 
 				mat.w = cmat:Width()
@@ -730,7 +730,7 @@ function surface.DrawMaterial(url, name, x, y, w, h, rot)
 end
 
 function surface.DrawUVMaterial(url, name, x, y, w, h, u1, v1, u2, v2)
-	local mat = GetOrDownload(url, name .. "(noclamp)", "smooth noclamp")
+	local mat = GetOrDownload(url, name .. "(noclamp)", "smooth noclamp ignorez")
 	if not mat then return end
 
 	if mat and mat.downloading or not mat.mat or mat.mat:IsError() then
