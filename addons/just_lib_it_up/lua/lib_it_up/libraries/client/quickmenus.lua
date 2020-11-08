@@ -11,21 +11,15 @@ local iqmr = QuickMenus.IRegistered
 openedQM = nil --panel
 
 local ENTITY = FindMetaTable("Entity")
-local QMObj = QuickMenus.Obj or {}
-local QMMeta = QuickMenus.Meta or {}
 
-QuickMenus.Obj = QMObj
-QuickMenus.Meta = QMMeta
+QuickMenus.QuickMenu = QuickMenus.QuickMenu or Animatable:callable()
+local qobj = QuickMenus.QuickMenu
 
-QMObj.__index = QMMeta
-
-setmetatable(QMObj, QMMeta)
-
-AccessorFunc(QMMeta, "progress", "Progress")
-AccessorFunc(QMMeta, "dist", "UseDistance")
-AccessorFunc(QMMeta, "time", "Time")
-AccessorFunc(QMMeta, "KeepAlive", "KeepAlive")
-AccessorFunc(QMMeta, "ent", "Entity")
+AccessorFunc(qobj, "progress", "Progress")
+AccessorFunc(qobj, "dist", "UseDistance")
+AccessorFunc(qobj, "time", "Time")
+AccessorFunc(qobj, "KeepAlive", "KeepAlive")
+AccessorFunc(qobj, "ent", "Entity")
 
 local CreateQuickMenu
 
@@ -33,54 +27,137 @@ local CreateQuickMenu
 	Functions for override
 ]]
 
-function QMMeta:OnOpen(ent, pnl)
+function qobj:OnOpen(ent, pnl)
+end
+function qobj:OnHold(ent, pnl)
+end
+function qobj:OnClose(ent, pnl)		--this is called when the qm progress was 1 but became less than 1
+end
+function qobj:OnFullClose(ent, pnl)	--this is called when the qm progress reaches 0
+end
+function qobj:OnUnhold(ent, pnl)
+end
+function qobj:OnReopen(ent, pnl)
+end
+function qobj:OnRehold(ent, pnl)
+end
+function qobj:Think(ent, pnl)
+end
+function qobj:Paint(ent, pnl)
+end
+
+function qobj:Destroy()
+	table.RemoveByValue(iqmr, self)
+	qmregistered[self.ent] = nil
+end
+
+function qobj:StartClose()
+	if self.Closing or self.progress == 0 then
+		self.Closing = true
+		self.Opening = false
+		return
+	end
+
+	local anim, new = self:To("progress", 0, self.progress * self.time, 0, 1)
+	print("Closing", self.ent)
+
+	self.Closing = true
+	self.Opening = false
+
+	if anim then
+		self._progressAnim = anim
+	end
+
+	if self.wasopened then
+		print("	was opened once;")
+		if new then
+			print("on end we'll full-close")
+			anim:On("End", 1, function() print("fullclose called!", self.ent) self:__OnFullClose() end)
+		end
+
+		if self.progress == 1 then
+			print("we're fully open so we're beginning close now")
+			self:Emit("Close")
+			self:__OnClose()
+		end
+	end
 
 end
 
-function QMMeta:OnHold(ent, pnl)
+function qobj:StartOpen()
+	if self.Opening then return end
 
+	local anim, new = self:To("progress", 1, (1 - self.progress) * self.time, 0, 1)
+
+	self.Opening = true
+	self.Closing = false
+
+	if anim then
+		self._progressAnim = anim
+	end
+								-- panel Think runs b4 GM think,	(i think)
+								-- so the panel can get removed before
+								-- the QM starts reopening, thus causing a
+								-- reopen on a fresh panel which is bad
+
+								-- to proc that bug you need to open on exactly the same frame as the progress reaches 0
+								-- sounds hard but i managed to proc it so let's put safeguards
+	if self.progress > 0 and self.wasopened and IsValid(openedQM) then
+		if anim then
+			anim:On("End", 1, function()
+				self:Emit("Reopen")
+				self:__OnReopen()
+			end)
+		end
+
+		return
+	end
+
+	if new then
+		anim:On("End", 1, function() self:__OnOpen() end)
+	end
 end
 
-
-function QMMeta:OnClose(ent, pnl)		--this is called when the qm progress was 1 but became less than 1
-
+function qobj:StopProgress()
+	if self._progressAnim then self._progressAnim:Stop() end
 end
 
-function QMMeta:OnFullClose(ent, pnl)	--this is called when the qm progress reaches 0
+function qobj:Close()
 
-end
+	--[[self:Emit("Close")
+	self:__OnClose()]]
 
-function QMMeta:OnUnhold(ent, pnl)
+	--self:Emit("FullClose")
+	--self:__OnFullClose()
+	--self:StopProgress()
 
-end
+	self.Opening = false
+	self.Closing = true
+	self:StartClose()
 
-function QMMeta:OnReopen(ent, pnl)
-
-end
-
-function QMMeta:OnRehold(ent, pnl)
-
-end
-
-function QMMeta:Think(ent, pnl)
-
-end
-
-function QMMeta:Paint(ent, pnl)
-
-end
-
-function QMMeta:Close()
-	self.wasopened = false
-	if openedQM and openedQM:IsValid() then openedQM:Remove() end
+	if openedQM and openedQM:IsValid() then openedQM:Remove() print("requested QM removal", debug.traceback()) end
 	openedQM = CreateQuickMenu()
 end
+
+function qobj:Initialize(ent)
+	qmregistered[ent] = self
+
+	iqmr[#iqmr + 1] = self
+
+
+	self.progress = 0
+	self.active = false
+	self.wasopened = false
+	self.ent = ent
+	self.PopIns = {}
+end
+
 
 --[[
 	Internal functions
 ]]
-function QMMeta:__OnClose(ent, pnl)
 
+function qobj:__HidePopins()
 	for k,v in pairs(self.PopIns) do
 		if not IsValid(v.Panel) then self.PopIns[k] = nil continue end
 
@@ -98,16 +175,14 @@ function QMMeta:__OnClose(ent, pnl)
 		end
 		if v.MoveInAnim then v.MoveInAnim:Stop() v.MoveInAnim = nil end
 
-		v.PopOutAnim = btn:AlphaTo(0, self:GetTime(), 0)
+		v.PopOutAnim = btn:PopOutHide()
 		v.MoveOutAnim = btn:MoveBy(oX, oY, self:GetTime(), 0, 0.2)
 	end
-
-	self.Open = false
-	self.Closing = true
 end
 
-function QMMeta:__OnReopen(ent, pnl)
 
+
+function qobj:__ShowPopins()
 	for k,v in pairs(self.PopIns) do
 
 		if not IsValid(v.Panel) then self.PopIns[k] = nil continue end
@@ -117,22 +192,67 @@ function QMMeta:__OnReopen(ent, pnl)
 		if v.PopOutAnim then v.PopOutAnim:Stop() v.PopOutAnim = nil end
 		if v.MoveOutAnim then v.MoveOutAnim:Stop() v.MoveOutAnim = nil end
 
-		v.PopInAnim = btn:AlphaTo(255, 0.1, 0)
+		v.PopInAnim = btn:PopInShow()
 		v.MoveInAnim = btn:MoveTo(v.X, v.Y, self:GetTime(), 0, 0.2)
 	end
-
-	self.Open = true
-	self.Closing = false
 end
 
-function QMMeta:__OnOpen(ent, pnl)
+function qobj:__OnFullClose()
+	if not self.wasopened then return end
+
+	self.opened = false
+	self.wasopened = false
+	self:__HidePopins()
+	self.Closing = false
+	self.Opening = false
+	self.progress = 0
+
+	self:Emit("FullClose")
+	self:OnFullClose(self.ent, openedQM)
+end
+
+-- begin closing after qm reached 1
+function qobj:__OnClose()
+	if not self.wasopened then return end
+
+	self:__HidePopins()
+
+	self.opened = false
+	self.Open = false
+	self.Closing = true
+
+	self:OnClose(self.ent, openedQM)
+end
+
+-- opened again after it has been opened once
+function qobj:__OnReopen()
+
+	self:__ShowPopins()
+
+	self.opened = true
+	self.wasopened = true
+
+	self.Open = true
+
+	self:OnReopen(self.ent, openedQM)
+end
+
+-- full open for the first time
+function qobj:__OnOpen()
+	self.opened = true
+	self.wasopened = true
+
+	self:__ShowPopins()
+
 	self.Open = true
 	self.Closing = false
+
+	self:OnOpen(self.ent, openedQM)
 end
 
 --quick function for making fancy button pop-in & out animations without much hassle
 
-function QMMeta:AddPopIn(pnl, x, y, offx, offy)
+function qobj:AddPopIn(pnl, x, y, offx, offy)
 	local pop = {}
 
 	self.PopIns[#self.PopIns + 1] = pop
@@ -158,40 +278,25 @@ function ENTITY:SetQuickInteractable(b)
 
 	if b==nil or b then
 
-		local key = #iqmr + 1
+		local qm = qobj:new(self)
+			qm.dist = 192
+			qm.time = 0.4
+			qm.ease = 1.4
 
-		local tbl = {
-			key = key,
-			ent = self,
+		local id = ("QuickMenus:%p"):format(self)
 
-			dist = 192,
-			time = 0.5,
-			ease = 2,
+		hook.OnceRet("EntityRemoved", id, function(ent)
+			if ent ~= self then return false end
+			if qm.progress > 0 then
+				qm:Close()
+				qm:Destroy()
+			end
+		end)
 
-			progress = 0,
-			active = false,
-			PopIns = {}
-		}
-		setmetatable(tbl, QMObj)
-
-		qmregistered[self] = tbl
-		iqmr[key] = tbl
-
-		return tbl
+		return qm
 	end
 
-	local id = ("QuickMenus:%p"):format(self)
-
-	hook.OnceRet("EntityRemoved", id, function(ent)
-		if ent ~= self then return false end
-		if tbl.progress > 0 then
-			tbl:OnClose(v.ent, openedQM)
-			tbl:__OnClose(v.ent, openedQM)
-			tbl:OnFullClose(v.ent, openedQM)
-		end
-	end)
-
-	table.remove(iqmr, qmregistered[self].key)
+	table.RemoveByValue(iqmr, qmregistered[self])
 	qmregistered[self] = nil
 end
 
@@ -207,79 +312,78 @@ function ENTITY:SetQuickMenuEase(num)
 	qmregistered[self].ease = num
 end
 
-local function DoTimer(qm, slow)
+local function DoTimer(qm)
 
 	if not qm then
 		for k,v in ipairs(iqmr) do
-			DoTimer(v, slow)
+			DoTimer(v)
 		end
 		return
 	end
 
-	local mult = (qm.active and 1 or -1) * (slow and 0.5 or 1)
-	qm.progress = math.Clamp(qm.progress + (FrameTime()/qm.time) * mult, 0, 1)
+	if qm.active then
+		qm:StartOpen()
+	else
+		qm:StartClose()
+	end
+
+	if qm.progress > 0 then
+		qm:Think()
+	end
+
+end
+
+local function mostActiveQM()
+	local mx, qm = 0, nil
+
+	for i=1, #iqmr do
+		local v = iqmr[i]
+		local pr = v.progress
+		if pr > mx then
+			qm = v
+			mx = pr
+		end
+	end
+
+	return qm, mx
 end
 
 local opened
 
 function CreateQuickMenu()
+	if IsValid(openedQM) then error("creating a panel on top of an existing panel -- this is really bad") end
+	print("creating qm")
 	local p = vgui.Create("DPanel")
 	p:SetSize(600, 400)
 	p:Center()
 
+	p.Size = 64
 	local maxperc = 0
 
 	local qm	--the quick menu with maximum progress
+	local lastEase = 1
 
-	local size = 64
 	local pad = 6
 
-	local shrinkanim
 	local shrinking = false
 
 	function p:Think()
 
 		maxperc = 0
 
-		local active = false
-
-		local hastime = false
-
 		-- iterate all QM's, find the 'most active'
 
-		for k=#iqmr, 1, -1 do
-
-			local v = iqmr[k]
-
-			if not IsValid(v.ent) then
-				table.remove(iqmr, k)
-				continue
-			end
-
-			active = active or v.active
-			hastime = hastime or v.progress > 0
-
-
-			maxperc = math.max(v.progress, maxperc)
-
-			--[[if v.progress == 0 then
-				v.wasopened = false
-			end]]
-
-			if v.progress == maxperc then
-				qm = v
-			end
-
-			if v.progress == 0 and v.wasopened then
-				v.wasopened = false
-				v:OnFullClose(v.ent, self)
-			end
-		end
+		qm, maxperc = mostActiveQM()
 
 		-- check if we should even keep the panel open and
 		-- whether we should shrink the circle now
 
-		if not qm or (not active and not hastime) then
+		if qm then
+			lastEase = qm.ease
+		end
+
+		if not qm or maxperc == 0 then
+			print("not qm or maxperc == 0; removing QM pnl", qm, maxperc)
 			self:Remove()
 			openedQM = nil
 			return
@@ -288,79 +392,25 @@ function CreateQuickMenu()
 		if maxperc == 1 and not shrinking then
 			shrinking = true
 
-			if shrinkanim then
-				shrinkanim:Swap(0.1, 0, 0.4)
-			else
-				shrinkanim = self:NewAnimation(0.1, 0, 0.4):SetSwappable()
-			end
+			self:To("Size", 40, 0.1, 0, 0.4)
 
 			self:MakePopup()
 
-			self:SetMouseInputEnabled(true)
-			self:SetKeyBoardInputEnabled(false)
-
-			shrinkanim.Think = function(_, self, frac)
-				size = 64 - 24*frac
+			if not qm.NoMouseInput then
+				self:SetMouseInputEnabled(true)
 			end
 
+			self:SetKeyBoardInputEnabled(false)
+
 		elseif shrinking and maxperc < 1 then
-
-			shrinkanim:Swap(0.1, 0, 0.4)
-
-			local sizediff = 64 - size
 			shrinking = false
+			self:To("Size", 64, 0.1, 0, 0.4)
 
 			self:SetMouseInputEnabled(false)
 
-			shrinkanim.Think = function(_, self, frac)
-				size = 64 - sizediff*(1 - frac)
-			end
-
 		end
 
-		-- and only then run all the individual QMs' logic
-
-		for k,v in ipairs(iqmr) do
-			local progress = v.progress
-
-			if v.active then
-				if v.wasopened and not v.opened then
-					-- im unsure what this does now, lol
-					v:OnRehold()
-				end
-			end
-
-			if progress > 0 then
-				-- we think only if progress is > 0, aka we still exist
-				hastime = true
-				v:Think(v.ent, self)
-			end
-
-			--progress = 100%, not open and no more opened quickmenus
-			if progress == 1 and not v.opened and not self.CurrentQM then 	
-				-- run either first open or reopen functions
-				v.opened = true
-				opened = v
-
-				if v.wasopened then
-					v:OnReopen(v.ent, self)
-					v:__OnReopen(v.ent, self)
-				else
-					v.wasopened = true
-					v:OnOpen(v.ent, self)
-					v:__OnOpen(v.ent, self)
-				end
-
-				
-			end
-
-			if progress ~= 1 and v.opened then
-				v.opened = false
-				-- progress dropped from 1 to < 1: run closing functions (not full close)
-				v:OnClose(v.ent, self)
-				v:__OnClose(v.ent, self)
-			end
-		end
+		--DoTimer()
 
 		self.CurrentQM = qm.progress == 1 and qm
 	end
@@ -370,6 +420,7 @@ function CreateQuickMenu()
 
 	p.CircleInnerColor = Color(250, 250, 250)
 	p.MaxInnerAlpha = 255
+	p.CircleSize = 64
 
 	function p:Paint(w, h)
 		self.Fraction = frac
@@ -388,7 +439,8 @@ function CreateQuickMenu()
 
 		end
 
-		local perc = (maxperc^2)
+		local perc = (maxperc ^ lastEase)
+		local size = self.Size
 
 		local mask = function()
 			draw.Circle(midX, midY, size+6, 32, perc * 100)
@@ -436,11 +488,19 @@ hook.Add("Think", "QuickMenus", function()
 		end
 	end
 
+	local haveKeepAlive = false
+
 	for k,v in ipairs(iqmr) do
 		if not v.KeepAlive then
 			v.active = false
+		else
+			haveKeepAlive = true
 		end
 	end
+
+	-- if we have a keepalive QM then we don't even do the logic for the rest,
+	-- since we don't want two QM's active
+	if haveKeepAlive then DoTimer() return end
 
 	local lp = LocalPlayer()
 
@@ -449,29 +509,12 @@ hook.Add("Think", "QuickMenus", function()
 
 	local tr = lp:GetEyeTrace()
 
-	if not using then DoTimer() return end
-
-	if not IsValid(tr.Entity) or physgunning then
-
-		if openedQM then
-
-			for k,v in ipairs(iqmr) do
-				if v ~= openedQM._qm then
-					DoTimer(v)
-				end
-			end
-
-		else
-			DoTimer()
-		end
-
-		return
-	end
+	if not using or (not IsValid(tr.Entity) or physgunning) then DoTimer() return end
 
 	local ent = tr.Entity
 	local qm = qmregistered[ent]
 
-	if not qm then DoTimer(nil, using) return end --??
+	if not qm then DoTimer() return end --??
 
 	if tr.Fraction*32768 > qm.dist then DoTimer(qm) return end
 

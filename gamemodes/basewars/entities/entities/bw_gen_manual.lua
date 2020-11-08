@@ -30,6 +30,8 @@ function ENT:GenPower()
 end
 
 function ENT:GenerateOptions(qm, pnl)
+	print("generating options", qm, pnl)
+
 	local gen = vgui.Create("FButton", pnl)
 	gen:SetLabel("Make some power!")
 
@@ -87,6 +89,8 @@ function ENT:GenerateOptions(qm, pnl)
 
 	qm:AddPopIn(pw, pw.X, pw.Y, 0, 32)
 	qm:AddPopIn(gen, gen.X, gen.Y - pnl.CircleSize - 8, 0, -32)
+
+	return gen, pw
 end
 
 if SERVER then

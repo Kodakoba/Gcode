@@ -25,10 +25,14 @@ local TimeToOpenPanel = 0.4
 
 DrawCable = DrawCable or false	-- Entity: from
 
+local dcFirstFrame = false -- is this the first frame when DrawCable was defined? used for DeltaText at the very bottom
+
 DrawCableDist = DrawCableDist or nil
 DrawCableEntity = DrawCableEntity or nil 	-- Entity: to
 
-local function OpenShit(qm, self, pnl)
+function ENT:OpenShit(qm, self, pnl)
+	print("initial open on gen")
+	if not IsValid(pnl) then error("WTF " .. tostring(pnl)) return end
 
 	GeneratorPanel = pnl
 
@@ -43,27 +47,28 @@ local function OpenShit(qm, self, pnl)
 
 	if ent.GenerateOptions then
 
-		if pnl.Panels then
+		if qm.Panels then
 
-			local valid = true
+			local valid = #qm.Panels > 0
 
-			for k, pnl in ipairs(pnl.Panels) do
-				if not IsValid(pnl) then valid = false break end
+			for k, p in ipairs(qm.Panels) do
+				if not IsValid(p) then print(p, "is invalid; recreating all") valid = false break end
 			end
-
-			if valid then return end
-
+			print("all valid?", valid)
+			if valid then print("skipping") goto skipOptions end 	-- every option is valid; don't recreate and bail
+												-- had ta use a goto here
 		end
 
 		local pnls = {ent:GenerateOptions(qm, pnl)}
 
-		pnl.Panels = pnls
+		qm.Panels = pnls
 	end
 
+	::skipOptions::
 
-	if not IsValid(pnl.ConnectBtn) then
+	if not IsValid(qm.ConnectBtn) then
 		local con = vgui.Create("FButton", pnl)
-		pnl.ConnectBtn = con
+		qm.ConnectBtn = con
 		con:SetSize(128, 48)
 
 		con.X = pnl.CircleX + pnl.CircleSize + 64
@@ -75,21 +80,20 @@ local function OpenShit(qm, self, pnl)
 		con.AlwaysDrawShadow = true
 		con:SetLabel("Connect to...")
 
-		pnl.HookUp = con
-
 		qm:AddPopIn(con, con.X, con.Y, 64, 0)
 
 		function con:DoClick()
 			DrawCable = ent
+			dcFirstFrame = true
 		end
 	end
 
-	if not IsValid(pnl.DisconnectBtn) then
+	if not IsValid(qm.DisconnectBtn) then
 
 		if IsValid(self:GetHotwired()) or IsValid(self:GetLine()) then
 
 			local disc = vgui.Create("FButton", pnl)
-			pnl.DisconnectBtn = disc
+			qm.DisconnectBtn = disc
 			disc:SetSize(128, 48)
 
 			disc.X = pnl.CircleX - pnl.CircleSize - 64 - 64
@@ -98,7 +102,6 @@ local function OpenShit(qm, self, pnl)
 			disc:PopIn()
 			disc.AlwaysDrawShadow = true
 			disc:SetLabel("Disconnect")
-			pnl.Disconnect = disc
 
 			function disc:DoClick()
 				net.Start("ConnectGenerator")
@@ -120,7 +123,7 @@ local function OpenShit(qm, self, pnl)
 				PreviewCable = false
 				PreviewFinalCablePoint = nil
 
-				pnl.Disconnect = nil
+				qm.DisconnectBtn = nil
 				ent.ExpectedDisconnect = true
 
 			end
@@ -131,7 +134,7 @@ local function OpenShit(qm, self, pnl)
 
 	function pnl:OnActive()
 
-		if not IsValid(self.Disconnect) and IsValid(ent:GetHotwired()) then
+		if not IsValid(qm.DisconnectBtn) and IsValid(ent:GetHotwired()) then
 			--[[
 				Disconnect button
 			]]
@@ -170,47 +173,13 @@ local function OpenShit(qm, self, pnl)
 
 		self.Shake = self:NewAnimation(1, 0, 0.6, function() offX = 0 hilite = 0 self.Shake = nil end)
 		self.Shake.Think = function(_, self, f)
-			local fr = f
-			offX = math.sin(fr*math.pi*4)*10
+			offX = math.sin(f * math.pi * 4) * 10
 			hilite = 1 - f
 		end
 	end
 
-	function pnl:GeneratorPaint(w, h)
-
-		tim = usingtime
-		if not IsValid(ent) then self:Remove() return end
-
-		local perc = 100 * (math.min(tim * 1/TimeToOpenPanel, 1))^2
-
-		if perc >= 100 and not DrawCable then
-			size = L(size, 32, 25, true)
-
-			if not active then
-				self:OnActive()
-			end
-			active = true
-
-		else
-			size = L(size, 64, 25)
-			if active then
-				self:OnUnactive()
-			end
-			active = false
-		end
-
-	end
-
-	local txfrac = 0
-	local toofar = 0
-
-	local rndto = 5	--rounding for lerping the text/box sizes in V
-	local rndmul = 10^rndto
-
 	function pnl:ConnectPaint(w, h)
 		self:SetMouseInputEnabled(false)
-
-		self:GeneratorPaint(w, h)
 	end
 
 
@@ -223,12 +192,13 @@ local function OpenShit(qm, self, pnl)
 			pnl:ConnectPaint(w, h)
 			self:SetKeepAlive(true)
 
-			if pnl.HookUp then
-				pnl.HookUp:AlphaTo(50, 0.2, 0, nil, 0.3)
+			self.FadedDueToCable = true
+			if qm.ConnectBtn then
+				qm.ConnectBtn:AlphaTo(50, 0.2, 0, nil, 0.3)
 			end
 
-			if pnl.Disconnect then
-				pnl.Disconnect:AlphaTo(50, 0.2, 0, nil, 0.3)
+			if qm.DisconnectBtn then
+				qm.DisconnectBtn:AlphaTo(50, 0.2, 0, nil, 0.3)
 			end
 
 			if self.Panels then
@@ -238,50 +208,48 @@ local function OpenShit(qm, self, pnl)
 			end
 
 		else
-			pnl:GeneratorPaint(w, h)
 
-			--[[if not self.Closing and self.Open then
-				if pnl.HookUp then
-					pnl.HookUp:AlphaTo(255, 0.2, 0, nil, 0.3)
+			if self.FadedDueToCable then
+				if qm.ConnectBtn then
+					qm.ConnectBtn:AlphaTo(255, 0.2, 0, nil, 0.3)
 				end
-				if pnl.Disconnect then
-					pnl.Disconnect:AlphaTo(255, 0.2, 0, nil, 0.3)
+
+				if qm.DisconnectBtn then
+					qm.DisconnectBtn:AlphaTo(255, 0.2, 0, nil, 0.3)
 				end
+
 				if self.Panels then
 					for k,v in ValidIPairs(self.Panels) do
 						v:AlphaTo(255, 0.2, 0, nil, 0.3)
 					end
 				end
 
-				if not vgui.CursorVisible() and IsValid(openedQM) then
-					openedQM:SetMouseInputEnabled(true)
-				end
-			end]]
+				self.FadedDueToCable = false
+			end
 
 			self:SetKeepAlive(false)
 		end
 
 	end
 
-	--[[local ent = self:GetHotwired()
+end
 
-	if IsValid(ent) then
-		if ent.DontPreview then return end
+function ENT:CloseAll(qm, self, pnl)
+	if not IsValid(pnl) then print("!!invalid pnl!!") return end
 
-		PreviewFinalCablePoint = ent
+	for k,v in pairs(qm.Panels) do
+		v:PopOut()
+		qm.Panels[k] = nil
+	end
 
-		if ent.UseSpline~=nil then
-			NoSpline = not ent.UseSpline
-		end
-
-		PreviewCable = self
-	end]]
-
+	qm.ConnectBtn:PopOut()
+	qm.DisconnectBtn:PopOut()
 end
 
 function ENT:CLInit()
 	local qm = self:SetQuickInteractable()
-	qm.OnOpen = OpenShit
+	qm.OnOpen = function(...) self:OpenShit(...) end
+	qm.OnFullClose = function(...) self:CloseAll(...) end
 	--qm.OnReopen = OpenShit
 
 	self:OnChangeGridID(self:GetGridID())
@@ -701,11 +669,11 @@ hook.Add("HUDPaint", "DrawPreviewCable", function()
 
 	if DrawCableClass then
 		anim:To("Frac", 1, 0.4, 0, 0.3)
-		local _, frag = dt.BText:ReplaceText(dt.ConnectWhat, " " .. DrawCableClass)
+		local _, frag = dt.BText:ReplaceText(dt.ConnectWhat, " " .. DrawCableClass, nil, dcFirstFrame)
 		if frag then frag.Color = Colors.Sky end
 	else
 		anim:To("Frac", 0, 0.3, 0, 0.3)
-		local _, frag = dt.BText:ReplaceText(dt.ConnectWhat, "...")
+		local _, frag = dt.BText:ReplaceText(dt.ConnectWhat, "...", nil, dcFirstFrame)
 		if frag then frag.Color = Colors.DarkWhite end
 	end
 
@@ -749,6 +717,9 @@ hook.Add("HUDPaint", "DrawPreviewCable", function()
 					sh / 2 + yOffset + 36 + farFrac * 16,
 					redCol, 1, 5)
 	end
+
+
+	dcFirstFrame = false
 end)
 
 --def not stolen from factorio

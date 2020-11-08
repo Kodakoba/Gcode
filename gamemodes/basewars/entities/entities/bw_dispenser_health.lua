@@ -59,9 +59,13 @@ function ENT:QMOnBeginClose(qm, self, pnl)
 	local y = midY - stimBtn:GetTall() / 2
 
 	stimBtn:CircleMoveTo(x, y, 0.3, 0.4, true)
-	stimBtn:PopOut(0.2):Then(function()
-		qm:Close()
-	end)
+	local anim = stimBtn:PopOutHide(0.2)
+
+	if anim then
+		--[[anim:Then(function()
+			qm:Close()
+		end)]]
+	end
 
 	pnl.Closing = true
 end
@@ -81,8 +85,10 @@ function ENT:QMOnReopen(qm, self, pnl)
 	healBtn:PopIn(0.2)]]
 
 	local stimBtn = pnl.GiveStimBtn
+	stimBtn:Stop()
 	stimBtn:CircleMoveTo(stimBtn.ToX, stimBtn.ToY, 0.3, 0.4)
 	stimBtn:AlphaTo(pnl.StimAlpha, 0.3, 0, 0.3)
+	stimBtn:Show()
 
 	pnl.Closing = false
 end
@@ -94,7 +100,7 @@ function ENT:OpenShit(qm, self, pnl)
 	--pnl:SetSize(850, 600)	--cant fit
 	--pnl:CenterHorizontal()
 	local give_stim
-
+	print("mouseinput disabled")
 	pnl:SetMouseInputEnabled(false)
 	pnl.MouseFrac = 0
 	pnl.PowerFrac = 0
@@ -291,6 +297,7 @@ function ENT:CLInit()
 	--qm.OnFullClose = function(...) self:QMOnClose(...) end
 	qm.OnReopen = function(...) self:QMOnReopen(...) end
 
+	qm.NoMouseInput = true
 end
 
 function ENT:CheckUsable()
