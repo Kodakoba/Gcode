@@ -274,6 +274,7 @@ function nw:Invalidate()
 	self.Valid = false
 
 	cache[self.NetworkableID] = nil
+	idData[self.NetworkableID] = nil
 
 	if self.NumberID and numToID[self.NumberID] == self.NetworkableID then numToID[self.NumberID] = nil end
 
@@ -321,7 +322,7 @@ end
 
 if SERVER then
 
-	local function WriteIDPair(i)
+	local function WriteIDPair(i, maxsz)
 
 		local name = numToID[i]
 		local obj = cache[name]
@@ -330,7 +331,7 @@ if SERVER then
 			realPrintf("Failed obtaining networkable object serverside: ID %d; name %s", i, name)
 		end
 
-		net.WriteUInt(i, 24)
+		net.WriteUInt(i, maxsz)
 		net.WriteUInt(obj.NetworkableIDEncoder.ID, encoderIDLength)
 
 		obj.NetworkableIDEncoder.Func(name, obj.NetworkableIDEncoder.IDArg)
@@ -384,6 +385,7 @@ if SERVER then
 
 		local newids = {--[[ [seq_id] = name ]]}
 		local added = {--[[ [name] = true ]]}
+		local maxID = 0
 
 		for _, ply in ipairs(everyone) do
 			for numID, nameID in pairs(numToID) do
@@ -394,6 +396,7 @@ if SERVER then
 					if obj.Filter then continue end
 
 					newids[#newids + 1] = numID
+					maxID = math.max(maxID, numID)
 					_NetworkableAwareness:Set(true, ply, nameID)
 					added[nameID] = true
 				end
@@ -404,7 +407,7 @@ if SERVER then
 		for id, v in pairs(_NetworkableChanges) do
 			-- if an obj has a filter it gets removed from all-player-broadcasting
 			local obj = cache[id]
-
+			maxID = math.max(maxID, obj.NumberID)
 			if not obj.Filter then
 				changes_count = changes_count + 1
 				for k, ply in ipairs(everyone) do
@@ -417,14 +420,17 @@ if SERVER then
 		if #newids == 0 and changes_count == 0 then return end
 
 		local nw = netstack:new()
-
+		print('server: max ID', maxID)
 		net.Start("NetworkableSync")
 			local ns = netstack:new()
 			ns:Hijack()
 
 			net.WriteUInt(#newids, 16)
+			local maxsz = bit.GetLen(maxID)
+			net.WriteUInt(maxsz, 5)
+
 			for i=1, #newids do
-				WriteIDPair(newids[i])
+				WriteIDPair(newids[i], maxsz)
 			end
 
 			net.WriteUInt(changes_count, 8).Description = "Changed objects count" --amount of changed networkable objects
@@ -438,7 +444,7 @@ if SERVER then
 				if obj.Filter then continue end --nyope
 
 				changed = changed + 1
-				net.WriteUInt(IDToNumber(id), 24).Description = "IDToNumber"
+				net.WriteUInt(IDToNumber(id), maxsz).Description = "IDToNumber"
 
 				local changesAmt = 0
 				local writeChanges = {}
@@ -526,7 +532,7 @@ if SERVER then
 				end
 
 				net.WriteUInt(1, 8) --amount of changed networkable objects (just self)
-				net.WriteUInt(IDToNumber(self.NetworkableID), 24) -- self's NetworkableID
+				net.WriteUInt(IDToNumber(self.NetworkableID), maxsz) -- self's NetworkableID
 				net.WriteUInt(table.Count(_NetworkableChanges[self.NetworkableID]), 8) -- amt of changes in self
 
 				for k,v in pairs(_NetworkableChanges[self.NetworkableID]) do 
@@ -543,8 +549,8 @@ end
 
 if CLIENT then
 
-	local function ReadIDPair(i)
-		local num = net.ReadUInt(24)
+	local function ReadIDPair(i, sz)
+		local num = net.ReadUInt(sz)
 		local enc_id = net.ReadUInt(encoderIDLength)
 
 		local dec = decoderByID[enc_id]
@@ -583,10 +589,11 @@ if CLIENT then
 		print("received networkable sync: length", len/8, "bytes")
 		-- read new numid:id pairs
 		local new_ids = net.ReadUInt(16)
-		print("reading", new_ids, "new pairs")
+		local idsz = net.ReadUInt(5)
+		print("reading", new_ids, "new pairs", idsz, "max size")
 
 		for i=1, new_ids do
-			local num_id, id = ReadIDPair(i)
+			local num_id, id = ReadIDPair(i, idsz)
 			printf("	new pair: %d = %s", num_id, id)
 			if not cache[id] then --that object doesn't exist clientside; store the num_id:id conversion
 				Networkable.CreateIDPair(id, num_id)
@@ -599,7 +606,7 @@ if CLIENT then
 		local changes = net.ReadUInt(8) --how many networkable objects were changed
 		print("reading", changes, " changes")
 		for i=1, changes do
-			local num_id = net.ReadUInt(24)			--numberID of the networkable object
+			local num_id = net.ReadUInt(idsz)			--numberID of the networkable object
 			local changed_keys = net.ReadUInt(8)	--amt of changed keys
 
 			local obj = cache[numToID[num_id]]
