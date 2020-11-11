@@ -325,7 +325,7 @@ function button:Draw(w, h)
 		end
 
 		if self.ActiveMatrix then
-			cam.PushModelMatrix(self.ActiveMatrix)
+			cam.PushModelMatrix(self.ActiveMatrix, true)
 		end
 
 			self:DrawButton(x, y, w, h)

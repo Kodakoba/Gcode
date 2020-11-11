@@ -448,10 +448,10 @@ end
 
 function ebutton:Paint(w, h)
 	local h2 = self.FakeH
-
-	self:PrePaint(w, h2)
+	self.BaseClass.Paint(self, w, h2)
+	--[[self:PrePaint(w, h2)
 	self:Draw(w, h2)
-	self:PostPaint(w, h2)
+	self:PostPaint(w, h2)]]
 end
 
 vgui.Register("EButton", ebutton, "FButton")
