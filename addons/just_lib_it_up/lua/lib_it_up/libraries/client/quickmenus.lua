@@ -15,6 +15,10 @@ local ENTITY = FindMetaTable("Entity")
 QuickMenus.QuickMenu = QuickMenus.QuickMenu or Animatable:callable()
 local qobj = QuickMenus.QuickMenu
 
+function qobj:__tostring()
+	return ("[QuickInteractable: [%s][%s]]"):format(self.ent:EntIndex(), self.ent:GetClass())
+end
+
 AccessorFunc(qobj, "progress", "Progress")
 AccessorFunc(qobj, "dist", "UseDistance")
 AccessorFunc(qobj, "time", "Time")
@@ -59,24 +63,21 @@ function qobj:StartClose()
 	end
 
 	local anim, new = self:To("progress", 0, self.progress * self.time, 0, 1)
-	print("Closing", self.ent)
 
 	self.Closing = true
 	self.Opening = false
 
 	if anim then
 		self._progressAnim = anim
+		anim:RemoveListeners("End", 1)
 	end
 
 	if self.wasopened then
-		print("	was opened once;")
 		if new then
-			print("on end we'll full-close")
-			anim:On("End", 1, function() print("fullclose called!", self.ent) self:__OnFullClose() end)
+			anim:On("End", 1, function() self:__OnFullClose() end)
 		end
 
 		if self.progress == 1 then
-			print("we're fully open so we're beginning close now")
 			self:Emit("Close")
 			self:__OnClose()
 		end
@@ -252,7 +253,7 @@ end
 
 --quick function for making fancy button pop-in & out animations without much hassle
 
-function qobj:AddPopIn(pnl, x, y, offx, offy)
+function qobj:AddPopIn(pnl, x, y, offx, offy, nopop, nomove)
 	local pop = {}
 
 	self.PopIns[#self.PopIns + 1] = pop
@@ -268,8 +269,8 @@ function qobj:AddPopIn(pnl, x, y, offx, offy)
 
 	pnl:SetAlpha(0)
 
-	pop.PopInAnim = pnl:PopIn()
-	pop.MoveInAnim = pnl:MoveTo(x, y, self:GetTime(), 0, 0.2)
+	if not nopop then pop.PopInAnim = pnl:PopIn() end
+	if not nomove then pop.MoveInAnim = pnl:MoveTo(x, y, self:GetTime(), 0, 0.2) end
 
 	return pop
 end
@@ -352,12 +353,21 @@ local opened
 
 function CreateQuickMenu()
 	if IsValid(openedQM) then error("creating a panel on top of an existing panel -- this is really bad") end
-	print("creating qm")
-	local p = vgui.Create("DPanel")
-	p:SetSize(600, 400)
-	p:Center()
 
-	p.Size = 64
+	local p = vgui.Create("DPanel", nil, "QuickInteractable Canvas")
+	p:SetSize(ScrW(), ScrH())
+	--p:Center()
+
+	p.CurrentCircleSize = 64
+
+	local circleOuterCol = Color(10, 10, 10)
+	p.CircleOuterColor = circleOuterCol
+
+	p.CircleInnerColor = Color(250, 250, 250)
+	p.MaxInnerAlpha = 255
+	p.MaxCircleSize = 64
+	p.MinCircleSize = 40
+
 	local maxperc = 0
 
 	local qm	--the quick menu with maximum progress
@@ -383,7 +393,6 @@ function CreateQuickMenu()
 		end
 
 		if not qm or maxperc == 0 then
-			print("not qm or maxperc == 0; removing QM pnl", qm, maxperc)
 			self:Remove()
 			openedQM = nil
 			return
@@ -392,7 +401,7 @@ function CreateQuickMenu()
 		if maxperc == 1 and not shrinking then
 			shrinking = true
 
-			self:To("Size", 40, 0.1, 0, 0.4)
+			self:To("CurrentCircleSize", p.MinCircleSize, 0.1, 0, 0.4)
 
 			self:MakePopup()
 
@@ -404,7 +413,7 @@ function CreateQuickMenu()
 
 		elseif shrinking and maxperc < 1 then
 			shrinking = false
-			self:To("Size", 64, 0.1, 0, 0.4)
+			self:To("CurrentCircleSize", self.MaxCircleSize, 0.1, 0, 0.4)
 
 			self:SetMouseInputEnabled(false)
 
@@ -415,13 +424,6 @@ function CreateQuickMenu()
 		self.CurrentQM = qm.progress == 1 and qm
 	end
 
-	local circleOuterCol = Color(10, 10, 10)
-	p.CircleOuterColor = circleOuterCol
-
-	p.CircleInnerColor = Color(250, 250, 250)
-	p.MaxInnerAlpha = 255
-	p.CircleSize = 64
-
 	function p:Paint(w, h)
 		self.Fraction = frac
 
@@ -430,8 +432,7 @@ function CreateQuickMenu()
 
 		if not midX or not midY then
 
-			local x, y = self:ScreenToLocal(ScrW()/2, ScrH()/2)	--w, h might change and the circle always needs to draw in the middle
-																--(unless overridden with self.CircleX, self.CircleY)
+			local x, y = w/2, h/2
 			midX, midY = midX or x, midY or y
 
 			self.CircleX = midX
@@ -440,7 +441,7 @@ function CreateQuickMenu()
 		end
 
 		local perc = (maxperc ^ lastEase)
-		local size = self.Size
+		local size = self.CurrentCircleSize
 
 		local mask = function()
 			draw.Circle(midX, midY, size+6, 32, perc * 100)
