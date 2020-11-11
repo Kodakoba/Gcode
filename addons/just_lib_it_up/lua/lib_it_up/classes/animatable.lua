@@ -21,6 +21,7 @@ local function GCProxy(t)
 	local ud = newproxy(true)
 	local mt = getmetatable(ud)
 
+	Class.CopyMetamethods(mt, t)
 	mt.__gc = function()
 		AnimatableObjects.Dirty = true -- only like this because __gc gets called _after_ the entry has been deleted from the table
 	end

@@ -85,6 +85,12 @@ local recursiveExtend = function(new, old, ...)
 	end
 end
 
+function Class:CopyMetamethods(old)
+	for k,v in ipairs(metamethods) do
+		self[v] = rawget(old, v)
+	end
+end
+
 function Class:ChangeInitArgs(...)
 	Class.__args = {...}
 end
@@ -96,11 +102,7 @@ function Class:extend(...)
 	new.Meta = {}
 	new.Meta.__index = old 				-- this time, __index points to the the parent
 										-- which points to that parent's meta, which points to that parent's parent, so on
-
-	for k,v in ipairs(metamethods) do
-		new[v] = rawget(old, v)
-	end
-
+	Class.CopyMetamethods(new, old)
 	setmetatable(new.Meta, old)
 
 	new.__index = function(t, k) --daily reminder this __index is for children, not for the class itself
