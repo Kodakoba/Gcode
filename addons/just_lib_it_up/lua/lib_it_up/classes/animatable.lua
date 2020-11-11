@@ -4,14 +4,15 @@ Animatable = Animatable or Emitter:callable()
 Animetable = Animatable
 
 AnimatableObjects = AnimatableObjects or setmetatable({}, {__mode = "v"}) -- dont keep references to prevent leaking
+AnimatableObjectsDirty = false -- if true, next Think will sequentialize the table
 AnimatableIDs = AnimatableIDs or setmetatable({}, {__mode = "v"})
 
-function AnimatableObjects.ResetAll()
+
+function AnimatableObjectsResetAll()
 	table.Empty(AnimatableObjects)
 	table.Empty(AnimatableIDs)
 end
 
-AnimatableObjects.Dirty = false -- if true, next Think will sequentialize the table
 
 local objs = AnimatableObjects
 
@@ -23,7 +24,7 @@ local function GCProxy(t)
 
 	Class.CopyMetamethods(mt, t)
 	mt.__gc = function()
-		AnimatableObjects.Dirty = true -- only like this because __gc gets called _after_ the entry has been deleted from the table
+		AnimatableObjectsDirty = true -- only like this because __gc gets called _after_ the entry has been deleted from the table
 	end
 
 	mt.__index = t
@@ -40,9 +41,9 @@ if SERVER then return end --bruh
 
 hook.Add("Think", "AnimatableThink", function()
 
-	if objs.Dirty then
+	if AnimatableObjectsDirty then
 		local oldObjs = objs
-		oldObjs.Dirty = nil
+		AnimatableObjectsDirty = false
 
 		objs = setmetatable({}, {__mode = "v"})
 		AnimatableObjects = objs
@@ -59,6 +60,12 @@ hook.Add("Think", "AnimatableThink", function()
 
 	for k,v in ipairs(objs) do
 		v:AnimationThink()
+	end
+
+	-- todo: debug, remove me
+	if table.Count(objs) ~= #objs then
+		errorf("animatable objects table unsequential - some animations might stop for a while! %d vs. %d", table.Count(objs), #objs)
+		return
 	end
 end)
 
