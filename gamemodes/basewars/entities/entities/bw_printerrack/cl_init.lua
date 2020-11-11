@@ -11,29 +11,6 @@ function ENT:CLInit()
 	self.PowerRequired = 5
 end
 
-local fontName = "BaseWars.MoneyPrinter"
-
-
-
-local WasPowered
-
-local wpad = 32
-
-
-local yoff = 90
-local barH = 32
-
-function ParsePrintersOut(str)
-	local t = string.Explode(" ", str) or {}
-
-	for k,v in pairs(t) do
-		t[k] = tonumber(v)
-	end
-
-	return t
-end
-
-
 function ENT:GetMiscPos()
 
 	local pos = self:GetPos()
@@ -135,7 +112,7 @@ function ENT:Draw()
 	local f = self.Frame
 
 	local pr = self:GetPrinters()
-	local t = self.Printers.Networked--ParsePrintersOut(pr)
+	local t = self.Printers.Networked
 
 	local i = 0
 
