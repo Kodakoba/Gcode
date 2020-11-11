@@ -25,6 +25,9 @@ _NetworkableChanges = _NetworkableChanges or muldim:new()-- _NetworkableChanges 
 
 _NetworkableAwareness = _NetworkableAwareness or muldim:new() --[ply] = {'ID', 'ID'} , not numberids
 
+_NetworkableData = _NetworkableData or muldim:new() 	-- stores networkable data as [num_id] = {bunch of key-values}
+local idData = _NetworkableData							-- only used clientside
+
 Networkable.Verbose = false
 
 local realPrint = print
@@ -53,6 +56,11 @@ function Networkable.ResetAll()
 
 	table.Empty(_NetworkableChanges)
 	table.Empty(_NetworkableAwareness)
+end
+
+function Networkable.CreateIDPair(id, numid)
+	numToID[numid] = id
+	IDToNum[id] = numid
 end
 
 local encoderIDLength = 5 --5 bits fit 16 (0-15) encoders
@@ -158,13 +166,6 @@ function nw:Initialize(id, ...)
 		end
 	end)
 
-	if self.__instance ~= nw then 	-- extension of Networkable; let's try to set the meta to it
-		if cache[id] then			-- in case we received nw data before the object was constructed
-			setmetatable(cache[id], self.__instance)
-			self:ChangeInitArgs(cache[id], id, ...) --eheheh
-		end
-	end
-
 	if not rawget(self.__instance, "AutoAssignID") then return end 	-- if this object is constructed from an Networkable extension,
 																	-- ignore the fact we don't have an ID
 
@@ -179,34 +180,44 @@ function nw:SetNetworkableID(id)
 
 	self.NetworkableID = id
 
-	if cache[id] then
-		for k,v in pairs(cache[id]) do --basically copy
-			self[k] = v
+	if cache[id] then errorf("This isn't supposed to happen -- setting NWID with a networkable already existing! NWID: %s", id) return end
+	cache[id] = self
+
+	printf("SetNetworkableID called %s %s %s", Realm(true, true), id, idData[id])
+
+	if CLIENT and idData[id] then
+		print("woah!!!! existssss")
+		for k, v in pairs(idData[id]) do
+			printf("pulling cached change: %s = %s", k, v)
+			self:Set(k, v)
 		end
-		return setmetatable(cache[id], getmetatable(self))
 	end
 
-	local typ = type(id):lower()
-
-	local encoder, encoderID, additionalArg = determineEncoder(typ, id)
-
-	self.NetworkableIDEncoder = {
-		Func = encoder, --function which will encode the ID
-		ID = encoderID, --ID of the encoder function so the client knows how to figure it out
-		IDArg = additionalArg, --additional arg for the encoder function, for cases like UInt and whatnot which require a second arg
-	}
-
 	if SERVER then
+		local typ = type(id):lower()
+
+		local encoder, encoderID, additionalArg = determineEncoder(typ, id)
+
+		self.NetworkableIDEncoder = {
+			Func = encoder, --function which will encode the ID
+			ID = encoderID, --ID of the encoder function so the client knows how to figure it out
+			IDArg = additionalArg, --additional arg for the encoder function, for cases like UInt and whatnot which require a second arg
+		}
+
 		local key = #numToID + 1
 		numToID[key] = id
 		IDToNum[id] = key
 		self.NumberID = key
 	end
 
-	if cache[id] then error("How") end
-	cache[id] = self
-
 	return self
+end
+
+function nw:SetNetworkableNumberID(numid)
+	if not self.NetworkableID then error("Networkable must have an ID before setting a number ID!") return end
+
+	numToID[numid] = self.NetworkableID
+	self.NumberID = numid
 end
 
 function nw:Set(k, v)
@@ -220,7 +231,10 @@ function nw:Set(k, v)
 		return
 	end
 
-	if not _NetworkableCache[self.NetworkableID] then self:SetNetworkableID(self.NetworkableID) end -- maybe resetall happened
+	if not _NetworkableCache[self.NetworkableID] then
+		printf("didn't find self with nwid?... %s", self.NetworkableID)
+		self:SetNetworkableID(self.NetworkableID)
+	end -- maybe resetall happened
 
 	if CLIENT then -- don't bother
 		self.Networked[k] = v
@@ -239,6 +253,7 @@ function nw:Set(k, v)
 		self.LastSerialized[v] = new_von
 	end
 
+	print("added nw change serverside", k, v)
 	self.Networked[k] = v
 	_NetworkableChanges:Set(v, self.NetworkableID, k)
 	return self
@@ -298,6 +313,10 @@ end
 
 local function IDToNumber(id)
 	return IDToNum[id]
+end
+
+local function NumberToID(id)
+	return numToID[id]
 end
 
 if SERVER then
@@ -569,11 +588,11 @@ if CLIENT then
 		for i=1, new_ids do
 			local num_id, id = ReadIDPair(i)
 			printf("	new pair: %d = %s", num_id, id)
-			if not cache[id] then --that object doesn't exist clientside; create it ahead of time
-				cache[id] = Networkable(id)
-				print("!!! created networkable via net !!!")
+			if not cache[id] then --that object doesn't exist clientside; store the num_id:id conversion
+				Networkable.CreateIDPair(id, num_id)
+			else
+				cache[id]:SetNetworkableNumberID(num_id)
 			end
-			numToID[num_id] = id
 		end
 
 		--read networkable changes
@@ -592,17 +611,20 @@ if CLIENT then
 				printf("	reading change #%d", key_i)
 				local k, v = ReadChange(obj)
 				if obj then		-- [1] = old, [2] = new
+								-- object existed; put the data in it and call the k-v change callbacks
 					changes[k] = {obj.Networked[k], v}
 					obj.Networked[k] = v
 					obj:Emit("NetworkedVarChanged", k, changes[k][1], v) -- key, old, new
 				else
+					-- object did not exist; just stash the data changes for when it's created
+					idData:Set(v, NumberToID(num_id), k)
 					print("failed to find object with numID", num_id)
 				end
 			end
 
 			print("	ID of obj:", numToID[num_id], num_id)
 			if obj then
-				obj.NumberID = num_id
+				-- if the object existed, call the callback after _every_ change has been read
 				obj:Emit("NetworkedChanged", changes)
 			end
 		end
