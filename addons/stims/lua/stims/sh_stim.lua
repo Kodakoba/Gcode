@@ -75,7 +75,7 @@ function PLAYER:IsOnStimCooldown()
 end
 
 hook.Add("CanUseStimpak", "CountCheck", function(ply)
-	if ply:GetStims() < 0 then return false end
+	if ply:GetStims() <= 0 then return false end
 end)
 
 hook.Add("CanUseStimpak", "CooldownCheck", function(ply)
