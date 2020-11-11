@@ -208,6 +208,11 @@ function qobj:__OnFullClose()
 	self.Opening = false
 	self.progress = 0
 
+	if self.__Canvas then
+		self.__Canvas:Remove()
+		self.__Canvas = nil
+	end
+
 	self:Emit("FullClose")
 	self:OnFullClose(self.ent, openedQM)
 end
@@ -222,6 +227,10 @@ function qobj:__OnClose()
 	self.Open = false
 	self.Closing = true
 
+	if self.__Canvas then
+		self.__Canvas:PopOutHide()
+	end
+
 	self:OnClose(self.ent, openedQM)
 end
 
@@ -234,6 +243,10 @@ function qobj:__OnReopen()
 	self.wasopened = true
 
 	self.Open = true
+
+	if self.__Canvas then
+		self.__Canvas:PopInShow()
+	end
 
 	self:OnReopen(self.ent, openedQM)
 end
@@ -273,6 +286,35 @@ function qobj:AddPopIn(pnl, x, y, offx, offy, nopop, nomove)
 	if not nomove then pop.MoveInAnim = pnl:MoveTo(x, y, self:GetTime(), 0, 0.2) end
 
 	return pop
+end
+
+-- adding a canvas will fade it when the qm starts closing, re-fade it back if it gets reopened and removes when the qm gets closed entirely
+-- handy!
+
+-- add a canvas manually
+function qobj:AddCanvas(pnl)
+	self.__Canvas = pnl
+end
+
+-- autocreate a canvas and grab it (cached panel)
+function qobj:GetCanvas()
+	if not openedQM then
+		error("Can't get QM canvas without the main QM panel existing!")
+		return
+	end
+	local ret = IsValid(self.__Canvas) and self.__Canvas
+	local new = false
+
+	if not ret then
+		ret = vgui.Create("InvisPanel", openedQM)
+		ret:SetSize(openedQM:GetSize())
+
+		new = true
+	end
+
+	self.__Canvas = ret
+
+	return ret, new
 end
 
 function ENTITY:SetQuickInteractable(b)
