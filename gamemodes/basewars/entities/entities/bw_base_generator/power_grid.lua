@@ -110,7 +110,7 @@ PowerGrid:On("RemovedConsumer", "UpdatePowerOut", PowerGrid.UpdatePowerOut)
 
 function PowerGrid:Initialize(ow, id, id2) --`id` is only used clientside, when we rely on the server fixing up powergrids to be sequential
 										   --`id2` is to fix up CPPIGetOwner returning uniqueID
-	if ow and ow:UniqueID() == id then
+	if IsPlayer(ow) and ow:UniqueID() == id then
 		id = id2
 	end
 
@@ -137,7 +137,7 @@ function PowerGrid:Initialize(ow, id, id2) --`id` is only used clientside, when 
 
 	self.ID = newid
 
-	self:SetNetworkableID("PowerGrid" .. newid)
+	self:SetNetworkableID("🗲" .. newid)
 
 	__GridEvents = self.__Events
 end
