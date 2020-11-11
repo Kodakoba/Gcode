@@ -8,6 +8,10 @@ local DIM = Color(30, 30, 30, 210)
 
 local button = {}
 
+local sharedScaleVec = Vector(1, 1)
+local sharedTranslVec = Vector(0, 0)
+local mx = Matrix()
+
 function button:Init()
 	self.Color = Colors.Button:Copy()
 	self.drawColor = Colors.Button:Copy()
@@ -38,7 +42,9 @@ function button:Init()
 
 	self.HoverColor = nil
 	self.HoverColorGenerated = nil
-	self.Icon = nil --[[
+	self.Icon = nil
+	self.MxScale = 1
+	--[[
 	{
 		IconURL = "",
 		IconName = "",
@@ -116,8 +122,15 @@ function button:SetTextColor(col, g, b, a)
 	self.DisabledLabelColor.a = 150
 end
 
-function button:HoverLogic(dis)
+function button:HoverLogic(dis, w, h)
 	local shadow = self.Shadow
+
+	if self:IsDown() then
+		local min = math.max(w, h)
+		self:To("MxScale", self.MxScaleDown or (1 - 8 / min), 0.1, 0, 0.3)
+	else
+		self:To("MxScale", 1, 0.1, 0, 0.3)
+	end
 
 	if (self:IsHovered() or self.ForceHovered) and not dis then
 
@@ -299,7 +312,7 @@ function button:Draw(w, h)
 
 	local x, y = 0, 0
 
-	self:HoverLogic(disabled)
+	self:HoverLogic(disabled, w, h)
 
 	local spr = shadow.Spread or 0
 	local label = self.Label or nil
@@ -311,7 +324,15 @@ function button:Draw(w, h)
 			x, y = self:LocalToScreen(0,0)
 		end
 
-		self:DrawButton(x, y, w, h)
+		if self.ActiveMatrix then
+			cam.PushModelMatrix(self.ActiveMatrix)
+		end
+
+			self:DrawButton(x, y, w, h)
+
+		if self.ActiveMatrix then
+			cam.PopModelMatrix()
+		end
 
 		if (self.DrawShadow and spr > 0) or self.AlwaysDrawShadow then
 			local int = shadow.Intensity
@@ -326,7 +347,9 @@ function button:Draw(w, h)
 			if spr < 0.2 then
 				a = a * (spr / 0.2)
 			end
+
 			BSHADOWS.EndShadow(int, spr, blur or 2, a, shadow.Dir, shadow.Distance, nil, shadow.Color, shadow.Color2)
+
 		end
 
 	end
@@ -416,18 +439,73 @@ function button:PrePaint(w,h)
 
 end
 
+
+fbuttonLeakingMatrices = 0	--failsafe
+
+local function popMatrix(self, w, h)
+	local scale = self.MxScale
+
+	if scale ~= 1 then
+		cam.PopModelMatrix()
+		self.ActiveMatrix = nil
+		mx:Reset()
+
+		fbuttonLeakingMatrices = fbuttonLeakingMatrices - 1
+		draw.DisableFilters(true)
+	end
+end
+
 function button:PaintOver(w, h)
 
 	if self.Dim then
 		draw.RoundedBox(self.RBRadius, 0, 0, w, h, DIM)
 	end
 
+	popMatrix(self, w, h)
 end
 
+
 function button:Paint(w, h)
+	local scale = self.MxScale
+
+	if scale ~= 1 then
+		sharedScaleVec[1] = scale
+		sharedScaleVec[2] = scale
+
+		local x, y = self:LocalToScreen(0, 0)
+		sharedTranslVec[1], sharedTranslVec[2] = x + w/2, y + h/2
+
+		mx:Translate(sharedTranslVec)
+			mx:SetScale(sharedScaleVec)
+		mx:Translate(-sharedTranslVec)
+		draw.EnableFilters(true)
+		cam.PushModelMatrix(mx, true)
+
+		self.ActiveMatrix = mx
+
+		fbuttonLeakingMatrices = fbuttonLeakingMatrices + 1
+	end
+
 	self:PrePaint(w,h)
 	self:Draw(w, h)
 	self:PostPaint(w,h)
+
 end
 
 vgui.Register("FButton", button, "DButton")
+
+
+hook.Add("PostRender", "UnleakMatrices", function()
+	if fbuttonLeakingMatrices > 0 then
+		local amt = fbuttonLeakingMatrices
+		for i=1, amt do
+			cam.PopModelMatrix()
+			--render.PopFilterMin()
+			draw.DisableFilters(true, true)
+		end
+
+		leakingMatrices = 0
+
+		errorf("nice matrix leak: leaked %d matrices", amt)
+	end
+end)
