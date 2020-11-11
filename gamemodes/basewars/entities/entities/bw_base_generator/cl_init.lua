@@ -17,7 +17,7 @@ local usingtime = 0
 local halos = {}
 
 GeneratorPanel = GeneratorPanel
-SplineStrength = 10
+local SplineStrength = 10
 
 if IsValid(GeneratorPanel) then GeneratorPanel:Remove() end
 
@@ -32,6 +32,7 @@ DrawCableEntity = DrawCableEntity or nil 	-- Entity: to
 
 function ENT:OpenShit(qm, self, pnl)
 	print("initial open on gen")
+	print('qm:', qm)
 	if not IsValid(pnl) then error("WTF " .. tostring(pnl)) return end
 
 	GeneratorPanel = pnl
@@ -67,14 +68,13 @@ function ENT:OpenShit(qm, self, pnl)
 	::skipOptions::
 
 	if not IsValid(qm.ConnectBtn) then
+		print("connectbtn was not valid")
 		local con = vgui.Create("FButton", pnl)
 		qm.ConnectBtn = con
 		con:SetSize(128, 48)
 
-		con.X = pnl.CircleX + pnl.CircleSize + 64
+		con.X = pnl.CircleX + pnl.MaxCircleSize
 		con.Y = pnl.CircleY - 24
-
-		con:CenterHorizontal(0.7)
 
 		con:SetMouseInputEnabled(true)
 		con.AlwaysDrawShadow = true
@@ -86,6 +86,8 @@ function ENT:OpenShit(qm, self, pnl)
 			DrawCable = ent
 			dcFirstFrame = true
 		end
+	else
+		print("connectbtn was valid")
 	end
 
 	if not IsValid(qm.DisconnectBtn) then
@@ -96,7 +98,7 @@ function ENT:OpenShit(qm, self, pnl)
 			qm.DisconnectBtn = disc
 			disc:SetSize(128, 48)
 
-			disc.X = pnl.CircleX - pnl.CircleSize - 64 - 64
+			disc.X = pnl.CircleX - pnl.MaxCircleSize - 64 - 64
 			disc.Y = pnl.CircleY - 24
 
 			disc:PopIn()
@@ -132,27 +134,7 @@ function ENT:OpenShit(qm, self, pnl)
 		end
 	end
 
-	function pnl:OnActive()
-
-		if not IsValid(qm.DisconnectBtn) and IsValid(ent:GetHotwired()) then
-			--[[
-				Disconnect button
-			]]
-
-
-		end
-
-	end
-
-	function pnl:OnUnactive()
-
-	end
-
-	local al
-
-	local offX = 0
-	local hilite = 0
-
+	-- todo: make QM panel emit OnRemove
 	function pnl:OnRemove()
 		PreviewCable = false
 		PreviewFinalCablePoint = nil
@@ -237,9 +219,11 @@ end
 function ENT:CloseAll(qm, self, pnl)
 	if not IsValid(pnl) then print("!!invalid pnl!!") return end
 
-	for k,v in pairs(qm.Panels) do
-		v:PopOut()
-		qm.Panels[k] = nil
+	if qm.Panels then
+		for k,v in pairs(qm.Panels) do
+			v:PopOut()
+			qm.Panels[k] = nil
+		end
 	end
 
 	qm.ConnectBtn:PopOut()
@@ -272,25 +256,6 @@ end]]
 
 function ENT:Think()
 	-- what the actual fuck is this
-	local p = LocalPlayer()
-	local ent = self
-	if not upd then
-		upd = true
-		using = p:KeyDown(IN_USE)
-	end
-
-	if not using then return end
-
-	local tr = p:GetEyeTrace()
-	if tr.Entity ~= self or tr.Fraction*32768 > 192 then looking[self] = nil return end
-
-	usingwho = self
-
-	looking[self] = true
-	halos[#halos + 1] = self
-
-	usingtime = math.min(usingtime + FrameTime(), TimeToOpenPanel)
-	dist = tr.Fraction*32768
 
 end
 

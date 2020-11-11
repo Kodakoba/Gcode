@@ -202,7 +202,7 @@ function ENTITY:InstallDataTable()
 
 	if notifQueue[ind] and CLIENT then
 		timer.Simple(0, function()
-			if not IsValid(self) then return end --???
+			if not IsValid(self) then return end --??? THANK U BASED FULLUPDATES
 			notifyDT(self, notifQueue[ind])
 		end)
 	end

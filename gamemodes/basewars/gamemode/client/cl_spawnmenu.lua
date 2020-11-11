@@ -90,8 +90,10 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 	local ply = LocalPlayer()
 
 	local ply_money, ply_level = ply:GetMoney(), ply:GetLevel()
+	local bclass = baseclass.Get("FButton")
 	function pnl:Think()
 		ply_money, ply_level = ply:GetMoney(), ply:GetLevel()
+		bclass = baseclass.Get("FButton")
 	end
 
 	for _, dat in ipairs(its) do
@@ -176,6 +178,8 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 
 			draw.SimpleText(shortName, "BS14", w/2 + 1, 4 - 22 * self.HoverFrac + 1, shortNameShadow, 1)
 			draw.SimpleText(shortName, "BS14", w/2, 4 - 22 * self.HoverFrac, shortNameCol, 1)
+
+			bclass.PaintOver(self, w, h)
 		end
 
 		function btn:PrePaint(w, h)

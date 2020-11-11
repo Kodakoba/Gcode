@@ -224,7 +224,6 @@ function Cloud:Paint()
 			end
 
 			boxh = boxh + v.YOff
-			frmtd = true
 
 			if v.Font then
 				surface.SetFont(v.Font)
@@ -234,7 +233,6 @@ function Cloud:Paint()
 
 		elseif ispanel(v) then
 			boxh = boxh + v:GetTall()
-			frmtd = true
 		end
 
 	end

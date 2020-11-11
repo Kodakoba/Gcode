@@ -52,8 +52,11 @@ function IsFaction(t)
 end
 
 function facmeta:Initialize(id, name, col, haspw)
-	local new = self:SetNetworkableID("Faction:" .. id)
-	if new then self = new end
+
+	if id > 0 then
+		local new = self:SetNetworkableID("Faction:" .. id)
+		if new then self = new end
+	end
 
 	self.id = id
 	self.name = name

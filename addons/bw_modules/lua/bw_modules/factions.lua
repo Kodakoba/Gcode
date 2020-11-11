@@ -115,6 +115,8 @@ hook.Add("BasewarsModuleLoaded", "CreateEmptyFaction", function(nm)
 		fac = Factions.meta:new(false, -1, "No Faction", nil, Color(100, 100, 100))
 	end
 
+	-- factions with ID < 0 are automatically considered invalid and don't get a networkableID
+
 	Factions.NoFaction = fac
 
 	Factions.Factions["No Faction"] = nil
