@@ -77,7 +77,6 @@ function ENT:CreateBaseScroll(pnl, name, icon)
 		if is_hov and not wasHov then
 			wasHov = true
 			ent.Focus = self
-			
 			self:OnHover()
 		elseif not is_hov and wasHov then
 			wasHov = false
@@ -86,15 +85,9 @@ function ENT:CreateBaseScroll(pnl, name, icon)
 			self:OnUnhover()
 		end
 
-		if ent.Focus == self then
-			self:To("Alpha", 255, 0.3, 0, 0.3)
-		else
-			self:To("Alpha", 120, 0.3, 0, 0.3)
-		end
 
 		local a = self.Alpha
-
-		if not self.AlphaOverride then self:SetAlpha(a) end
+		self:SetAlpha(a)
 	end
 
 	local curSizeAnim
@@ -107,6 +100,7 @@ function ENT:CreateBaseScroll(pnl, name, icon)
 		end)
 
 		self:Emit("Hover")
+		self:To("Alpha", 255, 0.3, 0, 0.3)
 	end
 
 	function scr:OnUnhover()
@@ -117,6 +111,7 @@ function ENT:CreateBaseScroll(pnl, name, icon)
 		end)
 
 		self:Emit("Unhover")
+		self:To("Alpha", 120, 0.3, 0, 0.3)
 	end
 
 	return scr
@@ -324,7 +319,9 @@ function ENT:CreateConsumersScroll(pnl, me)
 end
 
 function ENT:QMOnBeginClose(qm, self, pnl)
-	if IsValid(self.GenScroll) then
+	self.GenScroll:To("Alpha", 0, 0.1, 0, 0.3)
+	self.ConsumerScroll:To("Alpha", 0, 0.1, 0, 0.3)
+	--[[if IsValid(self.GenScroll) then
 		self.GenScroll:PopOut(nil, nil, BlankFunc)
 		self.GenScroll.AlphaOverride = true
 	end
@@ -332,7 +329,7 @@ function ENT:QMOnBeginClose(qm, self, pnl)
 	if IsValid(self.ConsumerScroll) then
 		self.ConsumerScroll:PopOut(nil, nil, BlankFunc)
 		self.ConsumerScroll.AlphaOverride = true
-	end
+	end]]
 
 	if IsValid(self.ConnectBtn) then
 		self.ConnectBtn.GoAway = true
@@ -364,47 +361,26 @@ end
 
 function ENT:QMOnClose(qm, self, pnl)
 	if pnl.Cloud then pnl.Cloud:Remove() pnl.NoCloud = true end
-
-	if self.GenScroll:IsValid() then self.GenScroll:Remove() end
+	self.GenScroll:Remove()
+	self.ConsumerScroll:Remove()
+	self.ConnectBtn:Remove()
 end
 
 function ENT:QMThink(qm, self, pnl)
 
-	--[[if pnl.NoCloud then return end --just in case
-
-	local cl = pnl:AddCloud(curtip)
-	cl:SetLabel(curtip)
-	--pnl.Cloud = pnl.Cloud or vgui.Create("Cloud")
-
-	local cloud = pnl.Cloud
-
-	cloud.MaxW = 512
-	cloud.Middle = 0.5
-	cloud.Font = "OSB36"
-	cloud:Popup(popup)
-	cloud:SetLabel(curtip)
-
-	local y = self.GenScroll and self.GenScroll:IsValid() and self.GenScroll.Y - 48
-
-	if y then
-		y = select(2, pnl:LocalToScreen(0, y))
-	else
-		y = ScrH() * 0.2
-	end
-
-	cloud:SetAbsPos(ScrW() / 2, y)]]
 end
 
 function ENT:OpenShit(qm, self, pnl)
+	print("openshit called")
+	--[[pnl:SetSize(850, 600)	--cant fit
+	pnl:CenterHorizontal()]]
 
-	pnl:SetSize(850, 600)	--cant fit
-	pnl:CenterHorizontal()
-	--pnl.Y = 0
-	local x, y = 425, 200	--ScreenToLocal doesn't work for some reason...
+	local x, y = pnl:GetCenter()
 
 	local me = BWEnts[self]
+	local ent = self
 
-	pnl.CircleX = x
+	--pnl.CircleX = x
 
 
 	local gens = self:CreateGeneratorsScroll(pnl, me)
@@ -422,7 +398,7 @@ function ENT:OpenShit(qm, self, pnl)
 	end)
 
 	local con = vgui.Create("FButton", pnl)
-	con:SetSize(gens:GetWide() * 0.75, pnl:GetTall() * 0.1)
+	con:SetSize(gens:GetWide() * 0.75, 60)
 	con:CenterHorizontal()
 	con.Y = consumers.Y + consumers:GetTall() + 12
 
@@ -460,13 +436,38 @@ function ENT:OpenShit(qm, self, pnl)
 		self.Y = math.max(origY,
 			gens.Y + gens:GetTall() / 1.5 + 12,
 			consumers.Y + consumers:GetTall() / 1.5 + 12)
+
+		local active = DrawCable == ent
+
+		if active then
+			qm:SetKeepAlive(active)
+			pnl:SetMouseInputEnabled(false)
+			self.DisabledDueToCable = true
+
+			gens:To("Alpha", 0, 0.2, 0, 0.2)
+			consumers:To("Alpha", 0, 0.2, 0, 0.2)
+			self.GoAway = true
+
+		else
+			qm:SetKeepAlive(false)
+			if self.DisabledDueToCable then
+				pnl:SetMouseInputEnabled(true)
+				self.DisabledDueToCable = false
+			end
+
+			gens:To("Alpha", 120, 0.2, 0, 0.2)
+			consumers:To("Alpha", 120, 0.2, 0, 0.2)
+			self.GoAway = false
+		end
 	end
 
 	gens:On("Hover", con, con.Hover, con)
 	gens:On("Unhover", con, con.Unhover, con)
+	qm:AddPopIn(gens, gens.X, gens.Y, -32, 0, true)
 
 	consumers:On("Hover", con, con.Hover, con)
 	consumers:On("Unhover", con, con.Unhover, con)
+	qm:AddPopIn(consumers, consumers.X, consumers.Y, 32, 0, true)
 
 	self.ConnectBtn = con
 	--qm:AddPopIn(consumers, consumers.X, consumers.Y + pnl.CircleSize, 0, 32)
@@ -486,10 +487,14 @@ function ENT:CLInit()
 
 	local qm = self:SetQuickInteractable()
 
+	local valid = function()
+		return self:IsValid()
+	end
+
 	qm.OnOpen = function(...) self:OpenShit(...) end
 	qm.Think = function(...) self:QMThink(...) end
-	qm.OnClose = function(...) self:QMOnBeginClose(...) end
-	qm.OnFullClose = function(...) self:QMOnClose(...) end
+	qm.OnClose = function(...) return valid() and self:QMOnBeginClose(...) end
+	qm.OnFullClose = function(...) return valid() and self:QMOnClose(...) end
 	qm.OnReopen = function(...) self:QMOnReopen(...) end
 
 	self:OnChangeGridID(self:GetGridID())
@@ -497,16 +502,18 @@ end
 
 function ENT:OnChangeGridID(new)
 	if self.OldGridID == new or new <= 0 then return end
-
+	print("OnChangeGridID called with", new)
 
 	self.OldGridID = new
 
 	local grid = PowerGrids[new]
 
 	if not grid then
+		print("grid didnt exist; creating")
 		grid = PowerGrid:new(self:CPPIGetOwner(), new)
 		grid:AddLine(self)
 	else
+		print("grid existed")
 		grid:AddLine(self)
 	end
 end

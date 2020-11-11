@@ -227,7 +227,9 @@ function ENT:CloseAll(qm, self, pnl)
 	end
 
 	qm.ConnectBtn:PopOut()
-	qm.DisconnectBtn:PopOut()
+	if qm.DisconnectBtn then
+		qm.DisconnectBtn:PopOut()
+	end
 end
 
 function ENT:CLInit()

@@ -808,7 +808,6 @@ hook.Add("GenerateFactionOptions", "BaseActions", function(faction, ply, mn)
 			Factions.RequestKick(ply)
 		end)
 		kick.Color = Color(150, 30, 30)
-		
 	end
 
 	mn.WOverride = 250

@@ -42,32 +42,16 @@ function ENT:QMOnBeginClose(qm, self, pnl)
 
 	local midX, midY = pnl:GetWide() / 2, pnl:GetTall() / 2
 
+	local canv = qm:GetCanvas()
+	local stimBtn = canv.GiveStimBtn
+	if not stimBtn then return end
 
-	--[[local healBtn = pnl.HealBtn
-
-	local x = midX - healBtn:GetWide() - pnl.CircleSize - 24
-	local y = midY - healBtn:GetTall() / 2
-
-	healBtn:CircleMoveTo(x, y, 0.3, 0.4, true)
-	healBtn:PopOut(0.2):Then(function()
-		qm:Close()
-	end)]]
-
-	local stimBtn = pnl.GiveStimBtn
-
-	local x = midX + pnl.CircleSize + 24
+	local x = midX + pnl.MaxCircleSize + 24
 	local y = midY - stimBtn:GetTall() / 2
 
 	stimBtn:CircleMoveTo(x, y, 0.3, 0.4, true)
 	local anim = stimBtn:PopOutHide(0.2)
 
-	if anim then
-		--[[anim:Then(function()
-			qm:Close()
-		end)]]
-	end
-
-	pnl.Closing = true
 end
 
 local blur = Material( "pp/blurscreen" )
@@ -75,7 +59,8 @@ blur:SetFloat("$blur", 2)
 blur:Recompute()
 
 function ENT:QMOnReopen(qm, self, pnl)
-	local minput = not not pnl.ShouldMouse
+	local canv = qm:GetCanvas()
+	local minput = not not canv.ShouldMouse
 	pnl:SetMouseInputEnabled(minput)
 
 	pnl:MemberLerp(blk, "a", minput and 160 or 90, 0.3, 0, 0.3)
@@ -84,13 +69,15 @@ function ENT:QMOnReopen(qm, self, pnl)
 	healBtn:CircleMoveTo(healBtn.ToX, healBtn.ToY, 0.3, 0.4)
 	healBtn:PopIn(0.2)]]
 
-	local stimBtn = pnl.GiveStimBtn
+	
+	local stimBtn = canv.GiveStimBtn
+	if not stimBtn then return end
+
 	stimBtn:Stop()
 	stimBtn:CircleMoveTo(stimBtn.ToX, stimBtn.ToY, 0.3, 0.4)
-	stimBtn:AlphaTo(pnl.StimAlpha, 0.3, 0, 0.3)
+	stimBtn:AlphaTo(canv.StimAlpha, 0.3, 0, 0.3)
 	stimBtn:Show()
 
-	pnl.Closing = false
 end
 
 function ENT:OpenShit(qm, self, pnl)
@@ -100,11 +87,19 @@ function ENT:OpenShit(qm, self, pnl)
 	--pnl:SetSize(850, 600)	--cant fit
 	--pnl:CenterHorizontal()
 	local give_stim
-	print("mouseinput disabled")
-	pnl:SetMouseInputEnabled(false)
-	pnl.MouseFrac = 0
-	pnl.PowerFrac = 0
-	pnl:On("PrePaint", function(self, w, h)
+
+	local canv = qm:GetCanvas()
+
+	canv.MouseFrac = 0
+	canv.PowerFrac = 0
+	canv:SetMouseInputEnabled(true)
+
+	function canv:PrePaint(w, h)
+
+		if qm:GetProgress() == 1 then
+			pnl:SetMouseInputEnabled(self.ShouldMouse)
+		end
+
 		local x, y = self:LocalToScreen(0, 0)
 
 		DisableClipping(true)
@@ -122,23 +117,19 @@ function ENT:OpenShit(qm, self, pnl)
 
 		DisableClipping(false)
 
-		--[[if self:IsMouseInputEnabled() and not pnl.Closing then
-			pnl:MemberLerp(blk, "a", 160, 0.3, 0, 0.3)
-		end]]
-
-		if input.IsMouseDown(MOUSE_RIGHT) and not self:IsMouseInputEnabled() then
-			self:SetMouseInputEnabled(true)
+		if input.IsMouseDown(MOUSE_RIGHT) and not pnl:IsMouseInputEnabled() then
+			pnl:SetMouseInputEnabled(true)
 			self.ShouldMouse = true
-			pnl:MemberLerp(blk, "a", 160, 0.3, 0, 0.3)
-			pnl:To("MouseFrac", 1, 0.3, 0, 0.3)
+			canv:MemberLerp(blk, "a", 160, 0.3, 0, 0.3)
+			canv:To("MouseFrac", 1, 0.3, 0, 0.3)
 
-			if pnl.GiveStimBtn and pnl.GiveStimBtn:IsValid() then
-				local b = pnl.GiveStimBtn
+			if canv.GiveStimBtn and canv.GiveStimBtn:IsValid() then
+				local b = canv.GiveStimBtn
 				b:PopIn(nil, nil, nil, true)
 				b:MemberLerp(b.Shadow, "Intensity", 4, 0.2, 0, 0.3)
 				b:MemberLerp(b.Shadow, "MinSpread", 1.2, 0.2, 0, 0.3)
 
-				pnl.StimAlpha = 255
+				canv.StimAlpha = 255
 				qm.MaxInnerAlpha = 255
 			end
 		end
@@ -147,13 +138,13 @@ function ENT:OpenShit(qm, self, pnl)
 			DisableClipping(true)
 				local chargeStr = ent:GetCharges() .. "/" .. ent.MaxStims
 				local col = lazy.Get("StimCntCol") or lazy.Set("StimCntCol", color_white:Copy())
-				col.a = math.min(pnl.MouseFrac, pnl.PowerFrac + 0.05 + math.random() * 0.02) * 255
+				col.a = math.min(canv.MouseFrac, canv.PowerFrac + 0.05 + math.random() * 0.02) * 255
 
 				draw.SimpleText(Language("ChargesCounter", chargeStr), "BSSB36", give_stim.X + give_stim:GetWide() / 2,
 					give_stim.Y - 4, col, 1, 4)
 
 				local col = lazy.Get("NextStimCntCol") or lazy.Set("NextStimCntCol", color_white:Copy())
-				col.a = math.min(pnl.MouseFrac, pnl.PowerFrac) * 65
+				col.a = math.min(canv.MouseFrac, canv.PowerFrac) * 65
 
 				local nextCharge = math.max(ent:GetNextCharge() - CurTime(), 0)
 				draw.SimpleText(Language("NextCharge", nextCharge), "BS24", give_stim.X + give_stim:GetWide() / 2,
@@ -161,14 +152,13 @@ function ENT:OpenShit(qm, self, pnl)
 
 			DisableClipping(false)
 		end
-	end)
+	end
 
-	pnl:MemberLerp(blk, "a", 90, 0.3, 0, 0.3)
+	canv:MemberLerp(blk, "a", 90, 0.3, 0, 0.3)
 
-	give_stim = vgui.Create("FButton", pnl)
+	give_stim = vgui.Create("FButton", canv)
 		give_stim:SetSize(200, 60)
 		give_stim:Center()
-		--give_stim.Y = give_stim.Y - pnl.CircleSize / 2 - give_stim:GetTall() / 2 - 22
 
 		give_stim.AlwaysDrawShadow = true
 		give_stim.Shadow.Intensity = 1
@@ -182,10 +172,10 @@ function ENT:OpenShit(qm, self, pnl)
 		give_stim.TextHeight = 18
 
 		local toX = give_stim.X
-		local toY = give_stim.Y - pnl.CircleSize - give_stim:GetTall() / 2 - 22
+		local toY = give_stim.Y - pnl.MaxCircleSize - give_stim:GetTall() / 2 - 22
 
-		give_stim.Y = give_stim.Y - give_stim:GetTall() / 2 - pnl.CircleSize / 2
-		give_stim.X = give_stim.X - give_stim:GetWide() / 2 - pnl.CircleSize / 2
+		give_stim.Y = give_stim.Y - give_stim:GetTall() / 2 - pnl.MaxCircleSize / 2
+		give_stim.X = give_stim.X - give_stim:GetWide() / 2 - pnl.MaxCircleSize / 2
 
 		give_stim.FromX, give_stim.FromY = give_stim:GetPos()
 		give_stim.ToX, give_stim.ToY = toX, toY
@@ -196,8 +186,8 @@ function ENT:OpenShit(qm, self, pnl)
 		give_stim:SetAlpha(0)
 		give_stim:AlphaTo(120, 0.1, 0)
 
-		pnl.GiveStimBtn = give_stim
-		pnl.StimAlpha = 120
+		canv.GiveStimBtn = give_stim
+		canv.StimAlpha = 120
 		qm.MaxInnerAlpha = 120
 
 		local canUse = ent:IsPowered() and ent:GetCharges() > 1
@@ -214,7 +204,7 @@ function ENT:OpenShit(qm, self, pnl)
 			local pw = ent:IsPowered()
 			canUse = pw and ent:GetCharges() > 1
 
-			pnl:To("PowerFrac", pw and 1 or 0, 0.3, 0, 0.3)
+			canv:To("PowerFrac", pw and 1 or 0, 0.3, 0, 0.3)
 
 			if not canUse then
 				self:SetColor(Colors.Button)
@@ -248,42 +238,7 @@ function ENT:OpenShit(qm, self, pnl)
 				net.WriteEntity(ent)
 			net.SendToServer()
 		end
-	--qm:AddPopIn(give_stim, give_stim.X, give_stim.Y, 0, -32)
 
-
-	--[[local healBtn = vgui.Create("FButton", pnl)
-		healBtn:SetSize(200, 60)
-		healBtn.AlwaysDrawShadow = true
-		healBtn.Shadow.Intensity = 3
-		healBtn.Shadow.MaxSpread = 2
-		healBtn.Shadow.MinSpread = 1.2
-		healBtn.Shadow.Blur = 1
-
-		healBtn.Label = "give me a heal,\nbartender"
-		healBtn.Font = "OS22"
-		healBtn.TextY = healBtn:GetTall() / 2 - 1
-		healBtn.TextHeight = 18
-
-		healBtn:Center()
-
-		local toX = healBtn.X
-		local toY = healBtn.Y + pnl.CircleSize + healBtn:GetTall() / 2 + 22
-
-		healBtn.Y = healBtn.Y + healBtn:GetTall() / 2 + pnl.CircleSize / 2
-		healBtn.X = healBtn.X + healBtn:GetWide() / 2 + pnl.CircleSize / 2
-
-		local fromX, fromY = healBtn:GetPos()
-
-		healBtn.FromX, healBtn.FromY = fromX, fromY
-		healBtn.ToX, healBtn.ToY = toX, toY
-
-		healBtn:CircleMoveTo(toX, toY, 0.3, 0.4)
-
-		healBtn:PopIn(0.2)
-
-		pnl.HealBtn = healBtn]]
-
-	--qm:AddPopIn(give_stim, give_stim.X, give_stim.Y, 0, 32)
 end
 
 function ENT:CLInit()
