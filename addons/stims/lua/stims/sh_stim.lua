@@ -51,14 +51,18 @@ end
 
 function PLAYER:AddStims(num, ignore)
 	if self:GetStims() >= self:GetMaxStims() and not ignore then return false end
+	if not num then num = 1 end
+
 	local add = ignore and num or math.min(self:GetMaxStims() - self:GetStims(), num)
-	self:SetNW2Int("Stimpaks", self:GetStims() + (num or 1))
+	self:SetNW2Int("Stimpaks", self:GetStims() + num)
 	return true
 end
 
 function PLAYER:TakeStims(num)
 	if self:GetStims() <= 0 then return false end
-	self:SetNW2Int("Stimpaks", self:GetStims() - (num or 1))
+	if not num then num = 1 end
+
+	self:SetNW2Int("Stimpaks", self:GetStims() - num)
 	return true
 end
 
