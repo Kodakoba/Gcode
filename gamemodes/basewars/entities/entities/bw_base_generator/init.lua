@@ -173,7 +173,7 @@ function ENT:Disconnect(filter_out)
 	self:SetHotwired(NULL)
 	self:SetLine(NULL)
 
-	PowerGrid:new(self:CPPIGetOwner()):AddGenerator(self)
+	PowerGrid:new((self:CPPIGetOwner())):AddGenerator(self)
 
 	net.Start("ConnectGenerator")
 		net.WriteEntity(self)

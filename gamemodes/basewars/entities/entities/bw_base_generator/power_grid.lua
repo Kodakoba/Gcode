@@ -114,6 +114,11 @@ function PowerGrid:Initialize(ow, id, id2) --`id` is only used clientside, when 
 		id = id2
 	end
 
+	if id and not isnumber(id) then
+		printf("powergrid IDs are supposed to be numbers, dipass (got %s)\n%s", id, debug.traceback())
+		id = nil
+	end
+
 	self.Generators = {}
 	self.Consumers = {}
 	self.Batteries = {}
@@ -337,7 +342,7 @@ for k,v in pairs(accessors) do
 		
 
 		if new then
-			PowerGrid:new(ent:CPPIGetOwner()):AddEntity(ent)
+			PowerGrid:new((ent:CPPIGetOwner())):AddEntity(ent)
 		end
 
 		if CLIENT then

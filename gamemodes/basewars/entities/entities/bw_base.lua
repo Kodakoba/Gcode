@@ -226,7 +226,7 @@ if SERVER then
 					if pole then
 						pole.Grid:AddConsumer(self, pole)
 					else
-						PowerGrid:new(self:CPPIGetOwner()):AddConsumer(self)
+						PowerGrid:new((self:CPPIGetOwner())):AddConsumer(self)
 					end
 
 				end

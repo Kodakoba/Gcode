@@ -36,7 +36,7 @@ end
 
 function ENT:Disconnect()
 	self:GetGrid():RemoveConsumer(self)
-	PowerGrid:new(self:CPPIGetOwner()):AddConsumer(self)
+	PowerGrid:new((self:CPPIGetOwner())):AddConsumer(self)
 end
 
 if SERVER then
@@ -115,7 +115,7 @@ if SERVER then
 	function ENT:StartBitching()
 		self:SetLine(NULL)
 
-		local grid = PowerGrid:new(self:CPPIGetOwner())
+		local grid = PowerGrid:new((self:CPPIGetOwner()))
 		grid:AddConsumer(self)
 	end
 
