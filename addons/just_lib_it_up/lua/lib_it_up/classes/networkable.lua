@@ -8,9 +8,10 @@ if not muldim then include("multidim.lua") end
 								[changed_key] = {old_val, new_val}
 
 		"NetworkedVarChanged" : key, old_val, new_val
+
+
+	If you're using .Filter, that implies you'll also handle when to network.
 ]]
-
-
 Networkable = Networkable or Emitter:callable()
 local nw = Networkable
 
@@ -28,7 +29,7 @@ _NetworkableAwareness = _NetworkableAwareness or muldim:new() --[ply] = {'ID', '
 _NetworkableData = _NetworkableData or muldim:new() 	-- stores networkable data as [num_id] = {bunch of key-values}
 local idData = _NetworkableData							-- only used clientside
 
-Networkable.Verbose = false
+Networkable.Verbose = true
 
 local realPrint = print
 local print = function(...)
@@ -156,12 +157,13 @@ nw.AutoAssignID = true
 
 function nw:Initialize(id, ...)
 	self.Networked = {}
-	self.LastSerialized = {} -- purely for networked tables
+	self.__LastSerialized = {} -- purely for networked tables
+	self.__Aware = muldim:new()
 
 	self:On("ShouldEncode", "TablesvONCheck", function(self, k, v)
 		if istable(v) then
 			local vonData = von.serialize(v)
-			if self.LastSerialized[k] == vonData then return end
+			if self.__LastSerialized[k] == vonData then return end
 			_vONCache[k] = vonData
 		end
 	end)
@@ -245,12 +247,12 @@ function nw:Set(k, v)
 	if self.Networked[k] == v and not istable(v) then --[[adios]] return end
 
 	if istable(v) then --we have to check if tables are exact
-		local last_von = self.LastSerialized[v]
+		local last_von = self.__LastSerialized[v]
 		local new_von = von.serialize(v)
 
 		if last_von == new_von then --[[ adios ]] return end
 
-		self.LastSerialized[v] = new_von
+		self.__LastSerialized[v] = new_von
 	end
 
 	print("added nw change serverside", k, v)
@@ -270,6 +272,7 @@ function nw:GetNetworked() --shrug
 	return self.Networked
 end
 
+
 function nw:Invalidate()
 	self.Valid = false
 
@@ -279,13 +282,21 @@ function nw:Invalidate()
 	if self.NumberID and numToID[self.NumberID] == self.NetworkableID then numToID[self.NumberID] = nil end
 
 	IDToNum[self.NetworkableID] = nil
-	_NetworkableChanges[self.NetworkableID] = nil
-
-	for ply, ids in pairs(_NetworkableAwareness) do
-		ids[self.NetworkableID] = nil
-	end
 
 	self:Emit("Invalidated")
+
+	if SERVER then
+		_NetworkableChanges[self.NetworkableID] = nil
+
+		for ply, ids in pairs(_NetworkableAwareness) do
+			ids[self.NetworkableID] = nil
+		end
+
+		net.Start("NetworkableInvalidated")
+			net.WriteUInt(self.NumberID, 24)
+		net.Broadcast()
+	end
+
 end
 
 
@@ -369,14 +380,14 @@ if SERVER then
 	end
 
 	util.AddNetworkString("NetworkableSync")
+	util.AddNetworkString("NetworkableInvalidated")
 
 
-	-- this networks to ALL PLAYERS!
-
-	--[[local]] function NetworkAll()
+	--[[local]] function NetworkAll(force)
 		if not next(_NetworkableChanges) then return end
 
 		local everyone = player.GetAll()
+		local sendTo = table.Copy(everyone)
 
 		local changes_count = 0
 
@@ -420,7 +431,7 @@ if SERVER then
 		if #newids == 0 and changes_count == 0 then return end
 
 		local nw = netstack:new()
-		print('server: max ID', maxID)
+
 		net.Start("NetworkableSync")
 			local ns = netstack:new()
 			ns:Hijack()
@@ -480,7 +491,7 @@ if SERVER then
 			--print("sent:", ns)
 			net.WriteNetStack(ns)
 
-		net.Send(player.GetAll())
+		net.Send(sendTo)
 	end
 
 	local nwAll = function()
@@ -490,12 +501,115 @@ if SERVER then
 		end
 	end
 
+	-- `what` GETS MODIFIED!!! COPY BEFORE CALLING
+	function Networkable.UpdateFull(who, what)
+		if istable(who) then
+			Filter(who, true):Filter("IsValid", true)
+		else
+			who = {who}
+		end
+
+		local maxID = 0
+		local newids = {}
+
+		for _, ply in ipairs(who) do
+			for numID, nameID in pairs(numToID) do
+				local obj = _NetworkableCache[nameID]
+				if obj.Filter then continue end
+
+				newids[#newids + 1] = numID
+				maxID = math.max(maxID, numID)
+				_NetworkableAwareness:Set(true, ply, nameID)
+			end
+		end
+
+		local changes = 0
+		for id, obj in pairs(what) do
+			if obj.Filter then what[id] = nil continue end
+
+			for k, v in ipairs(obj.Networked) do
+				changes = changes + 1
+			end
+		end
+
+		net.Start("NetworkableSync")
+			local ns = netstack:new()
+			ns:Hijack()
+
+			net.WriteUInt(#newids, 16)
+			local maxsz = bit.GetLen(maxID)
+			net.WriteUInt(maxsz, 5)
+
+			for i=1, #newids do
+				WriteIDPair(newids[i], maxsz)
+			end
+
+			net.WriteUInt(changes_count, 8).Description = "Changed objects count" --amount of changed networkable objects
+			local changedCountID = #ns.Ops
+			local changed = 0
+
+			local bits = select(2, net.BytesWritten())
+
+			for id, obj in pairs(what) do
+				changed = changed + 1
+				net.WriteUInt(IDToNumber(id), maxsz).Description = "IDToNumber"
+
+				local changesAmt = 0
+				local writeChanges = {}
+
+				for k,v in pairs(obj:GetNetworked()) do
+					local should = obj:Emit("ShouldEncode", k, v) 	-- this should mostly be used for equality checks
+					if should == false then continue end 			-- keep in mind that if you return false the change will be lost to networking
+
+					changesAmt = changesAmt + 1
+
+					writeChanges[k] = v
+				end
+
+				net.WriteUInt(changesAmt, 8).Description = "Amount of changes in an object" --amount of changed values in the Networkable object
+
+				for k,v in pairs(writeChanges) do
+					WriteChange(k, v, obj)
+				end
+
+				_NetworkableChanges[id] = nil
+
+				local cur_written = select(2, ns:BytesWritten())
+										--32 kb - more for complete updates
+				if bits + cur_written > 32*1024*8 then
+					printf("too much written; halting for this network frame @ %d/%d", changed, changes_count)
+					timer.Simple(update_freq, function()
+						Networkable.UpdateFull(who, what)
+					end)
+					break
+				end
+			end
+
+			ns:Hijack(false)
+
+			ns.Ops[changedCountID].args[1] = changed --this is the changes_count, change it to `changed` in case we broke out of the loop early
+			--print("sent:", ns)
+			net.WriteNetStack(ns)
+
+		net.Send(who)
+	end
+
 	timer.Create("NetworkableNetwork", update_freq, 0, nwAll)
 
-	hook.Add("PlayerFullyLoaded", "NetworkableUpdate", nwAll)
+	hook.Add("PlayerFullyLoaded", "NetworkableUpdate", function(ply)
+		Networkable.UpdateFull(ply, table.Copy(_NetworkableCache))
+	end)
 
+	local function shallowCopy(from, to)
+		to = to or {}
+		for k,v in pairs(from) do
+			to[k] = v
+		end
 
-	function nw:Network(now) 	--networks everything in the next tick (or right now if `now` is true OR networkable has a filter)
+		return to
+	end
+
+	function nw:Network(now, data, nwTo) 	--networks everything in the next tick (or right now if `now` is true OR networkable has a filter)
 
 		if not self.Filter then
 			if not now then
@@ -507,41 +621,122 @@ if SERVER then
 				nwAll()
 			end
 		else
-			if not _NetworkableChanges[self.NetworkableID] then return end
-
 			local anyone_missing = false
-			local nw = {}
 
-			for k, ply in ipairs(player.GetAll()) do
-				if self:Filter(ply) ~= false then
-					nw[#nw + 1] = ply
-					print("networking to", ply)
-				else
-					print("not networking to", ply)
+			local awareValues = self.__Aware	-- who's aware of what values: { [ply] = { k = v, k2 = v2, ... }, ... }
+			local unaware = {}			-- who needs networking what values: same structure as above
+			data = data or {}			-- {k = v, k2 = v2, ...}
+
+			local changes = _NetworkableChanges[self.NetworkableID]
+
+			if changes then shallowCopy(changes, data) end -- copy all changed into data
+
+			print("aight networking:")
+			PrintTable(data)
+
+			if not nwTo then
+				nwTo = {}
+
+				-- filter out the players first
+				for _, ply in ipairs(player.GetAll()) do
+					if self:Filter(ply) ~= false then
+						nwTo[#nwTo + 1] = ply
+						print("networking to", ply)
+					else
+						print("not networking to", ply)
+					end
 				end
 			end
 
-			for k, ply in ipairs(nw) do
-				if not _NetworkableAwareness[ply] or not _NetworkableAwareness[ply][self.NetworkableID] then anyone_missing = true break end --awh
+			if istable(nwTo) then
+				-- see who's aware of what and write the awareness down
+
+				for _, ply in ipairs(nwTo) do
+					for dataK, dataV in pairs(self:GetNetworked()) do
+						-- if a player wasn't aware of a value and it wasn't changed, add them to the unaware list for that kv
+						if awareValues:Get(ply, dataK) ~= dataV and (not changes or not changes[dataK]) then
+							print(ply, "is unaware of a kv!!!", dataK, dataV)
+							unaware[ply] = unaware[ply] or {}
+							unaware[ply][dataK] = dataV
+						end
+
+						awareValues:Set(dataV, ply, dataK)
+					end
+				end
+			else
+				local ply = nwTo
+
+				for dataK, dataV in pairs(self:GetNetworked()) do
+					if awareValues:Get(ply, dataK) ~= dataV and (not changes or not changes[dataK]) then
+						print(ply, "is unaware of a kv!!!", dataK, dataV)
+						data[dataK] = dataV
+					end
+
+					awareValues:Set(dataV, ply, dataK)
+				end
 			end
 
+			if table.Count(unaware) > 0 then --there are players who are unaware of some values; they get special treatment
+				print("there are unaware people")
+				for ply, dat in pairs(unaware) do
+					local toNW = shallowCopy(dat) 	-- add what they don't know
+					shallowCopy(data, toNW) 		-- then add what would've been networked anyway, handling changes in the process
+					print(ply, "gets this networked:")
+					PrintTable(toNW)
+					self:Network(true, toNW, ply)
+
+					table.RemoveByValue(nwTo, ply) -- exclude them from current networking
+				end
+			end
+
+			-- is everyone aware of this nw?
+			if istable(nwTo) then
+				for k, ply in ipairs(nwTo) do
+					if not anyone_missing and not _NetworkableAwareness:Get(ply, self.NetworkableID) then
+						anyone_missing = true
+					end --awh
+					_NetworkableAwareness:Set(true, ply, self.NetworkableID)
+				end
+			else
+				if not anyone_missing and not _NetworkableAwareness:Get(nwTo, self.NetworkableID) then
+					anyone_missing = true
+				end
+				_NetworkableAwareness:Set(true, nwTo, self.NetworkableID)
+			end
+
+			local everyone_knows = not anyone_missing
+			local noone_listens = (istable(nwTo) and table.IsEmpty(nwTo)) or false
+			local nothing_changes = table.IsEmpty(data)
+
+			if (everyone_knows and nothing_changes) or noone_listens then
+				printf("not networking; everyone knows? %s, nothing changes? %s, noone listens? %s", everyone_knows, nothing_changes, noone_listens)
+				return
+			end
+
+			local sz = bit.GetLen(self.NumberID)
+
 			net.Start("NetworkableSync")
+
 				net.WriteUInt(anyone_missing and 1 or 0, 16) --don't write yourself if everyone knows
+				net.WriteUInt(sz, 5)
+
 				if anyone_missing then
-					WriteIDPair(self.NumberID, true)
+					WriteIDPair(self.NumberID, sz)
 				end
 
 				net.WriteUInt(1, 8) --amount of changed networkable objects (just self)
-				net.WriteUInt(IDToNumber(self.NetworkableID), maxsz) -- self's NetworkableID
-				net.WriteUInt(table.Count(_NetworkableChanges[self.NetworkableID]), 8) -- amt of changes in self
+				net.WriteUInt(IDToNumber(self.NetworkableID), sz) -- self's NetworkableID
+				net.WriteUInt(table.Count(data), 8) -- amt of changes in self
 
-				for k,v in pairs(_NetworkableChanges[self.NetworkableID]) do 
-					WriteChange(k, v, self, nw)
+				for k,v in pairs(data) do
+					WriteChange(k, v, self, nwTo)
 				end
 
 				_NetworkableChanges[self.NetworkableID] = nil
 
-			net.Send(nw)
+			net.Send(nwTo)
+
+			print("-- sent! --")
 		end
 	end
 
@@ -635,5 +830,19 @@ if CLIENT then
 				obj:Emit("NetworkedChanged", changes)
 			end
 		end
+	end)
+
+	net.Receive("NetworkableInvalidated", function()
+		local num_id = net.ReadUInt(24)
+		print("invalidated nwable with numID", num_id)
+		local id = NumberToID(num_id)
+		print("that's ID", id)
+		_NetworkableData[id] = nil
+		if _NetworkableCache[id] then
+			_NetworkableCache[id]:Invalidate()
+		end
+
+		_NetworkableNumberToID[num_id] = nil
+		_NetworkableIDToNumber[id] = nil
 	end)
 end
