@@ -4,7 +4,7 @@ Animatable = Animatable or Emitter:callable()
 Animetable = Animatable
 
 AnimatableObjects = AnimatableObjects or setmetatable({}, {__mode = "v"}) -- dont keep references to prevent leaking
-AnimatableObjectsDirty = false -- if true, next Think will sequentialize the table
+AnimatableObjectsDirty = AnimatableObjectsDirty or false -- if true, next Think will sequentialize the table
 AnimatableIDs = AnimatableIDs or setmetatable({}, {__mode = "v"})
 
 
@@ -27,6 +27,8 @@ local function GCProxy(t)
 		AnimatableObjectsDirty = true -- only like this because __gc gets called _after_ the entry has been deleted from the table
 	end
 
+	t.__trace = debug.traceback()
+
 	mt.__index = t
 	mt.__newindex = t
 
@@ -38,6 +40,8 @@ end
 AnimMeta = Promise:extend()
 
 if SERVER then return end --bruh
+
+local systime = SysTime()
 
 hook.Add("Think", "AnimatableThink", function()
 
@@ -57,6 +61,8 @@ hook.Add("Think", "AnimatableThink", function()
 			i = i + 1
 		end
 	end
+
+	systime = SysTime()
 
 	for k,v in ipairs(objs) do
 		v:AnimationThink()
@@ -125,7 +131,6 @@ function Animatable:Initialize(auto_think)
 			end
 		end
 		--objs[#objs + 1] = ud
-		return ud
 	end
 
 end
@@ -143,7 +148,6 @@ function Animatable:StopAnimations()
 end
 
 function Animatable:AnimationThink()
-	local systime = SysTime()
 
 	for k, anim in pairs( self.m_AnimList ) do
 		if anim.Ended then continue end
