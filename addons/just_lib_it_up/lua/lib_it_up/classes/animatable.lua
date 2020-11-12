@@ -18,24 +18,22 @@ local objs = AnimatableObjects
 
 -- prevent leaking animatables
 
-local function GCProxy(t)
+--[[local function GCProxy(t)
 	local ud = newproxy(true)
 	local mt = getmetatable(ud)
 
 	Class.CopyMetamethods(mt, t)
 	mt.__gc = function()
+		print("GC called")
 		AnimatableObjectsDirty = true -- only like this because __gc gets called _after_ the entry has been deleted from the table
 	end
 
 	t.__trace = debug.traceback()
 
-	mt.__index = t
-	mt.__newindex = t
-
 	objs[#objs + 1] = ud
 
 	return ud
-end
+end]]
 
 AnimMeta = Promise:extend()
 
@@ -45,7 +43,8 @@ local systime = SysTime()
 
 hook.Add("Think", "AnimatableThink", function()
 
-	if AnimatableObjectsDirty then
+	--[[if AnimatableObjectsDirty then
+		print("dirty - sequentializing")
 		local oldObjs = objs
 		AnimatableObjectsDirty = false
 
@@ -60,19 +59,14 @@ hook.Add("Think", "AnimatableThink", function()
 			objs[i] = v
 			i = i + 1
 		end
-	end
+	end]]
 
 	systime = SysTime()
 
-	for k,v in ipairs(objs) do
+	for k,v in pairs(objs) do
 		v:AnimationThink()
 	end
 
-	-- todo: debug, remove me
-	if table.Count(objs) ~= #objs then
-		errorf("animatable objects table unsequential - some animations might stop for a while! %d vs. %d", table.Count(objs), #objs)
-		return
-	end
 end)
 
 function AnimMeta:Remove()
@@ -115,7 +109,8 @@ function Animatable:Initialize(auto_think)
 
 	if auto_think ~= false then
 		local id = auto_think ~= true and auto_think -- if auto_think isn't a bool consider it an ID
-		local ud = (id and AnimatableIDs[id]) or GCProxy(self)
+		local ud = (id and AnimatableIDs[id]) or self --GCProxy(self)
+		--self.__gcHandle = ud
 
 		if id then
 			ud:StopAnimations()
@@ -123,14 +118,11 @@ function Animatable:Initialize(auto_think)
 			AnimatableIDs[id] = ud
 			local found = false
 			for k,v in pairs(objs) do
-				if v == ud then found = true end
-			end
-
-			if not found then
-				objs[#objs + 1] = ud
+				if v == ud then return v end
 			end
 		end
-		--objs[#objs + 1] = ud
+
+		objs[#objs + 1] = ud
 	end
 
 end
