@@ -121,9 +121,16 @@ BSHADOWS.EndShadow = function(intensity, spread, blur, opacity, direction, dista
 
     --Blur the second render target
     if blur > 0 then
+        local sprX, sprY = 0, 0
+
+        if istable(spread) then
+            sprX, sprY = spread[1], spread[2]
+        else
+            sprX, sprY = spread, spread
+        end
 
         render.OverrideAlphaWriteEnable(true, true)
-            render.BlurRenderTarget(ShadowRT, spread, spread, blur)
+            render.BlurRenderTarget(ShadowRT, sprX, sprY, blur)
         render.OverrideAlphaWriteEnable(false, false)
 
     end
@@ -139,10 +146,10 @@ BSHADOWS.EndShadow = function(intensity, spread, blur, opacity, direction, dista
     end
 
     --Now update the material to what was drawn
-    mat:SetTexture('$basetexture', CurRT)
+    mat:SetTexture("$basetexture", CurRT)
 
     --Now update the material to the shadow render target
-    shmat:SetTexture('$basetexture', ShadowRT)
+    shmat:SetTexture("$basetexture", ShadowRT)
 
  	if color then
     	local vc = Vector(color.r, color.g, color.b) --nO cOloR mEtatAblE
@@ -170,9 +177,6 @@ BSHADOWS.EndShadow = function(intensity, spread, blur, opacity, direction, dista
     shmat:SetFloat("$alpha", opacity / 255)
 
     --first draw the shadow
-    local screct = BSHADOWS.ScissorRect
-
-   
 
     render.SetMaterial(shmat)
     if screct.x then scissor() end
@@ -184,7 +188,7 @@ BSHADOWS.EndShadow = function(intensity, spread, blur, opacity, direction, dista
             render.DrawScreenQuadEx(x, y, curW or ScrW(), curH or ScrH())
         if screct.x then unscissor() end
     end
-    
+
  	--then whatever the user has drawn
 
     if not _shadowOnly then
