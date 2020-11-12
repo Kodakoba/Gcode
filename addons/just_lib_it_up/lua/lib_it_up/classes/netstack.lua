@@ -103,7 +103,7 @@ local function hijackNet()
 				else
 					local ok, err = pcall(net["__Real" .. k], ...)
 					if not ok then
-						error(err, 3)
+						error(err, 2)
 					end
 				end
 			end
