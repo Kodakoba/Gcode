@@ -204,6 +204,7 @@ function ENTITY:InstallDataTable()
 		timer.Simple(0, function()
 			if not IsValid(self) then return end --??? THANK U BASED FULLUPDATES
 			notifyDT(self, notifQueue[ind])
+			notifQueue[ind] = nil
 		end)
 	end
 
@@ -216,6 +217,7 @@ if CLIENT then
 		local name = dt.name
 		local old = dt.GetFunc(ent, dt.index)
 		if old == val then old = nil end -- :)
+
 		ent:Emit("DTChanged", name, old, val, false)
 	end
 
