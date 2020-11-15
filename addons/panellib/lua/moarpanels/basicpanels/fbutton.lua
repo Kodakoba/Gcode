@@ -161,7 +161,8 @@ function button:HoverLogic(dis, w, h)
 		--self:LerpColor(self.drawColor, self.HoverColor, 1.1, 0, 0.2)
 
 		if shadow.OnHover then
-			self:MemberLerp(shadow, "Spread", shadow.MaxSpread, shadow.HoverSpeed, 0, shadow.HoverEase)
+			local spr = shadow.MaxSpread
+			self:MemberLerp(shadow, "Spread", spr, shadow.HoverSpeed, 0, shadow.HoverEase)
 		end
 
 		if not self._IsHovered then
@@ -343,6 +344,10 @@ function button:Draw(w, h)
 				--int = 3
 				spr = math.max(shadow.MinSpread or 0.3, spr)
 				--blur = 1
+			end
+
+			if self.MxScale < 1 then
+				spr = spr * (1 / self.MxScale ^ 12)
 			end
 			if spr < 0.2 then
 				a = a * (spr / 0.2)
