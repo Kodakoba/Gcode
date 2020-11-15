@@ -42,6 +42,7 @@ function ENT:SHInit()
 
 	self.Storage = self.Inventory[1]
 	self.Storage.MaxItems = self.Slots
+	self.Storage.UseOwnership = true
 
 	self:CalculateScrollSpeed()
 
