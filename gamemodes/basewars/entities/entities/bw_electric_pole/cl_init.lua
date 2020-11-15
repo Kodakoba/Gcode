@@ -453,10 +453,11 @@ function ENT:OpenShit(qm, self, pnl)
 			if self.DisabledDueToCable then
 				pnl:SetMouseInputEnabled(true)
 				self.DisabledDueToCable = false
+
+				gens:To("Alpha", 120, 0.2, 0, 0.2)
+				consumers:To("Alpha", 120, 0.2, 0, 0.2)
 			end
 
-			gens:To("Alpha", 120, 0.2, 0, 0.2)
-			consumers:To("Alpha", 120, 0.2, 0, 0.2)
 			self.GoAway = false
 		end
 	end
