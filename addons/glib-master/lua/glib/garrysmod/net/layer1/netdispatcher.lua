@@ -55,6 +55,8 @@ end
 function self:Bytes (data, length)
 	length = length or #data
 	length = math.min (length, #data)
+	if length == 0 then return end
+
 	net.WriteData (data, length)
 end
 
