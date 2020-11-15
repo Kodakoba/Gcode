@@ -15,6 +15,8 @@ ENT.ConnectDistance = 1500
 ENT.Connectable = true
 ENT.Cableable = true
 
+ENT.Powerless = true
+
 ENT.ConnectPoint = Vector (3.6, 0, 24)
 ENT.ChainPoints = {
 	Vector (12.8, -3.2, 72),
