@@ -292,6 +292,7 @@ function nw:Invalidate()
 			ids[self.NetworkableID] = nil
 		end
 
+		-- TODO: Awareness check here
 		net.Start("NetworkableInvalidated")
 			net.WriteUInt(self.NumberID, 24)
 		net.Broadcast()
@@ -837,6 +838,9 @@ if CLIENT then
 		print("invalidated nwable with numID", num_id)
 		local id = NumberToID(num_id)
 		print("that's ID", id)
+
+		if not id then print("we dont know that") return end
+
 		_NetworkableData[id] = nil
 		if _NetworkableCache[id] then
 			_NetworkableCache[id]:Invalidate()
