@@ -3,7 +3,7 @@ AddCSLuaFile("shared.lua")
 
 hdl.DownloadFile("https://i.imgur.com/SpRAhWY.jpg", "crafting/bp_line.jpg", function(fn)
 	local mat = Material(fn, "noclamp")
-
+	print("creating mat", fn)
 	if not BlueprinterMat then
 
 		BlueprinterMat = CreateMaterial("BlueprintPrinter_Line", "VertexLitGeneric", {
