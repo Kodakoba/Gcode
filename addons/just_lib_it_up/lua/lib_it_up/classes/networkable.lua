@@ -29,7 +29,7 @@ _NetworkableAwareness = _NetworkableAwareness or muldim:new() --[ply] = {'ID', '
 _NetworkableData = _NetworkableData or muldim:new() 	-- stores networkable data as [num_id] = {bunch of key-values}
 local idData = _NetworkableData							-- only used clientside
 
-Networkable.Verbose = true
+Networkable.Verbose = false
 
 local realPrint = print
 local print = function(...)
@@ -178,11 +178,13 @@ function nw:Initialize(id, ...)
 	self:SetNetworkableID(id)
 end
 
-function nw:SetNetworkableID(id)
+function nw:SetNetworkableID(id, replace)
 
 	self.NetworkableID = id
 
-	if cache[id] then errorf("This isn't supposed to happen -- setting NWID with a networkable already existing! NWID: %s", id) return end
+	local before = cache[id]
+
+	if cache[id] and not replace then errorf("This isn't supposed to happen -- setting NWID with a networkable already existing! NWID: %s", id) return end
 	cache[id] = self
 
 	printf("SetNetworkableID called %s %s %s", Realm(true, true), id, idData[id])
@@ -206,7 +208,8 @@ function nw:SetNetworkableID(id)
 			IDArg = additionalArg, --additional arg for the encoder function, for cases like UInt and whatnot which require a second arg
 		}
 
-		local key = #numToID + 1
+
+		local key = (replace and before and before.NumberID) or #numToID + 1
 		numToID[key] = id
 		IDToNum[id] = key
 		self.NumberID = key
@@ -255,7 +258,6 @@ function nw:Set(k, v)
 		self.__LastSerialized[v] = new_von
 	end
 
-	print("added nw change serverside", k, v)
 	self.Networked[k] = v
 	_NetworkableChanges:Set(v, self.NetworkableID, k)
 	return self
@@ -276,12 +278,14 @@ end
 function nw:Invalidate()
 	self.Valid = false
 
-	cache[self.NetworkableID] = nil
-	idData[self.NetworkableID] = nil
+	if self.NetworkableID then
+		cache[self.NetworkableID] = nil
+		idData[self.NetworkableID] = nil
 
-	if self.NumberID and numToID[self.NumberID] == self.NetworkableID then numToID[self.NumberID] = nil end
+		if self.NumberID and numToID[self.NumberID] == self.NetworkableID then numToID[self.NumberID] = nil end
 
-	IDToNum[self.NetworkableID] = nil
+		IDToNum[self.NetworkableID] = nil
+	end
 
 	self:Emit("Invalidated")
 
@@ -366,9 +370,7 @@ if SERVER then
 		end
 		-- write val encoderID and the encoded val
 
-		print("writechange", obj)
 		local res = obj:Emit("WriteChangeValue", key, val, ...)
-		print(res)
 
 		if res == false then print("not writing change serverside", key, val) return end
 
@@ -453,7 +455,9 @@ if SERVER then
 
 			for id, changes in pairs(_NetworkableChanges) do
 				local obj = cache[id]
-				if obj.Filter then continue end --nyope
+				if obj.Filter or obj:Emit("ShouldNetwork") == false then continue end --nyope
+
+				obj:Emit("StartWritingChanges", changes)
 
 				changed = changed + 1
 				net.WriteUInt(IDToNumber(id), maxsz).Description = "IDToNumber"
@@ -461,6 +465,7 @@ if SERVER then
 				local changesAmt = 0
 				local writeChanges = {}
 
+				-- emit "ShouldEncode" for every changed val in a networkable
 				for k,v in pairs(changes) do
 					local should = obj:Emit("ShouldEncode", k, v) 	-- this should mostly be used for equality checks
 					if should == false then continue end 			-- keep in mind that if you return false the change will be lost to networking
@@ -768,8 +773,8 @@ if CLIENT then
 
 
 		if obj then
-			local customValue = obj:Emit("ReadChangeValue", decoded_key)
-			if customValue ~= nil then return decoded_key, customValue end
+			local customValue, setNil = obj:Emit("ReadChangeValue", decoded_key)
+			if customValue ~= nil and not setNil then return decoded_key, customValue end
 		end
 
 		local v_encID = net.ReadUInt(encoderIDLength)
@@ -828,7 +833,10 @@ if CLIENT then
 			print("	ID of obj:", numToID[num_id], num_id)
 			if obj then
 				-- if the object existed, call the callback after _every_ change has been read
+				print("calling emitter")
 				obj:Emit("NetworkedChanged", changes)
+			else
+				print("no obj to call shit")
 			end
 		end
 	end)
