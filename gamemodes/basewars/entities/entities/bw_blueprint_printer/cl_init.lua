@@ -2,11 +2,15 @@ include("shared.lua")
 AddCSLuaFile("shared.lua")
 
 hdl.DownloadFile("https://i.imgur.com/SpRAhWY.jpg", "crafting/bp_line.jpg", function(fn)
-	local mat = Material(fn, "noclamp")
 	print("creating mat", fn)
+	local mat = Material(fn, "noclamp")
+	print("created:", mat:GetTexture("$basetexture"), mat:IsError(), file.Exists(fn, "GAME"))
+	_MAT = mat
+
 	if not BlueprinterMat then
 
-		BlueprinterMat = CreateMaterial("BlueprintPrinter_Line", "VertexLitGeneric", {
+		BlueprinterMat = CreateMaterial("blueprintprinter_line", "VertexLitGeneric", {
+			["$basetexture"] = mat:GetName(),
 			["$nocull"] = 1,
 			["$model"] = 1,
 
