@@ -33,6 +33,7 @@ local BWAddons = {
     2135529088, -- arccw mw2
     2175261690, -- arccw fa:s 1
     2131161276, -- arccw m9k "extras"
+    2257255110, -- arccw GO
 
     2155366756, -- vmanip
 }
