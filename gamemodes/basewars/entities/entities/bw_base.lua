@@ -1,9 +1,3 @@
-ENT.Exception=ENT.Exception or false
-
-if !ENT.Exception then
-AddCSLuaFile()
-end
-
 ENT.Base = "base_gmodentity"
 ENT.Type = "anim"
 ENT.PrintName = "Base Entity"
@@ -68,7 +62,6 @@ hook.Add("PlayerDisconnected", "SaveOwners", function(ply)
 end)
 
 hook.Add("CPPIAssignOwnership", "BWRecalculateOwner", function(ply, ent)
-	print("assigned ownership of", ent, "to", ply)
 	if not IsValid(ply) then return end
 	if not BWEnts[ent] or not ent.CPPIOwner then return end 	--not a bw ent or owner not assigned yet
 

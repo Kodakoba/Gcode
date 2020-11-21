@@ -106,7 +106,7 @@ function ENT:DrawMoneyBar(pos, ang, scale, _, _, me, pwd)
 
 	if me.TTR then me.PrintAmount = self:GetNWInt("UpgradeCost", 0) / me.TTR  end
 
-	local w, h = 290*2, 72*2
+	local w, h = 580, 144
 
 	local Cp = me.dt.Capacity
 
