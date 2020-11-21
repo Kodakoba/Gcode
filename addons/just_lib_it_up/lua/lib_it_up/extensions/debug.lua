@@ -74,3 +74,12 @@ function Realm(lower, side)
 	if lower then return s:lower() end
 	return s
 end
+
+function clPrint(...)
+	if CLIENT then print(...) end
+end
+clprint = clPrint
+function svPrint(...)
+	if SERVER then print(...) end
+end
+svprint = svPrint

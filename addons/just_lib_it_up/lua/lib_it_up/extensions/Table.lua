@@ -239,17 +239,17 @@ if not table.Filter then
 	-- turns out plogs had this already
 
 	function table.Filter(tab, func)
-		local c = 1
+		local cur = 1
 		local len = #tab
 
 		for i=1, len do
 			if func(tab[i]) ~= false then
-				tab[c] = tab[i]
-				c = c + 1
+				tab[cur] = tab[i]
+				cur = cur + 1
 			end
 		end
 
-		for i=c, len do
+		for i=cur, len do
 			tab[i] = nil
 		end
 

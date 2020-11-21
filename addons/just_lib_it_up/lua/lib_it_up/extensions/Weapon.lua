@@ -2,7 +2,9 @@ local WEAPON = FindMetaTable("Weapon")
 
 --https://github.com/ZehMatt/Lambda/blob/develop/entities/weapons/weapon_physcannon.lua#L2276-L2308
 
-
+function IsWeapon(what)
+    return type(what) == "Weapon"
+end
 
 if CLIENT then
     local pi = math.pi
@@ -43,9 +45,19 @@ if CLIENT then
     end
 
     hook.Add("EntityFireBullets", "ThankYouBasedGarry", function(whomst, bullet)
-        whomst:Emit("FiredBullet", bullet)
-        local wep = whomst:GetActiveWeapon()
-        if wep:IsValid() then
+
+        if IsPlayer(whomst) then
+            wep = whomst:GetActiveWeapon()
+        elseif IsWeapon(whomst) then
+            wep = whomst
+            whomst = wep:GetOwner()
+        end
+
+        if IsPlayer(whomst) then
+            whomst:Emit("FiredBullet", bullet)
+        end
+
+        if IsWeapon(wep) then
             wep:Emit("FiredBullet", bullet)
         end
     end)

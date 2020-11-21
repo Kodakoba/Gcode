@@ -112,7 +112,7 @@ hook.Add("FinishMove", "EntitySubscriptions", function(pl, mv)
 		local dist = dat[2]
 		local callback = dat[3]
 		if not IsValid(ent) then table.remove(subs[pl], key) continue end
-	
+
 		local epos = ent:GetPos()
 
 		if pos:DistToSqr(epos) > dist then
@@ -129,6 +129,19 @@ hook.Add("FinishMove", "EntitySubscriptions", function(pl, mv)
 end)
 
 
+if CLIENT then
+
+	hook.Add("EntityRemoved", "EntityActuallyRemoved", function(ent)
+		local t = ent:GetTable()
+
+		timer.Simple(0, function()
+			if not ent:IsValid() then
+				hook.Run("EntityActuallyRemoved", ent, t)
+			end
+		end)
+	end)
+
+end
 
 include("entity_dt.lua")
 AddCSLuaFile("entity_dt.lua")

@@ -35,8 +35,8 @@ local includes = {
 }
 
 local needToInclude = {
-	[1] = {[_CL] = true, [_SH] = true, [_SV] = false},
-	[2] = {[_CL] = true, [_SH] = true, [_SV] = true} 	--even though server's _CL should be false it's actually true because the server needs to AddCSLua
+	[1] = {[CLIENT] = true, [_CL] = true, [_SH] = true, [_SV] = false},
+	[2] = {[SERVER] = true, [_CL] = true, [_SH] = true, [_SV] = true} 	--even though server's _CL should be false it's actually true because the server needs to AddCSLua
 }
 
 local function Realm()
@@ -69,6 +69,7 @@ local cached_searches = FInc.CachedSearches
 
 function FInc.Recursive(name, realm, nofold, decider, callback)	--even though with "nofold" it's not really recursive
 	if not NeedToInclude(realm) then return end
+	print("deciding to include", name, Realm())
 	decider = decider or BlankFunc
 	callback = callback or BlankFunc
 	local b = bench("file.Find: " .. name)
