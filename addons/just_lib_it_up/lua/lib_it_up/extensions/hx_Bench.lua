@@ -48,6 +48,7 @@ function benchmark.Init(Name)
 
 			_Start	= 0,
 			_Dur = 0,
+			_LastPrint = SysTime(),
 		},
 		benchmark
 	)
@@ -77,10 +78,6 @@ function benchmark:Reset()
 	return self
 end
 
-function benchmark:print()
-	print(self)
-end
-benchmark.Print = benchmark.print
 
 
 function benchmark:Read()
@@ -96,8 +93,9 @@ function benchmark:__tostring(...)
 	local ms = InMS(self:Read())
 	str = str:format(self.Name, ms)
 
-	if self.Frames then 
-		str = str .. (" (avg. across %d calls: %.3fms)"):format(self.Frames, ms / self.Frames)
+	if self.Frames then
+		local st = SysTime()
+		str = str .. (" (avg. across %d calls: %.3fms, time since last print: %.3fms)"):format(self.Frames, ms / self.Frames, InMS(st - self._LastPrint))
 	end
 
 	return str
@@ -109,11 +107,14 @@ function benchmark:print()
 
 	if self.Frames then
 		self.BenchedFrames = self.BenchedFrames + 1
+
 		if self.BenchedFrames >= self.Frames then
 			print(self:__tostring())
 			self.BenchedFrames = 0
 			self:Reset()
+			self._LastPrint = SysTime()
 		end
+
 	else
 		print(self:__tostring())
 	end
