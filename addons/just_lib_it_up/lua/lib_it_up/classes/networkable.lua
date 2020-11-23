@@ -93,13 +93,17 @@ local encoders = {
 	["angle"] = {5, net.WriteAngle},
 	["color"] = {6, net.WriteColor},
 
-	--7, 8, 9, 10 are used!!!!!! do not use them!
+	--7 to 11 are used!!!!!! do not use them!
 }
 ns:Hijack(false)
 
 local decoders = {
 	["string"] = {0, net.ReadString},
-	["entity"] = {1, net.ReadEntity},
+	["entity"] = {1, function()
+		local entID = net.ReadUInt(16)
+		if IsValid(Entity(entID)) then return Entity(entID) end
+		error("Entity isn't valid. Consider networking something else...?")
+	end},
 	["vector"] = {2, net.ReadVector},
 
 	["table"] = {3, function(t)
@@ -118,9 +122,11 @@ local decoders = {
 	["color"] = {6, net.ReadColor},
 
 	["uint"] = {7, net.ReadUInt, 32},
-	["int"] = {8, net.ReadInt},
-	["float"] = {9, net.ReadFloat, 32},
-	["nil"] = {10, BlankFunc}
+	["ushort"] = {8, net.ReadUInt, 16},
+
+	["int"] = {9, net.ReadInt},
+	["float"] = {10, net.ReadFloat, 32},
+	["nil"] = {11, BlankFunc}
 }
 
 local decoderByID = {}
@@ -133,15 +139,22 @@ local NetworkAll --pre-definition
 
 local function determineEncoder(typ, val)
 	if val == fakeNil then --lol
-		return BlankFunc, 10
+		return BlankFunc, 11
 	end
 
 	if typ == "number" then --numbers are a bit more complicated
 		if math.ceil(val) == val then
-			if val >= 0 then return net.WriteUInt, 7, 32
-			else return net.WriteInt, 8, 32 end
+			if val >= 0 then
+				if val > 65535 then
+					return net.WriteUInt, 7, 32 -- uint
+				else
+					return net.WriteUInt, 8, 16 -- ushort
+				end
+			else
+				return net.WriteInt, 9, 32		-- int
+			end
 		else
-			return net.WriteFloat, 9
+			return net.WriteFloat, 10
 		end
 	end
 
@@ -157,6 +170,8 @@ nw.AutoAssignID = true
 
 function nw:Initialize(id, ...)
 	self.Networked = {}
+	self.Aliases = {}
+
 	self.__LastSerialized = {} -- purely for networked tables
 	self.__Aware = muldim:new()
 
@@ -184,7 +199,7 @@ function nw:SetNetworkableID(id, replace)
 
 	local before = cache[id]
 
-	if cache[id] and not replace then errorf("This isn't supposed to happen -- setting NWID with a networkable already existing! NWID: %s", id) return end
+	if cache[id] and cache[id] ~= self and not replace then errorf("This isn't supposed to happen -- setting NWID with a networkable already existing! NWID: %s", id) return end
 	cache[id] = self
 
 	printf("SetNetworkableID called %s %s %s", Realm(true, true), id, idData[id])
@@ -192,6 +207,7 @@ function nw:SetNetworkableID(id, replace)
 	if CLIENT and idData[id] then
 		print("woah!!!! existssss")
 		for k, v in pairs(idData[id]) do
+			if self.Aliases[k] then k = self.Aliases[k] end
 			printf("pulling cached change: %s = %s", k, v)
 			self:Set(k, v)
 		end
@@ -225,6 +241,10 @@ function nw:SetNetworkableNumberID(numid)
 	self.NumberID = numid
 end
 
+function nw:IsValid()
+	return self.Valid ~= false
+end
+
 function nw:Set(k, v)
 	if self.Valid == false then
 		error("Attempted to set a networked var on an invalid Networkable!", 2)
@@ -240,6 +260,8 @@ function nw:Set(k, v)
 		printf("didn't find self with nwid?... %s", self.NetworkableID)
 		self:SetNetworkableID(self.NetworkableID)
 	end -- maybe resetall happened
+
+	if self.Aliases[k] ~= nil then k = self.Aliases[k] end
 
 	if CLIENT then -- don't bother
 		self.Networked[k] = v
@@ -264,10 +286,16 @@ function nw:Set(k, v)
 end
 
 function nw:Get(k, default)
+	if self.Aliases[k] ~= nil then k = self.Aliases[k] end
+
 	local ret = self.Networked[k]
 	if ret == nil then return default end
 
 	return ret
+end
+
+function nw:Alias(k, k2)
+	self.Aliases[k] = k2
 end
 
 function nw:GetNetworked() --shrug
@@ -306,8 +334,6 @@ end
 
 
 function nw:Bond(what)
-	if not self.NetworkableID then error("Assign an ID first!") return end
-
 	if isentity(what) then
 		hook.OnceRet("EntityRemoved", ("Networkable.Bond:%p"):format(what), function(ent)
 			if ent ~= what then return false end
@@ -326,7 +352,7 @@ function nw:Bond(what)
 
 	return self
 end
-
+nw.Bind = nw.Bond
 
 local function IDToNumber(id)
 	return IDToNum[id]
@@ -616,7 +642,7 @@ if SERVER then
 	end
 
 	function nw:Network(now, data, nwTo) 	--networks everything in the next tick (or right now if `now` is true OR networkable has a filter)
-
+		print("Network called", self, now, self.Filter)
 		if not self.Filter then
 			if not now then
 				timer.Adjust("NetworkableNetwork", 0, 0, function()
@@ -637,9 +663,6 @@ if SERVER then
 
 			if changes then shallowCopy(changes, data) end -- copy all changed into data
 
-			print("aight networking:")
-			PrintTable(data)
-
 			if not nwTo then
 				nwTo = {}
 
@@ -659,6 +682,9 @@ if SERVER then
 
 				for _, ply in ipairs(nwTo) do
 					for dataK, dataV in pairs(self:GetNetworked()) do
+						local unalK = dataK
+						if self.Aliases[dataK] then dataK = self.Aliases[dataK] end
+
 						-- if a player wasn't aware of a value and it wasn't changed, add them to the unaware list for that kv
 						if awareValues:Get(ply, dataK) ~= dataV and (not changes or not changes[dataK]) then
 							print(ply, "is unaware of a kv!!!", dataK, dataV)
@@ -673,8 +699,11 @@ if SERVER then
 				local ply = nwTo
 
 				for dataK, dataV in pairs(self:GetNetworked()) do
-					if awareValues:Get(ply, dataK) ~= dataV and (not changes or not changes[dataK]) then
-						print(ply, "is unaware of a kv!!!", dataK, dataV)
+					local unalK = dataK
+					if self.Aliases[dataK] then dataK = self.Aliases[dataK] end
+
+					if awareValues:Get(ply, dataK) ~= dataV and (not changes or not changes[unalK]) then
+						print(ply, "is unaware of a kv!!!", dataK, dataV, awareValues:Get(ply, dataK))
 						data[dataK] = dataV
 					end
 
@@ -688,7 +717,6 @@ if SERVER then
 					local toNW = shallowCopy(dat) 	-- add what they don't know
 					shallowCopy(data, toNW) 		-- then add what would've been networked anyway, handling changes in the process
 					print(ply, "gets this networked:")
-					PrintTable(toNW)
 					self:Network(true, toNW, ply)
 
 					table.RemoveByValue(nwTo, ply) -- exclude them from current networking
@@ -770,7 +798,7 @@ if CLIENT then
 		end
 
 		local decoded_key = k_dec[2](k_dec[3])
-
+		if obj and obj.Aliases[decoded_key] then decoded_key = obj.Aliases[decoded_key] end
 
 		if obj then
 			local customValue, setNil = obj:Emit("ReadChangeValue", decoded_key)
