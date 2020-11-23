@@ -193,8 +193,8 @@ function qobj:__ShowPopins()
 		if v.PopOutAnim then v.PopOutAnim:Stop() v.PopOutAnim = nil end
 		if v.MoveOutAnim then v.MoveOutAnim:Stop() v.MoveOutAnim = nil end
 
-		v.PopInAnim = btn:PopInShow()
-		v.MoveInAnim = btn:MoveTo(v.X, v.Y, self:GetTime(), 0, 0.2)
+		if not v.NoPopin then v.PopInAnim = btn:PopInShow() end
+		if not v.NoMove then v.MoveInAnim = btn:MoveTo(v.X, v.Y, self:GetTime(), 0, 0.2) end
 	end
 end
 
@@ -284,6 +284,9 @@ function qobj:AddPopIn(pnl, x, y, offx, offy, nopop, nomove)
 
 	if not nopop then pop.PopInAnim = pnl:PopIn() end
 	if not nomove then pop.MoveInAnim = pnl:MoveTo(x, y, self:GetTime(), 0, 0.2) end
+
+	pop.NoPopin = nopop
+	pop.NoMove = nomove
 
 	return pop
 end

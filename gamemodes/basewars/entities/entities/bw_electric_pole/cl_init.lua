@@ -51,7 +51,7 @@ function ENT:CreateBaseScroll(pnl, name, icon)
 	scr.AlphaOverride = true
 
 	scr:SetAlpha(0)
-	scr.Alpha = 120
+	scr.Alpha = 0
 
 	local wasHov = false
 	function scr:PostPaint(w, h)
@@ -84,8 +84,9 @@ function ENT:CreateBaseScroll(pnl, name, icon)
 
 			self:OnUnhover()
 		end
+	end
 
-
+	function scr:Think()
 		local a = self.Alpha
 		self:SetAlpha(a)
 	end
@@ -319,8 +320,10 @@ function ENT:CreateConsumersScroll(pnl, me)
 end
 
 function ENT:QMOnBeginClose(qm, self, pnl)
+	print("alpha to 0")
 	self.GenScroll:To("Alpha", 0, 0.1, 0, 0.3)
 	self.ConsumerScroll:To("Alpha", 0, 0.1, 0, 0.3)
+
 	--[[if IsValid(self.GenScroll) then
 		self.GenScroll:PopOut(nil, nil, BlankFunc)
 		self.GenScroll.AlphaOverride = true
@@ -332,26 +335,23 @@ function ENT:QMOnBeginClose(qm, self, pnl)
 	end]]
 
 	if IsValid(self.ConnectBtn) then
-		self.ConnectBtn.GoAway = true
+		--self.ConnectBtn.GoAway = true
 	end
 end
 
 function ENT:QMOnReopen(qm, self, pnl)
-
+	print("waawaa")
 	if IsValid(self.GenScroll) then
-		self.GenScroll:AlphaTo(120, 0.1, 0, function()
-			self.GenScroll.AlphaOverride = false
-		end)
-
-		self.GenScroll.AlphaOverride = true
+		print("alpha to 120")
+		self.GenScroll:Show()
+		self.GenScroll.Alpha = self.GenScroll:GetAlpha()
+		self.GenScroll:To("Alpha", 120, 0.1, 0, 0.3)
 	end
 
 	if IsValid(self.ConsumerScroll) then
-		self.ConsumerScroll:AlphaTo(120, 0.1, 0, function()
-			self.ConsumerScroll.AlphaOverride = false
-		end)
-
-		self.ConsumerScroll.AlphaOverride = true
+		self.ConsumerScroll:Show()
+		self.ConsumerScroll.Alpha = self.ConsumerScroll:GetAlpha()
+		self.ConsumerScroll:To("Alpha", 120, 0.1, 0, 0.3)
 	end
 
 	if IsValid(self.ConnectBtn) then
@@ -386,25 +386,19 @@ function ENT:OpenShit(qm, self, pnl)
 	local gens = self:CreateGeneratorsScroll(pnl, me)
 
 	self.GenScroll = gens
-	gens:AlphaTo(120, 0.1):On("End", function()
-		gens.AlphaOverride = false
-	end)
+	gens:To("Alpha", 120, 0.1)
 	--qm:AddPopIn(gens, gens.X, gens.Y + pnl.CircleSize, 0, 32)
 
 	local consumers = self:CreateConsumersScroll(pnl, me)
 	self.ConsumerScroll = consumers
-	consumers:AlphaTo(120, 0.1):On("End", function()
-		consumers.AlphaOverride = false
-	end)
+	consumers:To("Alpha", 120, 0.1)
 
 	local con = vgui.Create("FButton", pnl)
 	con:SetSize(gens:GetWide() * 0.75, 60)
 	con:CenterHorizontal()
 	con.Y = consumers.Y + consumers:GetTall() + 12
 
-	con:AlphaTo(120, 0.1):On("End", function()
-		con.AlphaOverride = false
-	end)
+	con:To("Alpha", 120, 0.1)
 
 	con.Unrolled = 0
 	con.AlwaysDrawShadow = true
