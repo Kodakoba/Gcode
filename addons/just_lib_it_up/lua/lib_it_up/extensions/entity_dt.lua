@@ -60,7 +60,10 @@ local lua_typs = {
 }
 
 local aliases = {
-	["Player"] = type(Entity(0))
+	["Player"] = type(Entity(0)),
+	["Weapon"] = type(Entity(0)),
+	["NPC"] = type(Entity(0)),
+	["Vehicle"] = type(Entity(0)),
 }
 
 for k,v in pairs(lua_typs) do
@@ -128,8 +131,8 @@ function ENTITY:QueueNotifyChange(ind, typ, name, old, new)
 
 	local vartyp = type(new)
 	vartyp = aliases[vartyp] or vartyp
-
-	if lua_typs[typ] ~= vartyp then
+										-- 'nil' is supported in booleans, wtf
+	if lua_typs[typ] ~= vartyp and not (new == nil and typ == "Bool") then
 		errorf("EntityDT: mismatched types; expected %q for %q; received %q instead ( '%s' )\n%s", lua_typs[typ], name, vartyp, new, debug.traceback(0, 4))
 		return
 	end
