@@ -1,6 +1,5 @@
 BaseWars = BaseWars or {}
 
-include("autorun/server/sql_extension.lua")
 include("include.lua")
 
 local AuthTbl = {}
@@ -118,8 +117,6 @@ function GM:PreCleanupMap()
 end
 
 function GM:PostCleanupMap()
-
-	BaseWars.NPCs:CreateNPCs()
 
 end
 
