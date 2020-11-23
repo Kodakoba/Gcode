@@ -32,11 +32,12 @@ if CLIENT then
 	local files, _ = file.Find("models/c_grp_stim*", "DOWNLOAD")
 
 	for k,v in ipairs(files) do
-		local num = v:match("c_grp_stim(%d+)")
-		mx = math.max(num and tonumber(num) or 0, mx)
+		local num = v:match("c_grp_stim(%d*)")
+
+		mx = (num ~= "" and math.max(num and tonumber(num), mx)) or ""
 	end
 
-	local nm = "c_grp_stim" .. mx .. ".mdl"
+	local nm = "grp/stims/c_grp_stim" .. mx .. ".mdl"
 
 	VManip:RegisterAnim("stim_inject_start",
 		{
