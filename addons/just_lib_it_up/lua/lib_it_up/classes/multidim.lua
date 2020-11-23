@@ -12,7 +12,7 @@ function mmeta:Get(...)
 	local curvar = self
 
 	for k,v in ipairs(ks) do
-		if not curvar[v] then return end
+		if curvar[v] == nil then return end
 		curvar = curvar[v]
 	end
 
@@ -24,7 +24,7 @@ function mmeta:GetOrSet(...)
 	local curvar = self
 
 	for k,v in ipairs(ks) do
-		if not curvar[v] then curvar[v] = muldim:new() end
+		if curvar[v] == nil then curvar[v] = muldim:new() end
 		curvar = curvar[v]
 	end
 
@@ -38,9 +38,9 @@ function mmeta:Set(val, ...)
 	for k,v in ipairs(ks) do
 		local nextkey = ks[k + 1]
 
-		if not curvar[v] then
+		if curvar[v] == nil then
 
-			if nextkey then --if next key in ... exists
+			if nextkey ~= nil then --if next key in ... exists
 				curvar[v] = muldim:new() --recursively create new dim objects
 			else
 				curvar[v] = val --or just set the value
@@ -49,7 +49,7 @@ function mmeta:Set(val, ...)
 
 		else
 
-			if not nextkey then
+			if nextkey == nil then
 				curvar[v] = val
 			end
 
@@ -68,9 +68,9 @@ function mmeta:Insert(val, ...)
 	for k,v in ipairs(ks) do
 		local nextkey = ks[k + 1]
 
-		if not curvar[v] then
+		if curvar[v] == nil then
 
-			if nextkey then
+			if nextkey ~= nil then
 				curvar[v] = muldim:new()
 			else
 				curvar[v] = muldim:new()
@@ -80,7 +80,7 @@ function mmeta:Insert(val, ...)
 
 		else
 
-			if not nextkey then
+			if nextkey == nil then
 				curvar[v][#curvar[v] + 1] = val
 			end
 
