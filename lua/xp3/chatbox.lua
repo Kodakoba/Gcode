@@ -164,7 +164,7 @@ end
 function chatbox.OpenEmotesMenu(btn)
 	if IsValid(chatbox.EmoteMenu) then chatbox.EmoteMenu:StartClosing() chatbox.EmoteMenu = nil return end
 
-	local emotes = vgui.Create("TabbedFrame")
+	local emotes = vgui.Create("NavFrame")--vgui.Create("TabbedFrame")
 	chatbox.EmoteMenu = emotes
 	emotes.Shadow = {intensity = 3, blur = 1, spread = 0.7}
 
@@ -298,7 +298,7 @@ function chatbox.OpenEmotesMenu(btn)
 	for name, coll in pairs(Emotes.Collections) do
 		local tab = emotes:AddTab(name, function()
 			local list = vgui.Create("FScrollPanel", emotes)
-			list:Dock(FILL)
+			--list:Dock(FILL)
 
 			--apply filters to all children (emotes)
 
@@ -314,7 +314,7 @@ function chatbox.OpenEmotesMenu(btn)
 				emotesLoading = false
 			end
 
-			emotes:AlignPanel(list)
+			emotes:PositionPanel(list)
 
 			local size = 40
 
@@ -348,15 +348,18 @@ function chatbox.OpenEmotesMenu(btn)
 				b.Emote = v
 
 				function b:Paint(w, h)
-					if not MoarPanelsMats[self.Emote:GetHDLPath()] and not emotesLoading then 	-- emote material hasn't preloaded and we're not loading anything
+					--[[if not MoarPanelsMats[self.Emote:GetHDLPath()] and not emotesLoading then 	-- emote material hasn't preloaded and we're not loading anything
 						emotesLoading = true													-- switch emotesLoading to true and allow 1 mat to load
 					elseif emotesLoading then 													-- emote material is loading and we're already loading something, don't do anything
 						draw.DrawLoading(self, w/2, h/2, w, h)
 						return
-					end
+					end]]
 
 					surface.SetDrawColor(color_white)
-					self.Emote:Paint(0, 0, w, h, self)
+					local ok = self.Emote:Paint(0, 0, w, h, self)
+					if not ok then
+						draw.DrawLoading(self, w/2, h/2, w, h)
+					end
 				end
 
 				function b:OnCursorEntered()
