@@ -159,6 +159,7 @@ function ENT:OpenShit(qm, self, pnl)
 	give_stim = vgui.Create("FButton", canv)
 		give_stim:SetSize(200, 60)
 		give_stim:Center()
+		give_stim:SetDoubleClickingEnabled(false)
 
 		give_stim.AlwaysDrawShadow = true
 		give_stim.Shadow.Intensity = 1

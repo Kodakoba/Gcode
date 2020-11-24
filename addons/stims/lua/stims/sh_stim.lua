@@ -86,7 +86,9 @@ hook.Add("CanUseStimpak", "CooldownCheck", function(ply)
 	if ply:IsOnStimCooldown() then return false end
 end)
 
-
+hook.Add("PlayerSpawn", "ResetStimpaks", function(ply)
+	ply:SetNW2Int("Stimpaks", 0)
+end)
 
 hook.Add("PlayerUsedStimpak", "UseStim", function(ply, dat)
 	ply:TakeStims(1)

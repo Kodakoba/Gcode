@@ -1,30 +1,30 @@
 CUM.CurCat = "Fun"
 
-local log = CUM.Log 
+local log = CUM.Log
 
 local function GuessPlayer(cur, ply, arg)
 
-	if not ply and not arg then return "^", cur end 
+	if not ply and not arg then return "^", cur end
 
 	local plyr = CUM.ParsePlayer(ply)
 
-	if not plyr and arg then 
+	if not plyr and arg then
 		local plyr2 = CUM.ParsePlayer(arg)
 
-		if plyr2 then 
-			plyr = plyr2 
+		if plyr2 then
+			plyr = plyr2
 
 			arg = ply
-		end 
+		end
 	elseif not plyr and not arg and tonumber(ply) then --ply is number
-		return "^", tonumber(ply)  
+		return "^", tonumber(ply)
 	end
 
 	if not plyr and not arg then return "err" end
 
 	local num = tonumber(arg or cur)
 
-	if not plyr then 
+	if not plyr then
 		return "^", num
 	elseif plyr then
 		return plyr, num
@@ -35,8 +35,8 @@ local function GuessPlayer(cur, ply, arg)
 end
 
 
-CUM.AddCommand({"armor", "a"}, function(ply, amt) 
-	if not ply then return end 
+CUM.AddCommand({"armor", "a"}, function(ply, amt)
+	if not ply then return end
 	ply:SetArmor(amt)
 end)
 	:AddPlayerArg(true, GuessPlayer, "Player whose armor to set", true)
@@ -51,8 +51,8 @@ end)
 
 	:SetSilent(true)
 
-CUM.AddCommand({"hp", "health"}, function(ply, amt, ...) 
-	if not ply then return end 
+CUM.AddCommand({"hp", "health"}, function(ply, amt, ...)
+	if not ply then return end
 	print(ply, amt, ...)
 	log("Setting for %s to %d", ply, amt)
 	ply:SetHealth(amt or ply:GetMaxHealth())
@@ -71,8 +71,8 @@ end)
 	:SetSilent(true)
 
 
-CUM.AddCommand("slap", function(ply, amt) 
-	if not ply then return end 
+CUM.AddCommand("slap", function(ply, amt)
+	if not ply then return end
 	ply:SetVelocity(Vector(math.random(-amt/2, amt/2), math.random(-amt/2, amt/2), amt))
 end)
 	:AddPlayerArg(true, "Player to slap")
@@ -82,9 +82,9 @@ end)
 		local sa = rply:IsSuperAdmin()
 		local rep = {}
 
-		if sa then 
+		if sa then
 			rep[1] = caller
-		else 
+		else
 			rep[1] = "<col=0,60,100>Someone"
 		end
 
@@ -111,7 +111,7 @@ CUM.AddCommand("ps", function(ply, line)
 
  	if ply.psCoolDown and CurTime() - ply.psCoolDown < 2 then return false end
 
-	if not line or line=="" then 
+	if not line or line=="" then
 
 	    for k,v in pairs(f) do
 	    	local snds=file.Find("sound/"..v.."/*.ogg","MOD","namedesc")
@@ -121,10 +121,10 @@ CUM.AddCommand("ps", function(ply, line)
 			end
 
 		end
-		
+
 		ply:ChatPrint("All sounds are printed to console.")
 
-		return false 
+		return false
 	end
 
 	local played = false
@@ -133,8 +133,8 @@ CUM.AddCommand("ps", function(ply, line)
     	local snds=file.Find("sound/"..v.."/*.ogg","MOD","namedesc")
 
     	for k, file in pairs(snds) do
-        	if line..".ogg"==file then 
-        		played = true 
+        	if line..".ogg"==file then
+        		played = true
         		ply.psCoolDown = CurTime()
 				ply:EmitSound(v.."/"..line..'.ogg', 120, 100, 1, CHAN_AUTO )
         	break end
@@ -144,7 +144,7 @@ CUM.AddCommand("ps", function(ply, line)
 
     for k,v in pairs(urlps) do
 
-		if line==k then 
+		if line==k then
 			played=true
 			net.Start("playsound")
 				net.WriteString(v)
@@ -155,9 +155,9 @@ CUM.AddCommand("ps", function(ply, line)
 
 	end
 
-    if not played then 
+    if not played then
     	ply:PrintMessage(3,"sound '"..line..".ogg' not found")
-    	return false 
+    	return false
     end
 
 
@@ -165,9 +165,9 @@ end)
 :SetSilent(true)
 :SetDescription("Play one of the predefined sounds.")
 :SetReportFunc(function(self, rply, caller, caller2, snd)
-	if not snd or snd=="" then return end 
+	if not snd or snd=="" then return end
 
-	if rply:Distance(caller) < 768 or rply == caller then 
+	if rply:Distance(caller) < 768 or rply == caller then
 		return "{1} played sound {2}.", {[2] = "<color=100,230,100>"..snd..".ogg"}
 	end
 end)

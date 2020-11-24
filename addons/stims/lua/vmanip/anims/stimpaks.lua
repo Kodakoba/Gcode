@@ -29,7 +29,7 @@ STIMPAK_REMOVE_TIME = 0.4
 if CLIENT then
 	local mx = 0
 
-	local files, _ = file.Find("models/c_grp_stim*", "DOWNLOAD")
+	local files, _ = file.Find("models/grp/stims/*", "GAME")
 
 	for k,v in ipairs(files) do
 		local num = v:match("c_grp_stim(%d*)")
