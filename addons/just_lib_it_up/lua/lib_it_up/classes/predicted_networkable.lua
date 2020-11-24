@@ -42,9 +42,17 @@ timer.Create("PredNW_GC", 3, 0, function()
 		end
 	end
 end)
-function nw:Initialize(id)
 
-	self.PredictedVars = muldim:new()
+nw:On("Invalidate", "CleanPredNW", function(self)
+	for k,v in ipairs(_AllPredNWs) do
+		if v == self then
+			table.remove(_AllPredNWs, k)
+			break
+		end
+	end
+end)
+
+function nw:Initialize(id)
 
 	--[[
 		[unpred_ctime] = {
@@ -57,10 +65,11 @@ function nw:Initialize(id)
 
 	self.Streams = muldim:new()
 
-	self:SetNetworkableID(id, true)
+	if id then self:SetNetworkableID(id, true) end
 	self.LastPredFrame = 0 --UnPredictedCurTime
 	self.BaseLineWhen = 0
 
+	self:Alias("__ct", 255)
 	allNWs[#allNWs + 1] = self
 end
 
@@ -112,10 +121,20 @@ function nw:GetClosestPredRunUnpred(uct)
 end
 
 function nw:Set(k, v, force_pred)
+	if self.Aliases[k] ~= nil then k = self.Aliases[k] end
+
 	if SERVER then
+		if self.Networked[k] == v then return self end
+
 		local a = self.__parent.Set(self, k, v)
 		self.__parent.Set(self, "__ct", CurTime())
-		self.__parent:Network(true)
+
+		timer.Create("NWNetwork" .. tostring(self.NetworkableID), 0, 1, function()
+			if self:IsValid() then
+				self.__parent.Network(self, true)
+			end
+		end)
+
 		return a
 	end
 
@@ -126,17 +145,17 @@ function nw:Set(k, v, force_pred)
 	local first_pred = pred and IsFirstTimePredicted()
 
 	if not pred then
-		print("!!set baseline from unpred", CurTime(), k, v)
+		--print("!!set baseline from unpred", CurTime(), k, v)
 		self.BaseLine[k] = v
 		self.BaseLineWhen = when
 	else
-		print("!!set stream from pred", CurTime(), streamWhen)
+		--print("!!set stream from pred", CurTime(), streamWhen)
 		local stream = self:GetStream(streamWhen)
 		stream.LastPredRun = when
 		stream:Set(k, v, first_pred)
 
 		if first_pred then
-			print("!!!!!!!first pred", when, streamWhen)
+			--print("!!!!!!!first pred", when, streamWhen)
 			self.ActiveRuns[when] = streamWhen
 		end
 	end
@@ -147,6 +166,7 @@ local print = print
 local acPrint = print
 
 function nw:Get(k, p, no_pred)
+	if self.Aliases[k] ~= nil then k = self.Aliases[k] end
 	if p then print = acPrint else print = BlankFunc end
 
 	local when = CurTime()
@@ -163,22 +183,23 @@ function nw:Get(k, p, no_pred)
 
 		if streamFrom and self.ActiveRuns[self.BaseLineWhen] and streamFrom < self.ActiveRuns[self.BaseLineWhen] then
 			print("using baseline since its more recent", self.BaseLineWhen, streamWhen, streamFrom, when)
-			return self.BaseLine[k]
+			return self.BaseLine[k], self.BaseLineWhen
 		end
 
 		local var = stream and stream.Data[k]
 		print("using stream", var, streamFrom, streamWhen, self.BaseLineWhen, when)
 
-		if stream and not var then
+		if stream and var == nil then
+			print("using stream baseline..?", stream.BaseLine[k])
 			var = stream.BaseLine[k]
 		end
 
 		if var ~= nil then
-			return var
+			return var, streamFrom or streamWhen
 		end -- if the current prediction frame has that var set, return it
 
-
-		return self.BaseLine[k] -- otherwise, return to baseline
+		print('returned to baseline')
+		return self.BaseLine[k], self.BaseLineWhen -- otherwise, return to baseline
 	else
 
 		local stream = self.Streams[streamWhen]
@@ -188,7 +209,7 @@ function nw:Get(k, p, no_pred)
 		local blVar = self.BaseLine[k]
 
 		if closestTime and self.ActiveRuns[self.BaseLineWhen] and closestTime < self.ActiveRuns[self.BaseLineWhen] and blVar then -- use baseline if it's more recent than whatever stream we have
-			return blVar
+			return blVar, self.BaseLineWhen
 		end
 
 		local ret
@@ -198,10 +219,12 @@ function nw:Get(k, p, no_pred)
 		end
 		if ret == nil then ret = blVar end
 
-		return ret
+		return ret, closestTime or streamWhen
 
 	end
 end
+
+
 
 function nw:GetPredicted(k)
 	return self:Get(k, nil, false)
@@ -222,7 +245,7 @@ if CLIENT then
 				self.BaseLine[k] = v[2]
 				self:Emit("PredNetworkedVarChanged", k, v[1], v[2])
 			end
-			print("set baseline from sv", self.BaseLineServer)
+
 			self.BaseLineWhen = self.BaseLineServer
 			self.BaseLine.__ct = nil
 			self.BaseLineServer = nil
@@ -231,7 +254,7 @@ if CLIENT then
 	end)
 
 	nw:On("NetworkedVarChanged", "MergeIntoBaseline", function(self, key, old, new)
-		if key == "__ct" then
+		if key == self.Aliases["__ct"] then
 			if self.BaseLineWhen < new then
 				--self.BaseLineWhen = new
 				self.BaseLineServer = new

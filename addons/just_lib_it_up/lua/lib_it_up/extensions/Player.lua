@@ -93,7 +93,9 @@ end
 
 PLAYER.GetNextRespawn = PLAYER.GetRespawnTime
 
-
+function IsPred()
+	return CurTime() ~= UnPredictedCurTime()
+end
 
 if SERVER then
 	util.AddNetworkString("FullLoad")
