@@ -78,7 +78,7 @@ function hook.OnceRet(hookname, hookid, cb)
 	hook.Add(hookname, hookid, function(...)
 		local ok, ret = pcall(cb, ...)
 
-		if ret ~= false then
+		if not ok or ret ~= false then
 			hook.Remove(hookname, hookid)
 			if not ok then
 				error(ret, 2)

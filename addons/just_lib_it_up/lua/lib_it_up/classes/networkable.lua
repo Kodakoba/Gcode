@@ -334,13 +334,15 @@ end
 
 
 function nw:Bond(what)
+
 	if isentity(what) then
+
 		hook.OnceRet("EntityRemoved", ("Networkable.Bond:%p"):format(what), function(ent)
 			if ent ~= what then return false end
 
 			if CLIENT then
 				timer.Simple(0.1, function()
-					if IsValid(self) then print("Disregard...?") self:Bond(self) return end --fullupdates :v
+					if IsValid(ent) then self:Bond(ent) return end --fullupdates :v
 					self:Invalidate()
 				end)
 			else
@@ -348,6 +350,8 @@ function nw:Bond(what)
 			end
 
 		end)
+	else
+		errorf("Can't bind to %q (%s)!", type(what), what)
 	end
 
 	return self
@@ -749,7 +753,7 @@ if SERVER then
 
 			local sz = bit.GetLen(self.NumberID)
 
-			net.Start("NetworkableSync")
+			net.Start("NetworkableSync", self.Unreliable)
 
 				net.WriteUInt(anyone_missing and 1 or 0, 16) --don't write yourself if everyone knows
 				net.WriteUInt(sz, 5)
