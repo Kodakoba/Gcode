@@ -20,12 +20,14 @@ function Stream:Initialize()
 	self.CopiedData = {} -- [k] = stream from which we copied the key
 end
 
-function Stream:Set(k, v, futureBaseline)
+function Stream:Set(k, v, backupBase)
 	--clprint("Set", self.Time, k, v)
 	self.Data[k] = v
 	self.CopiedData[k] = nil
-	if futureBaseline then
-		self.BaseLine[k] = v
+	if backupBase then
+		for bk, bv in pairs(backupBase.BaseLine) do
+			self.BaseLine[bk] = bv
+		end
 	end
 end
 
@@ -41,13 +43,20 @@ local JITTER_THRESHOLD = 100 / 1000
 
 if CLIENT then
 	timer.Create("PredNW_GC", 0.1, 0, function() -- bitch
-		local rCT = CurTime() - math.max(0.07, LocalPlayer():Ping() / 500 + JITTER_THRESHOLD)
+		local rCT = CurTime() - math.max(0.07, LocalPlayer():Ping() / 100 + JITTER_THRESHOLD)
 		--print((LocalPlayer():Ping() / 500 + JITTER_THRESHOLD))
 		for k,v in pairs(allNWs) do
 			for ct, _ in pairs(v.Streams) do
 				if rCT > ct  then
-					--print("Cleaned up", ct, rCT)
+					--clprint("Cleaned up stream", ct, rCT)
 					v.Streams[ct] = nil -- you won't be missed
+				end
+			end
+
+			for ct, uct in pairs(v.ActiveRuns) do
+				if rCT > ct then
+					--clprint("Cleaned up active run", ct, rCT)
+					v.ActiveRuns[ct] = nil
 				end
 			end
 		end
@@ -81,7 +90,7 @@ function nw:Initialize(id)
 	if id then self:SetNetworkableID(id, true) end
 	self.LastPredFrame = 0 --UnPredictedCurTime
 	self.BaseLineWhen = 0
-
+	self.BaseLineServer = 0
 	-- self.MaxCTStream = math.huge  -- can't; we know UCT will never be less than the previous value, but CT can be due to winding forward
 	self.MaxUCTStream = math.huge
 
@@ -94,29 +103,21 @@ function nw:CreateStream(time)
 	st.Time = time
 	self.Streams[time] = st
 	--local print = BlankFunc
-	print("Created", st)
+	clprint("Created", st, CurTime(), self.ActiveRuns[CurTime()] and self.Streams[self.ActiveRuns[CurTime()]])
 	local str, strWhen = self:GetClosestPredRun(time)
 
 	if str then
 		str.Copied[#str.Copied + 1] = st
 		--print("	Copying data from stream @", strWhen)
 		--PrintTable(str.Data)
-	else
-		--print("	Copying data from NW baseline; no stream")
 	end
 
 	if str then
-
 		for k,v in pairs(str.BaseLine) do
 			--print("	Set #2", k, v)
 			st:Set(k, v)
 			str.CopiedData[k] = str
 		end
-	else
-		--[[for k,v in pairs(self.BaseLine) do
-			print("	Set", k, v)
-			st:Set(k, v)
-		end]]
 	end
 
 	self.MaxUCTStream = time
@@ -130,6 +131,7 @@ function nw:GetStream(time)
 end
 
 local fug = bench("Fugg", 6000)
+local lf = 0
 
 function nw:GetClosestPredRun(ct, key, cmd, p) -- behind `ct`
 	local print = print
@@ -151,15 +153,16 @@ function nw:GetClosestPredRun(ct, key, cmd, p) -- behind `ct`
 	local mx = 0
 
 	for k,v in pairs(self.ActiveRuns) do
+
 		if k < ct then
 			local str = self.Streams[v]
 			if not str then self.ActiveRuns[k] = nil continue end
 
 			if str.Data[key] ~= nil and str.Cmd ~= cmd then
 				mx = math.max(v, mx)
-			elseif str.Cmd == cmd then
+			elseif str.Cmd == cmd and key == 1 then
 				--clprint("can't use due to same cmd", str)
-			elseif str.Data[key] == nil and key == 2 then
+			elseif str.Data[key] == nil and key == 1 then
 				--clprint("can't use due to missing key", str, key)
 			end
 
@@ -195,7 +198,7 @@ function nw:GetClosestPredRunUnpred(uct, key, lim, p)
 			end
 		end
 	end
-	print("found:", mx)
+	--print("found:", mx)
 	--if lim and mx < lim then return false end
 	return str, mx
 end
@@ -233,7 +236,12 @@ function nw:Set(k, v)
 		--clprint("Set pred", k, v, streamWhen)
 		local stream = self:GetStream(streamWhen)
 		stream.LastPredRun = when
-		stream:Set(k, v, first_pred)
+		stream:Set(k, v, first_pred and self)
+
+		if first_pred then
+			--clprint("	Setting on first pred:", stream.Time, k, v)
+		end
+
 		local ply = GetPredictionPlayer()
 		local cmd = ply ~= NULL and ply:GetCurrentCommand():CommandNumber()
 		stream.Cmd = cmd
@@ -257,7 +265,12 @@ local print = print
 local acPrint = print
 
 function nw:Get(k, p, no_pred)
+	if SERVER then
+		return self.__parent.Get(self, k)
+	end
+
 	if self.Aliases[k] ~= nil then k = self.Aliases[k] end
+
 	if p then print = acPrint else print = BlankFunc end
 
 	local when = CurTime()
@@ -288,8 +301,10 @@ function nw:Get(k, p, no_pred)
 
 		local var = stream and stream.Data[k]
 		print("using stream", var, stream and stream.Time, streamWhen, self.BaseLineWhen, when)
-
-		if stream and var == nil then
+					-- the pred run is so old that we already lost the baseline data since it was overwritten by new data from the server;
+					-- time ta pull the old baseline from the stream!!!
+		print(CurTime(), self.BaseLineWhen)
+		if stream and (--[[stream.Time < self.BaseLineServer or ]]var == nil) then
 			print("using stream baseline..?", stream.BaseLine[k])
 			var = stream.BaseLine[k]
 		end
@@ -353,7 +368,7 @@ if CLIENT then
 
 			self.BaseLineWhen = self.BaseLineServer
 			self.BaseLine.__ct = nil
-			self.BaseLineServer = nil
+			--self.BaseLineServer = nil
 		end
 
 	end)

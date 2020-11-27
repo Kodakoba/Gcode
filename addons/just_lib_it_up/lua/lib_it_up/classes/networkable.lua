@@ -289,6 +289,7 @@ function nw:Get(k, default)
 	if self.Aliases[k] ~= nil then k = self.Aliases[k] end
 
 	local ret = self.Networked[k]
+	if ret == fakeNil then return nil end
 	if ret == nil then return default end
 
 	return ret
