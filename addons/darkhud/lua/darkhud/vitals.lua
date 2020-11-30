@@ -499,7 +499,7 @@ hook.Add("OnContextMenuOpen", "DarkHUD_Vitals", function()
 		if not IsValid(DarkHUD.Vitals) then return end
 	end
 
-	if not used["ContextMenu"] then
+	if not used.ContextMenu ~= 1 then
 		DarkHUD.SetUsed("ContextMenu", 1)
 	end
 

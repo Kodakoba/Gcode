@@ -20,11 +20,20 @@ local fonts = DarkHUD.Fonts
 DarkHUD.EverUsed = false
 
 sql.Query("CREATE TABLE IF NOT EXISTS DarkHUD(used TEXT, settings TEXT)")
-DarkHUD.Used = DarkHUD.Used or sql.Query("SELECT used FROM DarkHUD")
+DarkHUD.Used = DarkHUD.Used or {}
+
+local q = sql.Query("SELECT used FROM DarkHUD")
+
+if q and q[1] then
+	local t = util.JSONToTable(q[1].used)
+	for k,v in pairs(t) do
+		DarkHUD.Used[k] = v
+	end
+end
+
 local used = DarkHUD.Used
 
-if not used then
-	used = {}
+if not q then
 	sql.Query("INSERT INTO DarkHUD(used, settings) VALUES('[]', '[]')")
 end
 
