@@ -202,8 +202,8 @@ function SWEP:CheckMoves(owner, mv, dir)
 			start = pos + Vector(0, 0, 12),
 			endpos = pos - Vector(0, 0, 24),
 			filter = owner,
-			mins = Vector( -16, -16, -4 ),
-			maxs = Vector( 16, 16, 8 ),
+			mins = Vector( -24, -24, -4 ),
+			maxs = Vector( 24, 24, 8 ),
 			mask = MASK_SOLID
 		})
 
@@ -222,7 +222,7 @@ function SWEP:CheckMoves(owner, mv, dir)
 			local mul = 2000 * (1 - dir.z) -- and the bigger the bounce, the less velocity you have
 
 			vel = dir * mul
-			vel.z = math.max(vel.z * (dir.z > 0.6 and (0.5 / (1 - dir.z)) or 1), 400)
+			vel.z = math.max(vel.z * (dir.z > 0.6 and (0.77 / (1 - dir.z)) or 1), 400)
 			_HIT = true
 
 			if SERVER then
