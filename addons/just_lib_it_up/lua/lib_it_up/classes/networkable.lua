@@ -773,9 +773,10 @@ if SERVER then
 
 				_NetworkableChanges[self.NetworkableID] = nil
 
+				print("-- sent! --", net.BytesWritten())
 			net.Send(nwTo)
 
-			print("-- sent! --")
+			
 		end
 	end
 

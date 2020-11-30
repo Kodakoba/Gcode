@@ -103,7 +103,7 @@ function nw:CreateStream(time)
 	st.Time = time
 	self.Streams[time] = st
 	--local print = BlankFunc
-	clprint("Created", st, CurTime(), self.ActiveRuns[CurTime()] and self.Streams[self.ActiveRuns[CurTime()]])
+	--clprint("Created", st, CurTime(), self.ActiveRuns[CurTime()] and self.Streams[self.ActiveRuns[CurTime()]])
 	local str, strWhen = self:GetClosestPredRun(time)
 
 	if str then
