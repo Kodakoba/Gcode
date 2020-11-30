@@ -27,7 +27,27 @@ function SWEP:SetupDataTables()
 	self:NetworkVar("Float", 0, "DashEndTime")
 end
 
-DashTable = {}
+
+function SWEP:GetDashCooldownEnd()
+	local ret, when = self.PredNW:Get("DashCooldownEnd")
+	return ret or 0, when or 0
+end
+
+function SWEP:SetDashCooldownEnd(v)
+	return self.PredNW:Set("DashCooldownEnd", v)
+end
+
+
+function SWEP:GetDashCooldown()
+	local ret, when = self.PredNW:Get("DashCooldown")
+	return ret or 0, when or 0
+end
+
+function SWEP:SetDashCooldown(v)
+	return self.PredNW:Set("DashCooldown", v)
+end
+
+DashTable = DashTable or {}
 
 function SWEP:Initialize()
 	if CLIENT then
@@ -35,6 +55,23 @@ function SWEP:Initialize()
 		self:SetPredictable(true)
 		self.Dashed = false
 	end
+
+	self.CooldownEndsWhen = 0	-- for the HUD; don't use for pred!
+	self.CooldownDuration = 0	-- since the HUD hooks can't wind CurTime() forward, we hafta track these separately
+								-- as unpredicted curtimes
+
+	self.PredNW = PredNetworkable()
+
+	self.PredNW:Alias("DashCooldownEnd", 0)
+	self.PredNW:Alias("DashCooldown", 1)
+
+
+	self.PredNW:SetNetworkableID("Dash" .. self:EntIndex())
+
+	self.PredNW:Bind(self)
+	self.PredNW.Filter = function(nw, p)
+        return p == self:GetOwner()
+    end
 end
 
 hook.Add("GetFallDamage", "DashFall", function(ply)
@@ -43,19 +80,49 @@ hook.Add("GetFallDamage", "DashFall", function(ply)
 	end
 end)
 
-function SWEP:Think()
+function SWEP:RechargeLogic(ply)
+	local dashing = (SERVER and DashTable[ply]) or (CLIENT and self:GetDashing())
 
-	if self:GetOwner():IsOnGround() and self:GetDashCharges() ~= 1 then
-		local dashing = (SERVER and DashTable[self:GetOwner()]) or (CLIENT and self:GetDashing())
-		if not dashing then
-			self:SetDashCharges(1)
-			if CLIENT then
-				self.Dashed = false
+	if ply:IsOnGround() and self:GetDashCharges() ~= 1 and not dashing then
+
+		if self:GetDashCooldown() > 0 and self:GetDashCooldownEnd() == 0 then
+			self:SetDashCooldownEnd(CurTime() + self:GetDashCooldown())
+
+			if IsFirstTimePredicted() then
+				print(Realm(), "starting kewldown")
+				self.CooldownDuration = self:GetDashCooldown()
+				self.CooldownEndsWhen = UnPredictedCurTime() + self:GetDashCooldown()
 			end
+
+		end
+
+		if self:GetDashCooldownEnd() > CurTime() then return end
+
+
+		self:SetDashCooldownEnd(0)
+		self:SetDashCooldown(0)
+
+		self.CooldownDuration = 0
+		self.CooldownEndsWhen = 0
+
+		self:SetDashCharges(1)
+		if CLIENT then
+			self.Dashed = false
 		end
 	end
 
 end
+
+function SWEP:Think()
+	self:RechargeLogic(self:GetOwner())
+end
+
+hook.Add("OnPlayerHitGround", "RechargeDash", function(ply, water, floater, speed)
+	local dash = ply:GetActiveWeapon()
+	if not dash or not dash:IsValid() or not dash.IsDash then return end
+
+	dash:RechargeLogic(ply)
+end)
 
 local OverrideDashEnd
 
@@ -92,11 +159,17 @@ function SWEP:CheckMoves(owner, mv, dir)
 
 			local vel
 
+			self:SetDashCooldown(1.5)
+
+			if IsFirstTimePredicted() then
+				self.CooldownDuration = self:GetDashCooldown()
+			end
+
 			if ducked then
 
 				vel = dir * 2350
 				vel.z = 300
-
+				self:SetDashCooldown(3)
 			else
 				vel = dir * 1500
 				vel.z = 400
@@ -104,8 +177,6 @@ function SWEP:CheckMoves(owner, mv, dir)
 
 
 			--self.SuperMoving = true
-
-			OverrideAfterDash = UnPredictedCurTime() - CurTime()
 
 			if SERVER then
 				self:StopDash()
@@ -143,14 +214,12 @@ function SWEP:CheckMoves(owner, mv, dir)
 
 			local vel
 
-			local ang = dir:Angle()
-			local strength = ang.p --the lower they aimed their dash, the more it will be
-
 			local dir = Vector()
 			dir:Set(dt.dir)
-			dir.z = math.min(-dir.z, 0.9)
+			dir.z = math.min(-dir.z, 0.9) -- dt.down implies dir.z is < -0.15
+										  -- the lower dir.z was, the bigger the bounce
 
-			local mul = 2000 * (1 - dir.z)
+			local mul = 2000 * (1 - dir.z) -- and the bigger the bounce, the less velocity you have
 
 			vel = dir * mul
 			vel.z = math.max(vel.z * (dir.z > 0.6 and (0.5 / (1 - dir.z)) or 1), 400)
@@ -184,10 +253,14 @@ function SWEP:PrimaryAttack()
 	if not IsFirstTimePredicted() then
 		self:SetDashing(true)
 		self:SetDashCharges(self:GetDashCharges() - 1)
+		self:SetDashCooldown(1)
+
 		return
 	end
 
 	self:SetDashCharges(self:GetDashCharges() - 1)
+
+	
 
 	if CLIENT then
 		self.Dashed = true
@@ -201,6 +274,8 @@ function SWEP:PrimaryAttack()
 	local dir = owner:EyeAngles():Forward()
 	local z = dir.z
 
+	self:SetDashCooldown(1)
+	self.CooldownDuration = self:GetDashCooldown()
 
 	if z > -0.15 and z < 0.20 then
 		dir.z = 0.1
@@ -262,7 +337,6 @@ hook.Add("FinishMove", "Dash", function(ply, mv, cmd)
 	end
 
 	local curt = CurTime()
-	local afterdash = OverrideAfterDash or UnPredictedCurTime() - CurTime()
 	local d = t.dir
 
 	local newvel = t.newvel or d * 800
@@ -394,8 +468,6 @@ function SWEP:StopDash()
 	self.Moved = false
 	self.EndSuperMove = true
 	self.StoppedDash = nil
-
-	OverrideAfterDash = nil
 
 	DashTable[owner] = nil
 

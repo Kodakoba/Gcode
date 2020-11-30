@@ -9,6 +9,7 @@ SWEP.DrawCrosshair	= false
 
 
 local CurrentColor = Color(240, 40, 40)
+local dimmedCurCol = Color(0, 0, 0)
 
 local snap = false
 
@@ -47,6 +48,26 @@ function SWEP:DrawHUD()
 		anim:To("RecentChangeFrac", 0, anim.Dir == -1 and 0.2 or 0.4, 0, 0.3, true)
 	end
 
+	local nw = self.PredNW
+
+	local cdDur = self.CooldownDuration
+	local cdNext = self.CooldownEndsWhen
+
+	local cdFrac = math.Clamp(
+		(cdDur ~= 0 and cdNext == 0 and 0)
+		or (CurTime() - cdNext) / cdDur + 1
+		, 0, 1)
+	--print(CurTime(), cdNext, cdDur)
+	local fr = cdFrac
+
+	if cdFrac < 0.2 then
+		cdFrac = cdFrac ^ 4
+	else
+		local f = cdFrac ^ 4
+		cdFrac = f + (cdFrac ^ 32) * (1 - f)
+	end
+
+	--print(cdFrac, fr)
 
 	local fr = anim.Frac or 0
 	local recfr = anim.RecentChangeFrac or 0
@@ -63,15 +84,22 @@ function SWEP:DrawHUD()
 		BSHADOWS.BeginShadow()
 	end
 
-		surface.SetDrawColor(CurrentColor)
+		surface.SetDrawColor(dimmedCurCol:Unpack())
+		draw.DrawMaterialCircle(ScrW()/2, ScrH() * 0.9 - 64, size*2, 20)
 
-		draw.NoTexture()
-		draw.DrawCircle(ScrW()/2, ScrH() * 0.9 - 64, size - 2, 20)
+		surface.SetDrawColor(CurrentColor:Unpack())
+		draw.DrawMaterialCircle(ScrW()/2, ScrH() * 0.9 - 64, size*2 * cdFrac)
+		--draw.NoTexture()
+		--draw.DrawCircle(ScrW()/2, ScrH() * 0.9 - 64, size - 2, 20)
 
 	if a > 5 and spr > 0 then
 		BSHADOWS.EndShadow(int, spr, blur, a, nil, nil, nil, Color(255, 255, 255))
 	end
 
-	draw.DrawMaterialCircle(ScrW()/2, ScrH() * 0.9 - 64, size*2)
+	dimmedCurCol:Set(CurrentColor)
+	dimmedCurCol:ModHSV(0, 0, (cdFrac < 1 and -(1.25 - cdFrac) * 0.3) or 0)
+
+	surface.SetDrawColor(dimmedCurCol:Unpack())
+	
 
 end
