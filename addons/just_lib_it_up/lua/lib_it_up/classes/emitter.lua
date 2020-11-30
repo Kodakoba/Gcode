@@ -31,6 +31,8 @@ if not muldim then include("multidim.lua") end
 														 ...
 ]]
 
+local pairs = pairs
+
 local recursiveParentCopy = function(newobj, parent)
 	--recursively copy every parent's listeners
 	local events = newobj.__Events
@@ -98,7 +100,10 @@ function Emitter:On(event, name, cb, ...)
 		local t = {cb, vararg, ...}
 		events:Set(t, event, name)
 	else
-
+		if name == nil then
+			name = #(events:GetOrSet(event)) + 1
+			ErrorNoHalt("Adding an Emitter listener with name == nil!\n")
+		end
 		events:Set({cb, ...}, event, name)
 	end
 
