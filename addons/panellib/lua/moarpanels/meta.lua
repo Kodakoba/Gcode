@@ -80,7 +80,7 @@ function META:GetCloud(name)
 	return IsValid(cls[name]) and cls[name]
 end
 
-function META:Lerp(key, val, dur, del, ease, forceswap)
+function META:Lerp(key, val, dur, del, ease, forceswap, changeDest)
 	local anims = self.__Animations or {}
 	self.__Animations = anims
 
@@ -92,9 +92,11 @@ function META:Lerp(key, val, dur, del, ease, forceswap)
 	if anims[key] then
 		anim = anims[key]
 		if anim.ToVal == val and not forceswap then return anim, false end --don't re-create animation if we're already lerping to that anyways
-
 		anim.ToVal = val
-		anim:Swap(dur, del, ease)
+
+		if not changeDest then
+			anim:Swap(dur, del, ease)
+		end
 
 	else
 		anim = self:NewAnimation(dur, del, ease)
@@ -110,7 +112,7 @@ function META:Lerp(key, val, dur, del, ease, forceswap)
 	end)
 
 	anim.Think = function(anim, self, fr)
-		self[key] = Lerp(fr, from, val)
+		self[key] = Lerp(fr, from, anim.ToVal)
 	end
 
 	return anim, true
@@ -118,6 +120,9 @@ end
 
 META.To = META.Lerp
 
+function META:GetTo(key)
+	return self.__Animations and self.__Animations[key]
+end
 local format = string.format
 
 local function hex(t)

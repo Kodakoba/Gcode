@@ -38,6 +38,9 @@ function TE:Init()
 	end)
 end
 
+function TE:OnChange()
+	self:Emit("Change")
+end
 
 function TE:SetColor(col)
 

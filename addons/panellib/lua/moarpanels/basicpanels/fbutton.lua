@@ -18,7 +18,7 @@ function button:Init()
 	self.DisabledColor = Colors.Button:Copy()
 
 	self:SetText("")
-
+	self:SetDoubleClickingEnabled(false)
 	self.Font = "OS24"
 	self.DrawShadow = true
 	self.HovMult = 1.2

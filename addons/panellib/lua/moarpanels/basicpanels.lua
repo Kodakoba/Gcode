@@ -167,6 +167,33 @@ function Fonts.ClosestSize(h)
 	end
 end
 
+function vgui.ColorSetters(t)
+
+	function t:SetColor(col, g, b, a)
+		if IsColor(col) then
+			self.Color:Set(col)
+			if g then 	--if 2nd arg, that means apply now
+				self.drawColor = col:Copy()
+			end
+			return
+		end
+
+		local c = self.Color
+		c.r = col or 70
+		c.g = g or 70
+		c.b = b or 70
+		c.a = a or 255
+	end
+
+	function t:GetColor()
+		return self.Color
+	end
+
+	function t:GetDrawColor()
+		return self.drawColor
+	end
+end
+
 concommand.Add("ColorPicker", function()
 	local f = vgui.Create("FFrame")
 	f:SetSize(500, 400)

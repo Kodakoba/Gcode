@@ -41,10 +41,15 @@ function PANEL:Init()
 
 		if self.OnClose then
 			local ret = self:OnClose()
-			if ret==false then return end
+			if ret == false then return end
 		end
 
-		self:Remove()
+
+		if self:GetDeleteOnClose() then
+			self:Remove()
+		else
+			self:Hide()
+		end
 	end
 
 	self.m_bCloseButton = b
