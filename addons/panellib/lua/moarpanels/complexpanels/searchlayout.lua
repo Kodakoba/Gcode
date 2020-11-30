@@ -117,8 +117,11 @@ function SL:IsHighlighted()
 end
 
 function SL:PerformLayout(w, h)
-	local srch = self.SearchBar
 	self:Resort()
+end
+
+function SL:OnChildAdded(p)
+	self:Add(p)
 end
 
 function SL:Add(p, name)
@@ -131,7 +134,7 @@ end
 vgui.Register("SearchLayout", SL, "Panel")
 
 
-if IsValid(_Pn) then _Pn:Remove() end
+--[[if IsValid(_Pn) then _Pn:Remove() end
 
 local f = vgui.Create("FFrame")
 _Pn = f
@@ -187,4 +190,4 @@ ic:On("ShiftPanel", function(self, pnl, x, y)
 	pnl:To("Y", y, 0.7, 0, 0.3)
 
 	return true
-end)
+end)]]
