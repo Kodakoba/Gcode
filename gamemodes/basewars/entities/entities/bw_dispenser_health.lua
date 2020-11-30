@@ -203,7 +203,7 @@ function ENT:OpenShit(qm, self, pnl)
 			if not ent:IsValid() then return end --thonk
 			
 			local pw = ent:IsPowered()
-			canUse = pw and ent:GetCharges() > 1
+			canUse = pw and ent:GetCharges() >= 1
 
 			canv:To("PowerFrac", pw and 1 or 0, 0.3, 0, 0.3)
 
