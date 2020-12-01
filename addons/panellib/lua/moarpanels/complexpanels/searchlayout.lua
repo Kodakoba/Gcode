@@ -10,17 +10,35 @@ vgui.ColorSetters(SL)
 local b = bench("cock", 600)
 
 function SL:Init()
-	local srch = vgui.Create("FTextEntry", self)
+	local srchPanel = vgui.Create("EditablePanel", self) -- ewww cant offset entry text, hafta do this
+	self.SearchPanel = srchPanel
+	srchPanel:Dock(TOP)
+	srchPanel:SetTall(28)
+	srchPanel:DockMargin(4, 4, 4, 4)
+
+	local srch = vgui.Create("FTextEntry", srchPanel)
+
+	function srchPanel:Paint(w, h)
+		srch:DrawBG(w, h)
+			surface.SetDrawColor(Colors.Button:Copy())
+			surface.DrawRect(0, 0, 28, 28)
+			surface.SetDrawColor(255, 255, 255)
+			surface.DrawMaterial("https://i.imgur.com/Q8Vdlhq.png", "mag32_1.png", 4, 4, 20, 20)
+		srch:DrawGradBorder(w, h)
+	end
+
 	self.SearchBar = srch
-	srch:SetTall(28)
-	srch:Dock(TOP)
-	srch:DockMargin(8, 4, 8, 4)
+	srch:Dock(FILL)
+	srch:DockMargin(28, 0, 0, 0)
+	srch.NoDrawBG = true
+	srch.GradBorder = false
 
 	local ic = vgui.Create("FIconLayout", self)
 	self.IconLayout = ic
 	ic:Dock(FILL)
 
 	ic:On("ShiftPanel", function(_, pnl, x, y)
+		print("noe", self.ChangedStates[pnl])
 		if self.ChangedStates[pnl] ~= nil or pnl:GetTo("X") then
 			local dur = math.abs(pnl.X - x) / 2000
 			local an = pnl:GetTo("X") or pnl:To("X", x, dur, 0, 0.6)
@@ -42,7 +60,10 @@ function SL:Init()
 
 		if #tx == 0 then
 			for k,v in pairs(dhCopy) do
-				k:Emit("Highlight")
+				local a = k:Emit("Highlight")
+				if a == nil then
+					k:AlphaTo(255, 0.3, 0, nil, 0.3)
+				end
 				self.ChangedStates[k] = true
 			end
 
@@ -57,14 +78,21 @@ function SL:Init()
 
 		for k,v in pairs(self.Dehighlighted) do
 			if not dhCopy[k] then
-				k:Emit("Dehighlight")
+				local a = k:Emit("Dehighlight")
+				if a == nil then
+					k:AlphaTo(50, 0.3, 0, nil, 0.3)
+				end
 				self.ChangedStates[k] = false
 			end
 		end
 
 		for k,v in pairs(dhCopy) do
 			if not self.Dehighlighted[k] then
-				k:Emit("Highlight")
+				local a = k:Emit("Highlight")
+				if a == nil then
+					k:AlphaTo(255, 0.3, 0, nil, 0.3)
+				end
+
 				self.ChangedStates[k] = true
 			end
 		end
@@ -104,7 +132,7 @@ function SL:Resort()
 	end
 
 	if changes then
-		self:Resort()
+		self.IconLayout:UpdateSize(self.IconLayout:GetSize())
 	end
 end
 
@@ -121,13 +149,17 @@ function SL:PerformLayout(w, h)
 end
 
 function SL:OnChildAdded(p)
-	self:Add(p)
+	--self:Add(p)
 end
 
 function SL:Add(p, name)
+	if not isstring(name) then ErrorNoHalt("SearchLayout requires a name on panels!") return end
+
 	local pnl = self.IconLayout:Add(p)
+
 	self.Names[pnl] = isstring(name) and name
 	self.OriginalOrder[pnl] = #self.IconLayout.Panels
+
 	return pnl
 end
 

@@ -18,7 +18,7 @@ function TE:Init()
 	self.CursorColor = color_white:Copy()
 	self.PHTextColor = color_white:Copy()
 	self.PHTextAlpha = 50
-
+	self.GradColor = Color(10, 10, 10, 180)
 	self.PHTextFrac = 1
 	self.RBRadius = 6
 
@@ -79,20 +79,25 @@ function TE:OnLoseFocus()
 	self:Emit("LoseFocus")
 end
 
-function TE:Paint(w,h)
+-- yes i had to split it up into 3 functions, stfu
 
-	surface.DisableClipping(false)
+function TE:DrawGradBorder(w, h)
+	surface.SetDrawColor(self.GradColor:Unpack())
+	self:DrawGradientBorder(w, h, 3, 3)
+end
 
-	if self.Ex then
-		local e = self.Ex
-		draw.RoundedBoxEx(self.RBRadius, 0, 0, w, h, self.BGColor, e.tl, e.tr, e.bl, e.br)
-	else
-		draw.RoundedBox(self.RBRadius, 0, 0, w, h, self.BGColor)
-	end
-
+function TE:DrawBG(w, h)
+	surface.SetDrawColor(self.BGColor:Unpack())
+	surface.DrawRect(0, 0, w, h)
 	if self.GradBorder then
-		surface.SetDrawColor(Color(10, 10, 10, 180))
-		self:DrawGradientBorder(w, h, 3, 3)
+		self:DrawGradBorder(w, h)
+	end
+end
+
+function TE:Paint(w, h)
+
+	if not self.NoDrawBG then
+		self:DrawBG(w, h)
 	end
 
 	self:DrawTextEntryText(self.TextColor, self.HTextColor, self.CursorColor)
