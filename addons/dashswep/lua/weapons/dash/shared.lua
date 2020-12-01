@@ -118,7 +118,7 @@ function SWEP:Think()
 end
 
 hook.Add("OnPlayerHitGround", "RechargeDash", function(ply, water, floater, speed)
-	local dash = ply:GetActiveWeapon()
+	local dash = ply:GetWeapon("dash")
 	if not dash or not dash:IsValid() or not dash.IsDash then return end
 
 	dash:RechargeLogic(ply)
