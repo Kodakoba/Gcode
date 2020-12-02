@@ -120,8 +120,6 @@ function Class:extend(...)
 	new.__instance = new
 	local curobj
 
-	
-
 	new.__init = function(newobj, ...) --this function is kinda hard to wrap your head around, so i'll try to explain
 		--`self` is the parent class
 		--`new` is the new class

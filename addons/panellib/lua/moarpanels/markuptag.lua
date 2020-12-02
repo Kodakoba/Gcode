@@ -360,7 +360,7 @@ local ang = Angle()
 local offset = Vector()
 
 rot:SetStart(function(tag, buf, args, pnl)
-	if not ispanel(pnl) then return end 
+	if not ispanel(pnl) then return end
 
 	local x, y = pnl:LocalToScreen(0, 0)
 	local bx, by = buf:GetPos()

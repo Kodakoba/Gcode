@@ -26,7 +26,7 @@ dlabel.OnMouseReleased = function(self, mousecode)
 	end
 
 	-- FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU FUCK YOU
-	if not self.Hovered and vgui.GetHoveredPanel() ~= self then return end
+	if !self.Hovered && vgui.GetHoveredPanel() != self then return end
 
 	self.Depressed = true
 

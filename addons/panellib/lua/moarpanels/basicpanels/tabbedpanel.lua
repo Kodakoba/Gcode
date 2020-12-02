@@ -7,6 +7,8 @@
 	TabbedPanel:GetWorkY()
 	TabbedPanel:AlignPanel(pnl)
 
+
+	retired in favor of NavPanel
 ---------------------------------------------------------------------------]]
 local LerpColor = draw.LerpColor
 local TabbedPanel = {}

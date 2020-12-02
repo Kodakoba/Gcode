@@ -7,8 +7,6 @@ FIconLayout
 local SL = {}
 vgui.ColorSetters(SL)
 
-local b = bench("cock", 600)
-
 function SL:Init()
 	local srchPanel = vgui.Create("EditablePanel", self) -- ewww cant offset entry text, hafta do this
 	self.SearchPanel = srchPanel

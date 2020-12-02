@@ -63,13 +63,12 @@ local BlankFunc = function() end
 
 
 -- tfw searching a folder takes 200ms
-
 FInc.CachedSearches = FInc.CachedSearches or {}
 local cached_searches = FInc.CachedSearches
 
 function FInc.Recursive(name, realm, nofold, decider, callback)	--even though with "nofold" it's not really recursive
 	if not NeedToInclude(realm) then return end
-	print("deciding to include", name, Realm())
+
 	decider = decider or BlankFunc
 	callback = callback or BlankFunc
 	local b = bench("file.Find: " .. name)

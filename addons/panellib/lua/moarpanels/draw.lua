@@ -822,7 +822,7 @@ function draw.MaskCircle(x, y, rad, func, ...)
 	end
 
 	--draw.EnableFilters(true, false)
-		
+
 	--draw.DisableFilters(true, false)
 
 
@@ -832,7 +832,7 @@ function draw.MaskCircle(x, y, rad, func, ...)
 end
 
 function draw.EnableMaskCircle(x, y, w, h)
-	
+
 	render.PushRenderTarget(circMaskRT, x, y, w, h)
 		cam.Start2D()
 			render.OverrideDepthEnable(true, true)

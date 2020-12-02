@@ -298,7 +298,7 @@ function META:Emit(event, ...)
 end
 
 function META:RemoveHook(event, name)
-	if not self.__Events then return end 
+	if not self.__Events then return end
 
 	self.__Events:Set(nil, event, name)
 end
@@ -374,7 +374,7 @@ end
 
 
 function META:CircleMoveTo(toX, toY, len, ease, rev)
-	
+
 	if self.__circleAnim then
 		self.__circleAnim:Stop()
 	end
@@ -413,7 +413,7 @@ function META:SpringIn(accel, dist, x, y, len, ease, func)
 
 
 	anim.Think = function(self, pnl, frac)
-		local t = frac 
+		local t = frac
 		local p = ( 2 * math.pi ) / 3;
 
 		local mult = ( 2 ^ (dist * t) ) * math.sin( ( t * accel - 0.75 ) * p) + 1
@@ -427,17 +427,17 @@ end
 function META:InElastic(dur, del, func, funcend, ease, int, dist)
 
 	local anim = self:NewAnimation(dur or 0.5, del or 0, ease or -1, funcend or function() end)
-	anim.func = func 
+	anim.func = func
 	if not func then return end --k
 
 	dist = dist or 1
-	int = int or 1 
+	int = int or 1
 
 	local from = math.pi*3/2
 	local to = from/3
 
 	anim.Think = function(self, pnl, frac)
-	
+
 		local var = math.sin(Lerp(frac^int * int, from, to)) * (dist-frac*(dist-1)) * frac --what the fuck
 
 		func(self, pnl, var)
@@ -513,7 +513,7 @@ function animmeta:SetThinkManually(b)
 end
 
 animobj = {}
-animobj.__index = animmeta 
+animobj.__index = animmeta
 
 local pi2by3 = (2*math.pi)/3
 
@@ -548,7 +548,7 @@ function Animations.SpringOut(accel, strength, len, ease, func, callback)
 	anim.Animate = function(frac)
 		--print("diff:", (lf-frac) / (SysTime() - lt))
 
-		lf = frac 
+		lf = frac
 		lt = SysTime()
 
 		local mult = math.sin( p2 - (p * frac^accel)) * frac^(1/strength)
@@ -563,7 +563,7 @@ function Animations.InElastic(dur, del, func, funcend, ease, int, dist)
 	local anim = NewAnimation(dur or 0.5, del or 0, ease or -1, funcend or function() end)
 
 	dist = dist or 1
-	int = int or 1 
+	int = int or 1
 
 	local from = math.pi*3/2
 	local to = from/3

@@ -408,7 +408,7 @@ function ebutton:ExpandPaint(w,h)
 end
 
 function ebutton:Think()
-	local w, h = self:GetSize()
+	local _, h = self:GetSize()
 	self.ClickHeight = self.ClickHeight or h
 
 	self.FakeResize = true
