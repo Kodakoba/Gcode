@@ -9,7 +9,7 @@ local nwords = {
 	"the nword",
 }
 
-hook.Add("PlayerSay","__getdownmrpresident", function(ply, txt)
+hook.Add("PlayerSay", "!!getdownmrpresident", function(ply, txt)
 	local newtxt = txt
 	local repped = false
 	for k,v in pairs(nwords) do

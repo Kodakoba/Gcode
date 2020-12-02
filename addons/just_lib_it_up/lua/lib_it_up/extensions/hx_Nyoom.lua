@@ -49,26 +49,26 @@ Def_Skip = {
 
 function string.Nyoom(self, Skip)
 	Skip = Skip or Def_Skip
-	
+
 	local Out 	= ""
 	local Last 	= ""
 	for k,v in pairs( self:Split(" ") ) do
 		local Punc 	= v:match("%p") or ""
 		local Cap	= (k == 1 or Last == ".") and "Nyoom" or "nyoom"
 		local Nyoom = ( Skip[ v:lower():sub(0, -#Punc - 1) ] and v or Cap..Punc).." "
-		
+
 		Last = Punc
-		
+
 		//Over-nyoom'd
 		local Count = #(Out..Nyoom)
 		if not no_over_nyoom and Count > 100 then
 			Out = "Over-nyoom'd! ("..Count..") > 100"
 			break
 		end
-		
+
 		Out = Out..Nyoom
 	end
-	
+
 	return Out:Trim()
 end
 

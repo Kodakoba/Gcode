@@ -19,5 +19,5 @@ function coroutine.YieldResumeIn(s)
 		coroutine.resume(cor)
 	end)
 
-	coroutine.yield()
+	return coroutine.yield()
 end

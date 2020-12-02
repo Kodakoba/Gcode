@@ -46,13 +46,6 @@ local pingport = 27025
 
 local silence = false
 
-local function writeline(line)
-	local packet = BromPacket()
-	packet:WriteLine(line)
-	socket:Send(packet, true)
-
-end
-
 local function socketConnect(sock, connected, ip, port)
 
 	if (not connected) then
