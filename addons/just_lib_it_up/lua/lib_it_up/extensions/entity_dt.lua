@@ -8,6 +8,10 @@
 			[3] - Old value
 			[4] - New value
 			[5] - true/false - true if called from SetDT... ; false if received from a DT update
+
+		"DTVarsChanged"
+			[1] - Entity (self)
+			[2] - Table of changed vars ({ [key] = {old, new}, ... })
 ]]
 
 ENTITY.oldInstallDataTable = ENTITY.oldInstallDataTable or ENTITY.InstallDataTable
@@ -222,6 +226,8 @@ if CLIENT then
 		if old == val then old = nil end -- :)
 
 		ent:Emit("DTChanged", name, old, val, false)
+
+		return name, old, val
 	end
 
 	function notifyDT(ent, all_data)
@@ -235,14 +241,18 @@ if CLIENT then
 			}
 		]]
 
+		local cbVars = {}
+
 		for typ, indvals in pairs(all_data) do
 
 			for ind, val in pairs(indvals) do
 				if not rev[typ .. ind] then print("notifyDT: didnt find", typ .. ind) continue end
-				callCallbacks(ent, rev[typ .. ind], val)
+				local dtname, old, new = callCallbacks(ent, rev[typ .. ind], val)
+				cbVars[dtname] = {old, new}
 			end
 		end
 
+		ent:Emit("DTVarsChanged", cbVars)
 	end
 
 	net.Receive("DTVarChangeNotify", function(len)
