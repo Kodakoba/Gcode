@@ -115,6 +115,7 @@ local cmdptrn = "^[%./!](%w+)%s?"
 
 hook.Add("PlayerSay", "Discord", function(ply, msg)
 	if not discord.Enabled then return end
+	if not discord.DB then return end
 
     local cmd = msg:match(cmdptrn)
 
@@ -181,9 +182,11 @@ setmetatable(Embed, Embed)
 
 
 local db = mysqloo and mysqloo.GetDB()
+discord.DB = discord.DB or db
 
 hook.Add("OnMySQLReady", "Discord", function()
 	db = mysqloo.GetDB()
+	discord.DB = discord.DB or db
 end)
 
 
