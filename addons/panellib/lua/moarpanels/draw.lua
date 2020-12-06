@@ -1011,6 +1011,23 @@ function draw.GetRT(name, w, h)
 	return rt
 end
 
+function draw.GetRTMat(name, w, h, shader)
+	local rt = draw.GetRT(name, w, h)
+	local mat = mats[name]
+	if not mat then
+		mat = CreateMaterial(name, shader or "UnlitGeneric", {
+			["$basetexture"] = rt:GetName(),
+			["$translucent"] = 1,
+			["$vertexalpha"] = 1,
+			["$vertexcolor"] = 1,
+		})
+
+		mats[name] = mat
+	end
+
+	return rt, mat
+end
+
 local minstate = false
 local magstate = false
 
