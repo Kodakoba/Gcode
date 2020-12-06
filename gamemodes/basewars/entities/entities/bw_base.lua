@@ -195,7 +195,6 @@ if SERVER then
 		self:Activate()
 
 		self:SetHealth(self.PresetMaxHealth or self.MaxHealth)
-		self.rtb = 0
 
 		self:Init(me)
 		self:SHInit()

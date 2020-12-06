@@ -8,8 +8,6 @@ function ENT:Init()
 	self.Money = 0
 
 	self:SetHealth(self.PresetMaxHealth or 100)
-
-	self.rtb = 0
 	self:SetTrigger(true)
 
 	self.Printers = Networkable(("PrinterRack:%d"):format(self:EntIndex())):Bond(self)

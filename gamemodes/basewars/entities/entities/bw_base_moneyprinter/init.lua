@@ -18,8 +18,6 @@ function ENT:Init()
     self.Multiplier = 1
     self:SetHealth(self.PresetMaxHealth or 100)
 
-    self.rtb = 0
-
     self:SetMultiplier(1)
 
     self.Level = 1

@@ -75,39 +75,6 @@ if SERVER then
 			bwe.NextSpark = CurTime() + math.random(5, 15) / 10
 		end
 
-		if BaseWars.Watery then
-
-			if self:WaterLevel() > 0 and not me.GetWaterProof(self) then
-
-				if not me.FirstTime and not dmgd then
-
-					me.SetHealth(self, 25)
-					me.Spark(self)
-
-					me.FirstTime = true
-
-				end
-
-				if me.rtb == 2 then
-
-					me.rtb = 0
-					me.TakeDamage(self, 1)
-
-				else
-
-					me.rtb = me.rtb + 1
-
-				end
-
-			else
-
-				me.FirstTime = false
-
-			end
-
-		end
-
-
 		me.ThinkFunc(self)
 
 	end
