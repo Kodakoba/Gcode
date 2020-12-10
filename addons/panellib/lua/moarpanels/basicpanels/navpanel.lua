@@ -149,7 +149,7 @@ function NavbarChoice:Draw(w, h)
 	local ix = 8
 	local tx = 4
 
-	local frac = self:GetExpFrac(nav.ExpandFrac, 0.8, 0.5)
+	local frac = self:GetExpFrac(nav.ExpandFrac, 1.3, 1.2)
 
 	local size = self.Icon.Size or self.IconSize
 	local aspect = self.Icon.Aspect or 1
@@ -161,17 +161,22 @@ function NavbarChoice:Draw(w, h)
 
 	self.Icon:Paint(ix, h/2 - ih/2, iw, ih)
 
-	local frac = self:GetExpFrac(nav.ExpandFrac, 0.9, 0.5) 	--different frac; more eased so text goes to the right faster than the icon
+	local frac = self:GetExpFrac(nav.ExpandFrac, 1.8, 1.5) 	--different frac; more eased so text goes to the right faster than the icon
 															--(and goes left slower)
 
 	local iconArea = ix + size
 	local area = w - iconArea --available area
 
-	tx = ix + size + Lerp(frac, area, area/2) - 4
-	self.TextColor.a = 255 * (nav.ExpandFrac - 0.35) * 1/0.65 	--mmmmmm yes cancer maths
-																--(basically makes so text is invisible until 35% expanded)
+	surface.SetFont(self.Font or "BS22")
+	local tW = surface.GetTextSize(self.Name)
 
-	draw.SimpleText(self.Name, self.Font or "BS22", tx, 2, self.TextColor, 1, 5)
+	tx = ix + size + Lerp(frac, w - ix - size - 4, 0) + 4	-- left alignment for text
+
+	local becomeVisibleAt = 0.5
+	self.TextColor.a = 255 * (nav.ExpandFrac - becomeVisibleAt) * 1/becomeVisibleAt 		--mmmmmm yes cancer maths
+																							--(basically makes so text is invisible until (becomeVisibleAt) expanded)
+
+	draw.SimpleText2(self.Name, nil, tx, 2, self.TextColor, 0, 5)
 
 	if self.WrappedDescription then
 		local frac = math.max((nav.ExpandFrac - 0.4) * 1/0.6, 0)
@@ -338,15 +343,19 @@ function Navbar:OnSelect(btn, noanim)
 end
 
 function Navbar:Expand()
+	self.Active = true
+
 	local btn = self.ShowBtn
 	btn:To("Rotation", 180, 0.7, 0, 0.2)
 
 	local anim = self:MoveTo(0, self.Y, 0.4, 0, 0.3)
 	local oldfrac = self.ExpandFrac
 
-	anim:On("Think", function(anim, frac)
-		self.ExpandFrac = Lerp(frac, oldfrac, 1)
-	end)
+	if anim then
+		anim:On("Think", function(anim, frac)
+			self.ExpandFrac = Lerp(frac, oldfrac, 1)
+		end)
+	end
 
 	btn:MoveBy(-8, 0, 0.2, 0.3, 0.3)
 
@@ -357,6 +366,8 @@ function Navbar:Expand()
 end
 
 function Navbar:Retract()
+	self.Active = false
+
 	local btn = self.ShowBtn
 	btn.Rotation = btn.Rotation - 360 --flip it around so it lerps the opposite way
 	btn:To("Rotation", 0, 0.7, 0, 0.2)
