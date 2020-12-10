@@ -3,7 +3,7 @@
 function string.Random(len)
 	local rnd = ""
 	for i=1, (len or math.random(6,11)) do
-		local c = math.random(65,116)
+		local c = math.random(65, 122)
 		if c >= 91 and c <= 96 then
 			c = c + 6
 		end
