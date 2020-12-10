@@ -54,7 +54,9 @@ local function DownloadFolder(str, mask)
 
     if subdirs == 0 and debuggingDownloads then
         root = true
-        MsgC(Color(150, 150, 230), "Adding root folder: ", Color(200, 200, 200), str, "\n")
+        MsgC(
+            Color(150, 150, 230), "Adding root folder: ",
+            Color(200, 200, 200), str, "\n")
         subdirs = subdirs + 1
     end
 
@@ -63,7 +65,8 @@ local function DownloadFolder(str, mask)
         if not string.find(v, "ztmp") then
             resource.AddSingleFile(str .. "/" .. v)
             if debuggingDownloads then
-                MsgC(Color(160, 230, 80), indent(subdirs), "Added file: ", Color(220, 220, 220), str .. "/" .. v .. "\n")
+                MsgC(Color(160, 230, 80), indent(subdirs), "Added file: ",
+                    Color(220, 220, 220), str .. "/" .. v .. "\n")
             end
         end
 
@@ -74,7 +77,10 @@ local function DownloadFolder(str, mask)
         for k,v in pairs(folders) do
 
             if debuggingDownloads then
-                MsgC("\n", indent(subdirs), Color(200, 250, 90),"Added folder: ", Color(220, 220, 220), str .. "/" .. v .. "\n")
+                MsgC("\n", indent(subdirs),
+                    Color(200, 250, 90),"Added folder: ",
+                    Color(220, 220, 220), str .. "/" .. v .. "\n")
+
                 subdirs = subdirs+1
             end
 

@@ -107,17 +107,17 @@ local urlps = {
 
 CUM.AddCommand("ps", function(ply, line)
 	if not GachiRP then return end
- 	if not IsValid(ply) then return false, "Console?" end
+	if not IsValid(ply) then return false, "Console?" end
 
- 	if ply.psCoolDown and CurTime() - ply.psCoolDown < 2 then return false end
+	if ply.psCoolDown and CurTime() - ply.psCoolDown < 2 then return false end
 
-	if not line or line=="" then
+	if not line or line == "" then
 
-	    for k,v in pairs(f) do
-	    	local snds=file.Find("sound/"..v.."/*.ogg","MOD","namedesc")
-		    ply:ConsoleAddText(Color(150,150,230), v .. "/\n")
+		for k,v in pairs(f) do
+			local snds = file.Find("sound/" .. v .. "/*.ogg","MOD", "namedesc")
+			ply:ConsoleAddText(Color(150,150,230), v .. "/\n")
 			for i=1,#snds do
-			    ply:ConsoleAddText(Color(100,200,100), "  " .. snds[i].."\n")
+				ply:ConsoleAddText(Color(100,200,100), "  " .. snds[i] .. "\n")
 			end
 
 		end
@@ -129,20 +129,20 @@ CUM.AddCommand("ps", function(ply, line)
 
 	local played = false
 
-    for k,v in pairs(f) do
-    	local snds=file.Find("sound/"..v.."/*.ogg","MOD","namedesc")
+	for k,v in pairs(f) do
+		local snds = file.Find("sound/" .. v .. "/*.ogg","MOD", "namedesc")
 
-    	for k, file in pairs(snds) do
-        	if line..".ogg"==file then
-        		played = true
-        		ply.psCoolDown = CurTime()
-				ply:EmitSound(v.."/"..line..'.ogg', 120, 100, 1, CHAN_AUTO )
-        	break end
-        end
+		for k, file in pairs(snds) do
+			if line .. ".ogg"==file then
+				played = true
+				ply.psCoolDown = CurTime()
+				ply:EmitSound(v .. "/" .. line .. '.ogg', 120, 100, 1, CHAN_AUTO )
+			break end
+		end
 
-    end
+	end
 
-    for k,v in pairs(urlps) do
+	for k,v in pairs(urlps) do
 
 		if line==k then
 			played=true
@@ -155,10 +155,10 @@ CUM.AddCommand("ps", function(ply, line)
 
 	end
 
-    if not played then
-    	ply:PrintMessage(3,"sound '"..line..".ogg' not found")
-    	return false
-    end
+	if not played then
+		ply:PrintMessage(3,"sound '"..line..".ogg' not found")
+		return false
+	end
 
 
 end)

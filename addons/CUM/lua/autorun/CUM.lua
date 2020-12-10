@@ -20,27 +20,27 @@ local function IncludeFolder(name, realm)
 	local tbl = string.Explode("/", name)
 	tbl[#tbl] = ""
 	local fname = table.concat(tbl,"/")
-	if not realm then realm=_SH end 
-	
+	if not realm then realm=_SH end
+
 	for k,v in SortedPairs(file) do
 		local name = ""
-		if realm==_CL then 
+		if realm==_CL then
 
-			if SERVER then 
+			if SERVER then
 				AddCSLuaFile(fname..v)
 			end
 
-			if CLIENT then 
+			if CLIENT then
 				include(fname..v)
 			end
 
-		elseif realm == _SH then 
+		elseif realm == _SH then
 
 			include(fname..v)
 			AddCSLuaFile(fname..v)
 
-		elseif realm == _SV and SERVER then 
-			
+		elseif realm == _SV and SERVER then
+
 			include(fname..v)
 		else
 			ErrorNoHalt("Could not include file " .. fname .. "; fucked up realm?")
@@ -54,7 +54,7 @@ local function IncludeFolder(name, realm)
 	for k,v in pairs(folder) do
 		IncludeFolder(name..v, realm)
 	end
-	
+
 end
 
 local function IncludeCommands()
@@ -63,13 +63,13 @@ local function IncludeCommands()
 
 	local fname = "CUM/commands/"
 
-	for k,v in SortedPairs(file) do 
+	for k,v in SortedPairs(file) do
 		local catname = v:gsub(".lua", "")
-		CUM.CurCat = catname 
+		CUM.CurCat = catname
 		include(fname .. v)
 	end
 
-	CUM.CurCat = nil 
+	CUM.CurCat = nil
 end
 
 hook.Add("OnMySQLReady", "CUM", function()
@@ -83,7 +83,7 @@ hook.Add("OnMySQLReady", "CUM", function()
 
 	IncludeCommands()
 
-	for k,v in pairs(CUM.cmds) do 
+	for k,v in pairs(CUM.cmds) do
 		aowl.cmds[k] = nil
 	end
 end)
@@ -92,7 +92,7 @@ hook.Add("AowlCommandAdded", function(name)
 	if CUM.cmds[name] then aowl.cmds[name] = nil end
 end)
 
-for k,v in pairs(CUM.cmds) do 
+for k,v in pairs(CUM.cmds) do
 	aowl.cmds[k] = nil
 end
 --IncludeFolder("CUM/commands/*", _SV)
