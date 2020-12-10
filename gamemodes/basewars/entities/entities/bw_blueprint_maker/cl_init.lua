@@ -34,6 +34,9 @@ local function OntoMat(id, w, h, func)	--scrapped
 end
 
 
+local t3c1, t3c2 = Color(0, 12, 5), Color(0, 0.3, 0.35)
+local t4c1, t4c2 = Color(12, 4, 0), Color(12, 4, 0)
+
 local BlueprintPaints = {
 
 	--[[
@@ -41,8 +44,10 @@ local BlueprintPaints = {
 	]]
 
 	[1] = function(self, w, h)
-		surface.SetDrawColor(Colors.DarkWhite)
-		surface.DrawMaterial("https://i.imgur.com/zhejG17.png", "bp128.png", w/2 - 36, h/2 - 36, 72, 72)
+		
+			surface.SetDrawColor(Colors.DarkWhite)
+			surface.DrawMaterial("https://i.imgur.com/zhejG17.png", "bp128.png", w/2 - 36, h/2 - 36, 72, 72)
+
 	end,
 
 	--[[
@@ -52,13 +57,15 @@ local BlueprintPaints = {
 	[2] = function(self, w, h)
 		local x, y = self:LocalToScreen(0, 0)
 
-		BSHADOWS.BeginShadow(x - 12, y - 12, w + 24, w + 24)
+		BSHADOWS.BeginShadow()--x - 12, y - 12, w + 24, w + 24)
 
+		self:ApplyMatrix()
 			surface.SetDrawColor(color_white)
 			surface.SetMaterial(bpmat)
-			surface.DrawTexturedRect(w/2 - 38 + 12, h/2 - 38 + 12, 76, 76)
+			surface.DrawTexturedRect(x + w/2 - 38, y + h/2 - 38, 76, 76)
+		self:PopMatrix()
 
-		BSHADOWS.EndShadow(1, 10, 4, 125, 60, 2, nil, Colors.DarkGray, Colors.DarkGray)
+		BSHADOWS.EndShadow(1, 0.6, 2, 125, 60, 2, nil, Colors.DarkGray, Colors.DarkGray)
 
 
 	end,
@@ -70,13 +77,23 @@ local BlueprintPaints = {
 	[3] = function(self, w, h)
 		local x, y = self:LocalToScreen(0, 0)
 
-		BSHADOWS.BeginShadow(x, y, w, h)
+		local shine = math.sin(CurTime() * 1)
+		local shinecol = math.cos(CurTime() * 0.6)
+		
+		t3c1.g = 9 + shine * 2
+		t3c1.b = 3 + shine * 0.7
 
+		t3c2.g = 4 + shinecol * 0.7
+		t3c2.b = 2 + shinecol * 1
+
+		BSHADOWS.BeginShadow()
+		self:ApplyMatrix()
 			surface.SetDrawColor(color_white)
 			surface.SetMaterial(bpmat)
-			surface.DrawTexturedRect(w/2 - 40, h/2 - 40, 80, 80)
-
-		BSHADOWS.EndShadow(1, 25, 3, 205, 60, 2, nil, Color(0, 4, 0), Color(0, 2, 0))
+			surface.DrawTexturedRect(x + w/2 - 40, y + h/2 - 40, 80, 80)
+		self:PopMatrix()
+		BSHADOWS.EndShadow(1, 2 + shine * 0.2, 1, 255, 60, 2, nil, t3c1, t3c2)
+		--BSHADOWS.EndShadow(2, 5, 1, 205, 60, 0, nil, Color(0, 4, 0), Color(0, 2, 0))
 	end,
 
 	--[[
@@ -86,11 +103,21 @@ local BlueprintPaints = {
 	[4] = function(self, w, h)
 		local x, y = self:LocalToScreen(0, 0)
 
+		local shine = math.sin(CurTime() * 0.8)
+		local shinecol = math.cos(CurTime() * 0.5)
+		t4c1.r = 12 + 5 * shine
+		t4c1.g = 4 + shine * 2
+
+		t4c1.r = 7 + shinecol * 1
+		t4c2.g = 3 + shinecol * 0.5
+
 		BSHADOWS.BeginShadow()
+		self:ApplyMatrix()
 			surface.SetDrawColor(color_white)
 			surface.SetMaterial(bpmat)
 			surface.DrawTexturedRect(x + w/2 - 40, y + h/2 - 40, 80, 80)
-		BSHADOWS.EndShadow(2, 2, 2, 205, 60, 2, nil, Color(12, 4, 0), Color(12, 4, 0))
+		self:PopMatrix()
+		BSHADOWS.EndShadow(2, 2 + shine * 0.5, 2, 205, 60, 2, nil, t4c1, t4c2)
 	end,
 
 	--[[
@@ -227,7 +254,6 @@ function ENT:OpenMenu()
 	]]
 
 	local icons = vgui.Create("FIconLayout", menu)
-	icons.CenterX = true
 
 	icons:SetPos(32, 80)
 	icons:SetSize(menu:GetWide() - icons:GetPos()*2, 120)
@@ -283,8 +309,8 @@ function ENT:OpenMenu()
 			SelectedTier = i
 		end
 	end
-
-	icons:AutoCenter()
+	icons.IncompleteCenter = true
+	--icons:AutoCenter()
 
 	function menu:MakeTier(t)
 

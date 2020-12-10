@@ -460,6 +460,19 @@ local function popMatrix(self, w, h)
 	end
 end
 
+function button:ApplyMatrix()
+	if self.ActiveMatrix then
+		cam.PushModelMatrix(self.ActiveMatrix, true)
+	end
+end
+
+function button:PopMatrix()
+	if self.ActiveMatrix then
+		cam.PopModelMatrix()
+	end
+end
+
+
 function button:PaintOver(w, h)
 
 	if self.Dim then
