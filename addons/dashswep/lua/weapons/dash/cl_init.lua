@@ -48,8 +48,6 @@ function SWEP:DrawHUD()
 		anim:To("RecentChangeFrac", 0, anim.Dir == -1 and 0.2 or 0.4, 0, 0.3, true)
 	end
 
-	local nw = self.PredNW
-
 	local cdDur = self.CooldownDuration
 	local cdNext = self.CooldownEndsWhen
 

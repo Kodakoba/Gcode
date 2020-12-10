@@ -13,7 +13,9 @@ SWEP.UseHands = true
 
 SWEP.IsDash = true
 SWEP.Primary.Automatic = false
-SWEP.DashTime = 0.3
+
+local dashDur = 0.3
+SWEP.DashTime = dashDur
 
 local clprint = CLIENT and print or BlankFunc
 
@@ -23,12 +25,17 @@ function SWEP:SetupDataTables()
 
 	self:NetworkVar("Bool", 0, "Dashing")
 	self:NetworkVar("Bool", 1, "SuperMoving")
+	self:NetworkVar("Bool", 2, "PostSuperMove")
+	self:NetworkVar("Bool", 3, "PostDash")
 
 	self:NetworkVar("Float", 0, "DashEndTime")
+
+	self:NetworkVar("Float", 1, "DashCooldown")
+	self:NetworkVar("Float", 2, "DashCooldownEnd")
 end
 
 
-function SWEP:GetDashCooldownEnd()
+--[[function SWEP:GetDashCooldownEnd()
 	local ret, when = self.PredNW:Get("DashCooldownEnd")
 	return ret or 0, when or 0
 end
@@ -45,7 +52,7 @@ end
 
 function SWEP:SetDashCooldown(v)
 	return self.PredNW:Set("DashCooldown", v)
-end
+end]]
 
 DashTable = DashTable or {}
 
@@ -60,7 +67,7 @@ function SWEP:Initialize()
 	self.CooldownDuration = 0	-- since the HUD hooks can't wind CurTime() forward, we hafta track these separately
 								-- as unpredicted curtimes
 
-	self.PredNW = PredNetworkable()
+	--[[self.PredNW = PredNetworkable()
 
 	self.PredNW:Alias("DashCooldownEnd", 0)
 	self.PredNW:Alias("DashCooldown", 1)
@@ -71,7 +78,7 @@ function SWEP:Initialize()
 	self.PredNW:Bind(self)
 	self.PredNW.Filter = function(nw, p)
         return p == self:GetOwner()
-    end
+    end]]
 end
 
 hook.Add("GetFallDamage", "DashFall", function(ply)
@@ -80,16 +87,15 @@ hook.Add("GetFallDamage", "DashFall", function(ply)
 	end
 end)
 
-function SWEP:RechargeLogic(ply)
+function SWEP:RechargeLogic(ply, force)
 	local dashing = (SERVER and DashTable[ply]) or (CLIENT and self:GetDashing())
 
 	if ply:IsOnGround() and self:GetDashCharges() ~= 1 and not dashing then
-
+		self:SetPostDash(false)
 		if self:GetDashCooldown() > 0 and self:GetDashCooldownEnd() == 0 then
 			self:SetDashCooldownEnd(CurTime() + self:GetDashCooldown())
 
 			if IsFirstTimePredicted() then
-				print(Realm(), "starting kewldown")
 				self.CooldownDuration = self:GetDashCooldown()
 				self.CooldownEndsWhen = UnPredictedCurTime() + self:GetDashCooldown()
 			end
@@ -122,6 +128,8 @@ hook.Add("OnPlayerHitGround", "RechargeDash", function(ply, water, floater, spee
 	if not dash or not dash:IsValid() or not dash.IsDash then return end
 
 	dash:RechargeLogic(ply)
+	local nxt = dash:GetDashCooldown()
+
 end)
 
 local OverrideDashEnd
@@ -178,17 +186,20 @@ function SWEP:CheckMoves(owner, mv, dir)
 
 			--self.SuperMoving = true
 
+			
+
 			if SERVER then
 				self:StopDash()
 				self:SetSuperMoving(true)
+				self:SetPostSuperMove(true)
 				self.SuperMovingVelocity = vel
 				owner:GetCurrentCommand():RemoveKey(IN_JUMP)
 				return
 			else
 				self:SetSuperMoving(true)
+				self:SetPostSuperMove(true)
 				self.SuperMovingVelocity = vel
 				self:SetDashing(false)
-
 				return
 			end
 
@@ -207,9 +218,6 @@ function SWEP:CheckMoves(owner, mv, dir)
 			mask = MASK_SOLID
 		})
 
-		_Hull1 = mv:GetOrigin() + Vector(0, 0, 8)
-		_Hull2 = mv:GetOrigin() - Vector(0, 0, 24)
-
 		if tr.Hit then
 
 			local vel
@@ -223,19 +231,19 @@ function SWEP:CheckMoves(owner, mv, dir)
 
 			vel = dir * mul
 			vel.z = math.max(vel.z * (dir.z > 0.6 and (0.77 / (1 - dir.z)) or 1), 400)
-			_HIT = true
 
 			if SERVER then
 				self:StopDash()
 				self:SetSuperMoving(true)
+				self:SetPostSuperMove(true)
 				self.SuperMovingVelocity = vel
 				owner:GetCurrentCommand():RemoveKey(IN_JUMP)
 				return
 			else
-				self:SetSuperMoving(true)
-				self.SuperMovingVelocity = vel
 				self:SetDashing(false)
-
+				self:SetSuperMoving(true)
+				self:SetPostSuperMove(true)
+				self.SuperMovingVelocity = vel
 				return
 			end
 
@@ -271,6 +279,7 @@ function SWEP:PrimaryAttack()
 	if SERVER then self:SetDashEndTime(CurTime() + self.DashTime) end
 
 	self:SetDashing(true)
+	self:SetPostDash(true)
 	local dir = owner:EyeAngles():Forward()
 	local z = dir.z
 
@@ -308,8 +317,10 @@ hook.Add("FinishMove", "Dash", function(ply, mv, cmd)
 	if not dash or not dash:IsValid() or not dash.IsDash then return end
 
 	if dash.EndSuperMove and SERVER then
-		if mv:GetVelocity():Length() < 800 or ply:IsOnGround() then
+		if mv:GetVelocity():Length() < 600 or ply:IsOnGround() then
 			dash:SetSuperMoving(false)
+			dash:SetPostSuperMove(false)
+			dash:SetPostDash(false)
 			dash.EndSuperMove = nil
 			dash.Dashed = false
 		end
@@ -383,11 +394,23 @@ trail:SetFloat("$alpha", 1)
 
 hook.Add("PostPlayerDraw", "Dash", function(ply)
 	local t = trails[ply]
-	local dash = ply:GetWeapon("dash")
-	local dasht = (IsValid(dash) and dash:GetTable())
-	if dasht and (dasht.GetDashing and dasht.GetSuperMoving) and (dash:GetDashing() or dash:GetSuperMoving()) or DashTable[ply] then
+	local dash = ply:GetActiveWeapon()
+	local dasht = (IsValid(dash) and dash.IsDash and dash:GetTable())
+	if not dasht then return end
 
-		local widmul = (dash:GetDashing() or DashTable[ply]) and 15 or 8
+	local dt = DashTable[ply]
+
+	if dt then
+
+		if not dt.wep:IsValid() or CurTime() - dt.t > dashDur then
+			DashTable[ply] = nil
+			dt = nil
+		end
+
+	end
+
+	if ( dash:GetPostDash() or dash:GetPostSuperMove() ) or dt then
+		local widmul = (dash:GetDashing() or dt) and 15 or 8
 
 		local wid = math.min(ply:GetVelocity():Length() / 50, widmul)
 
@@ -407,7 +430,6 @@ hook.Add("PostPlayerDraw", "Dash", function(ply)
 
 	if not t then return end
 
-	local rems = {}
 
 	render.StartBeam(#t)
 
@@ -424,14 +446,16 @@ hook.Add("PostPlayerDraw", "Dash", function(ply)
 			render.SetMaterial(trail)
 
 			render.AddBeam(t[i][1], wid, 1/i, Color(255, 255, 255))
-			if wid < 0.5 then rems[#rems + 1] = i end
 		end
 
 	render.EndBeam()
 
-	for k,v in ipairs(rems) do
-		table.remove(t, v)
+	for i=#t, 1, -1 do
+		if t[i][3] < 0.5 then
+			table.remove(t, i)
+		end
 	end
+
 end)
 
 function SWEP:Holster(wep)
