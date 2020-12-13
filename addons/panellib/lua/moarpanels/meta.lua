@@ -80,14 +80,23 @@ function META:GetCloud(name)
 	return IsValid(cls[name]) and cls[name]
 end
 
+local specialKeys = {
+	X = true,
+	Y = true,
+}
+
 function META:Lerp(key, val, dur, del, ease, forceswap, changeDest)
-	local anims = self.__Animations or {}
-	self.__Animations = anims
+	local self2 = specialKeys[key] and self or self:GetTable()
+
+	local anims = self2.__Animations or {}
+	self2.__Animations = anims
 
 	local anim
-	local from = self[key] or 0
 
-	if self[key] == val then return false, false end
+	if not self2[key] then self2[key] = self2[key] or 0 end
+	local from = self2[key]
+
+	if self2[key] == val then return false, false end
 
 	if anims[key] then
 		anim = anims[key]
@@ -107,12 +116,12 @@ function META:Lerp(key, val, dur, del, ease, forceswap, changeDest)
 		anims[key] = anim
 	end
 
-	anim:On("End", "RemoveAnim", function()
+	anim:On("Stop", "RemoveAnim", function()
 		anims[key] = nil
 	end)
 
 	anim.Think = function(anim, self, fr)
-		self[key] = Lerp(fr, from, anim.ToVal)
+		self2[key] = Lerp(fr, from, anim.ToVal)
 	end
 
 	return anim, true
@@ -136,10 +145,12 @@ function META:MemberLerp(tbl, key, val, dur, del, ease, forceswap)
 	local as_str = hex(tbl)
 
 	local anim = anims[key .. as_str]
-	local from = tbl[key] or 0
 
-	if tbl[key] == val then return end
+	local from = tbl[key]
+	tbl[key] = from or 0
 
+	if from == val then return end
+	from = from or 0
 	if anim then
 		if anim.ToVal == val and not forceswap then return end
 
@@ -156,8 +167,8 @@ function META:MemberLerp(tbl, key, val, dur, del, ease, forceswap)
 		anims[key .. as_str] = anim
 	end
 
-	anim:On("End", "RemoveAnim", function()
-		anims[key] = nil
+	anim:On("Stop", "RemoveAnim", function()
+		anims[key .. as_str] = nil
 	end)
 
 	anim.Think = function(anim, self, fr)
@@ -200,6 +211,9 @@ local function LerpColorFrom(frac, col1, col2, col3)
 	end
 end
 
+local function eq(c, c2)
+	return c.r == c2.r and c.g == c2.g and c.b == c2.b and c.a == c2.a
+end
 
 --[[
 	Because colors are tables, instead of giving a key you can give LerpColor a color as the first arg,
@@ -218,7 +232,9 @@ function META:LerpColor(key, val, dur, del, ease, forceswap)
 
 	if anims[key] then
 		anim = anims[key]
-		if anim.ToVal == val and not forceswap then return end --don't re-create animation if we're already lerping to that anyways
+		if anim.ToVal == val and eq(anim.ToVal, val) and not forceswap then
+			return
+		end --don't re-create animation if we're already lerping to that anyways
 
 		anim.ToVal = val
 		anim:Swap(dur, del, ease)
@@ -227,13 +243,13 @@ function META:LerpColor(key, val, dur, del, ease, forceswap)
 		anim = self:NewAnimation(dur, del, ease)
 		anim:SetSwappable(true)
 
-		anim.ToVal = val
+		anim.ToVal = val:Copy()
 		anims[key] = anim
 	end
 
 	local newfrom = from:Copy()
 
-	anim:On("End", "RemoveAnim", function()
+	anim:On("Stop", "RemoveAnim", function()
 		anims[key] = nil
 	end)
 
@@ -250,6 +266,9 @@ function META:LerpColor(key, val, dur, del, ease, forceswap)
 end
 
 
+-- see: emitter.lua
+
+--[[
 
 function META:On(event, name, cb, ...)
 	self.__Events = self.__Events or muldim:new()
@@ -297,6 +316,8 @@ function META:Emit(event, ...)
 	end
 end
 
+]]
+
 function META:RemoveHook(event, name)
 	if not self.__Events then return end
 
@@ -330,7 +351,9 @@ end
 
 function META:PopIn(dur, del, func, noalpha)
 	if not noalpha then self:SetAlpha(0) end
-	return self:AlphaTo(255, dur or 0.1, del or 0, (isfunction(func) and func) or BlankFunc)
+
+	local anim = self:AlphaTo(255, dur or 0.1, del or 0, (isfunction(func) and func) or BlankFunc)
+	return anim
 end
 
 function META:PopOut(dur, del, rem)
@@ -339,12 +362,13 @@ function META:PopOut(dur, del, rem)
 		if IsValid(self) then self:Remove() end
 	end)
 
-	return self:AlphaTo(0, dur or 0.1, del or 0, func)
+	local anim = self:AlphaTo(0, dur or 0.1, del or 0, func)
+	return anim
 end
 
 function META:PopInShow(dur, del, rem)
 	self:Show()
-	return self:PopIn(dur or 0.1, del or 0, nil, true)
+	return self:PopIn(dur or 0.1, del or 0, nil)
 end
 
 function META:PopOutHide(dur, del, rem)
@@ -451,6 +475,8 @@ local gr = Material("vgui/gradient-r")
 local gl = Material("vgui/gradient-l")
 
 function META:DrawGradientBorder(w, h, gw, gh)
+	gw, gh = math.ceil(gw), math.ceil(gh)
+
 	if gh > 0 then
 		surface.SetMaterial(gu)
 		surface.DrawTexturedRect(0, 0, w, gh)
@@ -712,7 +738,86 @@ function META:Bond(to)
 			end
 		end)
 
+	elseif self.__HasBonded ~= to then
+		error("Can't bond a panel to multiple objects.")
 	end
 
 	self.__HasBonded = to
+end
+
+function META:GetAutoCanvas(name, class)
+	if not name then return end
+
+	self.__Canvases = self.__Canvases or {}
+	local cs = self.__Canvases
+
+	if cs[name] and cs[name]:IsValid() then
+		return cs[name], false
+	end
+
+	local cv = vgui.Create(class or "InvisPanel", self, "AutoCanvas - " .. name)
+	cs[name] = cv
+
+	return cv, true
+end
+
+function META:ShowAutoCanvas(name, class, duration, delay)
+	if not name then return end
+
+	self.__Canvases = self.__Canvases or {}
+	local cs = self.__Canvases
+
+	if not cs[name] or not cs[name]:IsValid() then
+		return self:GetAutoCanvas(name, class)	-- returns true already
+	end
+
+	if isbool(insta) then
+		cs[name]:Show()
+		cs[name]:SetAlpha(255)
+	else
+		local dur = isnumber(duration) and duration or 0.1
+		local del = isnumber(delay) and delay or 0
+		cs[name]:PopInShow(dur, del)
+	end
+
+	return cs[name], false
+end
+
+function META:HideAutoCanvas(name, class, duration, delay)
+	if not name then print("no name ritard") return end
+
+	self.__Canvases = self.__Canvases or {}
+	local cs = self.__Canvases
+
+	if not cs[name] or not cs[name]:IsValid() then print("not valid", name) return end
+
+	if isbool(insta) then
+		cs[name]:SetAlpha(0)
+		cs[name]:Hide()
+	else
+		local dur = isnumber(duration) and duration or 0.1
+		local del = isnumber(delay) and delay or 0
+		local anim = cs[name]:PopOutHide(dur, del)
+	end
+
+	return cs[name]
+end
+
+function META:CopiedColor(col, name)
+	local t = self:GetTable()
+	local k = "__" .. name .. "Color"
+	if not t[k] then
+		t[k] = col:Copy()
+		t[k .. "Generated"] = col
+
+		return t[k]
+	else
+		local gen = t[k .. "Generated"]
+		if gen.r ~= col.r or gen.g ~= col.g or gen.b ~= col.b or gen.a ~= col.a then
+			t[k]:Set(col)
+			t[k .. "Generated"]:Set(col)
+		end
+
+		return t[k]
+	end
 end

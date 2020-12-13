@@ -185,3 +185,4 @@ function MakeEmitter(t)
 end
 
 MakeEmitter(FindMetaTable("Entity"))
+if CLIENT then MakeEmitter(FindMetaTable("Panel")) end
