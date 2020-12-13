@@ -101,6 +101,10 @@ function COLOR:Copy()
 	return Color(self.r, self.g, self.b, self.a)
 end
 
+function COLOR:SetHSV(h, s, v)
+	return ColorModHSV(self, h, s, v)
+end
+
 function COLOR:ModHSV(h, s, v)
 	return ColorChangeHSV(self, h, s, v)
 end
