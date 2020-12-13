@@ -1557,8 +1557,8 @@ function draw.SimpleText2( text, font, x, y, colour, xalign, yalign )
 
 	if colour then
 		surface_SetTextColor(colour.r, colour.g, colour.b, colour.a)
-	else
-		surface_SetTextColor( 255, 255, 255, 255 )
+	--else
+		--surface_SetTextColor( 255, 255, 255, 255 )
 	end
 
 	surface_DrawText(text)
