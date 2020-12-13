@@ -127,8 +127,9 @@ end
 -- as the 2nd argument and then includes the file
 
 function FInc.Coroutine(name, realm, nofold, callback)
+	error("Retired; don't use FInc.Coroutine; causes autorefresh bugs")
 
-	FInc.Recursive(name, realm, nofold, function(path)
+	--[[FInc.Recursive(name, realm, nofold, function(path)
 		local co = coroutine.create(includes[realm])
 
 		local ret, ret2
@@ -139,7 +140,7 @@ function FInc.Coroutine(name, realm, nofold, callback)
 
 		coroutine.resume(co, path, ret, ret2)
 		return false, false --don't include by FInc.Recursive default action since we already included it with the coroutine
-	end)
+	end)]]
 
 end
 
