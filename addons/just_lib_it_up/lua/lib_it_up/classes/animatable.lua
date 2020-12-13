@@ -76,9 +76,17 @@ function AnimMeta:Remove()
 	end
 end
 
+function AnimMeta:IsValid()
+	return self.Valid ~= false
+end
+
 function AnimMeta:Stop()
 	self:Remove()
 	self:Emit("Stop")
+end
+
+function AnimMeta:End()
+	self:Stop()
 	self:Emit("End")
 end
 
@@ -131,13 +139,14 @@ function Animatable:StopAnimations()
 	for k,anim in pairs(self.m_AnimList) do
 		if anim.Ended then continue end
 		if anim.OnEnd then anim:OnEnd( self ) end
-		anim:Emit("End")
+		anim:End()
 		anim:Exec() -- start promise :Then's
 		anim.Ended = true
 	end
 
 	self.m_AnimList = {}
 end
+
 
 function Animatable:AnimationThink()
 
@@ -169,7 +178,7 @@ function Animatable:AnimationThink()
 				if not anim.Ended then
 					anim.Ended = true
 					if anim.OnEnd then anim:OnEnd( self ) end
-					anim:Emit("End")
+					anim:End()
 					anim:Exec() -- start promise :Then's
 				end
 
@@ -252,7 +261,7 @@ function Animatable:Lerp(key, val, dur, del, ease, forceswap)
 		anims[key] = anim
 	end
 
-	anim:On("End", "RemoveAnim", function()
+	anim:On("Stop", "RemoveAnim", function()
 		anims[key] = nil
 		anim:Remove()
 	end)
@@ -298,7 +307,7 @@ function Animatable:MemberLerp(tbl, key, val, dur, del, ease, forceswap)
 		anims[tostring(key) .. as_str] = anim
 	end
 
-	anim:On("End", "RemoveAnim", function()
+	anim:On("Stop", "RemoveAnim", function()
 		anims[tostring(key) .. as_str] = nil
 	end)
 
@@ -367,7 +376,7 @@ function Animatable:LerpColor(key, val, dur, del, ease, forceswap)
 
 	local newfrom = from:Copy()
 
-	anim:On("End", "RemoveAnim", function()
+	anim:On("Stop", "RemoveAnim", function()
 		anims[key] = nil
 	end)
 
