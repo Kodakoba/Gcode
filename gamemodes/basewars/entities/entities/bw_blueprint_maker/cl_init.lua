@@ -79,7 +79,7 @@ local BlueprintPaints = {
 
 		local shine = math.sin(CurTime() * 1)
 		local shinecol = math.cos(CurTime() * 0.6)
-		
+
 		t3c1.g = 9 + shine * 2
 		t3c1.b = 3 + shine * 0.7
 
@@ -93,7 +93,6 @@ local BlueprintPaints = {
 			surface.DrawTexturedRect(x + w/2 - 40, y + h/2 - 40, 80, 80)
 		self:PopMatrix()
 		BSHADOWS.EndShadow(1, 2 + shine * 0.2, 1, 255, 60, 2, nil, t3c1, t3c2)
-		--BSHADOWS.EndShadow(2, 5, 1, 205, 60, 0, nil, Color(0, 4, 0), Color(0, 2, 0))
 	end,
 
 	--[[
@@ -121,7 +120,7 @@ local BlueprintPaints = {
 	end,
 
 	--[[
-		Tier 5 paint
+		Tier 5 paint (no)
 	]]
 
 	[5] = function(self, w, h)
@@ -501,7 +500,6 @@ function ENT:OpenMenu()
 					net.WriteString(SelectedType)
 				net.SendToServer()
 
-				print("current type", SelectedType)
 			end
 
 		end

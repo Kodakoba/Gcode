@@ -112,7 +112,7 @@ function raidmeta:Initialize(rder, rded, fac)
 		end
 
 
-		for k,v in pairs(rded.members) do
+		for _, ply in pairs(rded:GetMembers()) do
 			part[ply] = 2
 			part[ply:SteamID64()] = 2
 
@@ -354,7 +354,7 @@ net.Receive("Raid", function(_, ply)
 		if fac1:InRaid() or fac2:InRaid() then print('Fac is in raid already') ReportFail(ply, "That faction is in a raid already!") return end
 		print("Mode 2; starting raid(?)")
 		local ok, err = raid.Start(ply:GetFaction(), Factions.GetFaction(fac), true)
-
+		print(ok, "yes")
 		if not ok then
 			print("returning no")
 			ReportFail(ply, err)

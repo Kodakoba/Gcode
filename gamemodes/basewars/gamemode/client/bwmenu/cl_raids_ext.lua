@@ -66,6 +66,9 @@ local function createRaidActions(pnl, fac, canv)
 		end)
 	end
 
+	function raid:DoClick()
+		Raids.CallRaid(fac, true)
+	end
 	canv:AddElement("Exclusive", raid)
 end
 

@@ -21,7 +21,7 @@ function Raids.CallRaid(what, fac)
 	if fac then
 		net.Start("Raid")
 			net.WriteUInt(2, 4) --fac vs fac
-			net.WriteUInt(what, 24)
+			net.WriteUInt(IsFaction(what) and what:GetID() or what, 24)
 		net.SendToServer()
 	else
 		if not IsPlayer(what) then return end
