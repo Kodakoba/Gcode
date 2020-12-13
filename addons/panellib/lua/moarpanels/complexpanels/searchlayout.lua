@@ -36,13 +36,13 @@ function SL:Init()
 	ic:Dock(FILL)
 
 	ic:On("ShiftPanel", function(_, pnl, x, y)
-		print("noe", self.ChangedStates[pnl])
-		if self.ChangedStates[pnl] ~= nil or pnl:GetTo("X") then
-			local dur = math.abs(pnl.X - x) / 2000
-			local an = pnl:GetTo("X") or pnl:To("X", x, dur, 0, 0.6)
-			if an then an.ToVal = x end
+		if self.ChangedStates[pnl] ~= nil then
+			local dur = (math.abs(pnl.X - x) / 1000 + math.abs(pnl.Y - y) / 1000) ^ 0.7
 
-			pnl:To("Y", y, 0.3, 0, 0.3)
+			local anX, new = pnl:To("X", x, dur, 0, 0.3, true)
+			local anY, new2 = pnl:To("Y", y, dur, 0, 0.3, true)
+
+			self.ChangedStates[pnl] = nil
 
 			return true
 		end
@@ -70,8 +70,7 @@ function SL:Init()
 		end
 
 		for pnl, name in pairs(self.Names) do
-			print(name, tx)
-			if not name:lower():find(tx, nil, self.PatternsEnabled) then self.Dehighlighted[pnl] = true end
+			if not name:lower():find(tx, nil, not self.PatternsEnabled) then self.Dehighlighted[pnl] = true end
 		end
 
 		for k,v in pairs(self.Dehighlighted) do

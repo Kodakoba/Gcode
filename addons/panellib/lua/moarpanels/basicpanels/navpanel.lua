@@ -352,7 +352,7 @@ function Navbar:Expand()
 	local oldfrac = self.ExpandFrac
 
 	if anim then
-		anim:On("Think", function(anim, frac)
+		anim:On("Think", "ekspand", function(anim, frac)
 			self.ExpandFrac = Lerp(frac, oldfrac, 1)
 		end)
 	end
@@ -375,14 +375,18 @@ function Navbar:Retract()
 	local oldfrac = self.ExpandFrac
 	local anim = self:MoveTo(-self:GetWide() + self.RetractedSize, self.Y, 0.4, 0, 0.3)
 
-	anim:On("Think", function(anim, frac)
-		self.ExpandFrac = Lerp(frac, oldfrac, 0)
-	end)
+	if anim then
+		anim:On("Think", "ritract", function(anim, frac)
+			self.ExpandFrac = Lerp(frac, oldfrac, 0)
+		end)
 
-	btn:MoveBy(8, 0, 0.2, 0.3, 0.3)
+		btn:MoveBy(8, 0, 0.2, 0.3, 0.3)
+
+		self:Emit("Retract")
+	end
 
 	self.Expanded = false
-	self:Emit("Retract")
+
 	--self.Scroll:AlphaTo(50, 0.3, 0)
 	--self.Scroll:SetMouseInputEnabled(false)
 end

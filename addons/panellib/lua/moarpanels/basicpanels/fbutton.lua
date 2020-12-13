@@ -127,7 +127,7 @@ function button:HoverLogic(dis, w, h)
 
 	if self:IsDown() then
 		local min = math.max(w, h)
-		self:To("MxScale", self.MxScaleDown or (1 - 8 / min), 0.1, 0, 0.3)
+		self:To("MxScale", self.MxScaleDown or (1 - math.min(16, min * 0.1) / min), 0.1, 0, 0.3)
 	else
 		self:To("MxScale", 1, 0.1, 0, 0.3)
 	end
@@ -323,17 +323,15 @@ function button:Draw(w, h)
 		if (self.DrawShadow and spr > 0) or self.AlwaysDrawShadow then
 			BSHADOWS.BeginShadow()
 			x, y = self:LocalToScreen(0,0)
+
+			if self.ActiveMatrix then
+				cam.PushModelMatrix(self.ActiveMatrix, true)
+			end
+
 		end
 
-		if self.ActiveMatrix then
-			cam.PushModelMatrix(self.ActiveMatrix, true)
-		end
 
 			self:DrawButton(x, y, w, h)
-
-		if self.ActiveMatrix then
-			cam.PopModelMatrix()
-		end
 
 		if (self.DrawShadow and spr > 0) or self.AlwaysDrawShadow then
 			local int = shadow.Intensity
@@ -347,13 +345,18 @@ function button:Draw(w, h)
 			end
 
 			if self.MxScale < 1 then
-				spr = spr * (1 / self.MxScale ^ 12)
+				spr = spr * (1 / self.MxScale ^ 6)
 			end
 			if spr < 0.2 then
 				a = a * (spr / 0.2)
 			end
 
+			if self.ActiveMatrix then
+				cam.PopModelMatrix()
+			end
+
 			BSHADOWS.EndShadow(int, spr, blur or 2, a, shadow.Dir, shadow.Distance, nil, shadow.Color, shadow.Color2)
+
 
 		end
 
