@@ -127,6 +127,10 @@ function Cloud:OnRemove()
 	self:Emit("Remove")
 end
 
+function Cloud:GetCurWidth()
+	return math.min(math.max(self.MaxWidth, self.LabelWidth + 16, self.MinW), self.MaxW)
+end
+
 function Cloud:MoveAbove(pnl, px)
 	local x, y = pnl:LocalToScreen(pnl:GetWide() / 2, 0)
 
@@ -417,7 +421,7 @@ end
 function Cloud:AddPanel(p, num)
 
 	self.MaxWidth = math.Clamp(p:GetWide() + 16, math.max(self.MinW, self.MaxWidth), self.MaxW)
-
+	p.IgnoreVisibility = true
 	self.DoneText[num or (#self.DoneText + 1)] = p
 end
 
