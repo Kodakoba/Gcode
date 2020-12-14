@@ -192,8 +192,7 @@ end
 
 --returns: wrapped text, current width, current line, 1 if wrapped entire word, 2 if partially
 
-local function WrapWord(word, curwid, fullwid, widtbl, line)
-
+local function WrapWord(word, curwid, fullwid, widtbl, line, first)
 	local tw, th = surface.GetTextSize(word)
 	local ret = ""
 
@@ -203,7 +202,6 @@ local function WrapWord(word, curwid, fullwid, widtbl, line)
 	local wrapped = false --did word wrap?
 
 	if curwid + tw > fullwid - 8 then --have to wrap
-
 		local should_hyphenate = false -- ignore that, we'll go MS Word way  -> 							--tw > fullwid * 0.65 --very wide word; wrap by letters if true
 						  		-- if both parts of the word would have three or more letters, we hyphenate
 
@@ -216,10 +214,10 @@ local function WrapWord(word, curwid, fullwid, widtbl, line)
 		end
 
 		if not should_hyphenate then
-			ret = ret .. "\n" .. word
+
+			ret = ret .. (first and "" or "\n") .. word
 			curwid = tw
 			wrapped = 1
-
 			line = line + 1
 		else
 			local newtx, newwid, lines, didwrap = WrapByLetters(word, fullwid - curwid, fullwid, widtbl, line)
@@ -232,6 +230,7 @@ local function WrapWord(word, curwid, fullwid, widtbl, line)
 			line = lines
 			wrapped = wrapped or (didwrap and 2)
 		end
+
 	else
 		ret = ret .. word
 		curwid = curwid + tw
@@ -248,28 +247,33 @@ function string.WordWrap2(txt, wid, font)
 	if istable(wid) then
 
 		local ret = ""
+		local lastWord = ""
 
 		local curwid = 0
 		local line = 1
+		local firstWord = true
 
 		for word in string.gmatch(txt, "[%s%c%p]*[^%s%c%p]*[%s%c%p]*") do
-			local r2, w2, lines, didwrap = WrapWord(word, curwid, nil, wid, line)
+			local r2, w2, lines, didwrap = WrapWord(word, curwid, nil, wid, line, firstWord)
+
+			ret = ret .. lastWord
+			lastWord = r2
+			curwid = w2
 
 			if didwrap == 1 then
-				ret = ret:gsub("%s$", "")
+				ret = ret:gsub("%s*$", "")
 			elseif not didwrap then
 				if r2:match("[\r\n]") then
 					w2 = 0
 				end
 			end
 
-			ret = ret .. r2
-			curwid = w2
-
 			line = lines
 			wrapped = wrapped or didwrap
+			firstWord = false
 		end
 
+		ret = ret .. lastWord:gsub("\n$", "", 1)
 
 		return ret, curwid, wrapped
 	else

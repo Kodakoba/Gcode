@@ -18,6 +18,16 @@ function math.PointIn2DBox(px, py, rx, ry, rw, rh)
 	return true
 end
 
+local sin = function(d) return math.sin(math.rad(d)) end
+local cos = function(d) return math.cos(math.rad(d)) end
+
+function math.AARectSize(w, h, deg)
+	local nh = h * math.abs(cos(deg)) + w * math.abs(sin(deg))
+	local nw = h * math.abs(sin(deg)) + w * math.abs(cos(deg))
+
+	return nw, nh
+end
+
 function math.Length(num) --length of number in base 10, kind of works for retarded numbers (> 14 in len)
 	if num == 0 then return 0 end
 	local ret = math.floor(
