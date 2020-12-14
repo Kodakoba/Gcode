@@ -294,6 +294,8 @@ function nw:Get(k, p, no_pred)
 			stream, streamFrom = self:GetClosestPredRun(when, k, cmd, true)
 		end
 
+		print(stream, streamFrom, stream and stream.Time, self.BaseLineWhen)
+
 		if streamFrom and self.ActiveRuns[self.BaseLineWhen] and streamFrom < self.ActiveRuns[self.BaseLineWhen] then
 			print("using baseline since its more recent", self.BaseLineWhen, streamWhen, streamFrom, when)
 			return self.BaseLine[k], self.BaseLineWhen
