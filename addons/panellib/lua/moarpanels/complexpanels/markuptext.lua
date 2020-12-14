@@ -15,7 +15,12 @@ function PANEL:Paint(w, h)
 end
 
 function PANEL:PerformLayout()
+	local h = 0
+	for k,v in ipairs(self.Pieces) do
+		h = h + v:GetTall()
+	end
 
+	self:SetTall(h)
 end
 
 function PANEL:OnKeyCodePressed(key)
@@ -48,6 +53,7 @@ end
 function PANEL:AddPiece()
 	local piece = vgui.Create("MarkupPiece", self)
 	self:Add(piece)
+
 	self.Pieces[#self.Pieces + 1] = piece
 	return piece
 end

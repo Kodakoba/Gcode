@@ -68,6 +68,7 @@ function PANEL:RecacheSmallestParent()
 end
 
 function PANEL:IsTextVisible(text)
+	if self.IgnoreVisibility then return true end
 	if not self.SmallestParent then self:RecacheSmallestParent() end
 
 	local ty = text.y
@@ -99,21 +100,23 @@ function PANEL:Recalculate()
 	if res ~= nil then return end
 
 	surface.SetFont(self.Font)
+	local ownWide = self:GetWide()
 
 	for k,v in ipairs(self.Elements) do
 
 		if v.isText then
 			local off = v.offset or 0
+			local algn = v.align or 0
 
 			buf.x = buf.x + off
-			if buf.x > self:GetWide() then
+			if buf.x > ownWide then
 				buf.x = 0
 				buf.y = buf.y + buf:GetTextHeight()
 			end
 			local curX, curY = buf.x, buf.y
 
 			local wtx, tw, th = self:CalculateTextSize(v)
-
+			print("text height", th, v.text)
 			local t = table.Copy(v)
 			t.text = wtx
 
@@ -127,6 +130,7 @@ function PANEL:Recalculate()
 
 			for s, line in eachNewline(wtx) do
 				local tw, th = surface.GetTextSize(s)
+
 				segs[#segs + 1] = {
 					w = tw,
 					h = th + 1,
@@ -141,8 +145,9 @@ function PANEL:Recalculate()
 					selStart = nil, selEnd = nil
 				}
 			end
-
+			
 			maxH = math.max(maxH, t.y + t.h)
+			print(t.h, t.y, maxH, wtx)
 			self.DrawQueue[#self.DrawQueue + 1] = t
 			self.Texts[#self.Texts + 1] = t
 		elseif ispanel(v) then
@@ -163,12 +168,14 @@ function PANEL:Recalculate()
 
 	end
 
-	local res = self:Emit("RecalculateHeight", buf)
-	if res ~= nil then return end
+	local res = self:Emit("RecalculateHeight", buf, maxH)
+	if res ~= nil and not isnumber(res) then return end
 
-	self:SetTall(maxH + 1)
-	self:GetParent():SetTall(math.max(self:GetParent():GetTall(), maxH + 1))
+	res = res or maxH
 
+	self:SetTall(res + 1)
+	self:GetParent():SetTall(math.max(self:GetParent():GetTall(), res + 1))
+	print("now", res + 1)
 end
 
 function PANEL:OnKeyCodePressed(key)
@@ -294,6 +301,7 @@ function PANEL:Think()
 
 	end
 
+	self:Emit("Think")
 end
 
 local b = bench("selection")
@@ -333,7 +341,7 @@ function PANEL:PaintText(dat, buf)
 	--surface.SetTextColor(buf:GetTextColor():Unpack())
 
 	surface.SetTextPos(dat.x, dat.y)
-	
+
 	--print(dat.text, "was:", buf:GetPos())
 	if #self.ExecutePerChar > 0 then
 
@@ -361,11 +369,11 @@ function PANEL:ExecuteTag(tag, buf, ...)
 end
 
 function PANEL:OnKeyCodePressed()
-	print("e?")
+
 end
 
 function PANEL:Paint(w, h)
-
+	self:Emit("PrePaint", w, h)
 	local buf = self.Buffer
 	buf:Reset()
 
@@ -381,7 +389,7 @@ function PANEL:Paint(w, h)
 			--print("drawing text", v.text)
 			--self:PaintText(v, buf)
 			for k,v in ipairs(v.segments) do
-				if not self:IsTextVisible(v) then continue end
+				if not self:IsTextVisible(v) then print("invisible", v.text) continue end
 				--surface.SetDrawColor(color_white)
 				--surface.DrawOutlinedRect(v.x, v.y, v.w, v.h)
 				self:PaintText(v, buf)
@@ -431,6 +439,7 @@ function PANEL:Paint(w, h)
 	table.Empty(self.ExecutePerChar)
 
 	self.LastFont = ""
+	self:Emit("PostPaint", w, h)
 end
 
 function PANEL:PerformLayout()
@@ -478,13 +487,14 @@ function PANEL:EndTag(num)
 
 end
 
-function PANEL:AddText(tx, offset)
+function PANEL:AddText(tx, offset, align)
 
 	self.Elements[#self.Elements + 1] = {
 		isText = true,
 		text = tx,
 		font = self.Font,
 		offset = offset,
+		align = align,
 		segments = {}
 	}
 	self:InvalidateLayout()

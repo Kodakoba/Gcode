@@ -295,17 +295,17 @@ function buf:WrapText(tx, width, font)
 	local txcache = fontcache[key]
 
 	if txcache then
-		local tw, th = txcache[2], txcache[3] * self:GetTextHeight()
+		local tw, th = txcache[2], (txcache[3] + 1) * self:GetTextHeight()
 
 		local offX = 0
 
-		if txcache[4] then
+		if txcache[4] and txcache[4] > 0 then
 			self:SetPos(tw)
 		else
 			offX = tw
 		end
 
-		self:Offset(offX, th)
+		self:Offset(offX, th - self:GetTextHeight())
 		return txcache[1], tw, th
 	else
 
@@ -320,10 +320,11 @@ function buf:WrapText(tx, width, font)
 		end
 
 		local _, lines = wrapped:gsub("\n", "")
-		local th = lines * self:GetTextHeight()
-		self:Offset(offX, th)
+		local th = (lines + 1) * self:GetTextHeight()
+		self:Offset(offX, th - self:GetTextHeight())
 
 		fontcache[key] = {wrapped, cur_wid, lines, didwrap}
+
 		return wrapped, cur_wid, th
 	end
 
@@ -473,7 +474,7 @@ local offset = Vector()
 local scale = Vector()
 
 sc:SetStart(function(tag, buf, args, pnl)
-	if not ispanel(pnl) then return end 
+	if not ispanel(pnl) then return end
 
 	local x, y = pnl:LocalToScreen(0, 0)
 	local bx, by = buf:GetPos()
@@ -483,7 +484,6 @@ sc:SetStart(function(tag, buf, args, pnl)
 	scmtrx:Set(mtrx)
 
 	offset.x, offset.y = x + bx, y + by
-
 	render.PushFilterMin(TEXFILTER.ANISOTROPIC)
 
 	scmtrx:Translate(offset)
