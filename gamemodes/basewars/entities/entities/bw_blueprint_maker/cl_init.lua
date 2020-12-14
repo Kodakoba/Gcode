@@ -361,9 +361,9 @@ function ENT:OpenMenu()
 				local name = v.Name
 				local mat = mats[v.RenderName]
 
-				local icon = v.Icon or {}
+				local icon = v.CatIcon or {}
 
-				if v.Icon and not mat then
+				if icon and not mat then
 
 					if icon.RenderName then
 
