@@ -42,7 +42,10 @@ _AllPredNWs = allNWs
 local JITTER_THRESHOLD = 100 / 1000
 
 if CLIENT then
-	timer.Create("PredNW_GC", 0.1, 0, function() -- bitch
+	local valid = false
+
+	timer.Create("PredNW_GC", 0.1, 0, function()
+		if not valid and not LocalPlayer():IsValid() then return end -- gmod plx
 		local rCT = CurTime() - math.max(0.07, LocalPlayer():Ping() / 100 + JITTER_THRESHOLD)
 		--print((LocalPlayer():Ping() / 500 + JITTER_THRESHOLD))
 		for k,v in pairs(allNWs) do
