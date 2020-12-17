@@ -5,6 +5,8 @@ local PLAYER = debug.getregistry().Player
 util.AddNetworkString("Raid")
 
 
+local CurrentReply	-- only 1 active at a time, so...
+
 BaseWars.Raid = BaseWars.Raid or {}
 local raid = BaseWars.Raid
 
@@ -155,6 +157,7 @@ function raidmeta:Stop()
 	end
 
 	net.Start("Raid")
+		CurrentReply:Accept()
 		net.WriteUInt(3, 4)
 		net.WriteUInt(self:GetID(), 16)
 	net.Broadcast()
@@ -231,6 +234,7 @@ function raid.Start(rder, rded, fac)
 		local rtbl = raidmeta:new(rder, rded, fac)
 
 		net.Start("Raid")
+			CurrentReply:Accept()
 			net.WriteUInt(2, 4)
 			net.WriteUInt(rder.id, 24)
 			net.WriteUInt(rded.id, 24)
@@ -247,6 +251,7 @@ function raid.Start(rder, rded, fac)
 	rded:SetNWBool("Raided", true)
 
 	net.Start("Raid")
+		CurrentReply:Accept()
 		net.WriteUInt(1, 4)
 		net.WriteUInt(rder:UserID(), 24)
 		net.WriteUInt(rded:UserID(), 24)
@@ -315,12 +320,16 @@ end)
 function ReportFail(ply, err)
 
 	net.Start("Raid")
-		net.WriteUInt(4, 4)
+		CurrentReply:Deny()
 		net.WriteString(err)
 	net.Send(ply)
 
+	CurrentReply = nil
 end
+
 net.Receive("Raid", function(_, ply)
+	local pr = net.ReplyPromise()
+	CurrentReply = pr
 	local mode = net.ReadUInt(4)
 	--1 = start vs. player
 	--2 = start vs. fac
@@ -338,7 +347,7 @@ net.Receive("Raid", function(_, ply)
 		print("ok?", ok, err)
 		if not ok then
 			print("returning no")
-			ReportFail(ply, err)
+			ReportFail(ply, err, pr)
 		end
 	elseif mode == 2 then
 		local fac = net.ReadUInt(24)
@@ -357,7 +366,7 @@ net.Receive("Raid", function(_, ply)
 		print(ok, "yes")
 		if not ok then
 			print("returning no")
-			ReportFail(ply, err)
+			ReportFail(ply, err, pr)
 		end
 
 	elseif mode==3 then

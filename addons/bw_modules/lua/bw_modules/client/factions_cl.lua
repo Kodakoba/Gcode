@@ -1,13 +1,6 @@
 local tag = "BaseWars.Factions"
 MODULE.Name = "FactionsCL"
 
-local CurUniqueID = 0
-
-local function uid()
-	CurUniqueID = CurUniqueID + 1
-	return CurUniqueID % 256
-end
-
 local Promises = {}
 
 local function promise()

@@ -1,6 +1,8 @@
 local tab = {}
 BaseWars.Menu.Tabs["Raids"] = tab
 
+Colors.Raid = Color(180, 70, 70)
+
 local function removePanel(pnl, hide)
 	if pnl.__selMove then pnl.__selMove:Stop() end
 
@@ -52,7 +54,7 @@ local function createRaidActions(pnl, fac, canv)
 		raid.Y = mn:GetTall() - 44
 	end
 
-	raid:SetColor(Color(180, 70, 70), true)
+	raid:SetColor(Colors.Raid, true)
 
 	raid:SetIcon("https://i.imgur.com/xyrD9OM.png", "salilsawaarim.png", 24, 24)
 	raid.Icon.IconX = 8
@@ -67,7 +69,7 @@ local function createRaidActions(pnl, fac, canv)
 	end
 
 	function raid:DoClick()
-		Raids.CallRaid(fac, true)
+		local pr = Raids.CallRaid(fac, true)
 	end
 	canv:AddElement("Exclusive", raid)
 end
@@ -156,6 +158,71 @@ local function createFactionlessOption(pnl, scr, num, ply)
 		else
 			self:To("Y", y, 0.3, 0, 0.3)
 		end
+	end
+
+	if ply == LocalPlayer() then return p end
+
+	local raid = vgui.Create("FButton", p)
+	raid:Dock(RIGHT)
+	raid:DockMargin(4, 4, 4, 4)
+	raid:InvalidateParent(true)
+	raid:SetWide(raid:GetTall())
+
+	local bad_red = Color(180, 80, 80)
+
+	function raid:Think()
+		local can, why = ply:IsRaidable()
+
+		if self:IsHovered() and why then
+			local cl, new = self:AddCloud("err")
+
+			if cl and new then
+				cl.Font = "OS20"
+				cl.MaxW = 400
+				cl.AlignLabel = 1
+
+				cl:SetTextColor(bad_red)
+				cl:SetRelPos(self:GetWide() / 2)
+				cl.ToY = -8
+
+				cl:SetText(why)
+			end
+		else
+			self:RemoveCloud("err")
+		end
+
+		self:SetDisabled(not can)
+		self:SetColor(can and Colors.Raid or Colors.Button)
+	end
+
+	local errPnl = vgui.Create("InvisPanel", p)
+	--errPnl:
+	raid.A = 1
+	local col = color_white:Copy()
+	function raid:PostPaint(w, h)
+		surface.SetDrawColor(255, 255, 255, self.A * 255)
+		surface.DrawMaterial("https://i.imgur.com/xyrD9OM.png", "salilsawaarim.png", 12, 12, w - 24, w - 24)
+
+		local rev = 1 - self.A
+
+		if rev > 0 then
+			col.a = rev * 250
+			draw.DrawLoading(self, w/2, h/2, 36 + 8 * rev, 36 + 8 * rev, col)
+		end
+	end
+
+	function raid:DoClick()
+		local pr = Raids.CallRaid(ply, false)
+		self:To("A", 0, 0.3, 0, 0.3)
+		pr:Then(function()
+			print("Raid call succeeded")
+			self:To("A", 1, 0.3, 0, 0.3)
+		end, function()
+			local why = net.ReadString()
+			self:To("A", 1, 0.3, 0, 0.3)
+
+			print("Raid call failed", why)
+		end)
 	end
 
 	return p

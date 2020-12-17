@@ -17,20 +17,22 @@ local function Valid()
 end
 
 function Raids.CallRaid(what, fac)
+	local pr
 
 	if fac then
-		net.Start("Raid")
+		pr = net.StartPromise("Raid")
 			net.WriteUInt(2, 4) --fac vs fac
 			net.WriteUInt(IsFaction(what) and what:GetID() or what, 24)
 		net.SendToServer()
 	else
 		if not IsPlayer(what) then return end
-		net.Start("Raid")
+		pr = net.StartPromise("Raid")
 			net.WriteUInt(1, 4) --ply vs ply
 			net.WriteEntity(what)
 		net.SendToServer()
 	end
 
+	return pr
 end
 
 function PLAYER:IsRaider() --localplayer's raid only
@@ -71,8 +73,24 @@ function PLAYER:IsEnemy()
 
 end
 
+function PLAYER:IsRaidable()
+	local can, err = raid.CanGenerallyRaid(self, true)
+	if can == false then
+		return can, err
+	end
+
+	can, err = raid.CanRaidPlayer(LocalPlayer(), self)
+	if can == false then
+		return can, err
+	end
+
+	return true
+end
 
 net.Receive("Raid", function()
+	local rep, ok = net.ReadPromise()
+	if ok == false then return end
+
 	local mode = net.ReadUInt(4)
 	--1 = start ply vs ply
 	--2 = start fac vs fac

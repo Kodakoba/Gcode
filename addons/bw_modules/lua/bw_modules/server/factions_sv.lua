@@ -133,7 +133,9 @@ function facmeta:Initialize(ply, id, name, pw, col)
 	facs.Factions[name] = self
 	facs.FactionIDs[id] = self
 
-	self:SetNetworkableID("Faction:" .. id)
+	if id > 0 then
+		self:SetNetworkableID("Faction:" .. id)
+	end
 
 	self:On("Raided", "CooldownTracker", self.OnRaided)
 end

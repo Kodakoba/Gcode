@@ -51,15 +51,25 @@ end
 	err.YouAreRaided 		= "You are currently being raided!"
 	err.YouAreRaiding 		= "You are currently raiding someone else!"
 
-	err.RaidedOnCooldown 	= function(ply, fac)
-		local who = IsFaction(fac) and "This faction" or "This player"
-		local _, left = fac:RaidedCooldown()
+	err.RaidedOnCooldown 	= function(what)
+		local who = IsFaction(what) and "This faction" or "This player"
+		local _, left = what:RaidedCooldown()
 		return ("%s is currently on cooldown from being raided. (%ds. remaining)"):format(who, left)
 	end
 
+
+for k,v in pairs(err) do
+	err[k] = makeErr(v)
+end
+
+function PLAYER:RaidedCooldown()
+	local left = self:GetNWFloat("RaidCD", 0) - CurTime()
+	return left > 0, left
+end
+
 function raid.CanGenerallyRaid(ply, nonfac)
 	if bit.bxor(ply:GetFaction() and 1 or 0, nonfac and 1 or 0) == 0 then
-		return false, nonfac and err.CantHaveAFaction or err.NeedAFaction
+		return false, nonfac and err.CantHaveAFaction() or err.NeedAFaction()
 	end
 
 	return true
@@ -72,12 +82,14 @@ function raid.CanRaidPlayer(ply, ply2)
 	if ply == ply2 then return false, err.RaidingSelf end
 
 	if ply2:RaidedCooldown() then
-		return false, err.RaidedOnCooldown
+		return false, err.RaidedOnCooldown(ply2)
 	end
 
 	if ply:InRaid() then
 		return false, err.YouAreRaided
 	end
+
+	return true
 end
 
 function raid.CanRaidFaction(ply, fac2)
@@ -98,6 +110,6 @@ function raid.CanRaidFaction(ply, fac2)
 	end
 
 	if fac2:RaidedCooldown() then
-		return false, err.RaidedOnCooldown
+		return false, err.RaidedOnCooldown(fac2)
 	end
 end
