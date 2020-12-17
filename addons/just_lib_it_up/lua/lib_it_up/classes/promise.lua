@@ -111,3 +111,64 @@ end
 
 Promise.Do = Promise.Exec
 Promise.Run = Promise.Exec
+
+local CurUniqueID = 0
+local uidLen = 16
+local NetPromises = {}
+
+local function uid()
+	CurUniqueID = CurUniqueID + 1
+	return CurUniqueID % bit.lshift(1, uidLen)
+end
+
+function net.StartPromise(name)
+	local prom = Promise():Then(function(good, bad, ok)
+		if not ok then
+			bad()
+		else
+			good()
+		end
+	end)
+
+	local uid = uid()
+	NetPromises[uid] = prom
+
+	if name then net.Start(name) end
+		net.WriteUInt(uid, uidLen)
+
+	return prom, uid
+end
+
+local PromReply = Object:extend()
+
+function PromReply:Reply(ok)
+	if self.Deactivated then error("Can't reply twice!") return end
+	net.WriteUInt(self.ID, uidLen)
+	net.WriteBool(ok == nil and true or ok)
+
+	self.Deactivated = true
+end
+
+function PromReply:Deny()
+	self:Reply(false)
+end
+PromReply.Error = PromReply.Deny
+
+function PromReply:Accept()
+	self:Reply(true)
+end
+PromReply.Success = PromReply.Accept
+
+function net.ReadPromise()
+	local id = net.ReadUInt(uidLen)
+	local ok = net.ReadBool()
+	return NetPromises[id]:Exec(ok), ok
+end
+
+function net.ReplyPromise()
+	local rep = PromReply:new()
+	rep.ID = net.ReadUInt(uidLen)
+
+	return rep
+end
+
