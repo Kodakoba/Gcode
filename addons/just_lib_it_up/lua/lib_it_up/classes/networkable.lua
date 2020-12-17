@@ -552,7 +552,7 @@ if SERVER then
 		for _, ply in ipairs(who) do
 			for numID, nameID in pairs(numToID) do
 				local obj = _NetworkableCache[nameID]
-				if obj.Filter then continue end
+				if not obj or obj.Filter then continue end
 
 				newids[#newids + 1] = numID
 				maxID = math.max(maxID, numID)
