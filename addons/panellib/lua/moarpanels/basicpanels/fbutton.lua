@@ -362,6 +362,10 @@ function button:Draw(w, h)
 
 	end
 
+	local ic = self.Icon
+	local iW = ic and (ic.IconW or w - (self.RBRadius or 8)) or 0
+	local iH = ic and (ic.IconH or h - (self.RBRadius or 8)) or 0
+
 	if not self.NoDrawText and label then
 
 		label = tostring(label)
@@ -372,13 +376,10 @@ function button:Draw(w, h)
 		local ax = self.TextAX or 1
 		local ay = self.TextAY or 1
 		local realAY = AYToTextY[ay] or 1
-		local ic = self.Icon
 
 		local lblCol = disabled and self.DisabledLabelColor or self.LabelColor
 		local newlines = amtNewlines(label)
 
-		local iW = ic and ic.IconW or 0
-		local iH = ic and ic.IconH or 0
 		local iconX = ic and (ic.IconX or 4) or 0
 
 		if newlines > 0 then
@@ -435,7 +436,7 @@ function button:Draw(w, h)
 		return
 	end
 
-	self:PaintIcon(w/2, h/2)
+	self:PaintIcon(w/2 - iW / 2, h/2 - iH / 2)
 
 end
 
