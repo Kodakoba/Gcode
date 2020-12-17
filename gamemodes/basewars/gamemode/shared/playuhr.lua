@@ -3,7 +3,7 @@ PlayTime = PlayTime or {}
 local PLAYER = debug.getregistry().Player
 
 if SERVER then
-	
+
 	PlayTime.LastThink = CurTime() + 1
 
 	function PlayTime:Init()
@@ -37,7 +37,7 @@ if SERVER then
 
 			file.CreateDir(dir)
 			file.Write(dir .. "/time.txt", "0")
-	
+
 		else
 
 			file.Write(dir .. "/time.txt", time)
@@ -57,7 +57,7 @@ if SERVER then
 
 		if not (CurTime() > PlayTime.LastThink) then return end
 		PlayTime.LastThink = CurTime() + 1
-	
+
 		for _, ply in next, player.GetAll() do
 
 			ply:SetNW2String("SessionTime", tostring(ply:GetSessionTime()))
@@ -79,18 +79,18 @@ if SERVER then
 		PlayTime:SetGlobalTimeFile(ply, ply.GlobalTime + ply:GetSessionTime())
 
 	end)
-	
+
 	hook.Add( "ShutDown", "PlayTime.ShutDown", function()
-		
+
 		for _, ply, next in pairs( player.GetAll() ) do
-		
+
 			PlayTime:SetGlobalTimeFile(ply, ply.GlobalTime + ply:GetSessionTime())
-			
+
 		end
-		
+
 	end	)
 
-end 
+end
 
 function PLAYER:GetPlayTime()
 
@@ -113,7 +113,7 @@ function PLAYER:GetPlayTimeTable()
 	tbl.h = math.floor(time / 60 / 60)
 	tbl.m = math.floor(time / 60) % 60
 	tbl.s = math.floor(time) % 60
-	
+
 	return tbl
 
 end
@@ -122,7 +122,7 @@ function PLAYER:GetSessionTime()
 
 	if SERVER then
 
-		return math.Round(CurTime() - self.JoinTime)
+		return math.Round(CurTime() - (self.JoinTime or 0))
 
 	else
 
@@ -136,11 +136,11 @@ function PLAYER:GetSessionTable()
 
 	local tbl = {}
 	local time = self:GetSessionTime() or 0
-	
+
 	tbl.h = math.floor(time / 60 / 60)
 	tbl.m = math.floor(time / 60) % 60
 	tbl.s = math.floor(time) % 60
-	
+
 	return tbl
 
 end

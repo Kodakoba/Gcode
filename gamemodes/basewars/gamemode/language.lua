@@ -77,7 +77,8 @@ function LocalString:Initialize(str, id)
 end
 
 function LocalString:__tostring()
-	return self.Str
+	if self.IsString then return self.Str end
+	return self.Str()
 end
 
 function LocalString:__call(...)

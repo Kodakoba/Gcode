@@ -107,18 +107,20 @@ end
 hook.Add("BasewarsModuleLoaded", "CreateEmptyFaction", function(nm)
 	if nm ~= "FactionsSV" and nm ~= "FactionsCL" then return end
 
-	local fac
+	if not Factions.NoFaction then
+		local fac
 
-	if CLIENT then
-		fac = Factions.meta:new(-1, "No Faction", Color(100, 100, 100))
-	else
-		fac = Factions.meta:new(false, -1, "No Faction", nil, Color(100, 100, 100))
+		if CLIENT then
+			fac = Factions.meta:new(-1, "No Faction", Color(100, 100, 100))
+		else
+			fac = Factions.meta:new(false, -1, "No Faction", nil, Color(100, 100, 100))
+		end
+
+		-- factions with ID < 0 are automatically considered invalid and don't get a networkableID
+
+		Factions.NoFaction = fac
+
+		Factions.Factions["No Faction"] = nil
+		Factions.FactionIDs[-1] = nil
 	end
-
-	-- factions with ID < 0 are automatically considered invalid and don't get a networkableID
-
-	Factions.NoFaction = fac
-
-	Factions.Factions["No Faction"] = nil
-	Factions.FactionIDs[-1] = nil
 end)
