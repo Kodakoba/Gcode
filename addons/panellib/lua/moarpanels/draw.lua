@@ -114,7 +114,11 @@ function draw.LegacyLoading(x, y, w, h)
 	surface.DrawTexturedRectRotated(x, y, size, size, -(CurTime() * 360) % 360)
 end
 
-function draw.DrawLoading(pnl, x, y, w, h)
+local tr_vec = Vector()
+local sc_vec = Vector()
+local vm = Matrix()
+
+function draw.DrawLoading(pnl, x, y, w, h, col)
 	local ct = CurTime()
 	local sx, sy
 
@@ -144,7 +148,7 @@ function draw.DrawLoading(pnl, x, y, w, h)
 		x, y = x, y
 
 	elseif ispanel(pnl) then
-		sx, sy = pnl:LocalToScreen(w/2, h/2)
+		sx, sy = pnl:LocalToScreen(x or w/2, y or h/2)
 		clipping = false
 	end
 
@@ -155,42 +159,42 @@ function draw.DrawLoading(pnl, x, y, w, h)
 
 	local amt = 3
 	local dur = 2 --seconds
-	local vm = Matrix()
 
 	if clipping then surface_DisableClipping(true) end
 
-	render.PushFilterMag( TEXFILTER.ANISOTROPIC )
+	col = IsColor(col) and col or false
+	local r, g, b, mul_a = col and col.r or 255, col and col.g or 255, col and col.b or 255, col and col.a / 255 or 1
+
+	--render.PushFilterMag( TEXFILTER.ANISOTROPIC )
 	render.PushFilterMin( TEXFILTER.ANISOTROPIC )
 
 	for i=1, amt do
 		local off = dur/amt
 		local a = ((ct + off * (i-1)) % dur) / dur
 
-		local r = w*a
-		local mat = (r > 160 and cout) or (r > 64 and cout128) or (r < 64 and cout64) or cout64
+		local rad = w * a
+		local mat = (rad > 160 and cout) or (rad > 64 and cout128) or (rad < 64 and cout64) or cout64
 
 		surface_SetMaterial(mat)
 
-		local vec = Vector(sx, sy)
+		tr_vec[1], tr_vec[2] = sx, sy
+		sc_vec[1], sc_vec[2] = a, a
 
-		vm:Translate(vec)
-
-		vm:SetScale(Vector(a, a, 0))
-
-		vm:Translate(-vec)
+		vm:Reset()
+		vm:Translate(tr_vec)
+			vm:SetScale(sc_vec)
+			tr_vec:Mul(-1)
+		vm:Translate(tr_vec)
 
 		cam.PushModelMatrix(vm)
-
-		pcall(function()
-			surface_SetDrawColor(Color(255, 255, 255, (1 - a)*255))
-			surface_DrawTexturedRect(x - w/2, y - h/2, w, h)	--i aint gotta explain shit where the 1.05 came from
-		end)
-
+			surface_SetDrawColor(r, g, b, (1 - a) * 255 * mul_a)
+			surface_DrawTexturedRect(x - w/2, y - h/2, w, h)
 		cam.PopModelMatrix(vm)
 	end
+
 	if clipping then surface_DisableClipping(false) end
 	render.PopFilterMin()
-	render.PopFilterMag()
+	--render.PopFilterMag()
 end
 
 function draw.DrawCircle(x, y, rad, seg, perc, reverse, matsize)
