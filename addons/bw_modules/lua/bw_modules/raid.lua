@@ -62,11 +62,6 @@ for k,v in pairs(err) do
 	err[k] = makeErr(v)
 end
 
-function PLAYER:RaidedCooldown()
-	local left = self:GetNWFloat("RaidCD", 0) - CurTime()
-	return left > 0, left
-end
-
 function raid.CanGenerallyRaid(ply, nonfac)
 	if bit.bxor(ply:GetFaction() and 1 or 0, nonfac and 1 or 0) == 0 then
 		return false, nonfac and err.CantHaveAFaction() or err.NeedAFaction()

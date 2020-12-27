@@ -35,6 +35,11 @@ function Raids.CallRaid(what, fac)
 	return pr
 end
 
+function PLAYER:RaidedCooldown()
+	local left = self:GetNWFloat("RaidCD", 0) - CurTime()
+	return left > 0, left
+end
+
 function PLAYER:IsRaider() --localplayer's raid only
 
 	if not raid.MyRaid then return false end

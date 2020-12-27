@@ -17,6 +17,7 @@ uniq.__seqs = uniq.__seqs or {} -- haha seks
 local seqs = uniq.__seqs
 
 function uniq.Seq(id)
+	id = id or ">tfw no id"
 	local ret = (seqs[id] and seqs[id] + 1) or 1
 	seqs[id] = ret
 	return ret

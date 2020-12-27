@@ -17,6 +17,7 @@
 	Cloud:ClearFormattedText()
 
 	Cloud:SetAbsPos(x, y)
+	Cloud:SetRelPos(x, y)
 
 	Cloud:FullInit()
 	Cloud:Popup(bool)
@@ -115,7 +116,7 @@ function Cloud:Init()
 	self.MinW = 0
 	self.MaxW = 192
 
-	self.MaxWidth = 0 --internal; the maximum registered width
+	self._MaxWidth = 0 --internal; the maximum registered width
 
 	self.Shadow = {}
 	self.DrawShadow = true
@@ -128,7 +129,7 @@ function Cloud:OnRemove()
 end
 
 function Cloud:GetCurWidth()
-	return math.min(math.max(self.MaxWidth, self.LabelWidth + 16, self.MinW), self.MaxW)
+	return math.min(math.max(self._MaxWidth, self.LabelWidth + 16, self.MinW), self.MaxW)
 end
 
 function Cloud:MoveAbove(pnl, px)
@@ -141,7 +142,19 @@ function Cloud:SetLabel(txt)
 	self.Label = tostring(txt)
 
 	surface.SetFont(self.Font)
-	self.LabelWidth = (surface.GetTextSize(self.Label))
+	local w = (surface.GetTextSize(self.Label))
+
+	if w > self.MaxW then -- uh oh time to wordwrap
+		local wrapped = string.WordWrap2(self.Label, self.MaxW)
+		local maxW = 0
+		for s, line in eachNewline(wrapped) do
+			maxW = math.max(maxW, (surface.GetTextSize(s)))
+		end
+
+		w = maxW
+	end
+
+	self.LabelWidth = w
 
 end
 
@@ -189,7 +202,7 @@ function Cloud:Paint()
 		if not self:IsValid() then return end
 	end
 
-	local cw = math.min(math.max(self.MaxWidth, self.LabelWidth + 16, self.MinW), self.MaxW)
+	local cw = math.min(math.max(self._MaxWidth, self.LabelWidth + 16, self.MinW), self.MaxW)
 
 	local lab = self.wwrapped[self.Label] or string.WordWrap2(self.Label, cw, self.Font)
 
@@ -349,7 +362,7 @@ end
 
 function Cloud:AddFormattedText(txt, col, font, overy, num, align) --if you're updating the text, for example, you can use "num" to position it where you want it
 
-	local wid = (self.MaxW or self.MaxWidth or self.MinW)
+	local wid = (self.MaxW or self._MaxWidth or self.MinW)
 	local nd = string.WordWrap2(txt, wid, font or self.Font)
 
 	local yo = 0
@@ -358,7 +371,7 @@ function Cloud:AddFormattedText(txt, col, font, overy, num, align) --if you're u
 	surface.SetFont(font or self.DescFont)
 
 	local wid, chary = surface.GetTextSize(nd)
-	self.MaxWidth = math.Clamp(wid + 16, math.max(self.MinW, self.MaxWidth), self.MaxW)
+	self._MaxWidth = math.Clamp(wid + 16, math.max(self.MinW, self._MaxWidth), self.MaxW)
 
 	--overy allows you to override the Y offset
 
@@ -420,7 +433,7 @@ end
 
 function Cloud:AddPanel(p, num)
 
-	self.MaxWidth = math.Clamp(p:GetWide() + 16, math.max(self.MinW, self.MaxWidth), self.MaxW)
+	self._MaxWidth = math.Clamp(p:GetWide() + 16, math.max(self.MinW, self._MaxWidth), self.MaxW)
 	p.IgnoreVisibility = true
 	self.DoneText[num or (#self.DoneText + 1)] = p
 end

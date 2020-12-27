@@ -202,14 +202,14 @@ local function WrapWord(word, curwid, fullwid, widtbl, line, first)
 	local wrapped = false --did word wrap?
 
 	if curwid + tw > fullwid - 8 then --have to wrap
-		local should_hyphenate = false -- ignore that, we'll go MS Word way  -> 							--tw > fullwid * 0.65 --very wide word; wrap by letters if true
+		local should_hyphenate = false
 						  		-- if both parts of the word would have three or more letters, we hyphenate
 
 		-- if this passes, the first 3 letters can remain on this line
 		if #word > 6 and (surface.GetTextSize(word:sub(1, 3))) < fullwid - curwid then
 			--if this passes, there are at least 3 letters on the next line
 			if (surface.GetTextSize(word:sub(1, #word - 3))) > fullwid - curwid then
-				should_hyphenate = true
+				should_hyphenate = true -- hyphenate, if at least 3 letters remain on the previous line and at least 3 letters can be carried over
 			end
 		end
 
@@ -287,9 +287,9 @@ function string.WordWrap2(txt, wid, font)
 			local r2, w2, _, didwrap = WrapWord(word, curwid, needwid)
 
 			if didwrap == 1 then
-				ret = ret:gsub("%s$", "")
+				ret = ret:gsub("%s*$", "") 	-- strip off spaces from the end if we wrapped the word
 			elseif not didwrap then
-				if r2:match("[\r\n]") then
+				if r2:match("[\r\n]") then	-- if we already had a newline there, just reset width and go onto a new line
 					w2 = 0
 				end
 			end
@@ -306,6 +306,12 @@ function string.WordWrap2(txt, wid, font)
 
 end
 
+local trim = function(s, ptrn) -- non-patternsafe trimming
+	return string.match( s, "^" .. ptrn .. "*(.-)" .. ptrn .. "*$" )
+end
+function string.CountWords(tx)
+	return select(2, trim(tx, "[%s%c%p]"):gsub("[%s%c%p]*[^%s%c%p]*[%s%c%p]*", "")) - 1
+end
 -- faster than string.Comma :)
 
 function string.Comma2( number )

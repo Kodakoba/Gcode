@@ -1,8 +1,11 @@
 __HookID = __HookID or 0
 
--- difference between this and hook.Add(event, object) is that
+-- difference between hook.Object and hook.Add(event, object) is that
 -- you are guaranteed a unique hook which won't overwrite other hooks
 -- with the same object and name (or get overwritten)
+
+-- oh and also, the first arg to the callback is not the object you used for the ID
+-- so if you used a player as the ID, it won't be provided as the first arg to the callback like with hook.Add
 
 function hook.Object(hookname, hookobj, cb)
 	local id = "hookObject" .. __HookID
@@ -13,6 +16,20 @@ function hook.Object(hookname, hookobj, cb)
 	end)
 
 	return id
+end
+
+-- only runs for the designated object once, then removes itself
+-- useful for one-call on specific objects, e.g. Move on only 1 player
+
+function hook.ObjectOnce(hookname, hookobj, num, cb)
+	local id
+	local func = function(...)
+		if select(num, ...) ~= hookobj then return end
+		hook.Remove(hookname, id)
+		cb(...)
+	end
+
+	id = hook.Object(hookname, hookobj, func)
 end
 
 function hook.Once(hookname, hookid, cb)

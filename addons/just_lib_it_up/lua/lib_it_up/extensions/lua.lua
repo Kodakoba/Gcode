@@ -21,3 +21,16 @@ function Carry(...)
 		return unpack(args)
 	end
 end
+
+function RotateArgs(...)
+	local args = {...}
+	local len = select('#', ...)
+
+	for i=1, len / 2 do
+		local temp = args[i]
+		args[i] = args[len - i + 1]
+		args[len - i + 1] = temp
+	end
+
+	return unpack(args, 1, len)
+end

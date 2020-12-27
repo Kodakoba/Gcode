@@ -164,11 +164,51 @@ function raidmeta:Stop()
 
 end
 
+function PLAYER:PutOnRaidedCooldown(sec)
+	raid.Cooldowns[self:SteamID64()] = CurTime() + (RaidCoolDown or sec)
+	self:SetNWFloat("RaidCD", CurTime() + (RaidCoolDown or sec))
+end
+
+function PLAYER:PutOffRaidedCooldown(sec)
+	raid.Cooldowns[self:SteamID64()] = nil
+	self:SetNWFloat("RaidCD", 0)
+end
+
+hook.Add("PlayerInitialSpawn", "BeginCooldown", function(ply)
+	print("InitSpawn called")
+	local onCD, left = ply:RaidedCooldown()
+	if onCD then -- since it uses sid64, we can safely use this
+		print("was on cd, putting back")
+		ply:SetNWFloat("RaidCD", CurTime() + left)
+	else
+		-- put them on CD until they fully load in
+		local putOff = false
+		print("was not on cd, putting on initial")
+		hook.ObjectOnce("PlayerFullyLoaded", ply, 1, function(...)
+			print("fully loaded", ...)
+			if not putOff then
+				ply:PutOffRaidedCooldown()
+				putOff = true
+			end
+		end)
+
+		ply:PutOnRaidedCooldown(120)	--i give you 120 seconds to load in bud
+
+		ply:Timer("JoinRaidProtection", 120, function()
+			print("timer ran out")
+			if not putOff then
+				ply:PutOffRaidedCooldown()
+				putOff = true
+			end
+		end)
+	end
+end)
+
 function PLAYER:RaidedCooldown()
 	local oncd = false
-	if raid.Cooldowns[self:SteamID64()] and CurTime() - raid.Cooldowns[self:SteamID64()] < RaidCoolDown then oncd = true end
+	if raid.Cooldowns[self:SteamID64()] and CurTime() - raid.Cooldowns[self:SteamID64()] > 0 then oncd = true end
 
-	return oncd
+	return oncd, oncd and CurTime() - raid.Cooldowns[self:SteamID64()]
 end
 
 function PLAYER:GetRaid()

@@ -195,7 +195,16 @@ local function createFactionlessOption(pnl, scr, num, ply)
 		self:SetColor(can and Colors.Raid or Colors.Button)
 	end
 
-	local errPnl = vgui.Create("InvisPanel", p)
+	local errPnl = vgui.Create("Cloud", p)
+	errPnl.AlignLabel = 1
+	errPnl.YAlign = 1
+	errPnl.MaxW = 192
+	errPnl.Middle = 1
+
+	errPnl:SetTextColor(200, 60, 60)
+	errPnl:SetRelPos(raid.X + 8, raid.Y + raid:GetTall() / 2)
+	errPnl.ToX = -16
+
 	--errPnl:
 	raid.A = 1
 	local col = color_white:Copy()
@@ -222,6 +231,9 @@ local function createFactionlessOption(pnl, scr, num, ply)
 			self:To("A", 1, 0.3, 0, 0.3)
 
 			print("Raid call failed", why)
+			errPnl:SetText(why)
+			errPnl:Popup(true)
+			errPnl:Timer("raidErr", why:CountWords() * 0.3, errPnl.Popup, false)
 		end)
 	end
 
