@@ -1,23 +1,85 @@
 
---[[
-	this lowkey sucks and i probably won't use it ever again :v
-]]
+ValidIterable = ValidIterable or Object:callable()
+
+local function validIterator(self)
+	local k
+	local iter
+
+	iter = function()
+		local key, val = next(self, k)
+		k = key
+		if val ~= nil then
+			if val:IsValid() then
+				return k, val
+			else
+				return iter()
+			end
+		end
+	end
+
+	return iter
+end
+
+ValidIterable._iter = pairs
+
+ValidSeqIterable = ValidSeqIterable or Object:callable()
 
 
-ValidIterable = {}
-ValidSeqIterable = {}
+local function validSeqIterator(self)
+	local i = 0
+	local ret_i = 0 -- how many times it actually returned things
 
-IterObj = {}
-IIterObj = {}
+	local iter
 
-IterMeta = {}
-IIterMeta = {}
+	iter = function()
+		i = i + 1
+		local val = self[i]
+		if val ~= nil then
+			if val:IsValid() then
+				ret_i = ret_i + 1
+				if ret_i ~= i then
+					self[ret_i] = val
+					self[i] = nil
+				end
+				return ret_i, val
+			else
+				return iter()
+			end
+		end
+	end
 
-IterObj.__index = IterMeta
-IIterObj.__index = IIterMeta
+	return iter
+end
 
-setmetatable(IterObj, IterMeta)
-setmetatable(IIterObj, IIterMeta)
+ValidSeqIterable._iter = validSeqIterator
+
+function ValidIterable:iter()
+	self:clean()
+	return self:_iter()
+end
+
+function ValidSeqIterable:iter()
+	return self:_iter()
+end
+
+function ValidIterable:len()
+	local len = 0
+	for k,v in self:_iter() do
+		if not v:IsValid() then self[k] = nil end
+		len = len + 1
+	end
+
+	return len
+end
+
+function ValidSeqIterable:len()
+	local len = 0
+	for _,_ in self:_iter() do
+		len = len + 1
+	end
+
+	return len
+end
 
 --[[
 	Valid Iterable
@@ -27,44 +89,36 @@ setmetatable(IIterObj, IIterMeta)
 		- Able to go sequential (loses keys, obviously)
 ]]
 
-local function IndexValid(self, k)
-	local rg = rawget(self, k)
 
-	if not IsValid(rg) then self[k] = nil return nil end
-	return rg
-end
+function ValidIterable:clean()
 
-function IterMeta:pairs()
-	return pairs(self)
-end
-
-function IterMeta:clean()
-
-	for k,v in pairs(self) do
-		if not IsValid(v) then
+	for k, obj in self:_iter() do
+		if not obj:IsValid() then
 			self[k] = nil
 		end
 	end
 
 end
 
-function IterMeta:tosequential()
+function ValidIterable:MakeSequential()
 	local t = {}
-	setmetatable(t, IIterObj)
 
 	local i = 0
 
 	self:clean()
 
-	for k, v in pairs(self) do
+	for k, v in self:_iter() do
 		i = i + 1
 		t[i] = v
+		self[k] = nil
 	end
 
-end
+	for i2=1, i do
+		self[i2] = t[i2]
+	end
 
-IterObj.__newindex = NewIndex
-IterObj.__index = IndexValid
+	setmetatable(t, ValidSeqIterable)
+end
 
 function ValidIterable:new(t, mode)
 	local tbl = t or {}
@@ -81,104 +135,74 @@ ValidIterable.__call = ValidIterable.new
 
 --[[
 	Sequential Valid Iterable
-
 		- Same as Valid Iterable, but sequential.
 ]]
 
-function IIterMeta:pairs()
-	return ipairs(self)
-end
 
-IIterMeta.ipairs = IIterMeta.pairs
+function ValidSeqIterable:clean()
 
-function IIterMeta:clean()
-
-	for i=0, #self-1 do
-		local key, ent = next(self, i)
-
-		if not IsValid(ent) and ent then
-			self[key] = nil
-		end
-	end
-
-	self:sequential()
-end
-
-function IIterMeta:sequential()
-	local len = table.maxn(self)
-	local shift = 0
+	local cur = 1
+	local len = #self
 
 	for i=1, len do
-
 		local v = self[i]
+		if v:IsValid() then
+			self[cur] = v
+			cur = cur + 1
+		end
+	end
 
-		if v == nil then
+	for i=cur, len do
+		self[i] = nil
+	end
 
-			while shift < len and self[i + shift] == nil do
-			 	shift = shift + 1
+end
+
+
+-- can remove by key or by value; keeps the table sequential
+-- 	if `what` is a number, will return the object corresponding to that key
+-- 	if `what` is a valid object, will return the key where that object was stored
+
+function ValidSeqIterable:remove(what)
+	if isnumber(what) then -- remove as a key
+		return table.remove(self, what)
+	else -- remove as a value
+		for k,v in ipairs(self) do -- don't bother with :iter(), they might wanna remove an invalid ent
+			if v == what then
+				table.remove(self, k)
+				return k
 			end
-
-			self[i] = self[i+shift]
-			self[i+shift] = nil
 		end
 	end
 end
 
-function IIterMeta:add(v)
-	self:clean()
+
+function ValidSeqIterable:add(v)
+	if not v.IsValid or not v:IsValid() then return self, false end --tf you tryina do
+
+	local key = #self + 1
+	rawset(self, key, v)
+
+	return self, key
+end
+
+function ValidSeqIterable:addExclusive(v)
+	if not v.IsValid or not v:IsValid() then return self, false end
+
 	local key = #self + 1
 
-	self[key] = v
-
-	return key
-end
-
-IIterMeta.__newindex = NewIndex
-IIterMeta.__index = IndexValid
-
-function ValidSeqIterable:new(t)
-	local tbl = t or {}
-
-	setmetatable(tbl, IIterObj)
-
-	return tbl
-end
-
-ValidSeqIterable.__call = ValidSeqIterable.new
-
-
-local seqMeta = {}
-
-SeqIterable = {}
-SeqIterable.__index = seqMeta
-
-function seqMeta:filter(func)
-
-	for i=0, #self-1 do
-		local key, val = next(self, i)
-
-		if val and func(key, val) == false then
-			table.remove(self, key)
-		end
+	for i=1, key-1 do
+		if self[i] == v then return false end -- already exists
 	end
 
+	rawset(self, key, v)
+
+	return self, key
 end
 
-function seqMeta:add(v)
-
-	local key = #self + 1
-
-	self[key] = v
-
-	return key
+local function ValidSeqInsert(self, k, v)
+	if not v:IsValid() then return end
+	self:add(v)
 end
 
-function SeqIterable:__call()
-	local t = {}
-	return setmetatable(t, self)
-end
-
-
-setmetatable(SeqIterable, SeqIterable)
-
-setmetatable(ValidSeqIterable, ValidSeqIterable)
+ValidSeqIterable.__newindex = ValidSeqInsert

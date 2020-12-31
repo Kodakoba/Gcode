@@ -129,19 +129,21 @@ hook.Add("FinishMove", "EntitySubscriptions", function(pl, mv)
 end)
 
 
-if CLIENT then
+-- fullupdates
+hook.Add("EntityRemoved", "EntityActuallyRemoved", function(ent)
+	local t = ent:GetTable()
 
-	hook.Add("EntityRemoved", "EntityActuallyRemoved", function(ent)
-		local t = ent:GetTable()
-
+	if CLIENT then
 		timer.Simple(0, function()
 			if not ent:IsValid() then
 				hook.Run("EntityActuallyRemoved", ent, t)
 			end
 		end)
-	end)
+	else
+		hook.Run("EntityActuallyRemoved", ent, t)
+	end
+end)
 
-end
 
 include("entity_dt.lua")
 AddCSLuaFile("entity_dt.lua")
