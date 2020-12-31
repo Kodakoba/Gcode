@@ -354,24 +354,26 @@ function string.TimeParse(time) --this is broken i think
 
 	local h = math.floor(time / 3600)
 	local m = math.floor(time/60) - h*60
-	local s = time - h*3600 - m*60
+	local s = math.floor(time - h*3600 - m*60)
 
 	return string.format("%.2d:%.2d:%.2d", h, m, s)
 
 end
 
-function string.YeetNewlines(str, also_spaces)
-	str = str:gsub("\n", " ")
-	str = str:gsub("\r", "")
-	str = str:gsub("\t", " ")
+function string.IsSteamID(what)
+	local univ, idnum, accnum = what:match("STEAM_(%d):(%d):(%d+)")
+	univ = tonumber(univ)
+	idnum = tonumber(idnum)
+	accnum = tonumber(accnum)
 
-	if also_spaces then
-		str = str:gsub("  ", " ")
-		str = str:gsub("  ", " ")
-		str = str:gsub("  ", " ")
-	end
-	return str
+	univ = univ and univ <= 5
+	idnum = idnum and idnum <= 1
+	accnum = accnum and accnum <= (2^31 + 1)
+
+	return univ and idnum and accnum
 end
+
+-- there's no reliable way to get if a string is a steamid64 or a steamid3 :(
 
 getmetatable("").__mod = function(self, what) --hot
 	return string.format(self, what)
