@@ -112,7 +112,8 @@ local function createFactionlessOption(pnl, scr, num, ply)
 	local nm = ply:Nick()
 	local lastnm = ply:Nick()
 
-	p.Money = ply:GetMoney()
+	p.Money = 0 -- ply:GetMoney()
+	p.Level = 0 -- ply:GetLevel()
 
 	function p:Disappear()
 		if self.Disappearing then return end
@@ -126,6 +127,8 @@ local function createFactionlessOption(pnl, scr, num, ply)
 		if ply:IsValid() then
 			nm = ply:Nick()
 			self:To("Money", ply:GetMoney(), 0.6, 0, 0.2)
+			-- it doesn't really make sense to lerp levels, but might as well, right?
+			self:To("Level", ply:GetLevel(), 0.6, 0, 0.2)
 			if ply:Team() ~= Factions.FactionlessTeamID then
 				self:Disappear()
 			end
@@ -134,15 +137,23 @@ local function createFactionlessOption(pnl, scr, num, ply)
 		end
 	end
 
+	local lvCol = (ply:GetLevel() > 75 and Colors.LighterGray or Colors.DarkerRed):Copy()
+
 	p:On("Paint", "DrawName", function(self, w, h)
 		local tW, tH = draw.SimpleText(nm, BaseWars.Menu.Fonts.MediumSmall, av.X + av:GetWide() + 6, av.Y, color_white, 0, 5)
 
 		if ply == LocalPlayer() then
 			draw.SimpleText("  (" .. Language.You:lower() .. "!)", BaseWars.Menu.Fonts.Small, av.X + av:GetWide() + 6 + tW, av.Y + tH * 0.875, Colors.LighterGray, 0, 4)
+			return
 		end
 
 
-		draw.SimpleText(Language("Price", self.Money), BaseWars.Menu.Fonts.Small, av.X + av:GetWide() + 6, av.Y + tH * 0.75 + 2, Colors.LighterGray, 0, 5)
+		local _, moneyH = draw.SimpleText(Language("Price", self.Money), BaseWars.Menu.Fonts.Small, av.X + av:GetWide() + 6,
+			av.Y + tH * 0.75 + 2, Colors.LighterGray, 0, 5)
+
+		self:LerpColor(lvCol, self.Level > 75 and Colors.LighterGray or Colors.DarkerRed, 0.3, 0, 0.3)
+		draw.SimpleText(Language("Level", self.Level), BaseWars.Menu.Fonts.Small, av.X + av:GetWide() + 6,
+			av.Y + tH * 0.75 + 2 + moneyH * 0.875, lvCol, 0, 5)
 	end)
 
 	function p:Shuffle(newID, now)
@@ -198,8 +209,9 @@ local function createFactionlessOption(pnl, scr, num, ply)
 	local errPnl = vgui.Create("Cloud", p)
 	errPnl.AlignLabel = 1
 	errPnl.YAlign = 1
-	errPnl.MaxW = 192
+	errPnl.MaxW = 256
 	errPnl.Middle = 1
+	errPnl.Font = "OS20"
 
 	errPnl:SetTextColor(200, 60, 60)
 	errPnl:SetRelPos(raid.X + 8, raid.Y + raid:GetTall() / 2)
@@ -222,18 +234,31 @@ local function createFactionlessOption(pnl, scr, num, ply)
 
 	function raid:DoClick()
 		local pr = Raids.CallRaid(ply, false)
-		self:To("A", 0, 0.3, 0, 0.3)
+		self:To("A", 0, 0.1, 0, 0.3)
 		pr:Then(function()
-			print("Raid call succeeded")
-			self:To("A", 1, 0.3, 0, 0.3)
+			self:To("A", 1, 0.1, 0, 0.3)
 		end, function()
 			local why = net.ReadString()
-			self:To("A", 1, 0.3, 0, 0.3)
+			self:To("A", 1, 0.1, 0, 0.3)
 
-			print("Raid call failed", why)
 			errPnl:SetText(why)
 			errPnl:Popup(true)
-			errPnl:Timer("raidErr", why:CountWords() * 0.3, errPnl.Popup, false)
+			errPnl:SetRelPos(raid.X + 8, raid.Y + raid:GetTall() / 2)
+
+			errPnl.ToX = -16
+			errPnl.ToY = 0
+
+			local time = why:CountWords() * 0.3
+			if time > 1 then
+				time = time ^ 0.6
+			end
+
+			errPnl:Timer("raidErr", time, function()
+				errPnl:Popup(false)
+				errPnl:SetRelPos(raid.X + 8 - 16, raid.Y + raid:GetTall() / 2 + 16)
+				errPnl.ToX = 0
+				errPnl.ToY = -16
+			end)
 		end)
 	end
 

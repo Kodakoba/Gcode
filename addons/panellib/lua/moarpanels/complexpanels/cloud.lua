@@ -197,7 +197,9 @@ function Cloud:Paint()
 	if self:GetAlpha() <= 1 then return end
 
 	if self.LastThink ~= FrameNumber() then
+		-- dumb issue where a hidden panel can paint but not think
 		self:Think()
+		if not self:IsValid() then return end -- could've been removed in those thinks
 		self:AnimationThinkInternal()
 		if not self:IsValid() then return end
 	end

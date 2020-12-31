@@ -95,7 +95,7 @@ function raidmeta:Initialize(rder, rded, fac)
 
 	self.Faction = fac
 
-	local id = uniq.Seq("raid")
+	local id = uniq.Seq("raid", 16)
 
 	raid.OngoingRaids[id] = self
 	self.ID = id
@@ -175,10 +175,9 @@ function PLAYER:PutOffRaidedCooldown(sec)
 end
 
 hook.Add("PlayerInitialSpawn", "BeginCooldown", function(ply)
-	print("InitSpawn called")
+
 	local onCD, left = ply:RaidedCooldown()
 	if onCD then -- since it uses sid64, we can safely use this
-		print("was on cd, putting back")
 		ply:SetNWFloat("RaidCD", CurTime() + left)
 	else
 		-- put them on CD until they fully load in
@@ -260,15 +259,26 @@ function raid.Stop(obj) -- obj = player, sid64 or faction
 end
 
 local cdf = "Target is on cooldown!\n(%ds. remaining)"
+
+
 function raid.Start(rder, rded, fac)
 	local oncd, rem = rded:RaidedCooldown()
 	if oncd then print('on cd') return false, cdf:format(rem) end
 
-	if raid.IsParticipant(rder) then return false, "You are in a raid already!" end--print("Stopped on start: rder") raid.Stop(part[rder]) end
-	if raid.IsParticipant(rded) then return false, "Target is in a raid already!" end--print("Stopped on start: rded") raid.Stop(part[rded]) end
+	if raid.IsParticipant(rder) then
+		return false, raid.PickRaidedError(rder, rded)
+	end
 
-	if not rder:IsRaidable() then return false, "You are not raidable!" end
-	if not rded:IsRaidable() then return false, "Target is not raidable!" end
+	if raid.IsParticipant(rder) then
+		return false, raid.Errors.YouAreRaiding
+	end
+
+	local rderCan, rderWhy = rder:IsRaidable()
+	if not rderCan then return false, raid.Errors.YouAreUnraidable(rderWhy) end
+
+	local rdedCan, rdedWhy = rded:IsRaidable()
+	if not rdedCan then return false, raid.Errors.TargetUnraidable(rdedWhy) end
+
 
 	if fac then
 		local rtbl = raidmeta:new(rder, rded, fac)
@@ -328,24 +338,17 @@ hook.Add("PlayerDisconnected", "RaidLog", function(ply) --aiaiai
 end)
 
 function PLAYER:IsRaidable()
-	local sid = self:SteamID64()
+	local can, err = hook.Run("IsPlayerRaidable", self)
+	if can == false then return can, err end
 
-	if not BWOwners[self] then return false end -- no entities
-	if self:GetLevel() < 75 then return false end
+	-- todo: move this V to a hook
+	if self:GetLevel() < 75 then return false, raid.Errors.LowLevelPlayer end
 
-	BWOwners[self]:clean()
-
-	for k,v in ipairs(BWOwners[self]) do
-
-		local class = (isentity(v) and v:GetClass()) or v
-
-		local e = scripted_ents.GetStored(class)
-		if not e then print('didnt find', v, "; raids sv") continue end --??
-
-		if e.t.IsValidRaidable then return true end
+	for _, ent in ipairs(BaseWars.Ents.GetOwnedBy(self)) do
+		if ent.IsValidRaidable then return true end
 	end
 
-	return false
+	return false, raid.Errors.NoRaidablesPlayer
 end
 
 function raid.WasInRaid(sid)
