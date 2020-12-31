@@ -13,79 +13,6 @@ ENT.IsBaseWars = true
 ENT.ConnectPoint = Vector()
 local pow = ENT.Power
 
-BWEnts = BWEnts or {}
-
-BWOwners = BWOwners or {}
-
-local function getEntry(ply)
-	local t = BWOwners[ply]
-	if t then
-		t:clean()
-		t:sequential()
-		return t
-	else
-		t = ValidSeqIterable()
-		BWOwners[ply] = t
-		return t
-	end
-end
-
-hook.Add("PlayerAuthed", "RefreshOwner", function(ply, sid, uid)
-
-	local sid64 = util.SteamIDTo64(sid) --ply:SteamID64()
-
-	local t = getEntry(sid64)
-
-	for k,v in ipairs(t) do
-		local _, entsid = v:CPPIGetOwner()
-
-		if entsid == sid then
-			v.CPPIOwner = ply
-		else
-			t[k] = nil
-		end
-	end
-
-	BWOwners[ply] = t
-
-end)
-
-hook.Add("PlayerDisconnected", "SaveOwners", function(ply)
-	local sid64 = ply:SteamID64()
-
-	if BWOwners[ply] then
-		BWOwners[sid64] = BWOwners[ply]
-		for k,v in BWOwners[ply]:pairs() do
-			v.BWOwner = sid64
-		end
-	end
-
-	BWOwners[ply] = nil
-end)
-
-hook.Add("CPPIAssignOwnership", "BWRecalculateOwner", function(ply, ent)
-	if not IsValid(ply) then return end
-	if not BWEnts[ent] or not ent.CPPIOwner then return end 	--not a bw ent or owner not assigned yet
-
-	local prev = ent:CPPIGetOwner()
-
-	if IsPlayer(prev) then
-		BWOwners[prev]:sequential()
-		for k,v in ipairs(BWOwners[prev]) do
-			if v==ent then
-				BWOwners[prev][k] = nil
-			end
-		end
-	end
-
-	if IsPlayer(ply) then
-		local t = getEntry(ply)
-		t:add(ent)
-	end
-
-	ent.CPPIOwner = ply
-end)
-
 function ENT:Init()
 
 end
@@ -177,8 +104,8 @@ end
 if SERVER then
 
 	function ENT:Initialize()
-		BWEnts[self] = {}
-		local me = BWEnts[self]
+		BWEnts.Tables[self] = BWEnts.Tables[self] or {}
+		local me = BWEnts.Tables[self]
 		me.ConnectDistanceSqr = self.ConnectDistance ^ 2
 
 		self:SetModel(self.Model)
@@ -206,25 +133,22 @@ if SERVER then
 		end)
 
 		timer.Simple(0, function()
-			if IsValid(self) then
-				self.CPPIOwner = self:CPPIGetOwner()
-				self.BWOwner = self.CPPIOwner
-				if not self.CPPIOwner then return end
 
-				BWOwners[self.CPPIOwner] = BWOwners[self.CPPIOwner] or ValidSeqIterable()
-				local t = BWOwners[self.CPPIOwner]
-				t[#t+1] = self
+			if self:IsValid() then
+				local ply, sid64 = self:CPPIGetOwner()
+				if not IsPlayer(ply) then return end
 
 				if self.IsElectronic then
 					local pole = PowerGrid.FindNearestPole(self)
+
 					if pole then
 						pole.Grid:AddConsumer(self, pole)
 					else
-						PowerGrid:new((self:CPPIGetOwner())):AddConsumer(self)
+						PowerGrid:new(ply):AddConsumer(self)
 					end
-
 				end
 			end
+
 		end)
 
 	end
@@ -328,7 +252,10 @@ else
 	end
 
 	function ENT:Initialize()
-		BWEnts[self] = {}
+		BWEnts.Tables[self] = BWEnts.Tables[self] or {}
+			local me = BWEnts.Tables[self]
+			me.ConnectDistanceSqr = self.ConnectDistance ^ 2
+
 		self:OnChangeGridID(self:GetGridID())
 		self:CLInit()
 		self:SHInit()

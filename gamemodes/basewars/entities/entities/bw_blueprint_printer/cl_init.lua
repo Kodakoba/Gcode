@@ -51,8 +51,6 @@ end)
 
 function ENT:CLInit()
 
-	local me = BWEnts[self]
-
 end
 
 local onRow = 2

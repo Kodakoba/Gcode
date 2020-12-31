@@ -4,7 +4,7 @@ include("shared.lua")
 
 function ENT:Init()
 
-    local me = BWEnts[self]
+    local me = BWEnts.Tables[self]
 
     me.Power = 0
     me.MaxPower = self.PowerCapacity
@@ -126,7 +126,7 @@ end
 
 function ENT:NetworkVars()
 
-    local me = BWEnts[self]
+    local me = BWEnts.Tables[self]
     local t = self:GetTable()
 
     t.SetNWMoney(self, t.Money)

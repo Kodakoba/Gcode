@@ -71,7 +71,7 @@ function ENT:Think()
 end
 
 function ENT:CheckCableDistance(bwe)
-	bwe = bwe or BWEnts[self]
+	bwe = bwe or BWEnts.Tables[self]
 
 
 	if bwe.CheckDist then
@@ -82,7 +82,7 @@ function ENT:CheckCableDistance(bwe)
 		local pos = self:GetPos()
 		local pos2 = line:GetPos()
 
-		if pos:DistToSqr(pos2) > math.min(bwe.ConnectDistanceSqr, BWEnts[line].ConnectDistanceSqr) then
+		if pos:DistToSqr(pos2) > math.min(bwe.ConnectDistanceSqr, BWEnts.Tables[line].ConnectDistanceSqr) then
 			self:Disconnect()
 		else
 			bwe.CheckDist = nil
@@ -93,7 +93,7 @@ function ENT:CheckCableDistance(bwe)
 end
 
 function ENT:PhysicsUpdate()
-	BWEnts[self].CheckDist = true
+	BWEnts.Tables[self].CheckDist = true
 end
 
 function ENT:OnConnectToLine(line)

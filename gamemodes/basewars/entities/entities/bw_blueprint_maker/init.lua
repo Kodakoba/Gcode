@@ -16,7 +16,7 @@ function ENT:SendInfo(ply)
 end
 
 function ENT:Think()
-	local me = BWEnts[self]
+
 end
 
 function ENT:Use(ply)

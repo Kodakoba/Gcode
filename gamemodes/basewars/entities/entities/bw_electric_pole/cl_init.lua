@@ -7,7 +7,7 @@ PowerPoles = PowerPoles or {}
 local poles = PowerPoles
 
 function ENT:OnConnectionChange(id, old, new)
-	local me = BWEnts[self]
+	local me = BWEnts.Tables[self]
 
 	if not IsValid(new) then
 		new = nil
@@ -377,7 +377,7 @@ function ENT:OpenShit(qm, self, pnl)
 
 	local x, y = pnl:GetCenter()
 
-	local me = BWEnts[self]
+	local me = BWEnts.Tables[self]
 	local ent = self
 
 	--pnl.CircleX = x
@@ -474,7 +474,7 @@ function ENT:CLInit()
 
 	poles[#poles + 1] = self
 
-	local me = BWEnts[self]
+	local me = BWEnts.Tables[self]
 	me.ThrowLightning = {}
 	me.Cables = {}
 
@@ -572,17 +572,17 @@ hook.Add("PostDrawTranslucentRenderables", "DrawPoleCables", function(d, sb)
 
 				pos = pole:LocalToWorld(chosen)
 				genpos = ent:LocalToWorld(chosen)
-				me = BWEnts[ent]
+				me = BWEnts.Tables[ent]
 			else
 				pos = pole:LocalToWorld(pole.ConnectPoint)
 				genpos = ent:GetPos()
 			end
 
-			local me = BWEnts[pole]
+			local me = BWEnts.Tables[pole]
 			me.Cables = me.Cables or {}
 			--if not me.ThrowLightning then print("nope") continue end
 
-			local them = BWEnts[ent]
+			local them = BWEnts.Tables[ent]
 			local cab = me.Cables[ent]
 
 			local qual = (ent.PowerType == "Line" and 35) or 15

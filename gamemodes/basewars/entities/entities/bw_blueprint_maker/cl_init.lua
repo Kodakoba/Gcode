@@ -7,8 +7,6 @@ local green = Color(80, 200, 80)
 
 function ENT:CLInit()
 
-	local me = BWEnts[self]
-
 end
 
 local col = Color(70, 70, 70, 120)

@@ -42,7 +42,7 @@ end
 if SERVER then
 
 	function ENT:CheckCableDistance(bwe)
-		bwe = bwe or BWEnts[self]
+		bwe = bwe or BWEnts.Tables[self]
 		if bwe.CheckDist and IsValid(self:GetLine()) then
 			local pos = self:GetPos()
 
@@ -59,7 +59,7 @@ if SERVER then
 
 	function ENT:Think()
 		local me = self:GetTable()
-		local bwe = BWEnts[self]
+		local bwe = BWEnts.Tables[self]
 
 		self:CheckCableDistance(bwe)
 
@@ -115,7 +115,7 @@ if SERVER then
 	end
 
 	function ENT:PhysicsUpdate(...)
-		local me = BWEnts[self]
+		local me = BWEnts.Tables[self]
 		me.CheckDist = true
 
 		self:OnPhysicsUpdate(...)
