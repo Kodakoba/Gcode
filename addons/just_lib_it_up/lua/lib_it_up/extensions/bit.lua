@@ -1,3 +1,7 @@
+function tobit(what)
+	return what and 1 or 0
+end
+
 function bit.GetLast(num, n)
 	return num % (2^n)
 end
@@ -21,4 +25,12 @@ local select = select
 function bit.Has(num, ...)
 	local bor = bit.bor(...)
 	return bit.band(num, bor) == bor
+end
+
+-- returns a number with `num` LS bits as 1's
+-- because i get autism every time i try to remember the algo lol
+
+-- eg: bit.Fill(8) -> 0xFF
+function bit.Fill(num)
+	return (bit.lshift(1, num) - 1)
 end
