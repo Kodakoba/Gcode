@@ -244,8 +244,8 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 				cl.MaxW = 450
 				cl.AlignLabel = 1
 				cl:AddSeparator(nil, 8)
-				cl:AddFormattedText(Language.Currency .. BaseWars.NumberFormat(price), moneytxCol, "OSB20", 18, nil, 1)
-				cl:AddFormattedText(Language.Level .. " " .. lv, leveltxCol, "OSB20", nil, nil, 1)
+				cl:AddFormattedText(Language("Price", price), moneytxCol, "OSB20", 18, nil, 1)
+				cl:AddFormattedText(Language("Level", lv), leveltxCol, "OSB20", nil, nil, 1)
 				cl:SetRelPos(self:GetWide() / 2)
 				cl.ToY = -8
 

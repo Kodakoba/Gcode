@@ -223,7 +223,7 @@ function BaseWars.UTIL.PayOut(ent, attacker, full, ret)
 
 	local Name = ent.PrintName or ent:GetClass()
 
-	if ent.IsPrinter then Name = Language.Level .. " " .. ent:GetLevel() .. " " .. Name end
+	if ent.IsPrinter then Name = Language("Level", ent:GetLevel()) .. " " .. Name end
 
 	if attacker == Owner then
 

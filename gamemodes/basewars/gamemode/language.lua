@@ -44,7 +44,13 @@ Language.PayOut 		= "You got " .. Language.Currency .. "%s for destroying a %s!"
 
 Language.You 			= "You"
 
-Language.Level 			= "Level"
+Language.Level 			= function(str)
+	if str then
+		return ("Level %d"):format(str)
+	else
+		return "Level"
+	end
+end
 
 Language.WelcomeBackCrash = "Welcome back!"
 Language.Refunded		= "You were refunded %s after a crash."
