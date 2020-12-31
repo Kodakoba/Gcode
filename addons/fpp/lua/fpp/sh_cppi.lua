@@ -44,8 +44,8 @@ if SERVER then
 
 		assert(ply == nil or IsEntity(ply), "The owner of an entity must be set to either nil, NULL or a valid entity.")
 
-		local valid = IsValid(ply) and ply:IsPlayer()
-		local steamId = valid and ply:SteamID64() or nil
+		local valid = IsValid(ply) and ply:IsPlayer()				-- Why the fuck is this a thing, falco?
+		local steamId = valid and ply:SteamID64() or nil							-- V
 		local canSetOwner = hook.Run("CPPIAssignOwnership", ply, self, valid and ply:SteamID64() or ply)
 
 		if canSetOwner == false then return false end

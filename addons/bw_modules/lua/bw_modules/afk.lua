@@ -1,7 +1,7 @@
 local PLAYER = debug.getregistry().Player
 BaseWars.AFK = {}
 
-local MODULE = BaseWars.AFK 
+local MODULE = BaseWars.AFK
 
 if SERVER then
 
@@ -26,15 +26,15 @@ if SERVER then
 
 	end
 
-	if SERVER then 
-    
-	    util.AddNetworkString("AFKFocus")
+	if SERVER then
 
-	    net.Receive("AFKFocus", function(len, ply)
-	        local focus = net.ReadBool()
-	        if focus==nil then return end
-	        ply:SetNW2Bool("AFKFocused", focus)
-	    end)
+		util.AddNetworkString("AFKFocus")
+
+		net.Receive("AFKFocus", function(len, ply)
+			local focus = net.ReadBool()
+			if focus==nil then return end
+			ply:SetNW2Bool("AFKFocused", focus)
+		end)
 	end
 
 end
@@ -45,17 +45,17 @@ local lastClear = CurTime()
 function MODULE.ClearAFK(ply)
 
 	if CLIENT and ply and ply ~= LocalPlayer() then return end
-    if CLIENT and CurTime() - lastClear < 2 then return end
+	if CLIENT and CurTime() - lastClear < 2 then return end
 	if CLIENT then
 
 		net.Start("AFK")
 			net.WriteUInt(0, 2)
 		net.SendToServer()
-        lastClear = CurTime()
+		lastClear = CurTime()
 		return
 
 	end
-    
+
 	ply:SetNW2Int("AFK", CurTime())
 	ply:SetNW2Bool("AFKFocused", true)
 
@@ -126,25 +126,25 @@ local time = 0
 function MODULE.Paint()
 
 	local ply = LocalPlayer()
-	
 
-	if not ply:IsAFK() then 
 
-		if back==0 and gone~=0 then 
-			back = CurTime() 
+	if not ply:IsAFK() then
+
+		if back==0 and gone~=0 then
+			back = CurTime()
 			gone = 0
-		end 
+		end
 
-		if CurTime() - back < 1.5 then 
+		if CurTime() - back < 1.5 then
 			LC(col, green)
 		elseif ta > 1 then
 
 			ta = L(ta, 0, 20)
 
-			if ta<=1 then 
-				back = 0 
+			if ta<=1 then
+				back = 0
 				col:Set(trans)
-			end 
+			end
 		end
 
 	else
@@ -157,9 +157,9 @@ function MODULE.Paint()
 
 	local AFKTime = string.TimeParse(time)
 	local str = "You have been AFK for"
-	
+
 	shade.a = ta
-	col.a = ta 
+	col.a = ta
 
 	draw.SimpleText(str, "AFKTimeBlur", ScrW()/2+1, ScrH()/4+1, shade, 1, 1)
 	draw.SimpleText(str, "AFKTime", ScrW()/2, ScrH()/4, col, 1, 1)
