@@ -14,6 +14,9 @@ function IncludeBasewarsModules()
 	end
 
 	local function moduleLoaded(p)
+		if p:match("_ext$") or p:match("_ext_") then
+			return false, false
+		end
 		MODULE = {}
 	end
 
