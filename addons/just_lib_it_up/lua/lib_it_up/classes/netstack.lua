@@ -1,5 +1,5 @@
 
-netstack = netstack or Object:callable()
+netstack = netstack or Emitter:callable()
 netstack.IsNetStack = true
 
 local nsm = netstack
@@ -35,16 +35,21 @@ for k,v in pairs(net) do
 	if k:find("Write.+") then
 		nsm[k] = function(self, ...)
 			local aeiou = {...}	--stupid stupid lua
-			self.Ops[#self.Ops + 1] = {
+			local tbl = {
 				type = k,
 				args = aeiou,
 				size = determineSize(k, ...),
-				--trace = debug.traceback(),	--not worth it
 				func = function()
 					net[k](unpack(aeiou)) --i cant use ... cuz its outside of this function!!!
 				end
 			}
-			return self.Ops[#self.Ops]
+
+			local where = self:Emit("WriteOp", k, tbl)
+			if where ~= nil then return t end
+
+			local where = self:WriteAtCursor(tbl)
+			self:AdvanceCursor()
+			return t
 		end
 	end
 end
@@ -126,12 +131,45 @@ netstack.__call = net.WriteNetStack
 
 function netstack:Initialize()
 	self.Ops = {}
+	self.Cursor = 1
 end
 
 function netstack:GetOps()
 	return self.Ops
 end
 
+function netstack:SetCursor(where)
+	self.Cursor = where
+end
+
+local blank = {
+	func = BlankFunc,
+	args = {"You're not supposed to see this!"},
+	size = 69,
+	type = "You're not supposed to see this!"
+}
+
+function netstack:WriteAtCursor(what)
+	if self.Mode == "a" then
+		table.insert(self.Ops, self.Cursor, what)
+	else
+		self.Ops[self.Cursor] = what
+	end
+end
+
+function netstack:AdvanceCursor()
+	self.Cursor = self.Cursor + 1
+end
+
+function netstack:GetCursor()
+	return self.Cursor
+end
+
+function netstack:SetMode(m)
+	if not isstring(m) then self.Mode = nil end
+	if m:lower() == "w" or m:lower() == "write" then self.Mode = nil end
+	if m == "a" or m == "append" then self.Mode = "a" end
+end
 
 function netstack:BytesWritten()
 	local bits = 0
@@ -198,6 +236,9 @@ netstack.__tostring = function(self)
 	return head .. "\n" .. args
 end
 
+function netstack:print()
+	print(tostring(self))
+end
 
 function IsNetStack(what)
 	return what.IsNetStack
