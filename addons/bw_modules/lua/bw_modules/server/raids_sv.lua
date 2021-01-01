@@ -1,5 +1,3 @@
-RaidCoolDown = 900 --15 min
-RaidDuration = 360 --6 min
 local PLAYER = debug.getregistry().Player
 
 util.AddNetworkString("Raid")
@@ -12,14 +10,56 @@ local raid = BaseWars.Raid
 
 raid.Cooldowns = raid.Cooldowns or {}
 
-raidmeta = Emitter:callable()
+local raidmeta = raid.RaidMeta or Emitter:callable()
+raid.RaidMeta = raidmeta
 
-raid.OngoingRaids = raid.OngoingRaids or {} --{[RaidID] = RaidMeta}
-local cur = raid.OngoingRaids
+raid.OngoingRaids = raid.OngoingRaids or {} 	--{[RaidID] = RaidMeta}
+raid.Participants = raid.Participants or {}		--Participants as {[player/SID64/faction] = RaidMeta}
 
-raid.Participants = raid.Participants or {}		--Participants as {[player] = RaidMeta}
+local function replyEveryone(accept, ns)
 
-local lowseq = table.LowestSequential
+	local filt = RecipientFilter()
+	filt:AddAllPlayers()
+	if CurrentReply then
+		filt:RemovePlayer(CurrentReply.Owner)
+	end
+
+	net.Start("Raid")
+		net.WriteBool(false)
+		net.WriteNetStack(ns)
+	net.Send(filt)
+
+	if CurrentReply then
+		filt:RemoveAllPlayers()
+		filt:AddPlayer(CurrentReply.Owner)
+
+		ns:SetMode("a")
+		ns:SetCursor(1)
+		CurrentReply:Reply(accept, ns)
+
+		net.Start("Raid")
+			net.WriteBool(true)
+			net.WriteNetStack(ns)
+		net.Send(filt)
+	end
+
+	return ns
+end
+
+local function replySender(accept, ns)
+	if not CurrentReply then return end
+
+	ns:SetMode("a")
+	ns:SetCursor(1)
+	CurrentReply:Reply(accept, ns)
+
+	net.Start("Raid")
+		net.WriteBool(true)
+		net.WriteNetStack(ns)
+	net.Send(CurrentReply.Owner)
+
+	return ns
+end
 
 local function Date()
 	local ts = os.time()
@@ -31,6 +71,30 @@ local function Time()
 	local ts = os.time()
 	local date = os.date( "%H:%M:%S" , ts )
 	return date
+end
+
+function raidmeta:AddParticipant(obj, side)
+
+	if IsFaction(obj) then
+		for k, ply in ipairs(obj:GetMembers()) do
+			raid.Participants[ply] = self
+			raid.Participants[ply:SteamID64()] = self
+			if side then
+				self.Participants[ply] = side
+				self.Participants[ply:SteamID64()] = side
+			end
+		end
+	elseif IsPlayer(obj) then
+		raid.Participants[obj:SteamID64()] = self
+		if side then
+			self.Participants[obj:SteamID64()] = side
+		end
+	end
+
+	raid.Participants[obj] = self
+	if side then
+		self.Participants[obj] = side
+	end
 end
 
 -- obj = Player, SteamID64 or Faction
@@ -101,42 +165,12 @@ function raidmeta:Initialize(rder, rded, fac)
 	self.ID = id
 
 	self.Participants = {}
-	local part = self.Participants
+
+	self:AddParticipant(rder, 1)
+	self:AddParticipant(rded, 2)
 
 	if fac then
-
-		for _, ply in ipairs(rder:GetMembers()) do
-			part[ply] = 1
-			part[ply:SteamID64()] = 1
-
-			raid.Participants[ply] = self
-			raid.Participants[ply:SteamID64()] = self
-		end
-
-
-		for _, ply in pairs(rded:GetMembers()) do
-			part[ply] = 2
-			part[ply:SteamID64()] = 2
-
-			raid.Participants[ply] = self
-			raid.Participants[ply:SteamID64()] = self
-		end
-
-		hook.Run("RaidStart", rder, rded, true)
-	else
-		part[rder] = 1
-		part[rder:SteamID64()] = 1
-
-		raid.Participants[rder] = self
-		raid.Participants[rder:SteamID64()] = self
-
-		part[rded] = 2
-		part[rded:SteamID64()] = 2
-
-		raid.Participants[rded] = self
-		raid.Participants[rded:SteamID64()] = self
-
-		hook.Run("RaidStart", rder, rded, false)
+		hook.Run("RaidStart", rder, rded, fac ~= nil)
 	end
 
 end
@@ -147,7 +181,7 @@ end
 
 function raidmeta:Stop()
 
-	hook.Run("RaidStop", self.Raider, self.Raided, self.Faction)
+	hook.Run("RaidStop", self)
 
 	-- remove everything that mentions this raid in raid.Participants
 	for k,v in pairs(raid.Participants) do
@@ -156,12 +190,11 @@ function raidmeta:Stop()
 		end
 	end
 
-	net.Start("Raid")
-		CurrentReply:Accept()
-		net.WriteUInt(3, 4)
-		net.WriteUInt(self:GetID(), 16)
-	net.Broadcast()
+	local ns = netstack:new()
+	ns:WriteUInt(3, 4)
+	ns:WriteUInt(self:GetID(), 16)
 
+	replyEveryone(true, ns)
 end
 
 function PLAYER:PutOnRaidedCooldown(sec)
@@ -205,9 +238,14 @@ end)
 
 function PLAYER:RaidedCooldown()
 	local oncd = false
-	if raid.Cooldowns[self:SteamID64()] and CurTime() - raid.Cooldowns[self:SteamID64()] > 0 then oncd = true end
 
-	return oncd, oncd and CurTime() - raid.Cooldowns[self:SteamID64()]
+	local curCD = raid.Cooldowns[self:SteamID64()]
+
+	if curCD and CurTime() - curCD > 0 then
+		oncd = true
+	end
+
+	return oncd, oncd and CurTime() - curCD
 end
 
 function PLAYER:GetRaid()
@@ -258,6 +296,13 @@ function raid.Stop(obj) -- obj = player, sid64 or faction
 	raidObj:Stop()
 end
 
+function PLAYER:StopRaid()
+	local rd = raid.IsParticipant(self)
+	if rd then
+		rd:Stop()
+	end
+end
+
 local cdf = "Target is on cooldown!\n(%ds. remaining)"
 
 
@@ -279,18 +324,18 @@ function raid.Start(rder, rded, fac)
 	local rdedCan, rdedWhy = rded:IsRaidable()
 	if not rdedCan then return false, raid.Errors.TargetUnraidable(rdedWhy) end
 
+	local ns = netstack:new()
 
 	if fac then
 		local rtbl = raidmeta:new(rder, rded, fac)
 
-		net.Start("Raid")
-			CurrentReply:Accept()
-			net.WriteUInt(2, 4)
-			net.WriteUInt(rder.id, 24)
-			net.WriteUInt(rded.id, 24)
-			net.WriteFloat(rtbl.Start)
-			net.WriteUInt(rtbl:GetID(), 16)
-		net.Broadcast()
+		ns:WriteUInt(2, 4)
+		ns:WriteUInt(rder.id, 24)
+		ns:WriteUInt(rded.id, 24)
+		ns:WriteFloat(rtbl.Start)
+		ns:WriteUInt(rtbl:GetID(), 16)
+
+		replyEveryone(true, ns)
 
 		return rtbl
 	end
@@ -300,14 +345,13 @@ function raid.Start(rder, rded, fac)
 	rder:SetNWBool("Raided", true)
 	rded:SetNWBool("Raided", true)
 
-	net.Start("Raid")
-		CurrentReply:Accept()
-		net.WriteUInt(1, 4)
-		net.WriteUInt(rder:UserID(), 24)
-		net.WriteUInt(rded:UserID(), 24)
-		net.WriteFloat(rtbl.Start)
-		net.WriteUInt(rtbl:GetID(), 16)
-	net.Broadcast()
+	ns:WriteUInt(1, 4)
+	ns:WriteUInt(rder:UserID(), 24)
+	ns:WriteUInt(rded:UserID(), 24)
+	ns:WriteFloat(rtbl.Start)
+	ns:WriteUInt(rtbl:GetID(), 16)
+
+	replyEveryone(true, ns)
 
 
 	return rtbl
@@ -325,11 +369,13 @@ hook.Add("PlayerDisconnected", "RaidLog", function(ply) --aiaiai
 
 	local plys = {}
 
-	for obj, side in pairs(rd:GetParticipants()) do
-		if IsPlayer(k) then plys[#plys + 1] = obj end
+	for k, side in pairs(rd:GetParticipants()) do
+		if IsPlayer(k) and rd:IsRaider(k) then
+			plys[#plys + 1] = k
+		end
 	end
 
-	if #plys == 1 then	-- EVERY participant left; stop the raid
+	if #plys == 1 then	-- every raider left; stop the raid
 		rd:Stop()
 		return
 	end
@@ -348,12 +394,7 @@ function PLAYER:IsRaidable()
 		if ent.IsValidRaidable then return true end
 	end
 
-	return false, raid.Errors.NoRaidablesPlayer
-end
-
-function raid.WasInRaid(sid)
-	if raid.Participants[sid] then return raid.Participants[sid] end
-	return false
+	return false, raid.Errors.NoRaidables
 end
 
 hook.Add("PlayerSpawnObject", "RaidPropsPrevent", function(ply, mdl, skin)
@@ -361,17 +402,15 @@ hook.Add("PlayerSpawnObject", "RaidPropsPrevent", function(ply, mdl, skin)
 end)
 
 function ReportFail(ply, err)
-
-	net.Start("Raid")
-		CurrentReply:Deny()
-		net.WriteString(err)
-	net.Send(ply)
+	local ns = netstack:new()
+	ns:WriteString(err)
+	replySender(false, ns)
 
 	CurrentReply = nil
 end
 
 net.Receive("Raid", function(_, ply)
-	local pr = net.ReplyPromise()
+	local pr = net.ReplyPromise(ply)
 	CurrentReply = pr
 	local mode = net.ReadUInt(4)
 	--1 = start vs. player
@@ -421,6 +460,7 @@ net.Receive("Raid", function(_, ply)
 		end
 	end
 
+	CurrentReply = nil
 end)
 
 hook.Add("Think", "RaidsThink", function()

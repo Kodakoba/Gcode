@@ -1,5 +1,7 @@
 local PLAYER = debug.getregistry().Player
 
+
+
 Raids = Raids or {}
 
 local raid = Raids
@@ -10,7 +12,7 @@ raid.OngoingRaids = raid.OngoingRaids or {}
 RaidCoolDown = 900 --15 min
 RaidDuration = 360 --6 min
 
-
+include("raid_meta_ext_cl.lua")
 
 local function Valid()
 	return Raids.Frame and IsValid(Raids.Frame)
@@ -46,7 +48,7 @@ function PLAYER:IsRaider() --localplayer's raid only
 
 	if raid.MyRaid then
 		if raid.MyRaid.Raided and (raid.MyRaid.Raided.id == self:Team() or raid.MyRaid.Raided == self) then return false end
-		if raid.MyRaid.Raiders and (raid.MyRaid.Raiders.id == self:Team() or raid.MyRaid.Raiders == self) then return true end
+		if raid.MyRaid.Raider and (raid.MyRaid.Raider.id == self:Team() or raid.MyRaid.Raider == self) then return true end
 		return false --?
 	else
 		return false
@@ -56,26 +58,15 @@ end
 function PLAYER:IsEnemy()
 
 	if not raid.MyRaid then return false end
-	--1 = raider
-	--2 = raided
-	local am = 0
-	local is = 0
-	local my = raid.MyRaid
-	if my.VSFac then
-		if my.Raided and my.Raided.id == self:Team() then is = 2 am = 1 end
-		if my.Raiders and my.Raiders.id == self:Team() then is = 1 am = 2 end
-	else
-		if my.Raided and my.Raided == LocalPlayer() then am = 2 is = 1 end
-		if my.Raiders and my.Raiders == LocalPlayer() then am = 1 is = 2 end
-	end
 
-	local err = (am==0 or is==0) --not even a part of the raid
+	local rd = raid.MyRaid
 
-	if err then return false end
+	local my = rd:GetSide(LocalPlayer())
+	local their = rd:GetSide(self)
 
+	if my == 0 or their == 0 then return false end
 
-	return am ~= is
-
+	return my ~= their
 end
 
 function PLAYER:IsRaidable()
@@ -92,9 +83,19 @@ function PLAYER:IsRaidable()
 	return true
 end
 
+function raid.IsParticipant(obj)
+	return raid.Participants[obj]
+end
+
 net.Receive("Raid", function()
-	local rep, ok = net.ReadPromise()
-	if ok == false then return end
+	local hasReply = net.ReadBool()
+	local rep
+
+	if hasReply then
+		local promise, ok = net.ReadPromise()
+		rep = promise
+		if ok == false then return end
+	end
 
 	local mode = net.ReadUInt(4)
 	--1 = start ply vs ply
@@ -102,75 +103,53 @@ net.Receive("Raid", function()
 	--3 = end
 	--4 = err
 	print("received raid cl,", mode)
+
 	if mode == 1 then
+		-- ply on ply
 		local rder = net.ReadUInt(24)
 		local rded = net.ReadUInt(24)
 
 		local start = net.ReadFloat()
 		local id = net.ReadUInt(16)
 
-		local r = {}
-
-		r.VSFac = false
-
 		if IsPlayer(Player(rder)) then rder = Player(rder) end
-		if IsPlayer(Player(rded)) then rded = Player(rded) end --see factions_cl for why
+		if IsPlayer(Player(rded)) then rded = Player(rded) end
 
-		r.Raiders = rder
-		r.Raided = rded
-
-		r.Start = start
-		print('received ply vs ply', rder, rded)
-		r.PartOf = (rder == LocalPlayer()) or (rded == LocalPlayer())
-		print(rder, rded, r.PartOf)
-		if r.PartOf then raid.MyRaid = r end
-
+		local r = raid.RaidMeta:new(rder, rded, start, id, false)
 		raid.OngoingRaids[id] = r
 
 		CreateRaidButton(id, r)
 
-		hook.Run("OnRaid", true, false, rder, rded)
-
 		return
 	elseif mode == 2 then
+		-- fac on fac
 		local rder = net.ReadUInt(24)
 		local rded = net.ReadUInt(24)
 
 		local start = net.ReadFloat()
 		local id = net.ReadUInt(16)
-
-		local r = {}
-
-		r.VSFac = true
 
 		local rderfac = Factions.FactionIDs[rder]
 		local rdedfac = Factions.FactionIDs[rded]
 
-		r.Raiders = rderfac
-		r.Raided =  rdedfac
-
-		r.Start = start
-
-		local partof = LocalPlayer():InFaction(rderfac.id) or LocalPlayer():InFaction(rdedfac.id)
-		print('received fac vs fac', rder, rded)
-		r.PartOf = partof
-
-		if r.PartOf then raid.MyRaid = r end
-
+		local r = raid.RaidMeta:new(rderfac, rdedfac, start, id, true)
 		raid.OngoingRaids[id] = r
 
 		CreateRaidButton(id, r)
 
-		hook.Run("OnRaid", true, true, rder, rded)
-
 		return
 	elseif mode==3 then
-
+		-- stop the raid
 		local id = net.ReadUInt(16)
-		print("Sweet louiseana", id)
+		print("Stopping raid, ID:" .. id)
+
+		if not raid.OngoingRaids[id] then
+			errorf("Attempted to stop a non-existent raid with ID: %d.", id)
+			return
+		end
 
 		if raid.MyRaid == raid.OngoingRaids[id] then raid.MyRaid = nil end
-		raid.OngoingRaids[id] = nil
+		raid.OngoingRaids[id]:Stop()
 
 		if Valid() and Raids.Frame.Raids[id] and IsValid(Raids.Frame.Raids[id]) then
 			Raids.Frame.Raids[id]:PopOut()
@@ -178,11 +157,7 @@ net.Receive("Raid", function()
 		end
 
 		hook.Run("OnRaidStop", id)
-
 		return
-	elseif mode==4 then
-		print("running onRaid")
-		hook.Run("OnRaid", false, net.ReadString())
 	end
 
 
@@ -258,14 +233,19 @@ function CreateRaidButton(id, v)
 
 		f.VSFac = v.VSFac
 		f:SetTall((v.VSFac and 48) or 32)
-		f.Raiders = v.Raiders
+		f.Raider = v.Raider
 		f.Raided = v.Raided
 
 		f.Start = v.Start
-		f.PartOf = v.PartOf
+		f.PartOf = v:IsParticipant(LocalPlayer())
 
 		f.Font = "TW18"
-		if raid.MyRaid and raid.MyRaid.Panel and IsValid(raid.MyRaid.Panel) then raid.MyRaid.Panel:Remove() raid.MyRaid.Panel = nil end
+
+		if raid.MyRaid and raid.MyRaid.Panel and IsValid(raid.MyRaid.Panel) then
+			raid.MyRaid.Panel:Remove()
+			raid.MyRaid.Panel = nil
+		end
+
 		if f.PartOf then
 			f:Dock(NODOCK)
 			f:SetParent(vgui.GetWorldPanel())
@@ -279,8 +259,11 @@ function CreateRaidButton(id, v)
 		local lkname1 = ""
 		local lkname2 = ""
 
+		local parCol = Color(50, 150, 250)
+		local nonparCol = Color(40, 90, 120)
+
 		function f:PostPaint(w, h)
-			local frac = (RaidDuration - (CurTime() - f.Start))/RaidDuration
+			local frac = v:GetLeft() / RaidDuration
 
 			if frac <= 0.01 or not raid.MyRaid then
 				self:PopOut()
@@ -288,12 +271,13 @@ function CreateRaidButton(id, v)
 				if f.PartOf and raid.MyRaid and raid.MyRaid.Panel == self then raid.MyRaid.Panel = nil end
 			end
 
-			local col = (self.PartOf and Color(50, 150, 250)) or Color(40, 90, 120)
+			local col = (self.PartOf and parCol) or nonparCol
 
-			local t = math.max(math.Round(RaidDuration - (CurTime() - f.Start), 1), 0)
+			local t = math.max(math.Round(v:GetLeft(), 1), 0)
 
-			if (v.VSFac and v.Raiders.name) or IsPlayer(v.Raiders) then
-				lkname1 = (v.VSFac and v.Raiders.name) or (v.Raiders.Nick and v.Raiders:Nick()) or "???"
+
+			if (v.VSFac and v.Raider.name) or IsPlayer(v.Raider) then
+				lkname1 = (v.VSFac and v.Raider.name) or (v.Raider.Nick and v.Raider:Nick()) or "???"
 			end
 
 			if (v.VSFac and v.Raided.name) or IsPlayer(v.Raided) then
@@ -303,11 +287,11 @@ function CreateRaidButton(id, v)
 			local name1, name2 = lkname1, lkname2
 
 			if utf8.len(name1) > 16 then
-				name1 = name1:sub(1, 14) .. ".."
+				name1 = utf8.sub(name1, 1, 13) .. "..."
 			end
 
 			if utf8.len(name2) > 16 then
-				name2 = name2:sub(1, 14) .. ".."
+				name2 = utf8.sub(name2, 1, 13) .. "..."
 			end
 
 			draw.RoundedBox(8, 0, 0, w*frac, h, col)

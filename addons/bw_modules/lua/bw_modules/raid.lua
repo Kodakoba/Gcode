@@ -4,14 +4,17 @@ local PLAYER = debug.getregistry().Player
 BaseWars.Raid = BaseWars.Raid or {}
 
 Raids = BaseWars.Raid
+
 Raids.FactionCooldown = 900
+Raids.RaidCoolDown = 900
+Raids.RaidDuration = 360
 
 local raid = BaseWars.Raid
 
 raid.Cooldowns = raid.Cooldowns or {}
 
 function PLAYER:InRaid()
-	return self:GetNWBool("Raided", false)
+	return raid.Participants[self]
 end
 
 raid.Errors = {}
@@ -33,7 +36,6 @@ end
 	err.NeedAFaction 		= "You can't raid a faction without being in a faction yourself!"
 	err.OwnFaction 			= "You can't really raid your own faction..."
 	err.LowLevelFaction 	= "Every player's level in that faction is too low!"
-	err.NoRaidablesFaction	= "This faction doesn't own any raidable entities!"
 
 	err.RaidedByOthers 		= "This faction is already being raided by someone else."
 	err.RaidingOthers 		= "This faction is currently raiding someone else."
@@ -53,11 +55,11 @@ end
 	err.RaidingSelf				= "Might be better to just sell your own stuff, y'know?"
 
 	err.LowLevelPlayer 			= "This player's level is too low!"
-	err.NoRaidablesPlayer		= "This player doesn't own any raidable entities!"
 
 -- Both:
 	err.YouAreRaided 		= "You are currently being raided!"
 	err.YouAreRaiding 		= "You are currently raiding someone else!"
+	err.NoRaidables			= "No raidable entities!"
 	err.Generic				= "Generic error"
 	err.YouAreUnraidable	= function(why)
 		if why then
@@ -93,7 +95,7 @@ function raid.PickRaidedError(rder, rded)
 	local prefix = IsFaction(rded) and "" or "Player"
 	local main
 
-	-- faction is raiding...
+	-- they are raiding...
 	if rd:IsRaider(rded) then
 		if rd:IsRaided(rder) then
 			-- ...you
@@ -103,8 +105,8 @@ function raid.PickRaidedError(rder, rded)
 			main = "RaidingOthers"
 		end
 	else
-		-- faction is being raided by...
-		if rd:IsRaiding(rder) then
+		-- they are being raided by...
+		if rd:IsRaider(rder) then
 			-- ...you
 			main = "RaidedByYou"
 		else
@@ -145,7 +147,7 @@ function raid.CanRaidPlayer(ply, ply2)
 	end
 
 	if ply:InRaid() then
-		return false, err.YouAreRaided
+		return false, raid.PickRaidedError(ply, ply2)
 	end
 
 	return true
@@ -169,6 +171,6 @@ function raid.CanRaidFaction(ply, fac2)
 	end
 
 	if fac2:RaidedCooldown() then
-		return false, err.RaidedOnCooldown(fac2)
+		return false, raid.PickRaidedError(ply, fac2)
 	end
 end
