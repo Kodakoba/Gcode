@@ -121,7 +121,7 @@ local function uid()
 	return CurUniqueID % bit.lshift(1, uidLen)
 end
 
-function net.StartPromise(name)
+function net.StartPromise(name, ns)
 	local prom = Promise():Then(function(good, bad, ok)
 		if not ok then
 			bad()
@@ -141,10 +141,17 @@ end
 
 local PromReply = Object:extend()
 
-function PromReply:Reply(ok)
+function PromReply:Reply(ok, ns)
 	if self.Deactivated then error("Can't reply twice!") return end
-	net.WriteUInt(self.ID, uidLen)
-	net.WriteBool(ok == nil and true or ok)
+	ns = IsNetstack(ns) and ns or nil
+
+	if ns then
+		ns:WriteUInt(self.ID, uidLen)
+		ns:WriteBool(ok == nil and true or ok)
+	else
+		net.WriteUInt(self.ID, uidLen)
+		net.WriteBool(ok == nil and true or ok)
+	end
 
 	self.Deactivated = true
 end
@@ -165,9 +172,10 @@ function net.ReadPromise()
 	return NetPromises[id]:Exec(ok), ok
 end
 
-function net.ReplyPromise()
+function net.ReplyPromise(who)
 	local rep = PromReply:new()
 	rep.ID = net.ReadUInt(uidLen)
+	rep.Owner = who
 
 	return rep
 end
