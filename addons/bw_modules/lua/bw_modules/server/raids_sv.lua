@@ -16,6 +16,7 @@ raid.RaidMeta = raidmeta
 raid.OngoingRaids = raid.OngoingRaids or {} 	--{[RaidID] = RaidMeta}
 raid.Participants = raid.Participants or {}		--Participants as {[player/SID64/faction] = RaidMeta}
 
+local log = Logger("BW-RaidsSV")
 local function replyEveryone(accept, ns)
 
 	local filt = RecipientFilter()
@@ -175,6 +176,10 @@ function raidmeta:Initialize(rder, rded, fac)
 
 end
 
+function IsRaid(obj)
+	return getmetatable(obj) == raidmeta
+end
+
 function raidmeta:GetID()
 	return self.ID
 end
@@ -189,6 +194,8 @@ function raidmeta:Stop()
 			raid.Participants[k] = nil
 		end
 	end
+
+	table.RemoveByValue(raid.OngoingRaids, self)
 
 	local ns = netstack:new()
 	ns:WriteUInt(3, 4)
@@ -215,9 +222,8 @@ hook.Add("PlayerInitialSpawn", "BeginCooldown", function(ply)
 	else
 		-- put them on CD until they fully load in
 		local putOff = false
-		print("was not on cd, putting on initial")
+
 		hook.ObjectOnce("PlayerFullyLoaded", ply, 1, function(...)
-			print("fully loaded", ...)
 			if not putOff then
 				ply:PutOffRaidedCooldown()
 				putOff = true
@@ -227,7 +233,6 @@ hook.Add("PlayerInitialSpawn", "BeginCooldown", function(ply)
 		ply:PutOnRaidedCooldown(120)	--i give you 120 seconds to load in bud
 
 		ply:Timer("JoinRaidProtection", 120, function()
-			print("timer ran out")
 			if not putOff then
 				ply:PutOffRaidedCooldown()
 				putOff = true
@@ -290,7 +295,7 @@ end
 
 function raid.Stop(obj) -- obj = player, sid64 or faction
 
-	local raidObj = raid.IsParticipant(obj)
+	local raidObj = IsRaid(obj) and obj or raid.IsParticipant(obj)
 	if not raidObj then return end
 
 	raidObj:Stop()
@@ -465,7 +470,7 @@ end)
 
 hook.Add("Think", "RaidsThink", function()
 	for k,v in pairs(raid.OngoingRaids) do
-		if CurTime() - v.Start > RaidDuration then
+		if CurTime() - v.Start > raid.RaidDuration then
 			raid.Stop(v)
 		end
 	end

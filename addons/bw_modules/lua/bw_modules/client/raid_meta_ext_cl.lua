@@ -100,7 +100,7 @@ function raidmeta:Initialize(rder, rded, when, id, vsfac)
 	self.ID = id
 	self.Start = when
 	self.Participants = {}
-	print("intiailized", rder, rded)
+
 	self:AddParticipant(rder, 1)
 	self:AddParticipant(rded, 2)
 
