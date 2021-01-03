@@ -96,6 +96,10 @@ function raidmeta:Stop()
 	end
 end
 
+function raidmeta:GetSides()
+	return self.Raider, self.Raided, self.Faction
+end
+
 function raidmeta:Initialize(rder, rded, when, id, vsfac)
 	self.ID = id
 	self.Start = when

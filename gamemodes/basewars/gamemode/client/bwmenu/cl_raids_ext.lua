@@ -1,4 +1,6 @@
 local tab = {}
+local fonts = BaseWars.Menu.Fonts
+
 BaseWars.Menu.Tabs["Raids"] = tab
 
 Colors.Raid = Color(180, 70, 70)
@@ -266,10 +268,7 @@ local function createFactionlessOption(pnl, scr, num, ply)
 end
 
 
-local function createFactionlessActions(pnl, fac, scr, oldcanv)
-	if oldcanv and oldcanv ~= pnl.NoFactionRaidCanvas then
-		removePanel(oldcanv)
-	end
+local function createFactionlessActions(pnl, fac, scr, scrollPlayer)
 
 	local canv = pnl.NoFactionRaidCanvas
 
@@ -406,8 +405,16 @@ local function createFactionlessActions(pnl, fac, scr, oldcanv)
 		end
 
 	end)
+
 	function canv:Disappear()
 		removePanel(self, true)
+	end
+
+	if scrollPlayer then
+		local btn = plyToFrame[scrollPlayer]
+		if btn then
+			scr:ScrollToChild(btn)
+		end
 	end
 end
 
@@ -415,7 +422,7 @@ local function onOpen(navpnl, tabbtn, _, noanim)
 	local f = BaseWars.Menu.Frame
 
 	local pnl = f.FactionsPanel	-- pnl : holder for everythingg, scr: panel holding a scrollpanel in it
-	local scr = IsValid(pnl) and pnl.FactionScroll.FactionScroll --kek
+	local scr = IsValid(pnl) and pnl:GetScroll()
 
 	if IsValid(pnl) then
 
@@ -432,20 +439,6 @@ local function onOpen(navpnl, tabbtn, _, noanim)
 
 		f:PositionPanel(pnl)
 
-		if IsValid(pnl.NewFaction) then
-			local p = pnl.NewFaction
-			local l, t, r, b = p:GetDockMargin()
-
-			pnl.NewFaction:SizeTo(pnl.NewFaction:GetWide(), 0, 0.3, 0, 0.3, function()
-				p:Remove()
-			end):On("Think", function(self, fr)
-				p:SetAlpha(255 * (1 - fr^0.6))
-				p:DockMargin(l, t * (1 - fr), r, b * (1 - fr))
-			end)
-
-			pnl.NewFaction = nil
-		end
-
 		if IsValid(pnl.FactionFrame) then
 			if pnl.FactionFrame == pnl.NoFactionRaidCanvas then
 				createFactionlessActions(pnl, pnl.FactionFrame.Faction, scr)
@@ -457,7 +450,9 @@ local function onOpen(navpnl, tabbtn, _, noanim)
 		pnl, scr = BaseWars.Menu.CreateFactionList(f)
 	end
 
-	local noFac = scr:AddButton(Factions.NoFaction)
+	-- add a custom NoFaction button
+	local noFac = scr:AddFaction(Factions.NoFaction)
+	noFac:PopIn()
 	scr:AddElement("NoFaction", noFac)
 
 	function pnl:FactionClicked(fac, ...)
@@ -477,6 +472,57 @@ local function onOpen(navpnl, tabbtn, _, noanim)
 	end
 
 	tabbtn.Panel = pnl
+
+	local cur = vgui.Create("FButton", scr)
+	local newH = math.floor(scr:GetTall() * 0.08 / 2) * 2 + 1
+
+	cur:Dock(BOTTOM)
+	cur:DockMargin(8, 0, 8, 4)
+	cur:SetSize(scr:GetWide() - 16, newH)
+
+	cur.Label = "Your current raid"
+	cur.Font = fonts.MediumSmall
+	local isize = math.floor(cur:GetTall() * 0.5 / 2) * 2 + 1
+	local ic = cur:SetIcon("https://i.imgur.com/xyrD9OM.png", "salilsawaarim.png", isize, isize)
+	ic.IconX = 8
+	cur:SizeTo(-1, newH, 0.3, 0, 0.3)
+	cur:SetTall(0)
+
+	pnl:AddElement("Exclusive", cur)
+
+	function cur:Disappear()
+		local p = self
+		local l, t, r, b = p:GetDockMargin()
+
+		self:SizeTo(self:GetWide(), 0, 0.3, 0, 0.3, function()
+			self:Remove()
+		end):On("Think", function(self, fr)
+			p:SetAlpha(255 * (1 - fr^0.6))
+			p:DockMargin(l, t * (1 - fr), r, b * (1 - fr))
+		end)
+		self:SetZPos(-10)
+	end
+
+	cur:SetColor(Raids.MyRaid and Colors.Raid or Colors.Button, true)
+
+	function cur:Think()
+		self:SetColor(Raids.MyRaid and Colors.Raid or Colors.Button)
+		self:SetDisabled(Raids.MyRaid == nil)
+	end
+
+	function cur:DoClick()
+		local rd = Raids.MyRaid
+		local rder, rded, isFac = rd:GetSides()
+		local lp = LocalPlayer()
+
+		if isFac then
+			local other = (rder == lp:GetFaction() and rded) or rder
+			pnl:FactionClicked(other)
+		else
+			local other = (rder == lp and rded) or rder
+			pnl:FactionClicked(Factions.NoFaction, other)
+		end
+	end
 
 	return pnl, true, true
 end
