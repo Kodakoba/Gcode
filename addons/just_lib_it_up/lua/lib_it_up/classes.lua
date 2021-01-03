@@ -23,7 +23,6 @@ Class.__index = function(self, k)
 end
 
 Class.Meta = {__index = Class}
-Class.Debugging = false
 
 --[[
 	Inheritance table:
@@ -139,7 +138,7 @@ function Class:extend(...)
 		local args = Class.__args
 
 		if self.__init and rawget(new, "AutoInitialize") ~= false then 	--recursively call the parents' __init's
-			if Class.Debugging then
+			if self.___Debugging then
 				print("found __init in", self.Name)
 				print("Calling with args:", unpack(args, 1, table.maxn(args)))
 			end
@@ -158,7 +157,7 @@ function Class:extend(...)
 											--this way we call :Initialize() starting from the oldest one and going up to the most recent one
 
 		if func then
-			if Class.Debugging then
+			if self.___Debugging then
 				print("Rawgot init function from", new.Name)
 				print("Calling with args:", unpack(args, 1, table.maxn(args)))
 			end
