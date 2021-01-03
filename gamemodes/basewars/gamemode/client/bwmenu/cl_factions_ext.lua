@@ -132,8 +132,9 @@ local function createOwnFactionActions(f, fac, canv)
 	function leave:PostPaint(w, h)
 		local sx, sy = self:LocalToScreen(0, 0)
 		local fr = self.HoldFrac
+		local scale = self:GetMatrixScale()
 
-		render.SetScissorRect(sx, sy, sx + w * fr, sy + h, true)
+		render.SetScissorRect(sx, sy, sx + w * fr / scale, sy + h, true)
 			draw.RoundedBox(self.RBRadius, 0, 0, w, h, leavingProgressRed)
 		render.SetScissorRect(0, 0, 0, 0, false)
 
@@ -702,6 +703,8 @@ local function createNewFactionButton(pnl, scr, noanim)
 	newFac.HovMult = 1.1
 	newFac.DisabledColor = Color(85, 85, 85)
 
+	pnl:AddElement("Exclusive", newFac)
+
 	if not noanim then
 		newFac:SizeTo(-1, newH, 0.3, 0, 0.3)
 		newFac:SetTall(0)
@@ -718,6 +721,18 @@ local function createNewFactionButton(pnl, scr, noanim)
 	function newFac:Think()
 		self:SetDisabled(LocalPlayer():InFaction())
 	end
+	function newFac:Disappear()
+		local p = self
+		local l, t, r, b = p:GetDockMargin()
+
+		self:SizeTo(self:GetWide(), 0, 0.3, 0, 0.3, function()
+			self:Remove()
+		end):On("Think", function(self, fr)
+			p:SetAlpha(255 * (1 - fr^0.6))
+			p:DockMargin(l, t * (1 - fr), r, b * (1 - fr))
+		end)
+		self:SetZPos(-10)
+	end
 
 	pnl.NewFaction = newFac
 end
@@ -733,6 +748,9 @@ local function onOpen(navpnl, tabbtn, _, noanim)
 
 	if IsValid(prev) then
 		pnl, scr = prev, prev:GetScroll()
+
+		pnl:RemoveElements("Exclusive")
+		scr:RemoveElements("Exclusive")
 
 		if not pnl:IsVisible() then
 			if noanim then

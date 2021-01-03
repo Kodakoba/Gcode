@@ -49,7 +49,9 @@ local function facBtnPaint(self, w, h)
 	local frac = self.MembFrac or 0
 	local bgcol = self.FactionColor
 
-	render.SetScissorRect(x, y, x + w * frac, y + h, true)
+	local scale = self:GetMatrixScale()
+
+	render.SetScissorRect(x, y, x + w * frac / scale, y + h, true)
 		draw.RoundedBox(self.RBRadius or 8, 0, 0, w, h, bgcol)
 		local fh, fs, fv = self.Faction:GetColor():ToHSV()
 		local col = pickFactionButtonTextColor(fh, fs, fv)
@@ -72,7 +74,7 @@ local function facBtnPaint(self, w, h)
 
 	frac = self.MembFrac or 0
 
-	render.SetScissorRect(x + w * frac, y, x + w, y + h, true)
+	render.SetScissorRect(x + w * frac / scale, y, x + w, y + h, true)
 		draw.SimpleText2(self.Faction.name, nil, w/2, 2, color_white, 1)
 	render.SetScissorRect(0, 0, 0, 0, false)
 end

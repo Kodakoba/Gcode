@@ -85,6 +85,8 @@ function button:SetIcon(url, name, w, h, col, rot)
 
 	t.IconColor = col
 	t.IconRotation = rot
+
+	return t
 end
 
 function button:SetColor(col, g, b, a)
@@ -448,6 +450,9 @@ function button:PrePaint(w,h)
 
 end
 
+function button:GetMatrixScale()
+	return self.MxScale
+end
 
 fbuttonLeakingMatrices = 0	--failsafe
 
