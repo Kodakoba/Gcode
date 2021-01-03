@@ -158,11 +158,9 @@ function perkmeta:SetIcon(str)
 	self.Icon = str 
 end
 
-function perkmeta:SetDescription(str, dontyeet)
+function perkmeta:SetDescription(str)
 	local desc = tostring(str)
-	if not dontyeet then 
-		desc = desc:YeetNewlines()
-	end
+
 	self.Description = desc
 end
 

@@ -26,14 +26,14 @@ function CreatePerkFrame(par, perk, ent)
 	f:SetPos(24 + 200 + 8, 4)
 	f:SetSize(par:GetWide() - 24 - 200 - 16, par:GetTall())
 
-	f.Perk = perk 
+	f.Perk = perk
 
 	local names = {}
 	local descs = {}
 	local reqs = {}
 	local ylds = {}
 
-	local reqp 
+	local reqp
 
 	local lv = LocalPlayer():GetPerk(perk:GetID())
 
@@ -41,7 +41,7 @@ function CreatePerkFrame(par, perk, ent)
 		local name = vgui.Create("DLabel", f)
 		name:SetText(perk:GetName())
 		name:SetFont("TW64")
-		
+
 
 		local desc = vgui.Create("DLabel", f)
 		desc:SetFont("OS20")
@@ -50,7 +50,7 @@ function CreatePerkFrame(par, perk, ent)
 		desc.X = 8
 		desc.Y = 80
 
-		local yields 
+		local yields
 		local pylds = perk.Levels[lv + 1].Yields
 
 		if pylds then
@@ -74,8 +74,8 @@ function CreatePerkFrame(par, perk, ent)
 			end
 
 			local i = 0
-	
-			for k,v in pairs(pylds) do 
+
+			for k,v in pairs(pylds) do
 				i = i + 1
 				local b = vgui.Create("FButton", yields)
 				b:SetSize(64, 64)
@@ -83,18 +83,18 @@ function CreatePerkFrame(par, perk, ent)
 
 				function b:OnHover()
 					print("you dare hover over me?")
-					if not self.Cloud then 
+					if not self.Cloud then
 						self.Cloud = vgui.Create("Cloud", self)
 						local cl = self.Cloud
 
-						if v.name then 
-							cl.Label = v.name 
-						end 
+						if v.name then
+							cl.Label = v.name
+						end
 
-						if v.desc then 
-							for k,v in pairs(v.desc) do 
+						if v.desc then
+							for k,v in pairs(v.desc) do
 								cl:AddFormattedText(v.Text, v.Color or Color(255, 255, 255), v.font or "OS18", (v.Continuation and 0))
-							end 
+							end
 						end
 						local x, y = self:LocalToScreen(32, 0)
 						cl:SetAbsPos(32, -16)
@@ -106,12 +106,12 @@ function CreatePerkFrame(par, perk, ent)
 				end
 
 				function b:OnUnhover()
-					if self.Cloud then 
+					if self.Cloud then
 						self.Cloud:Popup(false)
 					end
 				end
 
-				local icurl 
+				local icurl
 				local icname
 				local ix, iy, iw, ih
 				local icol
@@ -122,11 +122,11 @@ function CreatePerkFrame(par, perk, ent)
 					if imdl then
 						surface.SetDrawColor(Color(255, 255, 255))
 						draw.DrawOrRender(self, imdl, 0, 0, w, h)
-					
-					elseif icurl then
-						local nw, nh = iw or w, ih or h 
 
-						local nx = ix or w/2 - nw/2 
+					elseif icurl then
+						local nw, nh = iw or w, ih or h
+
+						local nx = ix or w/2 - nw/2
 						local ny = iy or h/2 - nh/2
 
 						surface.SetDrawColor(icol or Color(255, 255, 255))
@@ -134,20 +134,20 @@ function CreatePerkFrame(par, perk, ent)
 					end
 				end
 
-				if v.model then 
+				if v.model then
 					imdl = v.model
 				end
 
-				if v.icon then 
+				if v.icon then
 					local i = v.icon
 
 					icurl = i.URL
 					icname = i.Name
 					ix, iy, iw, ih = i.X, i.Y, i.W, i.H
-					icol = i.Color 
+					icol = i.Color
 				end
 
-			end 
+			end
 
 
 			ylds[#ylds + 1] = yields
@@ -157,13 +157,13 @@ function CreatePerkFrame(par, perk, ent)
 		reql:SetSize(reqp:GetSize())
 		reql:PopIn()
 
-		
+
 		local reqs = perk:GetRequirements(lv + 1)
 
 		local reqsdraw = {}
 
-		for k,v in pairs(reqs) do 
-			if not Items[k] then continue end 
+		for k,v in pairs(reqs) do
+			if not Items[k] then continue end
 
 			local item = Items[k]
 			local text = "x%s %s"
@@ -175,28 +175,28 @@ function CreatePerkFrame(par, perk, ent)
 		end
 
 		function reql:Paint(w, h)
-			
+
 			draw.SimpleText("Requirements for lv. " .. lv + 1 .. ":", "TWB28", w/2, 4, color_white, 1, 5)
 			local i = 1
 			local col = 0
 
-			for k,v in pairs(reqsdraw) do 
+			for k,v in pairs(reqsdraw) do
 				draw.SimpleText(v.text, "TW24", 8 + 150*col, 32 + i*20, (v.has and Color(100, 200, 100)) or Color(200, 100, 100), 0, 1)
 				i = i+1
 
-				if 32+i*20 > 150 then 
+				if 32+i*20 > 150 then
 					col = col + 1
 					i = 1
 				end
 			end
-			if table.IsEmpty(reqsdraw) then 
+			if table.IsEmpty(reqsdraw) then
 				draw.SimpleText("Free!", "TWB32", w/2, h/2 - 16, Color(150, 150, 150), 1, 1)
 			end
 
 		end
-		
+
 		local start = vgui.Create("FButton", reql)
-		
+
 		start:SetSize(200, 50)
 		start:SetColor(100, 200, 100)
 
@@ -204,9 +204,9 @@ function CreatePerkFrame(par, perk, ent)
 		start.Y = reql:GetTall() - 60
 		start.Label = "Start Research"
 		function start:Think()
-			if self.PermaDisabled then return end 
+			if self.PermaDisabled then return end
 
-			for k,v in pairs(reqsdraw) do 
+			for k,v in pairs(reqsdraw) do
 				if not v.has then self:SetColor(50, 50, 50) self.Disabled = true return end
 			end
 			self:SetColor(100, 200, 100)
@@ -216,7 +216,7 @@ function CreatePerkFrame(par, perk, ent)
 		function start:DoClick()
 			if self.Disabled or self.PermaDisabled then return end
 			Research.RequestResearch(perk, ent)
-			if IsValid(pmain) then 
+			if IsValid(pmain) then
 				pmain:PopOut()
 			end
 			f:PopOut()
@@ -237,8 +237,8 @@ function CreatePerkFrame(par, perk, ent)
 
 	local nl, dl, rl = f:CreateLabels(perk)
 
-	names[1] = nl 
-	descs[1] = dl 
+	names[1] = nl
+	descs[1] = dl
 	reqs[1] = rl
 
 
@@ -251,7 +251,7 @@ function CreatePerkFrame(par, perk, ent)
 		--draw.SimpleText(perk:GetName(), "TW64", w/2, 6, color_white, 1)
 	end
 
-	
+
 
 	function reqp:Paint(w, h)
 		local prk = f.Perk
@@ -267,22 +267,22 @@ function CreatePerkFrame(par, perk, ent)
 
 	function f:ChangePerk(perk)
 
-		for k,v in pairs(names) do 
+		for k,v in pairs(names) do
 			v:PopOut(0.05)
 			table.remove(names, k)
 		end
 
-		for k,v in pairs(descs) do 
+		for k,v in pairs(descs) do
 			v:PopOut(0.05)
 			table.remove(descs, k)
 		end
 
-		for k,v in pairs(reqs) do 
+		for k,v in pairs(reqs) do
 			v:PopOut(0.05)
 			table.remove(reqs, k)
 		end
 
-		for k,v in pairs(ylds) do 
+		for k,v in pairs(ylds) do
 			v:PopOut(0.05)
 			table.remove(ylds, k)
 		end
@@ -313,13 +313,13 @@ function CreatePerkList(par, subcat, ent)
 	pmain.Expanded = false
 	pmain.SubCat = subcat
 
-	
+
 
 	function pmain:Think()
 
-		if not IsValid(par) then return end 
+		if not IsValid(par) then return end
 
-		if par.Expanded ~= self.Expanded then 
+		if par.Expanded ~= self.Expanded then
 			self:SizeTo(((par.Expanded and par.ExpandsTo) or par.UnexpandsTo) - 108, -1, 0.4, 0, 0.3)
 			self.Expanded = par.Expanded
 		end
@@ -332,12 +332,12 @@ function CreatePerkList(par, subcat, ent)
 	f:GetCanvas():DockPadding(8, 4, 8, 8)
 
 	f.GradBorder = true
-	pmain.scr = f 
+	pmain.scr = f
 
-	local pf 
+	local pf
 
 	function pmain:Disappear()
-		self:PopOut() 
+		self:PopOut()
 		if IsValid(pf) then pf:PopOut() end
 	end
 
@@ -349,7 +349,7 @@ function CreatePerkList(par, subcat, ent)
 
 		if IsValid(perksfr) then
 
-			local sanim = perksfr:NewAnimation(0.6, 0, 0.7, function(_, self) 
+			local sanim = perksfr:NewAnimation(0.6, 0, 0.7, function(_, self)
 					self:Remove()
 					f.VBar.NoResize = false
 				end)
@@ -365,19 +365,19 @@ function CreatePerkList(par, subcat, ent)
 			perksfr = nil
 		end
 
-		perksfr = vgui.Create("InvisPanel", f)	--where perks should be added; exists purely to make the 
+		perksfr = vgui.Create("InvisPanel", f)	--where perks should be added; exists purely to make the
 												--perks-falling-animation work
 		perksfr.Perks = {}
 		perksfr:SetWide(f:GetWide())
 
-		for k,v in pairs(tbl) do 
+		for k,v in pairs(tbl) do
 			local perk = vgui.Create("FButton", perksfr)
 			perk:Dock(TOP)
 			perk:SetTall(48)
 			perk:DockMargin(4, 4, 4, 8)
 			perk.Label = v:GetName()
-			perk.DrawShadow = false 
-			
+			perk.DrawShadow = false
+
 			perk:InvalidateParent()
 			perk.Perk = v
 
@@ -385,29 +385,29 @@ function CreatePerkList(par, subcat, ent)
 				local v = self.Perk
 				local ic = v:GetIcon()
 				self.Label = v:GetName()
-				if ic then 
+				if ic then
 					surface.SetDrawColor(255, 255, 255)
 					surface.DrawMaterial(ic.url, ic.name, 8, 8, 32, 32)
 
 					self.TextAX = 0
 					self.TextX = 48
 				end
-				if IsValid(pf) and pf.Perk == self.Perk then 
+				if IsValid(pf) and pf.Perk == self.Perk then
 					self.Color = Color(50, 150, 250)
-				else 
+				else
 					self.Color = Color(70, 70, 70)
 				end
 
-				
+
 			end
 
 			function perk:DoClick()
 				if not IsValid(pf) then
 					pf = CreatePerkFrame(pmain, self.Perk, ent)
 
-					local scr = par.scr 
+					local scr = par.scr
 
-					if IsValid(scr) and not scr.Folded then 
+					if IsValid(scr) and not scr.Folded then
 						scr:Fold(24, function()
 							pmain:MoveBy(76 + 24, 0, 0.2, 0, 0.3)
 						end)
@@ -418,9 +418,9 @@ function CreatePerkList(par, subcat, ent)
 				elseif self.Perk ~= pf.Perk then
 					pf:ChangePerk(self.Perk)
 
-					local scr = par.scr 
+					local scr = par.scr
 
-					if IsValid(scr) and not scr.Folded then 
+					if IsValid(scr) and not scr.Folded then
 						scr:Fold(24, function()
 							pmain:MoveBy(76 + 24, 0, 0.2, 0, 0.3)
 						end)
@@ -448,7 +448,7 @@ function CreatePerkList(par, subcat, ent)
 		pmain:NewPerks(subcat.Perks)
 
 	end
-	
+
 
 	return pmain
 
@@ -469,12 +469,12 @@ function CreatePerkTree(par, subcat, ent)
 
 	canvas:SetSize(origW, origH)	--source seems ok with ridiculous panel sizes.
 
-	local setpos = false 
+	local setpos = false
 
 	canvas.Offset = {x = 0, y = 0}
 	canvas.Panels = {}
-	canvas.Size = 1 
-	canvas.NewSize = 1 
+	canvas.Size = 1
+	canvas.NewSize = 1
 
 
 	canvas:SetMouseInputEnabled(true)
@@ -503,7 +503,7 @@ function CreatePerkTree(par, subcat, ent)
 	function canvas:Paint(w, h)
 		draw.RoundedBox(8, 0, 0, w, h, Color(40, 40, 40))
 
-		local size = container.Size 
+		local size = container.Size
 
 		local div = 1 / size
 
@@ -535,14 +535,14 @@ function CreatePerkTree(par, subcat, ent)
 	function main:Disappear()
 		par:Unfold()
 		self:PopOut()
-	end 
+	end
 
 	function main:ChangeSubCat(new)
 		self.SubCat = new
 	end
 
 	local lx, ly
-	local was = false 
+	local was = false
 
 
 	function container:Think()
@@ -554,14 +554,14 @@ function CreatePerkTree(par, subcat, ent)
 			local mx, my = input.GetCursorPos()
 
 			dx, dy = mx - (lx or mx), my - (ly or my)
-			lx, ly = mx, my 
+			lx, ly = mx, my
 		elseif not mdown then
 			self.Moving = false
 			lx, ly = nil, nil
 		end
 
-		if self.NewSize ~= self.Size then 
-			local change = self.Size 
+		if self.NewSize ~= self.Size then
+			local change = self.Size
 
 			self.Size = L(self.Size, self.NewSize, 15)
 			canvas.Size = self.Size
@@ -585,9 +585,9 @@ function CreatePerkTree(par, subcat, ent)
 			local mv = self.Moved
 
 			local tomovex, tomovey = (zX/preW*difW), (zY/preH*difH)--(zX - oldX + w) * frac, (zY - oldY + h) * frac
-			
-			if tomovex < 1 and tomovex> -1 
-			or tomovey < 1 and tomovey> -1 then 
+
+			if tomovex < 1 and tomovex> -1
+			or tomovey < 1 and tomovey> -1 then
 			else --oops
 
 				self:SetPos(
@@ -597,7 +597,7 @@ function CreatePerkTree(par, subcat, ent)
 
 			end
 
-			for k, pnl in pairs(self.Panels) do 
+			for k, pnl in pairs(self.Panels) do
 
 				pnl:SetSize(pnl.OrigW * self.Size, pnl.OrigH * self.Size)
 
@@ -609,16 +609,16 @@ function CreatePerkTree(par, subcat, ent)
 
 		self:SetPos(self.X + dx, self.Y + dy)
 	end
-	
+
 	function container:Paint(w, h)
 		--draw.RoundedBox(0, 0, 0, w, h, Color(255, 0, 0, 20))
 		surface.SetDrawColor(Color(200, 100, 100))
 
-		for k,v in pairs(self.Panels) do 
+		for k,v in pairs(self.Panels) do
 
 			local w, h = v:GetSize()
 
-			if v.ConnectedTo then 	
+			if v.ConnectedTo then
 				local lX, lY = v:ScreenToLocal(self:LocalToScreen(v.ConnectedTo:GetPos()))
 
 				draw.RotatedBox(v.X + w/2, v.Y + h/2, v.X + lX+w/2, v.Y + lY+h/2, self.Size*4)
@@ -626,14 +626,14 @@ function CreatePerkTree(par, subcat, ent)
 
 		end
 	end
-	
+
 
 	function container:OnMousePressed(k)
-		if k~=MOUSE_RIGHT then print("no") return end 
+		if k~=MOUSE_RIGHT then print("no") return end
 
 		self.Moving = true
-		
-	end 
+
+	end
 
 	function container:OnMouseWheeled(d)
 		self.PrevW, self.PrevH = self:GetSize()
@@ -648,10 +648,10 @@ function CreatePerkTree(par, subcat, ent)
 	end
 
 	function container:OnMouseReleased(k)
-		if k~=MOUSE_RIGHT then return end 
+		if k~=MOUSE_RIGHT then return end
 		self.Moving = false
 		lx, ly = 0, 0
-	end 
+	end
 
 	canvas.OnMouseWheeled = function(_, d) container:OnMouseWheeled(d) end
 	canvas.OnMouseReleased = function(_, d) container:OnMouseReleased(d) end
@@ -672,19 +672,19 @@ function CreatePerkTree(par, subcat, ent)
 		pnl.OrigFX, pnl.OrigFY = fx, fy
 	end
 
-	for name, perk in pairs(subcat.Perks) do 
+	for name, perk in pairs(subcat.Perks) do
 
 		local lastNode
 
 		for lv, lvt in ipairs(perk.Levels) do
 
-			if not lvt.Pos then print("Can't get pos for perk", perk.Name) continue end 
+			if not lvt.Pos then print("Can't get pos for perk", perk.Name) continue end
 
 			local btn = vgui.Create("DButton")
 			btn:SetSize(200, 200)
 			btn:SetText("")
 
-			if lastNode then btn.ConnectedTo = lastNode end 
+			if lastNode then btn.ConnectedTo = lastNode end
 
 			function btn:Paint(w, h)
 
@@ -695,22 +695,22 @@ function CreatePerkTree(par, subcat, ent)
 				surface.DrawMaterial("https://i.imgur.com/dO5eomW.png", "plus.png", w * 0.2, h * 0.2, w*0.6, h*0.6)
 
 				--draw.SimpleText(lv, "OS20", w/2, h, color_white, 1, 4)
-				
+
 			end
 			local omp = btn.OnMousePressed
 
 			function btn:OnMousePressed(k)
-				if k==MOUSE_RIGHT then 
+				if k==MOUSE_RIGHT then
 					container:OnMousePressed(k)
-				else 
+				else
 					omp(self, k)
-				end 
+				end
 			end
 			lastNode = btn
 
 			container:AddPanel(btn, lvt.Pos.x, lvt.Pos.y)
 		end
-			
+
 	end
 
 	return main
@@ -719,7 +719,7 @@ end
 
 function OpenResearchSelectMenu(ent)
 	local self = ent
-	if IsValid(pmain) then return end 
+	if IsValid(pmain) then return end
 
 	local f = vgui.Create("FFrame")
 
@@ -736,11 +736,11 @@ function OpenResearchSelectMenu(ent)
 	f:PopIn()
 
 	local rslist = vgui.Create("FScrollPanel", f)
-	rslist:SetPos(8, hh) 
+	rslist:SetPos(8, hh)
 	rslist:SetSize(250, 600 - f.HeaderSize - 8)
 	rslist:GetCanvas():DockPadding(8, 8, 8, 8)
 
-	rslist.GradBorder = true 
+	rslist.GradBorder = true
 
 	local cats = {}
 	local subfr = {}
@@ -748,7 +748,7 @@ function OpenResearchSelectMenu(ent)
 	local perklist 	--perktree created by CreatePerkTree function
 	local unexp		--invisible button for unfolding
 
-	--Categories panel 
+	--Categories panel
 
 	local function CreateSubScroll(skipanim)
 
@@ -763,7 +763,7 @@ function OpenResearchSelectMenu(ent)
 		end
 		function unexp:DoClick()
 			perklist:Disappear()
-			perklist = nil 
+			perklist = nil
 		end
 
 		subfr = vgui.Create("InvisPanel", f)	--main subframe button, holds subcats, perks and perk info
@@ -778,7 +778,7 @@ function OpenResearchSelectMenu(ent)
 
 		subfr.Expanded = false
 
-		subfr.ExpandsTo = expw 
+		subfr.ExpandsTo = expw
 		subfr.UnexpandsTo = unexpw
 
 		local scr = vgui.Create("FScrollPanel", subfr)	--subcats scroll
@@ -790,9 +790,9 @@ function OpenResearchSelectMenu(ent)
 			btn:SetSize(wid, subfr:GetTall())
 			btn:SetAlpha(0)
 
-			self.Folded = true 
+			self.Folded = true
 
-			local scr = self 
+			local scr = self
 
 			function btn:DoClick()
 				callback()
@@ -801,16 +801,16 @@ function OpenResearchSelectMenu(ent)
 			end
 
 			function btn:Think()
-				if not IsValid(self) or not subfr or not subfr.Expanded then 
+				if not IsValid(self) or not subfr or not subfr.Expanded then
 					self:Remove()
 					scr.Folded = false
-				end 
+				end
 			end
 
 		end
 
-		scr.Fold = UnexpandButton 
-		local po = scr.PaintOver 
+		scr.Fold = UnexpandButton
+		local po = scr.PaintOver
 
 		local a = 0
 
@@ -825,12 +825,12 @@ function OpenResearchSelectMenu(ent)
 
 			if self.Folded and out then --well this was cancer.
 				st = CurTime() 			--probably need to find a smarter way, yeah?
-				et = CurTime() + 0.3 
+				et = CurTime() + 0.3
 				out = false
 			elseif not self.Folded and not out then --actually i shouldve used the Animations library lol
 				st = CurTime()
-				et = CurTime() + 0.3 
-				out = true 
+				et = CurTime() + 0.3
+				out = true
 			end
 
 			local frac = math.min(math.TimeFraction(st, et, CurTime()), 1)
@@ -838,7 +838,7 @@ function OpenResearchSelectMenu(ent)
 
 			a = frac * 230
 
-			if out then 
+			if out then
 				a = math.max(230 - a, 0)
 			end
 
@@ -846,14 +846,14 @@ function OpenResearchSelectMenu(ent)
 
 		function subfr:Think()
 
-			if IsValid(perklist) and not self.Expanded then 
+			if IsValid(perklist) and not self.Expanded then
 
 				self:MoveTo(8 + 24, hh, 0.4, 0, 0.3)
 				self:SizeTo(expw, -1, 0.4, 0, 0.3)
 				scr:MoveTo(8, 0, 0.35, 0, 0.3)
 				self.Expanded = true
 
-			elseif not IsValid(perklist) and self.Expanded then 
+			elseif not IsValid(perklist) and self.Expanded then
 
 				self:MoveTo(24 + 250, hh, 0.4, 0, 0.3)
 				self:SizeTo(unexpw, -1, 0.4, 0, 0.3)
@@ -864,7 +864,7 @@ function OpenResearchSelectMenu(ent)
 			unexp:SetMouseInputEnabled(self.Expanded)
 		end
 
-		subfr.UnfoldedW = expw 
+		subfr.UnfoldedW = expw
 		subfr.FoldedW = unexpw
 		function subfr:Paint(w, h)
 			draw.RoundedBox(8, 0, 0, w, h, Color(60, 60, 60))
@@ -875,7 +875,7 @@ function OpenResearchSelectMenu(ent)
 		end
 
 		function subfr:Unfold()
-			self.Expanded = true 
+			self.Expanded = true
 		end
 
 		local a = 0
@@ -885,21 +885,21 @@ function OpenResearchSelectMenu(ent)
 			po(self, w, h)
 			if not IsValid(subfr) then return end
 
-			if subfr.Expanded then 
+			if subfr.Expanded then
 				a = L(a, 240, 15)
-			else 
+			else
 				a = L(a, 0, 20)
 			end
 
 			surface.SetDrawColor(10, 10, 10, a)
 			surface.DrawRect(0, 0, w, h)
 		end
-		
-		
+
+
 		subfr.scr = scr
 		scr:SetSize(100, subfr:GetTall())
 
-		scr.GradBorder = true 
+		scr.GradBorder = true
 
 		function subfr:Regenerate(cat, noanim)
 
@@ -910,7 +910,7 @@ function OpenResearchSelectMenu(ent)
 			local sanim
 			local size = 40
 
-			for k, subcat in pairs(curcat:GetSubCategories()) do 
+			for k, subcat in pairs(curcat:GetSubCategories()) do
 
 				local subbtn = vgui.Create("DButton", scrsubpnl)
 
@@ -921,7 +921,7 @@ function OpenResearchSelectMenu(ent)
 
 					if scrsubpnl.Shrink and not sanim then
 
-						sanim = scrsubpnl:NewAnimation(0.6, 0, 0.7, function() 
+						sanim = scrsubpnl:NewAnimation(0.6, 0, 0.7, function()
 							scrsubpnl:Remove()
 							scr.VBar.NoResize = false
 						end)
@@ -951,18 +951,18 @@ function OpenResearchSelectMenu(ent)
 				end
 
 				function subbtn:DoClick()
-					if scrsubpnl.Shrink then return end 
+					if scrsubpnl.Shrink then return end
 
 					if perklist and IsValid(perklist) then
 
-						if perklist.SubCat == subcat then 
+						if perklist.SubCat == subcat then
 							perklist:Disappear()
-							perklist = nil 
-						else 
+							perklist = nil
+						else
 							perklist:ChangeSubCat(subcat)
-						end 
+						end
 
-					else 
+					else
 						perklist = CreatePerkTree(subfr, subcat, ent)
 					end
 
@@ -975,7 +975,7 @@ function OpenResearchSelectMenu(ent)
 			scr.SubPnl = scrsubpnl
 
 			scrsubpnl:SetSize(120, 16 + 88*i)
-			if not noanim then 
+			if not noanim then
 				scrsubpnl:SetPos(0, -16 - 88*i)
 				scrsubpnl:MoveBy(0, 16 + 88*i, 0.4, 0.1, 0.5)
 			end
@@ -983,18 +983,18 @@ function OpenResearchSelectMenu(ent)
 		end
 
 		subfr:Regenerate(nil, skipanim)
-		
+
 	end
 
-	for id, cat in pairs(Research.Categories) do 
+	for id, cat in pairs(Research.Categories) do
 		local cbtn = vgui.Create("FButton", rslist)
 		cbtn:Dock(TOP)
 		cbtn:SetTall(48)
 		cbtn:DockMargin(0, 4, 0, 8)
 
-		cbtn.DrawShadow = false 
+		cbtn.DrawShadow = false
 
-		cbtn.cat = cat 
+		cbtn.cat = cat
 
 		function cbtn:PostPaint()
 			surface.SetDrawColor(255, 255, 255)
@@ -1008,10 +1008,10 @@ function OpenResearchSelectMenu(ent)
 		cbtn.Label = cat:GetName()
 
 		function cbtn:DoClick()
-			if not curcat or curcat ~= self.cat then 
+			if not curcat or curcat ~= self.cat then
 				curcat = self.cat
 
-				if not subfr or not IsValid(subfr) then 
+				if not subfr or not IsValid(subfr) then
 					CreateSubScroll()
 				elseif IsValid(subfr) then
 					subfr.scr.SubPnl.Shrink = true
@@ -1019,7 +1019,7 @@ function OpenResearchSelectMenu(ent)
 				end
 
 
-			elseif curcat == self.cat and IsValid(subfr) then 
+			elseif curcat == self.cat and IsValid(subfr) then
 				local x, a = subfr.X, subfr:GetAlpha()
 
 				local an = subfr:NewAnimation(0.2, 0, 0.4, function(_, self)
@@ -1035,10 +1035,10 @@ function OpenResearchSelectMenu(ent)
 				subfr = nil
 				curcat = nil
 			end
-			
+
 		end
 
-		if curcat == cat then 
+		if curcat == cat then
 			CreateSubScroll(true)
 		end
 	end
@@ -1052,11 +1052,11 @@ end
 local infof
 
 function OpenResearchInfoMenu(ent, perk)
-	local self = ent 
-	if IsValid(infof) then return end 
+	local self = ent
+	if IsValid(infof) then return end
 
 	local f = vgui.Create("FFrame")
-	infof = f 
+	infof = f
 
 	f:SetSize(600, 300)
 	f:Center()
@@ -1080,12 +1080,12 @@ function OpenResearchInfoMenu(ent, perk)
 		local timestr = "%s"
 		timestr = timestr:format(string.FormattedTime( math.Round(time - CurTime(), 2), "%02i:%02i.%02i" ))
 		surface.SetDrawColor(color_white)
-		
+
 		local tw, th = draw.SimpleText(timestr, "OSB36", w/2, h/2 - 32, Color(200, 200, 200), 1, 1)
 		surface.DrawMaterial("https://i.imgur.com/JYpGKqh.png", "clock.png", w/2 - tw/2 - 8 - 32, h/2 - 32 - 16, 32, 32)
 	end
 
-	local yields 
+	local yields
 	local pylds = perk.Levels[lv + 1].Yields
 
 	if pylds then
@@ -1110,7 +1110,7 @@ function OpenResearchInfoMenu(ent, perk)
 
 		local i = 0
 
-		for k,v in pairs(pylds) do 
+		for k,v in pairs(pylds) do
 			i = i + 1
 			local b = vgui.Create("FButton", yields)
 			b:SetSize(64, 64)
@@ -1118,18 +1118,18 @@ function OpenResearchInfoMenu(ent, perk)
 
 			function b:OnHover()
 
-				if not self.Cloud then 
+				if not self.Cloud then
 					self.Cloud = vgui.Create("Cloud", self)
 					local cl = self.Cloud
 
-					if v.name then 
-						cl.Label = v.name 
-					end 
+					if v.name then
+						cl.Label = v.name
+					end
 
-					if v.desc then 
-						for k,v in pairs(v.desc) do 
+					if v.desc then
+						for k,v in pairs(v.desc) do
 							cl:AddFormattedText(v.Text, v.Color or Color(255, 255, 255), v.font or "OS18", (v.Continuation and 0))
-						end 
+						end
 					end
 					local x, y = self:LocalToScreen(32, 0)
 					cl:SetAbsPos(32, -16)
@@ -1141,12 +1141,12 @@ function OpenResearchInfoMenu(ent, perk)
 			end
 
 			function b:OnUnhover()
-				if self.Cloud then 
+				if self.Cloud then
 					self.Cloud:Popup(false)
 				end
 			end
 
-			local icurl 
+			local icurl
 			local icname
 			local ix, iy, iw, ih
 			local icol
@@ -1157,11 +1157,11 @@ function OpenResearchInfoMenu(ent, perk)
 				if imdl then
 					surface.SetDrawColor(Color(255, 255, 255))
 					draw.DrawOrRender(self, imdl, 0, 0, w, h)
-				
-				elseif icurl then
-					local nw, nh = iw or w, ih or h 
 
-					local nx = ix or w/2 - nw/2 
+				elseif icurl then
+					local nw, nh = iw or w, ih or h
+
+					local nx = ix or w/2 - nw/2
 					local ny = iy or h/2 - nh/2
 
 					surface.SetDrawColor(icol or Color(255, 255, 255))
@@ -1169,20 +1169,20 @@ function OpenResearchInfoMenu(ent, perk)
 				end
 			end
 
-			if v.model then 
+			if v.model then
 				imdl = v.model
 			end
 
-			if v.icon then 
+			if v.icon then
 				local i = v.icon
 
 				icurl = i.URL
 				icname = i.Name
 				ix, iy, iw, ih = i.X, i.Y, i.W, i.H
-				icol = i.Color 
+				icol = i.Color
 			end
 
-		end 
+		end
 
 	end
 end
