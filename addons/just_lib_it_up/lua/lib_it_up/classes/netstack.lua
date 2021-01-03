@@ -45,11 +45,11 @@ for k,v in pairs(net) do
 			}
 
 			local where = self:Emit("WriteOp", k, tbl)
-			if where ~= nil then return t end
+			if where ~= nil then return tbl end
 
-			local where = self:WriteAtCursor(tbl)
+			self:WriteAtCursor(tbl)
 			self:AdvanceCursor()
-			return t
+			return tbl
 		end
 	end
 end
@@ -197,9 +197,15 @@ function netstack:Hijack(b)
 	end
 end
 
+-- add an op on cursor & advance it
+function netstack:AddTop(tbl)
+	self:WriteAtCursor(tbl)
+	self:AdvanceCursor()
+end
+
 function netstack:MergeInto(ns)
 	for k,v in ipairs(self.Ops) do
-		ns.Ops[#ns.Ops + 1] = v
+		ns:AddTop(v)
 	end
 end
 
