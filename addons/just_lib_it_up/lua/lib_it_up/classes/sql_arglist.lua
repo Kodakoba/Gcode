@@ -4,7 +4,7 @@ local al = LibItUp.SQLArgList
 al.IsArgList = true
 
 function IsArgList(t)
-	return t.IsArgList
+	return istable(t) and t.IsArgList
 end
 
 function al:Initialize()

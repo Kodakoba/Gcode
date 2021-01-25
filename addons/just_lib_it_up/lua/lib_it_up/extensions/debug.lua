@@ -17,7 +17,7 @@ function Log(mod, str, ...)
 	local n = mod.name or "???"
 	local col = mod.col or Color(255, 0, 0)
 
-	str = str:format(...)
+	str = isstring(str) and str:format(...) or table.concat({...}, "	")
 
 	local tbl = {
 		col,

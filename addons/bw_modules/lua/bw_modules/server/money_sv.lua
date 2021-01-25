@@ -2,137 +2,65 @@
 local tag = "BaseWarsMoney"
 local tag_escaped = "basewars_money"
 
-BaseWars.Money = {}
+BaseWars.Money = BaseWars.Money or {}
 local MODULE = BaseWars.Money
+MODULE.Log = Logger("BW-Money", Color(80, 230, 80))
 
 local PLAYER = debug.getregistry().Player
 
 
-local function isPlayer(ply)
 
-	return (IsValid(ply) and ply:IsPlayer())
-
+function MODULE:SyncMoney()
+	self:SetNWString("BW_Money", self._money)
 end
-local CDs = {}
 
-function MODULE.GetMoney(ply)
+function MODULE:SetMoney(amt, no_write)
+	self._money = math.Round(amt)
+	self:SyncMoney()
 
-	if SERVER then
-
-		local puid = MODULE.InitMoney(ply)
-		local money = sql.Check("SELECT money FROM bw_plyData WHERE puid=="..puid, true ) --maybe it's a little resource expensive...?
-		return tonumber(money[1].money) --pepega sqlite
-
-	elseif CLIENT then
-
-		return tonumber(ply:GetNWString(tag)) or 0
-
-	end
-
-end
-PLAYER.GetMoney = MODULE.GetMoney
-
-local q = "CREATE TABLE IF NOT EXISTS bw_plyData(puid INTEGER PRIMARY KEY, money INTEGER, lvl INTEGER, xp INTEGER, plvl INTEGER, ppts INTEGER);"
-sql.Check(q)
-
-function MODULE:Dump()
-	sql.Check("DROP TABLE bw_plyData")
-	sql.Check(q)
-	for k,v in pairs(player.GetAll()) do
-		MODULE.InitMoney(v)
+	if not no_write then
+		self:SetBWData("money", amt)
 	end
 end
 
-function MODULE.FirstMoney(ply)
-	local puid = ply:GetUID()
-	if not puid then error('Failed to get PUID for ' .. ply) return end
+function MODULE:TakeMoney(amt, no_write)
+	self._money = math.Round(self._money - amt)
+	self:SyncMoney()
 
-	local q = "INSERT INTO bw_plyData(puid, money, lvl, xp, plvl, ppts) VALUES (%s, %s, %s, %s, %s, %s)"
-	q = string.format(q, ply:GetUID(), BaseWars.Config.StartMoney, 0, 0, 0, 0)
-	sql.Check(q)
-	ply:SetNWString(tag, BaseWars.Config.StartMoney)
-end
-
-BaseWars.FirstEntry = MODULE.FirstMoney
-PLAYER.FirstEntry = MODULE.FirstMoney
-
-function MODULE.InitMoney(ply)
-
-	local puid = ply:GetUID()
-	if not puid then error('Failed to get PUID for ' .. ply) return end
-
-	local data = sql.Check("SELECT * FROM bw_plyData WHERE puid=="..puid, true )
-
-	if not data then
-		MODULE.FirstMoney(ply)
-		return puid
+	if not no_write then
+		self:SubBWData("money", amt)
 	end
-	data = data[1]
-
-	ply:SetNWString(tag, tonumber(data.money))
-
-	return puid
-
 end
 
-PLAYER.InitMoney = MODULE.InitMoney
+function MODULE:AddMoney(amt, no_write)
+	self._money = math.Round(self._money + amt)
+	self:SyncMoney()
 
-for k, v in ipairs(player.GetAll()) do
-	v:InitMoney()
+	if not no_write then
+		self:AddBWData("money", amt)
+	end
 end
 
-function MODULE.SaveMoney(ply, amount)
-
-	local puid = ply:InitMoney()
-	if not puid then return end
-	amount = amount or ply:GetMoney()
-	local q = "UPDATE bw_plyData SET money = %s WHERE puid==%s"
-	q = q:format(amount, puid)
-
-	sql.Check(q)
-
-end
-
-PLAYER.SaveMoney = MODULE.SaveMoney
-
-function MODULE.LoadMoney(ply)
-
-	ply:InitMoney()
-	ply:SetNWString(tag, ply:GetMoney())
-
-end
-
-PLAYER.LoadMoney = MODULE.LoadMoney
-
-function MODULE.SetMoney(ply, amount)
-
-	if not isnumber(amount) or amount < 0 then amount = 0 end
-	if amount > 2^63 then amount = 2^63 end
-
-	if amount ~= amount then amount = 0 end
-
-	amount = math.Round(amount)
-	ply:SaveMoney(amount)
-
-	ply:SetNWString(tag, amount)
-
-end
 PLAYER.SetMoney = MODULE.SetMoney
-
-function MODULE.GiveMoney(ply, amount)
-
-	ply:SetMoney(ply:GetMoney() + amount)
-
-end
-PLAYER.GiveMoney = MODULE.GiveMoney
-
-function MODULE.TakeMoney(ply, amount)
-
-	ply:SetMoney(ply:GetMoney() - amount)
-
-end
+PLAYER.AddMoney = MODULE.AddMoney
+PLAYER.SubMoney = MODULE.TakeMoney
 PLAYER.TakeMoney = MODULE.TakeMoney
+PLAYER.SyncMoney = MODULE.SyncMoney
 
-hook.Add("PlayerAuthed", tag .. ".Load", MODULE.LoadMoney)
-hook.Add("PlayerDisconnected", tag .. ".Save", MODULE.SaveMoney)
+function MODULE:LoadMoney(dat, write)
+	local money = dat.money
 
+	if not money then --bruh
+		money = BaseWars.Config.StartMoney
+		--write.money = money
+		
+		MODULE.Log("Reset money for \"%s\" (%s) to starting money (%s)",
+			self:Nick(), self:SteamID64(), Language.Price(money))
+	end
+
+	self:SetMoney(money, true)
+
+end
+
+hook.Add("BW_LoadPlayerData", tag .. ".Load", MODULE.LoadMoney)
+--hook.Add("BW_SavePlayerData", tag .. ".Save", MODULE.SaveMoney)
