@@ -8,8 +8,7 @@ Binds.Keys = Binds.Keys or muldim:new()
 local fileName = __LibName .. "_binds.txt"
 
 local comment = [[
-Don't touch this unless you're confident you won't mess it up,
-since if you did, the error won't really tell you where or why.
+Don't touch this unless you're confident you won't mess it up.
 
 You may want to use this page: https://wiki.facepunch.com/gmod/Enums/KEY
 ]]
