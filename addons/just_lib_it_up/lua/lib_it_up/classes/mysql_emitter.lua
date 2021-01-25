@@ -1,4 +1,4 @@
-if CLIENT then return end --not for you, pumpkin
+if CLIENT then error("This isn't supposed to be included clientside.") return end --not for you, pumpkin
 
 if not Emitter then include('emitter.lua') end
 
@@ -10,7 +10,8 @@ local function defaultCatch(q, err, sql)
 	MsgC(verygood, "[MySQLEmitter ", verybad, "ERROR!", verygood, "]\n", color_white, str:format(err, sql), "\n")
 end
 
-MySQLEmitter = Emitter:Callable()
+MySQLEmitter = MySQLEmitter or Emitter:Callable()
+MySQLEmitter.IsMySQLEmitter = true
 
 function MySQLEmitter:Initialize(query, also_do)
 	local meta = getmetatable(query)
@@ -87,4 +88,23 @@ end
 function MySQLEmitter:Exec()
 	self.CurrentQuery:start()
 	return self
+end
+
+
+MySQLDatabase = MySQLDatabase or Emitter:Callable()
+MySQLDatabase.IsMySQLDatabase = true
+
+function MySQLDatabase:Initialize(db)
+	local meta = getmetatable(query)
+	if not meta or meta.MetaName ~= "MySQLOO table" then errorf("MySQLEmitter: expected a mysql query object, got %s instead", type(query)) return end
+end
+
+
+
+function IsMySQLEmitter(t)
+	return t.IsMySQLEmitter
+end
+
+function IsMySQLDatabase(t)
+	return t.IsMySQLDatabase
 end
