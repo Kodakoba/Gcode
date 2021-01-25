@@ -655,7 +655,7 @@ local function GetOrDownload(url, name, flags, cb)	--callback: 1st arg is materi
 
 		if file.Exists("hdl/" .. name, "DATA") then 		--mat existed on disk: load it in
 
-			local cmat = Material("data/hdl/" .. name, flags or "ignorez")
+			local cmat = Material("data/hdl/" .. name, flags or "smooth ignorez")
 
 			mat.mat = cmat
 
@@ -672,7 +672,7 @@ local function GetOrDownload(url, name, flags, cb)	--callback: 1st arg is materi
 
 			hdl.DownloadFile(url, name or "unnamed.dat", function(fn)
 				mat.downloading = false
-				local cmat = Material(fn, flags or "ignorez")
+				local cmat = Material(fn, flags or "smooth ignorez")
 				mat.mat = cmat
 
 				mat.w = cmat:Width()
