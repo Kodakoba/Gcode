@@ -100,7 +100,18 @@ function FInc.Recursive(name, realm, nofold, decider, callback)	--even though wi
 		if inc_name:match("extensions/includes%.lua") then continue end --don't include yourself
 
 		if includes[realm] then
-			local cl, sv = decider (inc_name)
+			local cl, sv = decider (inc_name, realm)
+
+			-- if we're dealing with _SV and the 2nd arg isn't nil,
+			-- shift it to the 1st arg since the includers only take 1 arg for _CL/_SV
+			if realm ~= _SH then
+				if sv ~= nil then
+					if realm == _SV then
+						cl = sv
+					end
+				end
+			end
+
 			includes[realm] (inc_name, cl, sv)
 			callback(inc_name)
 		else
@@ -116,7 +127,7 @@ function FInc.Recursive(name, realm, nofold, decider, callback)	--even though wi
 			-- path/ .. found_folder  .. /  .. wildcard_used
 			-- muhaddon/newfolder/*.lua
 
-			FInc.Recursive(path .. v .. "/" .. wildcard, realm, nil, callback)
+			FInc.Recursive(path .. v .. "/" .. wildcard, realm, nil, decider, callback)
 		end
 	end
 
@@ -148,7 +159,7 @@ function FInc.NonRecursive(name, realm) --mhm
 	return FInc.Recursive(name, realm, true)
 end
 
-function FInc.FromHere(name, realm, nofold, cb)
+function FInc.FromHere(name, realm, nofold, decider, cb)
 	if not NeedToInclude(realm) then return end
 
 	local gm = engine.ActiveGamemode()
@@ -198,7 +209,7 @@ function FInc.FromHere(name, realm, nofold, cb)
 		return
 	end
 
-	FInc.Recursive(path .. name, realm, nofold, cb)
+	FInc.Recursive(path .. name, realm, nofold, decider, cb)
 
 end
 
