@@ -68,8 +68,16 @@ function PANEL:Init()
 
 	self.SizableBoxX = 1
 	self.SizableBoxY = 1 	--bottom right, like the default
+
+	self.Shadow = {}
 end
 
+function PANEL:SetHeaderSize(sz)
+	local l, t, r, b = self:GetDockPadding()
+	local prev = self.HeaderSize
+	self.HeaderSize = sz
+	self:DockPadding(l, t - prev + sz, r, b)
+end
 
 function PANEL:SetColor(r, g, b)
 
@@ -168,7 +176,7 @@ function PANEL.DrawHeaderPanel(self, w, h, x, y)
 
 		end
 
-		draw.SimpleText(label, self.LabelFont, x+xoff, y, color_white, 0, 2)
+		draw.SimpleText(label, self.LabelFont, x+xoff, y + hh / 2, color_white, 0, 1)
 	end
 
 	if self:GetSizable() then 	--i spent like 3 hours on sizable support for FPanels from any corner, holy shit
@@ -337,6 +345,17 @@ function PANEL:Think()
 			newsizeY = ScrH() - py
 		end
 
+		local retX, retY = self:Emit("Resize", newsizeX, newsizeY)
+		if retX == false then return end
+
+		if isnumber(retX) then
+			newsizeX = retX
+		end
+
+		if isnumber(retY) then
+			newsizeY = retY
+		end
+
 		local sizediffX, sizediffY = newsizeX - oldsizeX, newsizeY - oldsizeY
 
 		self:SetSize(newsizeX, newsizeY)
@@ -350,6 +369,7 @@ function PANEL:Think()
 		end
 
 		self:SetCursor(cursors[self.SizableBoxX][self.SizableBoxY])
+		self:Emit("Resized", newsizeX, newsizeY)
 		return
 
 	end
@@ -398,7 +418,7 @@ function PANEL:OnMousePressed()
 		if math.PointIn2DBox(mX, mY, boxX, boxY, boxW, boxH) then
 			self.Sizing = { gui.MouseX() - self:GetWide(), gui.MouseY() - self:GetTall() }
 			self:MouseCapture( true )
-			self:Emit("OnResize")
+			self:Emit("StartResize")
 			return
 		end
 	end
@@ -406,7 +426,7 @@ function PANEL:OnMousePressed()
 	if ( self:GetDraggable() and gui.MouseY() < ( screenY + self.DraggableH ) ) then
 		self.Dragging = { gui.MouseX() - self.x, gui.MouseY() - self.y }
 		self:MouseCapture( true )
-		self:Emit("OnDrag")
+		self:Emit("StartDrag")
 		return
 	end
 
