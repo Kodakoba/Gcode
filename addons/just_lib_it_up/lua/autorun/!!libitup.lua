@@ -59,6 +59,12 @@ local includes = {
 
 }
 
+local realmExclusive = {
+	["mysql_emitter.lua"] = _SV,
+	["sql_arglist.lua"] = _SV,
+	["rtpool.lua"] = _CL,
+}
+
 function IncludeFolder(name, realm, nofold)	--This function will be used both by addons and by LibItUp,
 											-- so we'll only count files when we're loading
 	local file, folder = file.Find( name, "LUA" )
@@ -68,13 +74,22 @@ function IncludeFolder(name, realm, nofold)	--This function will be used both by
 	--[[
 		Include all found lua files
 	]]
+	local curRealm = SERVER and _SV or _CL
 
 	for k,v in pairs(file) do
 		if not v:match(".+%.lua$") then continue end --if file doesn't end with .lua, ignore it
+		local name = pathname .. v
+
+		if realmExclusive[v] and realmExclusive[v] ~= curRealm then
+			if SERVER then
+				includes[realmExclusive[v]] (name) -- sv has to AddCSLuaFile it
+			end
+			continue
+		end
 
 		if loading then files = files + 1 end
 
-		local name = pathname .. v
+		
 
 		if includes[realm] then
 			includes[realm] (name)
