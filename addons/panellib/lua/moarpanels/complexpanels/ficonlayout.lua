@@ -12,6 +12,7 @@ function FIC:Init()
 	self.PadY = 8
 
 	self.AutoPad = true
+	self.AutoResize = true
 
 	self.MarginX = 4
 	self.MarginY = 8
@@ -65,6 +66,20 @@ function FIC:OnRowShift(row, curX, w)
 
 end
 
+function FIC:_CreateRow(n)
+	local row = {
+		MaxH = 0,
+		PnlW = 0,
+		Full = false,
+		Sizes = {},
+		Positions = {}
+	}
+
+	self.Rows[n] = row
+
+	return row
+end
+
 function FIC:UpdateSize(w, h)
 	local curX = self.PadX
 	local curY = self.PadY
@@ -74,7 +89,7 @@ function FIC:UpdateSize(w, h)
 	local curRow = self.CurRow
 
 	for k,v in ipairs( self.Panels ) do
-		local row = self.Rows[curRow]
+		local row = self.Rows[curRow] or self:_CreateRow(curRow)
 
 		local vW, vH = v:GetSize()
 
@@ -87,20 +102,7 @@ function FIC:UpdateSize(w, h)
 
 			self.CurRow = self.CurRow + 1
 			curRow = self.CurRow
-			row = self.Rows[curRow]
-		end
-
-		if not row then -- we're on a new, nonexisting row; fill in initial data
-
-			row = {
-				MaxH = 0,
-				PnlW = 0,
-				Full = false,
-				Sizes = {},
-				Positions = {}
-			}
-
-			self.Rows[curRow] = row
+			row = self.Rows[curRow] or self:_CreateRow(curRow)
 		end
 
 		row.Sizes[v] = {vW, vH}
@@ -131,6 +133,9 @@ function FIC:UpdateSize(w, h)
 		end
 	end
 
+	if self.AutoResize then
+		self:SetTall(math.max(curY + lastRow.MaxH, self:GetTall()))
+	end
 end
 
 FIC.Reshuffle = FIC.UpdateSize

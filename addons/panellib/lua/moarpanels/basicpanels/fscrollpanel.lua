@@ -62,7 +62,7 @@ function FScrollPanel:Init()
 	self.BackgroundColor = Color(40, 40, 40)
 	self.ScrollPower = 1
 
-	self.ScissorShadows = false
+	self.ScissorShadows = true
 end
 
 
