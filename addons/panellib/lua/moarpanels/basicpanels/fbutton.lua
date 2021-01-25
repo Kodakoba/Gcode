@@ -124,42 +124,48 @@ function button:SetTextColor(col, g, b, a)
 	self.DisabledLabelColor.a = 150
 end
 
+local b = bench("wtf", 2000)
+
 function button:HoverLogic(dis, w, h)
-	local shadow = self.Shadow
+
+	local t = self:GetTable()
+	local shadow = t.Shadow
 
 	if self:IsDown() then
 		local min = math.max(w, h)
-		self:To("MxScale", self.MxScaleDown or (1 - math.min(16, min * 0.1) / min), 0.1, 0, 0.3)
-	else
+		self:To("MxScale", t.MxScaleDown or (1 - math.min(16, min * 0.1) / min), 0.1, 0, 0.3)
+	elseif self.MxScale ~= 1 then
 		self:To("MxScale", 1, 0.1, 0, 0.3)
 	end
 
-	if (self:IsHovered() or self.ForceHovered) and not dis then
+	if (self:IsHovered() or t.ForceHovered) and not dis then
 
 		hov = true
-		local hm = self.HovMult
+		local hm = t.HovMult
 
-		local bg = self.Color
+		local bg = t.Color
 
 		local fr = math.min(bg.r*hm, 255)
 		local fg = math.min(bg.g*hm, 255)
 		local fb = math.min(bg.b*hm, 255)
 
 
-		local hovcol = self.HoverColor or Color(fr, fg, fb)
-		self.HoverColor = hovcol
+		local hovcol = t.HoverColor or Color(fr, fg, fb)
+		local hovGen = t.HoverColorGenerated
+
+		t.HoverColor = hovcol
 
 
-		if self.HoverColorGenerated ~= self.Color then
-			self.HoverColor:Set(fr, fg, fb)
-			if self.HoverColorGenerated then
-				self.HoverColorGenerated:Set(self.Color:Unpack())
+		if hovGen ~= bg then
+			t.HoverColor:Set(fr, fg, fb)
+			if hovGen then
+				hovGen:Set(bg:Unpack())
 			else
-				self.HoverColorGenerated = self.Color:Copy()
+				t.HoverColorGenerated = t.Color:Copy()
 			end
 		end
 
-		LC(self.drawColor, self.HoverColor, 10) --this just looks better, idfk
+		LC(t.drawColor, t.HoverColor, 10) --this just looks better, idfk
 		--self:LerpColor(self.drawColor, self.HoverColor, 1.1, 0, 0.2)
 
 		if shadow.OnHover then
@@ -168,24 +174,24 @@ function button:HoverLogic(dis, w, h)
 		end
 
 		if not self._IsHovered then
-			self._IsHovered = true
+			t._IsHovered = true
 			self:OnHover()
 		end
 
 		self:ThinkHovered()
 	else
 
-		local bg = dis and self.DisabledColor or self.Color
+		local bg = dis and t.DisabledColor or t.Color
 
 		--self:LerpColor(self.drawColor, bg, 0.4, 0, 0.8)
-		LC(self.drawColor, bg)
+		LC(t.drawColor, bg)
 
-		if shadow.OnHover then
+		if shadow.OnHover and shadow.Spread ~= 0 then
 			self:MemberLerp(shadow, "Spread", 0, shadow.UnhoverSpeed, 0, shadow.UnhoverEase)
 		end
 
-		if self._IsHovered then
-			self._IsHovered = false
+		if t._IsHovered then
+			t._IsHovered = false
 			self:OnUnhover()
 		end
 	end
@@ -274,30 +280,17 @@ function button:PaintIcon(x, y)
 	local iX = x
 	local iY = y
 
-	--[[if not ic.IconRotation then
-		iX = x - iW * xoff - ioff
-		iY = self:GetTall() / 2 - iH / 2
-	else
-		iX = x - ioff
-		iY = y
-	end]]
-
 	render.PushFilterMin(TEXFILTER.ANISOTROPIC)
 
-		local ok, err = pcall(function()
-			if ic.IconMat then
-				surface.SetMaterial(ic.IconMat)
-				surface.DrawTexturedRect(iX, iY, iW, iH)
-			elseif ic.IconURL then
-				surface.DrawMaterial(ic.IconURL, ic.IconName, iX, iY, iW, iH, ic.IconRotation)
-			end
-		end)
+		if ic.IconMat then
+			surface.SetMaterial(ic.IconMat)
+			surface.DrawTexturedRect(iX, iY, iW, iH)
+		elseif ic.IconURL then
+			surface.DrawMaterial(ic.IconURL, ic.IconName, iX, iY, iW, iH, ic.IconRotation)
+		end
 
 	render.PopFilterMin()
 
-	if not ok then
-		error(err)
-	end
 end
 
 local AYToTextY = {
@@ -307,53 +300,51 @@ local AYToTextY = {
 }
 --mostly shadow logic and caller for Draw* functions
 function button:Draw(w, h)
-
-	local shadow = self.Shadow
+	local t = self:GetTable()
+	
+	local shadow = t.Shadow
 	local disabled = self:GetDisabled()
-
-	self.drawColor = self.drawColor
 
 	local x, y = 0, 0
 
 	self:HoverLogic(disabled, w, h)
 
 	local spr = shadow.Spread or 0
-	local label = self.Label or nil
+	local label = t.Label or nil
 
-	if not self.NoDraw then
-
-		if (self.DrawShadow and spr > 0) or self.AlwaysDrawShadow then
+	if not t.NoDraw then
+		
+		if (t.DrawShadow and spr > 0) or t.AlwaysDrawShadow then
 			BSHADOWS.BeginShadow()
 			x, y = self:LocalToScreen(0,0)
 
-			if self.ActiveMatrix then
-				cam.PushModelMatrix(self.ActiveMatrix, true)
+			if t.ActiveMatrix then
+				cam.PushModelMatrix(t.ActiveMatrix, true)
 			end
 
 		end
 
-
 			self:DrawButton(x, y, w, h)
 
-		if (self.DrawShadow and spr > 0) or self.AlwaysDrawShadow then
+		if (t.DrawShadow and spr > 0) or t.AlwaysDrawShadow then
 			local int = shadow.Intensity
 			local blur = shadow.Blur
 			local a = shadow.Alpha or 255
 
-			if self.AlwaysDrawShadow then
+			if t.AlwaysDrawShadow then
 				--int = 3
 				spr = math.max(shadow.MinSpread or 0.3, spr)
 				--blur = 1
 			end
 
-			if self.MxScale < 1 then
-				spr = spr * (1 / self.MxScale ^ 6)
+			if t.MxScale < 1 then
+				spr = spr * (1 / t.MxScale ^ 6)
 			end
 			if spr < 0.2 then
 				a = a * (spr / 0.2)
 			end
 
-			if self.ActiveMatrix then
+			if t.ActiveMatrix then
 				cam.PopModelMatrix()
 			end
 
@@ -364,28 +355,28 @@ function button:Draw(w, h)
 
 	end
 
-	local ic = self.Icon
-	local iW = ic and (ic.IconW or w - (self.RBRadius or 8)) or 0
-	local iH = ic and (ic.IconH or h - (self.RBRadius or 8)) or 0
+	local ic = t.Icon
+	local iW = ic and (ic.IconW or w - (t.RBRadius or 8)) or 0
+	local iH = ic and (ic.IconH or h - (t.RBRadius or 8)) or 0
 
-	if not self.NoDrawText and label then
+	if not t.NoDrawText and label then
 
 		label = tostring(label)
 
-		local tx = self.TextX or w / 2
-		local ty = self.TextY or h / 2
+		local tx = t.TextX or w / 2
+		local ty = t.TextY or h / 2
 
-		local ax = self.TextAX or 1
-		local ay = self.TextAY or 1
+		local ax = t.TextAX or 1
+		local ay = t.TextAY or 1
 		local realAY = AYToTextY[ay] or 1
 
-		local lblCol = disabled and self.DisabledLabelColor or self.LabelColor
+		local lblCol = disabled and t.DisabledLabelColor or t.LabelColor
 		local newlines = amtNewlines(label)
 
 		local iconX = ic and (ic.IconX or 4) or 0
 
 		if newlines > 0 then
-			surface.SetFont(self.Font)
+			surface.SetFont(t.Font)
 			surface.SetTextColor(lblCol:Unpack())
 
 			local lines = newlines + 1
@@ -397,7 +388,7 @@ function button:Draw(w, h)
 				s = s:gsub("^%s+", "")
 				local tW, tH = surface.GetTextSize(s)
 				tWMax = math.max(tWMax, tW)
-				tH = self.TextHeight or tH
+				tH = t.TextHeight or tH
 
 				if not lH then
 					lH = tH * lines
@@ -414,11 +405,11 @@ function button:Draw(w, h)
 			--White()
 			--surface.DrawOutlinedRect(iX, iY, tWMax + iW + iconX, 32)
 
-			self:PaintIcon(iX, iY)
+			t:PaintIcon(iX, iY)
 			--local tw = draw.DrawText(label, self.Font, tx, ty, lblCol, ax)
 		else
 
-			surface.SetFont(self.Font)
+			surface.SetFont(t.Font)
 			local tW, tH = surface.GetTextSize(label)
 						-- 			shhh
 			local fullW = iW + (iconX * 2) + tW
@@ -426,7 +417,7 @@ function button:Draw(w, h)
 			local iX = math.Round(tx - fullW * (ax / 2))
 			local iY = math.Round(ty - iH * (ay / 2))
 
-			self:PaintIcon(iX, iY)
+			t:PaintIcon(iX, iY)
 
 			local tX = math.Round(iX + iconX + iW)
 			local tY = math.Round(ty - tH * (ay / 2))
@@ -438,8 +429,7 @@ function button:Draw(w, h)
 		return
 	end
 
-	self:PaintIcon(w/2 - iW / 2, h/2 - iH / 2)
-
+	t:PaintIcon(w/2 - iW / 2, h/2 - iH / 2)
 end
 
 function button:PostPaint(w,h)
