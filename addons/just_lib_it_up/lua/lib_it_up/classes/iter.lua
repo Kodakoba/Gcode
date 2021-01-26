@@ -81,15 +81,6 @@ function ValidSeqIterable:len()
 	return len
 end
 
---[[
-	Valid Iterable
-
-		- When indexing, checks if object is valid; returns nil if not
-		- Keeps keys
-		- Able to go sequential (loses keys, obviously)
-]]
-
-
 function ValidIterable:clean()
 
 	for k, obj in self:_iter() do
@@ -129,15 +120,6 @@ function ValidIterable:new(t, mode)
 end
 
 ValidIterable.__call = ValidIterable.new
-
-
-
-
---[[
-	Sequential Valid Iterable
-		- Same as Valid Iterable, but sequential.
-]]
-
 
 function ValidSeqIterable:clean()
 

@@ -5,7 +5,7 @@ local db
 local PLAYER = FindMetaTable("Player")
 
 function PLAYER:FetchResearch()
-	local q = "SELECT perkid, level FROM research WHERE puid=%s"
+	--[[local q = "SELECT perkid, level FROM research WHERE puid=%s"
 	q = q:format(self:GetPUID())
 
 	local query = db:query(q)
@@ -18,7 +18,7 @@ function PLAYER:FetchResearch()
 
 	end
 
-	query:start()
+	query:start()]]
 
 end
 

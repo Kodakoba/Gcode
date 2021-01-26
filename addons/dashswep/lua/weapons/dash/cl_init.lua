@@ -49,13 +49,13 @@ function SWEP:DrawHUD()
 	end
 
 	local cdDur = self.CooldownDuration
-	local cdNext = self.CooldownEndsWhen
+	local cdNext = self:GetDashCooldownEnd()--self.CooldownEndsWhen
 
 	local cdFrac = math.Clamp(
 		(cdDur ~= 0 and cdNext == 0 and 0)
 		or (CurTime() - cdNext) / cdDur + 1
 		, 0, 1)
-	--print(CurTime(), cdNext, cdDur)
+
 	local fr = cdFrac
 
 	if cdFrac < 0.2 then
@@ -64,8 +64,6 @@ function SWEP:DrawHUD()
 		local f = cdFrac ^ 4
 		cdFrac = f + (cdFrac ^ 32) * (1 - f)
 	end
-
-	--print(cdFrac, fr)
 
 	local fr = anim.Frac or 0
 	local recfr = anim.RecentChangeFrac or 0
