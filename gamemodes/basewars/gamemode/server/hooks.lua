@@ -3,22 +3,11 @@ hook.Add("BaseWars_PlayerBuyEntity", "XPRewards", function(ply, ent)
 end)
 
 hook.Add("BaseWars_PlayerEmptyPrinter", "XPRewards", function(ply, ent, money)
-	local mult = 1
-
-	local div = 300
-	local pad = math.max(50 - ply:GetLevel(), 0) * 3
-	div = math.max(div - pad, 1)
-	local xp = (money / div)
-
-	if ply:InFaction() then
-		local fac = Factions.Factions
-		if fac and fac.XPMult then
-			mult = math.max(1, mult+fac.XPMult)
-		end
+	if ent:GetClass() == "bw_printer_manual" then
+		ply:AwardEXPForMoney(money * 2, true)
+	else
+		ply:AwardEXPForMoney(money)
 	end
-
-	ply:AddXP(math.max(0, (money/div) * BaseWars.Config.EXPMult * mult ))
-
 end)
 
 util.AddNetworkString("StartConnect")
