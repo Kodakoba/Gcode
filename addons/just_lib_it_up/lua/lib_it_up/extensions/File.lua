@@ -12,20 +12,33 @@ function file.Me(lv)
 	return source:match(".+/lua/.+/(.+%.lua)")
 end
 
-
+local sep = "/\\"
 
 function file.GetFile(path)
-	return path:match("[^/]+$")
+	return path:match("[^" .. sep .. "]+$")
 end
 
--- matches / at the end too
+-- adds an / at the end if there isn't one
 function file.GetPath(path)
-	return path:match("(.+/).+") or ""
+	local ret = path:match("(.+[" .. sep .. "]).+") or ""
+	if not ret:sub(-1) == "/" then ret = ret .. "/" end
+
+	return ret
+end
+
+function file.GetPathTable(path)
+	local ret = {}
+	local len = 0
+	for f in path:gmatch("[^" .. sep .. "]+") do
+		len = len + 1
+		ret[len] = f
+	end
+	return ret, len
 end
 
 function file.ForEveryFile(path, where, func, recurse)
 
-	local wildcard = path:match("[^/]+$")
+	local wildcard = path:match("[^" .. sep .. "]+$")
 	local path = file.GetPath(path)
 
 	if isfunction(where) then
