@@ -1,9 +1,7 @@
 
-local tag = "BaseWarsMoney"
-local tag_escaped = "basewars_money"
-
 BaseWars.Money = BaseWars.Money or {}
 local MODULE = BaseWars.Money
+
 MODULE.Log = Logger("BW-Money", Color(80, 230, 80))
 
 local PLAYER = debug.getregistry().Player
@@ -43,6 +41,7 @@ end
 
 PLAYER.SetMoney = MODULE.SetMoney
 PLAYER.AddMoney = MODULE.AddMoney
+PLAYER.GiveMoney = MODULE.AddMoney
 PLAYER.SubMoney = MODULE.TakeMoney
 PLAYER.TakeMoney = MODULE.TakeMoney
 PLAYER.SyncMoney = MODULE.SyncMoney
@@ -52,8 +51,7 @@ function MODULE:LoadMoney(dat, write)
 
 	if not money then --bruh
 		money = BaseWars.Config.StartMoney
-		--write.money = money
-		
+
 		MODULE.Log("Reset money for \"%s\" (%s) to starting money (%s)",
 			self:Nick(), self:SteamID64(), Language.Price(money))
 	end
@@ -62,5 +60,5 @@ function MODULE:LoadMoney(dat, write)
 
 end
 
-hook.Add("BW_LoadPlayerData", tag .. ".Load", MODULE.LoadMoney)
+hook.Add("BW_LoadPlayerData", "BWMoney.Load", MODULE.LoadMoney)
 --hook.Add("BW_SavePlayerData", tag .. ".Save", MODULE.SaveMoney)
