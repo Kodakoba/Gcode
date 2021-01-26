@@ -17,8 +17,8 @@ local qries = {
 	sub_column_query = "UPDATE bw_plyData SET `%s` = `%s` - %s WHERE puid = %s",
 }
 
-function LoadData(ply, sid)
-	local sid64 = util.SteamIDTo64(sid)
+function LoadData(ply)
+	local sid64 = ply:SteamID64()
 	local q = db:query( qries.get_data_query:format(sid64) )
 
 	q.onSuccess = function(_, dat)
@@ -83,13 +83,14 @@ local function onDB(masterdb)
 	CREATE TABLE IF NOT EXISTS `master`.`bw_plyData` (
 	  `puid` BIGINT UNSIGNED NOT NULL,
 	  `money` BIGINT NOT NULL DEFAULT ]] .. BaseWars.Config.StartMoney .. [[,
-	  `lvl` INT UNSIGNED NOT NULL DEFAULT 0,
+	  `lvl` INT UNSIGNED NOT NULL DEFAULT 1,
 	  `xp` BIGINT UNSIGNED NOT NULL DEFAULT 0,
 	  PRIMARY KEY (`puid`),
 	  UNIQUE INDEX `puid_UNIQUE` (`puid` ASC) VISIBLE);
 
 	ALTER TABLE `master`.`bw_plydata` 
-	CHANGE COLUMN `money` `money` BIGINT UNSIGNED NOT NULL DEFAULT ]] .. BaseWars.Config.StartMoney .. [[;
+	CHANGE COLUMN `money` `money` BIGINT UNSIGNED NOT NULL DEFAULT ]] .. BaseWars.Config.StartMoney .. [[,
+	CHANGE COLUMN `lvl` `lvl` INT UNSIGNED NOT NULL DEFAULT '1' ;
 	]])
 
 	q.onError = mysqloo.QueryError
