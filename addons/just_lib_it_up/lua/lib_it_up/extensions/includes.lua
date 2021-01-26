@@ -1,11 +1,16 @@
 FInc = {} --Fast Inclusion
 
+-- todo: stop using these
 _CL = 1
 _SH = 2
 _SV = 3
 
+FInc.CLIENT = 1
+FInc.SHARED = 2
+FInc.SERVER = 3
+
 local includes = {
-	[_CL] = function(name, should)
+	[FInc.CLIENT] = function(name, should)
 		-- always add to CSLua,
 		-- don't include clientside if should = false
 
@@ -17,7 +22,7 @@ local includes = {
 		end
 	end,
 
-	[_SH] = function(name, cl, sv)
+	[FInc.SHARED] = function(name, cl, sv)
 		--cl = false : file doesn't get AddCSLua'd + not included clientside
 		--cl = 1     : file gets only AddCSLua'd but not included
 		--sv = false : file is not loaded but can be AddCSLua'd
@@ -27,16 +32,16 @@ local includes = {
 	end,
 
 
-	[_SV] = function(name, should)
+	[FInc.SERVER] = function(name, should)
 		if not SERVER or should == false then return end
 		return include(name)
 	end,
-
 }
 
 local needToInclude = {
-	[1] = {[CLIENT] = true, [_CL] = true, [_SH] = true, [_SV] = false},
-	[2] = {[SERVER] = true, [_CL] = true, [_SH] = true, [_SV] = true} 	--even though server's _CL should be false it's actually true because the server needs to AddCSLua
+	[1] = {[CLIENT] = true, [FInc.CLIENT] = true, [FInc.SHARED] = true, [FInc.SERVER] = false},
+	[2] = {[SERVER] = true, [FInc.CLIENT] = true, [FInc.SHARED] = true, [FInc.SERVER] = true} 
+	--even though server's _CL should be false it's actually true because the server needs to AddCSLua
 }
 
 local function Realm()
@@ -101,7 +106,6 @@ function FInc.Recursive(name, realm, nofold, decider, callback)	--even though wi
 
 		if includes[realm] then
 			local cl, sv = decider (inc_name, realm)
-
 			-- if we're dealing with _SV and the 2nd arg isn't nil,
 			-- shift it to the 1st arg since the includers only take 1 arg for _CL/_SV
 			if realm ~= _SH then
@@ -133,30 +137,82 @@ function FInc.Recursive(name, realm, nofold, decider, callback)	--even though wi
 
 end
 
--- Recursively starts a coroutine per each include,
--- fires the callback (if provided) with that coroutine
--- as the 2nd argument and then includes the file
-
 function FInc.Coroutine(name, realm, nofold, callback)
 	error("Retired; don't use FInc.Coroutine; causes autorefresh bugs")
-
-	--[[FInc.Recursive(name, realm, nofold, function(path)
-		local co = coroutine.create(includes[realm])
-
-		local ret, ret2
-
-		if callback then
-			ret, ret2 = callback(path, co)
-		end
-
-		coroutine.resume(co, path, ret, ret2)
-		return false, false --don't include by FInc.Recursive default action since we already included it with the coroutine
-	end)]]
-
 end
 
-function FInc.NonRecursive(name, realm) --mhm
-	return FInc.Recursive(name, realm, true)
+function FInc.NonRecursive(name, realm, decider, cb) --mhm
+	return FInc.Recursive(name, realm, true, decider, cb)
+end
+
+local function Resolve(res, path)
+	local default = res.__DefaultRealm
+	local pt = file.GetPathTable(path)
+	local fn = file.GetFile(path):gsub("%.lua", "")
+
+	local is_sv = table.HasValue(pt, "server") or table.HasValue(pt, "sv") or false
+	local is_cl = not is_sv and (table.HasValue(pt, "client") or table.HasValue(pt, "cl")) or false
+	local is_sh = table.HasValue(pt, "shared") or table.HasValue(pt, "sh") or false
+
+	-- failed matching by path; attempt matching by filename
+	if not is_sv and not is_cl and not is_sh then
+		
+
+		is_sv = fn:match("^sv_.+") or fn:match(".+_sv$") or false
+		is_cl = fn:match("^cl_.+") or fn:match(".+_cl$") or false
+		is_sh = fn:match("^sh_.+") or fn:match(".+_sh$") or false				
+	end
+
+	-- extensions get included manually; do not include them
+	-- generally they shouldn't have their own folders so no path-checking here
+	local is_ext = fn:match("_ext$") or fn:match("_extension$") or fn:match("^ext_.+") or fn:match("^extension_.+")
+
+	-- if we didn't pass cl/sv/sh path check...
+	if not is_sv and not is_cl and not is_sh then
+		-- and we weren't given a default realm...
+		if default == nil then
+			-- and it's not an extension, blame the user
+
+			if not is_ext then
+				ErrorNoHalt("Failed to resolve realm for file: " .. path .. ".\n")
+			end
+			-- if its an extension which didn't pass a realm check AND there's no default,
+			-- it won't be addcslua'd
+			return false, false
+		else
+			if is_ext then
+				return default and 1, false
+			end
+			return default, default
+		end
+	end
+
+	if is_ext then
+		-- returning 1 for `cl` AddCSLua's it
+		return (is_cl or is_sh) and 1, false
+	end
+
+	return is_cl or is_sh, is_sv or is_sh
+end
+
+local Resolver = Object:extend()
+Resolver.__call = Resolve
+
+function Resolver:SetDefaultRealm(r)
+	self.__DefaultRealm = r
+	return self
+end
+Resolver:AliasMethod(Resolver.SetDefaultRealm, "DefaultRealm", "Default", "SetDefault", "Realm", "SetRealm")
+
+local default_resolver = Resolver:new()
+
+function FInc.RealmResolver(path)
+	if isstring(path) then
+		-- I mean, you _CAN_ use this function this way, but then you can't put a default
+		return default_resolver(path)
+	end
+
+	return Resolver:new()
 end
 
 function FInc.FromHere(name, realm, nofold, decider, cb)
