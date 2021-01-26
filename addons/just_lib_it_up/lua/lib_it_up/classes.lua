@@ -90,6 +90,14 @@ function Class:CopyMetamethods(old)
 	end
 end
 
+function Class:AliasMethod(method, ...)
+	if not isfunction(method) then errorf("arg #1 is not a function (got %q)", type(method)) return end
+
+	for k,v in ipairs({...}) do
+		self[v] = method
+	end
+end
+
 function Class:ChangeInitArgs(...)
 	Class.__args = {...}
 end
