@@ -405,7 +405,7 @@ function button:Draw(w, h)
 			--White()
 			--surface.DrawOutlinedRect(iX, iY, tWMax + iW + iconX, 32)
 
-			t:PaintIcon(iX, iY)
+			t.PaintIcon(self, iX, iY)
 			--local tw = draw.DrawText(label, self.Font, tx, ty, lblCol, ax)
 		else
 
@@ -417,7 +417,7 @@ function button:Draw(w, h)
 			local iX = math.Round(tx - fullW * (ax / 2))
 			local iY = math.Round(ty - iH * (ay / 2))
 
-			t:PaintIcon(iX, iY)
+			t.PaintIcon(self, iX, iY)
 
 			local tX = math.Round(iX + iconX + iW)
 			local tY = math.Round(ty - tH * (ay / 2))
@@ -429,7 +429,7 @@ function button:Draw(w, h)
 		return
 	end
 
-	t:PaintIcon(w/2 - iW / 2, h/2 - iH / 2)
+	t.PaintIcon(self, w/2 - iW / 2, h/2 - iH / 2)
 end
 
 function button:PostPaint(w,h)
