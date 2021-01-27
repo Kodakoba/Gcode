@@ -34,3 +34,20 @@ function RotateArgs(...)
 
 	return unpack(args, 1, len)
 end
+
+function CheckArg(num, arg, check, expected_type)
+	if isfunction(check) then
+		if not check(arg) then
+			local err = (expected_type and
+							"expected '" .. expected_type .. "', got '" .. type(arg) .. "' instead")
+						or
+							"failed check function on '" .. type(arg) .. "'"
+			errorf("bad argument #%d (%s)", num, err)
+		end
+	elseif isstring(check) then
+		if type(arg) ~= check then
+			local err = "expected '" .. (expected_type or check) .. "', got '" .. type(arg) .. "' instead"
+			errorf("bad argument #%d (%s)", num, err)
+		end
+	end
+end

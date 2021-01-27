@@ -27,6 +27,15 @@ function table.KeysToValue(tbl)
 end
 table.KeysToValues = table.KeysToValue
 
+function table.ReplaceValue(t, what, with, seq)
+	local f = seq and ipairs or pairs
+	for k, v in f(t) do
+		if v == what then
+			t[k] = with
+			return k
+		end
+	end
+end
 
 --[[
 	Weak tables

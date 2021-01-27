@@ -79,17 +79,14 @@ function MySQLEmitter:Queue(q)
 	return self
 end
 
-function MySQLEmitter:Do(q)
-	self:Queue(q)
-	q:start()
-	return self
-end
-
 function MySQLEmitter:Exec()
 	self.CurrentQuery:start()
 	return self
 end
 
+function MySQLEmitter:Do(q)
+	return self:Queue(q):Exec()
+end
 
 MySQLDatabase = MySQLDatabase or Emitter:Callable()
 MySQLDatabase.IsMySQLDatabase = true
