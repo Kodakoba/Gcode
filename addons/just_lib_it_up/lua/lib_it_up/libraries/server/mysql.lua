@@ -4,6 +4,7 @@ __MYSQL_INFO = {"127.0.0.1", "root", "31415", ""}
 
 mysql = mysqloo
 mysqloo.Info = __MYSQL_INFO
+mysqloo.__OnConnectCallbacks = {}
 
 if mysqloo.GlobalDatabase and mysqloo.GlobalDatabase:status() == 0 then
 	mysqloo.GlobalDatabase:disconnect() --bye bye monkey
@@ -25,6 +26,10 @@ local function connect(ply)
 
 		q.onSuccess = function()
 			hook.Run("OnMySQLReady", self)
+			for k,v in ipairs(mysqloo.__OnConnectCallbacks) do
+				v[1](unpack(v, 2))
+			end
+			mysqloo.__OnConnectCallbacks = nil
 		end
 
 		q.onError = function(self, ...)
@@ -89,16 +94,19 @@ function mysqloo.CreateTable(db, name, ...)
 
 	q = q:format(name, qargs)
 
-	local query = db:query(q)
+	local em = MySQLEmitter(db:query(q), true)
+		:Catch(mysqloo.QueryError)
 
-	query.onError = function(self, err)
-		print("Error while creating table!", err)
-	end
-
-	query:start()
+	return em
 end
 
-
+function mysqloo.OnConnect(cb, ...)
+	if mysqloo.GlobalDatabase and mysqloo.GlobalDatabase:status() == 0 then
+		cb(...)
+	else
+		table.insert(mysqloo.__OnConnectCallbacks, {cb, ...})
+	end
+end
 
 concommand.Add("reconnect_mysql", function(p)
 	if IsValid(ply) and not ply:IsSuperAdmin() then return end
