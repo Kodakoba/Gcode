@@ -67,7 +67,8 @@ local BlankFunc = function() end
 -- if both returns are `false`, regardless of realm it'll just not do anything at all
 
 
--- tfw searching a folder takes 200ms
+-- mfw searching a folder takes 200ms
+-- vfs was a mistake
 FInc.CachedSearches = FInc.CachedSearches or {}
 local cached_searches = FInc.CachedSearches
 
@@ -86,7 +87,7 @@ function FInc.Recursive(name, realm, nofold, decider, callback)	--even though wi
 	if cache then
 		files, folders = unpack(cache, 2)
 	else
-		files, folders = file.Find( name, "LUA" )
+		files, folders = file.Find(name, "LUA", "nameasc")
 		cached_searches[name] = {CurTime(), files, folders}
 	end
 
@@ -145,8 +146,33 @@ function FInc.NonRecursive(name, realm, decider, cb) --mhm
 	return FInc.Recursive(name, realm, true, decider, cb)
 end
 
+local svcol = Color( 137, 222, 255 )
+local clcol = Color( 255, 222, 102 )
+local realmcol = SERVER and svcol or clcol
+
+local function logInclusion(path, cl, sv, why, default)
+	local reason = (why == -1 and "default-less extension-less") or
+					(why == 0 and "extension") or
+					(why == 1 and "default") or
+					(why == 2 and "extension using default (addcslua? -> " .. default .. ")") or
+					(why == 3 and "resolved as '" .. default .. "'")
+
+									-- we can't differentiate between a cl-only extension and
+									-- a shared extension which will be included manually
+
+	local as_what = (cl == 1 and not sv and {color_white, "Shared/Client unincluded"}) or
+					(not cl and sv and {svcol, "Server"}) or
+					(cl and not sv and {clcol, "Client"}) or
+					(cl and sv and {color_white, "Shared"}) or
+					(not cl and not sv and {svcol, "Server unincluded"})
+
+	MsgC(realmcol, "Resolved ", path, " as ", as_what[1], as_what[2], realmcol, " (", reason, ")\n", color_white)
+end
+
 local function Resolve(res, path)
 	local default = res.__DefaultRealm
+	local verb = res.__Verbose
+
 	local pt = file.GetPathTable(path)
 	local fn = file.GetFile(path):gsub("%.lua", "")
 
@@ -178,10 +204,21 @@ local function Resolve(res, path)
 			end
 			-- if its an extension which didn't pass a realm check AND there's no default,
 			-- it won't be addcslua'd
+			if verb then
+				logInclusion( path, false, false, is_ext and 0 or -1 )
+			end
 			return false, false
 		else
 			if is_ext then
+				if verb then
+					logInclusion( path, default and 1, false, 2, default )
+				end
+
 				return default and 1, false
+			end
+
+			if verb then
+				logInclusion( path, default, default, 1, default )
 			end
 			return default, default
 		end
@@ -189,7 +226,17 @@ local function Resolve(res, path)
 
 	if is_ext then
 		-- returning 1 for `cl` AddCSLua's it
+
+		if verb then
+			logInclusion( path, (is_cl or is_sh) and 1, false, 0 )
+		end
+
 		return (is_cl or is_sh) and 1, false
+	end
+
+	if verb then
+		logInclusion( path, is_cl or is_sh, is_sv or is_sh, 3,
+			(is_sh and "shared") or (is_cl and "client") or (is_sv and "server") )
 	end
 
 	return is_cl or is_sh, is_sv or is_sh
@@ -202,13 +249,21 @@ function Resolver:SetDefaultRealm(r)
 	self.__DefaultRealm = r
 	return self
 end
+
 Resolver:AliasMethod(Resolver.SetDefaultRealm, "DefaultRealm", "Default", "SetDefault", "Realm", "SetRealm")
+
+function Resolver:SetVerbose(b)
+	self.__Verbose = (b == nil and true) or b
+	return self
+end
+
+Resolver:AliasMethod(Resolver.SetVerbose, "Verbose")
 
 local default_resolver = Resolver:new()
 
 function FInc.RealmResolver(path)
 	if isstring(path) then
-		-- I mean, you _CAN_ use this function this way, but then you can't put a default
+		-- I mean, you _CAN_ use this function this way, but then you can't customize it
 		return default_resolver(path)
 	end
 
