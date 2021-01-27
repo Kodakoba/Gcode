@@ -136,11 +136,18 @@ end
 
 
 
-local toolgun = weapons.GetStored("gmod_tool")
+local toolgun
+
+local function register(tool)
+	toolgun = toolgun or weapons.GetStored("gmod_tool")
+	toolgun.Tool[tool.Mode] = tool
+end
 
 function ToolObj:Finish()
+	-- the weapon isn't created on boot
+	LibItUp.OnInitEntity(register, self)
+
 	self:CreateConVars()
-	toolgun.Tool[self.Mode] = self
 
 	for k, ply in ipairs(player.GetAll()) do
 		local wep = ply:GetWeapon("gmod_tool")
