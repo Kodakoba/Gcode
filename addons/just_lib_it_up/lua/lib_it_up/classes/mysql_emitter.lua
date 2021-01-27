@@ -40,16 +40,16 @@ function MySQLEmitter:onSuccess(qobj, data)
 
 end
 
-function MySQLEmitter:onError(qobj, query, error)
+function MySQLEmitter:onError(qobj, error, query)
 	self.CurrentQuery = nil
 
 	if self.Error[self.CurrentStep] then
-		self.Error[self.CurrentStep](qobj, query, error)
+		self.Error[self.CurrentStep](qobj, error, query)
 	end
-	self:Emit("Error", qobj, query, error, self.CurrentStep)
+	self:Emit("Error", qobj, error, query, self.CurrentStep)
 
 	if self.CatchFunc then
-		self.CatchFunc(qobj, query, error)
+		self.CatchFunc(qobj, error, query)
 	end
 end
 
