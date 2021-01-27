@@ -1,5 +1,7 @@
 --
 
+BaseWars.AreaMark.Tool:Finish()
+
 local nw = Networkable("Areas")
 
 nw:On("ReadChangeValue", 1, function(self, k)
@@ -27,25 +29,3 @@ nw:On("ReadChangeValue", 1, function(self, k)
 
 	return poses
 end)
-
-StartTool("AreaMark")
-
-
-
-	function TOOL:LeftClick(tr)
-		return true
-	end
-
-	function TOOL:Allowed()
-		return self:GetOwner():IsSuperAdmin()
-	end
-
-	function TOOL:RightClick(tr)
-		return true
-	end
-
-	function TOOL:Reload()
-
-	end
-
-EndTool()
