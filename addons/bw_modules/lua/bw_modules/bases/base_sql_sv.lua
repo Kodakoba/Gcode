@@ -11,11 +11,17 @@ local function PopulateBases(bases)
 			local zoneID, mins, maxs = unpack(zonedata)
 			local zone = bw.Zone:new(zoneID, mins, maxs)
 			base:AddZone(zone)
-			printf("Created %d:%d", baseID, zoneID)
 		end
 
 		bw.Bases[baseID] = base
 	end
+
+	bw.Bases.Log("SQL data pulled!")
+end
+
+local function OnDataReady()
+	-- mfw including across C boundary breaks relative pathing
+	include(file.Here() .. "areamark/_init.lua")
 end
 
 mysqloo.OnConnect(function()
@@ -70,6 +76,7 @@ mysqloo.OnConnect(function()
 				end
 
 				PopulateBases(bases)
+				OnDataReady()
 			end, function()
 				print("Failed to select all?")
 			end)

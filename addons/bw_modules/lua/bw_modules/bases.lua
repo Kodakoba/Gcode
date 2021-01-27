@@ -10,6 +10,8 @@ BaseWars.Bases = BaseWars.Bases or {
 	Base = nil,
 
 	MarkTool = nil, -- gets filled in areamark/ folder
+
+	Log = Logger("BW-Bases" .. Rlm(), CLIENT and Color(55, 205, 135) or Color(200, 50, 120))	-- bw18 throwback
 }
 
-FInc.FromHere("bases/*", _SH, false, FInc.RealmResolver():SetDefault(true))
+FInc.FromHere("bases/*.lua", _SH, true, FInc.RealmResolver():SetDefault(true))
