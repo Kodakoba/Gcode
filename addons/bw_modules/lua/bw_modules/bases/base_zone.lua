@@ -16,7 +16,8 @@ function bw.Zone:Initialize(id, mins, maxs)
 	CheckArg(3, maxs, isvector, "zone maxs")
 
 	self.ID = id
-	self.Mins, self.Maxs = OrderVectors(mins, maxs)
+	OrderVectors(mins, maxs)
+	self.Mins, self.Maxs = mins, maxs
 
 	self.Brush = ents.Create("bw_zone_brush")
 
