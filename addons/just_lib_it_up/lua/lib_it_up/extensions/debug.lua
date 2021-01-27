@@ -4,7 +4,10 @@ local modules = {}
 function LogModule(name, col)
 	name = name or "[Unnamed]"
 
-	if modules[name] then return modules[name] end
+	if modules[name] then 
+		modules[name].col = col or modules[name].col
+		return modules[name]
+	end
 
 	modules[name] = {name = name, col = col or Colors.Sky}
 	return modules[name]
@@ -73,6 +76,14 @@ function Realm(lower, side)
 	local s = (CLIENT and "Client" or "Server") .. (side and "side" or "")
 	if lower then return s:lower() end
 	return s
+end
+
+function Rlm(lower)
+	if lower then
+		return CLIENT and "cl" or "sv"
+	else
+		return CLIENT and "CL" or "SV"
+	end
 end
 
 function clPrint(...)
