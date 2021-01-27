@@ -106,6 +106,7 @@ function SWEP:RechargeLogic(ply, force)
 
 
 		self:SetDashCooldownEnd(0)
+
 		self:SetDashCooldown(0)
 
 		self.CooldownDuration = 0

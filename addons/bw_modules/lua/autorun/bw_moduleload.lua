@@ -5,7 +5,6 @@ function IncludeBasewarsModules()
 
 	local function incrementModule()
 		modules = modules + 1
-		print("loaded module:", MODULE.Name)
 
 		if MODULE.Name then
 			hook.Run("BasewarsModuleLoaded", MODULE.Name)
