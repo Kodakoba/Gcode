@@ -306,7 +306,7 @@ end
 
 function BaseWars.UTIL.WriteCrashRollback(recover)
 
-		if recover then
+	--[[	if recover then
 
 			if file.Exists("server_crashed.dat", "DATA") then
 
@@ -342,10 +342,13 @@ function BaseWars.UTIL.WriteCrashRollback(recover)
 	end
 
 	file.Write("server_crashed.dat", "")
-
+	]]
+	
 end
 
 function BaseWars.UTIL.RefundFromCrash(ply)
+
+	--[[
 
 	local UID = ply:SteamID64()
 	local FileName = "basewars_crashrollback/" .. UID .. "_load.txt"
@@ -364,6 +367,8 @@ function BaseWars.UTIL.RefundFromCrash(ply)
 		file.Delete(FileName)
 
 	end
+
+	]]
 
 end
 
