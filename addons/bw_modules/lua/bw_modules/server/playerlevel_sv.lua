@@ -67,7 +67,7 @@ function PLAYER:AwardEXPForMoney(money)
 	local add, leftover = MODULE.MoneyToXP(money + self._xp_money_leftover, self:GetLevel(), self:GetXP())
 	self._xp_money_leftover = leftover
 
-	print("Adding EXP:", add, leftover)
+
 	self:AddXP(add)
 end
 
@@ -84,11 +84,11 @@ function PLAYER:CheckLevels()
 		if curtotalxp < req then
 			lvs = i
 			curxp = curtotalxp - (BaseWars.LevelXP.TotalXP[i] or 0)
-			printf("[%d] %d < [!%d!] %d < [%d] %d", i, BaseWars.LevelXP.TotalXP[i] or 0, i, curtotalxp, i+1, req)
+			--printf("[%d] %d < [!%d!] %d < [%d] %d", i, BaseWars.LevelXP.TotalXP[i] or 0, i, curtotalxp, i+1, req)
 			break
 		end
 	end
-	print(curxp, curtotalxp, BaseWars.LevelXP.TotalXP[lvs])
+
 	self._xp = curxp
 	self:SetLevel(lvs)
 end
