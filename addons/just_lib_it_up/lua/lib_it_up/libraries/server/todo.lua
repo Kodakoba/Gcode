@@ -1,5 +1,3 @@
-
-
 todo = {
 	prepared = {}
 }
@@ -42,17 +40,12 @@ local function prepareQueries()
 	todo.prepared.remove = remove
 end
 
-if mysqloo and mysqloo.GetDB then
+if not mysqloo.OnConnect then include("mysql.lua") end
+
+mysqloo.OnConnect(function()
 	tododb = mysqloo.GetDB()
 	prepareQueries()
-else
-	hook.Add("OnMySQLReady", "ToDo", function(db)
-		tododb = db
-		prepareQueries()
-	end)
-end
-
---sql.Check("CREATE TABLE IF NOT EXISTS todo(id INTEGER PRIMARY KEY AUTOINCREMENT, str TEXT NOT NULL DEFAULT '??', done INT DEFAULT 0, adds INT DEFAULT 0)" )
+end)
 
 
 function todo.Add(str)
