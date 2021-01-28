@@ -1,3 +1,4 @@
+
 require("mysqloo")
 
 __MYSQL_INFO = {"127.0.0.1", "root", "31415", ""}
@@ -5,15 +6,17 @@ __MYSQL_INFO = {"127.0.0.1", "root", "31415", ""}
 mysql = mysqloo
 mysqloo.Info = __MYSQL_INFO
 mysqloo.__OnConnectCallbacks = {}
+mysqloo.__masterSchemaExists = mysqloo.__masterSchemaExists or false
 
-if mysqloo.GlobalDatabase and mysqloo.GlobalDatabase:status() == 0 then
+--[[if mysqloo.GlobalDatabase and mysqloo.GlobalDatabase:status() == 0 then
 	mysqloo.GlobalDatabase:disconnect() --bye bye monkey
-end
+end]]
 
 
 local err = Logger("MySQL ERROR", Color(230, 120, 120))
 
 local rsDB
+
 
 local function connect(ply)
 	if ply and IsPlayer(ply) and not ply:IsSuperAdmin() then return false end
@@ -22,14 +25,19 @@ local function connect(ply)
 	rsDB = mysqloo.connect(unpack(__MYSQL_INFO))
 
 	rsDB.onConnected = function(self)
-		local q = self:query("CREATE SCHEMA IF NOT EXISTS master; USE master")
+		print("!!!! db connected; creating master & using")
+		local q = self:query("CREATE DATABASE IF NOT EXISTS master; USE master")
 
 		q.onSuccess = function()
+			print("!!!! kewl, using master; running others")
+			mysqloo.__masterSchemaExists = true
 			hook.Run("OnMySQLReady", self)
-			for k,v in ipairs(mysqloo.__OnConnectCallbacks) do
-				v[1](unpack(v, 2))
+			if mysqloo.__OnConnectCallbacks then
+				for k,v in ipairs(mysqloo.__OnConnectCallbacks) do
+					v[1](unpack(v, 2))
+				end
+				mysqloo.__OnConnectCallbacks = nil
 			end
-			mysqloo.__OnConnectCallbacks = nil
 		end
 
 		q.onError = function(self, ...)
@@ -38,6 +46,7 @@ local function connect(ply)
 			err(...)
 		end
 
+		print("started use query")
 		q:start()
 	end
 
@@ -51,16 +60,20 @@ local function connect(ply)
 	mysqloo.GlobalDatabase = rsDB
 end
 
-concommand.Add("mysql_reconnect", connectFunc)
-connect()
+concommand.Add("mysql_reconnect", connect)
+
+if not mysqloo.GlobalDatabase then
+	connect()
+end
 
 function mysqloo.GetDB()
-	return rsDB
+	return mysqloo.GlobalDatabase
 end
 
 -- use as q.onError = mysqloo.QueryError
-function mysqloo.QueryError(q, errstr)
-	err("Query error! Error: %s\n\n	Trace: %s", errstr, debug.traceback())
+function mysqloo.QueryError(q, errstr, qstr)
+	err("Query error!\n	\"%s\"\n\n	Query: \"%s\"\n	Trace: %s",
+						errstr, 			qstr, 			debug.traceback())
 end
 
 mysqloo.HookName = "OnMySQLReady"
@@ -73,7 +86,19 @@ function mysqloo.CreateTable(db, name, ...)
 
 	if isstring(db) then 	--database is optional; it'll just use default
 		name = db
-		db = rsDB
+		db = mysqloo.GlobalDatabase
+	end
+
+	if db == nil then
+		if mysqloo.GlobalDatabase then -- db == nil due to user error
+			errorf( "mysqloo.CreateTable: no database supplied (%s, %s; %s)",
+				db, name, table.concat({...}, ", ") )
+			return
+		else	-- db == nil due to global database not being initialized yet
+			err("Attempted to create table `%s` before global database init. Attempting to recover...", name)
+			mysqloo.OnConnect(mysqloo.CreateTable, name, ...)
+			return false
+		end
 	end
 
 	local q = "CREATE TABLE IF NOT EXISTS `%s` (%s)"
@@ -101,26 +126,12 @@ function mysqloo.CreateTable(db, name, ...)
 end
 
 function mysqloo.OnConnect(cb, ...)
-	if mysqloo.GlobalDatabase and mysqloo.GlobalDatabase:status() == 0 then
+	if mysqloo.GlobalDatabase and mysqloo.GlobalDatabase:status() == 0 and mysqloo.__masterSchemaExists then
 		cb(...)
 	else
 		table.insert(mysqloo.__OnConnectCallbacks, {cb, ...})
 	end
 end
-
-concommand.Add("reconnect_mysql", function(p)
-	if IsValid(ply) and not ply:IsSuperAdmin() then return end
-
-	rsDB = mysqloo.connect(unpack(__MYSQL_INFO))
-
-	rsDB.onConnected = function(self)
-		hook.Run("OnMySQLReady", self)
-	end
-
-	rsDB:connect()
-
-end)
-
 
 function mysql.quote(db, str)
 	return "'" .. db:escape(str) .. "'"
