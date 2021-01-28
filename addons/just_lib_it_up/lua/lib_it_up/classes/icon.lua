@@ -47,7 +47,7 @@ function Icon:Initialize(url, name)
 	self.Filter = nil
 	self.Color = color_white:Copy()
 
-	self.__parent.Initialize(self, self)
+	self.__parent.Initialize(self, false)
 end
 
 function Icon:SetColor(col)
@@ -90,6 +90,8 @@ function Icon:PaintIcon(x, y, w, h, rot)
 end
 
 function Icon:Paint(x, y, w, h, rot)
+	self:AnimationThink()
+
 	w = w or self.W
 	h = h or self.H
 	rot = rot or self.Rotation
