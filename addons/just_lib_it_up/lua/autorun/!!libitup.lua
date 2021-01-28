@@ -175,7 +175,6 @@ local deps_t1 = SysTime()
 hook.Run("LibbedItUp", libTbl)
 hook.Run("LibItUp", libTbl)
 
-
 local function onLoad(s)
 	--printf("Loaded %s %s %.2fs. after start...", s, Realm(true, true), SysTime() - s1)
 	local fn = file.GetFile(s)
@@ -193,6 +192,7 @@ end
 
 FInc.Recursive("lib_deps/sh_*.lua", _SH, true, nil, onLoad)
 FInc.Recursive("lib_deps/*.lua", _SH, true, function(s) --decider
+	s = file.GetFile(s)
 	if s:match("^cl_") or s:match("^sh_") or s:match("^sv_") then return false, false end
 end, onLoad)
 
