@@ -42,6 +42,8 @@ function PLAYER:Research(perkid, lv)
 
 end
 
+--[[
+
 local function OnMySQL()
 	db = mysql.GetDatabase()
 	mysqloo.CreateTable("research", "`puid` INT", "`perkid` INT", "`level` INT")
@@ -56,3 +58,5 @@ end
 hook.Add("PlayerInitialSpawn", "Research", function(ply)
 	ply:FetchResearch()
 end)
+
+]]
