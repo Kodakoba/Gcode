@@ -19,11 +19,6 @@ local function PopulateBases(bases)
 	bw.Bases.Log("SQL data pulled!")
 end
 
-local function OnDataReady()
-	-- mfw including across C boundary breaks relative pathing
-	include(file.Here() .. "areamark/_init.lua")
-end
-
 mysqloo.OnConnect(function()
 	local db = mysqloo:GetDatabase()
 
@@ -32,7 +27,7 @@ mysqloo.OnConnect(function()
 	arg:AddArg("zone_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT")
 	arg:AddArg("base_id INT NOT NULL")	-- not PK: there can be multiple zones tied to the same base
 
-	local sides = {"max", "min"}	-- mfw
+	local sides = {"max", "min"}
 	local dims = {"x", "y", "z"}
 
 	local argnames = {min = {}, max = {}}
@@ -76,10 +71,10 @@ mysqloo.OnConnect(function()
 				end
 
 				PopulateBases(bases)
-				OnDataReady()
-			end, function()
-				print("Failed to select all?")
-			end)
+
+				FInc.AddState("BW_SQLAreasFetched")
+
+			end, mysqloo.QueryError)
 	end)
 
 	--[[
@@ -93,3 +88,5 @@ mysqloo.OnConnect(function()
 		zone_min_z float
 	]]
 end)
+
+include("areamark/_init.lua")
