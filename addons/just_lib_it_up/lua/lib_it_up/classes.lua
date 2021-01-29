@@ -11,6 +11,14 @@ BLANKFUNC = BlankFunc
 
 Class = {}
 
+local Class = Class
+local rawget = rawget
+local ipairs = ipairs
+local unpack = unpack
+local table_maxn = table.maxn
+local type = type
+local setmetatable = setmetatable
+
 Class.__index = function(self, k)
 	local parval = rawget(Class, k)
 
@@ -52,15 +60,18 @@ local function rawgetInitFunc(self)
 			)
 end
 
-local lv = 0
 
-local metamethods = { --metamethods except __index cannot be inherited
+local metamethods = {
+
+	--metamethods (except __index) aren't inherited
+
 	"__newindex",
 	"__mode",
 	"__concat",
 	"__call",
 	"__tostring"
-	--lets not add math metamethods?
+
+	-- cba with math metamethods
 }
 
 local recursiveExtend = function(new, old, ...)
@@ -91,47 +102,42 @@ function Class:CopyMetamethods(old)
 end
 
 function Class:AliasMethod(method, ...)
-	if not isfunction(method) then errorf("arg #1 is not a function (got %q)", type(method)) return end
+	if not type(method) == "function" then errorf("arg #1 is not a function (got %q)", type(method)) return end
 
 	for k,v in ipairs({...}) do
 		self[v] = method
 	end
 end
 
+-- todo: do i even need this feature?
 function Class:ChangeInitArgs(...)
 	Class.__args = {...}
 end
 
 function Class:extend(...)
-	local new = {}
+	
 	local old = self
 
+	local new = {}
 	new.Meta = {}
 	new.Meta.__index = old 				-- this time, __index points to the the parent
 										-- which points to that parent's meta, which points to that parent's parent, so on
 	Class.CopyMetamethods(new, old)
+
 	setmetatable(new.Meta, old)
+	setmetatable(new, new.Meta)
 
-	new.__index = function(t, k) --daily reminder this __index is for children, not for the class itself
-		local parval = rawget(new, k)
-
-		if parval ~= nil then
-			return parval
-		else
-			return new.Meta[k]
-		end
-	end
-
+	new.__index = new
 	new.__parent = old
 	new.__super = old
 	new.__instance = new
+
 	local curobj
 
 	new.__init = function(newobj, ...) --this function is kinda hard to wrap your head around, so i'll try to explain
 		--`self` is the parent class
 		--`new` is the new class
 
-		lv = lv + 1
 		local is_def = false 	--is this the function call that defined curobj?
 
 		curobj = newobj
@@ -146,12 +152,12 @@ function Class:extend(...)
 		local args = Class.__args
 
 		if self.__init and rawget(new, "AutoInitialize") ~= false then 	--recursively call the parents' __init's
-			if self.___Debugging then
+			--[[if self.___Debugging then
 				print("found __init in", self.Name)
-				print("Calling with args:", unpack(args, 1, table.maxn(args)))
-			end
+				print("Calling with args:", unpack(args, 1, table_maxn(args)))
+			end]]
 
-			local ret = self.__init(curobj, unpack(args, 1, table.maxn(args)))		--if any of the initializes return a new object,
+			local ret = self.__init(curobj, unpack(args, 1, table_maxn(args)))		--if any of the initializes return a new object,
 			curobj = ret or curobj						--that object will be used forward going up the chain
 		end
 
@@ -165,16 +171,14 @@ function Class:extend(...)
 											--this way we call :Initialize() starting from the oldest one and going up to the most recent one
 
 		if func then
-			if self.___Debugging then
+			--[[if self.___Debugging then
 				print("Rawgot init function from", new.Name)
-				print("Calling with args:", unpack(args, 1, table.maxn(args)))
-			end
+				print("Calling with args:", unpack(args, 1, table_maxn(args)))
+			end]]
 
-			local ret = func(curobj, unpack(args, 1, table.maxn(args)))		--returning an object from any of the Initializes will use
+			local ret = func(curobj, unpack(args, 1, table_maxn(args)))		--returning an object from any of the Initializes will use
 			curobj = ret or curobj 				--that returned object on every initialize up the chain
 		end
-
-		lv = lv - 1
 
 		if is_def then
 			local temp = curobj 	--return curobj to original state
@@ -190,7 +194,7 @@ function Class:extend(...)
 	recursiveExtend(new, old, ...)
 
 
-	return setmetatable(new, new.Meta)
+	return new
 end
 
 function Class:callable(...)
@@ -208,7 +212,7 @@ Class.Callable = Class.callable
 
 function Class:new(...)
 
-	local func = self.__init or getInitFunc(self)
+	local func = self.__init
 
 	local obj = {}
 	setmetatable(obj, self)

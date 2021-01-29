@@ -2,12 +2,10 @@
 setfenv(0, _G)
 
 muldim = muldim or Class:callable()
-local mmeta = muldim.Meta
-
-local weak = muldim:Callable()
+local weak = muldim:callable()
 weak.__mode = "kv"
 
-function mmeta:Get(...)
+function muldim:Get(...)
 	local ks = {...}
 	local curvar = self
 
@@ -19,7 +17,7 @@ function mmeta:Get(...)
 	return curvar
 end
 
-function mmeta:GetOrSet(...)
+function muldim:GetOrSet(...)
 	local ks = {...}
 	local curvar = self
 
@@ -31,7 +29,7 @@ function mmeta:GetOrSet(...)
 	return curvar
 end
 
-function mmeta:Set(val, ...)
+function muldim:Set(val, ...)
 	local ks = {...}
 	local curvar = self
 
@@ -61,7 +59,7 @@ function mmeta:Set(val, ...)
 	return val, curvar
 end
 
-function mmeta:Insert(val, ...)
+function muldim:Insert(val, ...)
 	local ks = {...}
 	local curvar = self
 
