@@ -36,70 +36,49 @@ function ToolObj:Create()
 end
 
 function ToolObj:CreateConVars()
-
 	local mode = self:GetMode()
 
 	if ( CLIENT ) then
-
 		for cvar, default in pairs( self.ClientConVar ) do
-
 			CreateClientConVar( mode .. "_" .. cvar, default, true, true )
-
 		end
-
 		return
 	end
 
-	-- Note: I changed this from replicated because replicated convars don't work
-	-- when they're created via Lua.
-
 	if ( SERVER ) then
-
 		self.AllowedCVar = CreateConVar( "toolmode_allow_" .. mode, 1, FCVAR_NOTIFY )
-
 		for cvar, default in pairs( self.ServerConVar ) do
 			CreateConVar( mode .. "_" .. cvar, default, FCVAR_ARCHIVE )
 		end
 	end
-
 end
 
 function ToolObj:GetServerInfo( property )
-
-	local mode = self:GetMode()
-
-	return GetConVarString( mode .. "_" .. property )
-
+	return GetConVarString( self:GetMode() .. "_" .. property )
 end
 
 function ToolObj:BuildConVarList()
-
 	local mode = self:GetMode()
 	local convars = {}
 
-	for k, v in pairs( self.ClientConVar ) do convars[ mode .. "_" .. k ] = v end
+	for k, v in pairs(self.ClientConVar) do
+		convars[mode .. "_" .. k] = v
+	end
 
 	return convars
-
 end
 
 function ToolObj:GetClientInfo( property )
-
 	return self:GetOwner():GetInfo( self:GetMode() .. "_" .. property )
-
 end
 
 function ToolObj:GetClientNumber( property, default )
-
 	return self:GetOwner():GetInfoNum( self:GetMode() .. "_" .. property, tonumber( default ) or 0 )
-
 end
 
 function ToolObj:Allowed()
-
 	if ( CLIENT ) then return true end
 	return self.AllowedCVar:GetBool()
-
 end
 
 -- Now for all the ToolObj redirects
@@ -118,20 +97,19 @@ function ToolObj:Deploy()		self:ReleaseGhostEntity() return end
 function ToolObj:Holster()		self:ReleaseGhostEntity() return end
 function ToolObj:Think()		self:ReleaseGhostEntity() end
 
+
+
 --[[---------------------------------------------------------
 	Checks the objects before any action is taken
 	This is to make sure that the entities haven't been removed
 -----------------------------------------------------------]]
+
 function ToolObj:CheckObjects()
-
 	for k, v in pairs( self.Objects ) do
-
 		if ( !v.Ent:IsWorld() && !v.Ent:IsValid() ) then
 			self:ClearObjects()
 		end
-
 	end
-
 end
 
 
@@ -141,25 +119,29 @@ local toolgun
 local function register(tool)
 	toolgun = toolgun or weapons.GetStored("gmod_tool")
 	toolgun.Tool[tool.Mode] = tool
-end
-
-function ToolObj:Finish()
-	-- the weapon isn't created on boot
-	LibItUp.OnInitEntity(register, self)
-
-	self:CreateConVars()
+	print("Registered into", toolgun, tool, tool.Mode)
 
 	for k, ply in ipairs(player.GetAll()) do
 		local wep = ply:GetWeapon("gmod_tool")
 		if wep:IsValid() then
-			local self = table.Copy(self)
-			wep.Tool[self.Mode] = self
-			self.SWEP = wep
-			self.Owner = ply
-			self.Weapon = wep
-			self:Init()
+			local toolCopy = table.Copy(tool)
+
+			wep.Tool = wep.Tool or {}	-- TOOLGUN IS CANCERRRRR
+			wep.Tool[toolCopy.Mode] = toolCopy
+			toolCopy.SWEP = wep
+			toolCopy.Owner = ply
+			toolCopy.Weapon = wep
+			toolCopy:Init()
+			print("Replaced")
 		end
 	end
+end
+
+function ToolObj:Finish()
+	self:CreateConVars()
+
+	-- the weapon isn't created on boot
+	LibItUp.OnInitEntity(register, self)
 end
 
 function IncludeTool(fn, name)
@@ -188,7 +170,7 @@ end
 
 function StartTool(name)
 	if not name then name = fn:match("([%w_]*)%.lua") end
-
+	print("started tool")
 	TOOL = LiveToolObj:Create()
 	TOOL.Mode = name
 	TOOL.Category = "Uncategorized"
@@ -198,5 +180,6 @@ end
 
 function EndTool()
 	TOOL:Finish()
+	print("finished tool")
 	TOOL = nil
 end
