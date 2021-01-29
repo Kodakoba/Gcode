@@ -80,10 +80,8 @@ function IncludeFolder(name, realm, nofold)	--This function will be used both by
 		if not v:match(".+%.lua$") then continue end --if file doesn't end with .lua, ignore it
 		local name = pathname .. v
 
-		if realmExclusive[v] and realmExclusive[v] ~= curRealm then
-			if SERVER then
-				includes[realmExclusive[v]] (name) -- sv has to AddCSLuaFile it
-			end
+		if realmExclusive[v] then
+			includes[realmExclusive[v]] (name)
 			continue
 		end
 
