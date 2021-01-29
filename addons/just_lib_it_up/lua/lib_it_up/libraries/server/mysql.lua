@@ -25,11 +25,9 @@ local function connect(ply)
 	rsDB = mysqloo.connect(unpack(__MYSQL_INFO))
 
 	rsDB.onConnected = function(self)
-		print("!!!! db connected; creating master & using")
 		local q = self:query("CREATE DATABASE IF NOT EXISTS master; USE master")
 
 		q.onSuccess = function()
-			print("!!!! kewl, using master; running others")
 			mysqloo.__masterSchemaExists = true
 			hook.Run("OnMySQLReady", self)
 			if mysqloo.__OnConnectCallbacks then
@@ -46,7 +44,6 @@ local function connect(ply)
 			err(...)
 		end
 
-		print("started use query")
 		q:start()
 	end
 
