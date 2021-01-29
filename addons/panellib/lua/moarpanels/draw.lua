@@ -31,6 +31,10 @@ local cout128 = Material("data/hdl/circle_outline128.png")
 local cout64 = Material("data/hdl/circle_outline64.png")
 local bad = Material("materials/icon16/cancel.png")
 
+local blur = Material( "pp/blurscreen" )
+blur:SetFloat("$blur", 1.6)
+blur:Recompute()
+
 local _ = spinner:IsError() and hdl.DownloadFile("https://i.imgur.com/KHvsQ4u.png", "spinner.png", function(fn) spinner = Material(fn, "mips") end)
 _ = spinner32:IsError() and hdl.DownloadFile("https://i.imgur.com/YMMrRhh.png", "spinner32.png", function(fn) spinner32 = Material(fn, "mips") end)
 _ = cout:IsError() and hdl.DownloadFile("https://i.imgur.com/huBY9vo.png", "circle_outline256.png", function(fn) cout = Material(fn, "mips") end)
@@ -599,6 +603,37 @@ function draw.RoundedPolyBoxEx(rad, x, y, w, h, col, notr, nobr, nobl, notl)
 
 	if not cache then return end
 	BenchPoly(cache)
+
+end
+
+function draw.ScuffedBlur(pnl, int, x, y, w, h)
+	local sx, sy = 0, 0
+	if pnl then
+		sx, sy = pnl:LocalToScreen(0, 0)
+	end
+	local sw, sh = ScrW(), ScrH()
+
+	blur:SetFloat("$alpha", int)	-- 0-1 int
+
+	-- SetScissorRect doesn't work with this??
+	-- Even if it did, see: https://github.com/Facepunch/garrysmod-issues/issues/4635
+
+	draw.BeginMask()
+	render.SetMaterial(blur)
+	render.DrawScreenQuadEx(sx, sy, sx + x + w, sy + y + h)
+
+	
+	int = math.max(int, 1)
+	
+	draw.DrawOp()
+
+	for i=0, int do
+		render.SetMaterial(blur)
+		render.UpdateScreenEffectTexture()
+		render.DrawScreenQuad()
+	end
+
+	draw.FinishMask()
 
 end
 
