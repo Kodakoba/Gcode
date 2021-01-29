@@ -1,4 +1,4 @@
-FInc = {} --Fast Inclusion
+FInc = FInc or {} --Fast Inclusion
 
 -- todo: stop using these
 _CL = 1
@@ -137,6 +137,8 @@ function FInc.Recursive(name, realm, nofold, decider, callback)	--even though wi
 	end
 
 end
+
+setmetatable(FInc, {__call = FInc.Recursive})
 
 function FInc.Coroutine(name, realm, nofold, callback)
 	error("Retired; don't use FInc.Coroutine; causes autorefresh bugs")
@@ -325,4 +327,45 @@ function FInc.FromHere(name, realm, nofold, decider, cb)
 end
 
 
-setmetatable(FInc, {__call = FInc.Recursive})
+FInc._States = FInc._States or {
+	-- good for checking eg `FInc.OnStates(print, CLIENT or "ServerOnlyState")
+	[true] = true
+}	
+
+FInc._StateCallbacks = FInc._StateCallbacks or {}
+
+function FInc.OnStates(cb, ...)
+	local states = {...}
+
+	local ready = true
+
+	for k,v in ipairs(states) do
+		if not FInc._States[v] then ready = false break end
+	end
+
+	if ready then
+		-- if all the states are set, just call the thing
+		cb()
+	else
+		local key = #FInc._StateCallbacks + 1
+
+		FInc._StateCallbacks[key] = function()
+			for k,v in ipairs(states) do
+				if not FInc._States[v] then return end
+			end
+
+			table.remove(FInc._StateCallbacks, key)
+			cb()
+		end
+
+	end
+end
+
+function FInc.AddState(state)
+	FInc._States[state] = true
+	for k,v in ipairs(FInc._StateCallbacks) do
+		v(state)
+	end
+end
+
+FInc.SetState = FInc.AddState
