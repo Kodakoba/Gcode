@@ -1,4 +1,5 @@
-if not muldim then include("multidim.lua") end
+if not LibItUp.MulDim then include("multidim.lua") end
+
 --[[
 
 	how 2 use:
@@ -62,7 +63,8 @@ local rawevent = function(self)
 	return (istable(self) and rawget(self, "__Events")) or self.__Events
 end
 
-Emitter = Emitter or Class:callable()
+Emitter = Emitter or LibItUp.MulDim:callable()
+LibItUp.Emitter = Emitter
 
 function Emitter:Initialize(e)
 	self.__Events = muldim:new()

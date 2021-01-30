@@ -1,5 +1,8 @@
 if not Promise then include('promise.lua') end
-Animatable = Animatable or Emitter:callable()
+if not LibItUp.Emitter then include('emitter.lua') end
+
+Animatable = Animatable or LibItUp.Emitter:callable()
+LibItUp.Animatable = Animatable
 
 Animetable = Animatable
 
@@ -115,7 +118,7 @@ function Animatable:Initialize(auto_think)
 	self.__Animations = {}
 	self.m_AnimList = {}
 
-	if auto_think ~= false then
+	if auto_think ~= false and self.__instance.NoAutoThink ~= true then
 		local id = auto_think ~= true and auto_think -- if auto_think isn't a bool consider it an ID
 		local ud = (id and AnimatableIDs[id]) or self --GCProxy(self)
 		--self.__gcHandle = ud

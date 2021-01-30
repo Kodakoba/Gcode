@@ -2,6 +2,7 @@
 setfenv(0, _G)
 
 muldim = muldim or Class:callable()
+LibItUp.MulDim = muldim
 local weak = muldim:callable()
 weak.__mode = "kv"
 
