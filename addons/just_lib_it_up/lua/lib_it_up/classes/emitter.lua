@@ -63,7 +63,7 @@ local rawevent = function(self)
 	return (istable(self) and rawget(self, "__Events")) or self.__Events
 end
 
-Emitter = Emitter or LibItUp.MulDim:callable()
+Emitter = Emitter or Class:callable()
 LibItUp.Emitter = Emitter
 
 function Emitter:Initialize(e)
