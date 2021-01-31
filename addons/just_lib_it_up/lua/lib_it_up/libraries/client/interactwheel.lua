@@ -13,6 +13,9 @@ function wheel:Initialize()
 	self.Dim = 0.7
 end
 
+local wheelInnerRadius = 8
+local wheelOuterRadius = 24
+
 function wheel:_PaintPanel(wheel, w, h)
 	-- self = panel
 	local fr = wheel.Frac
@@ -21,10 +24,23 @@ function wheel:_PaintPanel(wheel, w, h)
 
 	draw.ScuffedBlur(nil, fr * wheel.BlurAmount, 0, 0, w, h)
 
+	draw.MaterialCircle(w/2, h/2, wheelInnerRadius * 2, wheelInnerRadius * 2)
+	draw.MaterialCircle(w/2, h/2, wheelOuterRadius * 2, wheelOuterRadius * 2)
+
 	local ang = self.Angle
-	draw.SimpleText(math.Round(self.SelectionFrac, 4), "OS32", w/2, h/2 - 32 * 0.625, color_white, 1, 1)
-	draw.SimpleText(math.Round(ang) .. "°", "OS32", w/2, h/2, color_white, 1, 1)
-	draw.SimpleText(math.Round(self.OptionPercentage * 100) .. "%", "OS32", w/2, h/2 + 32 * 0.625, color_white, 1, 1)
+	local options = wheel.Options
+
+	local segAng = 360 / #options
+
+	for i=1, #options do
+		
+	end
+
+	--[[
+		draw.SimpleText(math.Round(self.SelectionFrac, 4), "OS32", w/2, h/2 - 32 * 0.625, color_white, 1, 1)
+		draw.SimpleText(math.Round(ang) .. "°", "OS32", w/2, h/2, color_white, 1, 1)
+		draw.SimpleText(math.Round(self.OptionPercentage * 100) .. "%", "OS32", w/2, h/2 + 32 * 0.625, color_white, 1, 1)
+	]]
 
 	White()
 	local origin = self.MouseOrigin
@@ -32,8 +48,7 @@ function wheel:_PaintPanel(wheel, w, h)
 	surface.DrawLine(origin[1], origin[2], cur[1], cur[2])
 end
 
-local wheelInnerRadius = 16
-local wheelOuterRadius = 64
+
 
 function wheel:_ThinkPanel(wheel)
 	-- self = panel
@@ -111,6 +126,8 @@ function wheel:Show()
 
 	if not self.Panel then
 		self.Panel = vgui.Create("InvisPanel")
+	else
+		self.Panel:AlphaTo(255, 0.2, 0, 0.3)
 	end
 
 	self.Panel:SetSize(ScrW(), ScrH())
@@ -133,6 +150,7 @@ function wheel:Hide()
 	local anim, new = self:To("Frac", 0, 0.15, 0, 0.3)
 
 	if self.Panel then
+
 		self.Panel:AlphaTo(0, 0.15, 0, 0.3)
 		self.Panel:SetMouseInputEnabled(false)
 		self.Panel:SetKeyBoardInputEnabled(false)
@@ -181,7 +199,7 @@ local wh = _TestWheel
 wh:Show()
 
 timer.Create("interactwheel", 1, 1, function()
-	--[[timer.Create("interactwheel", 3, 1, function()
+	timer.Create("interactwheel", 3, 1, function()
 		wh:Hide()
-	end)]]
+	end)
 end)
