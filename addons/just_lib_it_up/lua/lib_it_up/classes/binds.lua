@@ -1,4 +1,4 @@
-if not Emitter then include('emitter.lua') end
+if not LibItUp.Emitter then include('emitter.lua') end
 
 Binds = Binds or {}
 
@@ -98,7 +98,8 @@ local function cleanID(t, id)
 	end
 end
 
-Bind = Bind or Emitter:callable()
+LibItUp.Bind = LibItUp.Bind or LibItUp.Emitter:callable()
+Bind = LibItUp.Bind
 
 function Bind:Initialize(id)
 

@@ -19,7 +19,7 @@ local table_maxn = table.maxn
 local type = type
 local setmetatable = setmetatable
 
-Class.__index = function(self, k)
+Class.__index = Class --[[function(self, k)
 	local parval = rawget(Class, k)
 
 	if parval ~= nil then
@@ -28,7 +28,7 @@ Class.__index = function(self, k)
 		return Class.Meta[k]
 	end
 
-end
+end]]
 
 Class.Meta = {__index = Class}
 
@@ -50,14 +50,7 @@ local function getInitFunc(self)
 end
 
 local function rawgetInitFunc(self)
-	return 	(rawget(self, "Initialize") or rawget(self, "initialize") or
-				(
-					rawget(self, "Meta") and
-					(
-						rawget(self.Meta, "Initialize") or rawget(self.Meta, "initialize")
-					)
-				)
-			)
+	return 	(rawget(self, "Initialize") or rawget(self, "initialize"))
 end
 
 
