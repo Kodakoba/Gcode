@@ -93,6 +93,9 @@ end
 
 function muldim:Initialize(mode)
 	if mode then
+		if not mode == "k" or mode == "v" or mode == "kv" then
+			errorf("muldim takes mode as `k` or `v` or `kv`, not %s (`%s`)", mode, type(mode))
+		end
 		return weak()
 	end
 end
