@@ -118,3 +118,27 @@ local mx = Matrix()
 function MATRIX:Reset()
 	self:Set(mx)
 end
+
+local vec = Vector()
+local ang = Angle()
+
+local mtrx_methods = {
+	"Translate", 		vec,
+	"Scale", 			vec,
+
+	"SetTranslation", 	vec,
+	"SetScale", 		vec,
+
+	"Rotate", 			ang,
+	"SetAngles", 		ang
+}
+
+for i=1, #mtrx_methods, 2 do
+	local fn = mtrx_methods[i]
+	local typ = mtrx_methods[i + 1]
+
+	MATRIX[fn .. "Number"] = function(self, x, y, z)
+		typ:SetUnpacked(x or 0, y or 0, z or 0)
+		MATRIX[fn] (self, typ)
+	end
+end
