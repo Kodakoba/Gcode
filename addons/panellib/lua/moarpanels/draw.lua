@@ -783,6 +783,36 @@ function surface.DrawUVMaterial(url, name, x, y, w, h, u1, v1, u2, v2)
 
 end
 
+local shitCircle = CreateMaterial("_crapcircle", "UnlitGeneric", {
+	["$basetexture"] = "vgui/circle",
+	["$ignorez"] = 1,
+	["$translucent"] = 1,
+
+	["$vertexcolor"] = 1,
+	["$vertexalpha"] = 1, -- what in the goddamn
+})
+
+--Material("vgui/circle", "smooth ignorez")
+--shitCircle:SetInt("$translucent", 1)
+
+function draw.SetMaterialCircle(rad)
+	local mat
+
+	if rad < 64 then
+		mat = GetOrDownload("https://i.imgur.com/MMHZw92.png", "small-circle.png", "smooth ignorez")
+	elseif rad < 256 then
+		mat = GetOrDownload("https://i.imgur.com/XAWPA15.png", "medium-circle.png", "smooth ignorez")
+	else
+		mat = GetOrDownload("https://i.imgur.com/6SdL8ff.png", "big-circle.png", "smooth ignorez")
+	end
+
+	if mat.mat and not mat.mat:IsError() then
+		surface.SetMaterial(mat.mat)
+	else
+		surface.SetMaterial(shitCircle)
+	end
+end
+
 function draw.DrawMaterialCircle(x, y, rad)	--i hate it but its the only way to make an antialiased circle on clients with no antialiasing set
 	if rad < 64 then
 		surface.DrawMaterial("https://i.imgur.com/MMHZw92.png", "small-circle.png", x - rad/2, y - rad/2, rad, rad)
