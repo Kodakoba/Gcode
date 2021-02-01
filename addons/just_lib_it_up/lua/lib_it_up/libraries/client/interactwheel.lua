@@ -13,8 +13,27 @@ function wheel:Initialize()
 	self.Dim = 0.7
 end
 
-local wheelInnerRadius = 8
-local wheelOuterRadius = 24
+-- mouse radius:
+local wheelInnerRadius = 16
+local wheelOuterRadius = 32
+
+-- options radius:
+	-- / 2 because its a radius, not a diameter
+
+local optionInnerRadius, optionOuterRadius
+
+local function resize()
+	local sw, sh = ScrW(), ScrH()
+
+	optionInnerRadius = math.min(sw * 0.35 / 2, sh * 0.35 / 2)
+	optionOuterRadius = math.min(sw * 0.6 / 2, sh * 0.6 / 2)
+end
+
+hook.Add("OnScreenSizeChanged", "InteractWheelResize", resize)
+resize()
+
+local unselectedColor = Color(0, 0, 0, 157)
+local selectedColor = Color(60, 120, 220, 157)
 
 function wheel:_PaintPanel(wheel, w, h)
 	-- self = panel
@@ -24,40 +43,62 @@ function wheel:_PaintPanel(wheel, w, h)
 
 	draw.ScuffedBlur(nil, fr * wheel.BlurAmount, 0, 0, w, h)
 
+	--[[
 	draw.MaterialCircle(w/2, h/2, wheelInnerRadius * 2, wheelInnerRadius * 2)
 	draw.MaterialCircle(w/2, h/2, wheelOuterRadius * 2, wheelOuterRadius * 2)
+	]]
 
 	local ang = self.Angle
 	local options = wheel.Options
 
-	local segAng = 360 / #options
+	--draw.NoTexture()
 
-	for i=1, #options do
+	local mtrx = wheel.Matrix
+		mtrx:TranslateNumber(w/2, h/2)
+		local scale = 0.3 + fr * 0.7
+		mtrx:SetScaleNumber(scale, scale)
+		mtrx:TranslateNumber(-w/2, -h/2)
+
+	draw.BeginMask()
+	render.PerformFullScreenStencilOperation()
+
+
+	cam.PushModelMatrix(mtrx)
+
+		draw.DeMask()
+		self.InnerCircle:Paint(w/2, h/2)
+
+		draw.DrawOp()
+		draw.SetMaterialCircle(optionOuterRadius)
+
+		for i=1, #options do
+			local opt = options[i]
+			surface.SetDrawColor(opt.Circle.Color)
+			opt.Circle:Paint(w/2, h/2)
+		end
+
+		draw.FinishMask()
 		
-	end
-
-	--[[
+		--[[
 		draw.SimpleText(math.Round(self.SelectionFrac, 4), "OS32", w/2, h/2 - 32 * 0.625, color_white, 1, 1)
 		draw.SimpleText(math.Round(ang) .. "°", "OS32", w/2, h/2, color_white, 1, 1)
 		draw.SimpleText(math.Round(self.OptionPercentage * 100) .. "%", "OS32", w/2, h/2 + 32 * 0.625, color_white, 1, 1)
-	]]
+		]]
+		
 
-	White()
-	local origin = self.MouseOrigin
-	local cur = self.Panel.CurrentMouse
-	surface.DrawLine(origin[1], origin[2], cur[1], cur[2])
+		--[[
+		White()
+		local origin = self.MouseOrigin
+		local cur = self.Panel.CurrentMouse
+		surface.DrawLine(origin[1], origin[2], cur[1], cur[2])
+		]]
+
+	cam.PopModelMatrix(mtrx)
 end
 
-
-
-function wheel:_ThinkPanel(wheel)
+function wheel:_BoundCursor(wheel)
 	-- self = panel
-	local fr = wheel.Frac
-	local min = self:IsMouseInputEnabled()
-	if not min then return end
 
-	self:SetAlpha(fr * 255)
-	
 	local mx, my = input.GetCursorPos()
 
 	local origin = self.MouseOrigin
@@ -117,8 +158,44 @@ function wheel:_ThinkPanel(wheel)
 
 		self.OptionPercentage = math.min( (len - wheelInnerRadius) / (wheelOuterRadius - wheelInnerRadius), 1 )
 	end
+end
 
-	
+function wheel:_ThinkPanel(wheel)
+	-- self = panel
+	local fr = wheel.Frac
+	local min = self:IsMouseInputEnabled()
+	if not min then return end
+
+	self:SetAlpha(fr * 255)
+
+	wheel._BoundCursor(self, wheel)
+
+	local options = wheel.Options
+	local len = #options
+	local optAng = 360 / len
+
+	for i=1, len do
+		local opt = options[i]
+
+		if self.OptionPercentage > 0 and
+			self.SelectionFrac >= (1 / len) * (i - 1) and
+			self.SelectionFrac < (1 / len) * i		then
+			
+			
+			if not opt._Hovered then
+				opt._Hovered = true
+				opt:Emit("Hovered")
+				print("hovered")
+			end
+		else
+			if opt._Hovered then
+				opt._Hovered = false
+				opt:Emit("Unhovered")
+				print("unhovered")
+			end
+		end
+	end
+
 end
 
 function wheel:Show()
@@ -130,20 +207,43 @@ function wheel:Show()
 		self.Panel:AlphaTo(255, 0.2, 0, 0.3)
 	end
 
-	self.Panel:SetSize(ScrW(), ScrH())
+	local pnl = self.Panel
 
-	self.Panel:MakePopup()
-	self.Panel:SetKeyBoardInputEnabled(false)
+	pnl:SetSize(ScrW(), ScrH())
+	pnl:SetCursor("blank")
 
-	self.Panel.CursorDelta = {0, 0}
-	self.Panel.MouseOrigin = {ScrW() / 2, ScrH() / 2}
-	self.Panel.CurrentMouse = {ScrW() / 2, ScrH() / 2}
-	self.Panel.OptionPercentage = 1
+	pnl.SelectionCircle = LibItUp.Circle()
+	pnl.InnerCircle = LibItUp.Circle()
 
-	self.Panel.Angle = 0
+	pnl:MakePopup()
+	pnl:SetKeyBoardInputEnabled(false)
 
-	self.Panel.Paint = function(pnl, w, h) 	InteractWheel._PaintPanel(pnl, self, w, h) 	end
-	self.Panel.Think = function(pnl) 		InteractWheel._ThinkPanel(pnl, self) 		end
+	pnl.CursorDelta = {0, 0}
+	pnl.MouseOrigin = {ScrW() / 2, ScrH() / 2}
+	pnl.CurrentMouse = {ScrW() / 2, ScrH() / 2}
+	pnl.OptionPercentage = 1
+
+	pnl.Angle = 0
+
+	pnl.Paint = function(pnl, w, h) 	InteractWheel._PaintPanel(pnl, self, w, h) 	end
+	pnl.Think = function(pnl) 		InteractWheel._ThinkPanel(pnl, self) 		end
+
+	local options = self.Options
+	local segAng = 360 / #options
+
+	local selcirc = pnl.SelectionCircle
+		selcirc:SetSegments(50)
+
+	local incirc = pnl.InnerCircle
+		incirc:SetSegments(50)
+		incirc:SetRadius(8)
+		incirc:To("Radius", optionInnerRadius, 0.3, 0, 0.2)
+
+	for i=1, #options do
+		local opt = options[i]
+		opt:_Setup(i, segAng)
+	end
+
 end
 
 function wheel:Hide()
@@ -151,9 +251,10 @@ function wheel:Hide()
 
 	if self.Panel then
 
-		self.Panel:AlphaTo(0, 0.15, 0, 0.3)
+		self.Panel:AlphaTo(0, 0.2, 0, 1.4)
 		self.Panel:SetMouseInputEnabled(false)
 		self.Panel:SetKeyBoardInputEnabled(false)
+		--self.Panel.InnerCircle:To("Radius", 8, 0.2, 0, 1.6)
 
 		if new then
 			anim:Then(function()
@@ -164,10 +265,12 @@ function wheel:Hide()
 
 	end
 
-end
+	local options = self.Options
 
-function wheel:GenerateOptions()
-	self:Emit("GenerateOptions", self)
+	for i=1, #options do
+		local opt = options[i]
+		opt:_Hide(i)
+	end
 end
 
 InteractWheelOption = Emitter:extend()
@@ -176,14 +279,49 @@ function InteractWheelOption:Initialize(name, desc, cb)
 	self.Name = name or "Unnamed"
 	self.Description = desc
 
+	self.Circle = LibItUp.Circle()
+		self.Circle:SetSegments(50)
+		self.Circle.Color = unselectedColor:Copy()
+
+	self:On("Hovered", function()
+		self.Circle:LerpColor(self.Circle.Color, selectedColor, 0.1, 0, 0.3)
+	end)
+
+	self:On("Unhovered", function()
+		self.Circle:LerpColor(self.Circle.Color, unselectedColor, 0.1, 0, 0.3)
+	end)
 
 	if isfunction(cb) then
 		self:On("Select", "InitCallback", cb)
 	end
 end
 
+ChainAccessor(InteractWheelOption, "Wheel", "Wheel")
+ChainAccessor(InteractWheelOption, "Disabled", "Disabled")
+
+function InteractWheelOption:_Hide(num)
+	local circ = self.Circle
+	circ:To("Radius", optionOuterRadius - 8, 0.1, 0, 0.4)
+end
+
+function InteractWheelOption:_Setup(num, ang)
+	-- called when the wheel is generated, so that the wheel can setup the circle properties
+
+	local circ = self.Circle
+	circ:SetRadius(optionOuterRadius)
+
+	circ:SetStartAngle(ang * (num - 1))
+	circ:SetEndAngle(ang * num)
+end
+
+function InteractWheelOption:Remove()
+	self.Wheel:RemoveOption(self)
+end
+
 function wheel:AddOption(name, desc, cb)
 	local option = InteractWheelOption:new(name, desc, cb)
+		option:SetWheel(self)
+
 	wheel.Options[#wheel.Options + 1] = option
 
 	return option
@@ -196,10 +334,17 @@ if _TestWheel then _TestWheel:Hide() end
 _TestWheel = InteractWheel:new()
 local wh = _TestWheel
 
-wh:Show()
+wh:AddOption("Peepee")
+wh:AddOption("Poopee")
 
-timer.Create("interactwheel", 1, 1, function()
-	timer.Create("interactwheel", 3, 1, function()
-		wh:Hide()
-	end)
+local bnd = Bind("wheel")
+bnd:SetDefaultKey(KEY_G)
+bnd:SetDefaultMethod(BINDS_HOLD)
+
+bnd:On("Activate", 1, function(self, ply)
+	wh:Show()
+end)
+
+bnd:On("Deactivate", 1, function(self, ply)
+	wh:Hide()
 end)
