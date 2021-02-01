@@ -1,9 +1,12 @@
 if not LibItUp.Emitter then include('emitter.lua') end
 
+local cmdPrefix = "lbu_"
+
 Binds = Binds or {}
 
 Binds.Data = Binds.Data or {}
 Binds.Keys = Binds.Keys or muldim:new()
+Binds.Concommands = Binds.Concommands or {}
 
 local fileName = __LibName .. "_binds.txt"
 
@@ -148,7 +151,7 @@ ChainAccessor(Bind, "Exclusive", "Exclusive")
 
 function Bind:SetKey(k)
 	local prev = self.Key
-	if prev == k then return end --bruh
+	if prev == k then return self end --bruh
 
 	self.Key = k
 
@@ -195,12 +198,56 @@ function Bind:SetDefaultMethod(m)
 	return self
 end
 
+function Bind:CreateConcommand(name)
+	name = name or self.ID
+
+	--[[if self.Method == BINDS_TOGGLE then
+		print("Creating", name, "as toggle", self.Method == BINDS_TOGGLE)
+		concommand.Add("binds_" .. name .. "_toggle", function(ply)
+			self:_Fire(true, ply)
+		end)
+
+		concommand.Remove("+binds_" .. name)
+		concommand.Remove("-binds_" .. name)
+	elseif self.Method == BINDS_HOLD then
+		print("Creating", name, "as hold", self.Method == BINDS_HOLD)
+		concommand.Add("+binds_" .. name, function(ply)
+			self:_Fire(true, ply)
+		end)
+
+		concommand.Add("-binds_" .. name, function(ply)
+			self:_Fire(false, ply)
+		end)
+
+		concommand.Remove("binds_" .. name .. "_toggle")
+	else
+		print("Unrecognized Bind method:", self.Method)
+	end]]
+
+	Binds.Concommands[name] = self
+
+	--[[self:On("MethodChanged", "RecreateConcommands", function()
+		self:CreateConcommand(name)
+	end)]]
+end
+
 function Bind:SetDefaultKey(k)
 	if not self.Key then
 		return self:SetKey(k)
 	end
 
 	return self
+end
+
+function Bind:_Fire(down, ply)
+
+	if self.Method == BINDS_HOLD then
+		self:Emit(down and "Activate" or "Deactivate", ply)
+	elseif self.Method == BINDS_TOGGLE and down then
+		local newState = not self.__State
+		self:Emit(newState and "Activate" or "Deactivate", ply)
+	end
+
 end
 
 hook.Add("PlayerButtonDown", __LibName .. "_BindsDown", function(ply, btn)
@@ -211,25 +258,13 @@ hook.Add("PlayerButtonDown", __LibName .. "_BindsDown", function(ply, btn)
 
 	for _, bind in ipairs(binds) do
 		if not bind.Exclusive then continue end
-
-		if bind.Method == BINDS_HOLD then
-			bind:Emit("Deactivate", ply)
-		elseif bind.Method == BINDS_TOGGLE then
-			local newState = not bind.__State
-			bind:Emit(newState and "Activate" or "Deactivate", ply)
-		end
-
+		bind:_Fire(true, ply)
 		return -- exclusive bind
 	end
 
 
 	for _, bind in ipairs(binds) do
-		if bind.Method == BINDS_HOLD then
-			bind:Emit("Activate", ply)
-		elseif bind.Method == BINDS_TOGGLE then
-			local newState = not bind.__State
-			bind:Emit(newState and "Activate" or "Deactivate", ply)
-		end
+		bind:_Fire(true, ply)
 	end
 
 end)
@@ -242,18 +277,88 @@ hook.Add("PlayerButtonUp", __LibName .. "_BindsUp", function(ply, btn)
 
 	for _, bind in ipairs(binds) do
 		if not bind.Exclusive then continue end
-
-		if bind.Method == BINDS_HOLD then
-			bind:Emit("Deactivate", ply)
-		end
-
+		bind:_Fire(false, ply)
 		return -- exclusive bind
 	end
 
 
 	for _, bind in ipairs(binds) do
-		if bind.Method == BINDS_HOLD then
-			bind:Emit("Deactivate", ply)
-		end
+		bind:_Fire(false, ply)
 	end
 end)
+
+--[[
+	Concommands
+]]
+
+local function autoCompleter(method)
+	return function(cmd, args)
+		args = args:Trim()
+
+		local ret = {}
+
+		for k,v in pairs(Binds.Concommands) do
+			if v.Method ~= method then continue end
+			if args ~= "" then
+			 	local lw = v.ID:lower()
+			 	local exact = lw:sub(1, #args) == args
+			 	local fuzzy = lw:find(args, 1, true) and #lw < #args * 3
+			 	if not exact and not fuzzy then continue end
+			 end
+			ret[#ret + 1] = cmd .. " " .. v.ID
+		end
+
+		return ret
+	end
+end
+
+
+concommand.Add(cmdPrefix .. "bindToggle", function(ply, _, _, str)
+	if not Binds.Concommands[str] then
+		print("unknown bind: " .. (str or ""))
+		return
+	end
+
+	local bnd = Binds.Concommands[str]
+
+	if bnd.Method ~= BINDS_TOGGLE then
+		printf("bind `%s` is not toggleable", str)
+		return
+	end
+
+	bnd:_Fire(true, ply)
+end, autoCompleter(BINDS_TOGGLE))
+
+local function checkBindHoldable(str)
+	if not Binds.Concommands[str] then
+		print("unknown bind: " .. (str or ""))
+		return
+	end
+
+	local bnd = Binds.Concommands[str]
+
+	if bnd.Method ~= BINDS_HOLD then
+		printf("bind `%s` is not holdable", str)
+		return
+	end
+
+	return bnd
+end
+
+local function onHold(ply, _, _, str)
+	local bnd = checkBindHoldable(str)
+	if not bnd then return end
+
+	bnd:_Fire(true, ply)
+end
+
+local function onUnhold(ply, _, _, str)
+	local bnd = checkBindHoldable(str)
+	if not bnd then return end
+	
+	bnd:_Fire(false, ply)
+end
+
+
+concommand.Add("+" .. cmdPrefix .. "bind", onHold, autoCompleter(BINDS_HOLD))
+concommand.Add("-" .. cmdPrefix .. "bind", onUnhold, autoCompleter(BINDS_HOLD))
