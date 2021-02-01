@@ -24,7 +24,7 @@ function LoadData(ply)
 	q.onSuccess = function(_, dat)
 		local write = {}
 
-		hook.Run("BW_LoadPlayerData", ply, dat[1], write)
+		hook.Run("BW_LoadPlayerData", ply, dat[1] or {}, write)
 		hook.Run("BW_LoadedPlayerData", ply)
 		-- todo: this is probably unnecessary
 
