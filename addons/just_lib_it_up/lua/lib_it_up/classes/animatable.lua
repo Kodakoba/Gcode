@@ -19,24 +19,6 @@ end
 
 local objs = AnimatableObjects
 
--- prevent leaking animatables
-
---[[local function GCProxy(t)
-	local ud = newproxy(true)
-	local mt = getmetatable(ud)
-
-	Class.CopyMetamethods(mt, t)
-	mt.__gc = function()
-		print("GC called")
-		AnimatableObjectsDirty = true -- only like this because __gc gets called _after_ the entry has been deleted from the table
-	end
-
-	t.__trace = debug.traceback()
-
-	objs[#objs + 1] = ud
-
-	return ud
-end]]
 
 AnimMeta = Promise:extend()
 
@@ -45,24 +27,6 @@ if SERVER then return end --bruh
 local systime = SysTime()
 
 hook.Add("Think", "AnimatableThink", function()
-
-	--[[if AnimatableObjectsDirty then
-		print("dirty - sequentializing")
-		local oldObjs = objs
-		AnimatableObjectsDirty = false
-
-		objs = setmetatable({}, {__mode = "v"})
-		AnimatableObjects = objs
-
-		local i = 1
-
-		for k,v in pairs(oldObjs) do
-			if not isnumber(k) then continue end
-
-			objs[i] = v
-			i = i + 1
-		end
-	end]]
 
 	systime = SysTime()
 
@@ -115,8 +79,10 @@ function AnimMeta:Swap(length, delay, ease, callback)
 end
 
 function Animatable:Initialize(auto_think)
-	self.__Animations = {}
-	self.m_AnimList = {}
+	self.__Animations = {}	-- this stores only :Lerp or :MemberLerp or :LerpColor
+							-- as [key] = anim
+
+	self.m_AnimList = {}	-- this is pretty much just a list of animations
 
 	if auto_think ~= false and self.__instance.NoAutoThink ~= true then
 		local id = auto_think ~= true and auto_think -- if auto_think isn't a bool consider it an ID
@@ -152,6 +118,7 @@ end
 
 
 function Animatable:AnimationThink()
+	self:Emit("AnimationPreThink", self.m_AnimList)
 
 	for k, anim in pairs( self.m_AnimList ) do
 		if anim.Ended then continue end
@@ -195,6 +162,8 @@ function Animatable:AnimationThink()
 		end
 
 	end
+
+	self:Emit("AnimationPostThink", self.m_AnimList)
 end
 
 function Animatable:NewAnimation( length, delay, ease, callback )
@@ -262,6 +231,7 @@ function Animatable:Lerp(key, val, dur, del, ease, forceswap)
 
 		anim.ToVal = val
 		anims[key] = anim
+
 	end
 
 	anim:On("Stop", "RemoveAnim", function()
@@ -272,6 +242,8 @@ function Animatable:Lerp(key, val, dur, del, ease, forceswap)
 	anim.Think = function(anim, self, fr)
 		self[key] = Lerp(fr, from, val)
 	end
+
+	self:Emit("NewAnimation", anim, self, key, val)
 
 	return anim, true
 end
@@ -317,6 +289,8 @@ function Animatable:MemberLerp(tbl, key, val, dur, del, ease, forceswap)
 	anim.Think = function(anim, self, fr)
 		tbl[key] = Lerp(fr, from, val)
 	end
+
+	self:Emit("NewAnimation", anim, tbl, key, val)
 
 	return anim, true
 end
