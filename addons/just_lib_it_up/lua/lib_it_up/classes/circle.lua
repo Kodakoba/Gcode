@@ -11,6 +11,12 @@ local mrad = math.rad
 local circ = LibItUp.Circle
 circ.AutoInitialize = false
 
+local animakeys = {
+	"StartAngle",
+	"EndAngle",
+	"Radius"
+}
+
 function circ:Initialize()
 	self._Polies = {}
 	self._Template = nil	-- new templates generated whenever the segment count changes
@@ -20,7 +26,13 @@ function circ:Initialize()
 	-- intentionally not marked as `internal` so you can use :To on these mfers
 	self.StartAngle = 0
 	self.EndAngle = 360
-	self.Radius = 64
+	self.Radius = 0
+
+	self.OutlineStartAngle = 0
+	self.OutlineEndAngle = 360
+	self.OutlineRadius = 0
+
+	self.__parent.Initialize(self, false)
 end
 
 function circ:_GenerateSubPoly(ang, x, y, rad, frac)
@@ -63,12 +75,16 @@ function circ:_GenerateTemplate()
 
 end
 
-function circ:_RegeneratePolies(x, y)
+function circ:_RegeneratePolies(x, y, startAngle, endAngle, rad, reusePolies)
+
+	--[[
 
 	local startAngle = self.StartAngle
 	local endAngle = self.EndAngle
 
 	local rad = self.Radius
+
+	]]
 
 	local seg = self._SegmentCount
 	local segAngle = 360 / seg
@@ -76,7 +92,7 @@ function circ:_RegeneratePolies(x, y)
 	local sa = math.min(endAngle, startAngle)
 	local ea = math.max(endAngle, startAngle)
 
-	local poly = self._Polies or {}
+	local poly = reusePolies or {}
 
 	poly[1] = {
 		x = x,
@@ -112,14 +128,49 @@ function circ:_RegeneratePolies(x, y)
 	poly[curPoly + useSegs] = self:_GenerateSubPoly(ea, x, y, rad)
 	poly[curPoly + useSegs + 1] = nil
 
-	self._Polies = poly
+	return poly
+end
+
+function circ:SetOutlined(b)
+	b = (b == nil and true) or b
+
+	if b then
+		self._Outlined = true
+	end
 end
 
 function circ:Paint(x, y)
+	self:AnimationThink()
+
+	for k,v in ipairs(animakeys) do
+		if self[v] ~= self["_Last" .. v] then
+			self._SettingsChanged = true
+			self["_Last" .. v] = self[v]
+		end
+
+		if self["Outline" .. v] ~= self["_LastOutline" .. v] then
+			self._OutlineSettingsChanged = true
+			self["_LastOutline" .. v] = self[v]
+		end
+	end
+
 	if not self._Template then self:_GenerateTemplate() end
 
+	local startAngle = self.StartAngle
+	local endAngle = self.EndAngle
+	local rad = self.Radius
+
+	if self._Outlined then
+
+		if not self._OutlinePolies or self._LastX ~= x or self._LastY ~= y then
+			self._OutlinePolies = self._OutlinePolies or {}
+			local poly = self:_RegeneratePolies(x, y, startAngle, endAngle, rad, self._OutlinePolies)
+		end
+
+	end
+
 	if self._LastX ~= x or self._LastY ~= y or self._SettingsChanged then
-		self:_RegeneratePolies(x, y)
+		self:_RegeneratePolies(x, y, startAngle, endAngle, rad, self._Polies)
 		self._LastX = x
 		self._LastY = y
 		self._SettingsChanged = false
@@ -128,26 +179,50 @@ function circ:Paint(x, y)
 	surface.DrawPoly(self._Polies)
 end
 
-local function ChangeAccessor(k, requireRetemplate)
-
+local function ChangeAccessor(k)
 	circ["Get" .. k] = function(s)
 		return s[k]
 	end
 
 	circ["Set" .. k] = function(s, v)
 		CheckArg(1, v, isnumber, "number")
-		s[k] = v
-		s._SettingsChanged = true
+
+		if s[k] ~= v then
+			s[k] = v
+			s._SettingsChanged = true
+		end
+
+		return s
+	end
+end
+
+local function ChangeOutlineAccessor(k)
+
+	circ["GetOutline" .. k] = function(s)
+		return s["Outline" .. k]
+	end
+
+	circ["SetOutline" .. k] = function(s, v)
+		CheckArg(1, v, isnumber, "number")
+
+		if s["Outline" .. k] ~= v then
+			s["Outline" .. k] = v
+			s._OutlineSettingsChanged = true
+		end
 
 		return s
 	end
 
 end
 
+ChangeOutlineAccessor("Radius")
+ChangeOutlineAccessor("EndAngle")
+ChangeOutlineAccessor("StartAngle")
+-- outline reuses outer segments amt
+
 ChangeAccessor("Radius")
 ChangeAccessor("EndAngle")
 ChangeAccessor("StartAngle")
-ChangeAccessor("Segments", true)
 
 function circ:SetSegments(amt)
 	CheckArg(1, amt, isnumber, "number")
