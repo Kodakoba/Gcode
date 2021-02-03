@@ -200,36 +200,10 @@ end
 
 function Bind:CreateConcommand(name)
 	name = name or self.ID
-
-	--[[if self.Method == BINDS_TOGGLE then
-		print("Creating", name, "as toggle", self.Method == BINDS_TOGGLE)
-		concommand.Add("binds_" .. name .. "_toggle", function(ply)
-			self:_Fire(true, ply)
-		end)
-
-		concommand.Remove("+binds_" .. name)
-		concommand.Remove("-binds_" .. name)
-	elseif self.Method == BINDS_HOLD then
-		print("Creating", name, "as hold", self.Method == BINDS_HOLD)
-		concommand.Add("+binds_" .. name, function(ply)
-			self:_Fire(true, ply)
-		end)
-
-		concommand.Add("-binds_" .. name, function(ply)
-			self:_Fire(false, ply)
-		end)
-
-		concommand.Remove("binds_" .. name .. "_toggle")
-	else
-		print("Unrecognized Bind method:", self.Method)
-	end]]
-
 	Binds.Concommands[name] = self
-
-	--[[self:On("MethodChanged", "RecreateConcommands", function()
-		self:CreateConcommand(name)
-	end)]]
 end
+
+Bind:AliasMethod(Bind.CreateConcommand, "CreateConcommands")
 
 function Bind:SetDefaultKey(k)
 	if not self.Key then
@@ -239,12 +213,16 @@ function Bind:SetDefaultKey(k)
 	return self
 end
 
+ChainAccessor(Bind, "__State", "Active")
+
 function Bind:_Fire(down, ply)
 
 	if self.Method == BINDS_HOLD then
+		if down and self:GetActive() then return end -- you can't re-activate a holdable bind
 		self:Emit(down and "Activate" or "Deactivate", ply)
 	elseif self.Method == BINDS_TOGGLE and down then
 		local newState = not self.__State
+		self:SetActive(newState)
 		self:Emit(newState and "Activate" or "Deactivate", ply)
 	end
 
