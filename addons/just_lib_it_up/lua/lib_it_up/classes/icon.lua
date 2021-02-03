@@ -42,6 +42,7 @@ function Icon:Initialize(url, name)
 
 	end
 
+	self._SizeInitialized = false
 	self.W, self.H = 16, 16
 
 	self.Filter = nil
@@ -56,16 +57,22 @@ function Icon:SetColor(col)
 end
 
 ChainAccessor(Icon, "Filter", "Filter")
+ChainAccessor(Icon, "_Debug", "Debug")
 
 function Icon:SetSize(w, h)
 	self.W = w or self.W
 	self.H = h or self.H
+	self._SizeInitialized = true
 	return self
 end
 
 function Icon:GetSize()
 	return self.W, self.H
 end
+
+ChainAccessor(Icon, "_Autosize", "Autosize")
+ChainAccessor(Icon, "_Autosize", "AutoResize")
+ChainAccessor(Icon, "_Autosize", "AutoSize")
 
 function Icon:PaintIcon(x, y, w, h, rot)
 
@@ -74,6 +81,10 @@ function Icon:PaintIcon(x, y, w, h, rot)
 
 		if mat then 			--cache the downloaded material as an IMaterial asap
 			self.Material = mat.mat
+			if self:GetAutosize() and not self._SizeInitialized then
+				local tex = mat.mat:GetTexture("$basetexture")
+				self:SetSize(tex:GetMappingWidth(), tex:GetMappingHeight())
+			end
 		end
 
 	else
@@ -85,6 +96,10 @@ function Icon:PaintIcon(x, y, w, h, rot)
 			surface.DrawTexturedRect(x, y, w, h)
 		end
 
+		if self:GetAutosize() and not self._SizeInitialized then
+			local tex = self.Material:GetTexture("$basetexture")
+			self:SetSize(tex:GetMappingWidth(), tex:GetMappingHeight())
+		end
 	end
 
 end
@@ -118,6 +133,9 @@ function Icon:Paint(x, y, w, h, rot)
 		self:PaintIcon(x, y, w, h, rot)
 	end
 
+	if self:GetDebug() then
+		surface.DrawOutlinedRect(x, y, w, h)
+	end
 end
 
 function Icon:Copy()
