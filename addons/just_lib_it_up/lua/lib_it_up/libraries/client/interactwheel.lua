@@ -18,7 +18,7 @@ local requireCertainty = 0.3
 
 -- animation settings:
 local wheelAppearTime = 0.2
-local wheelDisappearTime = 0.1
+local wheelDisappearTime = 0.15
 
 -- mouse radius:
 local wheelInnerRadius = 12
@@ -55,20 +55,16 @@ end
 function wheel:_PaintPanel(wheel, w, h)
 	-- self = panel
 	local fr = wheel.Frac
-	surface.SetDrawColor(0, 0, 0, wheel.Dim * 255)
+	surface.SetDrawColor(0, 0, 0, wheel.Dim * 255 * fr)
 	surface.DrawRect(0, 0, w, h)
 
+	surface.SetDrawColor(0, 0, 0, 255)	-- if no dim was given then drawcolor alpha might be 0, which
+										-- will result in no-ops on circle stencils and blur
 	draw.ScuffedBlur(self, fr * wheel.BlurAmount, 0, 0, w, h)
 
-	--[[
-	draw.MaterialCircle(w/2, h/2, wheelInnerRadius * 2, wheelInnerRadius * 2)
-	draw.MaterialCircle(w/2, h/2, wheelOuterRadius * 2, wheelOuterRadius * 2)
-	]]
 
 	local ang = self.Angle
 	local options = wheel.Options
-
-	--draw.NoTexture()
 
 	local mtrx = wheel.Matrix
 		mtrx:TranslateNumber(w/2, h/2)
@@ -78,32 +74,35 @@ function wheel:_PaintPanel(wheel, w, h)
 
 	BSHADOWS.BeginShadow()
 
-	draw.BeginMask()
-	render.PerformFullScreenStencilOperation()
+	
 
+	render.ClearStencil()
+	draw.BeginMask()
 
 	cam.PushModelMatrix(mtrx)
 
-		draw.DeMask()
+		-- draw the inner circle for the stencil
+
 		self.InnerCircle:Paint(w/2, h/2)
 
 		draw.DrawOp()
-		
+		render.SetStencilReferenceValue(1)
+		-- draw every option
 
 		for i=1, #options do
 			local opt = options[i]
 			draw.SetMaterialCircle(optionOuterRadius)
-			opt:_Paint(w/2, h/2, w, h)
+			opt:_Paint(w/2, h/2, w, h, mtrx, self.InnerCircle)
 		end
 
 		draw.FinishMask()
-			
+				
+		-- draw selection arrow
+
 		local origin = self.MouseOrigin
 		local cur = self.Panel.CurrentMouse
 		local ox, oy = cur[1] - origin[1], cur[2] - origin[2]
 		local nx, ny = normalize(ox, oy)
-
-		surface.SetDrawColor(arrowColor:Unpack())
 
 		local certainty = self.OptionPercentage
 
@@ -117,27 +116,30 @@ function wheel:_PaintPanel(wheel, w, h)
 
 		draw.EnableFilters()
 
+			surface.SetDrawColor(arrowColor:Unpack())
 			surface.DrawMaterial("https://i.imgur.com/jFHSu7s.png", "arr_right.png", 
 				ax, ay, aw, ah, -self.Angle + 90)
 
 		draw.DisableFilters()
-		--[[
-		draw.SimpleText(math.Round(self.SelectionFrac, 4), "OS32", w/2, h/2 - 32 * 0.625, color_white, 1, 1)
-		draw.SimpleText(math.Round(ang) .. "°", "OS32", w/2, h/2, color_white, 1, 1)
-		draw.SimpleText(math.Round(self.OptionPercentage * 100) .. "%", "OS32", w/2, h/2 + 32 * 0.625, color_white, 1, 1)
-		]]
-		
-
-		--[[
-		White()
-		local origin = self.MouseOrigin
-		local cur = self.Panel.CurrentMouse
-		surface.DrawLine(origin[1], origin[2], cur[1], cur[2])
-		]]
 
 	cam.PopModelMatrix(mtrx)
 
 	BSHADOWS.EndShadow(2, 2, 3)
+
+end
+
+function wheel:_OnMousePressed(wheel, mouse)
+	local curhov = self._CurHovered
+	if curhov then
+		for k, opt in ipairs(wheel.Options) do
+			if opt ~= curhov then
+				opt:_Hide(true)
+			end
+		end
+
+		curhov:_Select()
+		wheel:Hide(0.2)
+	end
 end
 
 function wheel:_BoundCursor(wheel)
@@ -332,6 +334,7 @@ function wheel:Show()
 
 	pnl.Paint = function(pnl, w, h) 	InteractWheel._PaintPanel(pnl, self, w, h) 	end
 	pnl.Think = function(pnl) 		InteractWheel._ThinkPanel(pnl, self) 		end
+	pnl.OnMousePressed = function(pnl, ...) InteractWheel._OnMousePressed(pnl, self, ...) end
 
 	local options = self.Options
 	local segAng = 360 / #options
@@ -351,30 +354,25 @@ function wheel:Show()
 
 end
 
-function wheel:Hide()
-	local anim, new = self:To("Frac", 0, 0.15, 0, 0.3)
+function wheel:Hide(delay)
+	local anim, new = self:To("Frac", 0, wheelDisappearTime, 0, 0.3)
 
 	if self.Panel then
 
-		self.Panel:AlphaTo(0, wheelDisappearTime, 0, 1.4)
+		self.Panel:AlphaTo(0, wheelDisappearTime, delay or 0, function(anim, pnl)
+			pnl:Remove()
+			if pnl == self.Panel then self.Panel = nil end
+		end, 1.4)
+
 		self.Panel:SetMouseInputEnabled(false)
 		self.Panel:SetKeyBoardInputEnabled(false)
-		--self.Panel.InnerCircle:To("Radius", 8, 0.2, 0, 1.6)
-
-		if new then
-			anim:Then(function()
-				self.Panel:Remove()
-				self.Panel = nil
-			end)
-		end
-
 	end
 
 	local options = self.Options
 
 	for i=1, #options do
 		local opt = options[i]
-		opt:_Hide(i)
+		opt:_Hide()
 	end
 end
 
@@ -405,6 +403,38 @@ end
 ChainAccessor(InteractWheelOption, "Wheel", "Wheel")
 ChainAccessor(InteractWheelOption, "Disabled", "Disabled")
 ChainAccessor(InteractWheelOption, "OptionNumber", "OptionNumber")
+
+function InteractWheelOption:_Setup(num, ang)
+	-- called when the wheel is generated, so that
+	-- the options can setup properties and whatnot
+
+	-- the methods will figure out whether wrapping is actually necessary or nah
+	self:_WrapTitle()
+	self:_WrapDescription()
+
+
+	self.Circle:StopAnimations()
+
+	self.HoveredFrac = 0
+	self.SelectedFrac = 0
+	self._AlphaOverride = 1	-- used for fading out non-selected options manually for when an option is selected
+
+	local circ = self.Circle
+	circ:SetRadius(optionOuterRadius)
+
+	circ:SetStartAngle(ang * (num - 1))
+	circ:SetEndAngle(ang * num)
+
+	-- used in selection circle expanding
+	circ._OriginalStartAngle = circ:GetStartAngle()
+	circ._OriginalEndAngle = circ:GetEndAngle()
+
+	if circ.Color then
+		circ.Color:Set(circ.UnselectedColor)
+	else
+		circ.Color = circ.UnselectedColor:Copy()
+	end
+end
 
 function InteractWheelOption:_WrapDescription()
 	
@@ -448,7 +478,23 @@ function InteractWheelOption:SetDescription(s)
 	self._WrappedDescription = false
 end
 
+local optionSelectedScaleMult = 0.15
+
 function InteractWheelOption:_Select()
+	-- we'll have to draw a new stenciled circle in order to have the
+	-- selected option arc not be huge: https://i.imgur.com/hq6sY8Z.png
+
+	self._InnerCircle = LibItUp.Circle()
+
+	local dur, ease = 0.2, 0.3
+
+	local incirc = self._InnerCircle
+		incirc:SetSegments(50)
+		incirc:SetRadius(optionInnerRadius)
+		incirc:To("Radius", optionInnerRadius + optionInnerRadius * optionSelectedScaleMult,
+			dur, 0, ease)
+
+	self.Circle:MemberLerp(self, "SelectedFrac", 1, dur, 0, ease)
 	self:Emit("Select")
 end
 
@@ -462,17 +508,22 @@ end
 
 function InteractWheelOption:_Unhover()
 	self.Circle:MemberLerp(self, "HoveredFrac", 0, 0.1, 0, 0.2)
-	self.Circle:LerpColor(self.Circle.Color, unselectedColor, 0.1, 0, 0.3)
+	local anim, new = self.Circle:LerpColor(self.Circle.Color, unselectedColor, 0.1, 0, 0.3)
 
 	self._Hovered = false
 	self:Emit("Unhovered")
 end
 
-function InteractWheelOption:_Hide(num)
+function InteractWheelOption:_Hide(sel)
 	local circ = self.Circle
 
 	circ:MemberLerp(self, "HoveredFrac", 0, 0.1, 0, 0.2)
-	circ:To("Radius", optionOuterRadius - 8, wheelDisappearTime, 0, 0.4)
+
+	if sel then -- if we're hiding because an option was selected, override our own alpha manually
+		circ:MemberLerp(self, "_AlphaOverride", 0, wheelDisappearTime, 0, 0.2)
+	end
+
+	--circ:To("Radius", optionOuterRadius - 16, wheelDisappearTime, 0, 0.4)
 end
 
 ChainAccessor(InteractWheelOption, "_Hovered", "Hovered")
@@ -481,83 +532,164 @@ local sqrt2 = math.sqrt(2)
 
 local ic2 = Icon("https://i.imgur.com/z3SWemE.png", "dbutt_icon.png")
 
-function InteractWheelOption:_Paint(x, y, w, h)
+function InteractWheelOption:_Paint(x, y, w, h, prevMatrix, innerCircle)
 	local circ = self.Circle
+
+	-- Get the segment's middle as XY
+	-- This will come in handy in icon size manipulation and
+	-- selection matrix modifying
+
+	local segMid = circ:GetStartAngle() + (circ:GetEndAngle() - circ:GetStartAngle()) / 2 - 90
+	local segMidRad = math.rad(segMid)
+
+	local rad = (optionOuterRadius + optionInnerRadius) / 2
+
+	local smX, smY = math.floor(math.cos(segMidRad) * rad), math.floor(math.sin(segMidRad) * rad) -- relative to 0, 0
 
 	--[[
 		Draw segment & segment icon
 	]]
+
+	-- If we're selected, push a selection matrix to create a
+	-- option-popping-out animation
+	local pushed = false
+	if self.SelectedFrac > 0 then
+		cam.PopModelMatrix()	-- pop the old matrix; we don't obey the wheel's scaling matrix
+								-- we'll also have to disable the parent's stencil, draw our own,
+								-- and then restore the old stencil ; bit fucky but i can't come up with a better solution
+
+		surface.SetDrawColor(0, 0, 0, 255)
+
+		render.ClearStencil() -- set every pixel to 0
+		-- put our own circle
+		draw.BeginMask()	
+
+		self._InnerCircle:Paint(w/2, h/2)	-- this sets ref value to 1
+
+		draw.DrawOp()			-- this will draw where value is 1, however, for our case it's more advantageous to
+								-- draw where it's NOT 1, and since the op is NOTEQUAL we'll just compare against != 1 
+		render.SetStencilReferenceValue(1)
+		
+
+		local trX, trY = x, y
+		local fr = self.SelectedFrac
+		local easedfr = fr ^ 0.7
+
+		local mtrx = self.Matrix
+			mtrx:Reset()
+			mtrx:TranslateNumber(trX, trY)
+			local scale = 1 + easedfr * optionSelectedScaleMult
+			mtrx:SetScaleNumber(scale, scale)
+			mtrx:TranslateNumber(-trX, -trY)
+
+		cam.PushModelMatrix(mtrx, true)
+		pushed = true
+		local osa, oea = circ._OriginalStartAngle, circ._OriginalEndAngle
+		local diff = oea - osa
+		circ:SetStartAngle(osa - diff * easedfr * 0.4)
+		circ:SetEndAngle(oea + diff * easedfr * 0.4)
+	end
+
+	local prevAlpha, curAlpha
+
+	if self._AlphaOverride ~= 1 then
+		prevAlpha = surface.GetAlphaMultiplier()
+		curAlpha = prevAlpha * self._AlphaOverride
+		surface.SetAlphaMultiplier(curAlpha)
+	end
 
 	-- Segment (duh)
 	surface.SetDrawColor(circ.Color:Unpack())
 	--surface.SetDrawColor(Colors.Red)
 	circ:Paint(x, y)
 
+	
 	-- Icon:
 	local ic = self.Icon
 
-	-- 1. Get the segment's middle as XY
-	local segMid = circ:GetStartAngle() + (circ:GetEndAngle() - circ:GetStartAngle()) / 2 - 90
-
-	local rad = (optionOuterRadius + optionInnerRadius) / 2
-
-	segMid = math.rad(segMid)
-	local smX, smY = math.floor(math.cos(segMid) * rad), math.floor(math.sin(segMid) * rad) -- relative to 0, 0
+	
 
 	-- 2. Calculate the W, H of box we can draw our icon in
-	-- This is ass
+		-- This is ass
 
 	local rdiff = (optionOuterRadius - optionInnerRadius) / 2
 	local ang = angXY(smX, smY)
 
-	local side = (optionOuterRadius - optionInnerRadius) / sqrt2
-
-	
-
-
-	render.SetStencilEnable(false)
-	surface.SetDrawColor(color_white)
-
-	local closeAng = math.max(math.pi / 2 - math.abs(segMid) % (math.pi / 2), math.abs(segMid) % (math.pi / 2))
-
+	local closeAng = math.max(math.pi / 2 - math.abs(segMidRad) % (math.pi / 2), math.abs(segMidRad) % (math.pi / 2))
 	local close = math.sin(closeAng)
 	local far = math.sin(math.pi / 4)
 
-	local off = 0
-
 	local sqr = math.Round(far * rdiff + close * rdiff)
 
-	local rx, ry = x + smX - sqr/2 + off, y + smY - sqr/2 + off
-
-
-	
-	local rx, ry = x + smX, y + smY
-
-	local ang = -math.deg(ang)
+	local ang = -segMid
 	local flip = 1
 
-	if ang > 75 and ang < 255 then
+	if math.abs(ang) > 90 then
 		flip = -1
 	end
 
-	if flip < 0 then
-		render.CullMode(1)
-	end
+	if ic then
 
-		if ic then
-			ic:Paint(rx, ry, sqr, sqr * flip, ang)
+		if flip < 0 then
+			render.CullMode(1)
 		end
 
-	if flip < 0 then
-		render.CullMode(0)
+			local rx, ry = x + smX, y + smY
+			local icang = ang
+
+			if flip < 0 then
+				icang = math.Clamp(icang, -180 - 45, -180 + 15)
+			else
+				icang = math.Clamp(icang, -15, 45)
+			end
+
+			local iw, ih = ic:GetSize()
+
+			-- the maximum of these will be 1
+			local ratio_w = 1
+			local ratio_h = 1
+
+			if iw and ih then
+				if iw >= ih then
+					ratio_h = ih / iw
+				else
+					ratio_w = iw / ih
+				end
+			end
+
+			render.SetStencilEnable(false)
+				ic:Paint(rx, ry, sqr * ratio_w, sqr * flip * ratio_h, icang)
+			render.SetStencilEnable(true)
+
+		if flip < 0 then
+			render.CullMode(0)
+		end
+
 	end
 
 
-	render.SetStencilEnable(true)
+	if pushed then
+		if prevAlpha then surface.SetAlphaMultiplier(prevAlpha) end
 
-	if self.HoveredFrac == 0 then return end
+		cam.PopModelMatrix()
+		cam.PushModelMatrix(prevMatrix)
+
+		-- after reinstating previous matrix we also need to reinstate previous stencil
+
+		render.ClearStencil() -- here we go again
+
+		draw.BeginMask()	
+			innerCircle:Paint(x, y)	-- re-draw the parent circle
+
+		draw.DrawOp()
+		render.SetStencilReferenceValue(1)
+	end
 
 	local fr = self.HoveredFrac
+	if fr == 0 then 
+		if prevAlpha then surface.SetAlphaMultiplier(prevAlpha) end
+		return
+	end
 
 	--[[
 		Calculate total infobox height so we can center it
@@ -604,8 +736,8 @@ function InteractWheelOption:_Paint(x, y, w, h)
 
 	-- Translation depends on hoverfrac: the closer to 1, the less this translation is
 
-	local mtrxMiddleX = math.floor(math.cos(segMid) * (optionInnerRadius * 0.9))
-	local mtrxMiddleY = math.floor(math.sin(segMid) * (optionInnerRadius * 0.9))
+	local mtrxMiddleX = math.floor(math.cos(segMidRad) * (optionInnerRadius * 0.9))
+	local mtrxMiddleY = math.floor(math.sin(segMidRad) * (optionInnerRadius * 0.9))
 
 	local trX, trY = x + mtrxMiddleX * (1 - fr), y + mtrxMiddleY * (1 - fr)
 
@@ -664,27 +796,10 @@ function InteractWheelOption:_Paint(x, y, w, h)
 
 	-- bring back the inner circle stencil and restore alpha multiplier
 	render.SetStencilEnable(true)
-	surface.SetAlphaMultiplier(amult)
-end
-
-function InteractWheelOption:_Setup(num, ang)
-	-- called when the wheel is generated, so that
-	-- the options can setup properties and whatnot
-
-	-- the methods will figure out whether wrapping is actually necessary or nah
-	self:_WrapTitle()
-	self:_WrapDescription()
-
-	local circ = self.Circle
-	circ:SetRadius(optionOuterRadius)
-
-	circ:SetStartAngle(ang * (num - 1))
-	circ:SetEndAngle(ang * num)
-
-	if circ.Color then
-		circ.Color:Set(circ.UnselectedColor)
+	if prevAlpha then
+		surface.SetAlphaMultiplier(prevAlpha)
 	else
-		circ.Color = circ.UnselectedColor:Copy()
+		surface.SetAlphaMultiplier(amult)
 	end
 end
 
@@ -715,7 +830,10 @@ local wh = _TestWheel
 wh:AddOption("Icon + description", "Yes funny description description veri funny mm yes veri funi",
 	Icon("https://i.imgur.com/z3SWemE.png", "dbutt_icon.png"):SetSize(64, 72))
 
-wh:AddOption("Iconless")
+for i=1, 10 do
+	wh:AddOption("Option " .. i, "Some description " .. ("some description "):rep(i - 1):Trim(),
+		Icon("https://i.imgur.com/z3SWemE.png", "dbutt_icon.png"):SetSize(64, 72))
+end
 
 wh:AddOption("NaM VERYLONGTITLESPAM NaM", "NaM NAM THE WEEBS AWAY NaM NAM THE WEEBS AWAY NaM NAM THE WEEBS AWAY NaM NAM THE WEEBS AWAY ",
 	Icon("https://i.imgur.com/z3SWemE.png", "dbutt_icon.png"):SetSize(64, 72))

@@ -114,7 +114,7 @@ function circ:_RegeneratePolies(x, y, startAngle, endAngle, rad, reusePolies)
 	
 
 	for i=0, useSegs-1 do
-		local t = self._Template[skipFirst + i + 1]
+		local t = self._Template[(skipFirst + i) % seg + 1]
 
 		poly[curPoly + i] = {
 			x = t.x * rad + x,
