@@ -228,7 +228,7 @@ function META:LerpColor(key, val, dur, del, ease, forceswap)
 	local iscol = IsColor(key)
 	local from = (iscol and key) or self[key]
 	if not from then errorf("Didn't find color when provided %s (%s)", key, type(key)) end
-	if from == val then return end
+	if from == val and not anims[key] then return end
 
 	if anims[key] then
 		anim = anims[key]
