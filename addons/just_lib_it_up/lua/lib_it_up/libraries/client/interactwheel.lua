@@ -10,9 +10,11 @@ function wheel:Initialize()
 	self.Frac = 0
 
 	self.BlurAmount = 2
-	self.Dim = 0.7
+	self.Dim = 0.5
 end
 
+
+local requireCertainty = 0.3
 
 -- animation settings:
 local wheelAppearTime = 0.2
@@ -24,6 +26,7 @@ local wheelOuterRadius = 48
 
 -- options radius:
 local optionInnerRadius, optionOuterRadius
+
 
 local function resize()
 	local sw, sh = ScrW(), ScrH()
@@ -45,13 +48,17 @@ local function normalize(x, y)
 	return x / len, y / len
 end
 
+local function angXY(x, y)
+	return math.atan2(y, x)
+end
+
 function wheel:_PaintPanel(wheel, w, h)
 	-- self = panel
 	local fr = wheel.Frac
 	surface.SetDrawColor(0, 0, 0, wheel.Dim * 255)
 	surface.DrawRect(0, 0, w, h)
 
-	draw.ScuffedBlur(nil, fr * wheel.BlurAmount, 0, 0, w, h)
+	draw.ScuffedBlur(self, fr * wheel.BlurAmount, 0, 0, w, h)
 
 	--[[
 	draw.MaterialCircle(w/2, h/2, wheelInnerRadius * 2, wheelInnerRadius * 2)
@@ -68,6 +75,8 @@ function wheel:_PaintPanel(wheel, w, h)
 		local scale = 0.3 + fr * 0.7
 		mtrx:SetScaleNumber(scale, scale)
 		mtrx:TranslateNumber(-w/2, -h/2)
+
+	BSHADOWS.BeginShadow()
 
 	draw.BeginMask()
 	render.PerformFullScreenStencilOperation()
@@ -127,6 +136,8 @@ function wheel:_PaintPanel(wheel, w, h)
 		]]
 
 	cam.PopModelMatrix(mtrx)
+
+	BSHADOWS.EndShadow(2, 2, 3)
 end
 
 function wheel:_BoundCursor(wheel)
@@ -217,7 +228,7 @@ local function isSelected(fr, bottom, upper, sel)
 
 		inArea = aboveBottom and belowTop
 	else
-		inArea = fr > bottom and fr <= upper
+		inArea = fr >= bottom and fr < upper 	-- frac can be 0 (0deg) but it can't be 1 (360deg -> 0deg)
 	end
 
 	return inArea
@@ -247,7 +258,7 @@ function wheel:_ThinkPanel(wheel)
 		local bottomBound = (1 / len) * (i - 1)
 		local upperBound = (1 / len) * i
 
-		if self.OptionPercentage > 0.3 and
+		if self.OptionPercentage > requireCertainty and
 			isSelected(sel, bottomBound, upperBound, true) then
 			gotSel = true
 		else
@@ -257,12 +268,21 @@ function wheel:_ThinkPanel(wheel)
 
 	for i=1, len do
 		local opt = options[i]
-		if opt == curSel then continue end -- already calculated
+
+		-- we already have a selection which is still hovered;
+		-- this can't be the selected option
+		if curSel then
+			if opt ~= curSel and opt:GetHovered() then
+				opt:_Unhover()
+			end
+
+			continue
+		end
 
 		local bottomBound = (1 / len) * (i - 1)
 		local upperBound = (1 / len) * i
 
-		if self.OptionPercentage > 0.3 and not gotSel and
+		if self.OptionPercentage > requireCertainty and not gotSel and
 			isSelected(sel, bottomBound, upperBound, false) then
 			
 			gotSel = opt
@@ -368,9 +388,6 @@ function InteractWheelOption:Initialize(name, desc, icon, cb)
 	self.DescriptionFont = "OS20"
 	self.TitleFont = "OSB32"
 
-	self:_WrapTitle()
-	self:_WrapDescription()
-
 	self.Icon = icon
 
 	self.HoveredFrac = 0
@@ -390,13 +407,19 @@ ChainAccessor(InteractWheelOption, "Disabled", "Disabled")
 ChainAccessor(InteractWheelOption, "OptionNumber", "OptionNumber")
 
 function InteractWheelOption:_WrapDescription()
-	if isstring(self.Description) then
+	
+
+	if isstring(self.Description) and not self._WrappedDescription then
+		self._WrappedDescription = true
 		self.Description = string.WordWrap2(self.Description, (optionInnerRadius * 2) - 16, self.DescriptionFont)
 	end
 end
 
 function InteractWheelOption:_WrapTitle()
-	if isstring(self.Title) then
+	
+
+	if isstring(self.Title) and not self._WrappedTitle then
+		self._WrappedTitle = true
 		self.Title = string.WordWrap2(self.Title, (optionInnerRadius * 2) - 32, self.TitleFont)
 	end
 end
@@ -404,21 +427,25 @@ end
 function InteractWheelOption:SetTitleFont(f)
 	self.TitleFont = f
 	self:_WrapTitle()
+	self._WrappedTitle = false
 end
 
 function InteractWheelOption:SetTitle(s)
 	self.Title = s
 	self:_WrapTitle()
+	self._WrappedTitle = false
 end
 
 function InteractWheelOption:SetDescriptionFont(f)
 	self.DescriptionFont = f
 	self:_WrapDescription()
+	self._WrappedDescription = false
 end
 
 function InteractWheelOption:SetDescription(s)
 	self.Description = s
 	self:_WrapDescription()
+	self._WrappedDescription = false
 end
 
 function InteractWheelOption:_Select()
@@ -450,20 +477,99 @@ end
 
 ChainAccessor(InteractWheelOption, "_Hovered", "Hovered")
 
+local sqrt2 = math.sqrt(2)
+
+local ic2 = Icon("https://i.imgur.com/z3SWemE.png", "dbutt_icon.png")
+
 function InteractWheelOption:_Paint(x, y, w, h)
 	local circ = self.Circle
 
+	--[[
+		Draw segment & segment icon
+	]]
+
+	-- Segment (duh)
 	surface.SetDrawColor(circ.Color:Unpack())
+	--surface.SetDrawColor(Colors.Red)
 	circ:Paint(x, y)
+
+	-- Icon:
+	local ic = self.Icon
+
+	-- 1. Get the segment's middle as XY
+	local segMid = circ:GetStartAngle() + (circ:GetEndAngle() - circ:GetStartAngle()) / 2 - 90
+
+	local rad = (optionOuterRadius + optionInnerRadius) / 2
+
+	segMid = math.rad(segMid)
+	local smX, smY = math.floor(math.cos(segMid) * rad), math.floor(math.sin(segMid) * rad) -- relative to 0, 0
+
+	-- 2. Calculate the W, H of box we can draw our icon in
+	-- This is ass
+
+	local rdiff = (optionOuterRadius - optionInnerRadius) / 2
+	local ang = angXY(smX, smY)
+
+	local side = (optionOuterRadius - optionInnerRadius) / sqrt2
+
+	
+
+
+	render.SetStencilEnable(false)
+	surface.SetDrawColor(color_white)
+
+	local closeAng = math.max(math.pi / 2 - math.abs(segMid) % (math.pi / 2), math.abs(segMid) % (math.pi / 2))
+
+	local close = math.sin(closeAng)
+	local far = math.sin(math.pi / 4)
+
+	local off = 0
+
+	local sqr = math.Round(far * rdiff + close * rdiff)
+
+	local rx, ry = x + smX - sqr/2 + off, y + smY - sqr/2 + off
+
+
+	
+	local rx, ry = x + smX, y + smY
+
+	local ang = -math.deg(ang)
+	local flip = 1
+
+	if ang > 75 and ang < 255 then
+		flip = -1
+	end
+
+	if flip < 0 then
+		render.CullMode(1)
+	end
+
+		if ic then
+			ic:Paint(rx, ry, sqr, sqr * flip, ang)
+		end
+
+	if flip < 0 then
+		render.CullMode(0)
+	end
+
+
+	render.SetStencilEnable(true)
 
 	if self.HoveredFrac == 0 then return end
 
 	local fr = self.HoveredFrac
 
+	--[[
+		Calculate total infobox height so we can center it
+			1. Get the icon's height, if present
+			2. Calculate wrapped title height, if present
+			3. Calculate wrapped description height, if present
+	]]
+
 	local infoH = 0, 0
 	local iconMargin = 8
 	local titleMargin = 4
-	local ic = self.Icon
+	
 
 	if ic then
 		local iw, ih = ic:GetSize()
@@ -489,17 +595,21 @@ function InteractWheelOption:_Paint(x, y, w, h)
 		end
 	end
 
+	--[[
+		Setup alpha and matrix for scaling + move-out effects
+	]]
+
 	local amult = surface.GetAlphaMultiplier()
 	surface.SetAlphaMultiplier(fr ^ 0.3 * amult)
 
-	local segMid = circ:GetStartAngle() + (circ:GetEndAngle() - circ:GetStartAngle()) / 2 - 90
-	local rad = optionInnerRadius / 2
+	-- Translation depends on hoverfrac: the closer to 1, the less this translation is
 
-	segMid = math.rad(segMid)
-	local smX, smY = math.cos(segMid) * rad, math.sin(segMid) * rad
+	local mtrxMiddleX = math.floor(math.cos(segMid) * (optionInnerRadius * 0.9))
+	local mtrxMiddleY = math.floor(math.sin(segMid) * (optionInnerRadius * 0.9))
 
-	local trX, trY = x + smX * (1 - fr), y + smY * (1 - fr)
+	local trX, trY = x + mtrxMiddleX * (1 - fr), y + mtrxMiddleY * (1 - fr)
 
+	-- Scale and translate the matrix
 	local mtrx = self.Matrix
 		mtrx:Reset()
 		mtrx:TranslateNumber(trX, trY)
@@ -507,53 +617,63 @@ function InteractWheelOption:_Paint(x, y, w, h)
 		mtrx:SetScaleNumber(scale, scale)
 		mtrx:TranslateNumber(-trX, -trY)
 
+	--[[
+		Render the infobox
+	]]
+
+	-- Disable the inner-circle stencil
 	render.SetStencilEnable(false)
 
 	cam.PushModelMatrix(mtrx, true)
 
-	local cy = y - infoH / 2 - (ic and select(2, ic:GetSize()) / 2 or 0)
-	local cy2 = cy
+		local cy = y - infoH / 2 - (ic and select(2, ic:GetSize()) / 2 or 0)
+		local cy2 = cy
 
-	if ic then
-		local iw, ih = ic:GetSize()
-		ic:Paint(x - iw/2, cy, iw, ih)
-		cy = cy + ih + iconMargin
-	end
-
-	if title then
-		surface.SetFont(self.TitleFont)
-		surface.SetDrawColor(color_white)
-		local hgt = draw.GetFontHeight(self.TitleFont)
-
-		for s, line in eachNewline(title) do
-			draw.SimpleText(s, self.TitleFont, x, cy, color_white, 1, 5)
-			cy = cy + hgt
+		if ic then
+			local iw, ih = ic:GetSize()
+			ic:Paint(x - iw/2, cy, iw, ih)
+			cy = cy + ih + iconMargin
 		end
 
-	end
+		if title then
+			surface.SetFont(self.TitleFont)
+			surface.SetDrawColor(color_white)
+			local hgt = draw.GetFontHeight(self.TitleFont)
 
-	if desc then
+			for s, line in eachNewline(title) do
+				draw.SimpleText(s, self.TitleFont, x, cy, color_white, 1, 5)
+				cy = cy + hgt
+			end
 
-		surface.SetFont(self.DescriptionFont)
-		surface.SetDrawColor(color_white)
-		local hgt = draw.GetFontHeight(self.DescriptionFont)
-
-		for s, line in eachNewline(desc) do
-			draw.SimpleText(s, self.DescriptionFont, x, cy, color_white, 1, 5)
-			cy = cy + hgt
 		end
 
-	end
+		if desc then
 
-	--surface.DrawOutlinedRect(x - 8, cy2, 16, infoH)
+			surface.SetFont(self.DescriptionFont)
+			surface.SetDrawColor(color_white)
+			local hgt = draw.GetFontHeight(self.DescriptionFont)
+
+			for s, line in eachNewline(desc) do
+				draw.SimpleText(s, self.DescriptionFont, x, cy, color_white, 1, 5)
+				cy = cy + hgt
+			end
+
+		end
+
 	cam.PopModelMatrix()
 
+	-- bring back the inner circle stencil and restore alpha multiplier
 	render.SetStencilEnable(true)
 	surface.SetAlphaMultiplier(amult)
 end
 
 function InteractWheelOption:_Setup(num, ang)
-	-- called when the wheel is generated, so that the options can setup the circle properties
+	-- called when the wheel is generated, so that
+	-- the options can setup properties and whatnot
+
+	-- the methods will figure out whether wrapping is actually necessary or nah
+	self:_WrapTitle()
+	self:_WrapDescription()
 
 	local circ = self.Circle
 	circ:SetRadius(optionOuterRadius)
@@ -581,6 +701,10 @@ function wheel:AddOption(name, desc, icon, cb)
 	return option
 end
 
+function InteractWheelOption:__tostring()
+	return "[IWheelOption: " .. (self.Title or "<no title>") .. "]"
+end
+
 --- test
 
 if _TestWheel then _TestWheel:Hide() end
@@ -588,10 +712,10 @@ if _TestWheel then _TestWheel:Hide() end
 _TestWheel = InteractWheel:new()
 local wh = _TestWheel
 
-wh:AddOption("Peepee", "Funny poop poop funny mm yes veri funi",
+wh:AddOption("Icon + description", "Yes funny description description veri funny mm yes veri funi",
 	Icon("https://i.imgur.com/z3SWemE.png", "dbutt_icon.png"):SetSize(64, 72))
 
-wh:AddOption("Poopee")
+wh:AddOption("Iconless")
 
 wh:AddOption("NaM VERYLONGTITLESPAM NaM", "NaM NAM THE WEEBS AWAY NaM NAM THE WEEBS AWAY NaM NAM THE WEEBS AWAY NaM NAM THE WEEBS AWAY ",
 	Icon("https://i.imgur.com/z3SWemE.png", "dbutt_icon.png"):SetSize(64, 72))

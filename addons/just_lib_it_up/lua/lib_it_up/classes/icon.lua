@@ -51,11 +51,7 @@ function Icon:Initialize(url, name)
 	self.__parent.Initialize(self, false)
 end
 
-function Icon:SetColor(col)
-	self.Color = col
-	return self
-end
-
+ChainAccessor(Icon, "Color", "Color")
 ChainAccessor(Icon, "Filter", "Filter")
 ChainAccessor(Icon, "_Debug", "Debug")
 

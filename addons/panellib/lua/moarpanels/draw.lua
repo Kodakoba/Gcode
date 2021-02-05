@@ -31,8 +31,13 @@ local cout128 = Material("data/hdl/circle_outline128.png")
 local cout64 = Material("data/hdl/circle_outline64.png")
 local bad = Material("materials/icon16/cancel.png")
 
-local blur = Material( "pp/blurscreen" )
-blur:SetFloat("$blur", 1.6)
+local blur = CreateMaterial("lbu_Blur", "GMODScreenspace", {
+	["$basetexture"] = "_rt_FullFrameFB",
+	["$texturealpha"] = "0",
+	["$vertexalpha"] = "0",
+	["$blur"] = 1.6,
+})
+
 blur:Recompute()
 
 local _ = spinner:IsError() and hdl.DownloadFile("https://i.imgur.com/KHvsQ4u.png", "spinner.png", function(fn) spinner = Material(fn, "mips") end)
