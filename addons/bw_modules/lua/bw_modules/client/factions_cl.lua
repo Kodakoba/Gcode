@@ -16,7 +16,7 @@ local function promise()
 		end
 	end)
 
-	local uid = uid()
+	local uid = uniq.Seq("Faction promises", 8)
 
 	Promises[uid] = prom
 

@@ -21,7 +21,7 @@ function uniq.Seq(id, sz)
 	local ret = (seqs[id] and seqs[id] + 1) or 1
 
 	if isnumber(sz) then
-		ret = bit.band(ret, bit.Fill(sz))
+		ret = bit.band(ret, bit.Fill(sz))	-- todo: shouldn't this just be a modulus?
 	end
 
 	seqs[id] = ret
