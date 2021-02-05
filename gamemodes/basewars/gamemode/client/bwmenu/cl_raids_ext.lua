@@ -1,4 +1,9 @@
 local tab = {}
+tab.Order = 99
+
+tab.UsesFactions = true
+tab.UsesFactionless = true
+
 local fonts = BaseWars.Menu.Fonts
 
 BaseWars.Menu.Tabs["Raids"] = tab
@@ -421,8 +426,8 @@ end
 local function onOpen(navpnl, tabbtn, _, noanim)
 	local f = BaseWars.Menu.Frame
 
-	local pnl = f.FactionsPanel	-- pnl : holder for everythingg, scr: panel holding a scrollpanel in it
-	local scr = IsValid(pnl) and pnl:GetScroll()
+	local pnl = f.FactionsPanel	-- pnl is the canvas (holds everything), scr is the FactionsList
+	local scr = IsValid(pnl) and pnl:GetList()
 
 	if IsValid(pnl) then
 
@@ -451,9 +456,7 @@ local function onOpen(navpnl, tabbtn, _, noanim)
 	end
 
 	-- add a custom NoFaction button
-	local noFac = scr:AddFaction(Factions.NoFaction)
-	noFac:PopIn()
-	scr:AddElement("NoFaction", noFac)
+	local noFac = scr:AddFactionless()
 
 	function pnl:FactionClicked(fac, ...)
 		local old = IsValid(pnl.FactionFrame) and pnl.FactionFrame
@@ -529,12 +532,26 @@ end
 
 local function onClose(navpnl, tabbtn, prevPnl, newTab)
 	local pnl = tabbtn.Panel
-	pnl.FactionScroll.FactionScroll:RemoveElements("NoFaction")
-	if not newTab or not newTab.UsesFactions then
-		pnl:PopOutHide()
+	--pnl.FactionScroll.FactionScroll:RemoveElements("NoFaction")
+
+	local f = BaseWars.Menu.Frame
+	local prev = f.FactionsPanel	-- factions canvas
+
+	prev:RemoveElements("Exclusive")
+	prev:GetList():RemoveElements("Exclusive")
+
+	if newTab then
+		if not newTab.TabData.UsesFactionless then
+			prev:GetList():RemoveFactionless()
+		end
+
+		if not newTab.TabData.UsesFactions then
+			pnl:PopOutHide()
+		end
 	end
 
 	if IsValid(pnl.FactionFrame) then
+		pnl.FactionFrame:RemoveElements("Exclusive")
 		pnl.FactionFrame:RemoveElements("Exclusive")
 	end
 end

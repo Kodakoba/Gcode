@@ -1,5 +1,18 @@
+--[[
+	tabData = {
+		[1] = onOpenFunction,
+		[2] = onCloseFunction,
+		[3] = onCreatedButtonFunction,
+			
+		Order = [number], (bigger = created sooner)
+		IsDefault = true/false,
+
+		+ 	any additional key/values you want; they'll be transferred onto the tab button
+			and you can access them by doing `btn.TabData`
+	}
+]]
 BaseWars.Menu = BaseWars.Menu or {
-	Tabs = {}, -- ["name"] = {onOpenFunc, onCloseFunc, onCreateTabFunc(bw_frame, tab), ["Order"] = ?, ["IsDefault"] = true/false}
+	Tabs = {},
 
 	Frame = nil, --will be a panel
 
@@ -87,10 +100,10 @@ local function CreateBWFrame()
 		end
 	end
 
-	local sorted = {}
+	local sorted = {}	--[[ [seq_num] = { tabName, order, tabData } ]]
 
-	for name, funcs in pairs(BaseWars.Menu.Tabs) do
-		sorted[#sorted + 1] = {name, funcs.Order or 0, funcs}
+	for name, tabData in pairs(BaseWars.Menu.Tabs) do
+		sorted[#sorted + 1] = {name, tabData.Order or 0, tabData}
 	end
 
 	table.sort(sorted, function(a, b)
@@ -110,14 +123,17 @@ local function CreateBWFrame()
 		}	]]
 
 		local name = data[1]
-		local funcs = data[3]
+		local tabData = data[3]
 
-		local tab = f:AddTab(name, funcs[1], funcs[2])
-		if funcs[3] then
-			funcs[3] (f, tab)
+		local tab = f:AddTab(name, tabData[1], tabData[2])
+		tab.TabData = tabData
+
+
+		if tabData[3] then
+			tabData[3] (f, tab)
 		end
 
-		if funcs.IsDefault then
+		if tabData.IsDefault then
 			f:SelectTab(name, true)
 		end
 	end

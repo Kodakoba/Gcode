@@ -92,6 +92,10 @@ function FACSCROLL:Init()
 
 end
 
+function FACSCROLL:GetList()
+	return self:GetParent()
+end
+
 function FACSCROLL:FactionClicked(fac)
 	self:Emit("FactionClicked", fac)
 	self:GetParent():Emit("FactionClicked", fac)
@@ -100,6 +104,23 @@ end
 function FACSCROLL:GetFactionY(num)
 	local facPad, facHeight = self.FactionPadding, self.FactionHeight
 	return facPad / 2 + (num - 1) * (facHeight + facPad)
+end
+
+function FACSCROLL:RemoveFactionless()
+	if IsValid(self.FactionlessButton) then
+		self.FactionlessButton:Disappear()
+	end
+end
+
+function FACSCROLL:AddFactionless()
+	if IsValid(self.FactionlessButton) then return self.FactionlessButton end
+
+	local noFac = self:GetList():AddFaction(Factions.NoFaction)
+	noFac:PopIn()
+	self:AddElement("NoFaction", noFac)
+	self.FactionlessButton = noFac
+
+	return noFac
 end
 
 function FACSCROLL:AddButton(fac, num)
@@ -182,32 +203,31 @@ function FAC:PopulateFactions()
 	end
 end
 
+
+
 function FAC:GetScroll()
 	return self.FactionScroll
 end
 
+
 function FAC:AddFaction(fac, k)
-	return self.FactionScroll:AddButton(fac, k)
+	return self:GetScroll():AddButton(fac, k)
 end
 
 function FAC:GetFactions()
-	return self.FactionScroll.Factions
+	return self:GetScroll().Factions
 end
 
-local vis
+function FAC:AddFactionless()
+	return self:GetScroll():AddFactionless()
+end
+
+function FAC:RemoveFactionless()
+	return self:GetScroll():RemoveFactionless()
+end
 
 function FAC:Think()
 	local scr = self.FactionScroll
-
-	--[[local newvis = scr:IsVisible()
-	if vis ~= newvis then
-		for k,v in pairs(scr.Factions) do --if vbar is visible, shorten the btn by 10
-			print("newvis:", newvis)
-			v:SetWide(scr:GetWide() - 16 - (newvis and 10 or 0))
-		end
-	end
-
-	vis = newvis]]
 
 	self:Emit("Think")
 end
@@ -268,7 +288,7 @@ function BaseWars.Menu.CreateFactionList(f)
 
 	pnl.FactionScroll = scr
 
-	function pnl:GetScroll()
+	function pnl:GetList()
 		return scr
 	end
 

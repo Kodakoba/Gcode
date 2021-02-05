@@ -1,4 +1,10 @@
 local tab = {}
+tab.Order = 100	-- always first
+tab.IsDefault = true
+
+tab.UsesFactions = true
+tab.UsesFactionless = false
+
 local fonts = BaseWars.Menu.Fonts
 local createFactionActions --bwergh
 
@@ -742,15 +748,13 @@ end
 --[[------------------------------]]
 
 local function onOpen(navpnl, tabbtn, _, noanim)
+
 	local f = BaseWars.Menu.Frame
 	local prev = f.FactionsPanel
 	local pnl, scr
 
 	if IsValid(prev) then
-		pnl, scr = prev, prev:GetScroll()
-
-		pnl:RemoveElements("Exclusive")
-		scr:RemoveElements("Exclusive")
+		pnl, scr = prev, prev:GetList()
 
 		if not pnl:IsVisible() then
 			if noanim then
@@ -763,10 +767,8 @@ local function onOpen(navpnl, tabbtn, _, noanim)
 		f:PositionPanel(pnl)
 
 		if IsValid(pnl.FactionFrame) then
-			pnl.FactionFrame:RemoveElements("Exclusive")
 			onSelectAction(pnl, pnl.FactionFrame.Faction, pnl.FactionFrame.IsNewFaction, true)
 		end
-
 	else
 		pnl, scr = BaseWars.Menu.CreateFactionList(f)
 		pnl:PopIn()
@@ -776,9 +778,9 @@ local function onOpen(navpnl, tabbtn, _, noanim)
 		onSelectAction(self, fac, false)
 	end
 
-	if not IsValid(pnl.NewFaction) then
-		createNewFactionButton(pnl, scr, noanim)
-	end
+	if IsValid(pnl.NewFaction) then pnl.NewFaction:Disappear() end
+
+	createNewFactionButton(pnl, scr, noanim)
 
 	tabbtn.Panel = pnl
 	f.FactionsPanel = pnl
@@ -791,7 +793,7 @@ local function onClose(navpnl, tabbtn, prevPnl, newTab)
 	local pnl = tabbtn.Panel
 
 	pnl:RemoveElements("Exclusive")
-	if not newTab or not newTab.UsesFactions then
+	if not newTab or not newTab.TabData.UsesFactions then
 		pnl:PopOutHide()
 	end
 
@@ -804,17 +806,11 @@ local function onCreateTab(f, tab)
 	local ic = tab:SetIcon("https://i.imgur.com/JzTfIuf.png", "faction_64.png", 55 / 64) --the pic is 64x51
 	tab:SetDescription("Team up with other players")
 	ic.Size = tab.IconSize * 1.1
-
-	tab.UsesFactions = true
 end
 
 tab[1] = onOpen
 tab[2] = onClose
 tab[3] = onCreateTab
-
-tab.Order = math.huge
-tab.IsDefault = true
-
 
 
 hook.Add("GenerateFactionOptions", "BaseActions", function(faction, ply, mn)
