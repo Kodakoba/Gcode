@@ -1,13 +1,38 @@
 setfenv(0, _G)
 
 if not muldim then include("multidim.lua") end
+if not netstack then include("netstack.lua") end
 
 --[[
 	Emits:
-		"NetworkedChanged" : `changes` table
-								[changed_key] = {old_val, new_val}
 
-		"NetworkedVarChanged" : key, old_val, new_val
+		SV: "CustomWriteChanges" : changes_table
+			If you have a custom encoder for the whole object, use this event and return anything from it
+	
+		SV: "ShouldNetwork"
+			Returning false from this will prevent networking
+			Changes won't be lost to networking, meaning it might attempt to network in the future
+
+		SV: "ShouldEncode" : change_key, change_value
+			If you return false from this, the change won't be written (but will be lost to networking!)
+			Should be primarily used for equality checks
+
+		SV: "WriteChangeValue" : key, value, ...
+			If you return false from this, the change value won't be written
+			Should be primarily used to encode a value your own way
+
+
+		CL: "CustomReadChanges"
+			If you have a custom encoder for the whole object, use this event and return anything from it
+
+		CL: "ReadChangeValue" : key
+			If you had a custom encoder for the value in WriteChangeValue, this is the hook to read it from
+
+		CL: "NetworkedVarChanged" : key, old_var, new_var
+			Kinda like NetworkVarNotify
+
+		CL: "NetworkedChanged" : changes_table
+			Kinda like NetworkVarNotify, except after _everything_ was updated
 
 
 	If you're using .Filter, that implies you'll also handle when to network.
@@ -30,6 +55,7 @@ _NetworkableData = _NetworkableData or muldim:new() 	-- stores networkable data 
 local idData = _NetworkableData							-- only used clientside
 
 Networkable.Verbose = false
+Networkable.Warnings = true
 
 local realPrint = print
 local print = function(...)
@@ -42,6 +68,13 @@ local printf = function(...)
 	if not Networkable.Verbose then return end
 	realPrintf(...)
 end
+
+local warnf = function(s, ...)
+	if not Networkable.Warnings then return end
+	MsgC(Colors.Warning, "[NWble] ", color_white, s:format(...), "\n")
+end
+
+warn = warnf
 
 local fakeNil = newproxy() --lul
 
@@ -73,6 +106,7 @@ local ns = netstack:new()
 ns:Hijack(true)
 
 local _vONCache = {}
+local _CurrentNWKey -- used for debug
 
 local encoders = {
 	["string"] = {0, net.WriteString},
@@ -102,7 +136,7 @@ local decoders = {
 	["entity"] = {1, function()
 		local entID = net.ReadUInt(16)
 		if IsValid(Entity(entID)) then return Entity(entID) end
-		error("Entity isn't valid. Consider networking something else...?")
+		error("Reading '" .. _CurrentNWKey .. "' : Entity isn't valid. Consider networking something else...?")
 	end},
 	["vector"] = {2, net.ReadVector},
 
@@ -417,7 +451,9 @@ if SERVER then
 	util.AddNetworkString("NetworkableInvalidated")
 
 
-	--[[local]] function NetworkAll(force)
+	-- networks all networkables to all players
+	-- ignores networkables with filters
+	function NetworkAll()
 		if not next(_NetworkableChanges) then return end
 
 		local everyone = player.GetAll()
@@ -493,23 +529,30 @@ if SERVER then
 				changed = changed + 1
 				net.WriteUInt(IDToNumber(id), maxsz).Description = "IDToNumber"
 
-				local changesAmt = 0
-				local writeChanges = {}
+				-- if you have a custom encoder for the whole object, you might
+				-- wanna use this event
 
-				-- emit "ShouldEncode" for every changed val in a networkable
-				for k,v in pairs(changes) do
-					local should = obj:Emit("ShouldEncode", k, v) 	-- this should mostly be used for equality checks
-					if should == false then continue end 			-- keep in mind that if you return false the change will be lost to networking
+				if obj:Emit("CustomWriteChanges", changes) == nil then
 
-					changesAmt = changesAmt + 1
+					local changesAmt = 0
+					local writeChanges = {}
 
-					writeChanges[k] = v
-				end
+					-- emit "ShouldEncode" for every changed val in a networkable
+					for k,v in pairs(changes) do
+						local should = obj:Emit("ShouldEncode", k, v) 	-- this should mostly be used for equality checks
+						if should == false then continue end 			-- keep in mind that if you return false the change will be lost to networking
 
-				net.WriteUInt(changesAmt, 8).Description = "Amount of changes in an object" --amount of changed values in the Networkable object
+						changesAmt = changesAmt + 1
 
-				for k,v in pairs(writeChanges) do
-					WriteChange(k, v, obj)
+						writeChanges[k] = v
+					end
+
+					net.WriteUInt(changesAmt, 8).Description = "Amount of changes in an object" --amount of changed values in the Networkable object
+
+					for k,v in pairs(writeChanges) do
+						WriteChange(k, v, obj)
+					end
+
 				end
 
 				_NetworkableChanges[id] = nil
@@ -537,6 +580,9 @@ if SERVER then
 			realPrint("NetworkableNetwork Error:", err)
 		end
 	end
+
+	-- Updates every player in `who` table on every networkable
+	-- in `what` table, regardless of their awareness
 
 	-- `what` GETS MODIFIED!!! COPY BEFORE CALLING
 	function Networkable.UpdateFull(who, what)
@@ -842,9 +888,19 @@ if CLIENT then
 		print("reading", changes, " changes")
 		for i=1, changes do
 			local num_id = net.ReadUInt(idsz)			--numberID of the networkable object
-			local changed_keys = net.ReadUInt(8)	--amt of changed keys
 
 			local obj = cache[numToID[num_id]]
+			if not obj then
+				warnf("Networkable with the name `%s` (%d) didn't exist clientside.", numToID[num_id] or "nil", num_id)
+			end
+
+			_CurrentNWKey = numToID[num_id]
+
+			if obj and obj:Emit("CustomReadChanges") ~= nil then continue end
+
+			local changed_keys = net.ReadUInt(8)	--amt of changed keys
+
+			
 			local changes = {}
 
 			printf("	amt of changed keys for %s(id: %d): %d", obj, num_id, changed_keys)
