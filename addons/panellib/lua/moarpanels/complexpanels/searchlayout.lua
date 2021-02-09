@@ -1,8 +1,3 @@
---[[
-
-FIconLayout
-	this barely works; don't use it
-]]
 
 local SL = {}
 vgui.ColorSetters(SL)
@@ -31,13 +26,16 @@ function SL:Init()
 	srch.NoDrawBG = true
 	srch.GradBorder = false
 
-	local ic = vgui.Create("FIconLayout", self)
+	local scr = vgui.Create("FScrollPanel", self)
+	scr:Dock(FILL)
+
+	local ic = vgui.Create("FIconLayout", scr)
 	self.IconLayout = ic
 	ic:Dock(FILL)
 
 	ic:On("ShiftPanel", function(_, pnl, x, y)
 		if self.ChangedStates[pnl] ~= nil then
-			local dur = (math.abs(pnl.X - x) / 1000 + math.abs(pnl.Y - y) / 1000) ^ 0.7
+			local dur = math.min( (math.abs(pnl.X - x) / 1000 + math.abs(pnl.Y - y) / 1000) ^ 0.7, 0.3)
 
 			local anX, new = pnl:To("X", x, dur, 0, 0.3, true)
 			local anY, new2 = pnl:To("Y", y, dur, 0, 0.3, true)
