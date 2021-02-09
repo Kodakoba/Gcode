@@ -24,8 +24,8 @@ function TE:Init()
 
 	self.GradBorder = true
 
-	hook.Add("OnTextEntryLoseFocus", self, function(self, pnl)
-		if self ~= pnl then return end --?????
+	hook.Object("OnTextEntryLoseFocus", self, function(self, pnl)
+		if self ~= pnl then return end
 		self:OnLoseFocus()
 	end)
 
