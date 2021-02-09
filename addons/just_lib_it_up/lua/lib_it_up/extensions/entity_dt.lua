@@ -98,9 +98,19 @@ local OBBs = { -- add ent pos, min, max and center of its' obb to PVS
 	end
 }
 
-function ENTITY:NotifyDTVars(pvs)
+function ENTITY:NotifyDTVars()
 	if not self:IsValid() then print("NotifyDTVars: invalid self.") return end
 	if not queue[self] or table.Count(queue[self]) == 0 then print("NotifyDTVars: Nothing queued") return end
+
+	local recip = RecipientFilter()
+	local pos = self:GetPos()
+
+	for i=1, #OBBs do
+		local pvs_point = OBBs[i](self, pos)
+		recip:AddPVS(pvs_point)
+	end
+
+	if recip:GetCount() == 0 then return end
 
 	net.Start("DTVarChangeNotify")
 		net.WriteEntity(self)
@@ -110,15 +120,8 @@ function ENTITY:NotifyDTVars(pvs)
 			local ind, typ, val = unpack(v)
 			net.WriteUInt(ind, 5)
 			net.WriteUInt(typs[typ], bit.GetLen(typLen))
+
 			net["Write" .. typ] (val, sz[typ])
-		end
-
-		local recip = RecipientFilter()
-		local pos = self:GetPos()
-
-		for i=1, #OBBs do
-			local pvs_point = OBBs[i](self, pos)
-			recip:AddPVS(pvs_point)
 		end
 
 	net.Send(recip)
@@ -145,6 +148,7 @@ function ENTITY:QueueNotifyChange(ind, typ, name, old, new)
 
 	local notify = self.NotifyDTVars
 
+	-- let other DTVars have a chance to be set and network next tick
 	timer.Create(("NotifyDTs:%p"):format(self), 0, 1, function() notify(self) end)
 
 end
