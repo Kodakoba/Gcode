@@ -156,7 +156,7 @@ function Fonts.PickFont(fam, txt, wid, hgt, start_size)
 		end
 	end
 
-	return picked
+	return picked, sz
 end
 
 function Fonts.ClosestSize(h)
@@ -194,6 +194,20 @@ function vgui.ColorSetters(t)
 	end
 end
 
+local active
+
+function vgui.GetActiveTextEntry()
+	return active
+end
+
+hook.Add("OnTextEntryGetFocus", "vgui_GetActiveTextEntry", function(pnl)
+	active = pnl
+end)
+
+hook.Add("OnTextEntryLoseFocus", "vgui_GetActiveTextEntry", function(pnl)
+	if active == pnl then active = nil end
+end)
+
 concommand.Add("ColorPicker", function()
 	local f = vgui.Create("FFrame")
 	f:SetSize(500, 400)
@@ -201,11 +215,42 @@ concommand.Add("ColorPicker", function()
 	f.Shadow = {}
 	f:MakePopup()
 	f:PopIn()
+	f:AddDockPadding(16, 0, 16, 0)
 
 	local col = vgui.Create("DColorMixer", f)
-	col:SetSize(400, 300)
-	col:Center()
+	col:Dock(FILL)
+	col:DockMargin(40, 0, 40, 8)
+
 	function col:ValueChanged(col)
 		f.HeaderColor = col
+		self:Emit("C", col)
+	end
+
+	local cpy = vgui.Create("InvisPanel", f)
+	cpy:SetTall(40)
+	cpy:Dock(BOTTOM)
+
+	local txt = vgui.Create("FTextEntry", cpy)
+	txt:SetWide(300)
+	txt:Dock(FILL)
+	txt:DockMargin(4, 4, 4, 4)
+	txt:SetValue("AAAAAAAA")
+	txt:SetContentAlignment(5)
+
+	col:On("C", function(_, c)
+		local s = "Color(%d, %d, %d%s)"
+		txt:SetValue(
+			s:format(c.r, c.g, c.b, (c.a and c.a ~= 255 and ", " .. c.a) or "")
+		)
+	end)
+
+	local cpybtn = vgui.Create("FButton", cpy)
+	cpybtn:SetWide(120)
+	cpybtn:Dock(LEFT)
+	cpybtn:DockMargin(8, 4, 4, 4)
+	cpybtn.Label = "Copy"
+
+	function cpybtn:DoClick()
+		SetClipboardText(txt:GetValue())
 	end
 end)
