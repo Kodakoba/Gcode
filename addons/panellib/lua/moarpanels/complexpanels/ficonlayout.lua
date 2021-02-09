@@ -134,7 +134,7 @@ function FIC:UpdateSize(w, h)
 	end
 
 	if self.AutoResize then
-		self:SetTall(math.max(curY + lastRow.MaxH, self:GetTall()))
+		self:SetTall(math.max(curY + (lastRow and lastRow.MaxH or 8), self:GetTall()))
 	end
 end
 
