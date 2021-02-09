@@ -98,9 +98,13 @@ function meta:SetAnimationEnabled( b )
 end
 
 function meta:Stop()
+	for k,v in pairs(self.m_AnimList) do
+		v:Emit("Stop")
+		v:Emit("End")
+	end
 
+	self.__Animations = {}
 	self.m_AnimList = {}
-
 end
 
 function meta:Queue()
@@ -148,6 +152,7 @@ function meta:NewAnimation( length, delay, ease, callback )
 		Ease = ease,
 		OnEnd = callback,
 		Parent = self,
+		Valid = true,
 	})
 
 	self:SetAnimationEnabled( true )
