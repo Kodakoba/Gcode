@@ -5,7 +5,8 @@ local cmdPrefix = "lbu_"
 Binds = Binds or {}
 
 Binds.Data = Binds.Data or {}
-Binds.Keys = Binds.Keys or muldim:new()
+Binds.Objects = Binds.Objects or {} -- [id] = bindObject
+Binds.Keys = Binds.Keys or muldim:new()	-- [KEY_*][bind_ID] = bindObject
 Binds.Concommands = Binds.Concommands or {}
 
 local fileName = __LibName .. "_binds.txt"
@@ -108,12 +109,19 @@ function Bind:Initialize(id)
 
 	self.ID = id
 
+	-- if an existing object for this ID already exists, just give that
+	if Binds.Objects[id] then return Binds.Objects[id] end 
+	Binds.Objects[id] = self
+
+	-- if we have data for that bindID (preferred key/method), set those automatically
 	if Binds.Data[id] then
 		local dat = Binds.Data[id]
-		self :SetKey(dat.Key) :SetMethod(dat.Method)
+		self :SetKey(dat.Key)
+			:SetMethod(dat.Method)
 		return
 	end
 
+	-- otherwise, create new data
 	Binds.Data[id] = bindData:new()
 end
 
@@ -213,13 +221,44 @@ function Bind:SetDefaultKey(k)
 	return self
 end
 
-ChainAccessor(Bind, "__State", "Active")
+if CLIENT then
+
+	-- only works on holdable binds
+	function Bind:SetHeld(b)
+		local ac = self:GetActive()
+		self.__KeepHeld = b
+
+		if b then
+			if ac then return end
+			-- if we weren't active before, activate now
+			self:_Fire(true, LocalPlayer())
+		else
+			-- if we were active before only because of the Held state,
+			-- we disable ourselves ( otherwise we leave it to the user )
+			if self:GetButtonState() == false and self:GetActive() then
+				self:_Fire(false, LocalPlayer())
+			end
+		end
+	end
+
+end
+
+function Bind:GetHeld()
+	return not not self.__KeepHeld
+end
+
+ChainAccessor(Bind, "__State", "Active")			-- the "custom" button state; can be influenced by addons (eg Bind:SetHeld(true))
+ChainAccessor(Bind, "__BtnState", "ButtonState") 	-- the REAL button state, the player's input representing this bind currently
 
 function Bind:_Fire(down, ply)
 
 	if self.Method == BINDS_HOLD then
-		if down and self:GetActive() then return end -- you can't re-activate a holdable bind
+		if down and self:GetActive() then return end 	-- you can't re-activate a holdable bind
+		if not down and self:GetHeld() then return end 	-- if the bind is forced to be held, don't deactivate it
+
+		self:SetActive(down)
 		self:Emit(down and "Activate" or "Deactivate", ply)
+		
 	elseif self.Method == BINDS_TOGGLE and down then
 		local newState = not self.__State
 		self:SetActive(newState)
@@ -236,12 +275,22 @@ hook.Add("PlayerButtonDown", __LibName .. "_BindsDown", function(ply, btn)
 
 	for _, bind in ipairs(binds) do
 		if not bind.Exclusive then continue end
+		if bind:Emit("ShouldActivate") == false then continue end
+
+		bind:SetButtonState(true)
+		bind:Emit("ButtonChanged", true)
+
 		bind:_Fire(true, ply)
 		return -- exclusive bind
 	end
 
 
 	for _, bind in ipairs(binds) do
+		if bind:Emit("ShouldActivate") == false then continue end
+
+		bind:SetButtonState(true)
+		bind:Emit("ButtonChanged", true)
+
 		bind:_Fire(true, ply)
 	end
 
@@ -255,12 +304,22 @@ hook.Add("PlayerButtonUp", __LibName .. "_BindsUp", function(ply, btn)
 
 	for _, bind in ipairs(binds) do
 		if not bind.Exclusive then continue end
+		if bind:Emit("ShouldDeactivate") == false then continue end
+
+		bind:SetButtonState(false)
+		bind:Emit("ButtonChanged", false)
+
 		bind:_Fire(false, ply)
 		return -- exclusive bind
 	end
 
 
 	for _, bind in ipairs(binds) do
+		if bind:Emit("ShouldDeactivate") == false then continue end
+
+		bind:SetButtonState(false)
+		bind:Emit("ButtonChanged", false)
+
 		bind:_Fire(false, ply)
 	end
 end)
