@@ -4,15 +4,25 @@ netstack.IsNetStack = true
 
 local nsm = netstack
 
+local COORD_INTEGER_BITS = 14
+local COORD_FRACTIONAL_BITS	= 5
+local NORMAL_FRACTIONAL_BITS = 11
+
 local sizes = {
-	Float = 32,
-	Double = 64,
+	Float = 4*8,
+	Double = 8*8,
 	Entity = 16,
-	Vector = 32 * 3,
 
-	Normal = 12*2 + 3, --https://github.com/ValveSoftware/source-sdk-2013/blob/0d8dceea4310fde5706b3ce1c70609d72a38efdf/mp/src/tier1/bitbuf.cpp#L692-L710
+	-- https://github.com/ValveSoftware/source-sdk-2013/blob/0d8dceea4310fde5706b3ce1c70609d72a38efdf/mp/src/tier1/bitbuf.cpp#L654-L672
+	-- assuming worst case
+	Vector = (3 + COORD_INTEGER_BITS + COORD_FRACTIONAL_BITS) * 3 + 3,
 
-	Angle = 32 * 3,
+	--https://github.com/ValveSoftware/source-sdk-2013/blob/0d8dceea4310fde5706b3ce1c70609d72a38efdf/mp/src/tier1/bitbuf.cpp#L692-L710
+	Normal = (NORMAL_FRACTIONAL_BITS + 1) * 2 + 3, 
+
+	-- https://github.com/ValveSoftware/source-sdk-2013/blob/0d8dceea4310fde5706b3ce1c70609d72a38efdf/mp/src/tier1/bitbuf.cpp#L712
+	-- it might've been changed but i'll keep it the same as BitVec3Coord since i don't know for sure
+	Angle = (3 + COORD_INTEGER_BITS + COORD_FRACTIONAL_BITS) * 3 + 3,
 	Color = 8 * 4,
 	Bool = 1,
 	Bit = 1,
