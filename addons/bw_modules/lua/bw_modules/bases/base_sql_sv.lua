@@ -11,12 +11,14 @@ local function PopulateBases(bases)
 			local zoneID, mins, maxs = unpack(zonedata)
 			local zone = bw.Zone:new(zoneID, mins, maxs)
 			base:AddZone(zone)
+			bw.Bases.NWZones:Set(zoneID, zone)
 		end
 
-		bw.Bases[baseID] = base
+		bw.Bases.NWBases:Set(baseID, base)
 	end
 
 	bw.Bases.Log("SQL data pulled!")
+
 end
 
 mysqloo.OnConnect(function()
