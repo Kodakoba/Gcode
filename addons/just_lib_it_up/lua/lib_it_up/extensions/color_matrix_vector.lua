@@ -10,20 +10,32 @@ Colors.Green = Color(60, 235, 60)
 Colors.Red = Color(255, 70, 70)
 Colors.DarkerRed = Color(205, 40, 40)
 
+Colors.LighterGray = Color(75, 75, 75)
+Colors.LightGray = Color(65, 65, 65)
 Colors.Gray = Color(50, 50, 50)
 Colors.DarkGray = Color(35, 35, 35)
 Colors.DarkerGray = Color(20, 20, 20)
 
-Colors.LightGray = Color(65, 65, 65)
-Colors.LighterGray = Color(75, 75, 75)
+-- i used gray's too much already and they're all quite dark
+-- i need a light-gray color palette now but all `light + gray` are already taken
+-- this is my shitty solution :v
+
+Colors.White = color_white:Copy()
+Colors.DarkWhite = Color(220, 220, 220)
+Colors.DarkerWhite = Color(182, 182, 182)
 
 Colors.Sky = Color(50, 150, 250)
 
 Colors.Money = Color(100, 220, 100)
 Colors.Level = Color(110, 110, 250)
+
 Colors.Golden = Color(205, 160, 50)
-Colors.DarkWhite = Color(220, 220, 220) --yes, dark white
+Colors.Yellowish = Color(250, 210, 120)
+
 Colors.Blue = Color(60, 140, 200)
+
+Colors.Warning = Color(255, 210, 65)
+Colors.Error = Color(230, 75, 75)
 
 -- THANK U BASED GigsD4X
 -- https://gist.github.com/GigsD4X/8513963
