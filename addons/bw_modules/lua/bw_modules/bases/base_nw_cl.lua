@@ -2,8 +2,7 @@ local bw = BaseWars
 
 local zNW = bw.Bases.NWZones
 local bNW = bw.Bases.NWBases
-
-local bruh = Promise()
+local adNW = bw.Bases.NWAdmin
 
 zNW:On("CustomReadChanges", "DecodeZones", function(self)
 	self.Networked.Zones = self.Networked.Zones or {}
@@ -26,7 +25,6 @@ bNW:On("CustomReadChanges", "DecodeBases", function(self)
 	
 	for i=1, amtChanges do
 		local bID = net.ReadUInt(12)
-
 		local base = bw.Base(bID)
 		base:ReadNetwork()
 

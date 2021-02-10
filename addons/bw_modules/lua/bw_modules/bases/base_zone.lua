@@ -65,6 +65,7 @@ function bw.Base:Initialize(id)
 end
 
 ChainAccessor(bw.Base, "Zones", "Zones")
+ChainAccessor(bw.Base, "Name", "Name")
 
 function bw.Base:RemoveZone(zone)
 	table.RemoveByValue(self.Zones, zone)
@@ -92,6 +93,9 @@ function bw.Base:ReadNetwork()
 	self.ZoneQueue = self.ZoneQueue or {}
 	local zq = self.ZoneQueue
 
+	local name = net.ReadCompressedString()
+	self:SetName(name)
+	
 	local zones = net.ReadUInt(8)
 
 	for z=1, zones do

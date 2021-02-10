@@ -1,34 +1,48 @@
 --
 
 local bw = BaseWars
-local tbl_name = "bw_baseareas"
+
+local zones_tbl = "bw_baseareas"
+local bases_tbl = "bw_bases"
 
 local function PopulateBases(bases)
-	for baseID, zones in pairs(bases) do
+	for baseID, data in pairs(bases) do
 		local base = bw.Base:new(baseID)
+		base:SetName(data.name)
 
-		for _, zonedata in ipairs(zones) do
-			local zoneID, mins, maxs = unpack(zonedata)
+		for _, zonedata in ipairs(data.zones) do
+			local zoneID, mins, maxs, name = unpack(zonedata)
 			local zone = bw.Zone:new(zoneID, mins, maxs)
 			base:AddZone(zone)
 			bw.Bases.NWZones:Set(zoneID, zone)
 		end
 
 		bw.Bases.NWBases:Set(baseID, base)
+		bw.Bases.NWAdmin:Set(baseID, data.name)
+		
 	end
 
 	bw.Bases.Log("SQL data pulled!")
-
+	bw.Bases.NWAdmin:Network()
 end
 
-mysqloo.OnConnect(function()
+mysqloo.OnConnect(coroutine.wrap(function()
 	local db = mysqloo:GetDatabase()
+
+	local arg = LibItUp.SQLArgList()
+		arg:AddArg("base_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT")
+		arg:AddArg("base_name VARCHAR(500) NOT NULL")
+
+	-- creating bases table (contains ID and name)
+	mysqloo.CreateTable(db, bases_tbl, arg):Then(coroutine.Resumer())
+	
 
 	local arg = LibItUp.SQLArgList()
 
 	arg:AddArg("zone_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT")
 	arg:AddArg("base_id INT NOT NULL")	-- not PK: there can be multiple zones tied to the same base
-
+	arg:AddArg("base_name VARCHAR(255) NOT NULL") -- you really don't need the name to be any longer than this
+  	
 	local sides = {"max", "min"}
 	local dims = {"x", "y", "z"}
 
@@ -42,53 +56,54 @@ mysqloo.OnConnect(function()
 		end
 	end
 
+	local em = mysqloo.CreateTable(db, zones_tbl, arg):Then(coroutine.Resumer())
 
-	mysqloo.CreateTable(db, tbl_name, arg):Then(function(em)
+	coroutine.yield(); coroutine.yield()	-- 2 queries, 2 yields
 
-		local query = "SELECT * FROM " .. tbl_name .. " ORDER BY base_id ASC"
+	local selWhat = "a.zone_id, b.base_id, b.base_name"
 
-		em:Do(db:query(query))
-			:Then(function(self, q, data)
+	for k,v in pairs(argnames) do
+		for _, v2 in pairs(v) do
+			selWhat = "a." .. v2 .. ", " .. selWhat
+		end
+	end
 
-				local bases = {
-					--[base_id] = { {zone_id, mins, maxs}, ... }
+	local q = ("SELECT %s FROM master.%s a INNER JOIN master.%s b ON a.base_id = b.base_id;")
+				:format(selWhat, zones_tbl, bases_tbl)
+
+	em:Do(db:query(q))
+		:Then(function(self, q, data)
+			local bases = {}	-- [base_ID] = { name = string, zones = {...} }
+
+			for _, zdata in ipairs(data) do
+				local zID = zdata.zone_id
+				local bID = zdata.base_id
+
+				local base = bases[bID] or {
+					name = zdata.base_name,
+					zones = {}	-- [seq_id] = {zone_id, zone_mins, zone_maxs}
 				}
-				for _, zdata in ipairs(data) do
-					local zID = zdata.zone_id
-					local bID = zdata.base_id
 
-					local base = bases[bID] or {}
-					bases[bID] = base
+				bases[bID] = base
 
-					local mins, maxs = Vector(), Vector()
-					for k,v in pairs(argnames.min) do
-						mins[k] = zdata[v]
-					end
-
-					for k,v in pairs(argnames.max) do
-						maxs[k] = zdata[v]
-					end
-
-					base[#base + 1] = {zID, mins, maxs}
+				local mins, maxs = Vector(), Vector()
+				for k,v in pairs(argnames.min) do
+					mins[k] = zdata[v]
 				end
 
-				PopulateBases(bases)
+				for k,v in pairs(argnames.max) do
+					maxs[k] = zdata[v]
+				end
 
-				FInc.AddState("BW_SQLAreasFetched")
+				base.zones[#base.zones + 1] = {zID, mins, maxs}
+			end
 
-			end, mysqloo.QueryError)
-	end)
+			PopulateBases(bases)
 
-	--[[
-		zone_id int AI PK 
-		base_id int 
-		zone_max_x float 
-		zone_max_y float 
-		zone_max_z float 
-		zone_min_x float 
-		zone_min_y float 
-		zone_min_z float
-	]]
-end)
+			FInc.AddState("BW_SQLAreasFetched")
+
+		end, mysqloo.QueryError)
+
+end))
 
 include("areamark/_init.lua")

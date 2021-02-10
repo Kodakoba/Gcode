@@ -2,36 +2,11 @@
 --BaseWars.Bases.MarkTool:Finish()
 
 local bases = BaseWars.Bases
-local nw = Networkable("BW_Areas")
 
 local bnd = Bind("areamark_baseselect")
 bnd:SetHeld(false)
 
 local BASE_MENU_KEY = KEY_R
-
-nw:On("ReadChangeValue", "ReadServerAreas", function(self, k)
-	if k ~= "CurrentAreas" then return end
-
-	local amt = net.ReadUInt(16)
-
-	self:Set(k, self:Get(k) or {})
-
-	local poses = self:Get(k)
-
-	for i=1, amt do
-		local k = net.ReadUInt(16)
-
-		if not exists then
-			poses[k] = nil
-		else
-			local origin = net.ReadVector()
-			local mins, maxs = net.ReadVector()
-			poses[k] = {origin, mins, maxs}
-		end
-	end
-
-	return poses
-end)
 
 local TOOL = BaseWars.Bases.MarkTool
 
@@ -181,8 +156,10 @@ function TOOL:ShowBaseSelection(cur)
 	cur[2] = self
 	if cur[1] and cur[1]:IsValid() then
 		pnl = cur[1]
+
 		pnl.Disappearing = false
 		pnl:Stop()
+		pnl:Show()
 		pnl:SetMouseInputEnabled(true)
 
 		bnd:SetHeld(false)
@@ -229,11 +206,11 @@ function TOOL:ShowBaseSelection(cur)
 		scr:Dock(FILL)
 		scr:InvalidateParent(true)
 
-		for i=1, 20 do
+		for baseID, base in pairs(bases.Bases) do
 			local fb = vgui.Create("FButton")
 			fb:SetSize(180, 40)
-			scr:Add(fb, "(not a real base " .. i .. ")")
-			fb.Label = "(not a real base " .. i .. ")"
+			scr:Add(fb, base:GetName() or "[unnamed?]")
+			fb.Label = base:GetName() or "[unnamed?]"
 		end
 
 		-- if the search bar gets focus, keep the bind held
@@ -288,8 +265,7 @@ function TOOL:HideBaseSelection(cur)
 	bnd:SetHeld(false)
 
 	pnl:MoveTo(ScrW(), pnl.Y, disappearTime, 0, disappearEase, function(_, pnl)
-		pnl:Remove()
-		table.Empty(cur)
+		pnl:Hide()
 	end)
 
 	
@@ -326,13 +302,12 @@ bases.MarkToolPanelInfo = bases.MarkToolPanelInfo or {}	-- {panel, tool_instance
 local curTool = bases.MarkToolPanelInfo	
 
 bnd:On("ButtonChanged", 1, function()
-	if not IsValid(curTool[1]) then bnd:SetHeld(false) end -- just a sanity check
+	if not IsValid(curTool[1]) then bnd:SetHeld(false) end -- just a failsafe
 end)
 
 bnd:On("Activate", 1, function(self, ply)
 	local tool = TOOL:GetInstance()
 	if not tool then return end
-	print("Activate called")
 	tool:ShowBaseSelection(curTool)
 end)
 
