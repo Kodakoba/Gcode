@@ -98,9 +98,11 @@ function meta:SetAnimationEnabled( b )
 end
 
 function meta:Stop()
-	for k,v in pairs(self.m_AnimList) do
-		v:Emit("Stop")
-		v:Emit("End")
+	if self.m_AnimList then
+		for k,v in pairs(self.m_AnimList) do
+			v:Emit("Stop")
+			v:Emit("End")
+		end
 	end
 
 	self.__Animations = {}

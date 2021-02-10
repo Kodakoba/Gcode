@@ -20,7 +20,7 @@ Colors.DarkerGray = Color(20, 20, 20)
 -- i need a light-gray color palette now but all `light + gray` are already taken
 -- this is my shitty solution :v
 
-Colors.White = color_white:Copy()
+Colors.White = Color(255, 255, 255)
 Colors.DarkWhite = Color(220, 220, 220)
 Colors.DarkerWhite = Color(182, 182, 182)
 

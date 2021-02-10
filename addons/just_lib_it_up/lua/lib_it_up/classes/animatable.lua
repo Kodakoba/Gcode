@@ -40,6 +40,7 @@ function AnimMeta:Remove()
 	local ans = self.Parent.m_AnimList
 	if ans[self.Key] == self then
 		ans[self.Key] = nil
+		self.Valid = false
 	end
 end
 
@@ -113,6 +114,7 @@ function Animatable:StopAnimations()
 		anim.Ended = true
 	end
 
+	self.__Animations = {}
 	self.m_AnimList = {}
 end
 
