@@ -119,7 +119,6 @@ local toolgun
 local function register(tool)
 	toolgun = toolgun or weapons.GetStored("gmod_tool")
 	toolgun.Tool[tool.Mode] = tool
-	print("Registered into", toolgun, tool, tool.Mode)
 
 	for k, ply in ipairs(player.GetAll()) do
 		local wep = ply:GetWeapon("gmod_tool")
@@ -132,7 +131,6 @@ local function register(tool)
 			toolCopy.Owner = ply
 			toolCopy.Weapon = wep
 			toolCopy:Init()
-			print("Replaced")
 		end
 	end
 end
@@ -170,7 +168,7 @@ end
 
 function StartTool(name)
 	if not name then name = fn:match("([%w_]*)%.lua") end
-	print("started tool")
+
 	TOOL = LiveToolObj:Create()
 	TOOL.Mode = name
 	TOOL.Category = "Uncategorized"
@@ -180,6 +178,5 @@ end
 
 function EndTool()
 	TOOL:Finish()
-	print("finished tool")
 	TOOL = nil
 end

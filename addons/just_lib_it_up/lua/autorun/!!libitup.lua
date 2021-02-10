@@ -65,7 +65,7 @@ local realmExclusive = {
 	["rtpool.lua"] = _CL,
 }
 
-function IncludeFolder(name, realm, nofold)	--This function will be used both by addons and by LibItUp,
+function IncludeFolder(name, realm, nofold)	-- This function will be used both by addons and by LibItUp,
 											-- so we'll only count files when we're loading
 	local file, folder = file.Find( name, "LUA" )
 
