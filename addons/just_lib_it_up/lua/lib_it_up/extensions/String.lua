@@ -375,6 +375,21 @@ end
 
 -- there's no reliable way to get if a string is a steamid64 or a steamid3 :(
 
+
+function string.Fibonacci(len) -- good for testing net messages or whatever; not designed to be memory efficient since lua
+	local n1, n2 = 0, 1
+	local ret = "0 1 "
+	for i=1, len do
+		local sum = n1 + n2
+		ret = ret .. tostring(sum) .. (i ~= len and " " or "")
+		n1 = n2
+		n2 = sum
+	end
+
+	return ret
+end
+
+
 getmetatable("").__mod = function(self, what) --hot
 	return string.format(self, what)
 end
