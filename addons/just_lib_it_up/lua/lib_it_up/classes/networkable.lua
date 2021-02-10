@@ -896,7 +896,10 @@ if CLIENT then
 
 			_CurrentNWKey = numToID[num_id]
 
-			if obj and obj:Emit("CustomReadChanges") ~= nil then continue end
+			if obj and obj:Emit("CustomReadChanges") ~= nil then
+				printf("	networkable %s(%d) had custom reader", _CurrentNWKey or "nil", num_id)
+				continue
+			end
 
 			local changed_keys = net.ReadUInt(8)	--amt of changed keys
 
