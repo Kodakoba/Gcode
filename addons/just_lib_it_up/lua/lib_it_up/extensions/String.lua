@@ -375,6 +375,10 @@ end
 
 -- there's no reliable way to get if a string is a steamid64 or a steamid3 :(
 
+function string.Quote(s, single)
+	if single then return '"' .. tostring(s) .. '"' end
+	return "'" .. tostring(s) .. "'"
+end
 
 function string.Fibonacci(len) -- good for testing net messages or whatever; not designed to be memory efficient since lua
 	local n1, n2 = 0, 1
