@@ -249,10 +249,21 @@ function TOOL:ShowBaseSelection(cur)
 			if fuckOff == FrameNumber() then fuckOff = nil return true end
 		end
 		
+		local new = vgui.Create("FButton", pnl)
+		new:DockMargin(0, 4, 0, 0)
+		new:Dock(BOTTOM)
+		new:SetTall(32)
+		new:SetIcon(Icons.Plus:Copy():SetSize(24, 24))
+		new:SetColor(Colors.Green)
+
+		function new.DoClick()
+			self:OpenNewBaseGUI()
+		end
 	end
 
 	pnl:To("AppearFrac", 1, appearTime, 0, appearEase)
 	pnl:MoveTo(ScrW() * 0.9 - pnl:GetWide(), pnl.Y, appearTime, 0, appearEase)
+	self.BaseSelection = pnl
 end
 
 function TOOL:HideBaseSelection(cur)
@@ -299,7 +310,8 @@ bnd:SetMethod(BINDS_HOLD)
 
 bases.MarkToolPanelInfo = bases.MarkToolPanelInfo or {}	-- {panel, tool_instance}
 
-local curTool = bases.MarkToolPanelInfo	
+local curTool = bases.MarkToolPanelInfo
+if IsValid(curTool[1]) then curTool[1]:Remove() end
 
 bnd:On("ButtonChanged", 1, function()
 	if not IsValid(curTool[1]) then bnd:SetHeld(false) end -- just a failsafe

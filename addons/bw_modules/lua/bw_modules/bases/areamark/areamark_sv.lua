@@ -1,5 +1,5 @@
 --
-local nw = Networkable("BW_Areas")
+
 local TOOL = BaseWars.Bases.MarkTool
 
 function TOOL:LeftClick(tr)
