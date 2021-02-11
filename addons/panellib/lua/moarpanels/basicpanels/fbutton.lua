@@ -42,49 +42,19 @@ function button:Init()
 
 	self.HoverColor = nil
 	self.HoverColorGenerated = nil
-	self.Icon = nil
+	self._Icon = nil
 	self.MxScale = 1
-	--[[
-	{
-		IconURL = "",
-		IconName = "",
-
-		IconMat = nil, --you can give it a plain material if you want
-
-		IconColor = color_white,
-
-		IconW = 24,
-		IconH = 24,
-
-		IconX = 4,	--offset to the left from the text
-
-		CenterWithText = false 	--if true, will take the icon's width into account as well for centering text
-	}
-	]]
 end
 
 function button:SetIcon(url, name, w, h, col, rot)
-	local t = self.Icon or {}
-	self.Icon = t
+	if IsIcon(url) then self._Icon = url return end
 
-	if IsMaterial(url) then
-		t.IconMat = url
+	local t = self._Icon or Icon(url, name)
+	self._Icon = t
 
-		--shift args backwards by 1
-		col = h
-		h = w
-		w = name
-	else
-		t.IconURL = url
-		t.IconName = name
-	end
-
-
-	t.IconW = w
-	t.IconH = h
-
-	t.IconColor = col
-	t.IconRotation = rot
+	t:SetSize(w, h)
+	if IsColor(col) then t:SetColor(col) end
+	t._Rotation = rot
 
 	return t
 end
@@ -262,12 +232,11 @@ function button:DrawLabel(x, y, w, h, label)
 end
 
 function button:PaintIcon(x, y)
-	if not istable(self.Icon) then return end
+	if not IsIcon(self._Icon) then return end
 
-	local ic = self.Icon
+	local ic = self._Icon
 
-	local iW = ic.IconW or self:GetWide() - (self.RBRadius or 8)
-	local iH = ic.IconH or self:GetTall() - (self.RBRadius or 8)
+	local iW, iH = ic:GetSize()
 
 	local ioff = ic.IconX or (self.Label and 4) or 0
 
@@ -280,6 +249,11 @@ function button:PaintIcon(x, y)
 	local iX = x
 	local iY = y
 
+
+	ic:Paint(iX, iY, iW, iH, ic._Rotation)
+
+
+	--[[
 	render.PushFilterMin(TEXFILTER.ANISOTROPIC)
 
 		if ic.IconMat then
@@ -290,6 +264,7 @@ function button:PaintIcon(x, y)
 		end
 
 	render.PopFilterMin()
+	]]
 
 end
 
@@ -355,10 +330,13 @@ function button:Draw(w, h)
 
 	end
 
-	local ic = t.Icon
-	local iW = ic and (ic.IconW or w - (t.RBRadius or 8)) or 0
-	local iH = ic and (ic.IconH or h - (t.RBRadius or 8)) or 0
+	local ic = t._Icon
+	local iW, iH = 0, 0
 
+	if ic then
+		iW, iH = ic:GetSize()
+	end
+	
 	if not t.NoDrawText and label then
 
 		label = tostring(label)
