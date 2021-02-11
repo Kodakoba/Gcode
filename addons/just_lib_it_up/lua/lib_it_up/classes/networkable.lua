@@ -46,6 +46,7 @@ _NetworkableCache = _NetworkableCache or {}-- _NetworkableCache or {}
 
 _NetworkableNumberToID = _NetworkableNumberToID or {} --[num] = name
 _NetworkableIDToNumber = _NetworkableIDToNumber or {} --[name] = num
+_NetworkableQueue = _NetworkableQueue or {}	-- [seq_id] = [name] ; FIFO
 
 _NetworkableChanges = _NetworkableChanges or muldim:new()-- _NetworkableChanges or muldim:new()
 
@@ -54,8 +55,16 @@ _NetworkableAwareness = _NetworkableAwareness or muldim:new() --[ply] = {'ID', '
 _NetworkableData = _NetworkableData or muldim:new() 	-- stores networkable data as [num_id] = {bunch of key-values}
 local idData = _NetworkableData							-- only used clientside
 
-Networkable.Verbose = false
+Networkable.Verbose = Networkable.Verbose or (Networkable.Verbose == nil and false)
 Networkable.Warnings = true
+
+local SZ = {
+	NUMBERID = 16,
+	CHANGES_COUNT = 12,
+
+	INTERVAL_UPDATE = 1024 * 12, -- 12kb
+	FULL_UPDATE = 1024 * 32, -- 32kb
+}
 
 local realPrint = print
 local print = function(...)
@@ -225,6 +234,10 @@ function nw:Initialize(id, ...)
 	if cache[id] then return cache[id] end
 
 	self:SetNetworkableID(id)
+end
+
+function nw:__tostring()
+	return ("[Networkable][%d][`%s`]"):format(self.NumberID or -1, self.NetworkableID or "[no ID]")
 end
 
 function nw:SetNetworkableID(id, replace)
@@ -403,19 +416,9 @@ end
 
 if SERVER then
 
-	local function WriteIDPair(i, maxsz)
-
-		local name = numToID[i]
-		local obj = cache[name]
-
-		if not obj then
-			realPrintf("Failed obtaining networkable object serverside: ID %d; name %s", i, name)
-		end
-
-		net.WriteUInt(i, maxsz)
+	local function WriteNWID(obj)
 		net.WriteUInt(obj.NetworkableIDEncoder.ID, encoderIDLength)
-
-		obj.NetworkableIDEncoder.Func(name, obj.NetworkableIDEncoder.IDArg)
+		obj.NetworkableIDEncoder.Func(obj.NetworkableID, obj.NetworkableIDEncoder.IDArg)
 	end
 
 	local function WriteChange(key, val, obj, ...)
@@ -450,130 +453,138 @@ if SERVER then
 	util.AddNetworkString("NetworkableSync")
 	util.AddNetworkString("NetworkableInvalidated")
 
+	function Networkable:_SendNet(who, full, budget)
+		if self:Emit("ShouldNetwork", who) == false then return end
+
+		budget = budget or 32 * 1024 * 8
+
+		local numID, nameID = self.NumberID, self.NetworkableID
+		local unaware = false
+
+		for _, ply in ipairs(who) do
+			-- if some player didn't know about this NWID, network the ID as well
+			if not _NetworkableAwareness[ply] or not _NetworkableAwareness[ply][nameID] then 
+				unaware = true
+				_NetworkableAwareness:Set(true, ply, nameID)
+			end
+		end
+
+		local changes = full and self:GetNetworked() or _NetworkableChanges[nameID]
+		local changes_count = 0
+
+		for k,v in pairs(changes) do
+			local should = self:Emit("ShouldEncode", k, v)
+			if should == false then changes[k] = nil continue end
+
+			changes_count = changes_count + 1
+		end
+
+		local written = 0
+
+		net.Start("NetworkableSync")
+			local ns = netstack:new()
+			ns:Hijack()
+
+			-- write numberID + NWID if there are any unaware people
+			net.WriteBool(unaware)
+			net.WriteUInt(numID, SZ.NUMBERID)
+
+			if unaware then
+				WriteNWID(self)
+			end
+
+			self:Emit("StartWritingChanges", changes)
+
+			local actuallyWritten = 0
+			local nsCursor = 0
+
+			if self:Emit("CustomWriteChanges", changes) == nil then
+				net.WriteUInt(changes_count, SZ.CHANGES_COUNT).IsChangesCount = true
+				nsCursor = ns:GetCursor() - 1
+
+				for k,v in pairs(changes) do
+					WriteChange(k, v, self)
+					changes[k] = nil
+					actuallyWritten = actuallyWritten + 1
+					if ns:BytesWritten() > budget then
+						goto send -- YEET IT
+					end
+				end
+			end
+
+			_NetworkableChanges[nameID] = nil 	-- don't erase all changes if we didn't write all of them
+												-- (eg went over budget)
+
+			::send::
+			written = ns:BytesWritten()
+			ns:Hijack(false)
+
+			ns:SetCursor(nsCursor)
+			ns:WriteUInt(actuallyWritten, SZ.CHANGES_COUNT)
+
+			net.WriteNetStack(ns)
+		net.Send(who)
+
+		return ns, written
+	end
+
+	function Networkable:_Queue()
+		local q = _NetworkableQueue
+		for k,v in ipairs(q) do
+			if v == self.NetworkableID then return end
+		end
+
+		q[#q + 1] = self.NetworkableID
+	end
 
 	-- networks all networkables to all players
-	-- ignores networkables with filters
 	function NetworkAll()
 		if not next(_NetworkableChanges) then return end
 
 		local everyone = player.GetAll()
 		local sendTo = table.Copy(everyone)
 
-		local changes_count = 0
-
-
-		-- count networkables someone might not know about
-
-		local newids = {--[[ [seq_id] = name ]]}
-		local added = {--[[ [name] = true ]]}
-		local maxID = 0
-
-		for _, ply in ipairs(everyone) do
-			for numID, nameID in pairs(numToID) do
-				if added[nameID] then continue end
-
-				if not _NetworkableAwareness[ply] or not _NetworkableAwareness[ply][nameID] then
-					local obj = _NetworkableCache[nameID]
-					if obj.Filter then continue end
-
-					newids[#newids + 1] = numID
-					maxID = math.max(maxID, numID)
-					_NetworkableAwareness:Set(true, ply, nameID)
-					added[nameID] = true
-				end
+		for nwID, changes in pairs(_NetworkableChanges) do
+			if cache[nwID] then
+				cache[nwID]:_Queue()
 			end
 		end
 
-		-- store their awareness
-		for id, v in pairs(_NetworkableChanges) do
-			-- if an obj has a filter it gets removed from all-player-broadcasting
-			local obj = cache[id]
-			maxID = math.max(maxID, obj.NumberID)
-			if not obj.Filter then
-				changes_count = changes_count + 1
-				for k, ply in ipairs(everyone) do
-					local arr = _NetworkableAwareness:GetOrSet(ply)
-					arr[obj.NetworkableID] = true
+		local all = player.GetAll()
+		local copy = {}
+		local len = 0
+
+		local total_written = 0
+
+		for i=1, #_NetworkableQueue do
+			local name = table.remove(_NetworkableQueue, 1)
+
+			local obj = _NetworkableCache[name]
+			if not obj or not obj:IsValid() then continue end
+
+			if obj.Filter then
+				copy = {}
+
+				for k,v in ipairs(all) do
+					if obj:Filter(v) ~= false then
+						copy[#copy + 1] = v
+					end
 				end
+			else
+				copy = all
+			end
+
+			local ns, written = obj:_SendNet(copy, false, SZ.INTERVAL_UPDATE - total_written)
+			total_written = total_written + written
+							-- written more than INTERVAL_UPDATE = halt until next nw frame
+			if total_written > SZ.INTERVAL_UPDATE then
+				return
 			end
 		end
 
-		if #newids == 0 and changes_count == 0 then return end
-
-		local nw = netstack:new()
-
-		net.Start("NetworkableSync")
-			local ns = netstack:new()
-			ns:Hijack()
-
-			net.WriteUInt(#newids, 16)
-			local maxsz = bit.GetLen(maxID)
-			net.WriteUInt(maxsz, 5)
-
-			for i=1, #newids do
-				WriteIDPair(newids[i], maxsz)
-			end
-
-			net.WriteUInt(changes_count, 8).Description = "Changed objects count" --amount of changed networkable objects
-			local changedCountID = #ns.Ops
-			local changed = 0
-
-			local bits = select(2, net.BytesWritten())
-
-			for id, changes in pairs(_NetworkableChanges) do
-				local obj = cache[id]
-				if obj.Filter or obj:Emit("ShouldNetwork") == false then continue end --nyope
-
-				obj:Emit("StartWritingChanges", changes)
-
-				changed = changed + 1
-				net.WriteUInt(IDToNumber(id), maxsz).Description = "IDToNumber"
-
-				-- if you have a custom encoder for the whole object, you might
-				-- wanna use this event
-
-				if obj:Emit("CustomWriteChanges", changes) == nil then
-
-					local changesAmt = 0
-					local writeChanges = {}
-
-					-- emit "ShouldEncode" for every changed val in a networkable
-					for k,v in pairs(changes) do
-						local should = obj:Emit("ShouldEncode", k, v) 	-- this should mostly be used for equality checks
-						if should == false then continue end 			-- keep in mind that if you return false the change will be lost to networking
-
-						changesAmt = changesAmt + 1
-
-						writeChanges[k] = v
-					end
-
-					net.WriteUInt(changesAmt, 8).Description = "Amount of changes in an object" --amount of changed values in the Networkable object
-
-					for k,v in pairs(writeChanges) do
-						WriteChange(k, v, obj)
-					end
-
-				end
-
-				_NetworkableChanges[id] = nil
-
-				local cur_written = select(2, ns:BytesWritten())
-										--16 kb
-				if bits + cur_written > 16*1024*8 then
-					printf("too much written; halting for this network frame @ %d/%d", changed, changes_count)
-					break
-				end
-			end
-
-			ns:Hijack(false)
-
-			ns.Ops[changedCountID].args[1] = changed --this is the changes_count, change it to `changed` in case we broke out of the loop early
-			--print("sent:", ns)
-			net.WriteNetStack(ns)
-
-		net.Send(sendTo)
 	end
 
+	_G.NWAll = NetworkAll
 	local nwAll = function()
 		local ok, err = pcall(NetworkAll)
 		if not ok then
@@ -583,8 +594,6 @@ if SERVER then
 
 	-- Updates every player in `who` table on every networkable
 	-- in `what` table, regardless of their awareness
-
-	-- `what` GETS MODIFIED!!! COPY BEFORE CALLING
 	function Networkable.UpdateFull(who, what)
 		if istable(who) then
 			Filter(who, true):Filter("IsValid", true)
@@ -592,252 +601,63 @@ if SERVER then
 			who = {who}
 		end
 
-		local maxID = 0
-		local newids = {}
+		local copy = {}
 
-		for _, ply in ipairs(who) do
-			for numID, nameID in pairs(numToID) do
-				local obj = _NetworkableCache[nameID]
-				if not obj or obj.Filter then continue end
+		for _, obj in pairs(what) do
+			if obj.Filter then
+				copy = {}
 
-				newids[#newids + 1] = numID
-				maxID = math.max(maxID, numID)
-				_NetworkableAwareness:Set(true, ply, nameID)
+				for k,v in ipairs(who) do
+					if obj:Filter(v) ~= false then
+						copy[#copy + 1] = v
+					end
+				end
+
+			else
+				copy = all
 			end
+
+			obj:_SendNet(copy, true)
 		end
-
-		local changes = 0
-		for id, obj in pairs(what) do
-			if obj.Filter then what[id] = nil continue end
-
-			for k, v in ipairs(obj.Networked) do
-				changes = changes + 1
-			end
-		end
-
-		net.Start("NetworkableSync")
-			local ns = netstack:new()
-			ns:Hijack()
-
-			net.WriteUInt(#newids, 16)
-			local maxsz = bit.GetLen(maxID)
-			net.WriteUInt(maxsz, 5)
-
-			for i=1, #newids do
-				WriteIDPair(newids[i], maxsz)
-			end
-
-			net.WriteUInt(changes_count, 8).Description = "Changed objects count" --amount of changed networkable objects
-			local changedCountID = #ns.Ops
-			local changed = 0
-
-			local bits = select(2, net.BytesWritten())
-
-			for id, obj in pairs(what) do
-				changed = changed + 1
-				net.WriteUInt(IDToNumber(id), maxsz).Description = "IDToNumber"
-
-				local changesAmt = 0
-				local writeChanges = {}
-
-				for k,v in pairs(obj:GetNetworked()) do
-					local should = obj:Emit("ShouldEncode", k, v) 	-- this should mostly be used for equality checks
-					if should == false then continue end 			-- keep in mind that if you return false the change will be lost to networking
-
-					changesAmt = changesAmt + 1
-
-					writeChanges[k] = v
-				end
-
-				net.WriteUInt(changesAmt, 8).Description = "Amount of changes in an object" --amount of changed values in the Networkable object
-
-				for k,v in pairs(writeChanges) do
-					WriteChange(k, v, obj)
-				end
-
-				_NetworkableChanges[id] = nil
-
-				local cur_written = select(2, ns:BytesWritten())
-										--32 kb - more for complete updates
-				if bits + cur_written > 32*1024*8 then
-					printf("too much written; halting for this network frame @ %d/%d", changed, changes_count)
-					timer.Simple(update_freq, function()
-						Networkable.UpdateFull(who, what)
-					end)
-					break
-				end
-			end
-
-			ns:Hijack(false)
-
-			ns.Ops[changedCountID].args[1] = changed --this is the changes_count, change it to `changed` in case we broke out of the loop early
-			--print("sent:", ns)
-			net.WriteNetStack(ns)
-
-		net.Send(who)
 	end
 
 	timer.Create("NetworkableNetwork", update_freq, 0, nwAll)
 
 	hook.Add("PlayerFullyLoaded", "NetworkableUpdate", function(ply)
-		Networkable.UpdateFull(ply, table.Copy(_NetworkableCache))
+		Networkable.UpdateFull(ply, _NetworkableCache)
 	end)
 
-	local function shallowCopy(from, to)
-		to = to or {}
-		for k,v in pairs(from) do
-			to[k] = v
-		end
+	function nw:Network(now) 	--networks everything in the next tick (or right now if `now` is true OR networkable has a filter)
+		local to = istable(nwTo) and nwTo or player.GetAll()
+		local copy = {}
 
-		return to
-	end
+		if self.Filter then
+			copy = {}
 
-	function nw:Network(now, data, nwTo) 	--networks everything in the next tick (or right now if `now` is true OR networkable has a filter)
-		print("Network called", self, now, self.Filter)
-		if not self.Filter then
-			if not now then
-				timer.Adjust("NetworkableNetwork", 0, 0, function()
-					nwAll()
-					timer.Adjust("NetworkableNetwork", update_freq, 0, nwAll)
-				end)
-			else
-				nwAll()
+			for k,v in ipairs(to) do
+				if self:Filter(v) ~= false then
+					copy[#copy + 1] = v
+				end
 			end
+
 		else
-			local anyone_missing = false
-
-			local awareValues = self.__Aware	-- who's aware of what values: { [ply] = { k = v, k2 = v2, ... }, ... }
-			local unaware = {}			-- who needs networking what values: same structure as above
-			data = data or {}			-- {k = v, k2 = v2, ...}
-
-			local changes = _NetworkableChanges[self.NetworkableID]
-
-			if changes then shallowCopy(changes, data) end -- copy all changed into data
-
-			if not nwTo then
-				nwTo = {}
-
-				-- filter out the players first
-				for _, ply in ipairs(player.GetAll()) do
-					if self:Filter(ply) ~= false then
-						nwTo[#nwTo + 1] = ply
-						print("networking to", ply)
-					else
-						print("not networking to", ply)
-					end
-				end
-			end
-
-			if istable(nwTo) then
-				-- see who's aware of what and write the awareness down
-
-				for _, ply in ipairs(nwTo) do
-					for dataK, dataV in pairs(self:GetNetworked()) do
-						local unalK = dataK
-						if self.Aliases[dataK] then dataK = self.Aliases[dataK] end
-
-						-- if a player wasn't aware of a value and it wasn't changed, add them to the unaware list for that kv
-						if awareValues:Get(ply, dataK) ~= dataV and (not changes or not changes[dataK]) then
-							print(ply, "is unaware of a kv!!!", dataK, dataV)
-							unaware[ply] = unaware[ply] or {}
-							unaware[ply][dataK] = dataV
-						end
-
-						awareValues:Set(dataV, ply, dataK)
-					end
-				end
-			else
-				local ply = nwTo
-
-				for dataK, dataV in pairs(self:GetNetworked()) do
-					local unalK = dataK
-					if self.Aliases[dataK] then dataK = self.Aliases[dataK] end
-
-					if awareValues:Get(ply, dataK) ~= dataV and (not changes or not changes[unalK]) then
-						print(ply, "is unaware of a kv!!!", dataK, dataV, awareValues:Get(ply, dataK))
-						data[dataK] = dataV
-					end
-
-					awareValues:Set(dataV, ply, dataK)
-				end
-			end
-
-			if table.Count(unaware) > 0 then --there are players who are unaware of some values; they get special treatment
-				print("there are unaware people")
-				for ply, dat in pairs(unaware) do
-					local toNW = shallowCopy(dat) 	-- add what they don't know
-					shallowCopy(data, toNW) 		-- then add what would've been networked anyway, handling changes in the process
-					print(ply, "gets this networked:")
-					self:Network(true, toNW, ply)
-
-					table.RemoveByValue(nwTo, ply) -- exclude them from current networking
-				end
-			end
-
-			-- is everyone aware of this nw?
-			if istable(nwTo) then
-				for k, ply in ipairs(nwTo) do
-					if not anyone_missing and not _NetworkableAwareness:Get(ply, self.NetworkableID) then
-						anyone_missing = true
-					end --awh
-					_NetworkableAwareness:Set(true, ply, self.NetworkableID)
-				end
-			else
-				if not anyone_missing and not _NetworkableAwareness:Get(nwTo, self.NetworkableID) then
-					anyone_missing = true
-				end
-				_NetworkableAwareness:Set(true, nwTo, self.NetworkableID)
-			end
-
-			local everyone_knows = not anyone_missing
-			local noone_listens = (istable(nwTo) and table.IsEmpty(nwTo)) or false
-			local nothing_changes = table.IsEmpty(data)
-
-			if (everyone_knows and nothing_changes) or noone_listens then
-				printf("not networking; everyone knows? %s, nothing changes? %s, noone listens? %s", everyone_knows, nothing_changes, noone_listens)
-				return
-			end
-
-			local sz = bit.GetLen(self.NumberID)
-
-			net.Start("NetworkableSync", self.Unreliable)
-
-				net.WriteUInt(anyone_missing and 1 or 0, 16) --don't write yourself if everyone knows
-				net.WriteUInt(sz, 5)
-
-				if anyone_missing then
-					WriteIDPair(self.NumberID, sz)
-				end
-
-				net.WriteUInt(1, 8) --amount of changed networkable objects (just self)
-				net.WriteUInt(IDToNumber(self.NetworkableID), sz) -- self's NetworkableID
-				net.WriteUInt(table.Count(data), 8) -- amt of changes in self
-
-				for k,v in pairs(data) do
-					WriteChange(k, v, self, nwTo)
-				end
-
-				_NetworkableChanges[self.NetworkableID] = nil
-
-				print("-- sent! --", net.BytesWritten())
-			net.Send(nwTo)
-
-			
+			copy = to
 		end
+
+		self:_SendNet(copy)
 	end
 
 end
 
 if CLIENT then
 
-	local function ReadIDPair(i, sz)
-		local num = net.ReadUInt(sz)
+	local function ReadNWID()
 		local enc_id = net.ReadUInt(encoderIDLength)
 
 		local dec = decoderByID[enc_id]
 		local name = dec[2](dec[3])
 
-		return num, name
+		return name
 	end
 
 	local function ReadChange(obj)
@@ -862,80 +682,74 @@ if CLIENT then
 		local v_dec = decoderByID[v_encID]
 		local decoded_val = v_dec[2](v_dec[3])
 
-		print("	decoded key, val:", decoded_key, decoded_val)
+		--print("	decoded key, val:", decoded_key, decoded_val)
 		return decoded_key, decoded_val
 	end
 
 	net.Receive("NetworkableSync", function(len)
-		print("received networkable sync: length", len/8, "bytes")
-		-- read new numid:id pairs
-		local new_ids = net.ReadUInt(16)
-		local idsz = net.ReadUInt(5)
-		print("reading", new_ids, "new pairs", idsz, "max size")
+		printf("received sync: %d bytes", len/8)
+		local is_new = net.ReadBool()
+		local num_id = net.ReadUInt(SZ.NUMBERID)
+		local nwID
 
-		for i=1, new_ids do
-			local num_id, id = ReadIDPair(i, idsz)
-			printf("	new pair: %d = %s", num_id, id)
-			if not cache[id] then --that object doesn't exist clientside; store the num_id:id conversion
-				Networkable.CreateIDPair(id, num_id)
-			else
-				cache[id]:SetNetworkableNumberID(num_id)
-			end
+		if is_new then
+			nwID = ReadNWID(num_id)
+		else
+			nwID = NumberToID(num_id)
 		end
 
-		--read networkable changes
-		local changes = net.ReadUInt(8) --how many networkable objects were changed
-		print("reading", changes, " changes")
-		for i=1, changes do
-			local num_id = net.ReadUInt(idsz)			--numberID of the networkable object
+		if not nwID then
+			warn("Something went wrong while reading networkable: failed to grab NWID for numID %d.", num_id)
+			return
+		end
 
-			local obj = cache[numToID[num_id]]
-			if not obj then
-				warnf("Networkable with the name `%s` (%d) didn't exist clientside.", numToID[num_id] or "nil", num_id)
-			end
+		_CurrentNWKey = nwID
 
-			_CurrentNWKey = numToID[num_id]
+		if not cache[nwID] then
+			Networkable.CreateIDPair(nwID, num_id)
+		else
+			cache[nwID]:SetNetworkableNumberID(num_id)
+		end
 
-			if obj and obj:Emit("CustomReadChanges") ~= nil then
-				printf("	networkable %s(%d) had custom reader", _CurrentNWKey or "nil", num_id)
-				continue
-			end
+		local obj = cache[nwID]
+		if not obj then
+			warnf("Networkable with the name `%s` (%d) didn't exist clientside.", nwID, num_id)
+		end
 
-			local changed_keys = net.ReadUInt(8)	--amt of changed keys
+		if obj and obj:Emit("CustomReadChanges") ~= nil then
+			printf("	networkable %s(%d) had custom reader", nwID or "nil", num_id)
+			return
+		end
 
-			
-			local changes = {}
+		local cng_amt = net.ReadUInt(SZ.CHANGES_COUNT)
+		printf("	amt of changed keys for %s(id: %s): %d", obj, nwID:Quote(), cng_amt)
 
-			printf("	amt of changed keys for %s(id: %d): %d", obj, num_id, changed_keys)
+		local changes = {}
+		for i=1, cng_amt do
+	
+			printf("	reading change #%d", i)
 
-			for key_i = 1, changed_keys do
-				printf("	reading change #%d", key_i)
-				local k, v = ReadChange(obj)
-				if obj then		-- [1] = old, [2] = new
-								-- object existed; put the data in it and call the k-v change callbacks
-					changes[k] = {obj.Networked[k], v}
-					obj.Networked[k] = v
-					obj:Emit("NetworkedVarChanged", k, changes[k][1], v) -- key, old, new
-				else
-					-- object did not exist; just stash the data changes for when it's created
-					idData:Set(v, NumberToID(num_id), k)
-					print("failed to find object with numID", num_id)
-				end
-			end
+			local k, v = ReadChange(obj)
 
-			print("	ID of obj:", numToID[num_id], num_id)
 			if obj then
-				-- if the object existed, call the callback after _every_ change has been read
-				print("calling emitter")
-				obj:Emit("NetworkedChanged", changes)
+				changes[k] = {obj.Networked[k], v}
+				obj.Networked[k] = v
+				obj:Emit("NetworkedVarChanged", k, changes[k][1], v) -- key, old, new
 			else
-				print("no obj to call shit")
+
+				idData:Set(v, NumberToID(num_id), k)
+				warn("	Couldn't find object with numID %d; stashing change...", num_id)
+			end
+
+
+			if obj then
+				obj:Emit("NetworkedChanged", changes)
 			end
 		end
 	end)
 
 	net.Receive("NetworkableInvalidated", function()
-		local num_id = net.ReadUInt(24)
+		local num_id = net.ReadUInt(SZ.NUMBERID)
 		print("invalidated nwable with numID", num_id)
 		local id = NumberToID(num_id)
 		print("that's ID", id)
