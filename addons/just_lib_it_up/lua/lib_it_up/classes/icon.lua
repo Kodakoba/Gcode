@@ -146,3 +146,7 @@ end
 function IsIcon(t)
 	return getmetatable(t) == Icon
 end
+
+
+Icons = Icons or {}
+Icons.Plus = Icon("https://i.imgur.com/dO5eomW.png", "plus.png")
