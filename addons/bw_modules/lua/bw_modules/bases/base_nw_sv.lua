@@ -23,7 +23,7 @@ bNW:On("CustomWriteChanges", "EncodeZones", function(self, changes, ...)
 	net.WriteUInt(table.Count(changes), 16)
 	for bNW, base in pairs(changes) do
 		net.WriteUInt(base:GetID(), 12)
-		net.WriteCompressedString("COCK PEEPEE " .. base:GetID())
+		net.WriteCompressedString("COCK PEEPEE " .. base:GetID(), 255)
 		net.WriteUInt(#base:GetZones(), 8)
 		for k,v in ipairs(base:GetZones()) do
 			net.WriteUInt(v:GetID(), 12)

@@ -93,7 +93,7 @@ function bw.Base:ReadNetwork()
 	self.ZoneQueue = self.ZoneQueue or {}
 	local zq = self.ZoneQueue
 
-	local name = net.ReadCompressedString()
+	local name = net.ReadCompressedString(255)
 	self:SetName(name)
 	
 	local zones = net.ReadUInt(8)
