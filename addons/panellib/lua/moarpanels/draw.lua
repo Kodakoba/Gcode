@@ -681,7 +681,7 @@ draw.Line = draw.RotatedBox
 
 local function GetOrDownload(url, name, flags, cb)	--callback: 1st arg is material, 2nd arg is boolean: was the material loaded from cache?
 	if url == "-" or name == "-" then return false end
-	if not name then error("no name! disaster averting") return end
+	if not name then ErrorNoHalt("GetOrDownload: No name!\n") return end
 
 	local key = name:gsub("%.png$", "")
 	local mat = MoarPanelsMats[key]
@@ -1443,7 +1443,7 @@ function DownloadGIF(url, name)
 	local path = "hdl/%s"
 
 	local mat = MoarPanelsMats[name]
-	if not name then error("no name! disaster averting") return end
+	if not name then ErrorNoHalt("DownloadGIF: No name!\n") return end
 
 	if not mat or (mat.failed and mat.failed ~= url) then
 		MoarPanelsMats[name] = {}
