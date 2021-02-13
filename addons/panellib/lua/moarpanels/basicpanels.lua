@@ -4,6 +4,8 @@ local gd = Material("vgui/gradient-d")
 local gr = Material("vgui/gradient-r")
 local gl = Material("vgui/gradient-l")
 
+CreateLogID("MPMatrices", "leaked %d matrices: %s", {0, ""})
+
 function LC(col, dest, vel)
 	local v = vel or 10
 	if not IsColor(col) or not IsColor(dest) then return end

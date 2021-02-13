@@ -45,7 +45,8 @@ local function CreateFrame(ent)
 
 	f:DockPadding(16, 64, 16, 16)
 	f.ScaleDown = ScrH() < 800
-
+	f.Shadow = false
+	
 	local col = vgui.Create("FButton", f)
 
 	f:On("Think", function(self)

@@ -423,6 +423,7 @@ function button:GetMatrixScale()
 end
 
 fbuttonLeakingMatrices = 0	--failsafe
+fbuttonMatrices = {}
 
 local function popMatrix(self, w, h)
 	local scale = self.MxScale
@@ -433,6 +434,7 @@ local function popMatrix(self, w, h)
 		mx:Reset()
 
 		fbuttonLeakingMatrices = fbuttonLeakingMatrices - 1
+		fbuttonMatrices[self] = nil
 		draw.DisableFilters(true)
 	end
 end
@@ -477,7 +479,7 @@ function button:Paint(w, h)
 		cam.PushModelMatrix(mx, true)
 
 		self.ActiveMatrix = mx
-
+		fbuttonMatrices[self] = mx
 		fbuttonLeakingMatrices = fbuttonLeakingMatrices + 1
 	end
 
@@ -492,15 +494,35 @@ vgui.Register("FButton", button, "DButton")
 
 hook.Add("PostRender", "UnleakMatrices", function()
 	if fbuttonLeakingMatrices > 0 then
+		-- removing an fbutton and leaking a matrix this way is "acceptable" (kinda)
+		local num = 0
 		local amt = fbuttonLeakingMatrices
+
+		for k,v in pairs(fbuttonMatrices) do
+			if not k:IsValid() then
+				cam.PopModelMatrix()
+				draw.DisableFilters(true, true)
+
+				amt = amt - 1
+				num = num + 1
+				fbuttonMatrices[k] = nil
+			end
+		end
+
+		if num > 0 then
+			clLog("MPMatrices", num, "remove before pop")
+		end
+
 		for i=1, amt do
 			cam.PopModelMatrix()
-			--render.PopFilterMin()
 			draw.DisableFilters(true, true)
 		end
 
-		leakingMatrices = 0
+		fbuttonLeakingMatrices = 0
 
-		errorf("nice matrix leak: leaked %d matrices", amt)
+		if amt > 0 then
+			clLog("MPMatrices", amt, "errors?")
+			errorf("nice matrix leak: leaked %d matrices", amt)
+		end
 	end
 end)

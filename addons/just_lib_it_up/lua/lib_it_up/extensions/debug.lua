@@ -94,3 +94,33 @@ function svPrint(...)
 	if SERVER then print(...) end
 end
 svprint = svPrint
+
+
+LibItUp.LogIDs = LibItUp.LogIDs or {}
+function CreateLogID(id, str, types)
+	CheckArg(1, id, "string")
+	CheckArg(2, str, "string")
+	CheckArg(3, types, {})
+
+	local m = LogModule(id, Colors.Warning)
+	m.FormatStr = str
+	m.Types = types
+
+	LibItUp.LogIDs[id] = m
+end
+
+CreateLogID("log-idless", "Attempted to log a string with non-existent ID: %s", {""})
+
+if CLIENT then
+	-- todo: this will send the stuff to the server
+	function clLog(id, ...)
+		if not LibItUp.LogIDs[id] then
+			clLog("log-idless", id)
+			return
+		end
+
+		-- todo: typecheck ... here
+
+		Log(LibItUp.LogIDs[id], LibItUp.LogIDs[id].FormatStr, ...)
+	end
+end
