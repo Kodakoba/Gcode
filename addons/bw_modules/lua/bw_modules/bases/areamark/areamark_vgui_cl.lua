@@ -1,6 +1,7 @@
 local bases = BaseWars.Bases
 local bnd = Bind("areamark_baseselect")
 local TOOL = BaseWars.Bases.MarkTool
+print(TOOL, "tewl")
 
 function TOOL:OpenBaseGUI(base)
 	if IsValid(bases.BaseGUI) then

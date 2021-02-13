@@ -71,6 +71,11 @@ local BlankFunc = function() end
 -- vfs was a mistake
 FInc.CachedSearches = FInc.CachedSearches or {}
 local cached_searches = FInc.CachedSearches
+local including = 0
+
+function FInc.Including()
+	return including > 0, including
+end
 
 function FInc.Recursive(name, realm, nofold, decider, callback)	--even though with "nofold" it's not really recursive
 	if not NeedToInclude(realm) then return end
@@ -78,7 +83,9 @@ function FInc.Recursive(name, realm, nofold, decider, callback)	--even though wi
 	decider = decider or BlankFunc
 	callback = callback or BlankFunc
 	local b = bench("file.Find: " .. name)
+
 	b:Open()
+	including = including + 1
 
 	local cache = (cached_searches[name] and CurTime() - cached_searches[name][1] < 0.2) and cached_searches[name]
 
@@ -136,6 +143,7 @@ function FInc.Recursive(name, realm, nofold, decider, callback)	--even though wi
 		end
 	end
 
+	including = including - 1
 end
 
 setmetatable(FInc, {__call = FInc.Recursive})
