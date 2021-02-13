@@ -235,8 +235,9 @@ end
 
 function ENT:CLInit()
 	local qm = self:SetQuickInteractable()
+	local base = self.BaseClass
 	qm.OnOpen = function(...) self:OpenShit(...) end
-	qm.OnFullClose = function(...) self:CloseAll(...) end
+	qm.OnFullClose = function(...) base.CloseAll(self, ...) end
 	--qm.OnReopen = OpenShit
 
 	self:OnChangeGridID(self:GetGridID())

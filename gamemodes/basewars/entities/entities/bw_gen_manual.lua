@@ -56,7 +56,7 @@ function ENT:GenerateOptions(qm, pnl)
 		local ent = self
 
 		if not grid.ManualTapped then
-			grid:On("NetworkedChanged", "ManualGen", function(self)
+			grid:On("NetworkedChanged", self, function(self)
 				self:AddPower((self.ManualTapped - (self.Networked.MT or 0)) * ent.PowerGenerated2)
 			end)
 		end

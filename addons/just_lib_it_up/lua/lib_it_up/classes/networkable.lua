@@ -741,10 +741,10 @@ if CLIENT then
 				warn("	Couldn't find object with numID %d; stashing change...", num_id)
 			end
 
+		end
 
-			if obj then
-				obj:Emit("NetworkedChanged", changes)
-			end
+		if obj then
+			obj:Emit("NetworkedChanged", changes)
 		end
 	end)
 
