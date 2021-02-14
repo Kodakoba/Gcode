@@ -1,3 +1,4 @@
+LibItUp.SetIncluded()
 if not Emitter then include('emitter.lua') end
 
 --[[
@@ -140,6 +141,26 @@ function net.StartPromise(name, ns)
 end
 
 local PromReply = Object:extend()
+
+function PromReply:ReplySend(name, ok, ns)
+	if self.Deactivated then error("Can't reply twice!") return end
+
+	if IsNetstack(ns) then
+		ns:SetMode("append")
+		ns:SetCursor(1)
+
+		self:Reply(ok, ns)
+
+		net.Start(name)
+			net.WriteNetStack(ns)
+		net.Send(self.Owner)
+	else
+		net.Start(name)
+			self:Reply(ok)
+		net.Send(self.Owner)
+	end
+	
+end
 
 function PromReply:Reply(ok, ns)
 	if self.Deactivated then error("Can't reply twice!") return end
