@@ -154,6 +154,8 @@ local disappearTime, disappearEase = 0.15, 3
 function TOOL:ShowBaseSelection(cur)
 	local pnl
 	cur[2] = self
+	local tool = self
+
 	if cur[1] and cur[1]:IsValid() then
 		pnl = cur[1]
 
@@ -211,6 +213,10 @@ function TOOL:ShowBaseSelection(cur)
 			fb:SetSize(180, 40)
 			scr:Add(fb, base:GetName() or "[unnamed?]")
 			fb.Label = base:GetName() or "[unnamed?]"
+
+			function fb:DoClick()
+				tool:OpenBaseGUI(base)
+			end
 		end
 
 		-- if the search bar gets focus, keep the bind held
@@ -254,7 +260,7 @@ function TOOL:ShowBaseSelection(cur)
 		new:Dock(BOTTOM)
 		new:SetTall(32)
 		new:SetIcon(Icons.Plus:Copy():SetSize(24, 24))
-		new:SetColor(Colors.Green)
+		new:SetColor(Colors.Greenish)
 
 		function new.DoClick()
 			self:OpenNewBaseGUI()
@@ -278,7 +284,6 @@ function TOOL:HideBaseSelection(cur)
 	pnl:MoveTo(ScrW(), pnl.Y, disappearTime, 0, disappearEase, function(_, pnl)
 		pnl:Hide()
 	end)
-
 	
 end
 

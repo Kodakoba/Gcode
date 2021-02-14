@@ -1,8 +1,13 @@
-local bw = BaseWars
+util.AddNetworkString("BWBases")
 
-local zNW = bw.Bases.NWZones
-local bNW = bw.Bases.NWBases
-local adNW = bw.Bases.NWAdmin
+local bw = BaseWars.Bases
+
+local zNW = bw.NW.Zones
+local bNW = bw.NW.Bases
+local adNW = bw.NW.Admin
+
+local bIDSZ = 12
+local zIDSZ = 12
 
 zNW:On("CustomWriteChanges", "EncodeZones", function(self, changes, ...)
 	local write = {}
@@ -12,6 +17,7 @@ zNW:On("CustomWriteChanges", "EncodeZones", function(self, changes, ...)
 		net.WriteUInt(zID, 12)
 		net.WriteVector(zone.Mins)
 		net.WriteVector(zone.Maxs)
+		net.WriteCompressedString(zone:GetName(), bw.MaxZoneNameLength)
 	end
 
 	return true
@@ -23,7 +29,7 @@ bNW:On("CustomWriteChanges", "EncodeZones", function(self, changes, ...)
 	net.WriteUInt(table.Count(changes), 16)
 	for bNW, base in pairs(changes) do
 		net.WriteUInt(base:GetID(), 12)
-		net.WriteCompressedString("COCK PEEPEE " .. base:GetID(), 255)
+		net.WriteCompressedString(base:GetName(), bw.MaxBaseNameLength + 1)
 		net.WriteUInt(#base:GetZones(), 8)
 		for k,v in ipairs(base:GetZones()) do
 			net.WriteUInt(v:GetID(), 12)
@@ -34,5 +40,42 @@ bNW:On("CustomWriteChanges", "EncodeZones", function(self, changes, ...)
 end)
 
 adNW.Filter = function(self, ply)
-	return ply:IsAdmin()
+	return bw.CanModify(ply)
 end
+
+local function createNew(ply)
+	local pr = net.ReplyPromise(ply)
+	local ns = netstack:new()
+	if not bw.CanModify(ply) then
+		ns:WriteCompressedString("no permissions")
+		pr:ReplySend("BWBases", false, ns)
+		return
+	end
+
+	local name = net.ReadString()
+
+	local a, err = bw.SQL.CreateBase(name)
+	
+	if err then
+		ns:WriteCompressedString(err)
+		pr:ReplySend("BWBases", false, ns)
+		return
+	end
+
+	a:Then(function(_, q)
+		ns:WriteUInt(q:lastInsert(), bIDSZ)
+		pr:ReplySend("BWBases", true, ns)
+	end, function(_, why)
+		ns:WriteCompressedString("query failed:\n" .. why)
+		pr:ReplySend("BWBases", false, ns)
+	end)
+end
+
+net.Receive("BWBases", function(l, ply)
+	local mode = net.ReadUInt(2)
+
+	if mode == bw.NW.BASE_NEW then
+		createNew(ply)
+	end
+
+end)

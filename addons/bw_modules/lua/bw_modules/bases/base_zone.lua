@@ -1,10 +1,32 @@
-local bw = BaseWars
+local bw = BaseWars.Bases
+
+bw.CanModify = function(ply)
+	return ply:IsAdmin()
+end
+
+bw.MaxBaseNameLength = 120
+bw.MinBaseNameLength = 2
+
+bw.MaxZoneNameLength = 120
+-- zones don't have a minimum name requirement; they can be unnamed
 
 bw.Base = bw.Base or Emitter:callable()
 bw.Zone = bw.Zone or Emitter:callable()
 
 ChainAccessor(bw.Base, "ID", "ID")
 ChainAccessor(bw.Zone, "ID", "ID")
+
+function bw.GetZone(id)
+	if isnumber(id) then
+		return BaseWars.Bases.Bases[id]
+	else
+		for k,v in pairs(BaseWars.Bases.Bases) do
+			if v:GetName() == id then
+				return v
+			end
+		end
+	end
+end
 
 function bw.Zone:GetBounds()
 	return self.Mins, self.Maxs
@@ -18,8 +40,17 @@ function bw.Zone:Initialize(id, mins, maxs)
 	self.ID = id
 	OrderVectors(mins, maxs)
 	self.Mins, self.Maxs = mins, maxs
+	self.Name = "-unnamed zone-"
 
-	bw.Bases.Zones[id] = self
+	if BaseWars.Bases.Zones[id] then
+		local oldZone = BaseWars.Bases.Zones[id]
+		local base = oldZone:GetBase()
+		if base then
+			base:AddZone(self)
+		end
+	end
+	
+	BaseWars.Bases.Zones[id] = self
 
 	if SERVER then
 		self.Brush = ents.Create("bw_zone_brush")
@@ -32,6 +63,8 @@ function bw.Zone:Initialize(id, mins, maxs)
 		self.Brush:SetZone(self)
 	end
 end
+
+ChainAccessor(bw.Zone, "Name", "Name")
 
 function bw.IsZone(what)
 	return getmetatable(what) == bw.Zone
@@ -48,7 +81,7 @@ function bw.Zone:Remove(baseless)
 end
 
 function bw.Zone:GetBase()
-	return bw.Bases[self.BaseID]
+	return BaseWars.Bases.Bases[self.BaseID]
 end
 
 function bw.Base:Initialize(id)
@@ -60,12 +93,19 @@ function bw.Base:Initialize(id)
 	self.ZonesByID = {}		-- [zone_id] = zone_obj
 
 	self.Players = {}
+	self.Name = "-unnamed base-"
 
-	bw.Bases.Bases[id] = self
+	BaseWars.Bases.Bases[id] = self
+	print("yes adding", id)
 end
 
 ChainAccessor(bw.Base, "Zones", "Zones")
 ChainAccessor(bw.Base, "Name", "Name")
+
+-- SV
+function bw.Base:AddToNW()
+	bw.NW.Bases:Set(self:GetID(), self)
+end
 
 function bw.Base:RemoveZone(zone)
 	table.RemoveByValue(self.Zones, zone)
@@ -73,7 +113,7 @@ function bw.Base:RemoveZone(zone)
 end
 
 function bw.Base:AddZone(zone)
-	if isnumber(zone) then zone = bw.Bases.Zones[zone] end
+	if isnumber(zone) then zone = bw.Zones[zone] end
 	CheckArg(1, zone, bw.IsZone, "bwzone")
 
 	zone.BaseID = self.ID
@@ -89,11 +129,12 @@ function bw.Base:AddZone(zone)
 	self.ZonesByID[zone.ID] = zone
 end
 
+-- CL
 function bw.Base:ReadNetwork()
 	self.ZoneQueue = self.ZoneQueue or {}
 	local zq = self.ZoneQueue
 
-	local name = net.ReadCompressedString(255)
+	local name = net.ReadCompressedString(bw.MaxBaseNameLength)
 	self:SetName(name)
 	
 	local zones = net.ReadUInt(8)
@@ -101,13 +142,13 @@ function bw.Base:ReadNetwork()
 	for z=1, zones do
 		local zID = net.ReadUInt(12)
 
-		if not bw.Bases.Zones[zID] then
+		if not bw.Zones[zID] then
 
 			local eid = ("wait:%d:%d"):format(self:GetID(), zID)
-			bw.Bases.NWZones:On("ReadZones", eid, function(nw, zones)
+			bw.NW.Zones:On("ReadZones", eid, function(nw, zones)
 				if zones[zID] then
 					self:AddZone(zones[zID])
-					bw.Bases.NWZones:RemoveListener("ReadZones", eid)
+					bw.NW.Zones:RemoveListener("ReadZones", eid)
 				end
 			end)
 
@@ -118,7 +159,7 @@ function bw.Base:ReadNetwork()
 end
 
 function bw.IsBase(what)
-	return getmetatable(what) == bw.Bases.Base
+	return getmetatable(what) == bw.Base
 end
 
 if CLIENT then

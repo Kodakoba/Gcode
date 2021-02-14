@@ -6,7 +6,7 @@ function ENT:Initialize()
 end
 
 function ENT:SetZone(zone)
-	CheckArg(1, zone, BaseWars.IsZone, "zone")
+	CheckArg(1, zone, BaseWars.Bases.IsZone, "zone")
 
 	-- note: the zone has no information about its' base at this point
 	self.Zone = zone

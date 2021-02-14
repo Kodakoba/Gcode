@@ -1,16 +1,17 @@
 
 if BaseWars.Bases then
-	BaseWars.Bases.NWBases:Invalidate()
-	BaseWars.Bases.NWZones:Invalidate()
-	BaseWars.Bases.NWAdmin:Invalidate()
+	local b = BaseWars.Bases.NW
+	b.Bases:Invalidate()
+	b.Zones:Invalidate()
+	b.Admin:Invalidate()
 
-	BaseWars.Bases.NWBases = Networkable("bw_bases_bases")
-	BaseWars.Bases.NWZones = Networkable("bw_bases_zones")
-	BaseWars.Bases.NWAdmin = Networkable("bw_bases_admin")
+	b.Bases = Networkable("bw_bases_bases")
+	b.Zones = Networkable("bw_bases_zones")
+	b.Admin = Networkable("bw_bases_admin")
 end
 
 local function init(force)
-	BaseWars.Bases = (not force and BaseWars.Bases) or {
+	BaseWars.Bases = (not force and BaseWars.Bases) or Emitter.Make({
 		-- data populated from base_sql_sv
 		Zones = {},	
 		Bases = {},
@@ -23,10 +24,18 @@ local function init(force)
 
 		Log = Logger("BW-Bases" .. Rlm(), CLIENT and Color(55, 205, 135) or Color(200, 50, 120)),	-- bw18 throwback
 
-		NWBases = Networkable("bw_bases_bases"),
-		NWZones = Networkable("bw_bases_zones"),
-		NWAdmin = Networkable("bw_bases_admin"),
-	}
+		NW = {
+			Bases = Networkable("bw_bases_bases"),
+			Zones = Networkable("bw_bases_zones"),
+			Admin = Networkable("bw_bases_admin"),
+
+			BASE_NEW = 0,
+			BASE_EDIT = 1,
+			BASE_DELETE = 2
+		},
+
+		SQL = {}
+	})
 
 
 	FInc.FromHere("bases/*.lua", _SH, true, FInc.RealmResolver():SetDefault(true))
