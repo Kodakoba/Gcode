@@ -1,8 +1,10 @@
+LibItUp.SetIncluded()
+
 --- === String === ---
 
 function string.Random(len)
 	local rnd = ""
-	for i=1, (len or math.random(6,11)) do
+	for i=1, (len or math.random(6, 11)) do
 		local c = math.random(65, 122)
 		if c >= 91 and c <= 96 then
 			c = c + 6
@@ -348,6 +350,19 @@ function string.Comma2( number )
 
 	return ret
 
+end
+
+function string.MaxFits(str, w, font)
+	if font then surface.SetFont(font) end
+	local curw = 0
+	for i=1, #str do
+		curw = curw + surface.GetTextSize(str:sub(i, i))
+		if curw > w then
+			return str:sub(1, i-1)
+		end
+	end
+
+	return str
 end
 
 function string.TimeParse(time) --this is broken i think
