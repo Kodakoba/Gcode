@@ -40,21 +40,22 @@ local files = 0
 local reincFiles = 0
 
 local includes = {
-	[_CL] = function(name)
+	[_CL] = function(name, noInclude)
 		if SERVER then
 			AddCSLuaFile(name)
-		else
+		elseif not noInclude then
 			include(name)
 		end
 	end,
 
-	[_SH] = function(name)
+	[_SH] = function(name, noInclude)
 		AddCSLuaFile(name)
-		include(name)
+		if not noInclude then include(name) end
 	end,
 
 
-	[_SV] = function(name)
+	[_SV] = function(name, noInclude)
+		if noInclude then return end
 		include(name)
 	end,
 
@@ -107,10 +108,10 @@ function IncludeFolder(name, realm, nofold)	-- This function will be used both b
 
 		-- don't re-include files set via libTbl.SetIncluded
 		if libTbl.Included[incCheck] then
+			includes[realm] (name, true)
 			reincFiles = reincFiles + 1
 			continue
 		end 
-		
 
 		if includes[realm] then
 			includes[realm] (name)
