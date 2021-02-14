@@ -1,3 +1,5 @@
+LibItUp.SetIncluded()
+
 uniq = {}
 
 function uniq.UUID()

@@ -1,3 +1,5 @@
+LibItUp.SetIncluded()
+
 AddCSLuaFile()
 setfenv(1, _G)
 

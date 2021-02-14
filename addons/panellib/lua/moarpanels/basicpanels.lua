@@ -229,24 +229,25 @@ concommand.Add("ColorPicker", function()
 	end
 
 	local cpy = vgui.Create("InvisPanel", f)
+	local txt = vgui.Create("FTextEntry", cpy)
+	local cpybtn = vgui.Create("FButton", cpy)
+
 	cpy:SetTall(40)
 	cpy:Dock(BOTTOM)
 
-	local txt = vgui.Create("FTextEntry", cpy)
 	txt:SetWide(300)
 	txt:Dock(FILL)
 	txt:DockMargin(4, 4, 4, 4)
-	txt:SetValue("AAAAAAAA")
 	txt:SetContentAlignment(5)
 
 	col:On("C", function(_, c)
+		cpybtn:SetColor(c.r, c.g, c.b, c.a or 255)
 		local s = "Color(%d, %d, %d%s)"
 		txt:SetValue(
 			s:format(c.r, c.g, c.b, (c.a and c.a ~= 255 and ", " .. c.a) or "")
 		)
 	end)
 
-	local cpybtn = vgui.Create("FButton", cpy)
 	cpybtn:SetWide(120)
 	cpybtn:Dock(LEFT)
 	cpybtn:DockMargin(8, 4, 4, 4)

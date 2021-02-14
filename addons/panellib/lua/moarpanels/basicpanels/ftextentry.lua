@@ -5,9 +5,8 @@
 local TE = {}
 
 function TE:Init()
-	--self:SetPlaceholderText("Some text")
 	self:SetSize(256, 36)
-	self:SetFont("A24")
+	self:SetFont("OS24")
 	self:SetEditable(true)
 	self:SetKeyboardInputEnabled(true)
 	self:AllowInput(true)
@@ -37,6 +36,10 @@ function TE:Init()
 		self.Focus = false
 	end)
 end
+
+ChainAccessor(TE, "MaxChars", "MaxChars")
+ChainAccessor(TE, "MaxChars", "MaxCharacters")
+ChainAccessor(TE, "MaxChars", "MaxLength")
 
 function TE:OnChange()
 	self:Emit("Change")

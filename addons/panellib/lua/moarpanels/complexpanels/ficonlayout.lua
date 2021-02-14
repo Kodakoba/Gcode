@@ -8,13 +8,13 @@ local FIC = {}
 
 function FIC:Init()
 
-	self.PadX = 4
+	self.PadX = 4 -- distance between the bounds and the insides
 	self.PadY = 8
 
 	self.AutoPad = true
 	self.AutoResize = true
 
-	self.MarginX = 4
+	self.MarginX = 4 -- distance between panels inside
 	self.MarginY = 8
 	self.AutoMargin = false
 

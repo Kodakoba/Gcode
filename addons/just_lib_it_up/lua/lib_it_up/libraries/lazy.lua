@@ -1,3 +1,5 @@
+LibItUp.SetIncluded()
+
 lazy = {}
 lazy.__vars = {}
 
