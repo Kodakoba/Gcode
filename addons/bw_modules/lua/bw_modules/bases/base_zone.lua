@@ -96,7 +96,6 @@ function bw.Base:Initialize(id)
 	self.Name = "-unnamed base-"
 
 	BaseWars.Bases.Bases[id] = self
-	print("yes adding", id)
 end
 
 ChainAccessor(bw.Base, "Zones", "Zones")
