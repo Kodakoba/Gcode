@@ -1,3 +1,4 @@
+LibItUp.SetIncluded()
 setfenv(0, _G)
 
 if not muldim then include("multidim.lua") end
@@ -17,7 +18,7 @@ if not netstack then include("netstack.lua") end
 			If you return false from this, the change won't be written (but will be lost to networking!)
 			Should be primarily used for equality checks
 
-		SV: "WriteChangeValue" : key, value, ...
+		SV: "WriteChangeValue" : key, value, players
 			If you return false from this, the change value won't be written
 			Should be primarily used to encode a value your own way
 
@@ -57,6 +58,7 @@ local idData = _NetworkableData							-- only used clientside
 
 Networkable.Verbose = Networkable.Verbose or (Networkable.Verbose == nil and false)
 Networkable.Warnings = true
+Networkable.BytesWarn = Networkable.BytesWarn or 500
 
 local SZ = {
 	NUMBERID = 16,
@@ -83,7 +85,7 @@ local warnf = function(s, ...)
 	MsgC(Colors.Warning, "[NWble] ", color_white, s:format(...), "\n")
 end
 
-warn = warnf
+local warn = warnf
 
 local fakeNil = newproxy() --lul
 
@@ -285,6 +287,8 @@ function nw:SetNetworkableNumberID(numid)
 	if not self.NetworkableID then error("Networkable must have an ID before setting a number ID!") return end
 
 	numToID[numid] = self.NetworkableID
+	IDToNum[self.NetworkableID] = numid
+
 	self.NumberID = numid
 end
 
@@ -459,17 +463,21 @@ if SERVER then
 		budget = budget or 32 * 1024 * 8
 
 		local numID, nameID = self.NumberID, self.NetworkableID
-		local unaware = false
+		local unaware = full or false
 
-		for _, ply in ipairs(who) do
-			-- if some player didn't know about this NWID, network the ID as well
-			if not _NetworkableAwareness[ply] or not _NetworkableAwareness[ply][nameID] then 
-				unaware = true
-				_NetworkableAwareness:Set(true, ply, nameID)
+		if not full then -- fullupdate ignores nw awareness
+			for _, ply in ipairs(who) do
+				-- if some player didn't know about this NWID, network the ID as well
+				if not _NetworkableAwareness[ply] or not _NetworkableAwareness[ply][nameID] then 
+					unaware = true
+					_NetworkableAwareness:Set(true, ply, nameID)
+				end
 			end
 		end
 
 		local changes = full and self:GetNetworked() or _NetworkableChanges[nameID]
+		if not changes then return end --/shrug
+		
 		local changes_count = 0
 
 		for k,v in pairs(changes) do
@@ -503,7 +511,7 @@ if SERVER then
 				nsCursor = ns:GetCursor() - 1
 
 				for k,v in pairs(changes) do
-					WriteChange(k, v, self)
+					WriteChange(k, v, self, who)
 					changes[k] = nil
 					actuallyWritten = actuallyWritten + 1
 					if ns:BytesWritten() > budget then
@@ -688,6 +696,10 @@ if CLIENT then
 
 	net.Receive("NetworkableSync", function(len)
 		printf("received sync: %d bytes", len/8)
+		if len/8 > Networkable.BytesWarn then
+			warnf("quite long eh? %d bytes update", len/8)
+		end
+
 		local is_new = net.ReadBool()
 		local num_id = net.ReadUInt(SZ.NUMBERID)
 		local nwID
