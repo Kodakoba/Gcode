@@ -1,3 +1,5 @@
+LibItUp.SetIncluded()
+
 --rip your RAM
 setfenv(0, _G)
 

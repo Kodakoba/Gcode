@@ -1,4 +1,4 @@
-
+LibItUp.SetIncluded()
 function Curry(f, ...)
 	local args = {...}
 	local len = #args

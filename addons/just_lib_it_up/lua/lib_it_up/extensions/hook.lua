@@ -1,3 +1,5 @@
+LibItUp.SetIncluded()
+
 __HookID = __HookID or 0
 
 -- difference between hook.Object and hook.Add(event, object) is that

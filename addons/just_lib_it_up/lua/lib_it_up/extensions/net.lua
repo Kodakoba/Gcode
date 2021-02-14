@@ -1,3 +1,5 @@
+LibItUp.SetIncluded()
+
 if SERVER then util.AddNetworkString("test") end -- good for testing
 
 function net.WriteCompressedString(s, maxsz)

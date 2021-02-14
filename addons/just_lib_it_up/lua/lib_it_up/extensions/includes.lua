@@ -1,3 +1,5 @@
+LibItUp.SetIncluded()
+
 FInc = FInc or {} --Fast Inclusion
 
 -- todo: stop using these

@@ -1,3 +1,4 @@
+LibItUp.SetIncluded()
 if not CLIENT then return end
 
 --[[
@@ -150,3 +151,4 @@ end
 
 Icons = Icons or {}
 Icons.Plus = Icon("https://i.imgur.com/dO5eomW.png", "plus.png")
+Icons.Dickbutt = Icon("https://i.imgur.com/z3SWemE.png", "dbutt_icon.png")

@@ -1,3 +1,5 @@
+LibItUp.SetIncluded()
+
 --[[
 	---=== Nyoom!, by HeX ===---
 ]]

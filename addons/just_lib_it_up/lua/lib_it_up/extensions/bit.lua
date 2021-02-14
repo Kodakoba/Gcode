@@ -1,3 +1,4 @@
+LibItUp.SetIncluded()
 function tobit(what)
 	return what and 1 or 0
 end

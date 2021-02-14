@@ -1,3 +1,4 @@
+LibItUp.SetIncluded()
 
 local COLOR = FindMetaTable("Color")
 local MATRIX = FindMetaTable("VMatrix")
@@ -6,6 +7,7 @@ local VECTOR = FindMetaTable("Vector")
 Colors = Colors or {}
 
 Colors.Green = Color(60, 235, 60)
+Colors.Greenish = Color(88, 188, 88)	-- better for buttons
 
 Colors.Red = Color(255, 70, 70)
 Colors.DarkerRed = Color(205, 40, 40)

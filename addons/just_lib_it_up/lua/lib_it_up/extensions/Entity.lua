@@ -1,3 +1,4 @@
+LibItUp.SetIncluded()
 EntitySubscribers = EntitySubscribers or {}
 
 local subs = EntitySubscribers.Players or {} 		-- key = player, value = { {ply, dist_sqr, callback}, {ply, dist_sqr, callback} }

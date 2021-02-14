@@ -1,3 +1,4 @@
+LibItUp.SetIncluded()
 function coroutine.Resumer()
 	local cor = coroutine.running()
 	return function(...) coroutine.resume(cor, ...) end

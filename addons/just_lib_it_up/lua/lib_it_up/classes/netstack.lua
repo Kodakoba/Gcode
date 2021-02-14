@@ -1,4 +1,4 @@
-
+LibItUp.SetIncluded()
 netstack = netstack or Emitter:callable()
 netstack.IsNetStack = true
 
@@ -257,6 +257,6 @@ function netstack:print()
 end
 
 function IsNetStack(what)
-	return what.IsNetStack
+	return what and what.IsNetStack
 end
 IsNetstack = IsNetStack

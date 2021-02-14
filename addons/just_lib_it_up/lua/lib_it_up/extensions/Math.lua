@@ -1,3 +1,5 @@
+LibItUp.SetIncluded()
+
 function math.Percent(num, perc)	--stfu
 	perc = perc / 100
 	return num * perc

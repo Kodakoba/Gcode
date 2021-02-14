@@ -1,3 +1,4 @@
+LibItUp.SetIncluded()
 LibItUp.ShadowTable = LibItUp.ShadowTable or Object:extend()
 local shad = LibItUp.ShadowTable
 

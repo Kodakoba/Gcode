@@ -1,3 +1,5 @@
+LibItUp.SetIncluded()
+
 if not Promise then include('promise.lua') end
 if not LibItUp.Emitter then include('emitter.lua') end
 

@@ -1,3 +1,4 @@
+LibItUp.SetIncluded()
 
 local modules = {}
 

@@ -37,6 +37,7 @@ local _SV = 3
 local loading = true
 
 local files = 0
+local reincFiles = 0
 
 local includes = {
 	[_CL] = function(name)
@@ -65,6 +66,21 @@ local realmExclusive = {
 	["rtpool.lua"] = _CL,
 }
 
+libTbl.Included = {} -- not auto-refresh friendly on purpose; allows reloading everything
+
+function libTbl.SetIncluded(who)
+	if not who then
+		local path = debug.getinfo(2).source
+		who = path:match("/?([^/]+/[^/]+%.lua)$") -- matches highest folder + file
+	end
+
+	if not who then
+		error("Failed to resolve path")
+	end
+
+	libTbl.Included[who] = true
+end
+
 function IncludeFolder(name, realm, nofold)	-- This function will be used both by addons and by LibItUp,
 											-- so we'll only count files when we're loading
 	local file, folder = file.Find( name, "LUA" )
@@ -87,6 +103,13 @@ function IncludeFolder(name, realm, nofold)	-- This function will be used both b
 
 		if loading then files = files + 1 end
 
+		local incCheck = name:match("([^/]+/[^/]+%.lua)$")
+
+		-- don't re-include files set via libTbl.SetIncluded
+		if libTbl.Included[incCheck] then
+			reincFiles = reincFiles + 1
+			continue
+		end 
 		
 
 		if includes[realm] then
@@ -205,14 +228,16 @@ local deps_t2 = SysTime()
 
 -- centering the fancy loaded text
 
-local l1 = "LibItUp loaded!"
-local l2 = "%d lib files included in %.2fs."
-local l3 = "Dependencies included in %.2fs."
+local l1 	= 	"LibItUp loaded!"
+local l2 	= 	"%d lib files included in %.2fs."
+local l25 	= 	"%d file re-inclusions avoided Pog"
+local l3 	= 	"Dependencies included in %.2fs."
 
 l2 = l2:format(files, t2 - t1)
+l25 = l25:format(reincFiles)
 l3 = l3:format(deps_t2 - deps_t1)
 
-local longest_line = math.ceil(math.max(#l1, #l2, #l3) / 2) * 2 + 2
+local longest_line = math.ceil(math.max(#l1, #l2, #l25, #l3) / 2) * 2 + 2
 
 local function calcWidth(tx)
 	local amt1 = math.floor( (longest_line - #tx) / 2 )
@@ -226,6 +251,7 @@ end
 
 local str = calcWidth(l1)
 			.. calcWidth(l2)
+			.. calcWidth(l25)
 			.. calcWidth(l3)
 
 local top = "□" .. ("―"):rep(longest_line) .. "□"

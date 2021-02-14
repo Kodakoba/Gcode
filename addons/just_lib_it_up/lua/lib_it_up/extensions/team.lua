@@ -1,3 +1,5 @@
+LibItUp.SetIncluded()
+
 -- ugh
 
 if SERVER then

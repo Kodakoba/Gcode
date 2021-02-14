@@ -1,3 +1,5 @@
+LibItUp.SetIncluded()
+
 local WEAPON = FindMetaTable("Weapon")
 
 --https://github.com/ZehMatt/Lambda/blob/develop/entities/weapons/weapon_physcannon.lua#L2276-L2308

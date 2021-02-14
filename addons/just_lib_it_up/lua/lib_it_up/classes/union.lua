@@ -1,3 +1,5 @@
+LibItUp.SetIncluded()
+
 --[[
 	A union table:
 		Calling methods on it will call the methods on its' children instead.

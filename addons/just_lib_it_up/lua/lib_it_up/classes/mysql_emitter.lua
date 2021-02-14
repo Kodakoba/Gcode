@@ -1,3 +1,4 @@
+LibItUp.SetIncluded()
 if CLIENT then error("This isn't supposed to be included clientside.") return end --not for you, pumpkin
 
 if not Emitter then include('emitter.lua') end
@@ -8,6 +9,12 @@ local verybad = Color(240, 70, 70)
 local function defaultCatch(q, err, sql)
 	local str = "	Error: %s\n	Query: %s"
 	MsgC(verygood, "[MySQLEmitter ", verybad, "ERROR!", verygood, "]\n", color_white, str:format(err, sql), "\n")
+end
+
+local function defaultSuccess(q, dat)
+	local str = "	Success! Returned %d rows;\n"
+	MsgC(verygood, "[MySQLEmitter]\n", color_white, str:format(#dat), "\n")
+	PrintTable(dat or {}, 1)
 end
 
 MySQLEmitter = MySQLEmitter or Emitter:Callable()
@@ -59,6 +66,16 @@ end
 function MySQLEmitter:Then(f, err)
 	self.Success[#self.Success + 1] = f
 	if err then self.Error[#self.Success] = err end
+
+	return self
+end
+
+function MySQLEmitter:Debug()
+	self:Then(function(_, ...)
+		defaultSuccess(...)
+	end, function(...)
+		defaultCatch(...)
+	end)
 
 	return self
 end

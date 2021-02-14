@@ -1,3 +1,5 @@
+LibItUp.SetIncluded()
+
 --[[
 	=== HeX's Benchmark script ===
 	Examples at the bottom

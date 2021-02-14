@@ -1,3 +1,4 @@
+LibItUp.SetIncluded()
 if not LibItUp.MulDim then include("multidim.lua") end
 
 --[[
@@ -66,7 +67,7 @@ end
 Emitter = Emitter or Class:callable()
 LibItUp.Emitter = Emitter
 
-function Emitter:Initialize(e)
+function Emitter:Initialize()
 	self.__Events = muldim:new()
 	if not self.__instance and self ~= Emitter then setmetatable(self, Emitter) end
 

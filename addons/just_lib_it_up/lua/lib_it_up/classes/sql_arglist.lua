@@ -1,3 +1,4 @@
+LibItUp.SetIncluded()
 LibItUp.SQLArgList = LibItUp.SQLArgList or Object:callable()
 
 local al = LibItUp.SQLArgList

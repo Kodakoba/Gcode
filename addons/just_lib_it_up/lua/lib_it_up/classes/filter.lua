@@ -1,3 +1,4 @@
+LibItUp.SetIncluded()
 Filter = Class:Callable()
 
 -- usage:

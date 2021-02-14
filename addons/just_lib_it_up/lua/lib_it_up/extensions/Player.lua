@@ -1,4 +1,4 @@
-
+LibItUp.SetIncluded()
 
 function ENTITY:Distance(ent)
 	return self:GetPos():Distance(ent:GetPos())

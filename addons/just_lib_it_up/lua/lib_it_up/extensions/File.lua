@@ -1,3 +1,4 @@
+LibItUp.SetIncluded()
 function file.Here(lv)
 	lv = lv or 2
 	local source = debug.getinfo(lv).source
