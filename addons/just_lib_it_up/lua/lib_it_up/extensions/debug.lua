@@ -1,4 +1,5 @@
 LibItUp.SetIncluded()
+if not CheckArg then include("lua.lua") end -- lol
 
 local modules = {}
 
