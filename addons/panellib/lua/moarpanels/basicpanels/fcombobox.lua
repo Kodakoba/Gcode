@@ -95,6 +95,16 @@ end
 
 function FCB:SetChoiceIcon(key, icon)
 	self.ChoiceIcons[key] = (isstring(icon) and Material(icon)) or (IsMaterial(icon) and icon) or nil
+	if self.Menu and self.Menu:IsValid() then
+		for k,v in ipairs(self.Menu.Options) do
+			if v.id == key then
+				v.Icon = self.ChoiceIcons[key]
+				v.IconW = 24
+				v.IconH = 24
+				v.IconPad = 4
+			end
+		end
+	end
 end
 
 FCB.SetChoiceMaterial = FCB.SetChoiceIcon
@@ -130,7 +140,6 @@ function FCB:OpenMenu( pControlOpener )
 			option.IconW = 24
 			option.IconH = 24
 			option.IconPad = 4
-			option.Font = "TW24"
 		end
 
 		if self.OnCreateFuncs[v.id] then

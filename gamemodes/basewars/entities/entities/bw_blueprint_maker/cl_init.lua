@@ -15,7 +15,7 @@ Colors.Blue = Color(60, 140, 200)
 
 local menu
 
-local bpmat = Material("")
+local bpmat = Material("__error")
 
 local prerenders = {}
 
@@ -55,7 +55,7 @@ local BlueprintPaints = {
 	[2] = function(self, w, h)
 		local x, y = self:LocalToScreen(0, 0)
 
-		BSHADOWS.BeginShadow()--x - 12, y - 12, w + 24, w + 24)
+		BSHADOWS.BeginShadow()
 
 		self:ApplyMatrix()
 			surface.SetDrawColor(color_white)
@@ -241,10 +241,6 @@ function ENT:OpenMenu()
 	local dled = draw.GetMaterial("https://i.imgur.com/zhejG17.png", "bp128.png", nil, function(mat)
 		bpmat = mat
 	end)
-
-	if dled then
-		bpmat = dled.mat
-	end
 
 	--[[
 		Tier selection
