@@ -7,9 +7,8 @@ local VECTOR = FindMetaTable("Vector")
 Colors = Colors or {}
 
 Colors.Green = Color(60, 235, 60)
-Colors.Greenish = Color(88, 188, 88)	-- better for buttons
-
 Colors.Red = Color(255, 70, 70)
+
 Colors.DarkerRed = Color(205, 40, 40)
 
 Colors.LighterGray = Color(75, 75, 75)
@@ -38,6 +37,10 @@ Colors.Blue = Color(60, 140, 200)
 
 Colors.Warning = Color(255, 210, 65)
 Colors.Error = Color(230, 75, 75)
+
+-- better for buttons
+Colors.Greenish = Color(88, 188, 88)
+Colors.Reddish = Color(175, 68, 68)
 
 -- THANK U BASED GigsD4X
 -- https://gist.github.com/GigsD4X/8513963

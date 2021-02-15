@@ -23,6 +23,7 @@ MoarPanelsMats.gr = Material("vgui/gradient-r")
 MoarPanelsMats.gl = Material("vgui/gradient-l")
 MoarPanelsMats.g = Material("gui/gradient", "noclamp smooth")
 
+
 local spinner = Material("data/hdl/spinner.png")
 local spinner32 = Material("data/hdl/spinner32.png")
 
@@ -679,11 +680,32 @@ end
 
 draw.Line = draw.RotatedBox
 
-local function GetOrDownload(url, name, flags, cb)	--callback: 1st arg is material, 2nd arg is boolean: was the material loaded from cache?
+local customMats = {}
+
+MoarPanelsMats._ReloadAll = function()
+	for k,v in pairs(customMats) do
+		MoarPanelsMats[k] = nil
+		draw.GetMaterial(v[1], v[2], v[3])
+	end
+end
+
+MoarPanelsMats._YeetAll = function()
+	for k,v in pairs(customMats) do
+		MoarPanelsMats[k] = nil
+	end
+end
+
+-- callback: 1st arg is material, 2nd arg is boolean: was the material loaded from cache?
+								-- (aka it was already loaded; if its a first load it's false)
+local function GetOrDownload(url, name, flags, cb)	
 	if url == "-" or name == "-" then return false end
 	if not name then ErrorNoHalt("GetOrDownload: No name!\n") return end
 
-	local key = name:gsub("%.png$", "")
+	local key = name:gsub("%.%w+$", "") .. (flags or "")
+	if key == "_YeetAll" or key == "_ReloadAll" then
+		ErrorNoHalt("GetOrDownload: Attempt to download a material with a reserved name!\n")
+	end
+
 	local mat = MoarPanelsMats[key]
 
 	name = name:gsub("%(.+%)", "")
@@ -706,9 +728,12 @@ local function GetOrDownload(url, name, flags, cb)	--callback: 1st arg is materi
 			mat.path = "data/hdl/" .. name
 
 			mat.fromurl = url
+			customMats[key] = {url, name, flags}
+			if cb then cb(mat.mat, false) end
 		else 												--mat did not exist on disk: download it then load it in
 
 			mat.downloading = true
+			customMats[key] = {url, name, flags}
 
 			hdl.DownloadFile(url, name or "unnamed.dat", function(fn)
 				mat.downloading = false
