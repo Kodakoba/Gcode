@@ -115,15 +115,13 @@ function TE:Paint(w, h)
 		draw.SimpleText(self:GetPlaceholderText(), self:GetFont(), 4, h/2, self.PHTextColor, 0, 1)
 	end
 
+	self:Emit("PostPaint", w, h)
 end
 
 
 function TE:AllowInput(val)
-	if self.MaxChars and self.MaxChars ~= 0 and #self:GetValue() > self.MaxChars then return true end
-end
-
-function TE:SetMaxChars(num)
-	self.MaxChars = num
+	local mx = self:GetMaxChars()
+	if mx and mx ~= 0 and #self:GetValue() > mx then print("suppressing") return true end
 end
 
 vgui.Register("FTextEntry", TE, "DTextEntry") 

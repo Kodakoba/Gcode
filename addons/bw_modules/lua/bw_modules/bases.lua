@@ -30,8 +30,15 @@ local function init(force)
 			Admin = Networkable("bw_bases_admin"),
 
 			BASE_NEW = 0,
-			BASE_EDIT = 1,
-			BASE_DELETE = 2
+			BASE_DELETE = 1,
+
+			ZONE_NEW = 2,
+			ZONE_EDIT = 3,
+
+			SZ = {
+				base = 12,
+				zone = 12
+			}
 		},
 
 		SQL = {}

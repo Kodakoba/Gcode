@@ -16,9 +16,11 @@ bw.Zone = bw.Zone or Emitter:callable()
 ChainAccessor(bw.Base, "ID", "ID")
 ChainAccessor(bw.Zone, "ID", "ID")
 
-function bw.GetZone(id)
+function bw.GetBase(id)
 	if isnumber(id) then
 		return BaseWars.Bases.Bases[id]
+	elseif bw.IsBase(id) then
+		return id
 	else
 		for k,v in pairs(BaseWars.Bases.Bases) do
 			if v:GetName() == id then
@@ -26,6 +28,10 @@ function bw.GetZone(id)
 			end
 		end
 	end
+end
+
+function bw.GetZone(id)
+	return BaseWars.Bases.Zones[id]
 end
 
 function bw.Zone:GetBounds()
@@ -40,7 +46,7 @@ function bw.Zone:Initialize(id, mins, maxs)
 	self.ID = id
 	OrderVectors(mins, maxs)
 	self.Mins, self.Maxs = mins, maxs
-	self.Name = "-unnamed zone-"
+	self.Name = ""
 
 	if BaseWars.Bases.Zones[id] then
 		local oldZone = BaseWars.Bases.Zones[id]
@@ -82,6 +88,10 @@ end
 
 function bw.Zone:GetBase()
 	return BaseWars.Bases.Bases[self.BaseID]
+end
+
+function bw.Zone:AddToNW()
+	bw.NW.Zones:Set(self:GetID(), self)
 end
 
 function bw.Base:Initialize(id)

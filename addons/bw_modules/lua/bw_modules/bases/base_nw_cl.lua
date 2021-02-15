@@ -6,11 +6,6 @@ local adNW = bw.NW.Admin
 
 local nw = bw.NW
 
-nw.SZ = {
-	base = 12,
-	zone = 12
-}
-
 local bIDSZ = nw.SZ.base
 local zIDSZ = nw.SZ.zone
 
@@ -24,7 +19,7 @@ zNW:On("CustomReadChanges", "DecodeZones", function(self)
 		local mins, maxs = net.ReadVector(), net.ReadVector()
 		local name = net.ReadCompressedString(bw.MaxZoneNameLength)
 		
-		self.Networked.Zones[zID] = bw.Zone(zID, mins, maxs)
+		self.Networked.Zones[zID] = bw.Zone(zID, mins, maxs):SetName(name)
 	end
 
 	zNW:Emit("ReadZones", self.Networked.Zones)
@@ -51,11 +46,36 @@ bNW:On("CustomReadChanges", "DecodeBases", function(self)
 	return true
 end)
 
-function bw:RequestCreation(name)
+function bw.RequestBaseCreation(name)
 	net.Start("BWBases")
 		net.WriteUInt(nw.BASE_NEW, 2)
 		local pr = net.StartPromise()
 		net.WriteString(name)
+	net.SendToServer()
+
+	return pr
+end
+
+function bw.RequestZoneCreation(name, baseID)
+	net.Start("BWBases")
+		net.WriteUInt(nw.ZONE_NEW, 4)
+		local pr = net.StartPromise()
+		net.WriteUInt(baseID, nw.SZ.base)
+		net.WriteString(name)
+	net.SendToServer()
+
+	return pr
+end
+
+function bw.RequestZoneEdit(zone)
+	net.Start("BWBases")
+		net.WriteUInt(nw.ZONE_EDIT, 4)
+		local pr = net.StartPromise()
+		net.WriteUInt(zone:GetID(), nw.SZ.zone)
+		net.WriteString(zone:GetName())
+		local mins, maxs = zone:GetBounds()
+		net.WriteVector(mins)
+		net.WriteVector(maxs)
 	net.SendToServer()
 
 	return pr
