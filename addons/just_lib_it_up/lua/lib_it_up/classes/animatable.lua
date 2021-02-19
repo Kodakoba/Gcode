@@ -371,3 +371,5 @@ function Animatable:LerpColor(key, val, dur, del, ease, forceswap)
 	end
 
 end
+
+_G.GlobalAnimatable = Animatable:new("Global")
