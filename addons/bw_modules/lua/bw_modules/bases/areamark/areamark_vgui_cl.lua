@@ -299,10 +299,10 @@ function TOOL:OpenBaseGUI(base)
 		createZoneTE(zto)
 
 		if zfrom then
-			GlobalAnimatable:LerpColor(zfrom.Color, zfrom.DefaultColor, 0.3, 0, 0.3)
+			GlobalAnimatable:LerpColor(zfrom:GetColor(), zfrom:GetDefaultColor(), 0.3, 0, 0.3)
 		end
 
-		GlobalAnimatable:LerpColor(zto.Color, zto.PreviewColor, 0.3, 0, 0.3)
+		GlobalAnimatable:LerpColor(zto:GetColor(), zto.PreviewColor, 0.3, 0, 0.3)
 	end
 
 	zCanvas:On("FirstSelect", "A", zCanvas.CreateZoneControls)
@@ -316,7 +316,7 @@ function TOOL:OpenBaseGUI(base)
 
 	function zCanvas:OnRemove()
 		for k,v in pairs(all_zones) do
-			GlobalAnimatable:LerpColor(v.Color, v.DefaultColor, 0.3, 0, 0.3)
+			GlobalAnimatable:LerpColor(v:GetColor(), v:GetDefaultColor(), 0.3, 0, 0.3)
 		end
 	end
 end

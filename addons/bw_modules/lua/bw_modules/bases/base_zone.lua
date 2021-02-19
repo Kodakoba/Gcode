@@ -50,7 +50,7 @@ function bw.Zone:SetDefaultColor(col)
 		self.Color = col:Copy()
 	end
 
-	self.DefaultColor = col:Copy()
+	self.DefaultColor:Set(col)
 end
 
 function bw.Zone:Initialize(id, mins, maxs)
