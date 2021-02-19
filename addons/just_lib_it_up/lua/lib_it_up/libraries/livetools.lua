@@ -1,6 +1,6 @@
 setfenv(0, _G)
 
-ToolObj = _G.LiveToolObj or {}
+ToolObj = {}
 
 include( "sandbox/entities/weapons/gmod_tool/ghostentity.lua" )
 include( "sandbox/entities/weapons/gmod_tool/object.lua" )
@@ -9,16 +9,19 @@ if ( CLIENT ) then
 	include( "sandbox/entities/weapons/gmod_tool/stool_cl.lua" )
 end
 
-local ToolObj = ToolObj
+local sboxTool = ToolObj
+local ToolObj = _G.LiveToolObj or Emitter:extend()
+
+for k,v in pairs(sboxTool) do
+	ToolObj[k] = v -- yeet
+end
+
 _G.ToolObj = nil
 _G.LiveToolObj = ToolObj
 
 function ToolObj:Create()
 
-	local o = {}
-
-	setmetatable( o, self )
-	self.__index = self
+	local o = ToolObj:new()
 
 	o.Mode				= nil
 	o.SWEP				= nil
@@ -168,12 +171,29 @@ end
 
 function StartTool(name)
 	if not name then name = fn:match("([%w_]*)%.lua") end
+	if TOOL then
+		errorf("Starting a new TOOL without finishing the previous! (`%s`)", TOOL.Mode)
+	end
 
 	TOOL = LiveToolObj:Create()
 	TOOL.Mode = name
 	TOOL.Category = "Uncategorized"
 
 	return TOOL
+end
+
+function GetTool(name, ply)
+	if IsPlayer(ply) then
+		local tg = ply:GetWeapon("gmod_tool")
+		if tg:IsValid() then
+			return tg.Tool[name]
+		end
+	else
+		toolgun = toolgun or weapons.GetStored("gmod_tool")
+		if toolgun then
+			return toolgun.Tool[name]
+		end
+	end
 end
 
 function EndTool()

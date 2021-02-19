@@ -158,67 +158,6 @@ ValidIPairs = ValidiPairs
 ValidIpairs = ValidiPairs
 Validipairs = ValidiPairs
 
-
---[[
-	Meme
-]]
-
-CommunistTable = {}
-CommunistMeta = {}
-
-function CommunistMeta.__newindex(self, k, v)
-	if k == "__Children" then return rawset(self, k, v) end
-
-	for chk,ch in pairs(self.__Children) do
-		ch[k] = v
-	end
-end
-
-function CommunistMeta.__index(self, k)
-
-	if k == "__Children" then return rawget(self, "__Children") end
-	if CommunistTable[k] then return CommunistTable[k] end 	--cancer
-
-	local ret = {}
-
-	for chk,ch in pairs(self.__Children) do
-		ret[chk] = ch[k]
-	end
-
-	return (#ret > 0 and ret) or nil
-end
-
-function CommunistTable:AddChild(t, id)
-	self.__Children[id or #self.__Children + 1] = t
-	return id or #self.__Children
-end
-
-
-
-function CommunistTable:new()
-	local t = {}
-	local ch = {}
-	t.__Children = ch
-
-	setmetatable(t, CommunistMeta)
-
-	return t
-end
-CommunistTable.__call = CommunistTable.new
-setmetatable(CommunistTable, CommunistTable)
-
-
-function ChainAccessor(t, key, func)
-	t["Get" .. func] = function(self)
-		return self[key]
-	end
-
-	t["Set" .. func] = function(self, val)
-		self[key] = val
-		return self
-	end
-end
-
 function table.InsertVararg(t, ...)
 	local len = select('#', ...)
 	local tlen = #t
@@ -227,6 +166,16 @@ function table.InsertVararg(t, ...)
 		t[tlen + i] = select(i, ...)
 	end
 
+end
+
+function table.ForEachRecursive(t, f)
+	for k,v in pairs(t) do
+		if istable(v) then
+			table.ForEachRecursive(v, f)
+		else
+			f(t, k, v)
+		end
+	end
 end
 
 if not table.Shuffle then

@@ -1,4 +1,8 @@
 LibItUp.SetIncluded()
+
+TrueFunc = function() return true end
+FalseFunc = function() return false end
+
 function Curry(f, ...)
 	local args = {...}
 	local len = #args
