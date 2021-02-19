@@ -10,6 +10,7 @@ BlankFunc = function() end
 BLANKFUNC = BlankFunc
 
 Class = {}
+Class.__isobject = true
 
 local Class = Class
 local rawget = rawget
@@ -124,6 +125,7 @@ function Class:extend(...)
 	new.__parent = old
 	new.__super = old
 	new.__instance = new
+	new.__isobject = true
 
 	local curobj
 
@@ -225,3 +227,15 @@ Class.Extend = Class.extend
 Class.Meta.new = Class.new
 
 Object = Class
+
+
+function ChainAccessor(t, key, func)
+	t["Get" .. func] = function(self)
+		return self[key]
+	end
+
+	t["Set" .. func] = function(self, val)
+		self[key] = val
+		return self
+	end
+end

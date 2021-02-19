@@ -126,7 +126,6 @@ local encoders = {
 
 	["table"] = {3, function(t, _, key)
 		--if t.Networkable_Encoder then return t:Networkable_Encoder() end
-
 		local vonned = _vONCache[key] or von.serialize(t)
 		_vONCache[key] = nil
 
@@ -221,7 +220,7 @@ function nw:Initialize(id, ...)
 	self.__Aware = muldim:new()
 
 	self:On("ShouldEncode", "TablesvONCheck", function(self, k, v)
-		if istable(v) then
+		if istable(v) and not v.__isobject then
 			local vonData = von.serialize(v)
 			if self.__LastSerialized[k] == vonData then return end
 			_vONCache[k] = vonData
@@ -296,6 +295,7 @@ function nw:IsValid()
 	return self.Valid ~= false
 end
 
+
 function nw:Set(k, v)
 	if self.Valid == false then
 		error("Attempted to set a networked var on an invalid Networkable!", 2)
@@ -321,10 +321,20 @@ function nw:Set(k, v)
 
 	if v == nil then v = fakeNil end --lul
 	if self.Networked[k] == v and not istable(v) then --[[adios]] return end
+	-- setting objects will proc a networkablechange regardless of whether or not they're exact von-wise
+	-- as we have no way of tracking it for custom objects
+	-- they aren't intended to be serialized and are expected to be encoded in an emit ( and via an :Encode method when i get around to doing it :) )
 
-	if istable(v) then --we have to check if tables are exact
+	-- for tables, however, we can check if the data is exact
+	if istable(v) and not v.__isobject then 
 		local last_von = self.__LastSerialized[v]
-		local new_von = von.serialize(v)
+
+		local err, new_von = pcall(von.serialize, v)
+
+		if err then
+			errorf("%s: Attempted to serialize a non-vON'able table! %s = %s\n%s", self, k, v, new_von)
+			return
+		end
 
 		if last_von == new_von then --[[ adios ]] return end
 
