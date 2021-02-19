@@ -10,32 +10,47 @@ bw.MinBaseNameLength = 2
 bw.MaxZoneNameLength = 120
 -- zones don't have a minimum name requirement; they can be unnamed
 
-bw.Base = bw.Base or Emitter:callable()
-bw.Zone = bw.Zone or Emitter:callable()
-
 ChainAccessor(bw.Base, "ID", "ID")
 ChainAccessor(bw.Zone, "ID", "ID")
 
-function bw.GetBase(id)
-	if isnumber(id) then
-		return BaseWars.Bases.Bases[id]
-	elseif bw.IsBase(id) then
-		return id
-	else
-		for k,v in pairs(BaseWars.Bases.Bases) do
-			if v:GetName() == id then
-				return v
-			end
-		end
-	end
-end
 
-function bw.GetZone(id)
-	return BaseWars.Bases.Zones[id]
-end
+--[[-------------------------------------------------------------------------
+	Zone object
+---------------------------------------------------------------------------]]
 
 function bw.Zone:GetBounds()
-	return self.Mins, self.Maxs
+	return self._Mins, self._Maxs
+end
+
+function bw.Zone:GetCenter()
+	return self._Center
+end
+
+function bw.Zone:SetBounds(mins, maxs)
+	CheckArg(1, mins, isvector, "zone mins")
+	CheckArg(2, maxs, isvector, "zone maxs")
+
+	local prevMin, prevMax = self._Mins, self._Maxs
+	self._Mins, self._Maxs = mins, maxs
+
+	self._Center = (mins + maxs)
+	self._Center:Mul(0.5)
+
+	self:Emit("BoundsChanged", prevMin, prevMax)
+	return self
+end
+
+bw.Zone.DefaultColor = Color(91, 151, 147)
+bw.Zone.PreviewColor = Color(243, 255, 78)
+
+ChainAccessor(bw.Zone, "DefaultColor", "DefaultColor")
+
+function bw.Zone:SetDefaultColor(col)
+	if self.Color == self.DefaultColor then
+		self.Color = col:Copy()
+	end
+
+	self.DefaultColor = col:Copy()
 end
 
 function bw.Zone:Initialize(id, mins, maxs)
@@ -43,10 +58,15 @@ function bw.Zone:Initialize(id, mins, maxs)
 	CheckArg(2, mins, isvector, "zone mins")
 	CheckArg(3, maxs, isvector, "zone maxs")
 
-	self.ID = id
+	self:SetID(id)
+
 	OrderVectors(mins, maxs)
-	self.Mins, self.Maxs = mins, maxs
-	self.Name = ""
+	self:SetBounds(mins, maxs)
+
+	self._ShouldPaint = false
+	self._Name = ""
+	self._Alpha = 0
+	self:SetColor( self.DefaultColor:Copy() )
 
 	if BaseWars.Bases.Zones[id] then
 		local oldZone = BaseWars.Bases.Zones[id]
@@ -70,12 +90,6 @@ function bw.Zone:Initialize(id, mins, maxs)
 	end
 end
 
-ChainAccessor(bw.Zone, "Name", "Name")
-
-function bw.IsZone(what)
-	return getmetatable(what) == bw.Zone
-end
-
 function bw.Zone:Remove(baseless)
 	if SERVER then
 		self.Brush:Remove()
@@ -84,15 +98,24 @@ function bw.Zone:Remove(baseless)
 	if not baseless then
 		self:GetBase():RemoveZone(self)
 	end
+
+	BaseWars.Bases.Zones[self:GetID()] = nil
+	bw.ZonePaints[self:GetID()] = nil
 end
+
+ChainAccessor(bw.Zone, "_Name", "Name")
+ChainAccessor(bw.Zone, "_Color", "Color")
+ChainAccessor(bw.Zone, "_Alpha", "Alpha")
 
 function bw.Zone:GetBase()
 	return BaseWars.Bases.Bases[self.BaseID]
 end
 
-function bw.Zone:AddToNW()
-	bw.NW.Zones:Set(self:GetID(), self)
-end
+
+
+--[[-------------------------------------------------------------------------
+	Base object
+---------------------------------------------------------------------------]]
 
 function bw.Base:Initialize(id)
 	CheckArg(1, id, isnumber, "base ID")
@@ -108,17 +131,18 @@ function bw.Base:Initialize(id)
 	BaseWars.Bases.Bases[id] = self
 end
 
+function bw.Base:Remove()
+	BaseWars.Bases.Bases[self:GetID()] = nil
+	bw.NW.Bases:Set(self:GetID(), nil)
+end
+
 ChainAccessor(bw.Base, "Zones", "Zones")
 ChainAccessor(bw.Base, "Name", "Name")
 
--- SV
-function bw.Base:AddToNW()
-	bw.NW.Bases:Set(self:GetID(), self)
-end
 
 function bw.Base:RemoveZone(zone)
 	table.RemoveByValue(self.Zones, zone)
-	self.ZonesByID[zone.ID] = nil
+	self.ZonesByID[zone:GetID()] = nil
 end
 
 function bw.Base:AddZone(zone)
@@ -138,11 +162,10 @@ function bw.Base:AddZone(zone)
 	self.ZonesByID[zone.ID] = zone
 end
 
--- CL
-function bw.Base:ReadNetwork()
-	self.ZoneQueue = self.ZoneQueue or {}
-	local zq = self.ZoneQueue
 
+-- CL only
+
+function bw.Base:ReadNetwork()
 	local name = net.ReadCompressedString(bw.MaxBaseNameLength)
 	self:SetName(name)
 	
@@ -167,9 +190,39 @@ function bw.Base:ReadNetwork()
 	end
 end
 
+--[[-------------------------------------------------------------------------
+	Utils
+---------------------------------------------------------------------------]]
+
+function bw.GetBase(id)
+	if isnumber(id) then
+		return BaseWars.Bases.Bases[id]
+	elseif bw.IsBase(id) then
+		return id
+	else
+		for k,v in pairs(BaseWars.Bases.Bases) do
+			if v:GetName() == id then
+				return v
+			end
+		end
+	end
+end
+
+function bw.GetZone(id)
+	return BaseWars.Bases.Zones[id]
+end
+
 function bw.IsBase(what)
 	return getmetatable(what) == bw.Base
 end
+
+function bw.IsZone(what)
+	return getmetatable(what) == bw.Zone
+end
+
+
+
+
 
 if CLIENT then
 	-- server includes it in base_sql_sv.lua

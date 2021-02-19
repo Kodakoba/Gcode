@@ -3,11 +3,11 @@ if BaseWars.Bases then
 	local b = BaseWars.Bases.NW
 	b.Bases:Invalidate()
 	b.Zones:Invalidate()
-	b.Admin:Invalidate()
+	--b.Admin:Invalidate()
 
 	b.Bases = Networkable("bw_bases_bases")
 	b.Zones = Networkable("bw_bases_zones")
-	b.Admin = Networkable("bw_bases_admin")
+	--b.Admin = Networkable("bw_bases_admin")
 end
 
 local function init(force)
@@ -16,9 +16,9 @@ local function init(force)
 		Zones = {},	
 		Bases = {},
 
-		-- objects from base_zone 
-		Zone = nil,
-		Base = nil,
+		-- objects from base_zone
+		Zone = Emitter:callable(),
+		Base = Emitter:callable(),
 
 		MarkTool = nil, -- gets filled in areamark/ folder
 
@@ -27,7 +27,7 @@ local function init(force)
 		NW = {
 			Bases = Networkable("bw_bases_bases"),
 			Zones = Networkable("bw_bases_zones"),
-			Admin = Networkable("bw_bases_admin"),
+			-- Admin = Networkable("bw_bases_admin"),
 
 			BASE_NEW = 0,
 			BASE_DELETE = 1,
@@ -41,7 +41,8 @@ local function init(force)
 			}
 		},
 
-		SQL = {}
+		SQL = {},			-- SV
+		ZonePaints = {},	-- CL
 	})
 
 

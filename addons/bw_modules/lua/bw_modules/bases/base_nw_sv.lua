@@ -5,7 +5,6 @@ local nw = bw.NW
 
 local zNW = bw.NW.Zones
 local bNW = bw.NW.Bases
-local adNW = bw.NW.Admin
 
 local bIDSZ = 12
 local zIDSZ = 12
@@ -16,8 +15,9 @@ zNW:On("CustomWriteChanges", "EncodeZones", function(self, changes, ...)
 	net.WriteUInt(table.Count(changes), 16)
 	for zID, zone in pairs(changes) do
 		net.WriteUInt(zID, 12)
-		net.WriteVector(zone.Mins)
-		net.WriteVector(zone.Maxs)
+		local mins, maxs = zone:GetBounds()
+		net.WriteVector(mins)
+		net.WriteVector(maxs)
 		net.WriteCompressedString(zone:GetName(), bw.MaxZoneNameLength)
 	end
 
@@ -40,9 +40,17 @@ bNW:On("CustomWriteChanges", "EncodeZones", function(self, changes, ...)
 	return true
 end)
 
-adNW.Filter = function(self, ply)
-	return bw.CanModify(ply)
+
+-- adding to NW will proc a networkable update automatically
+
+function bw.Base:AddToNW()
+	bw.NW.Bases:Set(self:GetID(), self)
 end
+
+function bw.Zone:AddToNW()
+	bw.NW.Zones:Set(self:GetID(), self)
+end
+
 
 local function createNewBase(ply)
 	local pr = net.ReplyPromise(ply)
@@ -116,14 +124,22 @@ local function editZone(ply)
 	local name = net.ReadString()
 	local mins, maxs = net.ReadVector(), net.ReadVector()
 
-	if true then
-		ns:WriteCompressedString("not implemented (yet)")
+	local zone = bw.GetZone(zoneID)
+	if not zone then
+		ns:WriteCompressedString("didn't find zone with ID " .. zoneID)
 		pr:ReplySend("BWBases", false, ns)
 		return
 	end
 
-	--[[local a, err = bw.SQL.CreateBase(name)
-	
+	print("received:", zoneID, name, mins, maxs)
+	--[[if true then
+		ns:WriteCompressedString("not implemented (yet)")
+		pr:ReplySend("BWBases", false, ns)
+		return
+	end]]
+
+	local a, err = bw.SQL.EditZone(zoneID, name, mins, maxs)
+	print(a, err)
 	if err then
 		ns:WriteCompressedString(err)
 		pr:ReplySend("BWBases", false, ns)
@@ -131,12 +147,11 @@ local function editZone(ply)
 	end
 
 	a:Then(function(_, q)
-		ns:WriteUInt(q:lastInsert(), bIDSZ)
 		pr:ReplySend("BWBases", true, ns)
 	end, function(_, why)
 		ns:WriteCompressedString("query failed:\n" .. why)
 		pr:ReplySend("BWBases", false, ns)
-	end)]]
+	end)
 end
 
 net.Receive("BWBases", function(l, ply)

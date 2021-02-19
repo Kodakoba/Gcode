@@ -197,4 +197,51 @@ function bw.SQL.CreateZone(name, baseid, min, max)
 	return em:Exec()
 end
 
+local edit_zone_q
+
+mysqloo.OnConnect(function()
+	local fuck = "UPDATE master.bw_baseareas SET %s, zone_name = ? WHERE (`zone_id` = ?);"
+	fuck = fuck:format(
+		-- SET `name` = ?, `name` = ?
+		table.concat(allArgNames, " = ?, ") .. " = ?" 
+	)
+	-- UPDATE master.bw_baseareas SET zone_name = ?, zone_min_x = ?, zone_min_y = ?, zone_min_z = ?, zone_max_x = ?, zone_max_y = ?, zone_max_z = ? WHERE (`zone_id` = ?);
+	edit_zone_q = mysqloo:GetDatabase():prepare(fuck)
+end)
+
+
+function bw.SQL.EditZone(id, name, min, max)
+	local em = MySQLEmitter(edit_zone_q)
+
+	print('editing', id, name, min, max)
+
+	if #name > bw.MaxZoneNameLength then
+		return em, ("name is too long (%d, max is %d)"):format(#name, bw.MaxZoneNameLength)
+	end
+
+	local zone = bw.GetZone(id)
+	if not zone then
+		return em, ("no zone found with id %s"):format(id)
+	end
+
+	for i=1, 3 do
+		edit_zone_q:setNumber(i, min[i])
+	end
+
+	for i=4, 6 do
+		edit_zone_q:setNumber(i, max[i-3])
+	end
+
+	edit_zone_q:setString(7, name)
+	edit_zone_q:setNumber(8, id)
+
+	em:On("Success", function(qobj)
+		zone:SetName(name)
+		zone:SetBounds(min, max)
+		zone:AddToNW()
+	end)
+	print("executin!")
+	return em:Exec()
+end
+
 include("areamark/_init.lua")

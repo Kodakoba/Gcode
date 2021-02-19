@@ -5,9 +5,7 @@ function ENT:Initialize()
 	self:SetSolid(SOLID_BBOX)
 end
 
-function ENT:SetZone(zone)
-	CheckArg(1, zone, BaseWars.Bases.IsZone, "zone")
-
+function ENT:UpdateZone(zone)
 	-- note: the zone has no information about its' base at this point
 	self.Zone = zone
 
@@ -15,8 +13,20 @@ function ENT:SetZone(zone)
 
 	-- whether this is necessary is questionable
 	local mins, maxs = zone:GetBounds()
-	local mid = (mins + maxs) / 2
+
+	local mid = (mins + maxs)
+	mid:Div(2)
+
 	self:SetPos(mid)
+end
+
+function ENT:SetZone(zone)
+	CheckArg(1, zone, BaseWars.Bases.IsZone, "zone")
+	self:UpdateZone(zone)
+	
+	zone:On("BoundsChanged", self, function()
+		self:UpdateZone(zone)
+	end)
 end
 
 function ENT:GetZone()

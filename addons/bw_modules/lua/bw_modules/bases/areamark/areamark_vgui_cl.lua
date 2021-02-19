@@ -20,6 +20,7 @@ function TOOL:OpenBaseGUI(base)
 		bw.BaseGUI:Remove()
 	end
 
+	local tool = self
 	local pnl = self:CreateTemplateGUI()
 	local scale = pnl:GetWide() / 544
 
@@ -51,19 +52,32 @@ function TOOL:OpenBaseGUI(base)
 	surface.SetFont(font)
 	local dotw = surface.GetTextSize("...")
 
-	for k,v in ipairs(base:GetZones()) do
+	local all_zones = {}
+
+	local function addZone(z)
+		all_zones[#all_zones + 1] = z
+
 		local zb = vgui.Create("FButton", zscr)
 		zb:SetSize(128, 48)
 		zb.Font = font
 
-		local fits = string.MaxFits(v:GetName(), zb:GetWide() - 4, zb.Font)
-		if fits ~= v:GetName() then
-			fits = string.MaxFits(v:GetName(), zb:GetWide() - 8 - dotw, zb.Font) .. "..."
+		local fits = string.MaxFits(z:GetName(), zb:GetWide() - 4, zb.Font)
+		if fits ~= z:GetName() then
+			fits = string.MaxFits(z:GetName(), zb:GetWide() - 8 - dotw, zb.Font) .. "..."
 		end
 		zb.Label = fits
 
-		zb.Zone = v
-		zb.ZoneCopy = v -- !! TODO : make this an actual copy and only modify it !!
+		zb.Zone = z
+		
+
+		local ms, mx = z:GetBounds()
+
+		zb.ZoneCopy = {	-- only stores data to send to the server, not any methods or anything like that
+			Name = z:GetName(),
+			BaseID = base:GetID(),
+			Mins = ms,
+			Maxs = mx,
+		} 
 
 		zp:Add(zb)
 
@@ -98,6 +112,10 @@ function TOOL:OpenBaseGUI(base)
 		end
 	end
 
+	for k,v in ipairs(base:GetZones()) do
+		addZone(v)
+	end
+
 	zCanvas:InvalidateLayout(true)
 
 	local zoneTE_Y = 0
@@ -130,6 +148,42 @@ function TOOL:OpenBaseGUI(base)
 		yeetZone:SetDisabled(true)
 		yeetZone:SetIcon(Icons.TrashCan:Copy():SetSize(btnHeight - 12, btnHeight - 12))
 
+	local edit = vgui.Create("FButton", zCanvas)
+		edit.X = addZone.X + addZone:GetWide() + 8
+		edit.Y = addZone.Y
+		edit:SetColor(Colors.Golden:Copy():ModHSV(0, 0, -0.1))
+		edit:SetSize(addZone:GetSize())
+		edit:SetIcon(Icons.Edit:Copy():SetSize(btnHeight - 12, btnHeight - 12))
+		edit:SetDisabled(true)
+
+	function edit:DoClick()
+		tool:SetZone(selectedZone.Zone)
+		local pnl = bw.BaseGUI
+
+		local x, y = pnl:GetPos()
+
+		bw.BaseGUI:AlphaTo(125, 0.2, 0)
+		bw.BaseGUI:MoveTo(bw.BaseGUI.X, ScrH() - bw.BaseGUI:GetTall() * 0.2, 0.3, 0, 0.3)
+		bw.BaseGUI:SetMouseInputEnabled(false)
+		bw.BaseGUI:SetKeyboardInputEnabled(false)
+		bw.BaseGUI:SetDraggable(false)
+
+		tool:On("ZoneConfirmed", "RepopBaseGUI", function(self, zone, mins, maxs)
+			if not IsValid(bw.BaseGUI) then return end
+			print(zone, mins, maxs)
+			local zc = selectedZone.ZoneCopy
+
+			zc.Mins = mins
+			zc.Maxs = maxs
+
+			bw.BaseGUI:MoveTo(bw.BaseGUI.X, y, 0.3, 0, 0.3)
+			bw.BaseGUI:AlphaTo(255, 0.2, 0)
+			bw.BaseGUI:SetMouseInputEnabled(true)
+			bw.BaseGUI:SetKeyboardInputEnabled(true)
+			bw.BaseGUI:SetDraggable(true)
+		end)
+	end
+
 	local save = vgui.Create("FButton", zCanvas)
 		save.X = yeetZone.X + yeetZone:GetWide() + 8
 		save.Y = yeetZone.Y
@@ -140,17 +194,44 @@ function TOOL:OpenBaseGUI(base)
 
 	function save:DoClick()
 		local zname = zoneTE:GetValue()
-		local zone = selectedZone.ZoneCopy
-		zone:SetName(zname)
-		local pr = bw.RequestZoneEdit(zone)
+
+		local dat = selectedZone.ZoneCopy
+		local zone = selectedZone.Zone
+
+		local mins, maxs = dat.Mins, dat.Maxs
+		OrderVectors(mins, maxs)
+		local pr = bw.RequestZoneEdit(zone:GetID(), zname, mins, maxs)
+
 		print("promise", pr)
 		pr:Then(function()
 			print("success")
+			zone:SetName(zname)
+			zone:SetBounds(mins, maxs)
 		end, function()
 			print("bad!")
 			local why = net.ReadCompressedString()
 			pnl:AddError(why)
 		end)
+	end
+
+	local function disable(b)
+		save:SetDisabled(b)
+	end
+
+	function save:Think()
+		local dis = false
+
+		if not zoneTE or not selectedZone then disable(true) return end
+
+		local cur = selectedZone.Zone
+
+		if zoneTE:GetValue() ~= cur:GetName() then disable(false) return end
+
+		local mins, maxs = cur:GetBounds()
+		local copy = selectedZone.ZoneCopy
+		if mins ~= copy.Mins and maxs ~= copy.Maxs then disable(false) return end
+
+		self:SetDisabled(false)
 	end
 
 	local function removeZoneTE()
@@ -198,9 +279,11 @@ function TOOL:OpenBaseGUI(base)
 
 	function zCanvas:CreateZoneControls(zb)
 		yeetZone:SetDisabled(false)
+		save:SetDisabled(false)
+		edit:SetDisabled(false)
 		createZoneTE(zb.Zone)
 
-		save:SetDisabled(false)
+		
 	end
 
 	function zCanvas:RemoveZoneControls(zb)
@@ -214,11 +297,28 @@ function TOOL:OpenBaseGUI(base)
 		local zfrom = from and from.Zone
 
 		createZoneTE(zto)
+
+		if zfrom then
+			GlobalAnimatable:LerpColor(zfrom.Color, zfrom.DefaultColor, 0.3, 0, 0.3)
+		end
+
+		GlobalAnimatable:LerpColor(zto.Color, zto.PreviewColor, 0.3, 0, 0.3)
 	end
 
 	zCanvas:On("FirstSelect", "A", zCanvas.CreateZoneControls)
 	zCanvas:On("FullDeselect", "AAA", zCanvas.RemoveZoneControls)
 	zCanvas:On("SelectZone", "AAAAA", zCanvas.SwitchZone)
+
+	for k,v in pairs(all_zones) do
+		v:On("ShouldPaint", zCanvas, TrueFunc)
+		v:UpdatePainted()
+	end
+
+	function zCanvas:OnRemove()
+		for k,v in pairs(all_zones) do
+			GlobalAnimatable:LerpColor(v.Color, v.DefaultColor, 0.3, 0, 0.3)
+		end
+	end
 end
 
 function TOOL:OpenNewBaseGUI()

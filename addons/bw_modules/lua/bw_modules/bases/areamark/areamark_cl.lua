@@ -26,6 +26,14 @@ local state_descs = {
 	[STATE_BASESELECT] = "Hold R and either pick a base, or create one",
 	[STATE_FIRST] = "LMB to select",
 	[STATE_SECOND] = "LMB to select\nRMB to rewind",
+	[STATE_CONFIRM] = "Confirm by saving\nthe zone in R\n(Press LMB to open)",
+}
+
+TOOL.States = {
+	["STATE_BASESELECT"] = STATE_BASESELECT,
+	["STATE_FIRST"] = STATE_FIRST,
+	["STATE_SECOND"] = STATE_SECOND,
+	["STATE_CONFIRM"] = STATE_CONFIRM,
 }
 
 TOOL.State = STATE_BASESELECT
@@ -36,15 +44,21 @@ TOOL.CurrentArea = {}
 TOOL.Information = {}
 TOOL.Name = "[sadmin] AreaMark"
 TOOL.Category = "Admin Tools"
-TOOL.CurrentBase = nil
+TOOL.CurrentZone = nil
 TOOL.IsBWAreaMark = true
+
+function TOOL:SetZone(z)
+	self:ChangeState(STATE_FIRST)
+	self.CurrentZone = z
+	table.Empty(self.CurrentArea)
+end
 
 function TOOL:DrawHUD()
 	return false
 end
 
 function TOOL:LeftClick(tr)
-	if not self.CurrentBase then return end
+	if not self.CurrentZone then return end
 
 	local ucmd = LocalPlayer():GetCurrentCommand():CommandNumber()
 	if not IsFirstTimePredicted() then
@@ -55,17 +69,23 @@ function TOOL:LeftClick(tr)
 	if self.State < STATE_CONFIRM then
 		self.State = self.State + 1
 		self.CurrentArea[self.State] = tr.HitPos
-		print("added into", self.State)
+
 		if self.State == STATE_CONFIRM then
 			--OrderVectors(self.CurrentArea[1], self.CurrentArea[2])
 			self.ConfirmedStateUCMD = ucmd
 		end
 
 		return true
+	else
+		self:Emit("ZoneConfirmed", self.CurrentZone, unpack(self.CurrentArea))
+		self.CurrentArea = {}
+		self:ChangeState(STATE_BASESELECT)
 	end
 
 	return false -- first pred
 end
+
+
 
 function TOOL:RightClick(tr)
 	if not IsFirstTimePredicted() then return end
@@ -81,6 +101,10 @@ function TOOL:RightClick(tr)
 	end
 end
 
+function TOOL:GetBounds()
+	return unpack(self.CurrentArea)
+end
+
 function TOOL:GetCurrentStateText()
 	local ret = state_titles[self.State]
 	return (ret or "?????"), not not ret
@@ -93,7 +117,9 @@ end
 
 function TOOL:ChangeState(to)
 	self.State = to
-	table.Empty(self._StateCache)
+	if self._StateCache then
+		table.Empty(self._StateCache)
+	end
 end
 
 local descFont = "BS32"
@@ -145,7 +171,7 @@ function TOOL:GetInstance()
 	local wep = tool and tool:GetWeapon()
 	if not tool or not tool.IsBWAreaMark or lp:GetActiveWeapon() ~= wep then return false end
 
-	return self
+	return tool
 end
 
 local appearTime, appearEase = 0.4, 0.2
@@ -216,6 +242,7 @@ function TOOL:ShowBaseSelection(cur)
 
 			function fb:DoClick()
 				tool:OpenBaseGUI(base)
+				print("Opening base gui on", tool)
 			end
 		end
 
@@ -299,7 +326,7 @@ hook.Add("PostDrawTranslucentRenderables", "BW_AreaMarkTool", function(d, s)
 	local col = color_white
 
 	if not p2 then
-		p2 = lp:GetEyeTrace().HitPos
+		p2 = LocalPlayer():GetEyeTrace().HitPos
 		col = Colors.Golden
 		if not p2 then return end -- ??
 	end
@@ -332,3 +359,5 @@ bnd:On("Deactivate", 1, function(self, ply)
 	if not curTool[2] then return end
 	curTool[2]:HideBaseSelection(curTool)
 end)
+
+BaseWars.Bases.MarkTool:Finish()
