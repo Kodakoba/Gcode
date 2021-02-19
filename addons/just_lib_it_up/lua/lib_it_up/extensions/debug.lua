@@ -3,6 +3,12 @@ if not CheckArg then include("lua.lua") end -- lol
 
 local modules = {}
 
+local logger = Object:extend()
+
+ChainAccessor(logger, "_ShouldNewline", "ShouldNewline")
+ChainAccessor(logger, "_Name", "Name")
+ChainAccessor(logger, "_Color", "Color")
+
 function LogModule(name, col)
 	name = name or "[Unnamed]"
 
@@ -11,16 +17,22 @@ function LogModule(name, col)
 		return modules[name]
 	end
 
-	modules[name] = {name = name, col = col or Colors.Sky}
-	return modules[name]
+	local ret = logger:new()
+		ret:SetName(name)
+		ret:SetColor(col or Color(255, 0, 0))
+		ret:SetShouldNewline(true)
+
+	modules[name] = ret
+	return ret
 end
 
 
 -- you may use '[col = 255, 0, 0]' (ambigous spaces) to color up the logs
-function Log(mod, str, ...)
-	mod = mod or {name = "No module! " .. debug.traceback(), col = Color(255, 255, 255)}
-	local n = mod.name or "???"
-	local col = mod.col or Color(255, 0, 0)
+local function Log(mod, str, ...)
+	if not mod then error("Can't log without a logger object.") return end
+
+	local n = mod:GetName()
+	local col = mod:GetColor()
 
 	str = isstring(str) and str:format(...) or table.concat({...}, "	")
 
@@ -58,21 +70,18 @@ function Log(mod, str, ...)
 	end
 
 	tbl[#tbl + 1] = color_white:Copy()
-	tbl[#tbl + 1] = "\n"
+
+	if mod:GetShouldNewline() then
+		tbl[#tbl + 1] = "\n"
+	end
 
 
 	MsgC(unpack(tbl))
-
 end
 
--- create a logger function with your log module
-function Logger(name, col)
-	local mod = LogModule(name, col)
+logger.__call = Log
 
-	return function(...)
-		return Log(mod, ...)
-	end
-end
+Logger = LogModule
 
 function Realm(lower, side)
 	local s = (CLIENT and "Client" or "Server") .. (side and "side" or "")
@@ -86,6 +95,14 @@ function Rlm(lower)
 	else
 		return CLIENT and "CL" or "SV"
 	end
+end
+
+local svcol = Color( 137, 222, 255 )
+local clcol = Color( 255, 222, 102 )
+local realmcol = SERVER and svcol or clcol
+
+function RealmColor()
+	return realmcol
 end
 
 function clPrint(...)
