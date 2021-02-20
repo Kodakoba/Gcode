@@ -55,3 +55,7 @@ function CheckArg(num, arg, check, expected_type)
 		end
 	end
 end
+
+function util.gary()
+	error("gary")
+end
