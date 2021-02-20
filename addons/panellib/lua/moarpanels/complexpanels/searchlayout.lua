@@ -29,9 +29,10 @@ function SL:Init()
 	local scr = vgui.Create("FScrollPanel", self)
 	scr:Dock(FILL)
 
-	local ic = vgui.Create("FIconLayout", scr)
+	local ic = vgui.Create("FIconLayout")
+	scr:Add(ic)
+	
 	self.IconLayout = ic
-	ic:Dock(FILL)
 
 	ic:On("ShiftPanel", function(_, pnl, x, y)
 		if self.ChangedStates[pnl] ~= nil then
@@ -72,7 +73,7 @@ function SL:Init()
 		end
 
 		for k,v in pairs(self.Dehighlighted) do
-			if not dhCopy[k] then
+			if k:IsValid() and not dhCopy[k] then
 				local a = k:Emit("Dehighlight")
 				if a == nil then
 					k:AlphaTo(50, 0.3, 0, nil, 0.3)
@@ -82,7 +83,7 @@ function SL:Init()
 		end
 
 		for k,v in pairs(dhCopy) do
-			if not self.Dehighlighted[k] then
+			if k:IsValid() and not self.Dehighlighted[k] then
 				local a = k:Emit("Highlight")
 				if a == nil then
 					k:AlphaTo(255, 0.3, 0, nil, 0.3)
@@ -141,6 +142,7 @@ end
 
 function SL:PerformLayout(w, h)
 	self:Resort()
+	self.IconLayout:SetWide(self:GetWide())
 end
 
 function SL:OnChildAdded(p)

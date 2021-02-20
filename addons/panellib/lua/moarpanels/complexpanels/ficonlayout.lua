@@ -19,7 +19,7 @@ function FIC:Init()
 	self.AutoMargin = false
 
 
-	self.IncompleteCenter = false
+	self.IncompleteCenter = true
 
 	self.Rows = {}				-- [num] = {curW, curH}
 	self.Panels = {}
@@ -47,6 +47,8 @@ end
 
 function FIC:ShiftPanel(pnl, x, y)
 	if self:Emit("ShiftPanel", pnl, x, y) ~= nil then return end
+	if pnl.X == x and pnl.Y == y then return end -- avoid infinite layouts
+
 	pnl:SetPos(x, y)
 end
 
@@ -84,6 +86,8 @@ function FIC:UpdateSize(w, h)
 	local curX = self.PadX
 	local curY = self.PadY
 
+	table.Filter(self.Panels, IsValid)
+
 	self:InvalidateRows()
 	self:Emit("UpdateSize")
 	local curRow = self.CurRow
@@ -107,6 +111,7 @@ function FIC:UpdateSize(w, h)
 
 		row.Sizes[v] = {vW, vH}
 		row.Positions[v] = {0, curY}
+
 		row.PnlW = row.PnlW + vW + self.MarginX
 		row.MaxH = math.max(row.MaxH, vH)
 
@@ -116,6 +121,7 @@ function FIC:UpdateSize(w, h)
 	end
 
 	local lastRow = self.Rows[curRow]
+
 	if lastRow and not lastRow.Full then
 		if self.IncompleteCenter then
 			self:OnRowShift(lastRow, curX, w)
@@ -127,6 +133,7 @@ function FIC:UpdateSize(w, h)
 				local y = lastRow.Positions[pnl][2]
 				lastRow.Positions[pnl][1] = x
 				self:ShiftPanel(pnl, x, y)
+
 				x = x + pnl:GetWide() + self.MarginX
 			end
 
@@ -134,7 +141,12 @@ function FIC:UpdateSize(w, h)
 	end
 
 	if self.AutoResize then
-		self:SetTall(math.max(curY + (lastRow and lastRow.MaxH or 8), self:GetTall()))
+
+		local curH = self:GetTall()
+		local newH = curY + (lastRow and lastRow.MaxH or 8) --math.max(curY + (lastRow and lastRow.MaxH or 8), curH)
+		if newH ~= curH then
+			self:SetTall(newH)
+		end
 	end
 end
 
