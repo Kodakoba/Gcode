@@ -207,7 +207,7 @@ function button:DrawButton(x, y, w, h)
 
 	local rad = self.RBRadius or 8
 
-	local bordercol = self.borderColor or self.Color or RED
+	
 	local bg = self.drawColor or self.Color or RED
 
 	local rbinfo = self.RBEx
@@ -216,10 +216,14 @@ function button:DrawButton(x, y, w, h)
 	local x2, y2 = x, y
 
 	if self.Border then
-		dRB(rad, x, y, w, h, bordercol, rbinfo)
+		local bordercol = self.Border.col or self.Color or RED
 		local bw, bh = self.Border.w or 2, self.Border.h or 2
-		w2, h2 = w - bw*2, h - bh*2
-		x2, y2 = x + bw, y + bh
+		if bw > 0 or bh > 0 then
+			dRB(rad, x, y, w, h, bordercol, rbinfo)
+			
+			w2, h2 = w - bw*2, h - bh*2
+			x2, y2 = x + bw, y + bh
+		end
 	end
 
 	dRB(rad, x2, y2, w2, h2, bg, rbinfo)
@@ -353,6 +357,8 @@ function button:Draw(w, h)
 
 		local iconX = ic and (ic.IconX or 4) or 0
 
+		self:PreLabelPaint(w, h)
+		
 		if newlines > 0 then
 			surface.SetFont(t.Font)
 			surface.SetTextColor(lblCol:Unpack())
@@ -410,11 +416,15 @@ function button:Draw(w, h)
 	t.PaintIcon(self, w/2 - iW / 2, h/2 - iH / 2)
 end
 
-function button:PostPaint(w,h)
+function button:PostPaint(w, h)
 
 end
 
-function button:PrePaint(w,h)
+function button:PrePaint(w, h)
+
+end
+
+function button:PreLabelPaint(w, h)
 
 end
 
