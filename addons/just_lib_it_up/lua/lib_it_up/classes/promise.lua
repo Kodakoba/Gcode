@@ -167,8 +167,8 @@ function PromReply:Reply(ok, ns)
 	ns = IsNetstack(ns) and ns or nil
 
 	if ns then
-		ns:WriteUInt(self.ID, uidLen)
-		ns:WriteBool(ok == nil and true or ok)
+		ns:WriteUInt(self.ID, uidLen).Description = "Promise ID"
+		ns:WriteBool(ok == nil and true or ok).Description = "Promise success"
 	else
 		net.WriteUInt(self.ID, uidLen)
 		net.WriteBool(ok == nil and true or ok)
