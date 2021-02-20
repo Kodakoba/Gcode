@@ -26,8 +26,12 @@ function META:Timer(name, sec, reps, func, ...)
 	name = name or uniq.Seq("__Timerified:" .. hex(self))
 	local id = (name and "__Timerified:" .. hex(self) .. ":" .. name)
 
+	if reps == 0 then
+		ErrorNoHalt("created a 0 rep timer:" .. debug.traceback())
+	end
+	
 	timer.Create(id, sec or 0, reps or 1, function()
-		if not self:IsValid() then return end
+		if not self:IsValid() then print("invalid smhhh", reps) return end
 		func(self, unpack(args))
 	end)
 
