@@ -2,9 +2,6 @@
 
 local bw = BaseWars.Bases
 
-table.Empty(bw.Bases) -- yo we'll be grabbing them anew
-table.Empty(bw.Zones)
-
 local zones_tbl = "bw_baseareas"
 local bases_tbl = "bw_bases"
 
@@ -120,6 +117,15 @@ mysqloo.OnConnect(coroutine.wrap(function()
 
 end))
 
+
+
+
+
+
+--[[
+	SQL operations
+]]
+
 local base_q
 
 mysqloo.OnConnect(function()
@@ -191,6 +197,7 @@ function bw.SQL.CreateZone(name, baseid, min, max)
 		local id = zone_q:lastInsert()
 		local zone = bw.Zone:new(id, min, max)
 		zone:SetName(name)
+		zone:AddToNW()
 		base:AddZone(zone)
 	end)
 
@@ -198,6 +205,7 @@ function bw.SQL.CreateZone(name, baseid, min, max)
 end
 
 local edit_zone_q
+local edit_base_q
 
 mysqloo.OnConnect(function()
 	local fuck = "UPDATE master.bw_baseareas SET %s, zone_name = ? WHERE (`zone_id` = ?);"
@@ -207,13 +215,17 @@ mysqloo.OnConnect(function()
 	)
 	-- UPDATE master.bw_baseareas SET zone_name = ?, zone_min_x = ?, zone_min_y = ?, zone_min_z = ?, zone_max_x = ?, zone_max_y = ?, zone_max_z = ? WHERE (`zone_id` = ?);
 	edit_zone_q = mysqloo:GetDatabase():prepare(fuck)
+
+	local fuck = "UPDATE master.%s SET base_name = ? WHERE (`base_id` = ?);"
+	fuck = fuck:format(bases_tbl)
+
+	-- UPDATE master.bw_baseareas SET base_name = ? WHERE (`zone_id` = ?);
+	edit_base_q = mysqloo:GetDatabase():prepare(fuck)
 end)
 
 
 function bw.SQL.EditZone(id, name, min, max)
 	local em = MySQLEmitter(edit_zone_q)
-
-	print('editing', id, name, min, max)
 
 	if #name > bw.MaxZoneNameLength then
 		return em, ("name is too long (%d, max is %d)"):format(#name, bw.MaxZoneNameLength)
@@ -240,7 +252,78 @@ function bw.SQL.EditZone(id, name, min, max)
 		zone:SetBounds(min, max)
 		zone:AddToNW()
 	end)
-	print("executin!")
+
+	return em:Exec()
+end
+
+function bw.SQL.EditBase(id, name)
+	local em = MySQLEmitter(edit_base_q)
+
+	if #name > bw.MaxBaseNameLength then
+		return em, ("name is too long (%d, max is %d)"):format(#name, bw.MaxZoneNameLength)
+	end
+
+	local base = bw.GetBase(id)
+	if not base then
+		return em, ("no base found with id %s"):format(id)
+	end
+
+	edit_base_q:setString(1, name)
+	edit_base_q:setNumber(2, id)
+
+	em:On("Success", function(qobj)
+		base:SetName(name)
+		base:AddToNW()
+	end)
+
+	return em:Exec()
+end
+
+local yeet_zone_q
+local yeet_base_q
+
+mysqloo.OnConnect(function()
+	local yeetzone = "DELETE FROM master.%s WHERE (`zone_id` = ?);"
+	yeetzone = yeetzone:format(zones_tbl)
+
+	local yeetbase = "DELETE FROM master.%s WHERE (`base_id` = ?);"
+	yeetbase = yeetbase:format(bases_tbl)
+
+	yeet_zone_q = mysqloo:GetDatabase():prepare(yeetzone)
+	yeet_base_q = mysqloo:GetDatabase():prepare(yeetbase)
+end)
+
+function bw.SQL.YeetZone(id)
+	local em = MySQLEmitter(yeet_zone_q)
+
+	local zone = bw.GetZone(id)
+	if not zone then
+		return em, ("no zone found with id %s"):format(id)
+	end
+
+	yeet_zone_q:setNumber(1, id)
+
+	em:On("Success", function(qobj)
+		zone:Remove()
+	end)
+
+	return em:Exec()
+end
+
+function bw.SQL.YeetBase(id)
+	local em = MySQLEmitter(yeet_base_q)
+
+	local base = bw.GetBase(id)
+	if not base then
+		return em, ("no base found with id %s"):format(id)
+	end
+
+	yeet_base_q:setNumber(1, id)
+
+	em:On("Success", function(qobj)
+		base:Remove()
+	end)
+
 	return em:Exec()
 end
 

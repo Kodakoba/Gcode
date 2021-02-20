@@ -53,32 +53,69 @@ function bw.Zone:SetDefaultColor(col)
 	self.DefaultColor:Set(col)
 end
 
+function bw.Zone:_Validate()
+	local id = self:GetID()
+	if id < 0 then return false, "ID" end
+
+	local mins, maxs = self:GetBounds()
+	if not mins or not maxs then return false, "Bounds" end
+
+	if BaseWars.Bases.Zones[id] then
+		local oldZone = BaseWars.Bases.Zones[id]
+		local base = oldZone:GetBase()
+
+		if base then
+			base:AddZone(self)
+		end
+
+		oldZone:Remove()
+	end
+
+	BaseWars.Bases.Zones[id] = self
+	self._Valid = true
+	
+	return true
+end
+
+function bw.Zone:Validate(optional)
+	local ok, why = self:_Validate()
+
+	self._Valid = ok
+	if not ok and not optional then
+		errorf("bw.Zone:Validate() : %s were incorrect.", why)
+		return
+	end
+
+end
+
 function bw.Zone:Initialize(id, mins, maxs)
 	CheckArg(1, id, isnumber, "zone ID")
-	CheckArg(2, mins, isvector, "zone mins")
-	CheckArg(3, maxs, isvector, "zone maxs")
+
+	local valid = id >= 0
+	-- use an id < 0 to create a fake zone
+	if valid then
+		CheckArg(2, mins, isvector, "zone mins")
+		CheckArg(3, maxs, isvector, "zone maxs")
+	end
 
 	self:SetID(id)
 
-	OrderVectors(mins, maxs)
-	self:SetBounds(mins, maxs)
+	if valid then
+		OrderVectors(mins, maxs)
+		self:SetBounds(mins, maxs)
+	end
 
 	self._ShouldPaint = false
 	self._Name = ""
 	self._Alpha = 0
 	self:SetColor( self.DefaultColor:Copy() )
 
-	if BaseWars.Bases.Zones[id] then
-		local oldZone = BaseWars.Bases.Zones[id]
-		local base = oldZone:GetBase()
-		if base then
-			base:AddZone(self)
-		end
-	end
-	
-	BaseWars.Bases.Zones[id] = self
+	self:Validate(CLIENT)
 
-	if SERVER then
+	self.Players = {}
+	self.Entities = {}
+	
+	if SERVER and valid then
 		self.Brush = ents.Create("bw_zone_brush")
 
 		if not self.Brush:IsValid() then
@@ -91,7 +128,9 @@ function bw.Zone:Initialize(id, mins, maxs)
 end
 
 function bw.Zone:Remove(baseless)
-	if SERVER then
+	if not self._Valid then print("not valid not removing") return end
+
+	if SERVER and self.Brush:IsValid() then
 		self.Brush:Remove()
 	end
 
@@ -101,6 +140,9 @@ function bw.Zone:Remove(baseless)
 
 	BaseWars.Bases.Zones[self:GetID()] = nil
 	bw.ZonePaints[self:GetID()] = nil
+
+	self._Valid = false
+	self:Emit("Remove")
 end
 
 ChainAccessor(bw.Zone, "_Name", "Name")
@@ -108,6 +150,7 @@ ChainAccessor(bw.Zone, "_Color", "Color")
 ChainAccessor(bw.Zone, "_Alpha", "Alpha")
 
 function bw.Zone:GetBase()
+	if not self.BaseID then return false end
 	return BaseWars.Bases.Bases[self.BaseID]
 end
 
@@ -126,14 +169,21 @@ function bw.Base:Initialize(id)
 	self.ZonesByID = {}		-- [zone_id] = zone_obj
 
 	self.Players = {}
+	self.Entities = {}
+
 	self.Name = "-unnamed base-"
 
 	BaseWars.Bases.Bases[id] = self
 end
 
 function bw.Base:Remove()
+	for k,v in ipairs(self.Zones) do
+		v:Remove(true)
+	end
+
 	BaseWars.Bases.Bases[self:GetID()] = nil
 	bw.NW.Bases:Set(self:GetID(), nil)
+	self:Emit("Remove")
 end
 
 ChainAccessor(bw.Base, "Zones", "Zones")
@@ -168,7 +218,7 @@ end
 function bw.Base:ReadNetwork()
 	local name = net.ReadCompressedString(bw.MaxBaseNameLength)
 	self:SetName(name)
-	
+
 	local zones = net.ReadUInt(8)
 
 	for z=1, zones do

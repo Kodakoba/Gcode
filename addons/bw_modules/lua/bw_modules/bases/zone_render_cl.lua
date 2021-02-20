@@ -16,6 +16,7 @@ function bw.Zone:UpdatePainted()
 end
 
 function bw.Zone:Draw()
+	if bw.Zones[self:GetID()] ~= self then bw.ZonePaints[self] = nil return end
 
 	if self:GetShouldPaint() then
 		GlobalAnimatable:MemberLerp(self, "_Alpha", 1, 0.5, 0, 0.3)

@@ -50,6 +50,7 @@ TOOL.IsBWAreaMark = true
 function TOOL:SetZone(z)
 	self:ChangeState(STATE_FIRST)
 	self.CurrentZone = z
+
 	table.Empty(self.CurrentArea)
 end
 
@@ -67,7 +68,7 @@ function TOOL:LeftClick(tr)
 	end
 
 	if self.State < STATE_CONFIRM then
-		self.State = self.State + 1
+		self:ChangeState(self.State + 1)
 		self.CurrentArea[self.State] = tr.HitPos
 
 		if self.State == STATE_CONFIRM then
@@ -94,10 +95,13 @@ function TOOL:RightClick(tr)
 		self.State = STATE_FIRST
 		table.Empty(self.CurrentArea)
 		return true
-	elseif self.State > 0 then
+	elseif self.State >= 0 then
 		print("removed", self.State)
 		self.CurrentArea[self.State] = nil
-		self.State = self.State - 1
+		self:ChangeState(self.State - 1)
+		if self.State == STATE_BASESELECT then
+			self:Emit("ZoneCancelled")
+		end
 	end
 end
 
@@ -117,6 +121,12 @@ end
 
 function TOOL:ChangeState(to)
 	self.State = to
+
+	if to == STATE_BASESELECT then
+		self.CurrentZone = nil
+		table.Empty(self.CurrentArea)
+	end
+
 	if self._StateCache then
 		table.Empty(self._StateCache)
 	end
@@ -186,6 +196,7 @@ function TOOL:ShowBaseSelection(cur)
 		pnl = cur[1]
 
 		pnl.Disappearing = false
+		pnl.Tool = tool
 		pnl:Stop()
 		pnl:Show()
 		pnl:SetMouseInputEnabled(true)
@@ -200,6 +211,7 @@ function TOOL:ShowBaseSelection(cur)
 		pnl:SetSize(ScrW() * 0.15, ScrH() * 0.5)
 		pnl:SetPos(ScrW(), 0)
 		pnl:CenterVertical()
+		pnl.Tool = tool
 
 		pnl:MakePopup()
 		pnl:SetKeyBoardInputEnabled(false)
@@ -234,17 +246,44 @@ function TOOL:ShowBaseSelection(cur)
 		scr:Dock(FILL)
 		scr:InvalidateParent(true)
 
-		for baseID, base in pairs(bases.Bases) do
-			local fb = vgui.Create("FButton")
+		local baseButtons = {}
+
+		local function makeBtn(base, inv)
+			local fb = vgui.Create("FButton", nil, "Base " .. base:GetName())
 			fb:SetSize(180, 40)
 			scr:Add(fb, base:GetName() or "[unnamed?]")
 			fb.Label = base:GetName() or "[unnamed?]"
 
 			function fb:DoClick()
-				tool:OpenBaseGUI(base)
-				print("Opening base gui on", tool)
+				pnl.Tool:OpenBaseGUI(base)
 			end
+
+			function fb:Think()
+				self.Label = base:GetName()
+			end
+			base:On("Remove", fb, function()
+				fb:Remove()
+				scr:InvalidateLayout(true)
+			end)
+
+			baseButtons[base] = fb
+
+			--[[if inv then
+				scr:InvalidateLayout(true) -- ugh this is awful
+			end]]
 		end
+
+		for baseID, base in pairs(bases.Bases) do
+			makeBtn(base)
+		end
+
+		bases:On("ReadBases", scr, function()
+			for k,v in pairs(bases.Bases) do
+				if not baseButtons[v] then
+					makeBtn(v)
+				end
+			end
+		end)
 
 		-- if the search bar gets focus, keep the bind held
 		-- when it loses focus, still keep the bind held because 

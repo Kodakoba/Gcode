@@ -30,10 +30,13 @@ local function init(force)
 			-- Admin = Networkable("bw_bases_admin"),
 
 			BASE_NEW = 0,
-			BASE_DELETE = 1,
+			BASE_YEET = 1,
 
 			ZONE_NEW = 2,
 			ZONE_EDIT = 3,
+			ZONE_YEET = 4,
+
+			BASE_EDIT = 5,
 
 			SZ = {
 				base = 12,
