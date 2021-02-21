@@ -273,7 +273,7 @@ function TOOL:OpenBaseGUI(base)
 
 	function edit:DoClick()
 		tool:SetZone(selectedZone.Zone)
-		print("set tool to zone", selectedZone.Zone)
+
 		local pnl = bw.BaseGUI
 
 		local x, y = pnl:GetPos()
@@ -539,6 +539,7 @@ function TOOL:OpenBaseGUI(base)
 		pnl:MoveBy(0, -48, 0.6, 0, 0.2)
 		local was = pnl.Y
 		pnl:SetMouseInputEnabled(false)
+		pnl:SetKeyBoardInputEnabled(false)
 
 		pr:Then(function()
 			pnl:PopOut()
@@ -551,6 +552,7 @@ function TOOL:OpenBaseGUI(base)
 			pnl:AlphaTo(255, 0.2, 0, 0.3)
 			pnl:MoveTo(pnl.X, was, 0.3, 0, 0.3)
 			pnl:SetMouseInputEnabled(true)
+			pnl:SetKeyBoardInputEnabled(true)
 
 			self.To0 = true
 			self.Yeeting = false

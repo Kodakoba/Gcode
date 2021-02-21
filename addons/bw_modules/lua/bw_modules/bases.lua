@@ -1,14 +1,14 @@
 
+
 if BaseWars.Bases then
 	local b = BaseWars.Bases.NW
 	b.Bases:Invalidate()
 	b.Zones:Invalidate()
-	--b.Admin:Invalidate()
 
 	b.Bases = Networkable("bw_bases_bases")
 	b.Zones = Networkable("bw_bases_zones")
-	--b.Admin = Networkable("bw_bases_admin")
 end
+
 
 local function init(force)
 	BaseWars.Bases = (not force and BaseWars.Bases) or Emitter.Make({
@@ -27,8 +27,8 @@ local function init(force)
 		NW = {
 			Bases = Networkable("bw_bases_bases"),
 			Zones = Networkable("bw_bases_zones"),
-			-- Admin = Networkable("bw_bases_admin"),
-
+			PlayerData = SERVER and {} or nil, 	-- defined in base_nw_*
+												-- serverside, a table ; clientside, the nw object itself
 			BASE_NEW = 0,
 			BASE_YEET = 1,
 

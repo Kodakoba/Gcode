@@ -8,13 +8,22 @@ local nw = bw.NW
 local bIDSZ = nw.SZ.base
 local zIDSZ = nw.SZ.zone
 
+LibItUp.OnInitEntity(function()
+	nw.PlayerData = nw.PlayerData or Networkable("bw_bases_player" .. LocalPlayer():UserID())
+	nw.PlayerData:Alias("CurrentZone", 1)
+	nw.PlayerData:Alias("CurrentBase", 2)
+end)
+
+--[[-------------------------------------------------------------------------
+	Networkable decoders
+---------------------------------------------------------------------------]]
+
 zNW:On("ReadChangeValue", "DecodeZones", function(self, zID)
 
 	local yiss = net.ReadBool()
 
 	if not yiss then
 		local z = bw.Zones[zID]
-		print("deleted zone", zID)
 		if z then z:Remove() end
 		return
 	end
@@ -59,6 +68,11 @@ end)
 bNW:On("NetworkedChanged", "DecodedAll", function(self)
 	bw:Emit("ReadBases")
 end)
+
+
+--[[-------------------------------------------------------------------------
+	Basezone modify requests
+---------------------------------------------------------------------------]]
 
 function bw.RequestBaseCreation(name)
 	net.Start("BWBases")

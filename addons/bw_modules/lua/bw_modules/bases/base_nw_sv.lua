@@ -59,8 +59,7 @@ function bw.Zone:AddToNW()
 end
 
 
-local function createNewBase(ply)
-	local pr = net.ReplyPromise(ply)
+local function createNewBase(ply, pr)
 	local ns = netstack:new()
 	if not bw.CanModify(ply) then
 		ns:WriteCompressedString("no permissions")
@@ -87,8 +86,7 @@ local function createNewBase(ply)
 	end)
 end
 
-local function createNewZone(ply)
-	local pr = net.ReplyPromise(ply)
+local function createNewZone(ply, pr)
 	local ns = netstack:new()
 	if not bw.CanModify(ply) then
 		ns:WriteCompressedString("no permissions")
@@ -117,8 +115,7 @@ local function createNewZone(ply)
 	end)
 end
 
-local function editZone(ply)
-	local pr = net.ReplyPromise(ply)
+local function editZone(ply, pr)
 	local ns = netstack:new()
 
 	if not bw.CanModify(ply) then
@@ -156,8 +153,7 @@ local function editZone(ply)
 	end)
 end
 
-local function editBase(ply)
-	local pr = net.ReplyPromise(ply)
+local function editBase(ply, pr)
 	local ns = netstack:new()
 
 	if not bw.CanModify(ply) then
@@ -194,8 +190,7 @@ local function editBase(ply)
 	end)
 end
 
-local function yeetBase(ply)
-	local pr = net.ReplyPromise(ply)
+local function yeetBase(ply, pr)
 	local ns = netstack:new()
 
 	if not bw.CanModify(ply) then
@@ -229,8 +224,7 @@ local function yeetBase(ply)
 	end)
 end
 
-local function yeetZone(ply)
-	local pr = net.ReplyPromise(ply)
+local function yeetZone(ply, pr)
 	local ns = netstack:new()
 
 	if not bw.CanModify(ply) then
@@ -264,23 +258,56 @@ local function yeetZone(ply)
 	end)
 end
 
-net.Receive("BWBases", function(l, ply)
-	local mode = net.ReadUInt(4)
+
+local function DetermineAction(mode, ply, pr)
 
 	if mode == bw.NW.BASE_NEW then
-		createNewBase(ply)
+		createNewBase(ply, pr)
 	elseif mode == bw.NW.BASE_EDIT then
-		editBase(ply)
+		editBase(ply, pr)
 	elseif mode == bw.NW.ZONE_EDIT then
-		editZone(ply)
+		editZone(ply, pr)
 	elseif mode == bw.NW.ZONE_NEW then
-		createNewZone(ply)
+		createNewZone(ply, pr)
 	elseif mode == bw.NW.ZONE_YEET then
-		yeetZone(ply)
+		yeetZone(ply, pr)
 	elseif mode == bw.NW.BASE_YEET then
-		yeetBase(ply)
+		yeetBase(ply, pr)
 	else
 		print("Unhandled BWBases action:", mode, ply)
+		local ns = netstack:new()
+		ns:WriteCompressedString("Unhandled action.")
+		pr:ReplySend("BWBases", false, ns)
 	end
 
+end
+
+net.Receive("BWBases", function(l, ply)
+	local mode = net.ReadUInt(4)
+	local pr = net.ReplyPromise(ply)
+
+	local ok, err = pcall(DetermineAction, mode, ply, pr)
+	if not ok then
+		ns:WriteCompressedString("Error!")
+		pr:ReplySend("BWBases", false, ns)
+		return false
+	end
+end)
+
+local function initNW(ply)
+	bw.NW.PlayerData[ply] = Networkable("bw_bases_player" .. ply:UserID())
+	local nw = bw.NW.PlayerData[ply]
+	nw:Bind(ply)
+	nw:Alias("CurrentZone", 1)
+	nw:Alias("CurrentBase", 2)
+
+	nw.Filter = function(p2)
+		return ply == p2
+	end
+end
+
+nw.InitPlayerNW = initNW
+
+hook.Add("PlayerInitialSpawn", "InitBaseNWPlayerData", function(ply)
+	initNW(ply)
 end)

@@ -395,16 +395,26 @@ function nw:Invalidate()
 end
 
 
-function nw:Bond(what)
+function nw:Bind(what)
 
-	if isentity(what) then
+	if IsPlayer(what) then
+		local origUID = what:UserID()
+
+		gameevent.Listen("player_disconnect")
+		hook.OnceRet("player_disconnect", ("Networkable.Bond:%p"):format(what), function(data)
+			local uid = data.userid
+			if uid ~= origUID then return false end
+
+			self:Invalidate()
+		end)
+	elseif isentity(what) then
 
 		hook.OnceRet("EntityRemoved", ("Networkable.Bond:%p"):format(what), function(ent)
 			if ent ~= what then return false end
 
 			if CLIENT then
 				timer.Simple(0.1, function()
-					if IsValid(ent) then self:Bond(ent) return end --fullupdates :v
+					if IsValid(ent) then self:Bind(ent) return end --fullupdates :v
 					self:Invalidate()
 				end)
 			else
@@ -418,7 +428,7 @@ function nw:Bond(what)
 
 	return self
 end
-nw.Bind = nw.Bond
+nw.Bond = nw.Bind
 
 local function IDToNumber(id)
 	return IDToNum[id]
@@ -539,7 +549,7 @@ if SERVER then
 
 			ns:SetCursor(nsCursor)
 			ns:WriteUInt(actuallyWritten, SZ.CHANGES_COUNT)
-
+			print( tostring(ns) )
 			net.WriteNetStack(ns)
 		net.Send(who)
 

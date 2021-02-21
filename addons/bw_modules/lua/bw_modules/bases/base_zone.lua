@@ -13,10 +13,18 @@ bw.MaxZoneNameLength = 120
 ChainAccessor(bw.Base, "ID", "ID")
 ChainAccessor(bw.Zone, "ID", "ID")
 
+function bw.Zone:__tostring()
+	return ("BWZone [%d][%s]"):format(self:GetID(), self:GetName())
+end
+
+function bw.Base:__tostring()
+	return ("BWBase [%d][%s]"):format(self:GetID(), self:GetName())
+end
 
 --[[-------------------------------------------------------------------------
 	Zone object
 ---------------------------------------------------------------------------]]
+
 
 function bw.Zone:GetBounds()
 	return self._Mins, self._Maxs
@@ -29,6 +37,8 @@ end
 function bw.Zone:SetBounds(mins, maxs)
 	CheckArg(1, mins, isvector, "zone mins")
 	CheckArg(2, maxs, isvector, "zone maxs")
+
+	OrderVectors(mins, maxs)
 
 	local prevMin, prevMax = self._Mins, self._Maxs
 	self._Mins, self._Maxs = mins, maxs
@@ -124,11 +134,14 @@ function bw.Zone:Initialize(id, mins, maxs)
 		end
 
 		self.Brush:SetZone(self)
+		self.Brush:Activate()
+		self.Brush:Spawn()
+
 	end
 end
 
 function bw.Zone:Remove(baseless)
-	if not self._Valid then print("not valid not removing") return end
+	if not self._Valid then return end
 
 	if SERVER and self.Brush:IsValid() then
 		self.Brush:Remove()
@@ -143,11 +156,16 @@ function bw.Zone:Remove(baseless)
 
 	self._Valid = false
 	self:Emit("Remove")
+	bw:Emit("DeleteZone", self)
 end
 
 ChainAccessor(bw.Zone, "_Name", "Name")
 ChainAccessor(bw.Zone, "_Color", "Color")
 ChainAccessor(bw.Zone, "_Alpha", "Alpha")
+
+function bw.Zone:IsValid()
+	return self._Valid
+end
 
 function bw.Zone:GetBase()
 	if not self.BaseID then return false end
@@ -172,23 +190,37 @@ function bw.Base:Initialize(id)
 	self.Entities = {}
 
 	self.Name = "-unnamed base-"
+	self._Valid = true
+
+	if BaseWars.Bases.Bases[id] then
+		BaseWars.Bases.Bases[id]:Remove(true)
+	end
 
 	BaseWars.Bases.Bases[id] = self
 end
 
-function bw.Base:Remove()
-	for k,v in ipairs(self.Zones) do
-		v:Remove(true)
+function bw.Base:Remove(replaced)
+	self._Valid = false
+
+	if not replaced then
+		for k,v in ipairs(self.Zones) do
+			v:Remove(true)
+		end
 	end
 
 	BaseWars.Bases.Bases[self:GetID()] = nil
 	bw.NW.Bases:Set(self:GetID(), nil)
+
 	self:Emit("Remove")
+	bw:Emit("DeleteBase", self)
 end
 
 ChainAccessor(bw.Base, "Zones", "Zones")
 ChainAccessor(bw.Base, "Name", "Name")
 
+function bw.Zone:IsValid()
+	return self._Valid
+end
 
 function bw.Base:RemoveZone(zone)
 	table.RemoveByValue(self.Zones, zone)

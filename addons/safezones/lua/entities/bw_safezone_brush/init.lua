@@ -33,9 +33,6 @@ function ENT:SetBrushBounds(p1, p2)
 	d.P2 = p2 
 end
 
---[[---------------------------------------------------------
-	Name: StartTouch
------------------------------------------------------------]]
 local RemoveEm = {}
 
 function ENT:StartTouch(ent)
@@ -53,9 +50,7 @@ function ENT:StartTouch(ent)
 
 end
 
---[[---------------------------------------------------------
-	Name: EndTouch
------------------------------------------------------------]]
+
 function ENT:EndTouch(ent)
 
 	if IsValid(ent) and ent:IsPlayer() then
@@ -65,9 +60,7 @@ function ENT:EndTouch(ent)
 	RemoveEm[ent] = nil
 end
 
---[[---------------------------------------------------------
-	Name: Touch
------------------------------------------------------------]]
+
 function ENT:Touch(ent)
 	
 	if RemoveEm[ent] and CurTime() - RemoveEm[ent] >= 5 then 
