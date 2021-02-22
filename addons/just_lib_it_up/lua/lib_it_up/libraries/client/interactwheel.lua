@@ -21,8 +21,8 @@ local wheelAppearTime = 0.2
 local wheelDisappearTime = 0.15
 
 -- mouse radius:
-local wheelInnerRadius = 12
-local wheelOuterRadius = 48
+local wheelInnerRadius = 32
+local wheelOuterRadius = 64
 
 -- options radius:
 local optionInnerRadius, optionOuterRadius
