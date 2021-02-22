@@ -549,7 +549,12 @@ if SERVER then
 
 			ns:SetCursor(nsCursor)
 			ns:WriteUInt(actuallyWritten, SZ.CHANGES_COUNT)
-			print( tostring(ns) )
+			
+			print( tostring(ns), "networking to:")
+			for k,v in pairs(who) do
+				print(k, who)
+			end
+			
 			net.WriteNetStack(ns)
 		net.Send(who)
 
