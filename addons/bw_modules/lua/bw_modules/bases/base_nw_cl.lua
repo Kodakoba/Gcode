@@ -39,7 +39,6 @@ zNW:On("ReadChangeValue", "DecodeZones", function(self, zID)
 	zone:SetName(name)
 	zone:SetBounds(mins, maxs)
 
-	print("read new zone", zID)
 	return true
 end)
 
@@ -59,8 +58,6 @@ bNW:On("ReadChangeValue", "DecodeBases", function(self, key)
 
 	local base = bw.GetBase(key) or bw.Base(key)
 	base:ReadNetwork()
-	
-	
 
 	return true
 end)
@@ -153,4 +150,73 @@ end
 
 net.Receive("BWBases", function()
 	net.ReadPromise()
+end)
+
+local baseCol = color_white:Copy()
+local zoneCol = color_white:Copy()
+
+local baseFontH = 32
+
+local bdt = DeltaText():SetFont("MR" .. baseFontH)
+local zdt = DeltaText():SetFont("MR24")
+
+local baseToID = {
+	-- [id] = elem_num
+}
+
+local zToID = {
+	-- [id] = elem_num
+}
+
+local an = Animatable("bases")
+an.BaseFrac = 0
+an.ZoneFrac = 0
+
+local function appear(z)
+	an:To("BaseFrac", 1, 0.4, 0, 0.3)
+	an:To("ZoneFrac", 1, 0.3, 0.3, 0.3)
+end
+
+local function disappear()
+	an:To("BaseFrac", 0, 0.25, 0.15, 2)
+	an:To("ZoneFrac", 0, 0.25, 0, 3)
+	bdt:DisappearCurrentElement()
+end
+
+local function think()
+	baseCol.a = an.BaseFrac
+	zoneCol.a = an.ZoneFrac
+end
+
+local lastBaseName = ""
+
+
+
+hook.Add("HUDPaint", "bas", function()
+	think()
+
+	local nw = nw.PlayerData
+
+	if not nw:Get("CurrentBase") then
+		disappear()
+	else
+
+		local base = bw.GetBase(nw:Get("CurrentBase"))
+		if not base then print("Didn't find base with ID", nw:Get("CurrentBase")) disappear() return end
+
+		local frag = baseToID[base:GetID()]
+
+		if not frag then
+			local piece, key = bdt:AddText(base:GetName())
+			piece.Color = baseCol
+			baseToID[base:GetID()] = key
+		else
+			frag = bdt:ActivateElement(frag)
+		end
+	end
+
+	bdt:Paint(8, ScrH() * 0.3)
+	zdt:Paint(8, ScrH() * 0.3 + baseFontH)
+	--appear()
+	--draw.SimpleText(base:GetName(), "OS32", 8, ScrH() * 0.3, color_white, 0, 5)
 end)
