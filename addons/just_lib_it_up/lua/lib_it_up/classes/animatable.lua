@@ -75,6 +75,7 @@ function AnimMeta:Swap(length, delay, ease, callback)
 	self.OnEnd = callback
 
 	self.Ended = false
+	self._Started = false
 
 	self:Emit("Swap")
 
@@ -119,7 +120,7 @@ function Animatable:StopAnimations()
 	self.__Animations = {}
 	self.m_AnimList = {}
 end
-
+Animatable.Stop = Animatable.StopAnimations
 
 function Animatable:AnimationThink()
 	self:Emit("AnimationPreThink", self.m_AnimList)
@@ -128,10 +129,15 @@ function Animatable:AnimationThink()
 		if anim.Ended then continue end
 
 		if ( systime >= anim.StartTime ) then
-
+			if not anim._Started then
+				anim._Started = true
+				anim:Emit("Start")
+			end
+			
 			local Fraction = math.TimeFraction( anim.StartTime, anim.EndTime, systime )
 			Fraction = math.Clamp( Fraction, 0, 1 )
-
+			anim.UneasedFrac = Fraction
+			
 			if ( anim.Think ) then
 
 				local Frac = Fraction ^ anim.Ease
@@ -143,6 +149,7 @@ function Animatable:AnimationThink()
 					Frac = 1 - ( ( 1 - Fraction ) ^ ( 1 / anim.Ease ) )
 				end
 
+				anim.Frac = Frac
 				anim:Think( self, Frac )
 				anim:Emit("Think", Frac)
 			end
@@ -185,6 +192,9 @@ function Animatable:NewAnimation( length, delay, ease, callback )
 		Ease = ease,
 		OnEnd = callback,
 		Parent = self,
+		Valid = true,
+		UneasedFrac = 0,
+		Frac = 0
 	})
 
 	if ( self.m_AnimList == nil ) then self.m_AnimList = {} end

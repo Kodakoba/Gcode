@@ -33,13 +33,14 @@ function meta:AnimationThinkInternal()
 		if anim.Ended then continue end
 
 		if ( systime >= anim.StartTime ) then
-			if not anim.Started then
-				anim.Started = true
+			if not anim._Started then
+				anim._Started = true
 				anim:Emit("Start")
 			end
 
 			local Fraction = math.TimeFraction( anim.StartTime, anim.EndTime, systime )
 			Fraction = math.Clamp( Fraction, 0, 1 )
+			anim.UneasedFrac = Fraction
 
 			local Frac = Fraction ^ anim.Ease
 
@@ -50,6 +51,7 @@ function meta:AnimationThinkInternal()
 				Frac = 1 - ( ( 1 - Fraction ) ^ ( 1 / anim.Ease ) )
 			end
 
+			anim.Frac = Frac
 			if ( anim.Think ) then
 				anim:Think( self, Frac )
 			end
@@ -155,6 +157,8 @@ function meta:NewAnimation( length, delay, ease, callback )
 		OnEnd = callback,
 		Parent = self,
 		Valid = true,
+		UneasedFrac = 0,
+		Frac = 0
 	})
 
 	self:SetAnimationEnabled( true )

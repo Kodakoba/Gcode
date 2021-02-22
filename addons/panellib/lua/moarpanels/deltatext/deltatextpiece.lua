@@ -50,13 +50,8 @@ function pmeta:Initialize(par, tx, font, key, rep)
 	self.Offsets.XDisappear = 0
 	self.Offsets.YDisappear = 24
 
-	--[[
-		Default animation data; if you don't provide length and delay
-		to :CreateAnimation, this will be used
-	]]
-
-	aninfo.Length = 0.4
-	aninfo.Ease = 0.3
+	aninfo.Length = 0.3
+	aninfo.Ease = 0.4
 	aninfo.Delay = 0
 	aninfo.AnimationFunction = function(self, len, delay, ease, onend, think) return NewAnimation(len, delay, ease, onend) end
 
@@ -79,9 +74,12 @@ end
 
 function pmeta:StopAnimation(name)
 
-	if self.Animations[name] then
-		self.Animations[name]:Stop()
+	local an = self.Animations[name]
+
+	if an then
+		an:Stop()
 		self.Animations[name] = nil
+		return an
 	end
 
 end
@@ -93,16 +91,8 @@ ChainAccessor(pmeta, "LiftStrength", "LiftStrength")
 ChainAccessor(pmeta, "Font", "Font")
 ChainAccessor(pmeta, "Parent", "Parent")
 
-function pmeta:CreateAnimation(name, think, cb, len, del)
-	local anim = self.Animations.Alpha
+function pmeta:CreateAlphaAnimation(name, think, cb, len, del)
 	local aninfo = self.Animation
-
-	if anim and not anim.Finished then return end
-
-	if anim then
-		anim:Swap(len or aninfo.Length, del or aninfo.Delay, aninfo.Ease)
-		return
-	end
 
 	local anim, nooverride = aninfo.AnimationFunction(self, len or aninfo.Length, del or aninfo.Delay, aninfo.Ease, cb, think)
 
@@ -111,6 +101,10 @@ function pmeta:CreateAnimation(name, think, cb, len, del)
 	end
 
 	self.Animations[name] = anim
+end
+
+function pmeta:GetAnimation(nm)
+	return self.Animations[nm]
 end
 
 --[[
@@ -130,12 +124,18 @@ end
 	Don't override it; use :AppearAnimation() and :DisappearAnimation callbacks instead.
 ]]
 
-function pmeta:AnimateAppearance(fr, a)
+function pmeta:AnimateAppearance(fr, a, rev, fromx, fromy)
 	if self:AppearAnimation(fr) then return end
 
-	self.Alpha = fr * 255
+	self.Alpha = a + (255 - a) * fr
 
-	local xo, yo = self.Offsets.XAppear, -self:GetLiftStrength()
+	local xo, yo
+
+	if not rev then -- just a regular appear; start from default values
+		xo, yo = self.Offsets.XAppear, -self:GetLiftStrength()
+	else -- we're reversing a disappear animation; take current values and go from them
+		xo, yo = fromx, fromy--self.Offsets.X, self.Offsets.Y
+	end
 
 	self.Offsets.X = Lerp(fr, xo, 0)
 	self.Offsets.Y = Lerp(fr, yo, 0)
@@ -143,11 +143,12 @@ function pmeta:AnimateAppearance(fr, a)
 	self:AppearAnimation(fr)
 end
 
-function pmeta:AnimateDisappearance(fr, a, x, y)
+function pmeta:AnimateDisappearance(fr, a, rev, x, y)
 	if self:DisappearAnimation(fr) then return end
 
-	self.Alpha = a - fr * a
-	local xo, yo = self.Offsets.XDisappear, self:GetDropStrength()
+	self.Alpha = math.max(a - (fr ^ 0.5) * a, 0)
+
+	local xo, yo = self.Offsets.XDisappear, rev and y - self:GetLiftStrength() or self:GetDropStrength()
 
 	self.Offsets.X = Lerp(fr, x, xo)
 	self.Offsets.Y = Lerp(fr, y, yo)
@@ -156,26 +157,37 @@ end
 
 
 function pmeta:Disappear()
-	self:StopAnimation("Appear")	--stop spazzing out
-
-	self.Parent.Disappearing[self.Key] = self	-- set self for disappearing
-	self.Disappearing = true
+	local anim = self:StopAnimation("Appear")	--stop spazzing out
 
 	local fromX, fromY = self.Offsets.X, self.Offsets.Y
+	local wasAppearing = self.Appearing and anim and anim.Frac < 0.6
 	local a = self.Alpha
 
-	self:CreateAnimation("Disappear", function(fr)
-		self:AnimateDisappearance(fr, a, fromX, fromY)
+	self:CreateAlphaAnimation("Disappear", function(fr)
+		self:AnimateDisappearance(fr, a, wasAppearing, fromX, fromY)
 	end, function()
-		self.Parent.Disappearing[self.Key] = nil
 		self.Disappeared = true
 	end)
 
+	self.Disappearing = true
+	self.Appearing = false
 end
 
 function pmeta:Appear()
-	self:StopAnimation("Disappear")
-	self:CreateAnimation("Appear", function(fr) self:AnimateAppearance(fr) end, function() end)
+	local anim = self:StopAnimation("Disappear")
+
+	local wasDisappearing = self.Disappearing and not self.Disappeared
+							 and anim and anim.Frac < 0.6
+
+	local a = self.Alpha
+	local fx, fy = self.Offsets.X, self.Offsets.Y
+	self.Appearing = true
+
+	self:CreateAlphaAnimation("Appear", function(fr)
+		self:AnimateAppearance(fr, a, wasDisappearing, fx, fy)
+	end, function() 
+		self.Appearing = false
+	end)
 
 	self.Disappearing = false
 	self.Disappeared = false
@@ -494,7 +506,7 @@ function pmeta:AddFragment(text, num, anim, onend)	--adds a fragment on top
 
 	if anim then
 
-		self:CreateAnimation("AddFragText" .. newfrag.Text, function(fr)
+		self:CreateAlphaAnimation("AddFragText" .. newfrag.Text, function(fr)
 			newfrag.OffsetY = 24 - (fr * 24)
 			newfrag.Alpha = fr*255
 		end, function()
@@ -564,7 +576,7 @@ function pmeta:RemoveFragment(num)
 	frag.LerpNext = 0
 	local a = frag.Alpha
 
-	self:CreateAnimation(hex(frag) .. "SubText", function(fr)
+	self:CreateAlphaAnimation(hex(frag) .. "SubText", function(fr)
 		frag.OffsetY = fr * dropstr
 		frag.Alpha = a - fr*a
 
@@ -634,7 +646,7 @@ function pmeta:ReplaceText(num, rep, onend, nolerp)
 
 	local a = frag.Alpha
 
-	self:CreateAnimation(hex(frag) .. "SubText", function(fr)
+	self:CreateAlphaAnimation(hex(frag) .. "SubText", function(fr)
 		frag.OffsetY = nolerp and dropstr or fr * dropstr
 		frag.Alpha = nolerp and 0 or a - fr*a
 
@@ -658,7 +670,7 @@ function pmeta:ReplaceText(num, rep, onend, nolerp)
 
 	local appstr = self:GetLiftStrength()
 
-	self:CreateAnimation(hex(newfrag) .. "AddText", function(fr)
+	self:CreateAlphaAnimation(hex(newfrag) .. "AddText", function(fr)
 		newfrag.RewindTextPos = false
 
 

@@ -612,6 +612,7 @@ function NewAnimation(len, del, ease, callback)
 
 	del = del + SysTime()
 
+
 	local anim = {
 		EndTime = del + len,
 		StartTime = del,
@@ -621,9 +622,13 @@ function NewAnimation(len, del, ease, callback)
 
 		Ease = ease,
 		OnEnd = callback,
-		ThinkManually = false
-	}
 
+		ThinkManually = false,
+
+		UneasedFrac = 0,
+		Frac = 0
+	}
+	
 	setmetatable(anim, animobj)
 
 	anim.AnimIndex = latest
@@ -657,11 +662,12 @@ local function AnimationsThink()
 
 			local Fraction = math.TimeFraction( anim.StartTime, anim.EndTime, systime )
 			Fraction = math.min( Fraction, 1 )
+			anim.UneasedFrac = Fraction
 
 			if ( anim.Animate ) then
 
 				local Frac = Fraction ^ anim.Ease
-
+				anim.Frac = Frac
 				-- Ease of -1 == ease in out
 				if ( anim.Ease < 0 ) then
 					Frac = Fraction ^ ( 1.0 - (  Fraction - 0.5 ) ) ^ -anim.Ease

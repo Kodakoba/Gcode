@@ -12,8 +12,6 @@ function DeltaText:Initialize()
 	self.Elements = {}
 	self.Active = {}
 
-	self.Disappearing = {}
-
 	self.Timings = {}
 	self.LastTiming = 0
 
@@ -144,8 +142,9 @@ function DeltaText:GetPreviousElement()
 	return self.Active[self.LastActive - 1]
 end
 
-function DeltaText:GetCurrentElement()
-	return self.Active[self.LastActive]
+function DeltaText:GetCurrentElement(anyway)
+	local elem = self.Active[self.LastActive]
+	return (elem and (not elem.Disappeared or anyway)) and elem
 end
 
 function DeltaText:CycleNext()
@@ -282,12 +281,6 @@ function DeltaText:Paint(x, y)
 		if not tp.Paint then continue end
 		tp:Paint(x + offx, y)
 	end
-
-	for k, tp in pairs(self.Disappearing) do
-		if not tp.Paint then continue end
-		tp:Paint(x, y)
-	end
-
 
 	local timing = self.Timings[self.LastActive + 1]
 

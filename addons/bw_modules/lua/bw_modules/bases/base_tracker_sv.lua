@@ -1,5 +1,4 @@
 local bw = BaseWars.Bases
-local tick = engine.TickCount
 
 local updateList = { --[[
 
@@ -22,15 +21,14 @@ bw.BasePresence = bw.BasePresence or {
 	-- [ent] = base_obj
 }
 
--- Base queue: [ent] = {oldest_base, ..., newest_base}
+-- Base queue: [ent] = { oldest_base, ..., newest_base }
 bw.BasePresenceQueue = bw.BasePresenceQueue or {}
 
--- Zone presence: [ent] = { [zones_objects] = true }
--- A [key] = true structure works better here than in base queue
+-- Zone presence: [ent] = { oldest_zone, ..., newest_zone }
+-- Also a queue, like Base queue, and operates on the same principles
 bw.ZonePresence = bw.ZonePresence or {}
 
--- TODO: Same as BaseQueue
-bw.ZoneQueue = bw.ZoneQueue or {}
+local ENTITY = FindMetaTable("Entity")
 
 -- returns the current base the ent is in, false if in none
 local function getBase(ent)
@@ -59,6 +57,31 @@ local function getZones(ent)
 	end 
 
 	return t
+end
+
+-- please make sure you're not modifying these or shit'll break :v
+
+function ENTITY:BW_GetOldestZone()
+	return getZones(self)[1]
+end
+
+function ENTITY:BW_GetNewestZone()
+	local t = getZones(self)
+	return t[#t]
+end
+
+function ENTITY:BW_GetAllZones()
+	local t = getZones(self)
+	return t[#t]
+end
+
+
+function ENTITY:BW_GetBase()
+	return getBase(self)
+end
+
+function ENTITY:BW_GetAllBases()
+	return getBaseQueue(self)
 end
 
 --[[-------------------------------------------------------------------------
@@ -166,7 +189,7 @@ local function checkZoneBases(ent)
 
 	-- check for entering new bases
 	
-	for k,v in pairs(zones) do
+	for k,v in ipairs(zones) do
 		-- for every zone we're in, check if we're also in that zone's base
 		local base = v:GetBase()
 		if revBases[base] then newBases[base] = true continue end -- we're already in that base; don't care 
@@ -191,6 +214,8 @@ local function addZone(ent, zone)
 	local t = getZones(ent)
 
 	table.insert(t, zone)
+
+	hook.Run("EntityEnteredZone", zone, ent)
 	checkZoneBases(ent)
 end
 
@@ -201,6 +226,7 @@ local function removeZone(ent, zone)
 	for k,v in ipairs(t) do
 		if v == zone then
 			table.remove(t, k)
+			hook.Run("EntityExitedZone", zone, ent)
 			checkZoneBases(ent)
 			return
 		end
@@ -208,12 +234,10 @@ local function removeZone(ent, zone)
 end
 
 function bw.Zone:_EntityEntered(brush, ent)
-	--print(tostring(self), "->|", ent, tick())
 	addZone(ent, self)
 end
 
 function bw.Zone:_EntityExited(brush, ent)
-	--print(tostring(self), "<-|", ent, tick())
 	removeZone(ent, self)
 end
 
@@ -234,9 +258,7 @@ hook.Add("EntityEnteredBase", "NetworkBase", function(base, ent)
 	if not IsPlayer(ent) then return end
 
 	local nw = bw.GetPlayerNW(ent)
-	if not nw then print("wtf no playerdata networkable?") return end
 
-	print("entered base; networking", base:GetID())
 	nw:Set("CurrentBase", base:GetID())
 	nw:Network()
 end)
@@ -245,10 +267,27 @@ hook.Add("EntityExitedBase", "NetworkBase", function(base, ent)
 	if not IsPlayer(ent) then return end
 
 	local nw = bw.GetPlayerNW(ent)
-	if not nw then print("wtf no playerdata networkable?") return end
 
-	print("exited base; networking")
 	nw:Set("CurrentBase", nil)
+	nw:Network()
+end)
+
+hook.Add("EntityEnteredZone", "NetworkZone", function(zone, ent)
+	if not IsPlayer(ent) then return end
+
+	local nw = bw.GetPlayerNW(ent)
+
+	nw:Set("CurrentZone", zone:GetID())
+	nw:Network()
+end)
+
+hook.Add("EntityExitedZone", "NetworkZone", function(zone, ent)
+	if not IsPlayer(ent) then return end
+
+	local nw = bw.GetPlayerNW(ent)
+	local z = ent:BW_GetOldestZone()
+
+	nw:Set("CurrentZone", z and z:GetID() or nil)
 	nw:Network()
 end)
 

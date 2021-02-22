@@ -253,6 +253,25 @@ netstack.__tostring = function(self)
 end
 
 function netstack:print()
+	--[[local head = "NetStack: %d ops:"
+	head = head:format(#self.Ops)
+
+	local args = {}
+
+	for k,v in ipairs(self.Ops) do
+		local argsstr = ""	--can't do `table.concat(v.args, ", ")` because it may have shit like userdata(entities) which table.concat doesn't like
+		for k,v in ipairs(v.args) do
+			argsstr = argsstr .. tostring(v) .. ", "
+		end
+
+		argsstr = argsstr:sub(1, #argsstr - 2)
+		if v.Description then
+			argsstr = argsstr .. "	| " .. v.Description
+		end
+
+		args[#args + 1] = ("#%d %s: %s\n"):format(k, v.type, argsstr)
+	end]]
+	
 	print(tostring(self))
 end
 
