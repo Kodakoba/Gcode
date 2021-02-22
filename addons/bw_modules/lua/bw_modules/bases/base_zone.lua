@@ -252,12 +252,12 @@ function bw.Base:ReadNetwork()
 	self:SetName(name)
 
 	local zones = net.ReadUInt(8)
-
+	print("bw.Base:ReadNetwork(): received", zones, "zones")
 	for z=1, zones do
 		local zID = net.ReadUInt(12)
-
+		print("zone #", z, zID)
 		if not bw.Zones[zID] then
-
+			print('did not exist')
 			local eid = ("wait:%d:%d"):format(self:GetID(), zID)
 			bw.NW.Zones:On("ReadZones", eid, function(nw, zones)
 				if zones[zID] then
@@ -267,6 +267,7 @@ function bw.Base:ReadNetwork()
 			end)
 
 		else
+			print('existed')
 			self:AddZone(zID)
 		end
 	end
