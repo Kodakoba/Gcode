@@ -16,21 +16,7 @@ EQmod = {name = "CUM-Ranks", col = Color(60, 175, 255)}
 
 local mod = EQmod
 
-local log = function(...)
-	local s = {...}
-	local str = ""
-
-	for k,v in pairs(s) do 
-		str = str .. (tostring(v) or "Nani? " .. type(v))
-	end
-
-	if not Modules then 
-		MsgC(Color(60, 175, 255), str, "\n")
-		return
-	end
-
-	Modules.Log(mod, str)
-end
+local log = Logger("CUM-SQL", Color(0, 117, 191))
 
 hook.Add("OnMySQLReady", "CUM", function()
 	rsDB = mysqloo.GetDB()

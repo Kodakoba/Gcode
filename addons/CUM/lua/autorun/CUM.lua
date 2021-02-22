@@ -8,9 +8,7 @@ local _SV = 3
 
 CUM = CUM or {}
 
-CUM.Log = function(...)
-	Log({name = "CUM", col = Color(220, 190, 50)}, ...)
-end
+CUM.Log = Logger("CUM", Color(151, 148, 3))
 
 CUM.cmds = CUM.cmds or {}
 CUM.Cats = CUM.Cats or {}
