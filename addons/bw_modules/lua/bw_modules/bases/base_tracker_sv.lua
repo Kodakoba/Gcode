@@ -29,6 +29,9 @@ bw.BasePresenceQueue = bw.BasePresenceQueue or {}
 -- A [key] = true structure works better here than in base queue
 bw.ZonePresence = bw.ZonePresence or {}
 
+-- TODO: Same as BaseQueue
+bw.ZoneQueue = bw.ZoneQueue or {}
+
 -- returns the current base the ent is in, false if in none
 local function getBase(ent)
 	return bw.BasePresence[ent] or false
@@ -224,6 +227,29 @@ bw:On("DeleteBase", "Tracker", function(self, delbase)
 	for ent, bases in pairs(bw.BasePresenceQueue) do
 		removeBase(ent, delbase)
 	end
+end)
+
+
+hook.Add("EntityEnteredBase", "NetworkBase", function(base, ent)
+	if not IsPlayer(ent) then return end
+
+	local nw = bw.GetPlayerNW(ent)
+	if not nw then print("wtf no playerdata networkable?") return end
+
+	print("entered base; networking", base:GetID())
+	nw:Set("CurrentBase", base:GetID())
+	nw:Network()
+end)
+
+hook.Add("EntityExitedBase", "NetworkBase", function(base, ent)
+	if not IsPlayer(ent) then return end
+
+	local nw = bw.GetPlayerNW(ent)
+	if not nw then print("wtf no playerdata networkable?") return end
+
+	print("exited base; networking")
+	nw:Set("CurrentBase", nil)
+	nw:Network()
 end)
 
 --[[
