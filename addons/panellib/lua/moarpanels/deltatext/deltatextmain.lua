@@ -1,11 +1,12 @@
 
+-- this needs a rewrite
 
 --[[
 	DeltaText: The object that holds all of the deltatext objects and calls appropriate functions.
 ]]
 
 
-DeltaText = DeltaText or Object:callable() 	--allow autorefresh of existing objects' metas
+DeltaText = DeltaText or Object:callable()
 
 function DeltaText:Initialize()
 	self.Elements = {}
@@ -73,6 +74,15 @@ end
 
 function DeltaText:RemoveElement(num)
 	if not self.Elements[num] then error("Can't remove a non-existent element!") return end
+	
+	if self.LastActiveText >= num then
+		self.LastActiveText = self.LastActiveText - 1
+	end
+
+	if self.LastActive >= num then
+		self.LastActive = self.LastActive - 1
+	end
+
 	table.remove(self.Elements, num)
 end
 
@@ -140,7 +150,7 @@ end
 
 function DeltaText:CycleNext()
 
-	self:ActivateElement( (self.LastActive or #self.Active) + 1 )
+	self:ActivateElement( self.LastActive + 1 )
 	--[[local key = self.LastActive or #self.Active
 	local tx = self.Elements[key + 1] --new object to activate
 
