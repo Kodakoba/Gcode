@@ -24,8 +24,8 @@ local state_titles = {
 
 local state_descs = {
 	[STATE_BASESELECT] = "Hold R and either pick a base, or create one",
-	[STATE_FIRST] = "LMB to select",
-	[STATE_SECOND] = "LMB to select\nRMB to rewind",
+	[STATE_FIRST] = "LMB to select\nMOUSE5 to select camera as new point",
+	[STATE_SECOND] = "LMB to select\nRMB to rewind\nMOUSE5 to select camera as new point",
 	[STATE_CONFIRM] = "Confirm by saving\nthe zone in R\n(Press LMB to open)",
 }
 
@@ -48,6 +48,7 @@ TOOL.CurrentZone = nil
 TOOL.IsBWAreaMark = true
 
 function TOOL:SetZone(z)
+	print("Tool - set zone", z)
 	self:ChangeState(STATE_FIRST)
 	self.CurrentZone = z
 
@@ -56,6 +57,17 @@ end
 
 function TOOL:DrawHUD()
 	return false
+end
+
+function TOOL:SelectPoint(vec)
+	if self.State < STATE_CONFIRM then
+		self:ChangeState(self.State + 1)
+		self.CurrentArea[self.State] = vec
+
+		if self.State == STATE_CONFIRM then
+			self.ConfirmedStateUCMD = ucmd
+		end
+	end
 end
 
 function TOOL:LeftClick(tr)
@@ -68,14 +80,7 @@ function TOOL:LeftClick(tr)
 	end
 
 	if self.State < STATE_CONFIRM then
-		self:ChangeState(self.State + 1)
-		self.CurrentArea[self.State] = tr.HitPos
-
-		if self.State == STATE_CONFIRM then
-			--OrderVectors(self.CurrentArea[1], self.CurrentArea[2])
-			self.ConfirmedStateUCMD = ucmd
-		end
-
+		self:SelectPoint(tr.HitPos)
 		return true
 	else
 		self:Emit("ZoneConfirmed", self.CurrentZone, unpack(self.CurrentArea))
@@ -86,7 +91,19 @@ function TOOL:LeftClick(tr)
 	return false -- first pred
 end
 
+local needSelection = false
 
+hook.Add("PlayerButtonDown", "IWishThisWasInTOOL", function(ply, btn)
+
+	if btn == MOUSE_5 and IsFirstTimePredicted() and TOOL:GetInstance() then
+		hook.Once("PostDrawTranslucentRenderables", "IWishEyePosWasntScuffed", function()
+			if TOOL:GetInstance() then
+				TOOL:GetInstance():SelectPoint(EyePos())
+			end
+		end) 
+	end
+
+end)
 
 function TOOL:RightClick(tr)
 	if not IsFirstTimePredicted() then return end

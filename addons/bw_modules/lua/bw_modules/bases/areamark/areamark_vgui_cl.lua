@@ -272,6 +272,7 @@ function TOOL:OpenBaseGUI(base)
 		edit:SetDisabled(true)
 
 	function edit:DoClick()
+		print("Setting zone on", tool)
 		tool:SetZone(selectedZone.Zone)
 
 		local pnl = bw.BaseGUI
@@ -758,7 +759,7 @@ function TOOL:CreateTemplateGUI()
 	function ff:AddError(err)
 		self.Error = err
 
-		self:Timer("deerr", math.max(1.25, err:CountWords() * 0.1), 0, function()
+		self:Timer("deerr", math.max(1.25, err:CountWords() * 0.1), 1, function()
 			self.Error = nil
 		end)
 	end
