@@ -301,12 +301,16 @@ local function initNW(ply)
 	nw:Alias("CurrentZone", 1)
 	nw:Alias("CurrentBase", 2)
 
-	nw.Filter = function(p2)
+	nw.Filter = function(self, p2)
 		return ply == p2
 	end
 end
 
 nw.InitPlayerNW = initNW
+
+function bw.GetPlayerNW(ply)
+	return bw.NW.PlayerData[ply]
+end
 
 hook.Add("PlayerInitialSpawn", "InitBaseNWPlayerData", function(ply)
 	initNW(ply)
