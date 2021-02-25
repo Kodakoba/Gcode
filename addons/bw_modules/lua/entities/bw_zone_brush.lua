@@ -2,7 +2,6 @@ ENT.Base = "base_brush"
 ENT.Type = "brush"
 
 function ENT:Initialize()
-	print("ENT:Initialize called", self.Zone, self.Zone and self.Zone:IsValid())
 	self._Initialized = true
 	self:SetSolid(SOLID_BBOX)
 	self:SetTrigger(true)
@@ -15,7 +14,7 @@ end
 function ENT:UpdateZone(zone)
 	-- note: the zone has no information about its' base at this point
 	self.Zone = zone
-	print("UpdateZone called")
+
 	if not self._Initialized then return end -- :Initialize() will run this
 
 	-- whether this is necessary is questionable
