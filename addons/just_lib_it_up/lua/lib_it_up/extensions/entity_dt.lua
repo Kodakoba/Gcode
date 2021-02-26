@@ -16,17 +16,19 @@
 
 ENTITY.oldInstallDataTable = ENTITY.oldInstallDataTable or ENTITY.InstallDataTable
 
-function ENTITY:OnDTVarChanged(...)
-	--classic notify hook (uses NetworkVarNotify, buggy)
-end
+-- for old notify system use ent:OnDTVarChanged()
 
--- for new notify system use ent:On("DTChanged", function(self, dt_name, old_val, new_val, predicted) end)
+-- for new notify system use ent:OnDTChanged() or
+-- ent:On("DTChanged", function(self, dt_name, old_val, new_val, predicted, initial) end)
 
 -- if `predicted` is true, that means this was called due to local realm setting the DTVar
 -- otherwise, that means it was received via the net notification system
 
 -- predicted updates use `old` as the real, currently-set-by-the-server var
 -- so setting a variable clientside multiple times in a row will keep old_val as the real unpredicted var
+
+-- if `initial` is true, that means the entity _just_ came into PVS so we're calling the proxies
+-- on the new entity with the dtvars that changed since last time
 
 if SERVER then util.AddNetworkString("DTVarChangeNotify") end
 
@@ -99,7 +101,7 @@ local OBBs = { -- add ent pos, min, max and center of its' obb to PVS
 }
 
 function ENTITY:NotifyDTVars()
-	if not self:IsValid() then print("NotifyDTVars: invalid self.") return end
+	if not self:IsValid() then queue[self] = nil print("NotifyDTVars: invalid self.") return end
 	if not queue[self] or table.Count(queue[self]) == 0 then print("NotifyDTVars: Nothing queued") return end
 
 	local recip = RecipientFilter()
@@ -149,18 +151,23 @@ function ENTITY:QueueNotifyChange(ind, typ, name, old, new)
 	local notify = self.NotifyDTVars
 
 	-- let other DTVars have a chance to be set and network next tick
-	timer.Create(("NotifyDTs:%p"):format(self), 0, 1, function() notify(self) end)
+	timer.Create(("NotifyDTs:%p:%d"):format(self, engine.TickCount()), 0, 1, function() notify(self) end)
 
 end
 
 local notifQueue = {}
+ENTITY._DTNotifyQueue = notifQueue
 
 local notifyDT --pre-definition, see client part
 
 function ENTITY:InstallDataTable()
-
 	self:oldInstallDataTable()
-	local datatable = select(2, debug.getupvalue(self.CallDTVarProxies, 1))
+	local name, datatable = debug.getupvalue(self.CallDTVarProxies, 1)
+
+	if name ~= "datatable" then
+		errorf("I think we got the wrong table chief %s", datatable)
+		return
+	end
 
 	self._dt_data = datatable
 
@@ -169,6 +176,11 @@ function ENTITY:InstallDataTable()
 
 	--self.CallDTVarProxies = BlankFunc
 
+	local changedDTs = false
+	local all_data = {}
+
+	-- DTVar registers a DTVar onto the entity
+	-- We can abuse that
 	self.DTVar = function( ent, typename, index, name )
 
 		local GetFunc = ent[ "GetDT" .. typename ]
@@ -178,6 +190,9 @@ function ENTITY:InstallDataTable()
 			if old == val then return end --fuck off
 
 			ent:Emit("DTChanged", name, old, val, true)
+			if ent.OnDTChanged then
+				ent:OnDTChanged(name, old, val, true)
+			end
 			return ent[ "SetDT" .. typename ] (ent, slot, val)
 		end
 
@@ -192,6 +207,8 @@ function ENTITY:InstallDataTable()
 			end
 		end
 
+		local prevDatatable = datatable[name]
+
 		datatable[name] = {
 			index = index,
 			SetFunc = SetFunc,
@@ -200,16 +217,34 @@ function ENTITY:InstallDataTable()
 			Notify = {
 				type_curry(self.OnDTVarChanged),
 				type_curry(self.QueueNotifyChange)
-			}
+			},
+			lastKnownValue = prevDatatable and prevDatatable.lastKnownValue or nil -- value which was used in the last notification
 		}
 
 		dt_rev[typename .. index] = datatable[name]
 		datatable[name].name = name
 
+
+		if CLIENT then
+			local curVal = GetFunc(self, index)
+		
+			if datatable.lastKnownValue ~= curVal then
+				all_data[typename] = all_data[typename] or {}
+				all_data[typename][index] = curVal
+
+				changedDTs = true
+			end
+		end
+
 		return datatable[name]
 	end
 
 	local ind = self:EntIndex()
+
+	timer.Simple(0, function()
+		if not CLIENT or not changedDTs or not self:IsValid() then return end
+		notifyDT(self, all_data)
+	end)
 
 	if notifQueue[ind] and CLIENT then
 		timer.Simple(0, function()
@@ -224,33 +259,65 @@ end
 
 if CLIENT then
 
+	-- this handles calling proxies for entities re-entering PVS
+	hook.Add("NotifyShouldTransmit", "UpdateDTProxies", function(ent, tr)
+		if not tr then return end
+		local dt = ent._dt_data
+		--[[
+		print(dt)
+		if not dt then
+
+		end
+		]]
+	end)
+
 	local function callCallbacks(ent, dt, val)
 		local name = dt.name
-		local old = dt.GetFunc(ent, dt.index)
+		local old = dt.lastKnownValue --dt.GetFunc(ent, dt.index)
 		if old == val then old = nil end -- :)
 
+		dt.lastKnownValue = val
+
 		ent:Emit("DTChanged", name, old, val, false)
+		if ent.OnDTChanged then
+			ent:OnDTChanged(name, old, val, false)
+		end
 
 		return name, old, val
 	end
 
-	function notifyDT(ent, all_data)
 
-		local rev = ent._dt_reverse
-		--[[
-			["String"] = {
-				[1] = {datatable_stuff},
-				[2] = {datatable_stuff},
-				...
-			}
+	--[[
+
+		all_data = { ["String"] = {
+						[0] = "aaa",
+						[1] = "Value",
+						[2] = "Value",
+						...
+					},
+					
+					["Float"] = {
+						[1] = 69.69,
+						...
+					} }
 		]]
+
+	function notifyDT(ent, all_data)
+		-- rev = { ["String0"] = datatable, ... }
+		--  (datatable is the same as in InstallDataTable)
+		local rev = ent._dt_reverse
+
 
 		local cbVars = {}
 
 		for typ, indvals in pairs(all_data) do
 
 			for ind, val in pairs(indvals) do
-				if not rev[typ .. ind] then print("notifyDT: didnt find", typ .. ind) continue end
+				if not rev[typ .. ind] then
+					print("NotifyDT: didnt find datatable of type %s index %d.", typ, ind)
+					continue
+				end
+
 				local dtname, old, new = callCallbacks(ent, rev[typ .. ind], val)
 				cbVars[dtname] = {old, new}
 			end
@@ -263,7 +330,7 @@ if CLIENT then
 		local entID = net.ReadUInt(16)
 		local valid = true
 
-		if not IsValid(Entity(entID)) then
+		if not Entity(entID):IsValid() then
 			notifQueue[entID] = {}
 			valid = false
 		end
@@ -288,7 +355,15 @@ if CLIENT then
 		if valid and ent._dt_reverse then
 			notifyDT(ent, dat)
 		else
-			notifQueue[entID] = dat
+
+			if notifQueue[entID] then
+				for k,v in pairs(dat) do
+					notifQueue[entID][k] = v
+				end
+			else
+				notifQueue[entID] = dat
+			end
+
 		end
 
 	end)
