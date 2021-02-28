@@ -3,14 +3,12 @@
 !addons/**
 # But descend into directories
 addons/inventory/**
+addons/epic_miningaddon/**
+addons/inventory/**
+addons/research/**
 
-addons/*gdcw*
-addons/*cw*
-addons/*customizable*
+addons/arccw*
 
-addons/epic_mining/*
-addons/inventory/*
-addons/research/*
 addons/inventory/inventory_1.0.zip
 
 
