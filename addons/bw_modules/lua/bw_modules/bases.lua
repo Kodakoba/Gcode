@@ -13,7 +13,7 @@ end
 local function init(force)
 	BaseWars.Bases = (not force and BaseWars.Bases) or Emitter.Make({
 		-- data populated from base_sql_sv
-		Zones = {},	
+		Zones = {},
 		Bases = {},
 
 		-- objects from base_zone
@@ -38,6 +38,9 @@ local function init(force)
 
 			BASE_EDIT = 5,
 
+			BASE_CORENEW = 6,
+			BASE_CORESAVE = 7,
+
 			SZ = {
 				base = 12,
 				zone = 12
@@ -48,6 +51,11 @@ local function init(force)
 		ZonePaints = {},	-- CL
 	})
 
+	if force then
+		for k,v in ipairs(ents.FindByClass("bw_zone_brush")) do
+			v:Remove()
+		end
+	end
 
 	FInc.FromHere("bases/*.lua", _SH, true, FInc.RealmResolver():SetDefault(true))
 end

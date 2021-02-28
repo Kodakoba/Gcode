@@ -122,17 +122,12 @@ local lastBaseName = ""
 
 hook.Add("HUDPaint", "bas", function()
 	think()
+	local lp = LocalPlayer()
+	local base, zone = lp:BW_GetBase(), lp:BW_GetZone()
 
-	local nw = nw.PlayerData
-
-	if not nw:Get("CurrentBase") then
+	if not base then
 		disappear()
 	else
-		local base = bw.GetBase(nw:Get("CurrentBase"))
-		if not base then print("Didn't find base with ID", nw:Get("CurrentBase")) disappear() return end
-
-		local zone = bw.GetZone( nw:Get("CurrentZone") )
-
 		appear(base, zone)
 	end
 

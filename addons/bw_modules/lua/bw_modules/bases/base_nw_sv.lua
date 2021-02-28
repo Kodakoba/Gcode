@@ -258,6 +258,99 @@ local function yeetZone(ply, pr)
 	end)
 end
 
+local function spawnCore(ply, pr)
+	local ns = netstack:new()
+
+	if not bw.CanModify(ply) then
+		ns:WriteCompressedString("no permissions")
+		pr:ReplySend("BWBases", false, ns)
+		return
+	end
+
+	local ID = net.ReadUInt(nw.SZ.base)
+	local base = bw.GetBase(ID)
+
+	if not base then
+		ns:WriteCompressedString("didn't find base with ID " .. ID)
+		pr:ReplySend("BWBases", false, ns)
+		return
+	end
+
+	-- jesus
+	local baseCore = scripted_ents.GetStored("bw_basecore")
+	if not baseCore or not baseCore.t or not baseCore.t.Model then
+		ns:WriteCompressedString("didn't find basecore entity/model somehow...?")
+		pr:ReplySend("BWBases", false, ns)
+		return
+	end
+
+	print( baseCore.Model )
+	local ok, ent = pcall(DoPlayerEntitySpawn, ply, "prop_physics", baseCore.t.Model, 0)
+
+	if not ok then
+		ns:WriteCompressedString("error while spawning: " .. ent)
+		pr:ReplySend("BWBases", false, ns)
+		return
+	elseif not ent:IsValid() then
+		ns:WriteCompressedString("spawned prop wasn't valid, somehow...")
+		pr:ReplySend("BWBases", false, ns)
+		return
+	end
+
+	ns:WriteUInt(ent:EntIndex(), 16)
+	pr:ReplySend("BWBases", true, ns)
+end
+
+local function saveCore(ply, pr)
+	local ns = netstack:new()
+
+	if not bw.CanModify(ply) then
+		ns:WriteCompressedString("no permissions")
+		pr:ReplySend("BWBases", false, ns)
+		return
+	end
+
+	local ID = net.ReadUInt(nw.SZ.base)
+	local base = bw.GetBase(ID)
+
+	if not base then
+		ns:WriteCompressedString("didn't find base with ID " .. ID)
+		pr:ReplySend("BWBases", false, ns)
+		return
+	end
+
+	local eid = net.ReadUInt(16)
+	local ent = Entity(eid)
+	if not IsValid(ent) then
+		ns:WriteCompressedString("didn't find entity with EntIndex " .. eid)
+		pr:ReplySend("BWBases", false, ns)
+		return
+	end
+
+	base:GetData().BaseCore = {
+		pos = ent:GetPos(),
+		ang = ent:GetAngles(),
+		mdl = ent:GetModel()
+	}
+
+	local json = util.TableToJSON(base:GetData())
+	local a, err = bw.SQL.SaveData(ID, json)
+
+	if err then
+		ns:WriteCompressedString(err)
+		pr:ReplySend("BWBases", false, ns)
+		return
+	end
+
+	a:Then(function(_, q)
+		pr:ReplySend("BWBases", true, ns)
+		ent:Remove()
+		base:SpawnCore()
+	end, function(_, why)
+		ns:WriteCompressedString("query failed:\n" .. why)
+		pr:ReplySend("BWBases", false, ns)
+	end)
+end
 
 local function DetermineAction(mode, ply, pr)
 
@@ -273,6 +366,10 @@ local function DetermineAction(mode, ply, pr)
 		yeetZone(ply, pr)
 	elseif mode == bw.NW.BASE_YEET then
 		yeetBase(ply, pr)
+	elseif mode == bw.NW.BASE_CORENEW then
+		spawnCore(ply, pr)
+	elseif mode == bw.NW.BASE_CORESAVE then
+		saveCore(ply, pr)
 	else
 		print("Unhandled BWBases action:", mode, ply)
 		local ns = netstack:new()
@@ -295,6 +392,8 @@ net.Receive("BWBases", function(l, ply)
 end)
 
 local function initNW(ply)
+	if bw.NW.PlayerData[ply] then return end
+
 	bw.NW.PlayerData[ply] = Networkable("bw_bases_player" .. ply:UserID())
 	local nw = bw.NW.PlayerData[ply]
 	nw:Bind(ply)
@@ -315,3 +414,7 @@ end
 hook.Add("PlayerInitialSpawn", "InitBaseNWPlayerData", function(ply)
 	initNW(ply)
 end)
+
+for k,v in ipairs(player.GetAll()) do
+	initNW(v)
+end

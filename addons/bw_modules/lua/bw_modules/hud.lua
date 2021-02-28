@@ -136,7 +136,7 @@ local function DrawStructureInfo()
 		local toH = h
 
 		local rebooting
-		local dead = not lastent:GetPowered() and not lastent.Powerless
+		local dead = not lastent:GetPower() and not lastent.Powerless
 
 		if lastent.GetRebootTime and lastent:GetRebootTime() ~= 0 then
 			rebooting = true

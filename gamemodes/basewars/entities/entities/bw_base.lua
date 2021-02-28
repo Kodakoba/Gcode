@@ -6,12 +6,10 @@ ENT.PrintName = "Base Entity"
 
 ENT.Model = "models/props_interiors/pot02a.mdl"
 ENT.Skin = 0
-ENT.PowerCapacity = 1000
 ENT.PresetMaxHealth = 100
-ENT.Power = 0
+
 ENT.IsBaseWars = true
-ENT.ConnectPoint = Vector()
-local pow = ENT.Power
+
 
 function ENT:Init()
 
@@ -52,27 +50,11 @@ function ENT:BadlyDamaged()
 end
 
 function ENT:GetPower()
-	return self:GetPowered()
+	return true --self:GetPowered()
 end
 
 function ENT:SetupDataTables()
-
-	self:NetworkVar("Bool", 0, "Powered")
-	self:NetworkVar("Float", 0, "RebootTime")
-
-	self:NetworkVar("Int", 0, "GridID")
-
-	self:NetworkVar("Entity", 0, "Line")
-
-	if CLIENT then
-		self:On("DTChanged", "GridID", function(self, name, old, new)
-			if name ~= "GridID" then return end
-			self:OnChangeGridID(new)
-		end)
-	end
-
 	self:DerivedDataTables()
-
 end
 
 function ENT:IsRebooting()
@@ -104,10 +86,6 @@ end
 if SERVER then
 
 	function ENT:Initialize()
-		BWEnts.Tables[self] = BWEnts.Tables[self] or {}
-		local me = BWEnts.Tables[self]
-		me.ConnectDistanceSqr = self.ConnectDistance ^ 2
-
 		self:SetModel(self.Model)
 		self:SetSkin(self.Skin)
 
@@ -252,13 +230,6 @@ else
 	end
 
 	function ENT:Initialize()
-		BWEnts.Tables[self] = BWEnts.Tables[self] or {}
-			local me = BWEnts.Tables[self]
-			me.ConnectDistanceSqr = self.ConnectDistance ^ 2
 
-		self:OnChangeGridID(self:GetGridID())
-		self:CLInit()
-		self:SHInit()
 	end
-
 end

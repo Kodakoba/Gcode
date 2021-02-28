@@ -22,3 +22,9 @@ function coroutine.YieldResumeIn(s)
 
 	return coroutine.yield()
 end
+
+function coroutine.Creator(f)
+	return function(...)
+		return coroutine.wrap(f)(...)
+	end
+end

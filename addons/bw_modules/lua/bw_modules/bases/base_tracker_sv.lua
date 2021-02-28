@@ -1,19 +1,10 @@
 local bw = BaseWars.Bases
 
-local updateList = { --[[
-
-	[ent] = {
-		[1] = { entered_zones_array },
-		[2] = {  exited_zones_array }
-	}, ...
-
-]] }
-
 -- If an entity touches multiple bases at once, then, first of all, it's your fault,
 -- and second, the oldest entered base will be considered as the `current` one.
 
 -- If the player leaves that oldest base, the one that came after will be considered the `current` one.
--- This repeats for multiple bases (so you can touch 10 bases (you absolute madman), 
+-- This repeats for multiple bases (so you can touch 10 bases (you absolute madman),
 -- and the oldest one will be the current)
 
 -- Current base: [ent] = cur_base
@@ -21,12 +12,46 @@ bw.BasePresence = bw.BasePresence or {
 	-- [ent] = base_obj
 }
 
+for ent, base in pairs(bw.BasePresence) do
+	if not base:IsValid() or not ent:IsValid() then
+		bw.BasePresence[ent] = nil
+	end
+end
+
 -- Base queue: [ent] = { oldest_base, ..., newest_base }
 bw.BasePresenceQueue = bw.BasePresenceQueue or {}
+
+for ent, queue in pairs(bw.BasePresenceQueue) do
+	table.Filter(queue, bw.Base.IsValid)
+end
 
 -- Zone presence: [ent] = { oldest_zone, ..., newest_zone }
 -- Also a queue, like Base queue, and operates on the same principles
 bw.ZonePresence = bw.ZonePresence or {}
+
+for ent, queue in pairs(bw.ZonePresence) do
+	table.Filter(queue, bw.Zone.IsValid)
+end
+
+timer.Create("BWBases_CollectGarbage", 20, 0, function()
+	for ent, v in pairs(bw.ZonePresence) do
+		if not ent:IsValid() then
+			bw.ZonePresence[ent] = nil
+		end
+	end
+
+	for ent, v in pairs(bw.BasePresenceQueue) do
+		if not ent:IsValid() then
+			bw.BasePresenceQueue[ent] = nil
+		end
+	end
+
+	for ent, v in pairs(bw.BasePresence) do
+		if not ent:IsValid() then
+			bw.BasePresence[ent] = nil
+		end
+	end
+end)
 
 local ENTITY = FindMetaTable("Entity")
 
@@ -38,11 +63,11 @@ end
 -- returns the base queue for ent, guaranteed to be a table
 local function getBaseQueue(ent)
 	local t = bw.BasePresenceQueue[ent]
-	
+
 	if not t then
 		t = {}
 		bw.BasePresenceQueue[ent] = t
-	end 
+	end
 
 	return t
 end
@@ -54,7 +79,7 @@ local function getZones(ent)
 	if not t then
 		t = {}
 		bw.ZonePresence[ent] = t
-	end 
+	end
 
 	return t
 end
@@ -93,8 +118,14 @@ end
 		bw.BasePresence[ent] = base
 
 		base:Emit("EntityEntered", ent)
+
 		ent:Emit("EnteredBase", base)
+		if ent.OnEnteredBase then
+			ent:OnEnteredBase(base)
+		end
+
 		hook.Run("EntityEnteredBase", base, ent)
+
 	end
 
 	local function exitBase(ent, base) -- exit a specific base; the only difference is the sanity check
@@ -107,20 +138,11 @@ end
 
 		base:Emit("EntityExited", ent)
 		ent:Emit("ExitedBase", base)
+		if ent.OnExitedBase then
+			ent:OnExitedBase(base)
+		end
 		hook.Run("EntityExitedBase", base, ent)
 	end
-
-	local function exitBaseMaybe(ent) -- exit any base the entity was in, if they were: emit shtuff
-		local cur = getBase(ent)
-		bw.BasePresence[ent] = nil
-
-		if cur then
-			cur:Emit("EntityExited", ent)
-			ent:Emit("ExitedBase", cur)
-			hook.Run("EntityExitedBase", cur, ent)
-		end
-	end
-
 
 
 --[[-------------------------------------------------------------------------
@@ -170,7 +192,7 @@ local function removeBase(ent, base)
 
 			-- there was an another base in queue and we were the current base;
 			-- make that one the new current base
-			if t[1] and k == 1 then 
+			if t[1] and k == 1 then
 				enterBase(ent, t[1])
 			end
 			return
@@ -188,11 +210,11 @@ local function checkZoneBases(ent)
 	local newBases = {} -- [confirmed_present_base] = true
 
 	-- check for entering new bases
-	
+
 	for k,v in ipairs(zones) do
 		-- for every zone we're in, check if we're also in that zone's base
 		local base = v:GetBase()
-		if revBases[base] then newBases[base] = true continue end -- we're already in that base; don't care 
+		if revBases[base] then newBases[base] = true continue end -- we're already in that base; don't care
 		-- we entered a new base: register
 		addBase(ent, base)
 		revBases[base] = true
@@ -200,7 +222,7 @@ local function checkZoneBases(ent)
 	end
 
 	-- check for exiting bases
-	-- if some base is not present in newBases, that means we're 
+	-- if some base is not present in newBases, that means we're
 	-- no longer in any zones, which belong to that base
 
 	for _, base in ipairs(bases) do
@@ -212,6 +234,7 @@ end
 
 local function addZone(ent, zone)
 	local t = getZones(ent)
+	if table.HasValue(t, zone) then return end
 
 	table.insert(t, zone)
 
@@ -290,13 +313,3 @@ hook.Add("EntityExitedZone", "NetworkZone", function(zone, ent)
 	nw:Set("CurrentZone", z and z:GetID() or nil)
 	nw:Network()
 end)
-
---[[
-timer.Create("BWBases_CollectGarbage", 60, 0, function()
-	for ent, v in pairs(updateList) do
-		if not ent:IsValid() then
-			updateList[ent] = nil
-		end
-	end
-end)
-]]

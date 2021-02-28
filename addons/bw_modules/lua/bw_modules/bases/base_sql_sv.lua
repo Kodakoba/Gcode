@@ -7,11 +7,11 @@ local bases_tbl = "bw_bases"
 
 local function PopulateBases(bases)
 	for baseID, data in pairs(bases) do
-		local base = bw.Base:new(baseID)
-		base:SetName(data.name)
+		local base = bw.Base:new(baseID, data.json)
+			:SetName(data.name)
 
 		for _, zonedata in ipairs(data.zones) do
-			local zoneID, zoneName, mins, maxs, name = unpack(zonedata)
+			local zoneID, zoneName, mins, maxs = unpack(zonedata)
 			local zone = bw.Zone:new(zoneID, mins, maxs)
 			if zoneName then
 				zone:SetName(zoneName)
@@ -21,7 +21,7 @@ local function PopulateBases(bases)
 		end
 
 		base:AddToNW()
-		
+
 	end
 
 	bw.Log("SQL data pulled!")
@@ -44,30 +44,33 @@ end
 mysqloo.OnConnect(coroutine.wrap(function()
 	local db = mysqloo:GetDatabase()
 
-	local arg = LibItUp.SQLArgList()
-		arg:AddArg("base_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT")
-		arg:AddArg("base_name VARCHAR(500) NOT NULL")
-		arg:AddArg("UNIQUE KEY `base_name_UNIQUE` (`base_name`)")
+	-- creating bases table
 
-	-- creating bases table (contains ID and name)
-	mysqloo.CreateTable(db, bases_tbl, arg):Then(coroutine.Resumer())
-	
+	local basesArg = LibItUp.SQLArgList()
+		basesArg:AddArg("base_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT")
+		basesArg:AddArg("base_name VARCHAR(500) NOT NULL")
+		basesArg:AddArg("base_name VARCHAR(500) NOT NULL")
+		basesArg:AddArg("base_data JSON")
+		basesArg:AddArg("UNIQUE KEY `base_name_UNIQUE` (`base_name`)")
 
-	local arg = LibItUp.SQLArgList()
+	mysqloo.CreateTable(db, bases_tbl, basesArg):Then(coroutine.Resumer())
 
-	arg:AddArg("zone_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT")
-	arg:AddArg("base_id INT NOT NULL")	-- not PK: there can be multiple zones tied to the same base
-	arg:AddArg("base_name VARCHAR(255) NOT NULL") -- you really don't need the name to be any longer than this
-	
+
+	local zonesArg = LibItUp.SQLArgList()
+
+	zonesArg:AddArg("zone_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT")
+	zonesArg:AddArg("base_id INT NOT NULL")	-- not PK: there can be multiple zones tied to the same base
+	zonesArg:AddArg("base_name VARCHAR(255) NOT NULL") -- you really don't need the name to be any longer than this
+
 	for k,v in ipairs(allArgNames) do
-		arg:AddArg(v .. " FLOAT NOT NULL")
+		zonesArg:AddArg(v .. " FLOAT NOT NULL")
 	end
 
-	local em = mysqloo.CreateTable(db, zones_tbl, arg):Then(coroutine.Resumer())
+	local em = mysqloo.CreateTable(db, zones_tbl, zonesArg):Then(coroutine.Resumer())
 
 	coroutine.yield(); coroutine.yield()	-- 2 queries, 2 yields
 
-	local selWhat = "a.zone_id, a.zone_name, b.base_id, b.base_name"
+	local selWhat = "a.zone_id, a.zone_name, b.base_id, b.base_name, b.base_data"
 
 	for k,v in pairs(argnames) do
 		for _, v2 in pairs(v) do
@@ -82,31 +85,33 @@ mysqloo.OnConnect(coroutine.wrap(function()
 		:Then(function(self, q, data)
 			local bases = {}	-- [base_ID] = { name = string, zones = {...} }
 
-			for _, zdata in ipairs(data) do
+			for _, row in ipairs(data) do
 				-- read the base ID/name (guaranteed to be present)
 
-				local bID = zdata.base_id
+				local bID = row.base_id
+				local json = row.base_data
 				local base = bases[bID] or {
-					name = zdata.base_name,
+					name = row.base_name,
+					json = json,
 					zones = {}	-- [seq_id] = {zone_id, zone_name, zone_mins, zone_maxs}
 				}
 
 				bases[bID] = base
 
 				-- read the zones data (not guaranteed)
-				local zID = zdata.zone_id
+				local zID = row.zone_id
 				if not zID then continue end
 
 				local mins, maxs = Vector(), Vector()
 				for k,v in pairs(argnames.min) do
-					mins[k] = zdata[v]
+					mins[k] = row[v]
 				end
 
 				for k,v in pairs(argnames.max) do
-					maxs[k] = zdata[v]
+					maxs[k] = row[v]
 				end
 
-				base.zones[#base.zones + 1] = {zID, zdata.zone_name or false, mins, maxs}
+				base.zones[#base.zones + 1] = {zID, row.zone_name or false, mins, maxs}
 			end
 
 			PopulateBases(bases)
@@ -180,7 +185,7 @@ function bw.SQL.CreateZone(name, baseid, min, max)
 		return em, ("no base found for %s"):format(baseid)
 	end
 	local base = bw.GetBase(baseid)
-	
+
 
 	for i=1, 3 do
 		zone_q:setNumber(i, min[i])
@@ -206,12 +211,13 @@ end
 
 local edit_zone_q
 local edit_base_q
+local data_base_q
 
 mysqloo.OnConnect(function()
 	local fuck = "UPDATE master.bw_baseareas SET %s, zone_name = ? WHERE (`zone_id` = ?);"
 	fuck = fuck:format(
 		-- SET `name` = ?, `name` = ?
-		table.concat(allArgNames, " = ?, ") .. " = ?" 
+		table.concat(allArgNames, " = ?, ") .. " = ?"
 	)
 	-- UPDATE master.bw_baseareas SET zone_name = ?, zone_min_x = ?, zone_min_y = ?, zone_min_z = ?, zone_max_x = ?, zone_max_y = ?, zone_max_z = ? WHERE (`zone_id` = ?);
 	edit_zone_q = mysqloo:GetDatabase():prepare(fuck)
@@ -219,8 +225,11 @@ mysqloo.OnConnect(function()
 	local fuck = "UPDATE master.%s SET base_name = ? WHERE (`base_id` = ?);"
 	fuck = fuck:format(bases_tbl)
 
-	-- UPDATE master.bw_baseareas SET base_name = ? WHERE (`zone_id` = ?);
 	edit_base_q = mysqloo:GetDatabase():prepare(fuck)
+
+	local fuck = "UPDATE master.%s SET base_data = ? WHERE (`base_id` = ?);"
+	fuck = fuck:format(bases_tbl)
+	data_base_q = mysqloo:GetDatabase():prepare(fuck)
 end)
 
 
@@ -275,6 +284,20 @@ function bw.SQL.EditBase(id, name)
 		base:SetName(name)
 		base:AddToNW()
 	end)
+
+	return em:Exec()
+end
+
+function bw.SQL.SaveData(id, json)
+	local em = MySQLEmitter(data_base_q)
+
+	local base = bw.GetBase(id)
+	if not base then
+		return em, ("no base found with id %s"):format(id)
+	end
+
+	data_base_q:setString(1, json)
+	data_base_q:setNumber(2, id)
 
 	return em:Exec()
 end

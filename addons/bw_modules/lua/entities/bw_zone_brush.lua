@@ -30,7 +30,7 @@ end
 function ENT:SetZone(zone)
 	CheckArg(1, zone, BaseWars.Bases.IsZone, "zone")
 	self:UpdateZone(zone)
-	
+
 	zone:On("BoundsChanged", self, function()
 		self:UpdateZone(zone)
 	end)
@@ -45,6 +45,8 @@ function ENT:GetBase()
 end
 
 function ENT:StartTouch(what)
+	if not self.Zone:IsValid() then self:Remove() return end
+
 	self.Zone:_EntityEntered(self, what)
 	self.Zone:Emit("EntityEntered", self, what)
 end
@@ -52,4 +54,6 @@ end
 function ENT:EndTouch(what)
 	self.Zone:_EntityExited(self, what)
 	self.Zone:Emit("EntityExited", self, what)
+
+	if not self.Zone:IsValid() then self:Remove() return end
 end

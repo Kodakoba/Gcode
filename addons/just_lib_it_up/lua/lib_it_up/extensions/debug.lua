@@ -109,11 +109,21 @@ function clPrint(...)
 	if CLIENT then print(...) end
 end
 clprint = clPrint
+
 function svPrint(...)
 	if SERVER then print(...) end
 end
 svprint = svPrint
 
+function clPrintf(...)
+	if CLIENT then printf(...) end
+end
+clprintf = clPrintf
+
+function svPrintf(...)
+	if SERVER then printf(...) end
+end
+svprintf = svPrintf
 
 LibItUp.LogIDs = LibItUp.LogIDs or {}
 function CreateLogID(id, str, types)

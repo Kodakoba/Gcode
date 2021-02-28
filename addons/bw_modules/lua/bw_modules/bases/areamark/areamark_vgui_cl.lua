@@ -60,7 +60,7 @@ function TOOL:OpenBaseGUI(base)
 	end
 
 	local function addZone(z, new)
-		
+
 
 		local zb = vgui.Create("FButton", zscr)
 		all_zones[#all_zones + 1] = zb
@@ -68,7 +68,7 @@ function TOOL:OpenBaseGUI(base)
 		zb:SetSize(128, 36)
 		zb.Font = font
 
-		
+
 
 		function zb:SetZName(n)
 			local fits = string.MaxFits(n, self:GetWide() - 4, self.Font)
@@ -82,7 +82,7 @@ function TOOL:OpenBaseGUI(base)
 
 		zb:SetZName(z:GetName())
 		zb.Zone = z
-		
+
 
 		local ms, mx = z:GetBounds()
 
@@ -91,14 +91,14 @@ function TOOL:OpenBaseGUI(base)
 			BaseID = base:GetID(),
 			Mins = ms,
 			Maxs = mx,
-		} 
+		}
 
 		zb.New = new
 
 		zp:Add(zb)
 
 		zb.Border = {
-			w = new and 2 or 0, 
+			w = new and 2 or 0,
 			h = new and 2 or 0
 		}
 
@@ -137,7 +137,7 @@ function TOOL:OpenBaseGUI(base)
 
 		local white = zb.LabelColor:Copy()
 		local change = Colors.Warning:Copy()
-		
+
 		function zb:UpdateLabelColor()
 			if self._ActualLabel ~= self.Zone:GetName() then
 				self:LerpColor(self.LabelColor, change, 0.3, 0, 0.3)
@@ -175,7 +175,7 @@ function TOOL:OpenBaseGUI(base)
 	local zoneTE
 
 	-- each button's settings
-	local btnHeight = 36 * scale 
+	local btnHeight = 36 * scale
 	local amtButtons = 2
 	local btnPad = 6
 
@@ -183,33 +183,6 @@ function TOOL:OpenBaseGUI(base)
 	local buttonsHeight = btnHeight * amtButtons + btnPad * (amtButtons - 1)
 
 	local center = (zCanvas:GetTall() - zoneTE_Y - zoneTE_H) / 2 + zoneTE_Y + zoneTE_H
-
-	--[[
-	local locks = {}
-
-	local function lock(...)
-		local id = uniq.Seq("amLocks")
-
-		for k,v in ipairs({...}) do
-			v:SetDisabled(true)
-			locks[v] = locks[v] or {}
-			locks[v][id] = true
-		end
-
-		return id
-	end
-
-	local function unlock(id)
-		for btn, lx in pairs(locks) do
-			if lx[id] then
-				lx[id] = nil
-				if not next(lx) then
-					btn:SetDisabled(false)
-				end
-			end
-		end
-	end
-	]]
 
 	local addBtn, yeetZone
 	local edit, save
@@ -362,7 +335,7 @@ function TOOL:OpenBaseGUI(base)
 				zone:SetName(zname)
 				zone:SetBounds(mins, maxs)
 				zone:Validate()
-				
+
 				base:AddZone(zone)
 
 				makePainted(zone)
@@ -403,7 +376,7 @@ function TOOL:OpenBaseGUI(base)
 
 		local dis = false
 
-		
+
 
 		if not zoneTE or not selectedZone then disable(true) return end
 
@@ -479,7 +452,7 @@ function TOOL:OpenBaseGUI(base)
 		edit:SetDisabled(false)
 		createZoneTE(zb.Zone, zb)
 
-		
+
 	end
 
 	function zCanvas:RemoveZoneControls(zb)
@@ -520,10 +493,17 @@ function TOOL:OpenBaseGUI(base)
 
 	zscr:InvalidateParent(true)
 
+	--[[-------------------------------------------------------------------------
+		Bottom buttons (delete base/save base/put base core)
+	---------------------------------------------------------------------------]]
+	local btns = 3
+	local pad = 8
+	local btnW = (pnl:GetWide() - zCanvas.X * 2 - (btns - 1) * pad) / btns
+
 	local yeetBase = vgui.Create("FButton", pnl)
-	yeetBase.X = zscr.X + 32
+	yeetBase.X = zCanvas.X
 	yeetBase.Y = pnl:GetTall() - 32 - 4
-	yeetBase:SetSize(160, 32)
+	yeetBase:SetSize(btnW, 32)
 	yeetBase.Label = "YEET BASE"
 	yeetBase:SetColor(Colors.Red:Copy():ModHSV(0, 0, -0.4))
 	yeetBase.MxScaleDown = 1
@@ -585,7 +565,7 @@ function TOOL:OpenBaseGUI(base)
 	local saveBase = vgui.Create("FButton", pnl)
 	saveBase.X = yeetBase.X + yeetBase:GetWide() + 8
 	saveBase.Y = pnl:GetTall() - 32 - 4
-	saveBase:SetSize(zscr:GetWide() - saveBase.X + 32, 32)
+	saveBase:SetSize(btnW, 32)
 	saveBase.Label = "Edit name"
 	saveBase:SetColor(Colors.Greenish)
 	saveBase:SetIcon(Icons.Edit:Copy():SetSize(24, 24))
@@ -613,6 +593,69 @@ function TOOL:OpenBaseGUI(base)
 			local why = net.ReadCompressedString()
 			pnl:AddError(why)
 		end)
+	end
+
+	local putCore = vgui.Create("FButton", pnl)
+		putCore.X = saveBase.X + saveBase:GetWide() + 8
+		putCore.Y = saveBase.Y
+		local putCoreCol = Color(0, 205, 123)
+		putCore:SetSize(btnW, 32)
+		putCore.Label = "Edit base core"
+		putCore:SetColor(putCoreCol)
+		putCore:SetIcon(Icons.Plus:Copy():SetSize(20, 20))
+		--putCore:SetDisabled(true)
+
+	function putCore:DoClick()
+		local hasCore = self:HasCore()
+
+		if hasCore then
+			local pr = bw.RequestBaseCoreSave(base:GetID(), base.NewCoreIndex)
+			pr:Then(function()
+				base.NewCoreIndex = nil
+			end, function()
+				local why = net.ReadCompressedString()
+				pnl:AddError(why)
+			end)
+		else
+			local pr = bw.RequestBaseCoreCreation(base:GetID())
+			pr:Then(function()
+				local eid = net.ReadUInt(16)
+				base.NewCoreIndex = eid
+			end, function()
+				local why = net.ReadCompressedString()
+				pnl:AddError(why)
+			end)
+		end
+	end
+
+	function putCore:HasCore()
+		if not base.NewCoreIndex or not IsValid(Entity(base.NewCoreIndex)) then return false end
+		return true
+	end
+
+	function putCore:Think()
+		local hasCore = self:HasCore()
+		putCore.Label = (hasCore and "Save" or "Make") .. " base core"
+	end
+
+	function putCore:OnHover()
+		local hasCore = self:HasCore()
+		if hasCore then
+			local cl, new = self:AddCloud("warn", "Remove the core prop to put down a new one, if you want.")
+
+			if new then
+				cl:SetFont("OS22")
+				cl:SetTextColor(Colors.Reddish)
+				cl:SetRelPos(self:GetWide() / 2, self:GetTall())
+				cl.ToY = 12
+				cl.YAlign = 0
+				cl.MaxW = 500
+			end
+		end
+	end
+
+	function putCore:OnUnhover()
+		self:RemoveCloud("warn")
 	end
 
 	pnl._TriedToExit = 0
@@ -765,10 +808,10 @@ function TOOL:CreateTemplateGUI()
 	end
 
 	local errFont = "OS24"
-	
+
 	function ff:PrePaint(w, h)
 		self:To("ErrFrac", self.Error and 1 or 0, 0.3, 0, self.Error and 0.3 or 2.4)
-		
+
 		if not lastErr and not self.Error or self.ErrFrac == 0 then return end
 
 		if self.Error and lastErr ~= self.Error then

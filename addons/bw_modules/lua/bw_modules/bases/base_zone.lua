@@ -13,6 +13,9 @@ bw.MaxZoneNameLength = 120
 ChainAccessor(bw.Base, "ID", "ID")
 ChainAccessor(bw.Zone, "ID", "ID")
 
+ChainAccessor(bw.Base, "Data", "Data")
+ChainAccessor(bw.Zone, "Data", "Data")
+
 function bw.Zone:__tostring()
 	return ("BWZone [%d][%s]"):format(self:GetID(), self:GetName())
 end
@@ -24,7 +27,6 @@ end
 --[[-------------------------------------------------------------------------
 	Zone object
 ---------------------------------------------------------------------------]]
-
 
 function bw.Zone:GetBounds()
 	return self._Mins, self._Maxs
@@ -83,7 +85,7 @@ function bw.Zone:_Validate()
 
 	BaseWars.Bases.Zones[id] = self
 	self._Valid = true
-	
+
 	return true
 end
 
@@ -96,6 +98,19 @@ function bw.Zone:Validate(optional)
 		return
 	end
 
+end
+
+function bw.Zone:SpawnBrush()
+	self.Brush = ents.Create("bw_zone_brush")
+
+	if not self.Brush:IsValid() then
+		ErrorNoHalt("Failed to create a zone brush entity.\n")
+		return
+	end
+
+	self.Brush:SetZone(self)
+	self.Brush:Activate()
+	self.Brush:Spawn()
 end
 
 function bw.Zone:Initialize(id, mins, maxs)
@@ -115,6 +130,7 @@ function bw.Zone:Initialize(id, mins, maxs)
 		self:SetBounds(mins, maxs)
 	end
 
+	self.Data = {}
 	self._ShouldPaint = false
 	self._Name = ""
 	self._Alpha = 0
@@ -124,19 +140,9 @@ function bw.Zone:Initialize(id, mins, maxs)
 
 	self.Players = {}
 	self.Entities = {}
-	
+
 	if SERVER and valid then
-		self.Brush = ents.Create("bw_zone_brush")
-
-		if not self.Brush:IsValid() then
-			ErrorNoHalt("Failed to create a zone brush entity.\n")
-			return
-		end
-
-		self.Brush:SetZone(self)
-		self.Brush:Activate()
-		self.Brush:Spawn()
-
+		self:SpawnBrush()
 	end
 end
 
@@ -164,7 +170,7 @@ ChainAccessor(bw.Zone, "_Color", "Color")
 ChainAccessor(bw.Zone, "_Alpha", "Alpha")
 
 function bw.Zone:IsValid()
-	return self._Valid
+	return self._Valid and bw.Zones[self:GetID()] == self
 end
 
 function bw.Zone:GetBase()
@@ -178,7 +184,41 @@ end
 	Base object
 ---------------------------------------------------------------------------]]
 
-function bw.Base:Initialize(id)
+function bw.Base:SpawnCore()
+	local dat = self:GetData()
+	if not dat.BaseCore then return end
+
+	local bc = dat.BaseCore
+	local pos, ang, mdl = bc.pos, bc.ang, bc.mdl
+
+	if not isvector(pos) or not isangle(ang) or not util.IsValidModel(mdl) then
+		errorf("Invalid data for base's basecore spawn.\
+	Position: %s (valid: %s)\
+	Angle: %s (valid: %s)\
+	Model: %s (valid: %s)",
+	tostring(pos), isvector(pos),
+	tostring(ang), isangle(ang),
+	tostring(mdl), util.IsValidModel(mdl))
+	end
+
+	local prevCore = IsValid(self:GetBaseCore()) and self:GetBaseCore()
+	local core = prevCore or ents.Create("bw_basecore")
+	core:SetPos(pos)
+	core:SetAngles(ang)
+	core:SetBase(self)
+	if not prevCore then
+		core:Spawn()
+		self:AddToNW()
+	end
+
+	core:SetModel(mdl)
+
+	self:SetBaseCore(core)
+end
+
+ChainAccessor(bw.Base, "BaseCore", "BaseCore")
+
+function bw.Base:Initialize(id, json)
 	CheckArg(1, id, isnumber, "base ID")
 
 	self.ID = id
@@ -188,6 +228,16 @@ function bw.Base:Initialize(id)
 
 	self.Players = {}
 	self.Entities = {}
+
+	self.Data = {}
+
+	if json and isstring(json) then
+		local t = json:FromJSON()
+		if t then
+			self.Data = t
+			self:SpawnCore()
+		end
+	end
 
 	self.Name = "-unnamed base-"
 	self._Valid = true
@@ -208,6 +258,10 @@ function bw.Base:Remove(replaced)
 		end
 	end
 
+	if IsValid(self:GetBaseCore()) then
+		self:GetBaseCore():Remove()
+	end
+
 	BaseWars.Bases.Bases[self:GetID()] = nil
 	bw.NW.Bases:Set(self:GetID(), nil)
 
@@ -218,8 +272,8 @@ end
 ChainAccessor(bw.Base, "Zones", "Zones")
 ChainAccessor(bw.Base, "Name", "Name")
 
-function bw.Zone:IsValid()
-	return self._Valid
+function bw.Base:IsValid()
+	return self._Valid and bw.Bases[self:GetID()] == self
 end
 
 function bw.Base:RemoveZone(zone)
@@ -251,13 +305,13 @@ function bw.Base:ReadNetwork()
 	local name = net.ReadCompressedString(bw.MaxBaseNameLength)
 	self:SetName(name)
 
-	local zones = net.ReadUInt(8)
+	local amtZones = net.ReadUInt(8)
 
-	for z=1, zones do
+	for z=1, amtZones do
 		local zID = net.ReadUInt(12)
 
 		if not bw.Zones[zID] then
-			
+
 			local eid = ("wait:%d:%d"):format(self:GetID(), zID)
 			bw.NW.Zones:On("ReadZones", eid, function(nw, zones)
 				if zones[zID] then
@@ -304,7 +358,17 @@ end
 
 
 
+hook.Add("PostCleanupMap", "RespawnBaseZone", function()
+	if CLIENT then return end
 
+	for k,v in pairs(bw.Zones) do
+		v:SpawnBrush()
+	end
+
+	for k,v in pairs(bw.Bases) do
+		v:SpawnCore()
+	end
+end)
 
 if CLIENT then
 	-- server includes it in base_sql_sv.lua

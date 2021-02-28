@@ -11,10 +11,10 @@ ENT.IsElectronic = true
 ENT.PowerType = "Consumer"
 
 ENT.PowerRequired = 20
-ENT.PowerCapacity = 1000
 ENT.EmitUnusableBeeps = true
 
 ENT.ConnectDistance = 550
+ENT.ConnectPoint = Vector()
 
 ENT.RebootTime = 3
 
@@ -33,6 +33,27 @@ end
 function ENT:IsPowered(val)
 	return self:GetPowered()
 end
+
+function ENT:SetupDataTables()
+	self.BaseClass.SetupDataTables(self)
+
+	self:NetworkVar("Bool", 0, "Powered")
+	self:NetworkVar("Float", 0, "RebootTime")
+
+	self:NetworkVar("Int", 0, "GridID")
+
+	self:NetworkVar("Entity", 0, "Line")
+
+	if CLIENT then
+		self:On("DTChanged", "GridID", function(self, name, old, new)
+			if name ~= "GridID" then return end
+			self:OnChangeGridID(new)
+		end)
+	end
+
+end
+
+
 
 function ENT:Disconnect()
 	self:GetGrid():RemoveConsumer(self)
@@ -119,6 +140,26 @@ if SERVER then
 		me.CheckDist = true
 
 		self:OnPhysicsUpdate(...)
+	end
+
+	function ENT:Initialize()
+		BWEnts.Tables[self] = BWEnts.Tables[self] or {}
+		local me = BWEnts.Tables[self]
+		me.ConnectDistanceSqr = self.ConnectDistance ^ 2
+	end
+	
+else
+	
+	function ENT:Initialize()
+		self.BaseClass.Initialize(self)
+
+		BWEnts.Tables[self] = BWEnts.Tables[self] or {}
+			local me = BWEnts.Tables[self]
+			me.ConnectDistanceSqr = self.ConnectDistance ^ 2
+
+		self:OnChangeGridID(self:GetGridID())
+		self:CLInit()
+		self:SHInit()
 	end
 
 end

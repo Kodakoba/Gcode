@@ -36,6 +36,10 @@ function amtNewlines(s)
 	return select(2, s:gsub("[\r\n]", ""))
 end
 
+function string.FromJSON(s)
+	return util.JSONToTable(s)
+end
+
 function string.WordWrap(name, w, font)	-- this should be deprecated cuz it sucks
 
 	surface.SetFont(font or "RL18")

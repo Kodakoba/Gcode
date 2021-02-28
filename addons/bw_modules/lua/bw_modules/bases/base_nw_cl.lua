@@ -49,7 +49,7 @@ end)
 
 bNW:On("ReadChangeValue", "DecodeBases", function(self, key)
 	local yiss = net.ReadBool()
-	
+
 	if not yiss then
 		local z = bw.Zones[key]
 		if z then z:Remove() end
@@ -66,10 +66,56 @@ bNW:On("NetworkedChanged", "DecodedAll", function(self)
 	bw:Emit("ReadBases")
 end)
 
+local PLAYER = FindMetaTable("Player")
+
+function PLAYER:BW_GetBase()
+	if self ~= LocalPlayer() then
+		errorf("You can only get base of LocalPlayer! (tried to get %s's base)", self)
+		return
+	end
+
+	local nw = nw.PlayerData
+	if not nw then return end --???
+
+	return bw.GetBase(nw:Get("CurrentBase"))
+end
+
+function PLAYER:BW_GetZone()
+	if self ~= LocalPlayer() then
+		errorf("You can only get zone of LocalPlayer! (tried to get %s's zone)", self)
+		return
+	end
+
+	local nw = nw.PlayerData
+	if not nw then return end --???
+
+	return bw.GetZone( nw:Get("CurrentZone" ))
+end
 
 --[[-------------------------------------------------------------------------
 	Basezone modify requests
 ---------------------------------------------------------------------------]]
+
+function bw.RequestBaseCoreCreation(baseid)
+	net.Start("BWBases")
+		net.WriteUInt(nw.BASE_CORENEW, 4)
+		local pr = net.StartPromise()
+		net.WriteUInt(baseid, nw.SZ.base)
+	net.SendToServer()
+
+	return pr
+end
+
+function bw.RequestBaseCoreSave(baseid, eid)
+	net.Start("BWBases")
+		net.WriteUInt(nw.BASE_CORESAVE, 4)
+		local pr = net.StartPromise()
+		net.WriteUInt(baseid, nw.SZ.base)
+		net.WriteUInt(eid, 16)
+	net.SendToServer()
+
+	return pr
+end
 
 function bw.RequestBaseCreation(name)
 	net.Start("BWBases")

@@ -100,6 +100,10 @@ local OBBs = { -- add ent pos, min, max and center of its' obb to PVS
 	end
 }
 
+function ENTITY:UseNetDTNotify(b)
+	self._UsesNetDTNotify = (b == nil and true) or b
+end
+
 function ENTITY:NotifyDTVars()
 	if not self:IsValid() then queue[self] = nil print("NotifyDTVars: invalid self.") return end
 	if not queue[self] or table.Count(queue[self]) == 0 then print("NotifyDTVars: Nothing queued") return end
@@ -133,6 +137,7 @@ end
 
 function ENTITY:QueueNotifyChange(ind, typ, name, old, new)
 	if CLIENT then return end
+	if not self._UsesNetDTNotify then return end
 	if old == new then return end --fuck off
 
 	queue[self] = queue[self] or {}
@@ -215,11 +220,14 @@ function ENTITY:InstallDataTable()
 			GetFunc = GetFunc,
 			typename = typename,
 			Notify = {
-				type_curry(self.OnDTVarChanged),
 				type_curry(self.QueueNotifyChange)
 			},
 			lastKnownValue = prevDatatable and prevDatatable.lastKnownValue or nil -- value which was used in the last notification
 		}
+
+		if isfunction(self.OnDTVarChanged) then
+			table.insert(datatable[name].Notify, 1, type_curry(self.OnDTVarChanged))
+		end
 
 		dt_rev[typename .. index] = datatable[name]
 		datatable[name].name = name
@@ -271,16 +279,16 @@ if CLIENT then
 		]]
 	end)
 
-	local function callCallbacks(ent, dt, val)
+	local function callCallbacks(ent, dt, val, init)
 		local name = dt.name
 		local old = dt.lastKnownValue --dt.GetFunc(ent, dt.index)
 		if old == val then old = nil end -- :)
-
+		init = init or false
 		dt.lastKnownValue = val
 
-		ent:Emit("DTChanged", name, old, val, false)
+		ent:Emit("DTChanged", name, old, val, init)
 		if ent.OnDTChanged then
-			ent:OnDTChanged(name, old, val, false)
+			ent:OnDTChanged(name, old, val, init)
 		end
 
 		return name, old, val
@@ -302,7 +310,7 @@ if CLIENT then
 					} }
 		]]
 
-	function notifyDT(ent, all_data)
+	function notifyDT(ent, all_data, init)
 		-- rev = { ["String0"] = datatable, ... }
 		--  (datatable is the same as in InstallDataTable)
 		local rev = ent._dt_reverse
@@ -318,7 +326,7 @@ if CLIENT then
 					continue
 				end
 
-				local dtname, old, new = callCallbacks(ent, rev[typ .. ind], val)
+				local dtname, old, new = callCallbacks(ent, rev[typ .. ind], val, init)
 				cbVars[dtname] = {old, new}
 			end
 		end
