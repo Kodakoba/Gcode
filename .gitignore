@@ -1,6 +1,6 @@
 *.*
 
-!addons/**
+!addons/**/*.lua
 # But descend into directories
 addons/inventory/**
 addons/epic_miningaddon/**
