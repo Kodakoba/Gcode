@@ -1,19 +1,3 @@
-
-
---require("serversecure.core")
---[[
-print("<---- required serversecure! ---->")
-serversecure.EnableInfoCache(true)
-serversecure.SetFakeMaxPlayerCount(96)
-serversecure.SetFakePlayerCount(69)
-serversecure.EnablePacketValidation(true)   --fakeplayer will not work without this
-serversecure.EnablePlayerInfoCache(true)
-
-
-print("fake player count on refresh:", serversecure.RefreshInfoCache())
-]]
-
-
 local debuggingDownloads = false
 
 
@@ -34,8 +18,11 @@ local BWAddons = {
     2175261690, -- arccw fa:s 1
     2131161276, -- arccw m9k "extras"
     2257255110, -- arccw GO
+    --2360831320, -- "oranche standard issue" basically an arccw pack (update: it sucks)
+    2409364730, -- gunsmith offensive extras
 
     2155366756, -- vmanip
+
 }
 
 
@@ -48,7 +35,7 @@ local function indent(t)
 end
 
 local function DownloadFolder(str, mask)
-    local files, folders=file.Find(str .. (mask and "/" .. mask or "/*"),"MOD","namedesc")
+    local files, folders = file.Find(str .. (mask and "/" .. mask or "/*"), "MOD", "namedesc")
 
     local root = false
 
@@ -81,7 +68,7 @@ local function DownloadFolder(str, mask)
                     Color(200, 250, 90),"Added folder: ",
                     Color(220, 220, 220), str .. "/" .. v .. "\n")
 
-                subdirs = subdirs+1
+                subdirs = subdirs + 1
             end
 
             DownloadFolder(str .. "/" .. v)
@@ -99,7 +86,7 @@ end
 
 timer.Simple(0, function()
 
-    for i=1,#BWAddons do
+    for i=1, #BWAddons do
         resource.AddWorkshop(tostring(BWAddons[i]))
     end
 
@@ -107,9 +94,9 @@ timer.Simple(0, function()
 
     DownloadFolder("sound/dash")
 
-    DownloadFolder('sound/snds')
+    DownloadFolder("sound/snds")
 
-    DownloadFolder('sound/playsound')
+    DownloadFolder("sound/playsound")
 
     DownloadFolder("materials/vgui/prestige")
 
