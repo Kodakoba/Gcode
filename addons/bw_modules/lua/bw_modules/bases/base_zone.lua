@@ -301,6 +301,43 @@ end
 
 -- CL only
 
+function bw.Base:_Ready()
+	if self._Ready then return end
+
+	self:Emit("Ready")
+	hook.Run("BaseReceived", self)
+	self._Ready = true
+end
+
+function bw.Base:_OnReady()
+	local cores = ents.FindByClass("bw_basecore") 	-- find all cores on the map; any cores that enter PVS
+													-- will be handled by NotifyShouldTransmit
+
+	for k,v in ipairs(cores) do
+		local base = v:GetBase()
+		if base == self then
+			self:SetBaseCore(v)
+
+			-- a base is only ready if it has a core assigned to it as well
+			self:_Ready()
+			break
+		end
+	end
+
+end
+
+hook.Add("NotifyShouldTransmit", "ReadyBase", function(e, add)
+	if not add then return end
+	if not bw.IsCore(e) then return end
+
+	local ENT = scripted_ents.GetStored("bw_basecore").t
+	local base = ENT.GetBase(e) -- fucking gmod is insane
+	if not base then print(self, myBaseID, "didn't find base with that ID when entered PVS?") return end
+
+	base:SetBaseCore(e)
+	base:_Ready()
+end)
+
 function bw.Base:ReadNetwork()
 	local name = net.ReadCompressedString(bw.MaxBaseNameLength)
 	self:SetName(name)
@@ -317,11 +354,13 @@ function bw.Base:ReadNetwork()
 				if zones[zID] then
 					self:AddZone(zones[zID])
 					bw.NW.Zones:RemoveListener("ReadZones", eid)
+					self:_OnReady()
 				end
 			end)
 
 		else
 			self:AddZone(zID)
+			self:_OnReady()
 		end
 	end
 end
@@ -356,6 +395,9 @@ function bw.IsZone(what)
 	return getmetatable(what) == bw.Zone
 end
 
+function bw.IsCore(what)
+	return IsEntity(what) and what:IsValid() and what:GetClass() == "bw_basecore"
+end
 
 
 hook.Add("PostCleanupMap", "RespawnBaseZone", function()
@@ -374,3 +416,5 @@ if CLIENT then
 	-- server includes it in base_sql_sv.lua
 	include("areamark/_init.lua")
 end
+
+FInc.FromHere("baseview/_init.lua", _SH, true, FInc.RealmResolver():SetDefault(true))

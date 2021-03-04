@@ -408,7 +408,8 @@ end
 nw.InitPlayerNW = initNW
 
 function bw.GetPlayerNW(ply)
-	return bw.NW.PlayerData[ply]
+	local nw = bw.NW.PlayerData[ply]
+	return (nw and nw:IsValid()) and nw
 end
 
 hook.Add("PlayerInitialSpawn", "InitBaseNWPlayerData", function(ply)

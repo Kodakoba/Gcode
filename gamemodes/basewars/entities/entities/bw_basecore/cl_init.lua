@@ -7,6 +7,39 @@ AddCSLuaFile("shared.lua")
 local needHalo = {}		-- [seqNum] = ent
 local needHaloRev = {}	-- [ent] = seqNum
 
+local wheel
+
+local function makeWheel(ent)
+	if wheel then wheel._Core = ent return wheel end
+
+	local wh = LibItUp.InteractWheel:new()
+	wh._Core = ent
+	wheel = wh
+
+	if ent:GetClaimed() then
+
+		local view = wh:AddOption("View Base", "Upgrades, modules, stats, etc.")
+			view:On("Select", function()
+				wheel._Core:OpenBaseView()
+			end)
+
+	else
+		local claim = wh:AddOption("Claim Base", "Yo this our turf now",
+				Icons.Flag128:Copy():SetSize(106 * 0.75, 128 * 0.75))
+			claim:On("Select", function()
+				wheel._Core:AttemptClaim()
+			end)
+
+		local exam = wh:AddOption("Examine Base", "See fuel supply and inventory space.\n(NYI)",
+				Icons.MagnifyingGlass128:Copy():SetSize(96, 96))
+			exam:On("Select", function()
+				wheel._Core:AttemptClaim()
+			end)
+	end
+
+	return wh
+end
+
 local colThroughWalls = Colors.Sky:Copy():ModHSV(0, -0.1, -0.1)
 local colObeyZ = Colors.Greenish:Copy():ModHSV(0, 0.1, 0.1)
 
@@ -18,7 +51,10 @@ function ENT:Initialize()
 
 	self.HaloTable = {self}
 	self.Claimed = false
+	self.Using = 0
 end
+
+local useTime = 0.3
 
 function ENT:Draw()
 	self:DrawModel()
@@ -36,8 +72,31 @@ function ENT:Draw()
 
 	if lp:BW_GetBase() ~= base then return end
 
+	local using = lp:KeyDown(IN_USE) and lp:GetEyeTrace().Entity == self
+
+	if using then
+		self.Using = math.min(self.Using + FrameTime(), useTime)
+	else
+		self.Using = math.max(0, self.Using - FrameTime() * 2)
+		if wheel then
+			wheel:Hide()
+			wheel = nil
+		end
+	end
+
+	if self.Using == useTime and not wheel then
+		local wh = makeWheel(self)
+		wh:Show()
+	end
 end
 
+function ENT:AttemptClaim()
+	print(Realm(), "attempting basecore claim")
+end
+
+function ENT:OpenBaseView()
+
+end
 
 hook.Add("NotifyShouldTransmit", "BaseCoreHalo", function(e, add)
 	if not add then return end
