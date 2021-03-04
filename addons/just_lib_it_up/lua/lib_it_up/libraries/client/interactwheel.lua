@@ -1,12 +1,16 @@
-InteractWheel = Animatable:extend()
-local wheel = InteractWheel
+
+LibItUp.InteractWheel = LibItUp.InteractWheel or Animatable:extend()
+InteractWheel = LibItUp.InteractWheel
+
+local wheel = LibItUp.InteractWheel
 wheel.Matrix = Matrix()
-wheel.Options = {}
+--wheel.Options = {}
 
 local vec = Vector()
 wheel.Frac = 0
 
 function wheel:Initialize()
+	self.Options = {}
 	self.Frac = 0
 
 	self.BlurAmount = 2
@@ -74,7 +78,7 @@ function wheel:_PaintPanel(wheel, w, h)
 
 	BSHADOWS.BeginShadow()
 
-	
+
 
 	render.ClearStencil()
 	draw.BeginMask()
@@ -96,7 +100,7 @@ function wheel:_PaintPanel(wheel, w, h)
 		end
 
 		draw.FinishMask()
-				
+
 		-- draw selection arrow
 
 		local origin = self.MouseOrigin
@@ -104,7 +108,7 @@ function wheel:_PaintPanel(wheel, w, h)
 		local ox, oy = cur[1] - origin[1], cur[2] - origin[2]
 		local nx, ny = normalize(ox, oy)
 
-		local certainty = self.OptionPercentage
+		local certainty = self.OptionPercentage * wheel.Frac
 
 		local arad = (optionInnerRadius - 16) * (0.8 + (certainty) * 0.2)
 
@@ -117,7 +121,7 @@ function wheel:_PaintPanel(wheel, w, h)
 		draw.EnableFilters()
 
 			surface.SetDrawColor(arrowColor:Unpack())
-			surface.DrawMaterial("https://i.imgur.com/jFHSu7s.png", "arr_right.png", 
+			surface.DrawMaterial("https://i.imgur.com/jFHSu7s.png", "arr_right.png",
 				ax, ay, aw, ah, -self.Angle + 90)
 
 		draw.DisableFilters()
@@ -156,7 +160,7 @@ function wheel:_BoundCursor(wheel)
 	local ocx, ocy = ox - mx, oy - my 	-- off-center mousepos
 
 	local cdist = math.sqrt(ocx^2 + ocy^2)
-	
+
 
 	if cdist <= wheelInnerRadius then
 		self.OptionPercentage = 0
@@ -170,7 +174,7 @@ function wheel:_BoundCursor(wheel)
 		-- it doesn't hurt to add it since the only reason we're doing this is window bounds
 		-- and lets be real, they're probably not running the game @ 128x128
 		if cdist > wheelOuterRadius + 8 then
-			
+
 
 			-- normalize XY and multiply by outer radius
 			local nmx = ocx / len * wheelOuterRadius
@@ -286,7 +290,7 @@ function wheel:_ThinkPanel(wheel)
 
 		if self.OptionPercentage > requireCertainty and not gotSel and
 			isSelected(sel, bottomBound, upperBound, false) then
-			
+
 			gotSel = opt
 			if not opt:GetHovered() then
 				self._CurHovered = opt
@@ -332,9 +336,9 @@ function wheel:Show()
 
 	pnl.Angle = 0
 
-	pnl.Paint = function(pnl, w, h) 	InteractWheel._PaintPanel(pnl, self, w, h) 	end
-	pnl.Think = function(pnl) 		InteractWheel._ThinkPanel(pnl, self) 		end
-	pnl.OnMousePressed = function(pnl, ...) InteractWheel._OnMousePressed(pnl, self, ...) end
+	pnl.Paint = function(pnl, w, h) 	LibItUp.InteractWheel._PaintPanel(pnl, self, w, h) 	end
+	pnl.Think = function(pnl) 		LibItUp.InteractWheel._ThinkPanel(pnl, self) 		end
+	pnl.OnMousePressed = function(pnl, ...) LibItUp.InteractWheel._OnMousePressed(pnl, self, ...) end
 
 	local options = self.Options
 	local segAng = 360 / #options
@@ -376,7 +380,9 @@ function wheel:Hide(delay)
 	end
 end
 
-InteractWheelOption = Emitter:extend()
+LibItUp.InteractWheelOption = LibItUp.InteractWheelOption or Emitter:extend()
+local InteractWheelOption = LibItUp.InteractWheelOption
+
 InteractWheelOption.Matrix = Matrix()
 
 function InteractWheelOption:Initialize(name, desc, icon, cb)
@@ -437,7 +443,7 @@ function InteractWheelOption:_Setup(num, ang)
 end
 
 function InteractWheelOption:_WrapDescription()
-	
+
 
 	if isstring(self.Description) and not self._WrappedDescription then
 		self._WrappedDescription = true
@@ -446,7 +452,7 @@ function InteractWheelOption:_WrapDescription()
 end
 
 function InteractWheelOption:_WrapTitle()
-	
+
 
 	if isstring(self.Title) and not self._WrappedTitle then
 		self._WrappedTitle = true
@@ -562,14 +568,14 @@ function InteractWheelOption:_Paint(x, y, w, h, prevMatrix, innerCircle)
 
 		render.ClearStencil() -- set every pixel to 0
 		-- put our own circle
-		draw.BeginMask()	
+		draw.BeginMask()
 
 		self._InnerCircle:Paint(w/2, h/2)	-- this sets ref value to 1
 
 		draw.DrawOp()			-- this will draw where value is 1, however, for our case it's more advantageous to
-								-- draw where it's NOT 1, and since the op is NOTEQUAL we'll just compare against != 1 
+								-- draw where it's NOT 1, and since the op is NOTEQUAL we'll just compare against != 1
 		render.SetStencilReferenceValue(1)
-		
+
 
 		local trX, trY = x, y
 		local fr = self.SelectedFrac
@@ -585,9 +591,12 @@ function InteractWheelOption:_Paint(x, y, w, h, prevMatrix, innerCircle)
 		cam.PushModelMatrix(mtrx, true)
 		pushed = true
 		local osa, oea = circ._OriginalStartAngle, circ._OriginalEndAngle
-		local diff = oea - osa
-		circ:SetStartAngle(osa - diff * easedfr * 0.4)
-		circ:SetEndAngle(oea + diff * easedfr * 0.4)
+
+		local diff = math.min( oea - osa, 360 - (oea - osa) ) -- does not allow us to get more than 360deg circles
+		local rise = math.max( diff * 0.1, 15 ) -- by how much our degrees will change: 20% of small options is too little and 30deg on big options is too little
+
+		circ:SetStartAngle( osa - rise * easedfr )
+		circ:SetEndAngle( oea + rise * easedfr )
 	end
 
 	local prevAlpha, curAlpha
@@ -603,28 +612,28 @@ function InteractWheelOption:_Paint(x, y, w, h, prevMatrix, innerCircle)
 	--surface.SetDrawColor(Colors.Red)
 	circ:Paint(x, y)
 
-	
+
 	-- Icon:
 	local ic = self.Icon
 
-	
+
 
 	-- 2. Calculate the W, H of box we can draw our icon in
 		-- This is ass
 
-	local rdiff = (optionOuterRadius - optionInnerRadius) / 2
+	local rdiff = (optionOuterRadius - optionInnerRadius) / 2 * 0.9 -- i am unhappy
 	local ang = angXY(smX, smY)
 
 	local closeAng = math.max(math.pi / 2 - math.abs(segMidRad) % (math.pi / 2), math.abs(segMidRad) % (math.pi / 2))
 	local close = math.sin(closeAng)
 	local far = math.sin(math.pi / 4)
+	local off = (far - close) * rdiff / 2
 
 	local sqr = math.Round(far * rdiff + close * rdiff)
 
-	local ang = -segMid
 	local flip = 1
 
-	if math.abs(ang) > 90 then
+	if math.abs(segMid) > 90 then
 		flip = -1
 	end
 
@@ -634,8 +643,9 @@ function InteractWheelOption:_Paint(x, y, w, h, prevMatrix, innerCircle)
 			render.CullMode(1)
 		end
 
-			local rx, ry = x + smX, y + smY
-			local icang = ang
+			local rx, ry = math.floor( x + smX + math.cos(segMidRad) * off ),
+							math.floor( y + smY + math.sin(segMidRad) * off )
+			local icang = -segMid
 
 			if flip < 0 then
 				icang = math.Clamp(icang, -180 - 45, -180 + 15)
@@ -657,9 +667,22 @@ function InteractWheelOption:_Paint(x, y, w, h, prevMatrix, innerCircle)
 				end
 			end
 
+			local rw, rh = sqr * ratio_w, sqr * flip * ratio_h
+
+
 			render.SetStencilEnable(false)
 				ic:Paint(rx, ry, sqr * ratio_w, sqr * flip * ratio_h, icang)
+				--[[
+				draw.NoTexture()
+				surface.DrawTexturedRectRotated(rx, ry, rw, rh, icang)
+				surface.SetDrawColor(Colors.Red)
+				surface.DrawLine(rx, ry, rx + close * rdiff, ry)
+				surface.SetDrawColor(Colors.Green)
+				surface.DrawLine(rx - far * rdiff, ry, rx, ry)
+				]]
+				--surface.DrawOutlinedRect(rx - rw/2, ry - rh/2, rw, rh, 1)
 			render.SetStencilEnable(true)
+
 
 		if flip < 0 then
 			render.CullMode(0)
@@ -678,7 +701,7 @@ function InteractWheelOption:_Paint(x, y, w, h, prevMatrix, innerCircle)
 
 		render.ClearStencil() -- here we go again
 
-		draw.BeginMask()	
+		draw.BeginMask()
 			innerCircle:Paint(x, y)	-- re-draw the parent circle
 
 		draw.DrawOp()
@@ -686,7 +709,7 @@ function InteractWheelOption:_Paint(x, y, w, h, prevMatrix, innerCircle)
 	end
 
 	local fr = self.HoveredFrac
-	if fr == 0 then 
+	if fr == 0 then
 		if prevAlpha then surface.SetAlphaMultiplier(prevAlpha) end
 		return
 	end
@@ -701,7 +724,7 @@ function InteractWheelOption:_Paint(x, y, w, h, prevMatrix, innerCircle)
 	local infoH = 0, 0
 	local iconMargin = 8
 	local titleMargin = 4
-	
+
 
 	if ic then
 		local iw, ih = ic:GetSize()
@@ -810,8 +833,8 @@ end
 function wheel:AddOption(name, desc, icon, cb)
 	local option = InteractWheelOption:new(name, desc, icon, cb)
 		option:SetWheel(self)
-		option:SetOptionNumber(#wheel.Options + 1)
-	wheel.Options[option:GetOptionNumber()] = option
+		option:SetOptionNumber(#self.Options + 1)
+	self.Options[option:GetOptionNumber()] = option
 
 	return option
 end
@@ -821,6 +844,8 @@ function InteractWheelOption:__tostring()
 end
 
 --- test
+
+--[[
 
 if _TestWheel then _TestWheel:Hide() end
 
@@ -850,3 +875,5 @@ end)
 bnd:On("Deactivate", 1, function(self, ply)
 	wh:Hide()
 end)
+
+]]

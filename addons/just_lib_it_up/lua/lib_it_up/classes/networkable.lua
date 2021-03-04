@@ -554,7 +554,7 @@ if SERVER then
 			for k,v in pairs(who) do
 				print(k, who)
 			end
-			
+
 			net.WriteNetStack(ns)
 		net.Send(who)
 
@@ -661,7 +661,7 @@ if SERVER then
 	end)
 
 	function nw:Network(now) 	--networks everything in the next tick (or right now if `now` is true OR networkable has a filter)
-		local to = istable(nwTo) and nwTo or player.GetAll()
+		local to = player.GetAll()
 		local copy = {}
 
 		if self.Filter then
