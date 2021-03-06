@@ -1,8 +1,8 @@
-easylua.StartEntity("title_npc")
 include('shared.lua')
- ENT.Type = "anim"
+
+ENT.Type = "anim"
 ENT.Base = "base_gmodentity"
- 
+
 ENT.PrintName		= "Gwa"
 ENT.Author			= "Gwa"
 ENT.Contact			= "Gwa"
@@ -274,4 +274,3 @@ function OpenTitleMenu()
 end
 
 net.Receive("OpenTitleMenu", OpenTitleMenu)
-easylua.EndEntity()
