@@ -205,18 +205,22 @@ function bw.Base:SpawnCore()
 	local core = prevCore or ents.Create("bw_basecore")
 	core:SetPos(pos)
 	core:SetAngles(ang)
-	core:SetBase(self)
+
 	if not prevCore then
 		core:Spawn()
-		self:AddToNW()
 	end
 
+	self:AddToNW()
+
+	core:SetBase(self)
 	core:SetModel(mdl)
 
 	self:SetBaseCore(core)
 end
 
 ChainAccessor(bw.Base, "BaseCore", "BaseCore")
+ChainAccessor(bw.Base, "Networkable", "NW")
+ChainAccessor(bw.Base, "_Claimed", "Claimed")
 
 function bw.Base:Initialize(id, json)
 	CheckArg(1, id, isnumber, "base ID")
@@ -231,6 +235,24 @@ function bw.Base:Initialize(id, json)
 
 	self.Data = {}
 
+	if BaseWars.Bases.Bases[id] then
+		local old = BaseWars.Bases.Bases[id]
+		BaseWars.Bases.Bases[id]:Remove(true)
+
+		self.Owner = old.Owner
+		self.Networkable = old.Networkable
+	else
+		self.Owner = {
+			Faction = nil,
+			Players = {}
+		}
+
+		self.Networkable = Networkable:new("base:" .. id)
+		self.Networkable.Filter = function()
+
+		end
+	end
+
 	if json and isstring(json) then
 		local t = json:FromJSON()
 		if t then
@@ -242,12 +264,78 @@ function bw.Base:Initialize(id, json)
 	self.Name = "-unnamed base-"
 	self._Valid = true
 
-	if BaseWars.Bases.Bases[id] then
-		BaseWars.Bases.Bases[id]:Remove(true)
-	end
-
 	BaseWars.Bases.Bases[id] = self
 end
+
+function bw.Base:GetOwnerPlayers()
+	return table.Copy(self.Owner.Players)
+end
+
+function bw.Base:GetOwnerPlayer()
+	return not self.Owner.Faction and self.Owner.Players[1]
+end
+
+function bw.Base:GetOwnerFaction()
+	return self.Owner.Faction
+end
+
+bw.Base.IsFactionOwned = bw.Base.GetOwnerFaction
+
+function bw.Base:IsOwner(what)
+	if self.Owner.Faction then
+		return self.Owner.Faction == what or self.Owner.Faction:IsMember(what)
+	else
+		return self.Owner.Players[1] == what
+	end
+end
+
+function bw.Base:CanClaim()
+	local ow = self.Owner
+	if ow.Faction and ow.Faction:IsValid() then return false end
+	if #ow.Players > 0 then return false end
+
+	return true
+end
+
+function bw.Base:ListenFaction(fac)
+	local listenID = "BaseListen" .. self:GetID()
+
+	fac:On("Update", listenID, function()
+		-- ?
+	end)
+
+	fac:On("Remove", listenID, function()
+		self:Unclaim()
+	end)
+end
+
+function bw.Base:Claim(by)
+	if not self:CanClaim(by) then return false end
+
+	if IsFaction(by) then
+		self.Owner.Faction = by
+		self.Owner.Players = by:GetMembers()
+		self:SetClaimed(true)
+
+	elseif IsPlayer(by) then
+		self.Owner.Faction = nil
+		self.Owner.Players = {by}
+		self:SetClaimed(true)
+	end
+
+	self:Emit("Claim")
+
+	return true
+end
+
+function bw.Base:Unclaim()
+	self.Owner.Faction = nil
+	self.Owner.Players = {}
+	self:SetClaimed(false)
+
+	self:Emit("Unclaim")
+end
+
 
 function bw.Base:Remove(replaced)
 	self._Valid = false

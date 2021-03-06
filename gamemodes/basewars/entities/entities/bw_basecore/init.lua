@@ -14,6 +14,10 @@ end
 function ENT:SetBase(base)
 	self.BWBase = base
 	self:SetBaseID(base:GetID())
+
+	if base:GetClaimed() then
+		self:Claim(base:GetOwnerFaction() or base:GetOwnerPlayer(), true)
+	end
 end
 
 function ENT:GetBase()
@@ -33,23 +37,46 @@ function ENT:UpdateTransmitState()
 end
 
 function ENT:RequestClaim(ply)
-	-- see: bw_modules/bases/baseview/ actions
-	if self:GetClaimed() then return end
+	-- see: bw_modules/bases/actions
+	if self:GetClaimed() then printf("Core is already claimed; %s can't claim.", ply) return end
+
 	self:Claim(ply)
 end
 
-function ENT:Claim(ply)
+function ENT:Claim(ply, restore)
 	local fac = ply:GetFaction()
-	if fac then
-		self:SetClaimedID(fac:GetID())
-		self:SetClaimedByFaction(true)
-		self.ClaimedFaction = fac
+	local base = self:GetBase()
+	if not base then error("BaseCore without base, wtf?") return end
+
+	local ok
+
+	if restore then
+		ok = true
 	else
-		self:SetClaimedID(ply:UserID())
-		self:SetClaimedByFaction(true)
+		ok = base:Claim(fac or ply)
 	end
 
-	--self.ClaimedPlayer = {ply, ply:SteamID64()}
+	if ok then
+
+		if fac then
+			print("claiming for faction")
+			self:SetClaimedID(fac:GetID())
+			self:SetClaimedByFaction(true)
+			self.ClaimedFaction = fac
+		else
+			print("claiming for player")
+			self:SetClaimedID(ply:UserID())
+			self:SetClaimedByFaction(false)
+			self.ClaimedPlayer = {ply, ply:SteamID64()}
+		end
+
+		self:GetBase():On("Unclaim", self, function()
+			self:Unclaim()
+		end)
+	else
+		printf("%s didn't allow claiming; %s can't claim.", base, ply)
+	end
+
 end
 
 function ENT:Unclaim()

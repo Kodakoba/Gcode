@@ -47,12 +47,24 @@ local function init(force)
 			}
 		},
 
+		Actions = {
+			Claim = 0,
+			Unclaim = 1,
+
+
+			SZ = 8,
+		},
+
 		SQL = {},			-- SV
 		ZonePaints = {},	-- CL
 	})
 
-	if force then
+	if force and SERVER then
 		for k,v in ipairs(ents.FindByClass("bw_zone_brush")) do
+			v:Remove()
+		end
+
+		for k,v in ipairs(ents.FindByClass("bw_basecore")) do
 			v:Remove()
 		end
 	end

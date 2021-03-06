@@ -171,8 +171,8 @@ end
 
 function StartTool(name)
 	if not name then name = fn:match("([%w_]*)%.lua") end
-	if TOOL then
-		errorf("Starting a new TOOL without finishing the previous! (`%s`)", TOOL.Mode)
+	if TOOL and TOOL.Mode ~= name then
+		ErrorNoHalt("Starting a new TOOL without finishing the previous! (`" .. TOOL.Mode .. "`)")
 	end
 
 	TOOL = LiveToolObj:Create()

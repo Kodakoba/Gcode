@@ -1,12 +1,6 @@
 include("shared.lua")
 AddCSLuaFile("shared.lua")
 
--- what's the name for this kinda data structure?
--- would it be a LinkedHashSet?
-
-local needHalo = {}		-- [seqNum] = ent
-local needHaloRev = {}	-- [ent] = seqNum
-
 local wheel
 
 local function makeWheel(ent)
@@ -72,13 +66,13 @@ function ENT:Draw()
 
 	if lp:BW_GetBase() ~= base then return end
 
-	local using = lp:KeyDown(IN_USE) and lp:GetEyeTrace().Entity == self
+	local using = lp:KeyDown(IN_USE) and lp:GetEyeTrace().Entity == self and lp:GetEyeTrace().Fraction * 32768 < 96
 
 	if using then
 		self.Using = math.min(self.Using + FrameTime(), useTime)
 	else
 		self.Using = math.max(0, self.Using - FrameTime() * 2)
-		if wheel then
+		if wheel and wheel._Core == self then
 			wheel:Hide()
 			wheel = nil
 		end
@@ -91,16 +85,19 @@ function ENT:Draw()
 end
 
 function ENT:AttemptClaim()
-	print(Realm(), "attempting basecore claim")
+	net.Start("BaseCore")
+		net.WriteUInt(BaseWars.Bases.Actions.Claim, BaseWars.Bases.Actions.SZ)
+		net.WriteEntity(self)
+	net.SendToServer()
 end
 
 function ENT:OpenBaseView()
-
+	BaseWars.Bases.BaseView.Activate(self)
 end
 
 hook.Add("NotifyShouldTransmit", "BaseCoreHalo", function(e, add)
 	if not add then return end
-	if e:GetClass() ~= "bw_basecore" then return end
+	if not BaseWars.Bases.IsCore(e) then return end
 
 	local ENT = scripted_ents.GetStored("bw_basecore").t
 	local base = ENT.GetBase(e) -- fucking gmod is insane

@@ -111,7 +111,7 @@ function IncludeFolder(name, realm, nofold)	-- This function will be used both b
 			includes[realm] (name, true)
 			reincFiles = reincFiles + 1
 			continue
-		end 
+		end
 
 		if includes[realm] then
 			includes[realm] (name)

@@ -28,6 +28,7 @@ if not netstack then include("netstack.lua") end
 
 		CL: "ReadChangeValue" : key
 			If you had a custom encoder for the value in WriteChangeValue, this is the hook to read it from
+			Return your value from it, and if it's nil, return the 2nd arg as "true"
 
 		CL: "NetworkedVarChanged" : key, old_var, new_var
 			Kinda like NetworkVarNotify
@@ -38,7 +39,8 @@ if not netstack then include("netstack.lua") end
 
 	If you're using .Filter, that implies you'll also handle when to network.
 ]]
-Networkable = Networkable or Emitter:callable()
+LibItUp.Networkable = LibItUp.Networkable or Emitter:callable()
+Networkable = LibItUp.Networkable
 local nw = Networkable
 
 local update_freq = 0.3
@@ -326,19 +328,17 @@ function nw:Set(k, v)
 	-- they aren't intended to be serialized and are expected to be encoded in an emit ( and via an :Encode method when i get around to doing it :) )
 
 	-- for tables, however, we can check if the data is exact
-	if istable(v) and not v.__isobject then 
+	if istable(v) and not v.__isobject then
 		local last_von = self.__LastSerialized[v]
 
 		local err, new_von = pcall(von.serialize, v)
 
 		if err then
-			errorf("%s: Attempted to serialize a non-vON'able table! %s = %s\n%s", self, k, v, new_von)
-			return
+			-- errorf("%s: Attempted to serialize a non-vON'able table! %s = %s\n%s", self, k, v, new_von)
+		else
+			if last_von == new_von then --[[ adios ]] return end
+			self.__LastSerialized[v] = new_von
 		end
-
-		if last_von == new_von then --[[ adios ]] return end
-
-		self.__LastSerialized[v] = new_von
 	end
 
 	self.Networked[k] = v

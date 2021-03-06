@@ -1,6 +1,4 @@
 if not Emitter then include('emitter.lua') end
-
-
 MultiPromise = MultiPromise or Emitter:Callable()
 
 function MultiPromise:Initialize(f)

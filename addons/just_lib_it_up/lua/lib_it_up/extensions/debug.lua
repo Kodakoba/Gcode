@@ -82,6 +82,7 @@ end
 logger.__call = Log
 
 Logger = LogModule
+LibItUp.Log = Logger("LBU", Color(210, 255, 99))
 
 function Realm(lower, side)
 	local s = (CLIENT and "Client" or "Server") .. (side and "side" or "")

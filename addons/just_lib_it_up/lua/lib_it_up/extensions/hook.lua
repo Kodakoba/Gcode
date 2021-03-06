@@ -25,6 +25,7 @@ end
 
 function hook.ObjectOnce(hookname, hookobj, num, cb)
 	local id
+	num = num or 1
 	local func = function(...)
 		if select(num, ...) ~= hookobj then return end
 		hook.Remove(hookname, id)
@@ -32,6 +33,7 @@ function hook.ObjectOnce(hookname, hookobj, num, cb)
 	end
 
 	id = hook.Object(hookname, hookobj, func)
+	return id
 end
 
 function hook.Once(hookname, hookid, cb)

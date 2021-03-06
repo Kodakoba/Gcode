@@ -28,15 +28,25 @@ end
 
 function ENT:GetClaimed()
 	if SERVER then
-		return self.ClaimedBy, self:GetClaimedByFaction()
+		local base = self:GetBase()
+		return base and base:GetClaimed(), self:GetClaimedByFaction()
+	else
+		return self:GetClaimedID() > -1
+	end
+end
+
+function ENT:GetOwners()
+	if SERVER then
+		return self:GetBase():GetOwnerPlayers()
 	else
 		local fac = self:GetClaimedByFaction()
 		local id = self:GetClaimedID()
 		if fac then
-			return Factions.GetFaction(id), true
+			fac = Factions.GetFaction(id)
+			return fac, fac:GetMembers()
 		elseif id > 0 then
 			local ply = Player(id)
-			return ply:IsValid() and ply, false
+			return ply, {ply}
 		end
 	end
 end

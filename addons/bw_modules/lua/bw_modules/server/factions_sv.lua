@@ -71,6 +71,7 @@ function facmeta:Update(now)
 	self:Set("Leader", self.own)
 
 	if now then self:Network(true) end
+	self:Emit("Update")
 end
 
 function facmeta:Join(ply, pw, force)
@@ -156,7 +157,7 @@ function facmeta:ChangeOwnership(to)
 	to = to or table.SeqRandom(self.memvals)
 	if not to then
 		self:Remove()
-		error("Noone to change ownership to; killing faction")
+		error("Noone to change ownership to; killing faction") -- this shouldn't happen
 		return
 	end
 
@@ -167,12 +168,13 @@ end
 function facmeta:RemovePlayer(ply)
 	self.members[ply] = nil
 	facs.Players[ply] = nil
-
 	table.RemoveByValue(self.memvals, ply)
 
-	ply:SetTeam(1)
+	if ply:IsValid() then
+		ply:SetTeam(1)
+	end
 
-	if #self.memvals == 0 then
+	if #self.memvals == 0 then -- todo: launch a destruction timer in 300s instead of instantly removing
 		self:Remove()
 		return
 	end
@@ -201,6 +203,7 @@ function facmeta:Remove()
 	net.Broadcast()
 
 	self:Invalidate()
+	self:Emit("Remove")
 end
 
 function ValidFactions()
@@ -213,6 +216,7 @@ function ValidFactions()
 		end)
 
 		if table.Count(v.members) == 0 then
+			-- todo: check the timer before removing
 			v:Remove()
 			continue
 		end
