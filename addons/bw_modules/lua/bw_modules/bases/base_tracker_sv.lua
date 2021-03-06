@@ -281,6 +281,7 @@ hook.Add("EntityEnteredBase", "NetworkBase", function(base, ent)
 	if not IsPlayer(ent) then return end
 
 	local nw = bw.GetPlayerNW(ent)
+	if not nw then return end
 
 	nw:Set("CurrentBase", base:GetID())
 	nw:Network()
@@ -290,6 +291,7 @@ hook.Add("EntityExitedBase", "NetworkBase", function(base, ent)
 	if not IsPlayer(ent) then return end
 
 	local nw = bw.GetPlayerNW(ent)
+	if not nw then return end -- can happen if a player leaves while in a base
 
 	nw:Set("CurrentBase", nil)
 	nw:Network()
@@ -309,7 +311,7 @@ hook.Add("EntityExitedZone", "NetworkZone", function(zone, ent)
 	if not IsPlayer(ent) then return end
 
 	local nw = bw.GetPlayerNW(ent)
-	if not nw then return end -- can happen if a player leaves while in a zone
+	if not nw then return end
 
 	local z = ent:BW_GetOldestZone()
 
