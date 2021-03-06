@@ -593,7 +593,8 @@ function InteractWheelOption:_Paint(x, y, w, h, prevMatrix, innerCircle)
 		local osa, oea = circ._OriginalStartAngle, circ._OriginalEndAngle
 
 		local diff = math.min( oea - osa, 360 - (oea - osa) ) -- does not allow us to get more than 360deg circles
-		local rise = math.max( diff * 0.1, 15 ) -- by how much our degrees will change: 20% of small options is too little and 30deg on big options is too little
+
+		local rise = math.max( diff * 0.1, math.min(diff, 15) ) -- by how much our degrees will change: 20% of small options is too little and 30deg on big options is too little
 
 		circ:SetStartAngle( osa - rise * easedfr )
 		circ:SetEndAngle( oea + rise * easedfr )
