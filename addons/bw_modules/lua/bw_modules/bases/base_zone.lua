@@ -244,7 +244,7 @@ function bw.Base:Initialize(id, json)
 	else
 		self.Owner = {
 			Faction = nil,
-			Players = {}
+			Player = nil
 		}
 
 		self.Networkable = Networkable:new("base:" .. id)
@@ -267,12 +267,13 @@ function bw.Base:Initialize(id, json)
 	BaseWars.Bases.Bases[id] = self
 end
 
-function bw.Base:GetOwnerPlayers()
-	return table.Copy(self.Owner.Players)
-end
+function bw.Base:GetOwner()
+	-- return #1: faction or nil
+	-- return #2: table of playerinfo(s)
+	local fac = self:GetOwnerFaction()
+	local plys = fac and fac:GetMembersInfo() or self.Owner.Player
 
-function bw.Base:GetOwnerPlayer()
-	return not self.Owner.Faction and self.Owner.Players[1]
+	return fac, plys
 end
 
 function bw.Base:GetOwnerFaction()
@@ -285,14 +286,14 @@ function bw.Base:IsOwner(what)
 	if self.Owner.Faction then
 		return self.Owner.Faction == what or self.Owner.Faction:IsMember(what)
 	else
-		return self.Owner.Players[1] == what
+		return self.Owner.Player == what
 	end
 end
 
 function bw.Base:CanClaim()
 	local ow = self.Owner
 	if ow.Faction and ow.Faction:IsValid() then return false end
-	if #ow.Players > 0 then return false end
+	if ow.Player and ow.Player:IsValid() then return false end
 
 	return true
 end
@@ -305,7 +306,9 @@ function bw.Base:ListenFaction(fac)
 	end)
 
 	fac:On("Remove", listenID, function()
-		self:Unclaim()
+		if self.Owner.Faction == fac then
+			self:Unclaim()
+		end
 	end)
 end
 
@@ -314,26 +317,37 @@ function bw.Base:Claim(by)
 
 	if IsFaction(by) then
 		self.Owner.Faction = by
-		self.Owner.Players = by:GetMembers()
+		self.Owner.Player = nil
 		self:SetClaimed(true)
+		self:ListenFaction(by)
 
 	elseif IsPlayer(by) then
+		local pinfo = by:GetPInfo()
 		self.Owner.Faction = nil
-		self.Owner.Players = {by}
+		self.Owner.Player = pinfo
 		self:SetClaimed(true)
+
+		by:GetPInfo():On("Destroy", self, function()
+			if self.Owner.Player == pinfo then
+				self:Unclaim()
+			end
+		end)
 	end
 
 	self:Emit("Claim")
+	hook.Run("BaseClaimed", self, by)
 
 	return true
 end
 
 function bw.Base:Unclaim()
+	local prev = self.Owner.Faction or self.Owner.Player
 	self.Owner.Faction = nil
-	self.Owner.Players = {}
+	self.Owner.Player = nil
 	self:SetClaimed(false)
 
 	self:Emit("Unclaim")
+	hook.Run("BaseUnclaimed", self, prev)
 end
 
 
