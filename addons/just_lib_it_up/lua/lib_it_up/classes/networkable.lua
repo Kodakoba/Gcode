@@ -9,14 +9,14 @@ if not netstack then include("netstack.lua") end
 
 		SV: "CustomWriteChanges" : changes_table
 			If you have a custom encoder for the whole object, use this event and return anything from it
-	
+
 		SV: "ShouldNetwork"
 			Returning false from this will prevent networking
 			Changes won't be lost to networking, meaning it might attempt to network in the future
 
-		SV: "ShouldEncode" : change_key, change_value
-			If you return false from this, the change won't be written (but will be lost to networking!)
-			Should be primarily used for equality checks
+		SV: REMOVED || 	"ShouldEncode" : change_key, change_value
+						If you return false from this, the change won't be written (but will be lost to networking!)
+						Should be primarily used for equality checks
 
 		SV: "WriteChangeValue" : key, value, players
 			If you return false from this, the change value won't be written
@@ -216,18 +216,22 @@ nw.AutoAssignID = true
 
 function nw:Initialize(id, ...)
 	self.Networked = {}
-	self.Aliases = {}
+
+	self.__Aliases = {}			-- [name] = alias
+	self.__AliasesBack = {}		-- [alias] = name
 
 	self.__LastSerialized = {} -- purely for networked tables
 	self.__Aware = muldim:new()
 
+	--[[
 	self:On("ShouldEncode", "TablesvONCheck", function(self, k, v)
 		if istable(v) and not v.__isobject then
-			local vonData = von.serialize(v)
+			local vonData = "bruh"--von.serialize(v)
 			if self.__LastSerialized[k] == vonData then return end
 			_vONCache[k] = vonData
 		end
 	end)
+	]]
 
 	if not rawget(self.__instance, "AutoAssignID") then return end 	-- if this object is constructed from an Networkable extension,
 																	-- ignore the fact we don't have an ID
@@ -249,7 +253,10 @@ function nw:SetNetworkableID(id, replace)
 
 	local before = cache[id]
 
-	if cache[id] and cache[id] ~= self and not replace then errorf("This isn't supposed to happen -- setting NWID with a networkable already existing! NWID: %s", id) return end
+	if cache[id] and cache[id] ~= self and not replace then
+		errorf("This isn't supposed to happen -- setting NWID with a networkable already existing! NWID: %s", id)
+		return
+	end
 	cache[id] = self
 
 	printf("SetNetworkableID called %s %s %s", Realm(true, true), id, idData[id])
@@ -257,7 +264,7 @@ function nw:SetNetworkableID(id, replace)
 	if CLIENT and idData[id] then
 		print("woah!!!! existssss")
 		for k, v in pairs(idData[id]) do
-			if self.Aliases[k] then k = self.Aliases[k] end
+			if self.__Aliases[k] then k = self.__Aliases[k] end
 			printf("pulling cached change: %s = %s", k, v)
 			self:Set(k, v)
 		end
@@ -297,8 +304,7 @@ function nw:IsValid()
 	return self.Valid ~= false
 end
 
-
-function nw:Set(k, v)
+function nw:_CanSetNW(k, v)
 	if self.Valid == false then
 		error("Attempted to set a networked var on an invalid Networkable!", 2)
 		return
@@ -314,40 +320,58 @@ function nw:Set(k, v)
 		self:SetNetworkableID(self.NetworkableID)
 	end -- maybe resetall happened
 
-	if self.Aliases[k] ~= nil then k = self.Aliases[k] end
+	if self.__Aliases[k] ~= nil then k = self.__Aliases[k] end
 
-	if CLIENT then -- don't bother
-		self.Networked[k] = v
-		return self
-	end
+	return k
+end
 
-	if v == nil then v = fakeNil end --lul
-	if self.Networked[k] == v and not istable(v) then --[[adios]] return end
+function nw:SetTable(k, v)
+	-- like :Set() but does vON checking
+	-- this is intended to be used with arrays/lists with von encodable shit
+	local alias_k = self:_CanSetNW(k, v)
+	if not istable(v) then errorf("Calling SetTable on a non-table value! (%s = %s `%s`)", k, v, type(v)) return end
+	if v.__isobject then errorf("Calling SetTable on an object! (%s = %s `%s`)", k, v, type(v)) return end
+
 	-- setting objects will proc a networkablechange regardless of whether or not they're exact von-wise
 	-- as we have no way of tracking it for custom objects
 	-- they aren't intended to be serialized and are expected to be encoded in an emit ( and via an :Encode method when i get around to doing it :) )
 
 	-- for tables, however, we can check if the data is exact
-	if istable(v) and not v.__isobject then
-		local last_von = self.__LastSerialized[v]
 
-		local err, new_von = pcall(von.serialize, v)
+	local last_von = self.__LastSerialized[v]
 
-		if err then
-			-- errorf("%s: Attempted to serialize a non-vON'able table! %s = %s\n%s", self, k, v, new_von)
-		else
-			if last_von == new_von then --[[ adios ]] return end
-			self.__LastSerialized[v] = new_von
-		end
+	local err, new_von = pcall(von.serialize, v)
+
+	if err then
+		errorf("%s: Attempted to serialize a non-vON'able table! %s = %s\n%s", self, k, v, new_von)
+	else
+		if last_von == new_von then --[[ adios ]] return self end
+		self.__LastSerialized[v] = new_von
 	end
 
-	self.Networked[k] = v
-	_NetworkableChanges:Set(v, self.NetworkableID, k)
+	return self:Set(k, v)
+end
+
+function nw:Set(k, v)
+	-- if you're using a table or an object as `v`, it's assumed you have a custom encoder for it
+	-- if you don't, well, expect issues...
+	local alias_k = self:_CanSetNW(k, v)
+
+	if CLIENT then -- don't bother
+		self.Networked[alias_k] = v
+		return self
+	end
+
+	if v == nil then v = fakeNil end --lul
+	if self.Networked[alias_k] == v and not istable(v) then --[[adios]] return end
+
+	self.Networked[alias_k] = v
+	_NetworkableChanges:Set(v, self.NetworkableID, alias_k)
 	return self
 end
 
 function nw:Get(k, default)
-	if self.Aliases[k] ~= nil then k = self.Aliases[k] end
+	if self.__Aliases[k] ~= nil then k = self.__Aliases[k] end
 
 	local ret = self.Networked[k]
 	if ret == fakeNil then return nil end
@@ -357,7 +381,12 @@ function nw:Get(k, default)
 end
 
 function nw:Alias(k, k2)
-	self.Aliases[k] = k2
+	if self.__Aliases[k] then
+		self.__AliasesBack[k2] = nil
+	end
+
+	self.__Aliases[k] = k2
+	self.__AliasesBack[k2] = k
 end
 
 function nw:GetNetworked() --shrug
@@ -461,10 +490,11 @@ if SERVER then
 			op.Description = "Changed key encoder ID"
 		end
 		-- write val encoderID and the encoded val
+		print("WriteChange called", key, val)
+		local unAliased = obj.__AliasesBack[key] or key
+		local res = obj:Emit("WriteChangeValue", unAliased, val, ...)
 
-		local res = obj:Emit("WriteChangeValue", key, val, ...)
-
-		if res == false then print("not writing change serverside", key, val) return end
+		if res == false then printf("WriteChangeValue asked to not write change (%s = %s)", unAliased, val) return end
 
 		op = net.WriteUInt(v_encoderID, encoderIDLength)
 		v_encoder(val, v_additionalArg, key)
@@ -488,7 +518,7 @@ if SERVER then
 		if not full then -- fullupdate ignores nw awareness
 			for _, ply in ipairs(who) do
 				-- if some player didn't know about this NWID, network the ID as well
-				if not _NetworkableAwareness[ply] or not _NetworkableAwareness[ply][nameID] then 
+				if not _NetworkableAwareness[ply] or not _NetworkableAwareness[ply][nameID] then
 					unaware = true
 					_NetworkableAwareness:Set(true, ply, nameID)
 				end
@@ -497,15 +527,17 @@ if SERVER then
 
 		local changes = full and self:GetNetworked() or _NetworkableChanges[nameID]
 		if not changes then return end --/shrug
-		
-		local changes_count = 0
 
+		local changes_count = table.Count(changes)
+
+		--[[
 		for k,v in pairs(changes) do
 			local should = self:Emit("ShouldEncode", k, v)
 			if should == false then changes[k] = nil continue end
 
 			changes_count = changes_count + 1
 		end
+		]]
 
 		local written = 0
 
@@ -549,7 +581,7 @@ if SERVER then
 
 			ns:SetCursor(nsCursor)
 			ns:WriteUInt(actuallyWritten, SZ.CHANGES_COUNT)
-			
+
 			print( tostring(ns), "networking to:")
 			for k,v in pairs(who) do
 				print(k, who)
@@ -703,10 +735,13 @@ if CLIENT then
 		end
 
 		local decoded_key = k_dec[2](k_dec[3])
-		if obj and obj.Aliases[decoded_key] then decoded_key = obj.Aliases[decoded_key] end
-
+		if obj and obj.__Aliases[decoded_key] then decoded_key = obj.__Aliases[decoded_key] end
+		print("decoded key:", decoded_key)
 		if obj then
-			local customValue, setNil = obj:Emit("ReadChangeValue", decoded_key)
+			local unaliased_key = obj.__AliasesBack[decoded_key] or decoded_key
+			print("unaliased:", unaliased_key)
+			local customValue, setNil = obj:Emit("ReadChangeValue", unaliased_key)
+			print("returned", customValue)
 			if customValue ~= nil and not setNil then return decoded_key, customValue end
 		end
 
@@ -763,7 +798,7 @@ if CLIENT then
 
 		local changes = {}
 		for i=1, cng_amt do
-	
+
 			printf("	reading change #%d", i)
 
 			local k, v = ReadChange(obj)
