@@ -46,6 +46,14 @@ if SERVER then
 		return rtimes[self] or (self.NextSpawnTime - CurTime()) --base gamemode
 	end
 
+	__BotIndex = __BotIndex or 0
+
+	hook.Add("PlayerInitialSpawn", "CountBotIndex", function(ply)
+		if ply:IsBot() then
+			ply:SetNWInt("BotIndex", __BotIndex)
+			__BotIndex = __BotIndex + 1
+		end
+	end)
 else
 
 	function PLAYER:GetRespawnTime()
@@ -89,6 +97,27 @@ else
 		end
 
 	end)
+
+	PLAYER.__RealSteamID64 = PLAYER.__RealSteamID64 or PLAYER.SteamID64
+
+	function PLAYER:SteamID64()
+		if self:IsBot() then
+			local first = "900719968423"
+			local second = 77216 + self:GetNWInt("BotIndex", 0)
+			return first .. second
+		end
+		return PLAYER.__RealSteamID64(self)
+	end
+
+end
+
+PLAYER.__RealSteamID = PLAYER.__RealSteamID or PLAYER.SteamID
+
+function PLAYER:SteamID()
+	if self:IsBot() then
+		return util.SteamIDFrom64(self:SteamID64()) -- `NULL` cl or `BOT` sv --> "STEAM_0:0:0", "STEAM_0:0:1", so on
+	end
+	return PLAYER.__RealSteamID(self)
 end
 
 PLAYER.GetNextRespawn = PLAYER.GetRespawnTime
