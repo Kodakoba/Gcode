@@ -30,8 +30,13 @@ function facmeta:GetMembers()
 	return self.memvals
 end
 
-function facmeta:IsMember(ply)
-	return self.members[ply]
+function facmeta:GetMembersInfo()
+	return self.meminfovals
+end
+
+function facmeta:IsMember(what)
+	local pinfo = GetPlayerInfoGuarantee(what)
+	return self.meminfo[pinfo] and pinfo
 end
 
 function facmeta:GetName()
@@ -69,9 +74,48 @@ end
 function facmeta:Update(now)
 	self:Set("Members", self.memvals)
 	self:Set("Leader", self.own)
+	self:Set("PlayerInfo", self.meminfovals)
 
 	if now then self:Network(true) end
 	self:Emit("Update")
+end
+
+function facmeta:_AddToMembers(what)
+	local pinfo, ply = GetPlayerInfoGuarantee(what)
+
+	local new = not self.meminfo[pinfo]
+
+	self.memvals[#self.memvals + 1] = ply
+	self.meminfovals[#self.meminfovals + 1] = pinfo
+	self.members[ply] = true
+	self.meminfo[pinfo] = true
+
+	pinfo:On("Destroy", self, function()
+		self:RemoveFromMembers(pinfo)
+	end)
+
+	if new then
+		self:Emit("JoinFaction", pinfo)
+		hook.Run("PlayerJoinedFaction", pinfo)
+	end
+end
+
+function facmeta:_RemoveFromMembers(ply)
+	local pinfo, ply = GetPlayerInfoGuarantee(ply)
+
+	if facs.Players[ply] == self:GetName() then facs.Players[ply] = nil end
+
+	local had = self.meminfo[pinfo]
+
+	table.RemoveByValue(self.memvals, ply)
+	table.RemoveByValue(self.meminfovals, pinfo)
+	self.members[ply] = nil
+	self.meminfo[pinfo] = nil
+
+	if had then
+		self:Emit("LeaveFaction", pinfo)
+		hook.Run("PlayerLeftFaction", pinfo)
+	end
 end
 
 function facmeta:Join(ply, pw, force)
@@ -90,8 +134,7 @@ function facmeta:Join(ply, pw, force)
 		return false, "wrong password boy"
 	end
 
-	self.members[ply] = true
-	self.memvals[#self.memvals + 1] = ply
+	self:_AddToMembers(ply)
 
 	facs.Players[ply] = self:GetName()
 
@@ -119,14 +162,19 @@ function facmeta:Initialize(ply, id, name, pw, col)
 	self.pw = pw
 	self.own = ply
 
-	self.members = {}
-	self.memvals = {}
+	self.members = {}		-- [ply] = true
+	self.memvals = {}		-- [seq_id] = ply
+	self.meminfo = {}		-- [plyInfo] = true
+	self.meminfovals = {}	-- [seq_id] = plyInfo
+
+	self:Alias("Members", 1)
+	self:Alias("Leader", 2)
+	self:Alias("PlayerInfo", 3)
 
 	if IsPlayer(ply) then
 		facs.Players[ply] = name
 		ply:SetTeam(id)
-		self.memvals[1] = ply
-		self.members[ply] = true
+		self:_AddToMembers(ply)
 	elseif ply ~= false then
 		error("Attempted to create a faction with no player; use `false` as the first arg if this is intentional.")
 	end
@@ -139,6 +187,18 @@ function facmeta:Initialize(ply, id, name, pw, col)
 	end
 
 	self:On("Raided", "CooldownTracker", self.OnRaided)
+
+	self:On("WriteChangeValue", "WritePlayerInfo", self._SerializePlayerInfo)
+end
+
+function facmeta:_SerializePlayerInfo(key, val)
+	if key == "PlayerInfo" then
+		net.WriteUInt(#val, 4)
+		for k,v in ipairs(val) do
+			net.WriteString(v:GetSteamID64())
+		end
+		return false
+	end
 end
 
 function facmeta:IsRaidable()
@@ -166,9 +226,7 @@ function facmeta:ChangeOwnership(to)
 end
 
 function facmeta:RemovePlayer(ply)
-	self.members[ply] = nil
-	facs.Players[ply] = nil
-	table.RemoveByValue(self.memvals, ply)
+	self:_RemoveFromMembers(ply)
 
 	if ply:IsValid() then
 		ply:SetTeam(1)
@@ -280,14 +338,13 @@ function facs.CreateFac(ply, name, pw, col)
 
 	cooldowns[ply] = CurTime()
 
-	fac:Update(true)
+	-- first make them aware of the faction, then network its' details
 
 	net.Start("Factions")
 		net.WriteUInt(2, 4)	--update
 		net.WriteUInt(id, 24)
 		net.WriteString(name)
 		net.WriteColor(col)
-		--net.WriteUInt(ply:UserID(), 24)
 
 		local haspw = false
 		if pw then haspw = true end
@@ -295,6 +352,7 @@ function facs.CreateFac(ply, name, pw, col)
 
 	net.Broadcast()
 
+	fac:Update(true)
 end
 
 PLAYER.CreateFaction = facs.CreateFac

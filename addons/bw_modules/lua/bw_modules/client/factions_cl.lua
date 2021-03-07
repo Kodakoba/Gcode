@@ -56,6 +56,10 @@ function facmeta:Initialize(id, name, col, haspw)
 	self.col = col
 	self.haspw = haspw
 
+	self:Alias("Members", 1)
+	self:Alias("Leader", 2)
+	self:Alias("PlayerInfo", 3)
+
 	self:On("NetworkedVarChanged", "TrackMembers", function(_, key, old, new)
 		if key == "Members" then
 			self:RunPlayerHooks(old, new)
@@ -70,6 +74,22 @@ function facmeta:Initialize(id, name, col, haspw)
 
 	self:On("NetworkedChanged", function()
 		hook.Run("FactionsUpdate", self)
+	end)
+
+	self:On("ReadChangeValue", function(self, key)
+		if key ~= "PlayerInfo" then return end
+		print("read change value")
+		local arr = {}
+
+		local count = net.ReadUInt(4)
+		print("reading ", count, "playerinfos")
+		for i=1, count do
+			local sid64 = net.ReadString()
+			arr[i] = GetPlayerInfoGuarantee(sid64, true)
+			print("got playerinfo", arr[i])
+		end
+
+		return arr
 	end)
 
 	return new
@@ -106,6 +126,15 @@ end
 
 function facmeta:GetMembers()
 	return self:Get("Members") or {}
+end
+
+function facmeta:GetMembersInfo()
+	return self:Get("PlayerInfo") or {}
+end
+
+function facmeta:IsMember(what)
+	local pinfo = GetPlayerInfoGuarantee(what)
+	return self.meminfo[pinfo] and pinfo
 end
 
 function facmeta:GetLeader()
@@ -162,7 +191,7 @@ net.Receive("Factions", function(len)
 
 			team.SetUp(id, name, col, false)
 
-			local fac = facmeta:new(id, name, col, haspw)
+			local fac = Factions.FactionIDs[id] or facmeta:new(id, name, col, haspw)
 			facs.Factions[name] = fac
 			facs.FactionIDs[id] = fac
 
@@ -182,7 +211,7 @@ net.Receive("Factions", function(len)
 
 		print("created new faction:", id, name)
 
-		local fac = facmeta:new(id, name, col, haspw)
+		local fac = Factions.FactionIDs[id] or facmeta:new(id, name, col, haspw)
 		facs.Factions[name] = fac
 		facs.FactionIDs[id] = fac
 
