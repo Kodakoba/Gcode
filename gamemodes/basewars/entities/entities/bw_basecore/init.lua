@@ -63,11 +63,13 @@ function ENT:Claim(ply, restore)
 			self:SetClaimedID(fac:GetID())
 			self:SetClaimedByFaction(true)
 			self.ClaimedFaction = fac
+			self.ClaimedPlayer = nil
 		else
 			print("claiming for player")
 			self:SetClaimedID(ply:UserID())
 			self:SetClaimedByFaction(false)
-			self.ClaimedPlayer = {ply, ply:SteamID64()}
+			self.ClaimedPlayer = ply:GetPInfo()
+			self.ClaimedFaction = nil
 		end
 
 		self:GetBase():On("Unclaim", self, function()
@@ -80,7 +82,7 @@ function ENT:Claim(ply, restore)
 end
 
 function ENT:Unclaim()
-	self.ClaimedPlayer = {}
+	self.ClaimedPlayer = nil
 	self.ClaimedFaction = nil
 
 	self:SetClaimedID(-1)

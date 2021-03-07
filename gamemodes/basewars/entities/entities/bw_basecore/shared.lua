@@ -11,10 +11,10 @@ ENT.IsBaseCore = true
 function ENT:DerivedDataTables()
 	self:NetworkVar("Int", 0, "BaseID")
 
-	self:NetworkVar("Int", 1, "ClaimedID")
+	self:NetworkVar("String", 0, "ClaimedID") -- gah!
 	self:NetworkVar("Bool", 0, "ClaimedByFaction")
 
-	self:SetClaimedID(-1)
+	self:SetClaimedID("")
 end
 
 function ENT:GetBase()
@@ -31,22 +31,26 @@ function ENT:GetClaimed()
 		local base = self:GetBase()
 		return base and base:GetClaimed(), self:GetClaimedByFaction()
 	else
-		return self:GetClaimedID() > -1
+		return self:GetClaimedID() ~= ""
 	end
 end
 
 function ENT:GetOwners()
 	if SERVER then
-		return self:GetBase():GetOwnerPlayers()
+		return self:GetBase():GetOwner()
 	else
 		local fac = self:GetClaimedByFaction()
 		local id = self:GetClaimedID()
 		if fac then
-			fac = Factions.GetFaction(id)
+			fac = Factions.GetFaction( tonumber(id) )
 			return fac, fac:GetMembers()
-		elseif id > 0 then
-			local ply = Player(id)
-			return ply, {ply}
+		elseif id ~= "" then
+			local ply = GetPlayerInfo(id, true)
+			if ply then
+				return nil, {ply}
+			else
+				return false, false
+			end
 		end
 	end
 end
