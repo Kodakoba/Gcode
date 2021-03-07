@@ -137,26 +137,25 @@ function Emitter:Emit(event, ...)
 	if not events then return end
 
 	local evs = events:Get(event)
+	if not evs then return end
 
-	if evs then
-		for k,v in pairs(evs) do
-			--if event name isn't a string, isn't a number and isn't valid then bail
-			if not (isstring(k) or isnumber(k) or k:IsValid()) then evs[k] = nil continue end
-			--v[1] is the callback function
-			--every other key-value is what was passed by On
+	for k,v in pairs(evs) do
+		--if event name isn't a string, isn't a number and isn't valid then bail
+		if not (isstring(k) or isnumber(k) or k:IsValid()) then evs[k] = nil continue end
+		--v[1] is the callback function
+		--every other key-value is what was passed by On
 
-			if #v > 1 then --AHHAHAHAHAHAHAHAHAHAHHA
-				local t = {unpack(v, 2)}
-				table.InsertVararg(t, ...)
+		if #v > 1 then --AHHAHAHAHAHAHAHAHAHAHHA
+			local t = {unpack(v, 2)}
+			table.InsertVararg(t, ...)
 
-				local a, b, c, d, e, why = v[1](self, unpack(t))
-				if a ~= nil then return a, b, c, d, e, why end --hook.Call intensifies
-			else
-				local a, b, c, d, e, why = v[1](self, ...)
-				if a ~= nil then return a, b, c, d, e, why end
-			end
-
+			local a, b, c, d, e, why = v[1](self, unpack(t))
+			if a ~= nil then return a, b, c, d, e, why end --hook.Call intensifies
+		else
+			local a, b, c, d, e, why = v[1](self, ...)
+			if a ~= nil then return a, b, c, d, e, why end
 		end
+
 	end
 
 end
