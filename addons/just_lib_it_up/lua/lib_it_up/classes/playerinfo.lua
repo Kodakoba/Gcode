@@ -1,10 +1,10 @@
 if not LibItUp.Networkable then include("networkable.lua") end
 LibItUp.SetIncluded()
 
-LibItUp.PlayerInfo = LibItUp.PlayerInfo or LibItUp.Networkable:callable()
+LibItUp.PlayerInfo = LibItUp.PlayerInfo or LibItUp.Emitter:callable()
 local PI = LibItUp.PlayerInfo
 PI.IsPlayerInfo = true
-PI.CleanupIn = 900 -- being absent for 15min = playerinfo is cleaned up
+PI.CleanupIn = 900 -- being absent for 15min = playerinfo is cleaned up (NYI)
 
 LibItUp.PlayerInfoTables = LibItUp.PlayerInfoTables or {
 	-- [info] = PI
@@ -43,7 +43,8 @@ function PI:Initialize(id, is_sid64) -- we can't know that the id is a steamID64
 	if ply then self:SetPlayer(ply) end
 	self:SetSteamID(sid)
 	self:SetSteamID64(sid64)
-	self:SetNetworkableID(sid64)
+
+	self.Networkable = Networkable:new(sid64)
 
 	self._StartedSession = CurTime()
 	self._EndedSession = nil
@@ -92,6 +93,7 @@ function PI:_Destroy()
 
 	self._Valid = false
 	self:Emit("Destroy")
+	self:Invalidate()
 	hook.Run("PlayerInfoDestroy", self)
 end
 
@@ -124,7 +126,7 @@ if CLIENT then
 		hook.Add("PlayerJoined", "AssignPlayerInfo:" .. uid, function(ply)
 			if ply:UserID() == uid then
 				self:SetPlayer(ply)
-				pi.Player[ply] = self
+				PIT.Player[ply] = self
 			end
 		end)
 	end
@@ -133,7 +135,7 @@ if CLIENT then
 		local uid = net.ReadUInt(16)
 		local sid64 = net.ReadString()
 
-		local pinfo = PI:get(sid64)
+		local pinfo = PI:get(sid64, true)
 
 		if not Player(uid):IsValid() then
 			pinfo:SetUserID(uid)
