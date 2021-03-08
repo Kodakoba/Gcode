@@ -25,14 +25,14 @@ Factions.KICK = 4
 
 Factions.Errors = {}
 local err = Factions.Errors
-local id = 0
+local err_id = 0
 
 local function makeErr(s)
-	err[id] = LocalString(s, id)
+	err[err_id] = LocalString(s, err_id)
 
-	id = id + 1
+	err_id = err_id + 1
 
-	return err[id - 1]
+	return err[err_id - 1]
 end
 
 Factions.Errors.Generic 		= 	makeErr("Something went wrong.")
@@ -102,6 +102,12 @@ function Factions.CanJoin(ply, fac)
 	end
 
 	return true
+end
+
+function Factions.GetFaction(id)
+	if SERVER then Factions.Validate() end
+	if isnumber(id) then return Factions.FactionIDs[id] or false end
+	return Factions.Faction[id] or false
 end
 
 hook.Add("BasewarsModuleLoaded", "CreateEmptyFaction", function(nm)

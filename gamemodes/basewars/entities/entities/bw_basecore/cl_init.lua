@@ -113,7 +113,7 @@ hook.Add("PreDrawHalos", "BaseCoreHalo", function()
 	if not base then return end
 
 	local core = base:GetBaseCore()
-	if not core or not core:IsValid() or core:IsDormant() then return end
+	if not core or not core:IsValid() then return end
 
 	local dist = lp:GetPos():Distance(core:GetPos())
 	local fr = math.max(math.min( (dist - 96) / 96, (768 - dist) / 512, 1 ), 0)

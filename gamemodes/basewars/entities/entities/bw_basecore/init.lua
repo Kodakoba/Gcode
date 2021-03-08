@@ -72,7 +72,8 @@ function ENT:Claim(ply, restore)
 			self.ClaimedFaction = nil
 		end
 
-		self:GetBase():On("Unclaim", self, function()
+		self:GetBase():Once("Unclaim", self, function()
+			print("Unclaim called")
 			self:Unclaim()
 		end)
 	else
@@ -85,7 +86,7 @@ function ENT:Unclaim()
 	self.ClaimedPlayer = nil
 	self.ClaimedFaction = nil
 
-	self:SetClaimedID(-1)
+	self:SetClaimedID("")
 	self:SetClaimedByFaction(false)
 end
 

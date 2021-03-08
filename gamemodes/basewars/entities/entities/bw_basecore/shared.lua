@@ -43,7 +43,7 @@ function ENT:GetOwners()
 		local id = self:GetClaimedID()
 		if fac then
 			fac = Factions.GetFaction( tonumber(id) )
-			return fac, fac:GetMembers()
+			return fac, fac:GetMembersInfo()
 		elseif id ~= "" then
 			local ply = GetPlayerInfo(id, true)
 			if ply then

@@ -264,7 +264,7 @@ function facmeta:Remove()
 	self:Emit("Remove")
 end
 
-function ValidFactions()
+function Factions.Validate()
 
 	for k,v in pairs(facs.Factions) do
 		if v == Factions.NoFaction then continue end
@@ -321,7 +321,7 @@ function facs.CreateFac(ply, name, pw, col)
 
 	if not Factions.CanCreate(name, pw, col, ply) then print("err can't create fac:", Factions.CanCreate(name, pw, col, ply)) return end
 
-	ValidFactions()
+	Factions.Validate()
 
 	if not name or name == "" then error('uh no name?') return end
 	if pw == "" then pw = nil end
@@ -380,7 +380,7 @@ function facs.JoinFac(ply, id, pw, force)
 
 	fac:Join(ply, pw, force)
 
-	ValidFactions()
+	Factions.Validate()
 	return true
 end
 
@@ -498,7 +498,7 @@ hook.Add("PlayerInitialSpawn", "FactionNetwork", function(ply)
 end)
 
 function facs.FullUpdate()
-	ValidFactions()
+	Factions.Validate()
 
 	net.Start("Factions")
 		net.WriteUInt(1, 4)
@@ -517,13 +517,6 @@ end
 
 
 facs.FullUpdate()
-
-
-function facs.GetFaction(id)
-	ValidFactions()
-	if isnumber(id) then return facs.FactionIDs[id] or false end
-	return facs.Faction[id] or false
-end
 
 function PLAYER:IsFacmate(ply2)
 	return facs.Players[self] == facs.Players[ply2]
