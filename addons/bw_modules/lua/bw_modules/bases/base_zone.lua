@@ -153,7 +153,7 @@ function bw.Zone:Remove(baseless)
 		self.Brush:Remove()
 	end
 
-	if not baseless then
+	if not baseless and self:GetBase() then
 		self:GetBase():RemoveZone(self)
 	end
 
@@ -235,6 +235,17 @@ function bw.Base:Initialize(id, json)
 
 	self.Data = {}
 
+	self.PublicNetworkable = Networkable("BasePub" .. id)
+
+	local pubNW = self.PublicNetworkable
+		pubNW:Alias("Claimed", 0)
+		pubNW:Alias("ClaimedBy", 1)
+		pubNW:Alias("ClaimedFaction", 2)
+
+	self.OwnerNetworkable = Networkable("BasePriv" .. id)
+	self.OwnerNetworkable.Base = self
+	self.OwnerNetworkable.Filter = self.OwnerNWFilter
+
 	if BaseWars.Bases.Bases[id] then
 		local old = BaseWars.Bases.Bases[id]
 		BaseWars.Bases.Bases[id]:Remove(true)
@@ -246,11 +257,6 @@ function bw.Base:Initialize(id, json)
 			Faction = nil,
 			Player = nil
 		}
-
-		self.Networkable = Networkable:new("base:" .. id)
-		self.Networkable.Filter = function()
-
-		end
 	end
 
 	if json and isstring(json) then
@@ -265,6 +271,11 @@ function bw.Base:Initialize(id, json)
 	self._Valid = true
 
 	BaseWars.Bases.Bases[id] = self
+
+	if self._PostInit then
+		self:_PostInit()
+	end
+
 end
 
 
@@ -275,6 +286,9 @@ function bw.Base:Remove(replaced)
 		for k,v in ipairs(self.Zones) do
 			v:Remove(true)
 		end
+
+		self.PublicNetworkable:Invalidate()
+		self.OwnerNetworkable:Invalidate()
 	end
 
 	if SERVER and IsValid(self:GetBaseCore()) then
@@ -351,7 +365,7 @@ hook.Add("NotifyShouldTransmit", "ReadyBase", function(e, add)
 
 	local ENT = scripted_ents.GetStored("bw_basecore").t
 	local base = ENT.GetBase(e) -- fucking gmod is insane
-	if not base then print(self, myBaseID, "didn't find base with that ID when entered PVS?") return end
+	if not base then print(e, myBaseID, "didn't find base with that ID when entered PVS?") return end
 
 	base:SetBaseCore(e)
 	base:_Ready()

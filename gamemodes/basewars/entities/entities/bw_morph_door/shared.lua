@@ -12,6 +12,7 @@ ENT.Cableable = true
 
 ENT.BoxThickness = 4
 ENT.IsMorphDoor = true
+ENT._UsesNetDTNotify = true
 
 function ENT:DerivedDataTables()
 	self:NetworkVar("Vector", 0, "Bound1")

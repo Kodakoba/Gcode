@@ -17,11 +17,16 @@ end
 function bw.Base:Claim(by)
 	if not self:CanClaim(by) then return false end
 
+	self.PublicNetworkable:Set("Claimed", true)
+
 	if IsFaction(by) then
 		self.Owner.Faction = by
 		self.Owner.Player = nil
 		self:SetClaimed(true)
 		self:ListenFaction(by)
+
+		self.PublicNetworkable:Set("ClaimedFaction", true)
+		self.PublicNetworkable:Set("ClaimedBy", by:GetID())
 
 	elseif IsPlayer(by) then
 		local pinfo = by:GetPInfo()
@@ -34,6 +39,9 @@ function bw.Base:Claim(by)
 				self:Unclaim()
 			end
 		end)
+
+		self.PublicNetworkable:Set("ClaimedFaction", false)
+		self.PublicNetworkable:Set("ClaimedBy", pinfo:GetSteamID64())
 	end
 
 	self:Emit("Claim")
@@ -53,6 +61,11 @@ function bw.Base:Unclaim()
 end
 
 
+function bw.Base.OwnerNWFilter(nw, ply)
+	local self = nw.Base
+	print("Owner filter:", ply, self:IsOwner(ply))
+	return self:IsOwner(ply)
+end
 
 function bw.Base:GetOwner()
 	-- return #1: faction or nil
@@ -73,7 +86,7 @@ function bw.Base:IsOwner(what)
 	if self.Owner.Faction then
 		return self.Owner.Faction == what or self.Owner.Faction:IsMember(what)
 	else
-		return self.Owner.Player == what
+		return self.Owner.Player == GetPlayerInfo(what)
 	end
 end
 

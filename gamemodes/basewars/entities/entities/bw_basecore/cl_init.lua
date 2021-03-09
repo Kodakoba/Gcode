@@ -101,7 +101,7 @@ hook.Add("NotifyShouldTransmit", "BaseCoreHalo", function(e, add)
 
 	local ENT = scripted_ents.GetStored("bw_basecore").t
 	local base = ENT.GetBase(e) -- fucking gmod is insane
-	if not base then print(self, myBaseID, "didn't find base with that ID when entered PVS?") return end
+	if not base then print(e, myBaseID, "didn't find base with that ID when entered PVS?") return end
 
 	base:SetBaseCore(e)
 end)

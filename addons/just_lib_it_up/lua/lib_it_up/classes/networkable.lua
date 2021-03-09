@@ -320,15 +320,12 @@ function nw:_CanSetNW(k, v)
 		self:SetNetworkableID(self.NetworkableID)
 	end -- maybe resetall happened
 
-	if self.__Aliases[k] ~= nil then k = self.__Aliases[k] end
-
-	return k
 end
 
 function nw:SetTable(k, v)
 	-- like :Set() but does vON checking
 	-- this is intended to be used with arrays/lists with von encodable shit
-	local alias_k = self:_CanSetNW(k, v)
+	self:_CanSetNW(k, v)
 	if not istable(v) then errorf("Calling SetTable on a non-table value! (%s = %s `%s`)", k, v, type(v)) return end
 	if v.__isobject then errorf("Calling SetTable on an object! (%s = %s `%s`)", k, v, type(v)) return end
 
@@ -355,23 +352,23 @@ end
 function nw:Set(k, v)
 	-- if you're using a table or an object as `v`, it's assumed you have a custom encoder for it
 	-- if you don't, well, expect issues...
-	local alias_k = self:_CanSetNW(k, v)
+	self:_CanSetNW(k, v)
 
 	if CLIENT then -- don't bother
-		self.Networked[alias_k] = v
+		self.Networked[k] = v
 		return self
 	end
 
 	if v == nil then v = fakeNil end --lul
-	if self.Networked[alias_k] == v and not istable(v) then --[[adios]] return end
+	if self.Networked[k] == v and not istable(v) then --[[adios]] return end
 
-	self.Networked[alias_k] = v
-	_NetworkableChanges:Set(v, self.NetworkableID, alias_k)
+	self.Networked[k] = v
+	_NetworkableChanges:Set(v, self.NetworkableID, k)
 	return self
 end
 
 function nw:Get(k, default)
-	if self.__Aliases[k] ~= nil then k = self.__Aliases[k] end
+	--if self.__Aliases[k] ~= nil then k = self.__Aliases[k] end
 
 	local ret = self.Networked[k]
 	if ret == fakeNil then return nil end
@@ -475,6 +472,7 @@ if SERVER then
 	end
 
 	local function WriteChange(key, val, obj, ...)
+		key = obj.__Aliases[key] ~= nil and obj.__Aliases[key] or key
 
 		local key_typ = type(key):lower()
 		local val_typ = type(val):lower()
@@ -730,24 +728,23 @@ if CLIENT then
 
 		local k_dec = decoderByID[k_encID]
 
-		if not k_dec then
-			print("	failed to read k_dec", k_dec, k_encID)
-		end
+		if not k_dec then errorf("Failed to read key decoder ID from %s properly (@ %d)", obj or "NWLess", k_encID) return end
 
 		local decoded_key = k_dec[2](k_dec[3])
-		if obj and obj.__Aliases[decoded_key] then decoded_key = obj.__Aliases[decoded_key] end
-		print("decoded key:", decoded_key)
+		print("decoded key: %s (dealiased: %s)", decoded_key, obj and (obj.__AliasesBack[decoded_key] or "no alias") or "no obj")
+		if obj and obj.__AliasesBack[decoded_key] then decoded_key = obj.__AliasesBack[decoded_key] end
+
 		if obj then
-			local unaliased_key = obj.__AliasesBack[decoded_key] or decoded_key
-			print("unaliased:", unaliased_key)
-			local customValue, setNil = obj:Emit("ReadChangeValue", unaliased_key)
-			print("returned", customValue)
+			local customValue, setNil = obj:Emit("ReadChangeValue", decoded_key)
+			print("returned", customValue, next(obj.__Events.ReadChangeValue or {}), obj.Yeet, obj.Yote)
 			if customValue ~= nil and not setNil then return decoded_key, customValue end
 		end
 
 		local v_encID = net.ReadUInt(encoderIDLength)
 
 		local v_dec = decoderByID[v_encID]
+		if not v_dec then errorf("Failed to read value decoder ID from %s properly (@ %d)", obj or "NWLess", v_encID) return end
+
 		local decoded_val = v_dec[2](v_dec[3])
 
 		--print("	decoded key, val:", decoded_key, decoded_val)
@@ -801,6 +798,7 @@ if CLIENT then
 
 			printf("	reading change #%d", i)
 
+			if not obj then warnf("Reading an object-less change #%d", i) end
 			local k, v = ReadChange(obj)
 
 			if obj then

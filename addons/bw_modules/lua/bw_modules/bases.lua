@@ -11,6 +11,26 @@ end
 
 
 local function init(force)
+	if force and BaseWars.Bases then
+		for k,v in pairs(BaseWars.Bases.Bases) do
+			v:Remove()
+		end
+
+		for k,v in pairs(BaseWars.Bases.Zones) do
+			v:Remove()
+		end
+	end
+
+	if force then
+		local b = BaseWars.Bases.NW
+		b.Bases:Invalidate()
+		b.Zones:Invalidate()
+
+		b.Bases = Networkable("bw_bases_bases")
+		b.Bases.Yeet = true
+		b.Zones = Networkable("bw_bases_zones")
+	end
+
 	BaseWars.Bases = (not force and BaseWars.Bases) or Emitter.Make({
 		-- data populated from base_sql_sv
 		Zones = {},
@@ -72,5 +92,5 @@ local function init(force)
 	FInc.FromHere("bases/*.lua", _SH, true, FInc.RealmResolver():SetDefault(true))
 end
 
-init()
+init(true)
 BaseWars.Bases.Reset = Curry(init, true)

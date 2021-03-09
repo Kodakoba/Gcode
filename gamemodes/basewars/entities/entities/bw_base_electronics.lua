@@ -1,8 +1,10 @@
 AddCSLuaFile()
 
-ENT.Base = "bw_base"
+local base = "bw_base"
+ENT.Base = base
 ENT.Type = "anim"
 ENT.PrintName = "Base Electricals"
+
 
 ENT.Model = "models/props_c17/metalPot002a.mdl"
 ENT.Skin = 0
@@ -35,7 +37,7 @@ function ENT:IsPowered(val)
 end
 
 function ENT:SetupDataTables()
-	self.BaseClass.SetupDataTables(self)
+	baseclass.Get(base).SetupDataTables(self)
 
 	self:NetworkVar("Bool", 0, "Powered")
 	self:NetworkVar("Float", 0, "RebootTime")
@@ -143,15 +145,17 @@ if SERVER then
 	end
 
 	function ENT:Initialize()
+		baseclass.Get(base).Initialize(self)
+
 		BWEnts.Tables[self] = BWEnts.Tables[self] or {}
 		local me = BWEnts.Tables[self]
 		me.ConnectDistanceSqr = self.ConnectDistance ^ 2
 	end
-	
+
 else
-	
+
 	function ENT:Initialize()
-		self.BaseClass.Initialize(self)
+		baseclass.Get(base).Initialize(self)
 
 		BWEnts.Tables[self] = BWEnts.Tables[self] or {}
 			local me = BWEnts.Tables[self]

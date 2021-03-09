@@ -25,7 +25,7 @@ zNW:On("ReadChangeValue", "DecodeZones", function(self, zID)
 	if not yiss then
 		local z = bw.Zones[zID]
 		if z then z:Remove() end
-		return
+		return nil, true
 	end
 
 	self.Networked.Zones = self.Networked.Zones or {}
@@ -39,7 +39,7 @@ zNW:On("ReadChangeValue", "DecodeZones", function(self, zID)
 	zone:SetName(name)
 	zone:SetBounds(mins, maxs)
 
-	return true
+	return zone
 end)
 
 zNW:On("NetworkedChanged", "DecodedAll", function(self)
@@ -47,19 +47,21 @@ zNW:On("NetworkedChanged", "DecodedAll", function(self)
 	bw:Emit("ReadZones")
 end)
 
+bNW.Yote = true
 bNW:On("ReadChangeValue", "DecodeBases", function(self, key)
 	local yiss = net.ReadBool()
 
 	if not yiss then
 		local z = bw.Zones[key]
 		if z then z:Remove() end
-		return
+		return nil, true
 	end
 
 	local base = bw.GetBase(key) or bw.Base(key)
+
 	base:ReadNetwork()
 
-	return true
+	return base
 end)
 
 bNW:On("NetworkedChanged", "DecodedAll", function(self)
