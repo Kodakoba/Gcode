@@ -29,7 +29,6 @@ function ENT:IsFull()
 end
 
 function ENT:Think()
-	local me = BWEnts.Tables[self]
 	local diff = CurTime() - self.LastThink
 	self.LastThink = CurTime()
 

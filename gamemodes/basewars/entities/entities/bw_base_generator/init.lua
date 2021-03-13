@@ -7,11 +7,13 @@ local meta = FindMetaTable("Entity")
 util.AddNetworkString("ConnectGenerator")
 
 function ENT:Init()
+	--baseclass.Get("bw_base").Initialize(self)
 
 	Generators[#Generators + 1] = self
 	self:AddEFlags(EFL_FORCE_CHECK_TRANSMIT)
 	timer.Simple(0, function() self:PingGrids() end)
-	self:SetPowered(true)
+	self.ConnectDistanceSqr = self.ConnectDistance ^ 2
+	--self:SetPowered(true)
 end
 
 function ENT:PingGrids()
@@ -70,8 +72,8 @@ function ENT:Think()
 	self:Emit("Think")
 end
 
-function ENT:CheckCableDistance(bwe)
-	bwe = bwe or BWEnts.Tables[self]
+function ENT:CheckCableDistance()
+	local bwe = self:GetTable()
 
 
 	if bwe.CheckDist then
@@ -82,7 +84,7 @@ function ENT:CheckCableDistance(bwe)
 		local pos = self:GetPos()
 		local pos2 = line:GetPos()
 
-		if pos:DistToSqr(pos2) > math.min(bwe.ConnectDistanceSqr, BWEnts.Tables[line].ConnectDistanceSqr) then
+		if pos:DistToSqr(pos2) > math.min(bwe.ConnectDistanceSqr, line.ConnectDistanceSqr) then
 			self:Disconnect()
 		else
 			bwe.CheckDist = nil
@@ -93,7 +95,7 @@ function ENT:CheckCableDistance(bwe)
 end
 
 function ENT:PhysicsUpdate()
-	BWEnts.Tables[self].CheckDist = true
+	self.CheckDist = true
 end
 
 function ENT:OnConnectToLine(line)

@@ -59,13 +59,13 @@ end
 
 function ENT:Disconnect()
 	self:GetGrid():RemoveConsumer(self)
-	PowerGrid:new((self:CPPIGetOwner())):AddConsumer(self)
+	PowerGrid:new( (self:CPPIGetOwner()) ):AddConsumer(self)
 end
 
 if SERVER then
 
-	function ENT:CheckCableDistance(bwe)
-		bwe = bwe or BWEnts.Tables[self]
+	function ENT:CheckCableDistance()
+		local bwe = self:GetTable()
 		if bwe.CheckDist and IsValid(self:GetLine()) then
 			local pos = self:GetPos()
 
@@ -82,7 +82,7 @@ if SERVER then
 
 	function ENT:Think()
 		local me = self:GetTable()
-		local bwe = BWEnts.Tables[self]
+		local bwe = me
 
 		self:CheckCableDistance(bwe)
 
@@ -105,7 +105,7 @@ if SERVER then
 	function ENT:StartBitching()
 		self:SetLine(NULL)
 
-		local grid = PowerGrid:new((self:CPPIGetOwner()))
+		local grid = PowerGrid:new( (self:CPPIGetOwner()) )
 		grid:AddConsumer(self)
 	end
 
@@ -138,28 +138,22 @@ if SERVER then
 	end
 
 	function ENT:PhysicsUpdate(...)
-		local me = BWEnts.Tables[self]
-		me.CheckDist = true
-
+		self.CheckDist = true
 		self:OnPhysicsUpdate(...)
 	end
 
 	function ENT:Initialize()
-		baseclass.Get(base).Initialize(self)
-
-		BWEnts.Tables[self] = BWEnts.Tables[self] or {}
-		local me = BWEnts.Tables[self]
-		me.ConnectDistanceSqr = self.ConnectDistance ^ 2
+		baseclass.Get("bw_base").Initialize(self)
+		self.ConnectDistanceSqr = self.ConnectDistance ^ 2
+		self:Init()
 	end
 
 else
 
 	function ENT:Initialize()
-		baseclass.Get(base).Initialize(self)
+		baseclass.Get("bw_base").Initialize(self)
 
-		BWEnts.Tables[self] = BWEnts.Tables[self] or {}
-			local me = BWEnts.Tables[self]
-			me.ConnectDistanceSqr = self.ConnectDistance ^ 2
+		self.ConnectDistanceSqr = self.ConnectDistance ^ 2
 
 		self:OnChangeGridID(self:GetGridID())
 		self:CLInit()

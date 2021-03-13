@@ -2,9 +2,10 @@ AddCSLuaFile("cl_init.lua")
 AddCSLuaFile("shared.lua")
 include("shared.lua")
 
-function ENT:Init()
+function ENT:Initialize()
+    baseclass.Get("bw_base_electronics").Initialize(self)
 
-    local me = BWEnts.Tables[self]
+    local me = self:GetTable()
 
     me.Power = 0
     me.MaxPower = self.PowerCapacity
@@ -125,8 +126,6 @@ function ENT:Upgrade(ply)
 end
 
 function ENT:NetworkVars()
-
-    local me = BWEnts.Tables[self]
     local t = self:GetTable()
 
     t.SetNWMoney(self, t.Money)

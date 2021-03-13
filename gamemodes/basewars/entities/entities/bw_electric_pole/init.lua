@@ -135,8 +135,8 @@ function ENT:Disconnect(ent)
 end
 
 function ENT:Think()
-	local me = BWEnts.Tables[self]
-	if me.CheckDist and self.Grid then
+	local me = self:GetTable()
+	if me.CheckDist and me.Grid then
 		local pos = self:GetPos()
 		local range = me.ConnectDistanceSqr
 
@@ -150,7 +150,7 @@ function ENT:Think()
 					break
 				end
 			else
-				BWEnts.Tables[v].CheckDist = true
+				v.CheckDist = true
 				v:CheckCableDistance()
 			end
 		end
