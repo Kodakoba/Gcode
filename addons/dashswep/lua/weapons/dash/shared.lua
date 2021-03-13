@@ -1,4 +1,3 @@
-
 SWEP.Author			= "grmx"
 SWEP.Contact			= ""
 SWEP.Purpose			= ""
@@ -16,8 +15,6 @@ SWEP.Primary.Automatic = false
 
 local dashDur = 0.3
 SWEP.DashTime = dashDur
-
-local clprint = CLIENT and print or BlankFunc
 
 function SWEP:SetupDataTables()
 

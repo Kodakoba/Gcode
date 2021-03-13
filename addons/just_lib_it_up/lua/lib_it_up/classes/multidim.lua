@@ -1,10 +1,10 @@
-LibItUp.SetIncluded()
+if LibItUp then LibItUp.SetIncluded() end
 
 --rip your RAM
 setfenv(0, _G)
 
 muldim = muldim or Class:callable()
-LibItUp.MulDim = muldim
+if LibItUp then LibItUp.MulDim = muldim end
 local weak = muldim:callable()
 weak.__mode = "kv"
 

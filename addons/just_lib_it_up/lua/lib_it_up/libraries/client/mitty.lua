@@ -24,7 +24,6 @@ local function MakeMesh(dat, mat)
 
 	]]
 	if not dat.Mesh then
-		print(mat)
 		local m = Mesh(mat)
 		dat.Mesh = m
 
@@ -282,7 +281,6 @@ function Memes.AddDecal(name, pos, ang, scale, normal, col, rtpaint, rtupd, pixp
 	d.Middle = d.Pos + (d.Ang:Right() * d.MeshW * scale / 2) - (d.Ang:Up() * d.MeshH * scale / 2)
 	Memes.Decals[name] = d
 end
-
 
 
 local mia, mitty

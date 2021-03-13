@@ -17,7 +17,7 @@ end
 function bw.Base:Claim(by)
 	if not self:CanClaim(by) then return false end
 
-	self.PublicNetworkable:Set("Claimed", true)
+	self.PublicNW:Set("Claimed", true)
 
 	if IsFaction(by) then
 		self.Owner.Faction = by
@@ -25,8 +25,8 @@ function bw.Base:Claim(by)
 		self:SetClaimed(true)
 		self:ListenFaction(by)
 
-		self.PublicNetworkable:Set("ClaimedFaction", true)
-		self.PublicNetworkable:Set("ClaimedBy", by:GetID())
+		self.PublicNW:Set("ClaimedFaction", true)
+		self.PublicNW:Set("ClaimedBy", by:GetID())
 
 	elseif IsPlayer(by) then
 		local pinfo = by:GetPInfo()
@@ -40,11 +40,12 @@ function bw.Base:Claim(by)
 			end
 		end)
 
-		self.PublicNetworkable:Set("ClaimedFaction", false)
-		self.PublicNetworkable:Set("ClaimedBy", pinfo:GetSteamID64())
+		self.PublicNW:Set("ClaimedFaction", false)
+		self.PublicNW:Set("ClaimedBy", pinfo:GetSteamID64())
 	end
 
 	self:Emit("Claim")
+	self:UpdateNW()
 	hook.Run("BaseClaimed", self, by)
 
 	return true
@@ -61,9 +62,25 @@ function bw.Base:Unclaim()
 end
 
 
+function bw.Base:UpdateNW()
+	local plys, nws = {}, {self.OwnerNW, self.EntsNW}
+	local fac, infos = self:GetOwner()
+
+	if fac then
+		for k,v in ipairs(infos) do
+			local ply = v:GetPlayer()
+			if ply:IsValid() then plys[#plys + 1] = ply end
+		end
+	else
+		plys[1] = infos:GetPlayer()
+	end
+
+	Networkable.UpdateFull(plys, nws)
+end
+
+-- This filter is used in multiple places
 function bw.Base.OwnerNWFilter(nw, ply)
 	local self = nw.Base
-	print("Owner filter:", ply, self:IsOwner(ply))
 	return self:IsOwner(ply)
 end
 

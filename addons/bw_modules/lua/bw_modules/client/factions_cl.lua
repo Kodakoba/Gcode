@@ -78,15 +78,14 @@ function facmeta:Initialize(id, name, col, haspw)
 
 	self:On("ReadChangeValue", function(self, key)
 		if key ~= "PlayerInfo" then return end
-		print("read change value")
+
 		local arr = {}
 
 		local count = net.ReadUInt(4)
-		print("reading ", count, "playerinfos")
+
 		for i=1, count do
 			local sid64 = net.ReadString()
 			arr[i] = GetPlayerInfoGuarantee(sid64, true)
-			print("got playerinfo", arr[i])
 		end
 
 		return arr

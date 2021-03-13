@@ -50,11 +50,19 @@ function PI:Initialize(id, is_sid64) -- we can't know that the id is a steamID64
 	self._EndedSession = nil
 	self._TotalSession = 0
 
-	local pi = LibItUp.PlayerInfoTables
+	if ply then PIT.Player[ply] = self end
+	PIT.SteamID[sid] = self
+	PIT.SteamID64[sid64] = self
+end
 
-	if ply then pi.Player[ply] = self end
-	pi.SteamID[sid] = self
-	pi.SteamID64[sid64] = self
+function PI:SetPlayer(ply)
+	if not ply:IsValid() then return end
+	self._Player = ply
+	PIT.Player[ply] = self
+end
+
+function PI:GetPlayer()
+	return self._Player
 end
 
 function PI:__tostring()
@@ -62,10 +70,15 @@ function PI:__tostring()
 end
 
 function PI:get(id, is_sid64)
+	-- returns: pinfo, bool (newly created?)
 	if IsPlayer(id) then
 		if LibItUp.PlayerInfoTables.Player[id] then return LibItUp.PlayerInfoTables.Player[id], false end
 		local sid64 = id:SteamID64()
-		if LibItUp.PlayerInfoTables.SteamID64[id] then return LibItUp.PlayerInfoTables.SteamID64[id], false end
+		if LibItUp.PlayerInfoTables.SteamID64[id] then
+			local pi = LibItUp.PlayerInfoTables.SteamID64[id]
+			pi:SetPlayer(id)
+			return pi, false
+		end
 	elseif not is_sid64 and string.IsSteamID(id) then
 		if LibItUp.PlayerInfoTables.SteamID[id] then return LibItUp.PlayerInfoTables.SteamID[id], false end
 	else
@@ -75,7 +88,6 @@ function PI:get(id, is_sid64)
 	return PI:new(id, is_sid64), true
 end
 
-ChainAccessor(PI, "_Player", "Player")
 ChainAccessor(PI, "_SteamID", "SteamID")	-- 	  !! Using SteamID's is not advised due to its' behavior on bots !!
 											-- Use SteamID64 instead since it has a hack to work on bots on both realms
 ChainAccessor(PI, "_SteamID64", "SteamID64")

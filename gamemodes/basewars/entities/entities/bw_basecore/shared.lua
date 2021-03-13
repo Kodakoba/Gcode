@@ -27,30 +27,16 @@ function ENT:GetBase()
 end
 
 function ENT:GetClaimed()
-	if SERVER then
-		local base = self:GetBase()
-		return base and base:GetClaimed(), self:GetClaimedByFaction()
-	else
-		return self:GetClaimedID() ~= ""
-	end
+	local base = self:GetBase()
+	if not base then return false end
+
+	return base:GetClaimed()
 end
 
 function ENT:GetOwners()
-	if SERVER then
-		return self:GetBase():GetOwner()
-	else
-		local fac = self:GetClaimedByFaction()
-		local id = self:GetClaimedID()
-		if fac then
-			fac = Factions.GetFaction( tonumber(id) )
-			return fac, fac:GetMembersInfo()
-		elseif id ~= "" then
-			local ply = GetPlayerInfo(id, true)
-			if ply then
-				return nil, {ply}
-			else
-				return false, false
-			end
-		end
-	end
+	local base = self:GetBase()
+	if not base then return false end
+
+	local fac, ows = base:GetOwner()
+	return fac, ows
 end

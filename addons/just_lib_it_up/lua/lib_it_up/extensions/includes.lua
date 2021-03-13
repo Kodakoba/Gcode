@@ -221,6 +221,11 @@ local function Resolve(res, path)
 			end
 			return false, false
 		else
+
+			if isfunction(default) then
+				default = default(path)
+			end
+
 			if is_ext then
 				if verb then
 					logInclusion( path, default and 1, false, 2, default )

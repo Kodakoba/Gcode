@@ -46,7 +46,7 @@ local function displayZone(zone)
 	end
 
 	local piece = zdt:ActivateElement(zfragID)
-	
+
 	if not bdt:GetCurrentElement() then
 		piece:SetLiftStrength(-18)
 	else

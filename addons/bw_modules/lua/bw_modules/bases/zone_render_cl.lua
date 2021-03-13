@@ -30,7 +30,7 @@ function bw.Zone:Draw()
 
 	-- if we don't draw anymore, remove ourselves from the list
 	-- so we don't even bother calling this
-	if a == 0 then bw.ZonePaints[self] = nil return end 
+	if a == 0 then bw.ZonePaints[self] = nil return end
 
 	local min, max = self:GetBounds()
 	if not min or not max then return end --??

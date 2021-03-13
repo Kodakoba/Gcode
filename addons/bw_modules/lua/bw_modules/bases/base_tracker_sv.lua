@@ -117,6 +117,7 @@ end
 	local function enterBase(ent, base)
 		bw.BasePresence[ent] = base
 
+		base:EntityEnter(ent)
 		base:Emit("EntityEntered", ent)
 
 		ent:Emit("EnteredBase", base)
@@ -136,6 +137,7 @@ end
 
 		bw.BasePresence[ent] = nil
 
+		base:EntityExit(ent)
 		base:Emit("EntityExited", ent)
 		ent:Emit("ExitedBase", base)
 		if ent.OnExitedBase then

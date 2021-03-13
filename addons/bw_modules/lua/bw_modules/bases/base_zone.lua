@@ -231,20 +231,27 @@ function bw.Base:Initialize(id, json)
 	self.ZonesByID = {}		-- [zone_id] = zone_obj
 
 	self.Players = {}
+
 	self.Entities = {}
 
 	self.Data = {}
 
-	self.PublicNetworkable = Networkable("BasePub" .. id)
+	self.PublicNW = Networkable("BasePub" .. id)
 
-	local pubNW = self.PublicNetworkable
+	local pubNW = self.PublicNW
 		pubNW:Alias("Claimed", 0)
 		pubNW:Alias("ClaimedBy", 1)
 		pubNW:Alias("ClaimedFaction", 2)
 
-	self.OwnerNetworkable = Networkable("BasePriv" .. id)
-	self.OwnerNetworkable.Base = self
-	self.OwnerNetworkable.Filter = self.OwnerNWFilter
+	self.OwnerNW = Networkable("BasePriv" .. id)
+		self.OwnerNW.Base = self
+		self.OwnerNW.Filter = self.OwnerNWFilter
+
+	self.EntsNW = Networkable("BaseEnts" .. id)
+		self.EntsNW.Base = self
+		self.EntsNW.Filter = self.OwnerNWFilter
+
+	self.PowerGrid = bw.PowerGrid:new(self)
 
 	if BaseWars.Bases.Bases[id] then
 		local old = BaseWars.Bases.Bases[id]
@@ -278,6 +285,19 @@ function bw.Base:Initialize(id, json)
 
 end
 
+ChainAccessor(bw.Base, "_Entities", "Entities")
+ChainAccessor(bw.Base, "_Players", "Players")
+
+function bw.Base:EntityEnter(ent)
+	self.Entities[ent] = ent:EntIndex()
+	self.EntsNW:Set(ent:EntIndex(), true)
+end
+
+function bw.Base:EntityExit(ent)
+	self.Entities[ent] = ent:EntIndex()
+	self.EntsNW:Set(ent:EntIndex(), true)
+end
+
 
 function bw.Base:Remove(replaced)
 	self._Valid = false
@@ -287,8 +307,10 @@ function bw.Base:Remove(replaced)
 			v:Remove(true)
 		end
 
-		self.PublicNetworkable:Invalidate()
-		self.OwnerNetworkable:Invalidate()
+		self.PublicNW:Invalidate()
+		self.OwnerNW:Invalidate()
+		self.EntsNW:Invalidate()
+		self.PowerGrid:Remove()
 	end
 
 	if SERVER and IsValid(self:GetBaseCore()) then
@@ -451,3 +473,4 @@ if CLIENT then
 end
 
 FInc.FromHere("baseview/_init.lua", _SH, true, FInc.RealmResolver():SetDefault(true))
+FInc.FromHere("powergrid/_init.lua", _SH, true, FInc.RealmResolver():SetDefault(true))

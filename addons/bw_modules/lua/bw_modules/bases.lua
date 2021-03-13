@@ -21,15 +21,6 @@ local function init(force)
 		end
 	end
 
-	if force then
-		local b = BaseWars.Bases.NW
-		b.Bases:Invalidate()
-		b.Zones:Invalidate()
-
-		b.Bases = Networkable("bw_bases_bases")
-		b.Bases.Yeet = true
-		b.Zones = Networkable("bw_bases_zones")
-	end
 
 	BaseWars.Bases = (not force and BaseWars.Bases) or Emitter.Make({
 		-- data populated from base_sql_sv
@@ -78,6 +69,16 @@ local function init(force)
 		SQL = {},			-- SV
 		ZonePaints = {},	-- CL
 	})
+
+	if force then
+		local b = BaseWars.Bases.NW
+		b.Bases:Invalidate()
+		b.Zones:Invalidate()
+
+		b.Bases = Networkable("bw_bases_bases")
+		b.Bases.Yeet = true
+		b.Zones = Networkable("bw_bases_zones")
+	end
 
 	if force and SERVER then
 		for k,v in ipairs(ents.FindByClass("bw_zone_brush")) do

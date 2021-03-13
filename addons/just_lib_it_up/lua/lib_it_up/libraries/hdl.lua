@@ -1,4 +1,4 @@
-LibItUp.SetIncluded()
+if LibItUp then LibItUp.SetIncluded() end
 
 AddCSLuaFile()
 setfenv(1, _G)
