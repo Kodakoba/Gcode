@@ -11,13 +11,15 @@ local BWAddons = {
     284266415,
 
     2131057232, -- arccw base(d on what)
-    2179387416, -- arccw arknights charms because aerach
+    -- 2179387416, -- arccw arknights charms because aerach
     2131058270, -- arccw cs+
-    2176333528, -- arccw insurgency
     2135529088, -- arccw mw2
     2175261690, -- arccw fa:s 1
     2131161276, -- arccw m9k "extras"
     2257255110, -- arccw GO
+    2393318131, -- arccw fa:s 2
+    2306829669, -- arccw home defense
+
     --2360831320, -- "oranche standard issue" basically an arccw pack (update: it sucks)
     2409364730, -- gunsmith offensive extras
 
