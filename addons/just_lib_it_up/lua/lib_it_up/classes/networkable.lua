@@ -467,7 +467,7 @@ end
 if SERVER then
 
 	local function WriteNWID(obj)
-		net.WriteUInt(obj.NetworkableIDEncoder.ID, encoderIDLength)
+		net.WriteUInt(obj.NetworkableIDEncoder.ID, encoderIDLength).Description = "Encoder ID"
 		obj.NetworkableIDEncoder.Func(obj.NetworkableID, obj.NetworkableIDEncoder.IDArg)
 	end
 
@@ -545,7 +545,7 @@ if SERVER then
 
 			-- write numberID + NWID if there are any unaware people
 			net.WriteBool(unaware)
-			net.WriteUInt(numID, SZ.NUMBERID)
+			net.WriteUInt(numID, SZ.NUMBERID).Description = "NumberID for `" .. nameID .. "`"
 
 			if unaware then
 				WriteNWID(self)
@@ -562,7 +562,7 @@ if SERVER then
 
 				for k,v in pairs(changes) do
 					WriteChange(k, v, self, who)
-					changes[k] = nil
+					if not full then changes[k] = nil end
 					actuallyWritten = actuallyWritten + 1
 					if ns:BytesWritten() > budget then
 						goto send -- YEET IT
@@ -582,7 +582,7 @@ if SERVER then
 
 			print( tostring(ns), "networking to:")
 			for k,v in pairs(who) do
-				print(k, who)
+				print(k, v)
 			end
 
 			net.WriteNetStack(ns)
@@ -623,6 +623,8 @@ if SERVER then
 			local name = table.remove(_NetworkableQueue, 1)
 
 			local obj = _NetworkableCache[name]
+			local shouldFull = false
+
 			if not obj or not obj:IsValid() then continue end
 
 			if obj.Filter then
@@ -637,7 +639,7 @@ if SERVER then
 				copy = all
 			end
 
-			local ns, written = obj:_SendNet(copy, false, SZ.INTERVAL_UPDATE - total_written)
+			local ns, written = obj:_SendNet(copy, shouldFull, SZ.INTERVAL_UPDATE - total_written)
 			total_written = total_written + written
 							-- written more than INTERVAL_UPDATE = halt until next nw frame
 			if total_written > SZ.INTERVAL_UPDATE then
@@ -679,7 +681,10 @@ if SERVER then
 			else
 				copy = all
 			end
-
+			print("Fullupdating:")
+			for k,v in pairs(copy) do
+				print("	", k, v)
+			end
 			obj:_SendNet(copy, true)
 		end
 	end
