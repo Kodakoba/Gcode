@@ -254,6 +254,8 @@ function facmeta:Remove()
 		facs.Players[v] = nil
 	end
 
+	hook.Run("FactionDisbanded", self)
+
 	net.Start("Factions")
 		net.WriteUInt(3, 4)	--delete
 		print("Deleting faction", self.id)
@@ -337,6 +339,8 @@ function facs.CreateFac(ply, name, pw, col)
 	local fac = facmeta:new(ply, id, name, pw, col)
 
 	cooldowns[ply] = CurTime()
+
+	hook.Run("FactionCreated", ply, fac)
 
 	-- first make them aware of the faction, then network its' details
 

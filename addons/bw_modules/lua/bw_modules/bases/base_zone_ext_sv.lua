@@ -1,10 +1,19 @@
 local bw = BaseWars.Bases
 
+function LibItUp.PlayerInfo:GetBase()
+	local base = self._Base
+	if not base then return false end
+
+	return base:IsOwner(self) and base
+end
+
 function bw.Base:ListenFaction(fac)
 	local listenID = "BaseListen" .. self:GetID()
 
 	fac:On("Update", listenID, function()
-		-- ?
+		for k,v in ipairs( fac:GetMembersInfo() ) do
+			v._Base = self
+		end
 	end)
 
 	fac:On("Remove", listenID, function()
@@ -14,14 +23,15 @@ function bw.Base:ListenFaction(fac)
 	end)
 end
 
-function bw.Base:Claim(by)
-	if not self:CanClaim(by) then return false end
+function bw.Base:Claim(by, force)
+	if not self:CanClaim(by) and not force then return false end
 
 	self.PublicNW:Set("Claimed", true)
 
 	if IsFaction(by) then
 		self.Owner.Faction = by
 		self.Owner.Player = nil
+
 		self:SetClaimed(true)
 		self:ListenFaction(by)
 
@@ -30,6 +40,8 @@ function bw.Base:Claim(by)
 
 	elseif IsPlayer(by) then
 		local pinfo = by:GetPInfo()
+		pinfo._Base = self
+
 		self.Owner.Faction = nil
 		self.Owner.Player = pinfo
 		self:SetClaimed(true)
@@ -51,16 +63,67 @@ function bw.Base:Claim(by)
 	return true
 end
 
+hook.Add("FactionCreated", "BWBaseOwnership", function(ply, fac)
+	if GetPlayerInfo(ply):GetBase() then
+		GetPlayerInfo(ply):GetBase():Claim(fac, true)
+	end
+end)
+
 function bw.Base:Unclaim()
 	local prev = self.Owner.Faction or self.Owner.Player
+
+	if IsFaction(prev) then
+		for k,v in ipairs( prev:GetMembersInfo() ) do
+			v._Base = nil
+		end
+	else
+		prev._Base = nil
+	end
+
 	self.Owner.Faction = nil
 	self.Owner.Player = nil
 	self:SetClaimed(false)
 
 	self:Emit("Unclaim")
 	hook.Run("BaseUnclaimed", self, prev)
+
+	self.PublicNW:Set("ClaimedFaction", false)
+	self.PublicNW:Set("ClaimedBy", nil)
 end
 
+function bw.Base:SpawnCore()
+	local dat = self:GetData()
+	if not dat.BaseCore then return end
+
+	local bc = dat.BaseCore
+	local pos, ang, mdl = bc.pos, bc.ang, bc.mdl
+
+	if not isvector(pos) or not isangle(ang) or not util.IsValidModel(mdl) then
+		errorf("Invalid data for base's basecore spawn.\
+	Position: %s (valid: %s)\
+	Angle: %s (valid: %s)\
+	Model: %s (valid: %s)",
+	tostring(pos), isvector(pos),
+	tostring(ang), isangle(ang),
+	tostring(mdl), util.IsValidModel(mdl))
+	end
+
+	local prevCore = IsValid(self:GetBaseCore()) and self:GetBaseCore()
+	local core = prevCore or ents.Create("bw_basecore")
+	core:SetPos(pos)
+	core:SetAngles(ang)
+
+	if not prevCore then
+		core:Spawn()
+	end
+
+	self:AddToNW()
+
+	core:SetBase(self)
+	core:SetModel(mdl)
+
+	self:SetBaseCore(core)
+end
 
 function bw.Base:UpdateNW()
 	local plys, nws = {}, {self.OwnerNW, self.EntsNW}

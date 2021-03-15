@@ -10,18 +10,28 @@ local function hex(t)
 	return ("%p"):format(t)
 end
 
-local function NewFragment(text, col)
-	return {
-		Text = text,
-		OffsetY = 0,
-		OffsetX = 0,
+local function NewFragment(piece, text, col)
+	local template = piece.FragmentTemplate and table.Copy(piece.FragmentTemplate) or {
+		--Text = text,
+		-- OffsetY = 0,
+		-- OffsetX = 0,
 
 		--AlignX = 0,
 		--AlignY = 0,
+		--AlignFragmentHeight = false,	-- this makes AlignY work off only this fragments' height and not the whole piece
 
-		Alpha = 255,
-		Color = col,
+		-- Alpha = 255,
+		--Color = col,
 	}
+
+	template.Text = text
+	template.Color = template.Color or col
+
+	template.Alpha = template.Alpha or 255
+	template.OffsetX = template.OffsetX or 0
+	template.OffsetY = template.OffsetY or 0
+
+	return template
 end
 
 local pmeta = DeltaTextPiece
@@ -139,8 +149,7 @@ function pmeta:AnimateAppearance(fr, a, rev, fromx, fromy)
 
 	self.Offsets.X = Lerp(fr, xo, 0)
 	self.Offsets.Y = Lerp(fr, yo, 0)
-
-	self:AppearAnimation(fr)
+	--self:AppearAnimation(fr)
 end
 
 function pmeta:AnimateDisappearance(fr, a, rev, x, y)
@@ -281,6 +290,8 @@ function pmeta:Paint(x, y)
 		local lerpnext = 1
 		local lerpfrom = 0
 
+		local totalHeight = 0
+
 		for k,v in pairs(self.Fragments) do
 			local font = v.Font or font -- fragment font takes priority over piece font
 
@@ -292,7 +303,7 @@ function pmeta:Paint(x, y)
 			end
 
 			local tw, th = surface.GetTextSize(v.Text)
-
+			totalHeight = math.max(totalHeight, th)
 
 			if v.LerpNext then --if lerpnext is active then this fragment's width will be calculated by the next fragment
 				lerpnext = Ease(v.LerpNext, v.Ease or 0.6)
@@ -309,10 +320,14 @@ function pmeta:Paint(x, y)
 
 		lastw = 0
 
+
 		for k,v in pairs(self.Fragments) do
 			if v.Text == "" then continue end
+			local alpha = math.min(v.Alpha or 255, self.Alpha, v.Color.a)
+			if alpha == 0 then continue end
 
 			local font = v.Font or font
+
 			--if fragment doesn't have a custom font, and current font is not default font (for example, from last frag)
 			--or fragment has a custom font and it's not the same one as the current,
 			--change it
@@ -324,7 +339,7 @@ function pmeta:Paint(x, y)
 
 			local oldA = v.Color.a --we only want to change the alpha of the color temporarily, in case there's the same color being used for multiple fragments
 
-			v.Color.a = math.min(v.Alpha or 255, self.Alpha, v.Color.a)
+			v.Color.a = alpha
 
 			local tw, th = surface.GetTextSize(v.Text)
 
@@ -338,8 +353,12 @@ function pmeta:Paint(x, y)
 			--current x/y + fragment offset + parent offset + alignment
 
 			local tX = x + v.OffsetX + self.Offsets.X -- alignX * tw
-			local tY = y + v.OffsetY + self.Offsets.Y + alignY * th
+			local yOff = -alignY * th + (not v.AlignFragmentHeight and alignY * totalHeight or 0)
+			local tY = y + v.OffsetY + self.Offsets.Y + yOff
 			self:DrawText(tX, tY, v.Color, v.Text, v)
+			print(tX, v.Text)
+			-- White()
+			-- surface.DrawOutlinedRect(tX, tY, tw, th)
 
 			if not v.RewindTextPos then
 
@@ -425,18 +444,18 @@ function pmeta:FragmentText(from, to)
 
 			local t1, t2, t3 = self.Text:sub(0, from-1), self.Text:sub(from, to), self.Text:sub(to+1, #self.Text)
 
-			t[1] = NewFragment(t1, self.Color) 
+			t[1] = NewFragment(self, t1, self.Color)
 			t[1].ID = 1
 
-			t[2] = NewFragment(t2, self.Color)
+			t[2] = NewFragment(self, t2, self.Color)
 			t[2].ID = 2
 
-			t[3] = NewFragment(t3, self.Color) 
+			t[3] = NewFragment(self, t3, self.Color)
 			t[3].ID = 3
 
 			self.Fragments = t
 		else
-			t[1] = NewFragment(self.Text, self.Color)
+			t[1] = NewFragment(self, self.Text, self.Color)
 			t[1].ID = 1
 
 			self.Fragments = t
@@ -494,7 +513,7 @@ function pmeta:SetFragmentFont(ind, font)
 end
 
 function pmeta:AddFragment(text, num, anim, onend)	--adds a fragment on top
-	local newfrag = NewFragment(text, self.Color)
+	local newfrag = NewFragment(self, text, self.Color)
 
 	if anim then
 		newfrag.Alpha = 0
@@ -505,13 +524,14 @@ function pmeta:AddFragment(text, num, anim, onend)	--adds a fragment on top
 	end
 
 	if anim then
+		local settings = istable(anim) and anim or {}
 
-		self:CreateAlphaAnimation("AddFragText" .. newfrag.Text, function(fr)
+		self:CreateAlphaAnimation("AddFragText" .. hex(newfrag), function(fr)
 			newfrag.OffsetY = 24 - (fr * 24)
 			newfrag.Alpha = fr*255
 		end, function()
 			if onend then onend() end
-		end, nil, 0.1)
+		end, settings.Length, settings.Delay or 0)
 
 	end
 
@@ -608,13 +628,7 @@ end
 	the text in the fragment is exactly the same as you're trying to change it to)
 ]]
 
-function pmeta:ReplaceText(num, rep, onend, nolerp)
-
-	local newfrag = NewFragment(rep, self.Color)
-
-	newfrag.Alpha = 0
-	newfrag.ID = num
-	newfrag.LerpFromLast = nolerp and 1 or 0
+function pmeta:ReplaceText(num, rep, onend, nolerp, anim)
 	--newfrag.RewindTextPos = true
 
 	local frag
@@ -627,14 +641,17 @@ function pmeta:ReplaceText(num, rep, onend, nolerp)
 	end
 
 	if not frag then return false end
-
 	if frag.Text == rep then return false end --its the same text
-	frag.RewindTextPos = true
+
+	local settings = istable(anim) and anim or {}
+
 	frag.Fading = true
-	frag.LerpFromLast = nil
 
-	frag.LerpNext = 0
+	local newfrag = NewFragment(self, rep, self.Color)
 
+	newfrag.Alpha = 0
+	newfrag.ID = num
+	newfrag.LerpFromLast = nolerp and 1 or 0
 
 	newfrag.AlignX = frag.AlignX
 	newfrag.AlignY = frag.AlignY
@@ -647,6 +664,10 @@ function pmeta:ReplaceText(num, rep, onend, nolerp)
 	local a = frag.Alpha
 
 	self:CreateAlphaAnimation(hex(frag) .. "SubText", function(fr)
+		frag.RewindTextPos = true
+		frag.LerpFromLast = 1
+		frag.LerpNext = 0
+
 		frag.OffsetY = nolerp and dropstr or fr * dropstr
 		frag.Alpha = nolerp and 0 or a - fr*a
 
@@ -666,7 +687,7 @@ function pmeta:ReplaceText(num, rep, onend, nolerp)
 
 		newfrag.Finished = true
 		--newfrag.LerpFromLast = 0
-	end)
+	end, settings.Length, settings.Delay)
 
 	local appstr = self:GetLiftStrength()
 
@@ -682,8 +703,8 @@ function pmeta:ReplaceText(num, rep, onend, nolerp)
 	function()
 		if onend then onend() end
 	end,
-	nil,
-	0.1)	--delay
+	settings.Length,
+	settings.Delay)	--delay
 
 	local inswhere = num+1
 

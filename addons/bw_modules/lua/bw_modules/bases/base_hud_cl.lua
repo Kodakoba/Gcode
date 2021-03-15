@@ -15,7 +15,7 @@ surface.CreateFont("BW_ZoneItalic", {
 	italic = true,
 })
 
-local bdt = DeltaText():SetFont("MRM" .. baseFontH)
+local bdt = DeltaText():SetFont("MR" .. baseFontH)
 local zdt = DeltaText():SetFont("BW_ZoneItalic")
 
 local deadZoneX, deadZoneY = 8, 16
@@ -41,6 +41,9 @@ local function displayZone(zone)
 		local piece, key = zdt:AddText(zone:GetName())
 		piece.Color = zoneCol
 		piece.BWZone = zone:GetID()
+
+
+
 		zToID[zone:GetID()] = key
 		zfragID = key
 	end
@@ -54,8 +57,51 @@ local function displayZone(zone)
 	end
 end
 
+
+local function updateOwner(base, initial)
+	local fac, owners = base:GetOwner()
+
+	local piece = bdt:GetElements()[ baseToID[base:GetID()] ]
+
+	local is_owned = fac or owners
+
+	local animTable = {Delay = initial and 0.6 or 0}
+
+	if is_owned then
+		if not piece.OwnedByOpenerFragment or not piece.OwnerFragment then
+			return
+		end
+
+		piece:ReplaceText(piece.OwnedByOpenerFragment, "  (owned by ", nil, nil, animTable)
+
+		if not fac and owners then -- player-owned
+			local ply = owners:GetPlayer()
+			local name = ply:IsValid() and ply:Nick() or owners:SteamID64()
+			local _, new = piece:ReplaceText(piece.OwnerFragment, name, nil, nil, animTable)
+			if new then
+				new.Font = "MR18"
+				new.Color = color_white:Copy()
+			end
+		else
+			local _, new = piece:ReplaceText(piece.OwnerFragment, fac:GetName(), nil, nil, animTable)
+			if new then
+				new.Color = fac:GetColor():Copy()
+			end
+		end
+	else -- not owned
+		piece:ReplaceText(piece.OwnedByOpenerFragment, "  (not owned", nil, nil, animTable)
+		piece:ReplaceText(piece.OwnerFragment, "", nil, nil, animTable)
+	end
+
+	piece:ReplaceText(piece.OwnedByCloserFragment, ")", nil, nil, animTable)
+end
+
 local function appear(base)
-	if state then return end -- we were appearing already
+	if state then -- we were appearing(-ed) already
+		updateOwner(base)
+		return
+	end
+
 	state = true
 
 	an:Stop()
@@ -65,10 +111,29 @@ local function appear(base)
 	local bfragID = baseToID[base:GetID()]
 
 	if not bfragID then
-		local piece, key = bdt:AddText(base:GetName())
+		local piece, key = bdt:AddText("")
+
+		local _, frag = piece:AddFragment(base:GetName(), 1, false)
+
+		piece.FragmentTemplate = {
+			Font = "OS18",
+			AlignY = (0.75 * 2),	-- eek.
+			Color = Color(150, 150, 150)
+		}
+
+		local owKey, frag = piece:AddFragment("", 2)
+			piece.OwnedByOpenerFragment = owKey
+
+		local owKey, frag = piece:AddFragment("", 3)
+			piece.OwnerFragment = owKey
+
+		local owKey, frag = piece:AddFragment("", 4)
+			piece.OwnedByCloserFragment = owKey
 		--piece.Color = baseCol
 		baseToID[base:GetID()] = key
 		bfragID = key
+
+		updateOwner(base, true)
 	end
 
 	local piece = bdt:ActivateElement(bfragID)
@@ -82,11 +147,17 @@ local function disappear()
 
 	local anim, new = an:To("BaseFrac", 0, 0.25, 0.15, 2)
 
+	local cur = bdt:GetCurrentElement()
+	cur:ReplaceText(cur.OwnedByOpenerFragment, "")
+	cur:ReplaceText(cur.OwnerFragment, "")
+	cur:ReplaceText(cur.OwnedByCloserFragment, "")
+
 	if new then
 		anim:Once("Start", "dis", function()
 			bdt:DisappearCurrentElement()
 		end)
 	end
+
 
 end
 

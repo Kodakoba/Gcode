@@ -36,3 +36,13 @@ function net.ReadCompressedString(maxsz)
 
 	return dat
 end
+
+--[[
+function net.WriteSteamID64()
+
+end
+
+function net.ReadSteamID64()
+
+end
+]]

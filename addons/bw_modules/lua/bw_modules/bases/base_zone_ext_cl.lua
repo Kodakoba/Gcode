@@ -21,7 +21,7 @@ function bw.Base:_PostInit()
 	local base = self
 
 	pub:On("NetworkedChanged", "GetPlayerInfo", function(self, changes)
-
+		print("pub network change", self:Get("ClaimedBy"))
 		if self:Get("ClaimedBy") then
 			base:SetClaimed(true)
 
@@ -33,6 +33,7 @@ function bw.Base:_PostInit()
 				self:Set( "ClaimedBy", Factions.GetFaction(self:Get("ClaimedBy")) )
 			end
 		else
+			print("base now unclaimed; also unclaiming", self:Get("ClaimedBy"))
 			base:SetClaimed(false)
 		end
 	end)
@@ -82,7 +83,7 @@ function bw.Base:GetOwner()
 	local fac = pub:Get("ClaimedFaction")
 
 	if fac then
-		return fac, fac:GetMembersInfo()
+		return by, by:GetMembersInfo()
 	else
 		return false, by
 	end

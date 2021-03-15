@@ -184,40 +184,6 @@ end
 	Base object
 ---------------------------------------------------------------------------]]
 
-function bw.Base:SpawnCore()
-	local dat = self:GetData()
-	if not dat.BaseCore then return end
-
-	local bc = dat.BaseCore
-	local pos, ang, mdl = bc.pos, bc.ang, bc.mdl
-
-	if not isvector(pos) or not isangle(ang) or not util.IsValidModel(mdl) then
-		errorf("Invalid data for base's basecore spawn.\
-	Position: %s (valid: %s)\
-	Angle: %s (valid: %s)\
-	Model: %s (valid: %s)",
-	tostring(pos), isvector(pos),
-	tostring(ang), isangle(ang),
-	tostring(mdl), util.IsValidModel(mdl))
-	end
-
-	local prevCore = IsValid(self:GetBaseCore()) and self:GetBaseCore()
-	local core = prevCore or ents.Create("bw_basecore")
-	core:SetPos(pos)
-	core:SetAngles(ang)
-
-	if not prevCore then
-		core:Spawn()
-	end
-
-	self:AddToNW()
-
-	core:SetBase(self)
-	core:SetModel(mdl)
-
-	self:SetBaseCore(core)
-end
-
 ChainAccessor(bw.Base, "BaseCore", "BaseCore")
 ChainAccessor(bw.Base, "Networkable", "NW")
 ChainAccessor(bw.Base, "_Claimed", "Claimed")
@@ -266,7 +232,7 @@ function bw.Base:Initialize(id, json)
 		}
 	end
 
-	if json and isstring(json) then
+	if json and isstring(json) and SERVER then
 		local t = json:FromJSON()
 		if t then
 			self.Data = t
