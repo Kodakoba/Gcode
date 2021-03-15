@@ -37,6 +37,10 @@ function table.ReplaceValue(t, what, with, seq)
 	end
 end
 
+function table.IsEmpty(t)
+	return (next(t) == nil)
+end
+
 --[[
 	Weak tables
 ]]
