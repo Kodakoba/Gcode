@@ -356,7 +356,7 @@ function pmeta:Paint(x, y)
 			local yOff = -alignY * th + (not v.AlignFragmentHeight and alignY * totalHeight or 0)
 			local tY = y + v.OffsetY + self.Offsets.Y + yOff
 			self:DrawText(tX, tY, v.Color, v.Text, v)
-			print(tX, v.Text)
+
 			-- White()
 			-- surface.DrawOutlinedRect(tX, tY, tw, th)
 
@@ -666,7 +666,6 @@ function pmeta:ReplaceText(num, rep, onend, nolerp, anim)
 	self:CreateAlphaAnimation(hex(frag) .. "SubText", function(fr)
 		frag.RewindTextPos = true
 		frag.LerpFromLast = 1
-		frag.LerpNext = 0
 
 		frag.OffsetY = nolerp and dropstr or fr * dropstr
 		frag.Alpha = nolerp and 0 or a - fr*a
@@ -694,10 +693,8 @@ function pmeta:ReplaceText(num, rep, onend, nolerp, anim)
 	self:CreateAlphaAnimation(hex(newfrag) .. "AddText", function(fr)
 		newfrag.RewindTextPos = false
 
-
 		newfrag.OffsetY = nolerp and 0 or appstr - (fr * appstr)
 		newfrag.Alpha = nolerp and 255 or fr * 255
-
 	end,
 
 	function()

@@ -59,13 +59,11 @@ function ENT:Claim(ply, restore)
 	if ok then
 
 		if fac then
-			print("claiming for faction")
 			self:SetClaimedID(fac:GetID())
 			self:SetClaimedByFaction(true)
 			self.ClaimedFaction = fac
 			self.ClaimedPlayer = nil
 		else
-			print("claiming for player")
 			self:SetClaimedID(ply:UserID())
 			self:SetClaimedByFaction(false)
 			self.ClaimedPlayer = ply:GetPInfo()
@@ -73,7 +71,6 @@ function ENT:Claim(ply, restore)
 		end
 
 		self:GetBase():Once("Unclaim", self, function()
-			print("Unclaim called")
 			self:Unclaim()
 		end)
 	else

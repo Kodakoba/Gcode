@@ -1,30 +1,31 @@
 local bw = BaseWars.Bases
 
-function LibItUp.PlayerInfo:GetBase()
-	local base = self._Base
-	if not base then return false end
-
-	return base:IsOwner(self) and base
-end
-
 function bw.Base:ListenFaction(fac)
 	local listenID = "BaseListen" .. self:GetID()
-
-	fac:On("Update", listenID, function()
-		for k,v in ipairs( fac:GetMembersInfo() ) do
-			v._Base = self
-		end
-	end)
 
 	fac:On("Remove", listenID, function()
 		if self.Owner.Faction == fac then
 			self:Unclaim()
 		end
+
+		fac._Base = nil
 	end)
+
+	--[[fac:On("LeaveFaction", listenID, function(_, ply, pinfo)
+		print("Player left faction", ply, pinfo, pinfo._Base, pinfo._Base == self)
+		if pinfo._Base == self then
+			print("equal to self, removing")
+			pinfo._Base = nil
+		end
+	end)]]
 end
 
 function bw.Base:Claim(by, force)
 	if not self:CanClaim(by) and not force then return false end
+
+	if self:GetClaimed() then
+		self:Unclaim(true)
+	end
 
 	self.PublicNW:Set("Claimed", true)
 
@@ -32,7 +33,7 @@ function bw.Base:Claim(by, force)
 		self.Owner.Faction = by
 		self.Owner.Player = nil
 
-		self:SetClaimed(true)
+		by._Base = self
 		self:ListenFaction(by)
 
 		self.PublicNW:Set("ClaimedFaction", true)
@@ -44,7 +45,6 @@ function bw.Base:Claim(by, force)
 
 		self.Owner.Faction = nil
 		self.Owner.Player = pinfo
-		self:SetClaimed(true)
 
 		by:GetPInfo():On("Destroy", self, function()
 			if self.Owner.Player == pinfo then
@@ -56,39 +56,44 @@ function bw.Base:Claim(by, force)
 		self.PublicNW:Set("ClaimedBy", pinfo:GetSteamID64())
 	end
 
+	self:SetClaimed(true)
 	self:Emit("Claim")
 	self:UpdateNW()
-	hook.Run("BaseClaimed", self, by)
+	hook.NHRun("BaseClaimed", self, by)
 
 	return true
 end
 
 hook.Add("FactionCreated", "BWBaseOwnership", function(ply, fac)
-	if GetPlayerInfo(ply):GetBase() then
-		GetPlayerInfo(ply):GetBase():Claim(fac, true)
+	local base = GetPlayerInfo(ply):GetBase(true)
+	if base and base:IsValid() then
+		base:Claim(fac, true)
 	end
 end)
 
-function bw.Base:Unclaim()
+function bw.Base:Unclaim(temporarily)
 	local prev = self.Owner.Faction or self.Owner.Player
+	print("Unclaim called", prev, IsFaction(prev), IsPlayerInfo(prev))
 
-	if IsFaction(prev) then
-		for k,v in ipairs( prev:GetMembersInfo() ) do
-			v._Base = nil
-		end
-	else
+	--[[if IsFaction(prev) then
 		prev._Base = nil
-	end
+	else
+		print("Yeeting plyinfo", prev)]]
+		prev._Base = nil
+	--end
 
 	self.Owner.Faction = nil
 	self.Owner.Player = nil
-	self:SetClaimed(false)
 
-	self:Emit("Unclaim")
-	hook.Run("BaseUnclaimed", self, prev)
+	if not temporarily and self:IsValid() then
+		self:SetClaimed(false)
 
-	self.PublicNW:Set("ClaimedFaction", false)
-	self.PublicNW:Set("ClaimedBy", nil)
+		self:Emit("Unclaim")
+		hook.NHRun("BaseUnclaimed", self, prev)
+
+		self.PublicNW:Set("ClaimedFaction", false)
+		self.PublicNW:Set("ClaimedBy", nil)
+	end
 end
 
 function bw.Base:SpawnCore()

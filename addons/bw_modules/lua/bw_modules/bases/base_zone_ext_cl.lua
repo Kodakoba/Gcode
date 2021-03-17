@@ -82,7 +82,7 @@ function bw.Base:GetOwner()
 	local by = pub:Get("ClaimedBy")
 	local fac = pub:Get("ClaimedFaction")
 
-	if fac then
+	if fac and IsFaction(by) then
 		return by, by:GetMembersInfo()
 	else
 		return false, by

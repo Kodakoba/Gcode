@@ -40,11 +40,17 @@ function PI:Initialize(id, is_sid64) -- we can't know that the id is a steamID64
 		sid64 = id
 	end
 
+	if not sid or not sid64 then
+		errorf("Can't create PlayerInfo without SteamID or SteamID64. %s %s %s",
+			sid or "[nil]", sid64 or "[nil]", ply or "[nil]")
+		return
+	end
+
 	if ply then self:SetPlayer(ply) end
 	self:SetSteamID(sid)
 	self:SetSteamID64(sid64)
 
-	self.Networkable = Networkable:new(sid64)
+	self.Networkable = Networkable:new("PI:" .. sid64)
 
 	self._StartedSession = CurTime()
 	self._EndedSession = nil
@@ -54,6 +60,28 @@ function PI:Initialize(id, is_sid64) -- we can't know that the id is a steamID64
 	PIT.SteamID[sid] = self
 	PIT.SteamID64[sid64] = self
 end
+
+ChainAccessor(PI, "_SteamID", "SteamID")	-- 	  !! Using SteamID's is not advised due to its' behavior on bots !!
+											-- Use SteamID64 instead since it has a hack to work on bots on both realms
+ChainAccessor(PI, "_SteamID64", "SteamID64")
+
+function PI:SetSteamID64(id)
+	self._SteamID64 = id
+	PIT.SteamID64[id] = self
+
+	if not self:GetSteamID() then
+		local sid = util.SteamIDFrom64(id)
+		self:SetSteamID(sid)
+	end
+
+	if not self:GetPlayer() then
+		local ply = player.GetBySteamID64(id)
+		if ply then
+			self:SetPlayer(ply)
+		end
+	end
+end
+
 
 function PI:SetPlayer(ply)
 	if not ply:IsValid() then return end
@@ -73,24 +101,38 @@ function PI:get(id, is_sid64)
 	-- returns: pinfo, bool (newly created?)
 	if IsPlayer(id) then
 		if LibItUp.PlayerInfoTables.Player[id] then return LibItUp.PlayerInfoTables.Player[id], false end
+
+		-- didnt find by player; try to find by sid64
 		local sid64 = id:SteamID64()
-		if LibItUp.PlayerInfoTables.SteamID64[id] then
-			local pi = LibItUp.PlayerInfoTables.SteamID64[id]
+
+		if LibItUp.PlayerInfoTables.SteamID64[sid64] then
+			local pi = LibItUp.PlayerInfoTables.SteamID64[sid64]
 			pi:SetPlayer(id)
 			return pi, false
 		end
+
 	elseif not is_sid64 and string.IsSteamID(id) then
 		if LibItUp.PlayerInfoTables.SteamID[id] then return LibItUp.PlayerInfoTables.SteamID[id], false end
+
+		local ply = player.GetBySteamID(id)
+
+		if ply and LibItUp.PlayerInfoTables.Player[ply] then
+			local info = LibItUp.PlayerInfoTables.Player[ply]
+			info:SetSteamID64(id)
+		end
 	else
 		if LibItUp.PlayerInfoTables.SteamID64[id] then return LibItUp.PlayerInfoTables.SteamID64[id], false end
+
+		local ply = player.GetBySteamID64(id)
+
+		if ply and LibItUp.PlayerInfoTables.Player[ply] then
+			local info = LibItUp.PlayerInfoTables.Player[ply]
+			info:SetSteamID64(id)
+		end
 	end
 
 	return PI:new(id, is_sid64), true
 end
-
-ChainAccessor(PI, "_SteamID", "SteamID")	-- 	  !! Using SteamID's is not advised due to its' behavior on bots !!
-											-- Use SteamID64 instead since it has a hack to work on bots on both realms
-ChainAccessor(PI, "_SteamID64", "SteamID64")
 
 function PI:IsValid()
 	return self._Valid
@@ -231,7 +273,7 @@ function GetPlayerInfo(what, is_sid64)
 	if IsPlayerInfo(what) then return what end
 	if isstring(what) and what:IsSteamID() then return LibItUp.PlayerInfoTables.SteamID[what] end
 
-	errorf("Unknown arg type passsed to GetPlayerInfo: `%s` (%s) (not SteamID64)", tostring(what), type(what))
+	errorf("Unknown arg type passsed to GetPlayerInfo: `%s` (%s) (not marked as SteamID64)", tostring(what), type(what))
 end
 
 function GetPlayerInfoGuarantee(what, is_sid64)

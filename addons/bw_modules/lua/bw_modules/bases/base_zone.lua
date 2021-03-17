@@ -24,6 +24,23 @@ function bw.Base:__tostring()
 	return ("BWBase [%d][%s]"):format(self:GetID(), self:GetName())
 end
 
+function LibItUp.PlayerInfo:GetBase(no_owner_check)
+	local fac = self:GetFaction()
+	if fac then
+		return fac:GetBase()
+	end
+
+	local base = self._Base
+	if not base then return false end
+
+	if not no_owner_check and not base:IsOwner(self) then
+		errorf("Something went wrong: %s has base set as %s, but player doesn't own it.", self, base)
+		return false
+	end
+
+	return base
+end
+
 --[[-------------------------------------------------------------------------
 	Zone object
 ---------------------------------------------------------------------------]]

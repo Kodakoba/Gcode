@@ -1,5 +1,11 @@
-local tag = "BaseWars.Factions"
 MODULE.Name = "FactionsSH"
+
+--[[
+	Hooks:
+		[SH] PlayerLeftFaction : faction, player, playerinfo
+		[SH] PlayerJoinedFaction : faction, player, playerinfo
+		[SH] FactionDisbanded : faction
+]]
 
 Factions = Factions or {}
 
@@ -10,18 +16,31 @@ Factions.MaxMembers = 4
 
 Factions.FactionlessTeamID = 1
 
-local facs = Factions
 
 Factions.CREATE = 1		-- cl -> sv
-Factions.FULLUPDATE = 1 -- sv -> cl
-
 Factions.LEAVE = 2		-- cl -> sv
-Factions.UPDATE = 2 	-- sv -> cl
-
 Factions.JOIN = 3		-- cl -> sv
+Factions.KICK = 4
+
+Factions.FULLUPDATE = 1 -- sv -> cl
+Factions.UPDATE = 2 	-- sv -> cl
 Factions.DELETE = 3		-- sv -> cl
 
-Factions.KICK = 4
+
+Factions.meta = Factions.meta or Emitter:extend()
+
+local facmeta = Factions.meta
+
+facmeta.__tostring = function(self)
+	return ("[Faction %q]"):format(self.name)
+end
+facmeta.IsFaction = true
+
+function IsFaction(t)
+	local meta = getmetatable(t)
+	return meta and meta.IsFaction
+end
+
 
 Factions.Errors = {}
 local err = Factions.Errors
@@ -46,6 +65,44 @@ Factions.Errors.NoFac 			= 	makeErr("No such factions exist!")
 Factions.Errors.JoinInRaid 		= 	makeErr("Can't join a faction while being raided!")
 Factions.Errors.JoinInFac 		= 	makeErr("Can't join a faction while already in one!")
 
+
+function LibItUp.PlayerInfo:GetFaction()
+	local fac = self._Faction
+	if fac and not fac:IsValid() then
+		errorf("Something went wrong: %s has faction set as %s, but it isn't valid.", self, fac)
+		return
+	end
+
+	return fac
+end
+
+hook.Add("PlayerJoinedFaction", "PlayerInfoFill", function(fac, ply, pinfo)
+	print("PlayerJoinedFaction", Realm(), pinfo)
+	pinfo._Faction = fac
+end)
+
+hook.Add("PlayerLeftFaction", "PlayerInfoFill", function(fac, ply, pinfo)
+	print("PlayerLeftFaction", Realm(), pinfo)
+	pinfo._Faction = nil
+end)
+
+function facmeta:GetBase()
+	local base = self._Base
+
+	if base then
+		if not base:IsValid() then
+			errorf("Something went wrong: %s has base set as %s, but it isn't valid.", self, base)
+			return
+		end
+
+		if not base:IsOwner(self) then
+			errorf("Something went wrong: %s has base set as %s, but it doesn't own it.", self, base)
+			return
+		end
+	end
+
+	return base
+end
 
 local PLAYER = debug.getregistry().Player
 
@@ -110,23 +167,27 @@ function Factions.GetFaction(id)
 	return Factions.Faction[id] or false
 end
 
+function Factions.CreateEmptyFaction()
+	local fac
+
+	if CLIENT then
+		fac = Factions.meta:new(-1, "No Faction", Color(100, 100, 100))
+	else
+		fac = Factions.meta:new(false, -1, "No Faction", nil, Color(100, 100, 100))
+	end
+
+	-- factions with ID < 0 are automatically considered invalid and don't get a networkableID
+
+	Factions.NoFaction = fac
+
+	Factions.Factions["No Faction"] = nil
+	Factions.FactionIDs[-1] = nil
+end
+
 hook.Add("BasewarsModuleLoaded", "CreateEmptyFaction", function(nm)
 	if nm ~= "FactionsSV" and nm ~= "FactionsCL" then return end
 
 	if not Factions.NoFaction then
-		local fac
-
-		if CLIENT then
-			fac = Factions.meta:new(-1, "No Faction", Color(100, 100, 100))
-		else
-			fac = Factions.meta:new(false, -1, "No Faction", nil, Color(100, 100, 100))
-		end
-
-		-- factions with ID < 0 are automatically considered invalid and don't get a networkableID
-
-		Factions.NoFaction = fac
-
-		Factions.Factions["No Faction"] = nil
-		Factions.FactionIDs[-1] = nil
+		Factions.CreateEmptyFaction()
 	end
 end)

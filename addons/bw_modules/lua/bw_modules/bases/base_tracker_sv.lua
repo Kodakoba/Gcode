@@ -125,7 +125,7 @@ end
 			ent:OnEnteredBase(base)
 		end
 
-		hook.Run("EntityEnteredBase", base, ent)
+		hook.NHRun("EntityEnteredBase", base, ent)
 
 	end
 
@@ -143,7 +143,7 @@ end
 		if ent.OnExitedBase then
 			ent:OnExitedBase(base)
 		end
-		hook.Run("EntityExitedBase", base, ent)
+		hook.NHRun("EntityExitedBase", base, ent)
 	end
 
 
@@ -240,8 +240,8 @@ local function addZone(ent, zone)
 
 	table.insert(t, zone)
 
-	hook.Run("EntityEnteredZone", zone, ent)
 	checkZoneBases(ent)
+	hook.NHRun("EntityEnteredZone", zone, ent)
 end
 
 local function removeZone(ent, zone)
@@ -251,8 +251,8 @@ local function removeZone(ent, zone)
 	for k,v in ipairs(t) do
 		if v == zone then
 			table.remove(t, k)
-			hook.Run("EntityExitedZone", zone, ent)
 			checkZoneBases(ent)
+			hook.NHRun("EntityExitedZone", zone, ent)
 			return
 		end
 	end

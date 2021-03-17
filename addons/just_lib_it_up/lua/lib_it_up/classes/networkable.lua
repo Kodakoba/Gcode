@@ -359,10 +359,11 @@ function nw:Set(k, v)
 		return self
 	end
 
-	if v == nil then v = fakeNil end --lul
 	if self.Networked[k] == v and not istable(v) then --[[adios]] return end
 
 	self.Networked[k] = v
+
+	if v == nil then v = fakeNil end
 	_NetworkableChanges:Set(v, self.NetworkableID, k)
 	return self
 end

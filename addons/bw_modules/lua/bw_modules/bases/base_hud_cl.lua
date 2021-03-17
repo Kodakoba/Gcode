@@ -147,10 +147,10 @@ local function disappear()
 
 	local anim, new = an:To("BaseFrac", 0, 0.25, 0.15, 2)
 
-	local cur = bdt:GetCurrentElement()
+	--[[local cur = bdt:GetCurrentElement()
 	cur:ReplaceText(cur.OwnedByOpenerFragment, "")
 	cur:ReplaceText(cur.OwnerFragment, "")
-	cur:ReplaceText(cur.OwnedByCloserFragment, "")
+	cur:ReplaceText(cur.OwnedByCloserFragment, "")]]
 
 	if new then
 		anim:Once("Start", "dis", function()

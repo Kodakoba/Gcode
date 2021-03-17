@@ -109,3 +109,29 @@ function hook.OnceRet(hookname, hookid, cb)
 	end)
 
 end
+
+function hook.PRun(ev, ...)
+	local ok, a, b, c, d, e, f = pcall(hook.Run, ev, ...)
+
+	if not ok then
+		return false, a
+	else
+		return true, a, b, c, d, e, f
+	end
+end
+
+-- nohalt run: will throw an ErrorNoHalt
+local function errNH(err)
+	local str = ("hook.NHRun error: %s\n%s"):format(err, debug.traceback("", 2))
+	ErrorNoHalt(str)
+end
+
+function hook.NHRun(ev, ...)
+	local ok, a, b, c, d, e, f = xpcall(hook.Run, errNH, ev, ...)
+
+	if not ok then
+		return false, a
+	else
+		return true, a, b, c, d, e, f
+	end
+end

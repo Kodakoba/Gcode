@@ -11,7 +11,6 @@ facs.Players = facs.Players or {}
 facs.Factions = facs.Factions or {}
 facs.FactionIDs = facs.FactionIDs or {}
 
-Factions.meta = Factions.meta or Networkable:extend()
 local facmeta = Factions.meta
 
 facmeta.IsFaction = true
@@ -72,11 +71,11 @@ function facmeta:RaidedCooldown()
 end
 
 function facmeta:Update(now)
-	self:Set("Members", self.memvals)
-	self:Set("Leader", self.own)
-	self:Set("PlayerInfo", self.meminfovals)
+	self.PublicNW:Set("Members", self.memvals)
+	self.PublicNW:Set("Leader", self.own)
+	self.PublicNW:Set("PlayerInfo", self.meminfovals)
 
-	if now then self:Network(true) end
+	if now then self.PublicNW:Network(true) end
 	self:Emit("Update")
 end
 
@@ -87,6 +86,7 @@ function facmeta:_AddToMembers(what)
 
 	self.memvals[#self.memvals + 1] = ply
 	self.meminfovals[#self.meminfovals + 1] = pinfo
+	pinfo._Faction = self
 	self.members[ply] = true
 	self.meminfo[pinfo] = true
 
@@ -95,15 +95,15 @@ function facmeta:_AddToMembers(what)
 	end)
 
 	if new then
-		self:Emit("JoinFaction", pinfo)
-		hook.Run("PlayerJoinedFaction", pinfo)
+		self:Emit("JoinFaction", ply, pinfo)
+		hook.NHRun("PlayerJoinedFaction", self, ply, pinfo)
 	end
 end
 
-function facmeta:_RemoveFromMembers(ply)
-	local pinfo, ply = GetPlayerInfoGuarantee(ply)
+function facmeta:_RemoveFromMembers(what)
+	local pinfo, ply = GetPlayerInfoGuarantee(what)
 
-	if facs.Players[ply] == self:GetName() then facs.Players[ply] = nil end
+	if Factions.Players[ply] == self:GetName() then Factions.Players[ply] = nil end
 
 	local had = self.meminfo[pinfo]
 
@@ -111,10 +111,11 @@ function facmeta:_RemoveFromMembers(ply)
 	table.RemoveByValue(self.meminfovals, pinfo)
 	self.members[ply] = nil
 	self.meminfo[pinfo] = nil
+	pinfo._Faction = nil
 
 	if had then
-		self:Emit("LeaveFaction", pinfo)
-		hook.Run("PlayerLeftFaction", pinfo)
+		self:Emit("LeaveFaction", ply, pinfo)
+		hook.NHRun("PlayerLeftFaction", self, ply, pinfo)
 	end
 end
 
@@ -136,7 +137,7 @@ function facmeta:Join(ply, pw, force)
 
 	self:_AddToMembers(ply)
 
-	facs.Players[ply] = self:GetName()
+	Factions.Players[ply] = self:GetName()
 
 	ply:SetTeam(self:GetID())
 
@@ -145,14 +146,14 @@ end
 
 function facmeta:OnRaided()
 	self.RaidCooldown = CurTime()
-	self:Set("RaidCooldown", self.RaidCooldown)
+	self.PublicNW:Set("RaidCooldown", self.RaidCooldown)
 end
 
 function facmeta:Initialize(ply, id, name, pw, col)
 
 	if not id or not name then error('what??? ' .. tostring(id) .. " " .. tostring(name)) return false end --for real?
 
-	if facs.Factions[name] then return false end
+	if Factions.Factions[name] then return false end
 
 	team.SetUp(id, name, col, false)
 
@@ -167,28 +168,27 @@ function facmeta:Initialize(ply, id, name, pw, col)
 	self.meminfo = {}		-- [plyInfo] = true
 	self.meminfovals = {}	-- [seq_id] = plyInfo
 
-	self:Alias("Members", 1)
-	self:Alias("Leader", 2)
-	self:Alias("PlayerInfo", 3)
-
 	if IsPlayer(ply) then
-		facs.Players[ply] = name
+		Factions.Players[ply] = name
 		ply:SetTeam(id)
 		self:_AddToMembers(ply)
 	elseif ply ~= false then
 		error("Attempted to create a faction with no player; use `false` as the first arg if this is intentional.")
 	end
 
-	facs.Factions[name] = self
-	facs.FactionIDs[id] = self
+	Factions.Factions[name] = self
+	Factions.FactionIDs[id] = self
 
 	if id > 0 then
-		self:SetNetworkableID("Faction:" .. id)
+		self.PublicNW = Networkable:new("Faction:" .. id)
+		self.PublicNW:On("WriteChangeValue", "WritePlayerInfo", self._SerializePlayerInfo)
+
+		self.PublicNW:Alias("Members", 1)
+		self.PublicNW:Alias("Leader", 2)
+		self.PublicNW:Alias("PlayerInfo", 3)
 	end
 
 	self:On("Raided", "CooldownTracker", self.OnRaided)
-
-	self:On("WriteChangeValue", "WritePlayerInfo", self._SerializePlayerInfo)
 end
 
 function facmeta:_SerializePlayerInfo(key, val)
@@ -246,15 +246,21 @@ end
 function facmeta:Remove()
 	if self == Factions.NoFaction then return end
 
-	facs.Factions[self.name] = nil
-	facs.FactionIDs[self.id] = nil
+	self._Valid = false
+
+	Factions.Factions[self.name] = nil
+	Factions.FactionIDs[self.id] = nil
 
 	for k,v in ipairs(self.memvals) do
 		v:SetTeam(1)
-		facs.Players[v] = nil
+		Factions.Players[v] = nil
 	end
 
-	hook.Run("FactionDisbanded", self)
+	for k, pinfo in ipairs(self.meminfovals) do
+		pinfo._Faction = nil
+	end
+
+	hook.NHRun("FactionDisbanded", self)
 
 	net.Start("Factions")
 		net.WriteUInt(3, 4)	--delete
@@ -262,13 +268,19 @@ function facmeta:Remove()
 		net.WriteUInt(self.id, 24)
 	net.Broadcast()
 
-	self:Invalidate()
+	if self.id > 0 then
+		self.PublicNW:Invalidate()
+	end
 	self:Emit("Remove")
+end
+
+function facmeta:IsValid()
+	return self._Valid ~= false
 end
 
 function Factions.Validate()
 
-	for k,v in pairs(facs.Factions) do
+	for k,v in pairs(Factions.Factions) do
 		if v == Factions.NoFaction then continue end
 
 		table.Filter(v.members, function(v)
@@ -293,29 +305,29 @@ function Factions.Validate()
 
 end
 
-function facs.GetPlayerFaction(ply, ply2)
+function Factions.GetPlayerFaction(ply, ply2)
 	if IsPlayer(ply2) then
-		return facs.Players[ply] == facs.Players[ply2]
+		return Factions.Players[ply] == Factions.Players[ply2]
 	elseif isstring(ply2) then
-		return facs.Players[ply] == ply2
+		return Factions.Players[ply] == ply2
 	else
-		return facs.Factions[facs.Players[ply]] or false
+		return Factions.Factions[Factions.Players[ply]] or false
 	end
 end
 
-PLAYER.GetFaction = facs.GetPlayerFaction
-PLAYER.InFaction = facs.GetPlayerFaction
+PLAYER.GetFaction = Factions.GetPlayerFaction
+PLAYER.InFaction = Factions.GetPlayerFaction
 
 
-function facs.RandomizeOwner(name)
-	local fac = IsFaction(name) and name or facs.Factions[name]
+function Factions.RandomizeOwner(name)
+	local fac = IsFaction(name) and name or Factions.Factions[name]
 	fac:ChangeOwnership()
 end
 
 
 local cooldowns = {}
 
-function facs.CreateFac(ply, name, pw, col)
+function Factions.CreateFac(ply, name, pw, col)
 	if cooldowns[ply] and CurTime() - cooldowns[ply] < 1 then return end
 
 	pw = pw and utf8.sub(pw, 0, 32)
@@ -330,7 +342,7 @@ function facs.CreateFac(ply, name, pw, col)
 
 	local id = 101
 
-	for k,v in pairs(facs.Factions) do
+	for k,v in pairs(Factions.Factions) do
 		if v.id+1 > id then id = v.id+1 end
 	end
 
@@ -339,8 +351,6 @@ function facs.CreateFac(ply, name, pw, col)
 	local fac = facmeta:new(ply, id, name, pw, col)
 
 	cooldowns[ply] = CurTime()
-
-	hook.Run("FactionCreated", ply, fac)
 
 	-- first make them aware of the faction, then network its' details
 
@@ -357,22 +367,26 @@ function facs.CreateFac(ply, name, pw, col)
 	net.Broadcast()
 
 	fac:Update(true)
+
+	-- anyone that tries to network data about the faction will do it afterwards
+	-- no data races on my watch
+	hook.NHRun("FactionCreated", ply, fac)
 end
 
-PLAYER.CreateFaction = facs.CreateFac
+PLAYER.CreateFaction = Factions.CreateFac
 
-function facs.LeaveFac(ply)
+function Factions.LeaveFac(ply)
 	local fac = ply:GetFaction()
 	if not fac then return end
 
 	fac:RemovePlayer(ply)
 end
 
-PLAYER.LeaveFaction = facs.LeaveFac
+PLAYER.LeaveFaction = Factions.LeaveFac
 
-function facs.JoinFac(ply, id, pw, force)
+function Factions.JoinFac(ply, id, pw, force)
 
-	local fac = facs.FactionIDs[id] or (IsFaction(id) and id)
+	local fac = Factions.FactionIDs[id] or (IsFaction(id) and id)
 	if not fac then return false, Factions.Errors.NoFac end
 
 	if ply:InRaid() then return false, Factions.Errors.JoinInRaid end
@@ -388,9 +402,9 @@ function facs.JoinFac(ply, id, pw, force)
 	return true
 end
 
-PLAYER.JoinFaction = facs.JoinFac
+PLAYER.JoinFaction = Factions.JoinFac
 
-function facs.KickOut(ply)
+function Factions.KickOut(ply)
 	local fac = ply:GetFaction()
 	if not fac then return end
 
@@ -399,7 +413,7 @@ function facs.KickOut(ply)
 	-- more logic if needed here; different from just leaving fac
 end
 
-PLAYER.KickFromFaction = facs.KickOut
+PLAYER.KickFromFaction = Factions.KickOut
 
 hook.Add("PlayerDisconnected", "FactionDisband", function(ply)
 	local fac = ply:GetFaction()
@@ -451,12 +465,12 @@ net.Receive("Factions", function(_, ply)
 			return
 		end
 
-		facs.CreateFac(ply, name, pw, col)
+		Factions.CreateFac(ply, name, pw, col)
 		throwSuccess(ply, reqID)
 	elseif mode == Factions.LEAVE then
 		-- Leaving a faction
 
-		facs.LeaveFac(ply)
+		Factions.LeaveFac(ply)
 
 	elseif mode == Factions.JOIN then
 		-- Joining a faction
@@ -468,7 +482,7 @@ net.Receive("Factions", function(_, ply)
 
 		if has_pw then pw = net.ReadString() end
 
-		local ok, why = facs.JoinFac(ply, id, pw)
+		local ok, why = Factions.JoinFac(ply, id, pw)
 
 		if ok == false then
 			throwError(ply, reqID, why)
@@ -498,16 +512,16 @@ net.Receive("Factions", function(_, ply)
 end)
 
 hook.Add("PlayerInitialSpawn", "FactionNetwork", function(ply)
-	facs.FullUpdate()
+	Factions.FullUpdate()
 end)
 
-function facs.FullUpdate()
+function Factions.FullUpdate()
 	Factions.Validate()
 
 	net.Start("Factions")
 		net.WriteUInt(1, 4)
-		net.WriteUInt(table.Count(facs.Factions), 16)
-		for k,v in pairs(facs.Factions) do
+		net.WriteUInt(table.Count(Factions.Factions), 16)
+		for k,v in pairs(Factions.Factions) do
 			net.WriteUInt(v.id, 24)
 			net.WriteString(v.name)
 			net.WriteColor(v.col)
@@ -520,10 +534,10 @@ function facs.FullUpdate()
 end
 
 
-facs.FullUpdate()
+Factions.FullUpdate()
 
 function PLAYER:IsFacmate(ply2)
-	return facs.Players[self] == facs.Players[ply2]
+	return Factions.Players[self] == Factions.Players[ply2]
 end
 
 function PLAYER:FactionMembers()

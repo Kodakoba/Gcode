@@ -1,6 +1,10 @@
 local tag = "BaseWars.Factions"
 MODULE.Name = "FactionsCL"
 
+local facmeta = Factions.meta
+Factions.Factions = Factions.Factions or {}
+Factions.FactionIDs = Factions.FactionIDs or {}
+
 local Promises = {}
 
 local function promise()
@@ -23,112 +27,52 @@ local function promise()
 	return prom, uid
 end
 
-Factions = Factions or {}
-
-Factions.Factions = Factions.Factions or {}
-Factions.FactionIDs = Factions.FactionIDs or {}
-
-local facs = Factions
-
-Factions.meta = Factions.meta or Networkable:extend()
-local facmeta = Factions.meta
-facmeta.__tostring = function(self)
-	return ("[Faction %q]"):format(self.name)
-end
-
-facmeta.IsFaction = true
-
-function IsFaction(t)
-	local meta = getmetatable(t)
-
-	return meta and meta.IsFaction
-end
-
 function facmeta:Initialize(id, name, col, haspw)
 
-	if id > 0 then
-		local new = self:SetNetworkableID("Faction:" .. id)
-		if new then self = new end
-	end
+	--if id > 0 or CLIENT then
+		self.PublicNW = LibItUp.Networkable:new("Faction:" .. id)
+			self.PublicNW:Alias("Members", 1)
+			self.PublicNW:Alias("Leader", 2)
+			self.PublicNW:Alias("PlayerInfo", 3)
+		self:_HookNW(self.PublicNW)
+	--end
 
 	self.id = id
 	self.name = name
 	self.col = col
 	self.haspw = haspw
-
-	self:Alias("Members", 1)
-	self:Alias("Leader", 2)
-	self:Alias("PlayerInfo", 3)
-
-	self:On("NetworkedVarChanged", "TrackMembers", function(_, key, old, new)
-		if key == "Members" then
-			self:RunPlayerHooks(old, new)
-			return
-		end
-
-		if key == "Leader" then
-			hook.Run("FactionChangedLeader", self, old, new)
-			return
-		end
-	end)
-
-	self:On("NetworkedChanged", function()
-		hook.Run("FactionsUpdate", self)
-	end)
-
-	self:On("ReadChangeValue", function(self, key)
-		if key ~= "PlayerInfo" then return end
-
-		local arr = {}
-
-		local count = net.ReadUInt(4)
-
-		for i=1, count do
-			local sid64 = net.ReadString()
-			arr[i] = GetPlayerInfoGuarantee(sid64, true)
-		end
-
-		return arr
-	end)
+	self._Valid = true
 
 	return new
 end
 
-function facmeta:RunPlayerHooks(old, new)
-	-- calculate who left & who joined
-	local old_plys = {}
-
-	if old then
-		for k, ply in ipairs(old) do
-			old_plys[ply] = true
-		end
+function facmeta:Remove()
+	for k, pinfo in ipairs(self:GetMembersInfo()) do
+		hook.NHRun("PlayerLeftFaction", self, pinfo:GetPlayer(), pinfo)
 	end
 
-	for k, ply in ipairs(new) do
-		if not old_plys[ply] then
-			self:Emit("JoinedPlayer", ply)
-			hook.Run("FactionJoinedPlayer", self, ply)
-		end
+	Factions.FactionIDs[self.id] = nil
+	Factions.Factions[self.name] = nil
+	self._Valid = false
+	self.PublicNW:Invalidate()
 
-		old_plys[ply] = nil
-	end
+	hook.NHRun("FactionDisbanded", self)
+end
 
-	for left_ply, _ in pairs(old_plys) do
-		self:Emit("LeftPlayer", left_ply)
-		hook.Run("FactionLeftPlayer", self, left_ply)
-	end
+function facmeta:IsValid()
+	return self._Valid ~= false
 end
 
 function facmeta:InRaid()
-	return self:Get("Raided") or self:Get("Raider")
+	return self.PublicNW:Get("Raided") or self.PublicNW:Get("Raider")
 end
 
 function facmeta:GetMembers()
-	return self:Get("Members") or {}
+	return self.PublicNW:Get("Members") or {}
 end
 
 function facmeta:GetMembersInfo()
-	return self:Get("PlayerInfo") or {}
+	return self.PublicNW:Get("PlayerInfo") or {}
 end
 
 function facmeta:IsMember(what)
@@ -137,7 +81,7 @@ function facmeta:IsMember(what)
 end
 
 function facmeta:GetLeader()
-	return self:Get("Leader")
+	return self.PublicNW:Get("Leader")
 end
 
 
@@ -158,13 +102,68 @@ function facmeta:GetID()
 end
 
 function facmeta:RaidedCooldown()
-	local cd = self:Get("RaidCooldown")
+	local cd = self.PublicNW:Get("RaidCooldown")
 
 	if cd and CurTime() - cd < Raids.FactionCooldown then
 		return true, Raids.FactionCooldown - (CurTime() - cd)
 	end
 
 	return false
+end
+
+function facmeta:_HookNW(nw)
+	nw:On("NetworkedVarChanged", "TrackMembers", function(_, key, old, new)
+		--[[ -- moved to playerinfo
+		if key == "Members" then
+			self:RunPlayerHooks(old, new)
+			return
+		end
+		]]
+
+		if key == "Leader" then
+			hook.NHRun("FactionChangedLeader", self, old, new)
+			return
+		end
+	end)
+
+	nw:On("NetworkedChanged", function()
+		hook.NHRun("FactionsUpdate", self)
+	end)
+
+	nw:On("ReadChangeValue", "ReadPlayerInfo", function(nw, key)
+		if key ~= "PlayerInfo" then return end
+
+		local prev_membs = self:GetMembersInfo()
+
+		local arr = {}
+		local list = {}
+
+		local count = net.ReadUInt(4)
+
+		for i=1, count do
+			local sid64 = net.ReadString()
+
+			arr[i] = GetPlayerInfoGuarantee(sid64, true)
+			arr[i]._Faction = self
+
+			list[sid64] = arr[i]
+		end
+
+		for k, pinfo in ipairs(prev_membs) do
+			local sid =  pinfo:GetSteamID64()
+			if not list[sid] then
+				hook.NHRun("PlayerLeftFaction", self,  pinfo:GetPlayer(), pinfo)
+			end
+
+			list[sid] = nil
+		end
+
+		for sid, pinfo in pairs(list) do
+			hook.NHRun("PlayerJoinedFaction", self, pinfo:GetPlayer(), pinfo)
+		end
+
+		return arr
+	end)
 end
 
 local PLAYER = debug.getregistry().Player
@@ -177,7 +176,7 @@ net.Receive("Factions", function(len)
 
 	if type == 1 then -- full update
 
-		facs.Factions = {}
+		Factions.Factions = {}
 
 		local amt = net.ReadUInt(16)
 
@@ -191,11 +190,11 @@ net.Receive("Factions", function(len)
 			team.SetUp(id, name, col, false)
 
 			local fac = Factions.FactionIDs[id] or facmeta:new(id, name, col, haspw)
-			facs.Factions[name] = fac
-			facs.FactionIDs[id] = fac
+			Factions.Factions[name] = fac
+			Factions.FactionIDs[id] = fac
 
-			--[[facs.Factions[name] = {id = id, name = name, col = col, own = lead, pw = haspw}
-			facs.FactionIDs[id] = {id = id, name = name, col = col, own = lead, pw = haspw}]]
+			--[[Factions.Factions[name] = {id = id, name = name, col = col, own = lead, pw = haspw}
+			Factions.FactionIDs[id] = {id = id, name = name, col = col, own = lead, pw = haspw}]]
 		end
 
 	elseif type == 2 then -- update
@@ -211,18 +210,18 @@ net.Receive("Factions", function(len)
 		print("created new faction:", id, name)
 
 		local fac = Factions.FactionIDs[id] or facmeta:new(id, name, col, haspw)
-		facs.Factions[name] = fac
-		facs.FactionIDs[id] = fac
+		Factions.Factions[name] = fac
+		Factions.FactionIDs[id] = fac
 
 	elseif type == 3 then
 
 		local id = net.ReadUInt(24)
-		print("deleting faction #" .. id)
-		for k,v in pairs(facs.Factions) do
+
+		for k,v in pairs(Factions.Factions) do
 			if v.id and v.id==id then
-				v:Invalidate()
-				facs.Factions[k] = nil
-				facs.FactionIDs[id] = nil
+				v:Remove()
+				Factions.Factions[k] = nil
+				Factions.FactionIDs[id] = nil
 				break
 			end
 		end
@@ -239,7 +238,7 @@ net.Receive("Factions", function(len)
 
 		return
 	end
-	hook.Run("FactionsUpdate")
+	hook.NHRun("FactionsUpdate")
 end)
 
 function GetFactions()
@@ -280,7 +279,7 @@ function Factions.RequestCreate(name, pw, col)
 	return prom
 end
 
-function facs.RequestKick(whomst)
+function Factions.RequestKick(whomst)
 
 	net.Start("Factions")
 		net.WriteUInt(Factions.KICK, 4)
@@ -289,13 +288,13 @@ function facs.RequestKick(whomst)
 
 end
 
-function facs.RequestLeave()
+function Factions.RequestLeave()
 	net.Start("Factions")
 		net.WriteUInt(Factions.LEAVE, 4)
 	net.SendToServer()
 end
 
-function facs.RequestJoin(fac, pw)
+function Factions.RequestJoin(fac, pw)
 	local prom, uid = promise()
 
 	net.Start("Factions")
@@ -310,7 +309,7 @@ function facs.RequestJoin(fac, pw)
 end
 
 
-function facs.GetSortedFactions()
+function Factions.GetSortedFactions()
 	local facs = Factions.Factions
 	local sorted = {}
 
