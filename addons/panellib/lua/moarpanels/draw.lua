@@ -650,29 +650,29 @@ function draw.RotatedBox(x, y, x2, y2, w)
 
 	local rad = -math.atan2(dy, dx)
 
-	local sin = math.sin(rad)
-	local cos = math.cos(rad)
+	local psin = sin(rad) * w
+	local pcos = cos(rad) * w
 
 	local poly = {}
 
 		poly[1] = {
-			x = x - sin*w,
-			y = y - cos*w
+			x = x - psin,
+			y = y - pcos
 		}
 
 		poly[2] = {
-			x = x2 - sin*w,
-			y = y2 - cos*4,
+			x = x2 - psin,
+			y = y2 - pcos,
 		}
 
 		poly[3] = {
-			x = x2 + sin*w,
-			y = y2 + cos*w,
+			x = x2 + psin,
+			y = y2 + pcos,
 		}
 
 		poly[4] = {
-			x = x + sin*w,
-			y = y + cos*w,
+			x = x + psin,
+			y = y + pcos,
 		}
 
 	surface_DrawPoly(poly)
@@ -697,7 +697,7 @@ end
 
 -- callback: 1st arg is material, 2nd arg is boolean: was the material loaded from cache?
 								-- (aka it was already loaded; if its a first load it's false)
-local function GetOrDownload(url, name, flags, cb)	
+local function GetOrDownload(url, name, flags, cb)
 	if url == "-" or name == "-" then return false end
 	if not name then ErrorNoHalt("GetOrDownload: No name!\n") return end
 
@@ -1227,7 +1227,7 @@ function draw.RenderOntoMaterial(name, w, h, func, rtfunc, matfunc, pre_rt, pre_
 
 	mat:SetTexture("$basetexture", rt:GetName())
 
-	render.PushRenderTarget(rt, x or 0, y or 0, w, h)
+	render.PushRenderTarget(rt)
 
 		render.OverrideAlphaWriteEnable(true, true)
 

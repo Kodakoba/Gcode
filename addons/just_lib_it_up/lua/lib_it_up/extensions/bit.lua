@@ -17,9 +17,6 @@ function bit.GetLen(num)
 	return math.max(0, math.floor(math.log(math.abs(num), 2) + 1))
 end
 
-local select = select
-
-
 -- returns whether every bit in ... is present in num
 -- can take either multiple bits as varargs or one sum of those bits
 -- useful for checking against masks

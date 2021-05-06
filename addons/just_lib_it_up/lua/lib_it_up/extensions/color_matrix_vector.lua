@@ -99,7 +99,6 @@ if CLIENT then
 end
 
 function COLOR:Set(col, g, b, a)
-
 	if IsColor(col) then
 		self.r = col.r
 		self.g = col.g
@@ -131,10 +130,7 @@ function IsMaterial(m)
 	return type(m) == "IMaterial"	--we can't really compare m.MetaName because m might not even be a table
 end
 
-local mx = Matrix()
-function MATRIX:Reset()
-	self:Set(mx)
-end
+MATRIX.fReset = MATRIX.Identity -- bruh
 
 local vec = Vector()
 local ang = Angle()

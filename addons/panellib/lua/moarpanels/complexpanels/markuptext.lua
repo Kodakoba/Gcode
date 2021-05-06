@@ -1,12 +1,12 @@
 --
-local Testing = false
+local Testing = true
 
 local PANEL = {}
 
 function PANEL:Init()
 	self.Pieces = {}
 	self:SetKeyboardInputEnabled(true)
-	-- self:RequestFocus()
+	self:SetName("Markup Text")
 end
 
 
@@ -21,6 +21,10 @@ function PANEL:PerformLayout()
 	end
 
 	self:SetTall(h)
+end
+
+function PANEL:_StartSelection(piece)
+
 end
 
 function PANEL:OnKeyCodePressed(key)
@@ -78,16 +82,16 @@ tx:Dock(TOP)
 tx:SetTall(60)
 
 --local beemovie = "hellooo hellooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo"
---[[local p = tx:AddPiece()
+local p = tx:AddPiece()
 
 p:SetFont("OS24")
-p:AddText("text with autowrapping and shit look i can write a lot of stuff here")
-p:AddText(" and it'll wrap by itself and i can even do it through multiple")
-p:AddText(" function calls isnt that cool")
+p:AddText("brabrabra epic text wow so many letters its amazing wait wtf it can wrap")
+p:AddText(" like a mfin burrito yo what even across")
+p:AddText(" multiple text-adds that's quite cool what happens if i add a")
 
 p:AddObject(Color(0, 255, 0))
 
-p:AddText(" MMMHHHHH")
+p:AddText(" COLOR or a few")
 local trind = p:AddTag(MarkupTags("translate", function()
 	return math.sin(CurTime() * 4) * 50 + 50
 end, 0))
@@ -96,7 +100,7 @@ local hsvind = p:AddTag(MarkupTags("hsv", function()
 	return CurTime() * 360
 end))
 
-p:AddText(" мегафэггот мегафэггот")
+p:AddText(" taAAaaaAAaags")
 
 p:EndTag(trind)
 
@@ -105,7 +109,7 @@ p:AddText("rainbow but not moving", 100) --100px offset
 p:EndTag(hsvind)
 
 p:AddText(" ک گھ پھ ہے ں ٹ ڈ ڑ گھ پھ ہے ں ٹ ڈ ڑ گھ پ گھ پھ ہے ں ٹ ڈ ڑ")
-]]
+
 local p2 = tx:AddPiece()
 p2:SetFont("OS18")
 p2:AddText("piece 2: different font, different line || ")
@@ -120,7 +124,7 @@ p2:AddText(beemovie)
 p2:On("Layout", function()
 	tx:SetTall(p2:GetTall())
 end)
-
+_FF:InvalidateLayout(true)
 local t
 
 function _FF:PostPaint()

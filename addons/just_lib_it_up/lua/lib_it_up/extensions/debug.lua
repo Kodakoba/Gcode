@@ -12,7 +12,7 @@ ChainAccessor(logger, "_Color", "Color")
 function LogModule(name, col)
 	name = name or "[Unnamed]"
 
-	if modules[name] then 
+	if modules[name] then
 		modules[name].col = col or modules[name].col
 		return modules[name]
 	end

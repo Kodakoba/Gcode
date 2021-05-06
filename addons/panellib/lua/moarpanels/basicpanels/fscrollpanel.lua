@@ -38,6 +38,7 @@ function FScrollPanel:Init()
 		draw.RoundedBoxEx(4, 0, 0, w, h, btnCol, false, false, true, true)
 	end
 
+	self.pnlCanvas:SetName("FScrollPanel Canvas")
 
 	self.Shadow = false --if used as a stand-alone panel
 

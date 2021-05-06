@@ -399,8 +399,8 @@ function string.Quote(s, single)
 	return "'" .. tostring(s) .. "'"
 end
 
-function string.Fibonacci(len) -- good for testing net messages or whatever; not designed to be memory efficient since lua
-	local n1, n2 = 0, 1
+function string.Fibonacci(len) 	-- good for testing net messages or whatever;
+	local n1, n2 = 0, 1			-- not designed to very efficient
 	local ret = "0 1 "
 	for i=1, len do
 		local sum = n1 + n2

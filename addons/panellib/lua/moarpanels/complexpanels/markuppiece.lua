@@ -25,6 +25,8 @@ function PANEL:Init()
 
 	self.Selectable = true
 	self.Color = color_white
+
+	self:SetName("Markup Piece")
 end
 
 function PANEL:GetCurPos()
@@ -48,40 +50,35 @@ function PANEL:SetSelectable(b)
 	self.Selectable = b
 end
 
-function PANEL:RecacheSmallestParent()
+function PANEL:RecacheBounds()
 	local par = self:GetParent()
+	local miny = select(2, par:LocalToScreen(0, 0))
+	local maxy = miny + par:GetTall()
 
-	local ph = self:GetParent():GetTall()
-	local minpar = self
-
+	par = par:GetParent()
 	while par and par:IsValid() do
-		local parh = par:GetTall()
-		if ph > parh then
-			ph = parh
-			minpar = par
-		end
+		local par_miny = select(2, par:LocalToScreen(0, 0))
+		local par_maxy = par_miny + par:GetTall()
+
+		miny = math.max(miny, par_miny)
+		maxy = math.min(maxy, par_maxy)
 		par = par:GetParent()
 	end
-	if not minpar then self.SmallestParent = self error("WTF") end
-	self.SmallestParent = minpar
-	self.SmallestHeight = ph
+
+	local _, lminy = self:ScreenToLocal(0, miny)
+	local _, lmaxy = self:ScreenToLocal(0, maxy)
+
+	self._Bounds = {lminy, lmaxy}
 end
 
 function PANEL:IsTextVisible(text)
 	if self.IgnoreVisibility then return true end
-	if not self.SmallestParent then self:RecacheSmallestParent() end
+	if not self._Bounds then self:RecacheBounds() end
 
 	local ty = text.y
 
-	local sx, sy = self:LocalToScreen(0, ty)
-	local px, py = self.SmallestParent:ScreenToLocal(0, sy)
-
-	if py > self.SmallestHeight or py + text.h < 0 then return false end
+	if ty > self._Bounds[2] or ty < self._Bounds[1] then return false end
 	return true
-end
-
-function PANEL:OnSizeChanged(w, h)
-	self.Buffer.width = w
 end
 
 function PANEL:CalculateTextSize(dat)
@@ -114,7 +111,7 @@ function PANEL:Recalculate()
 				buf.y = buf.y + buf:GetTextHeight()
 			end
 			local curX, curY = buf.x, buf.y
-
+			print('calctextsize', v, v.text, v.isText)
 			local wtx, tw, th = self:CalculateTextSize(v)
 			print("text height", th, v.text)
 			local t = table.Copy(v)
@@ -175,7 +172,6 @@ function PANEL:Recalculate()
 
 	self:SetTall(res + 1)
 	self:GetParent():SetTall(math.max(self:GetParent():GetTall(), res + 1))
-	print("now", res + 1)
 end
 
 function PANEL:OnKeyCodePressed(key)
@@ -201,6 +197,23 @@ function PANEL:OnMousePressed()
 	self.Mouse = ms
 
 	ms.x, ms.y = self:ScreenToLocal(gui.MousePos())
+
+	hook.Once("VGUIMousePressed", self, function(_, pnl, key)
+		if pnl ~= self and pnl ~= self:GetParent() then
+			self:ResetSelection()
+		end
+	end)
+end
+
+function PANEL:ResetSelection()
+	for k, tx in ipairs(self.Texts) do
+		for _, v in ipairs(tx.segments) do
+			v.selStart = nil
+			v.selEnd = nil
+		end
+	end
+
+	self.SelectedText = nil
 end
 
 function PANEL:OnMouseReleased_butlikeactual()
@@ -389,7 +402,7 @@ function PANEL:Paint(w, h)
 			--print("drawing text", v.text)
 			--self:PaintText(v, buf)
 			for k,v in ipairs(v.segments) do
-				if not self:IsTextVisible(v) then print("invisible", v.text) continue end
+				if not self:IsTextVisible(v) then continue end
 				--surface.SetDrawColor(color_white)
 				--surface.DrawOutlinedRect(v.x, v.y, v.w, v.h)
 				self:PaintText(v, buf)
@@ -444,15 +457,16 @@ end
 
 function PANEL:PerformLayout()
 	self:Recalculate()
-
-	self:RecacheSmallestParent()
 	self:Emit("Layout")
+	self:InvalidateParent(true)	-- cancer
+	self:RecacheBounds()
 end
 
 function PANEL:AddTag(tag)
 	if not IsTag(tag) then error("Tried to add a non-tag to MarkupPiece!") return end
 	tag:SetPanel(self)
 	self.Elements[#self.Elements + 1] = tag
+
 	self:InvalidateLayout()
 
 	return #self.Elements
@@ -488,6 +502,7 @@ function PANEL:EndTag(num)
 end
 
 function PANEL:AddText(tx, offset, align)
+	if not tx or not tostring(tx) then return end
 
 	self.Elements[#self.Elements + 1] = {
 		isText = true,

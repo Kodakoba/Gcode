@@ -1,6 +1,6 @@
 
 --credits to <CODE BLUE>
-
+setfenv(0, _G)
 local updating = false --set this to true when fucking with shadows to update the shadow materials with new reloads
 
 BSHADOWS_ID = BSHADOWS_ID or 0
@@ -57,8 +57,8 @@ BSHADOWS.BeginShadow = function(x, y, w, h)
  	realW, realH = ScrW(), ScrH()
  	curW, curH = w or realW, h or realH
 
-    local rt1 = draw.GetRT("bshadows", curW, curH)
-    local rt2 = draw.GetRT("bshadows_shadow", curW, curH)
+    local rt1 = BSHADOWS.RenderTarget
+    local rt2 = BSHADOWS.RenderTarget2
 
     if not rt1 or not rt2 then print("failed to get Rt for the shadow or somethin?") return end
 

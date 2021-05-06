@@ -1,6 +1,7 @@
 *.*
 
 !addons/**/*.lua
+!lua/notagain/**
 # But descend into directories
 addons/inventory/**
 addons/epic_miningaddon/**

@@ -428,7 +428,7 @@ function nw:Bind(what)
 		local origUID = what:UserID()
 
 		gameevent.Listen("player_disconnect")
-		hook.OnceRet("player_disconnect", ("Networkable.Bond:%p"):format(what), function(data)
+		hook.OnceRet("player_disconnect", ("Networkable.Bind:%p"):format(what), function(data)
 			local uid = data.userid
 			if uid ~= origUID then return false end
 
@@ -436,7 +436,7 @@ function nw:Bind(what)
 		end)
 	elseif isentity(what) then
 
-		hook.OnceRet("EntityRemoved", ("Networkable.Bond:%p"):format(what), function(ent)
+		hook.OnceRet("EntityRemoved", ("Networkable.Bind:%p"):format(what), function(ent)
 			if ent ~= what then return false end
 
 			if CLIENT then
