@@ -130,7 +130,7 @@ function IsMaterial(m)
 	return type(m) == "IMaterial"	--we can't really compare m.MetaName because m might not even be a table
 end
 
-MATRIX.fReset = MATRIX.Identity -- bruh
+MATRIX.Reset = MATRIX.Identity -- bruh
 
 local vec = Vector()
 local ang = Angle()
