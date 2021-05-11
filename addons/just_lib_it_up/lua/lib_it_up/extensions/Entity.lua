@@ -130,7 +130,7 @@ hook.Add("FinishMove", "EntitySubscriptions", function(pl, mv)
 end)
 
 
--- fullupdates
+-- ty garry
 hook.Add("EntityRemoved", "EntityActuallyRemoved", function(ent)
 	local t = ent:GetTable()
 

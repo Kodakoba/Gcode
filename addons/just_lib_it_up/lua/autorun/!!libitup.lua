@@ -33,6 +33,7 @@ local path = "lib_it_up/"
 local _CL = 1
 local _SH = 2
 local _SV = 3
+local _NONE = 4
 
 local loading = true
 
@@ -43,28 +44,31 @@ local includes = {
 	[_CL] = function(name, noInclude)
 		if SERVER then
 			AddCSLuaFile(name)
-		elseif not noInclude then
+		elseif not noInclude and not name:match("_ext") then
 			include(name)
 		end
 	end,
 
 	[_SH] = function(name, noInclude)
 		AddCSLuaFile(name)
-		if not noInclude then include(name) end
+		if not noInclude and not name:match("_ext") then include(name) end
 	end,
 
 
 	[_SV] = function(name, noInclude)
-		if noInclude then return end
+		if noInclude or name:match("_ext") then return end
 		include(name)
 	end,
 
+	[_NONE] = function() end,
 }
 
 local realmExclusive = {
 	["mysql_emitter.lua"] = _SV,
 	["sql_arglist.lua"] = _SV,
 	["rtpool.lua"] = _CL,
+	["networkable_sv_ext.lua"] = _NONE,
+	["networkable_cl_ext.lua"] = _CL,
 }
 
 libTbl.Included = {} -- not auto-refresh friendly on purpose; allows reloading everything

@@ -1,0 +1,202 @@
+local nw = Networkable
+local idData = _NetworkableData
+
+local realPrint = print
+local print = function(...)
+	if not nw.Verbose then return end
+	realPrint(...)
+end
+
+local realPrintf = printf
+local printf = function(...)
+	if not nw.Verbose then return end
+	realPrintf(...)
+end
+
+local warnf = function(s, ...)
+	if not nw.Warnings then return end
+	MsgC(Colors.Warning, "[NWble] ", color_white, s:format(...), "\n")
+end
+
+local cache = _NetworkableCache
+local numToID = _NetworkableNumberToID -- these tables are not sequential!!!
+local IDToNum = _NetworkableIDToNumber
+local _CurrentNWKey = nil
+
+local decoders = {
+	["string"] = {0, net.ReadString},
+	["entity"] = {1, function()
+		local entID = net.ReadUInt(16)
+		if IsValid(Entity(entID)) then return Entity(entID) end
+		errorf("Reading '%s' : Entity[%d] isn't valid. Consider networking something else...?", _CurrentNWKey, entID)
+	end},
+	["vector"] = {2, net.ReadVector},
+
+	["table"] = {3, function(t)
+		--if t.Networkable_Decoder then return t:Networkable_Decoder() end
+
+		local len = net.ReadUInt(16)
+		local von_data = net.ReadData(len)
+
+		local de_vonned = von.deserialize(von_data)
+
+		return de_vonned
+	end},
+
+	["boolean"] = {4, net.ReadBool},
+	["angle"] = {5, net.ReadAngle},
+	["color"] = {6, net.ReadColor},
+
+	["uint"] = {7, net.ReadUInt, 32},
+	["ushort"] = {8, net.ReadUInt, 16},
+
+	["int"] = {9, net.ReadInt},
+	["float"] = {10, net.ReadFloat, 32},
+	["nil"] = {11, BlankFunc}
+}
+
+local decoderByID = {}
+
+for typ,v in pairs(decoders) do
+	decoderByID[v[1]] = v
+end
+
+local function IDToNumber(id)
+	return IDToNum[id]
+end
+
+local function NumberToID(id)
+	return numToID[id]
+end
+
+local function ReadNWID()
+	local enc_id = net.ReadUInt(encoderIDLength)
+
+	local dec = decoderByID[enc_id]
+	local name = dec[2](dec[3])
+
+	return name
+end
+
+local function ReadChange(obj)
+	local k_encID = net.ReadUInt(encoderIDLength)
+
+	local k_dec = decoderByID[k_encID]
+
+	if not k_dec then errorf("Failed to read key decoder ID from %s properly (@ %d)", obj or "NWLess", k_encID) return end
+
+	local decoded_key = k_dec[2](k_dec[3])
+	print("decoded key: %s (dealiased: %s)", decoded_key, obj and (obj.__AliasesBack[decoded_key] or "no alias") or "no obj")
+	if obj and obj.__AliasesBack[decoded_key] then decoded_key = obj.__AliasesBack[decoded_key] end
+
+	if obj then
+		local customValue, setNil = obj:Emit("ReadChangeValue", decoded_key)
+		print("custom decoder returned", customValue)
+		if customValue ~= nil or setNil then return decoded_key, customValue end
+	end
+
+	local v_encID = net.ReadUInt(encoderIDLength)
+
+	local v_dec = decoderByID[v_encID]
+	if not v_dec then errorf("Failed to read value decoder ID from %s properly (@ %d)", obj or "NWLess", v_encID) return end
+
+	local decoded_val = v_dec[2](v_dec[3])
+
+	--print("	decoded key, val:", decoded_key, decoded_val)
+	return decoded_key, decoded_val
+end
+
+net.Receive("NetworkableSync", function(len)
+	local lBytes = len / 8
+
+	printf("received Networkable sync: %d bytes", lBytes)
+
+	if lBytes > Networkable.BytesWarn then
+		warnf("	quite a long Networkable update (%d bytes)", lBytes)
+	end
+
+	local is_new = net.ReadBool()
+	local num_id = net.ReadUInt(SZ.NUMBERID)
+	local nwID
+
+	if is_new then
+		nwID = ReadNWID(num_id)
+	else
+		nwID = NumberToID(num_id)
+	end
+
+	if not nwID then
+		warnf("Something went wrong while reading networkable: failed to grab NWID for numID %d.", num_id)
+		return
+	end
+
+	_CurrentNWKey = nwID
+
+	-- write entry into profiler
+	local ct = math.floor(CurTime())
+	local instances = nw.Profiling._NWDataInstances[ct] or {}
+	nw.Profiling._NWDataInstances[ct] = instances
+
+	local instBytes = instances[nwID] or 0
+	instances[nameID] = instBytes + lBytes
+
+	if not cache[nwID] then
+		Networkable.CreateIDPair(nwID, num_id)
+	else
+		cache[nwID]:SetNetworkableNumberID(num_id)
+	end
+
+	local obj = cache[nwID]
+	if not obj then
+		warnf("Networkable with the name `%s` (%d) didn't exist clientside.", nwID, num_id)
+	end
+
+	if obj and obj:Emit("CustomReadChanges") ~= nil then
+		printf("	networkable %s(%d) had custom reader", nwID or "nil", num_id)
+		return
+	end
+
+	local cng_amt = net.ReadUInt(SZ.CHANGES_COUNT)
+	printf("	amt of changed keys for %s(id: %s): %d", obj, nwID:Quote(), cng_amt)
+
+	local changes = {}
+	for i=1, cng_amt do
+
+		printf("	reading change #%d", i)
+
+		if not obj then warnf("Reading an object-less change #%d", i) end
+		local k, v = ReadChange(obj)
+
+		if obj then
+			changes[k] = {obj.Networked[k], v}
+			obj.Networked[k] = v
+			obj:Emit("NetworkedVarChanged", k, changes[k][1], v) -- key, old, new
+		else
+
+			idData:Set(v, NumberToID(num_id), k)
+			warnf("	Couldn't find object with numID %d; stashing change...", num_id)
+		end
+
+	end
+
+	if obj then
+		obj:Emit("NetworkedChanged", changes)
+	end
+end)
+
+net.Receive("NetworkableInvalidated", function()
+	local num_id = net.ReadUInt(SZ.NUMBERID)
+	print("invalidated nwable with numID", num_id)
+	local id = NumberToID(num_id)
+	print("that's ID", id)
+
+	if not id then print("we dont know that") return end
+
+	_NetworkableData[id] = nil
+	if _NetworkableCache[id] then
+		_NetworkableCache[id]:Invalidate()
+	end
+
+	_NetworkableNumberToID[num_id] = nil
+	_NetworkableIDToNumber[id] = nil
+end)
