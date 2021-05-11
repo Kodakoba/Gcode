@@ -10,6 +10,7 @@ end
 if not muldim then include("multidim.lua") end
 if not netstack then include("netstack.lua") end
 
+local nw = LibItUp.Networkable
 --[[
 	Emits:
 
@@ -43,14 +44,10 @@ if not netstack then include("netstack.lua") end
 			Kinda like NetworkVarNotify, except after _everything_ was updated
 ]]
 
+local update_freq = Networkable._UpdateFrequency
+local SZ = Networkable._Sizes
 
-local SZ = {
-	NUMBERID = 16,
-	CHANGES_COUNT = 12,
 
-	INTERVAL_UPDATE = 1024 * 12 * update_freq, -- 12kb
-	FULL_UPDATE = 1024 * 32 * update_freq, -- 32kb
-}
 
 local realPrint = print
 local print = function(...)

@@ -1,6 +1,8 @@
 local nw = Networkable
 local idData = _NetworkableData
 
+local SZ = Networkable._Sizes
+
 local realPrint = print
 local print = function(...)
 	if not nw.Verbose then return end

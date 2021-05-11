@@ -36,11 +36,23 @@ if not netstack then include("netstack.lua") end
 		CL: "NetworkedChanged" : changes_table
 			Kinda like NetworkVarNotify, except after _everything_ was updated
 ]]
+
 LibItUp.Networkable = LibItUp.Networkable or Emitter:callable()
 Networkable = LibItUp.Networkable
 local nw = Networkable
 
-local update_freq = 0.1
+
+Networkable._UpdateFrequency = 0.1
+
+Networkable._Sizes = {
+	NUMBERID = 16,
+	CHANGES_COUNT = 12,
+
+	INTERVAL_UPDATE = 1024 * 12 * Networkable._UpdateFrequency, -- 12kb
+	FULL_UPDATE = 1024 * 32 * Networkable._UpdateFrequency, -- 32kb
+}
+
+
 
 _NetworkableCache = _NetworkableCache or {}
 
@@ -76,13 +88,9 @@ timer.Create("NetworkableCleanProfiler", 60, 0, function()
 
 end)
 
-local SZ = {
-	NUMBERID = 16,
-	CHANGES_COUNT = 12,
 
-	INTERVAL_UPDATE = 1024 * 12 * update_freq, -- 12kb
-	FULL_UPDATE = 1024 * 32 * update_freq, -- 32kb
-}
+local update_freq = Networkable._UpdateFrequency
+local SZ = Networkable._Sizes
 
 local realPrint = print
 local print = function(...)
@@ -196,6 +204,7 @@ function nw:Initialize(id, ...)
 	self.__LastSerialized = {} -- purely for networked tables
 	self.__Aware = muldim:new()
 
+	self.Valid = true
 	--[[
 	self:On("ShouldEncode", "TablesvONCheck", function(self, k, v)
 		if istable(v) and not v.__isobject then
@@ -221,7 +230,6 @@ function nw:__tostring()
 end
 
 function nw:SetNetworkableID(id, replace)
-
 	self.NetworkableID = id
 
 	local before = cache[id]
@@ -395,7 +403,7 @@ nw.Bond = nw.Bind
 
 
 if CLIENT then
-	include("networkabe_cl_ext.lua")
+	include("networkable_cl_ext.lua")
 else
 	include("networkable_sv_ext.lua")
 end
