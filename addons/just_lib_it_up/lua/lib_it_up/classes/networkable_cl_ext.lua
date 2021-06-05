@@ -24,6 +24,7 @@ local cache = _NetworkableCache
 local numToID = _NetworkableNumberToID -- these tables are not sequential!!!
 local IDToNum = _NetworkableIDToNumber
 local _CurrentNWKey = nil
+local encoderIDLength = nw.EncoderLength
 
 local decoders = {
 	["string"] = {0, net.ReadString},
@@ -113,10 +114,6 @@ net.Receive("NetworkableSync", function(len)
 
 	printf("received Networkable sync: %d bytes", lBytes)
 
-	if lBytes > Networkable.BytesWarn then
-		warnf("	quite a long Networkable update (%d bytes)", lBytes)
-	end
-
 	local is_new = net.ReadBool()
 	local num_id = net.ReadUInt(SZ.NUMBERID)
 	local nwID
@@ -125,6 +122,10 @@ net.Receive("NetworkableSync", function(len)
 		nwID = ReadNWID(num_id)
 	else
 		nwID = NumberToID(num_id)
+	end
+
+	if lBytes > Networkable.BytesWarn then
+		warnf("	quite a long Networkable update for `%s` (%d bytes)", nwID or ("[numID: %d]"):format(num_id), lBytes)
 	end
 
 	if not nwID then
@@ -140,7 +141,7 @@ net.Receive("NetworkableSync", function(len)
 	nw.Profiling._NWDataInstances[ct] = instances
 
 	local instBytes = instances[nwID] or 0
-	instances[nameID] = instBytes + lBytes
+	instances[nwID] = instBytes + lBytes
 
 	if not cache[nwID] then
 		Networkable.CreateIDPair(nwID, num_id)
@@ -150,7 +151,25 @@ net.Receive("NetworkableSync", function(len)
 
 	local obj = cache[nwID]
 	if not obj then
-		warnf("Networkable with the name `%s` (%d) didn't exist clientside.", nwID, num_id)
+		local added = hook.Run("NetworkableAttemptCreate", nwID)
+
+		if not added then
+			obj = cache[nwID]
+			if obj then
+				warnf("Some hook created a networkable for `%s`, but didn't return success.", nwID)
+			end
+
+			if not obj then
+				warnf("Networkable with the name `%s` (%d) didn't exist clientside.", nwID, num_id)
+			end
+
+		elseif added then
+			obj = cache[nwID]
+			if not obj then
+				warnf("Some hook returned success, but didn't create a networkable for `%s`.", nwID)
+			end
+		end
+
 	end
 
 	if obj and obj:Emit("CustomReadChanges") ~= nil then
