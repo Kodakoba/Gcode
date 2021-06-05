@@ -184,7 +184,7 @@ else
 
 	-- clientside PlayerInitialSpawn basically
 
-	gameevent.Listen("player_info") --smh my head
+	gameevent.Listen("player_info")
 	local ran = {}
 
 	local function runHook(ply, uid)
@@ -197,11 +197,11 @@ else
 
 		if not ran[uid] then
 
-			hook.Add("Think", "ValidatePlayer" .. uid, function() --yikers
+			hook.Add("Think", "ValidatePlayer" .. uid, function() --yikes
 				if ran[uid] then hook.Remove("Think", "ValidatePlayer" .. uid) return end
 
 				local ply = Player(uid)
-									-- YIKERS 			-- DOUBLE YIKERS
+									-- YIKES 			-- DOUBLE YIKES
 				if ply:IsValid() and ply:Team() ~= 0 and ply:Nick() ~= "unconnected" then
 					runHook(ply, uid)
 				end

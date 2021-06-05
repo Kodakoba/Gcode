@@ -14,6 +14,7 @@ ENT.EmitUnusableBeeps = false
 
 ENT.StimRegenTime = 30
 ENT.MaxStims = 5
+ENT.IsHealthDispenser = true
 
 function ENT:Init()
 	self:SetModel(self.Model)
@@ -329,6 +330,7 @@ if SERVER then
 	net.Receive("HealthDispenser", function(len, ply)
 		local ent = net.ReadEntity()
 
+		if not IsValid(ent) or not ent.IsHealthDispenser then return end
 		if ply:GetPos():Distance(ent:GetPos()) > 256 then return end
 		if not ent:IsPowered() then return end
 		if ent:GetCharges() < 1 then return end

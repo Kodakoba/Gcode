@@ -75,6 +75,9 @@ nw.BytesWarn = nw.BytesWarn or 500
 nw.Profiling = {}
 nw.Profiling._NWDataInstances = {}
 
+nw.FakeNil = newproxy() --lul
+local fakeNil = nw.FakeNil
+
 -- { [CurTime] = { [nameID] = amt_bytes, ... }
 
 timer.Create("NetworkableCleanProfiler", 60, 0, function()
@@ -109,8 +112,6 @@ local warnf = function(s, ...)
 	MsgC(Colors.Warning, "[NWble] ", color_white, s:format(...), "\n")
 end
 
-local fakeNil = newproxy() --lul
-
 local cache = _NetworkableCache
 local numToID = _NetworkableNumberToID -- these tables are not sequential!!!
 local IDToNum = _NetworkableIDToNumber
@@ -129,71 +130,14 @@ function nw.CreateIDPair(id, numid)
 	IDToNum[id] = numid
 end
 
-local encoderIDLength = 5 --5 bits fit 16 (0-15) encoders
-
 local _vONCache = {}
 local _CurrentNWKey -- used for debug
 
 -- make sure you up encoderIDLength if you go above encoder ID of 15
 local ns = netstack:new()
 
--- write hijacked versions of net.*
-ns:Hijack(true)
-
-local encoders = {
-	["string"] = {0, net.WriteString},
-	["entity"] = {1, net.WriteEntity},
-	["vector"] = {2, net.WriteVector},
-
-	["table"] = {3, function(t, _, key)
-		--if t.Networkable_Encoder then return t:Networkable_Encoder() end
-		local vonned = _vONCache[key] or von.serialize(t)
-		_vONCache[key] = nil
-
-		net.WriteUInt(#vonned, 16)
-		net.WriteData(vonned, #vonned)
-	end},
-
-	["boolean"] = {4, net.WriteBool},	--please don't use bools as keys for ID's lmao
-	["angle"] = {5, net.WriteAngle},
-	["color"] = {6, net.WriteColor},
-
-	--7 to 11 are used!!!!!! do not use them!
-}
-
-ns:Hijack(false)
-ns = nil
-
-local function determineEncoder(typ, val)
-	if val == fakeNil then --lol
-		return BlankFunc, 11
-	end
-
-	if typ == "number" then --numbers are a bit more complicated
-		if math.ceil(val) == val then
-			if val >= 0 then
-				if val > 65535 then
-					return net.WriteUInt, 7, 32 -- uint
-				else
-					return net.WriteUInt, 8, 16 -- ushort
-				end
-			else
-				return net.WriteInt, 9, 32		-- int
-			end
-		else
-			return net.WriteFloat, 10
-		end
-	end
-
-	if typ == "player" or typ == "weapon" then typ = "entity" end
-
-	local enc = encoders[typ]
-	if not enc then errorf("Failed to find Encoder function for type %s! Value is %s", typ, val) return end
-
-	return enc[2], enc[1], enc[3]
-end
-
 nw.AutoAssignID = true
+nw.EncoderLength = 5
 
 function nw:Initialize(id, ...)
 	self.Networked = {}

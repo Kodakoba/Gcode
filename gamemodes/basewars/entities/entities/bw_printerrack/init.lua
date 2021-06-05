@@ -227,15 +227,14 @@ util.AddNetworkString("PrinterRack")
 
 net.Receive("PrinterRack", function(_, ply)
 	local ent = net.ReadEntity()
-	if 	not IsValid(ent) or
+
+	if not IsValid(ent) or
 		ent:GetClass() ~= "bw_printerrack" or
 		ply:GetPos():Distance(ent:GetPos()) > 192 or
 		ent:CPPIGetOwner() ~= ply then
-			print("can't interact",
-				not IsValid(ent), ent:GetClass() ~= "bw_printerrack",
-				ply:GetPos():Distance(ent:GetPos()) > 192, ent:CPPIGetOwner() ~= ply)
-			return
-		end
+
+		return
+	end
 
 	local typ = net.ReadUInt(2)
 

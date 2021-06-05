@@ -6,6 +6,9 @@ local PI = LibItUp.PlayerInfo
 PI.IsPlayerInfo = true
 PI.CleanupIn = 900 -- being absent for 15min = playerinfo is cleaned up (NYI)
 
+-- TODO: cleanup is important because networkables are kept in cache
+-- this means it'll be networking useless data for each player that ever joined
+
 LibItUp.PlayerInfoTables = LibItUp.PlayerInfoTables or {
 	-- [info] = PI
 	Player = {},
@@ -120,7 +123,7 @@ function PI:get(id, is_sid64)
 			local info = LibItUp.PlayerInfoTables.Player[ply]
 			info:SetSteamID64(id)
 		end
-	else
+	elseif is_sid64 then
 		if LibItUp.PlayerInfoTables.SteamID64[id] then return LibItUp.PlayerInfoTables.SteamID64[id], false end
 
 		local ply = player.GetBySteamID64(id)
@@ -129,6 +132,8 @@ function PI:get(id, is_sid64)
 			local info = LibItUp.PlayerInfoTables.Player[ply]
 			info:SetSteamID64(id)
 		end
+	else
+		errorf("Unknown ID passed to PlayerInfo:Get() (id = `%s`, is_sid64 = `%s`)", id, is_sid64)
 	end
 
 	return PI:new(id, is_sid64), true
@@ -268,12 +273,7 @@ end
 -- accepts SID, Player, PlayerInfo
 -- accepts SID64 only if 2nd arg is true
 function GetPlayerInfo(what, is_sid64)
-	if is_sid64 then return LibItUp.PlayerInfoTables.SteamID64[what] end
-	if IsPlayer(what) then return what:GetPInfo() end
-	if IsPlayerInfo(what) then return what end
-	if isstring(what) and what:IsSteamID() then return LibItUp.PlayerInfoTables.SteamID[what] end
-
-	errorf("Unknown arg type passsed to GetPlayerInfo: `%s` (%s) (not marked as SteamID64)", tostring(what), type(what))
+	return PI:get(what, is_sid64)
 end
 
 function GetPlayerInfoGuarantee(what, is_sid64)
@@ -282,3 +282,11 @@ function GetPlayerInfoGuarantee(what, is_sid64)
 
 	return pinfo, pinfo:GetPlayer()
 end
+
+hook.Add("NetworkableAttemptCreate", "PlayerInfo", function(nwID)
+	if nwID:match("PI:(%d+)") then
+		local sid64 = nwID:match("PI:(%d+)")
+		GetPlayerInfoGuarantee(sid64, true)
+		return true
+	end
+end)

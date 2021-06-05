@@ -73,6 +73,8 @@ local FFZChannels = {
 
 local EmoteShortcuts = {}
 local EmoteSize = {}
+TitleEmotes = EmoteShortcuts
+
 file.CreateDir("emoticon_cache")
 file.CreateDir("emoticon_cache/ffz")
 
@@ -145,6 +147,7 @@ local function CreateFFZShortcuts(update)
 							if (cont.name) and not EmoteShortcuts[cont.name] then 
 								local url
 								if cont.urls[4] then url=cont.urls[4] elseif cont.urls[2] then url=cont.urls[2] else url=cont.urls[1] end
+								print(url, cont.display_name or cont.name)
 								EmoteShortcuts[cont.display_name or cont.name] = string.Replace( url, "//cdn.frankerfacez.com/", "" )
 								EmoteSize[cont.display_name or cont.name] = {cont.width or 32, cont.height or 32}
 							end
@@ -169,31 +172,36 @@ local function CreateFFZShortcuts(update)
 end
 CreateFFZShortcuts()
 
-local function MakeCache(filename, emoticon)
+local function MakeCache(filename, emoticon, id)
 	local mat = Material("data/" .. string.lower(filename), "noclamp smooth")
-	filename=string.lower(filename)
-	emoticon_cache[emoticon or string.StripExtension(string.GetFileFromFilename(filename))] = mat
+	emoticon_cache[id] = mat
 end
 
 local function GetFFZEmoticon(emoticon)
-	if emoticon_cache[emoticon] then
-		return emoticon_cache[emoticon]
+	local id = emoticon:match("/?(%d+)/?") .. ".png"
+
+	if emoticon_cache[id] then
+		return emoticon_cache[id]
 	end
-	if busy[emoticon] then
+	if busy[id] then
 		return false
 	end
-	if file.Exists("emoticon_cache/ffz/" .. emoticon, "DATA") then
-		MakeCache("emoticon_cache/ffz/" .. emoticon, emoticon)
-	return emoticon_cache[emoticon] or false end
-	Msg"NT " print("Downloading FFZ emoticon https://cdn.frankerfacez.com/" .. emoticon)
+
+	if file.Exists("emoticon_cache/ffz/" .. id, "DATA") then
+		MakeCache("emoticon_cache/ffz/" .. id, emoticon, id)
+		return emoticon_cache[id] or false
+	end
+
+	print("Downloading FFZ emoticon https://cdn.frankerfacez.com/" .. emoticon)
 	http.Fetch("https://cdn.frankerfacez.com/" .. emoticon, function(body, len, headers, code)
 		if code == 200 then
 			if body == "" then
-				Msg"NT " print("Server returned OK but empty response")
-			return end
+				print("Server returned OK but empty response")
+				return
+			end
 			Msg"NT " print("Download OK")
-			file.Write("emoticon_cache/ffz/" .. string.lower(emoticon) , body)
-			MakeCache("emoticon_cache/ffz/" .. emoticon , emoticon)
+			file.Write("emoticon_cache/ffz/" .. id, body)
+			MakeCache("emoticon_cache/ffz/" .. id, emoticon, id)
 		else
 			Msg"NT " print("Download failure. Code: " .. code)
 		end
@@ -420,9 +428,12 @@ surface.CreateFont("Title2d", {
 
 local ARAlpha = 255
 
+local drawn = setmetatable({}, {__mode = "kv"})
+
 function Titles.Draw(ply)
 	if not enabled:GetBool() then return false end
-
+	if drawn[ply] == FrameNumber() then return false end
+	drawn[ply] = FrameNumber()
 	ply:UpdateTitle()
 	local me = LocalPlayer()
 	local sid = ply:SteamID64() or ply:UserID()
@@ -444,11 +455,11 @@ function Titles.Draw(ply)
 	ang.p = 0
 	--ang:RotateAroundAxis(ang:Up(), 90)
 
-	local pos = Vector(0,0,0)--ply:GetPos() + Vector(0, 0, 80) + ply:GetAngles():Forward()*1
-	local eyesid = ply:LookupAttachment('eyes') 
+	local pos = Vector(0,0,0) --ply:GetPos() + Vector(0, 0, 80) + ply:GetAngles():Forward()*1
+	local eyesid = ply:LookupAttachment('eyes')
 	local eyeang = ply:EyeAngles()
 	eyeang.r = 0
-	if eyesid <= 0 then 
+	if eyesid <= 0 then
 		pos = ply:GetPos() + Vector(0, 0, 80) + eyeang:Forward()*3 --alternative way of getting pos
 	else
 		local eyepos = ply:GetAttachment(eyesid)

@@ -11,8 +11,6 @@ local Requirements = {
 	NewXP = {},
 	TotalXP = {},
 
-	Anchors = {},	-- optimization thing; cont
-
 	NewMoney = {},
 	TotalMoney = {}
 }

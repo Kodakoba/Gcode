@@ -66,8 +66,6 @@ local warnf = function(s, ...)
 	MsgC(Colors.Warning, "[NWble] ", color_white, s:format(...), "\n")
 end
 
-local fakeNil = newproxy() --lul
-
 local cache = _NetworkableCache
 
 local numToID = _NetworkableNumberToID -- these tables are not sequential!!!
@@ -77,6 +75,7 @@ local encoderIDLength = 5 --5 bits fit 16 (0-15) encoders
 
 local _vONCache = {}
 
+local fakeNil = nw.FakeNil
 --[[
 	encoders
 ]]
@@ -402,6 +401,10 @@ end
 -- Updates every player in `who` table on every networkable
 -- in `what` table, regardless of their awareness
 function Networkable.UpdateFull(who, what)
+	if not what then
+		what = _NetworkableCache
+	end
+
 	if istable(who) then
 		Filter(who, true):Filter("IsValid", true)
 	else
@@ -421,7 +424,7 @@ function Networkable.UpdateFull(who, what)
 			end
 
 		else
-			copy = all
+			copy = who
 		end
 		print("Fullupdating:")
 		for k,v in pairs(copy) do
@@ -430,6 +433,8 @@ function Networkable.UpdateFull(who, what)
 		obj:_SendNet(copy, true)
 	end
 end
+
+Networkable.FullUpdate = Networkable.UpdateFull
 
 timer.Create("NetworkableNetwork", update_freq, 0, nwAll)
 
