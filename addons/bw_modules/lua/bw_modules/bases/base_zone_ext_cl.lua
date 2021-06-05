@@ -13,6 +13,29 @@ hook.Add("NotifyShouldTransmit", "BWBaseEntityList", function(ent, enter)
 	end
 end)
 
+local function indexFunc(...) -- eek!
+	return bw.Base.NetworkedChanged(...)
+end
+
+function bw.Base.NetworkedChanged(self, changes)
+	--print("pub network change", self:Get("ClaimedBy"))
+	local base = self.Base
+	if self:Get("ClaimedBy") then
+		base:SetClaimed(true)
+
+		if not IsPlayerInfo(self:Get("ClaimedBy")) and self:Get("ClaimedFaction") == false then
+			-- assume ClaimedBy is a steamid64, make it a playerinfo
+			self:Set( "ClaimedBy", GetPlayerInfoGuarantee(self:Get("ClaimedBy"), true) )
+		elseif not IsFaction(self:Get("ClaimedBy")) and self:Get("ClaimedFaction") == true then
+			-- assume ClaimedBy is a faction ID, make it into a faction
+			self:Set( "ClaimedBy", Factions.GetFaction(self:Get("ClaimedBy")) )
+		end
+	else
+		--print("base now unclaimed; also unclaiming", self:Get("ClaimedBy"))
+		base:SetClaimed(false)
+	end
+end
+
 function bw.Base:_PostInit()
 	local pub = self.PublicNW
 	local priv = self.OwnerNW
@@ -20,23 +43,7 @@ function bw.Base:_PostInit()
 
 	local base = self
 
-	pub:On("NetworkedChanged", "GetPlayerInfo", function(self, changes)
-		print("pub network change", self:Get("ClaimedBy"))
-		if self:Get("ClaimedBy") then
-			base:SetClaimed(true)
-
-			if not IsPlayerInfo(self:Get("ClaimedBy")) and self:Get("ClaimedFaction") == false then
-				-- assume ClaimedBy is a steamid64, make it a playerinfo
-				self:Set( "ClaimedBy", GetPlayerInfoGuarantee(self:Get("ClaimedBy"), true) )
-			elseif not IsFaction(self:Get("ClaimedBy")) and self:Get("ClaimedFaction") == true then
-				-- assume ClaimedBy is a faction ID, make it into a faction
-				self:Set( "ClaimedBy", Factions.GetFaction(self:Get("ClaimedBy")) )
-			end
-		else
-			print("base now unclaimed; also unclaiming", self:Get("ClaimedBy"))
-			base:SetClaimed(false)
-		end
-	end)
+	pub:On("NetworkedChanged", "GetPlayerInfo", indexFunc)
 
 	entNW:On("NetworkedChanged", "GetEntitiesInfo", function(self, changes)
 

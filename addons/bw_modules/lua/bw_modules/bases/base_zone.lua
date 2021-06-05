@@ -225,6 +225,7 @@ function bw.Base:Initialize(id, json)
 		pubNW:Alias("Claimed", 0)
 		pubNW:Alias("ClaimedBy", 1)
 		pubNW:Alias("ClaimedFaction", 2)
+		pubNW.Base = self
 
 	self.OwnerNW = Networkable("BasePriv" .. id)
 		self.OwnerNW.Base = self
