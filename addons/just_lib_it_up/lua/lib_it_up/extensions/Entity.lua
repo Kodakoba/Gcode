@@ -4,8 +4,6 @@ EntitySubscribers = EntitySubscribers or {}
 local subs = EntitySubscribers.Players or {} 		-- key = player, value = { {ply, dist_sqr, callback}, {ply, dist_sqr, callback} }
 EntitySubscribers.Players = subs					-- this is used for distance-checking logic 
 
-
-
 local ent_subs = EntitySubscribers.Entities or {}		-- key = entity, value = { [player] = ntid_in_plysub, [player] = entid_in_plysub }
 EntitySubscribers.Entities = ent_subs					-- this is used for adding/removing subs from entity
 
@@ -20,6 +18,32 @@ EntitySubscribers.Entities = ent_subs					-- this is used for adding/removing su
 
 local BlankFunc = function() end
 
+
+local lookupCache = setmetatable({}, {__mode = "k"})
+local ENTITY = FindMetaTable("Entity")
+
+function ENTITY:__index( key )
+	local val = ENTITY[key]
+	if val != nil then return val end
+
+	local tab = lookupCache[self]
+
+	if not tab then
+		tab = self:GetTable()
+		lookupCache[self] = tab
+	end
+
+	if tab then
+		val = tab[key]
+		if val != nil then return val end
+	end
+
+	-- todo: destroy this piece of shit
+	if ( key == "Owner" ) then return ENTITY.GetOwner( self ) end
+
+	return nil
+
+end
 
 function ENTITY:Subscribe(ply, dist, onunsub, addtwice)
 
