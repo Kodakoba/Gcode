@@ -263,7 +263,7 @@ chathud.TagTable = {
 		end,
 		Draw = function(self, markup, buffer, args)
 			self.mtrx:SetTranslation(Vector(args[1], args[2]))
-			cam.PushModelMatrix(self.mtrx, buffer.multmatrix)
+			cam.PushModelMatrix(self.mtrx, buffer.multmatrix or true)
 
 		end,
 		TagEnd = function(self)
@@ -285,7 +285,7 @@ chathud.TagTable = {
 				self.mtrx:SetAngles(Angle(0, args[1], 0))
 			self.mtrx:Translate(-vec)
 
-			cam.PushModelMatrix(self.mtrx, buffer.multmatrix)
+			cam.PushModelMatrix(self.mtrx, buffer.multmatrix or true)
 		end,
 
 		TagEnd = function(self)
@@ -316,7 +316,7 @@ chathud.TagTable = {
 				self.mtrx:Scale(Vector(args[1], args[2]))
 			self.mtrx:Translate(-Vector(buffer.x, buffer.y + (buffer.h * 0.5)))
 			
-			cam.PushModelMatrix(self.mtrx, buffer.multmatrix)
+			cam.PushModelMatrix(self.mtrx, buffer.multmatrix or true)
 
 		end,
 		TagEnd = function(self, markup, buffer, args)
@@ -474,7 +474,7 @@ chathud.TagTable["item"] = {
 	Draw = function(self, markup, buffer, args)
 		local uid = args[1]
 		uid = tonumber(uid)
-		if not uid or not chathud.Items[uid] then 
+		if not uid or not chathud.Items[uid] then
 
 			surface.SetFont("CH_TextShadow")
 			surface.SetTextColor(0, 0, 0)
