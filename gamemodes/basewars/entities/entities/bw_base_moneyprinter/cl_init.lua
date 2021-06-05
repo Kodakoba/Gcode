@@ -78,13 +78,13 @@ function ENT:DrawUpgradeCost(y, w, h)
 	local costW, whatW = cache[cost], cache[what]
 
 	if not costW then
-		setFont("OSB64")
+		setFont("BSB64")
 		costW = getTextSize(cost)
 		cache[cost] = costW
 	end
 
 	if not whatW then
-		setFont("OS24")
+		setFont("BS24")
 		whatW = getTextSize(what)
 		cache[what] = whatW
 	end
@@ -98,8 +98,8 @@ function ENT:DrawUpgradeCost(y, w, h)
 
 	--draw.RoundedBox(16, upX, upY, upW, upH, black)
 
-	simpleText(what, "OS24", upX + upW / 2, upY, white, 1)
-	simpleText(cost, "OSB64", upX + upW / 2, upY + 18, white, 1)
+	local _, th = simpleText(what, "BS24", upX + upW / 2, upY, white, 1)
+	simpleText(cost, "BSSB64", upX + upW / 2, upY + (th * 0.875), white, 1)
 end
 
 function ENT:DrawMoneyBar(pos, ang, scale, _, _, me, pwd)
@@ -144,7 +144,7 @@ function ENT:DrawMisc(pos, ang, scale, w, h, me, pwd)
 
 	setDrawColor(blk)
 	rect(nameX, nameY, nameW, nameH)
-	simpleText(me.PrintName, "TW72", w/2, nameY, white, 1)
+	simpleText(me.PrintName, "BS64", w/2, nameY, white, 1)
 
 	if pwd then
 
@@ -157,7 +157,7 @@ function ENT:DrawMisc(pos, ang, scale, w, h, me, pwd)
 			local x, y = nameX + nameW/2 - 180, nameY + nameH + 40
 
 			rect(x, y, 360, 80)
-			simpleText("Critical damage!", "TWB72", w/2, y + 40, col, 1, 1)
+			simpleText("Critical damage!", "MRB72", w/2, y + 40, col, 1, 1)
 		end
 	end
 end
@@ -323,7 +323,9 @@ function ENT:Draw()
 
 
 		local y = h * 0.2 + h * 0.075 + h * 0.05
-
+		draw.RoundedBox(16, 0, h/2, w, y, Colors.Green)
+		draw.SimpleText("WAAAAAAAOW", "TW48", -w/2, -h/2 - y/2, color_white, 1, 1)
+		print(-w/2, -h/2 - y/2)
 		ok, err = pcall(self.DrawUpgradeCost, self, y, w, h)
 		if not ok then print('Printers upgrade cost error:', err) end
 
