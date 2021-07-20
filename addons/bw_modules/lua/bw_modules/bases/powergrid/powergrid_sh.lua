@@ -1,5 +1,6 @@
 local bw = BaseWars.Bases
 
+bw.EntityToPowerGrid = {}
 bw.PowerGrid = bw.PowerGrid or Emitter:extend()
 local pg = bw.PowerGrid
 
@@ -8,11 +9,21 @@ function pg:Initialize(base)
 
 	local id = base:GetID()
 
+	self:SetValid(true)
+
 	self:SetNW( LibItUp.Networkable:new("PG:" .. id) )
+		:SetBase(base)
+		:SetPower(0)
+		:SetConsumers({})
+		:SetGenerators({})
+		:SetAllEntities({})
+		:SetCapacity(1000)
 
-	self:SetBase(base)
+	self._UnpoweredEnts = {}
+	self._PoweredEnts = {}
 
-	self:SetPower(0)
+	self:SetPowerIn(0)
+	self:SetPowerOut(0)
 
 	local nw = self:GetNW()
 		nw.Filter = base.OwnerNWFilter
@@ -29,18 +40,17 @@ end
 function pg:SetPower(pw)
 	self._Power = pw
 	self:Update()
-end
-
-function pg:GetPower()
-	return self._Power
+	return self
 end
 
 function pg:AddPower(pw)
-	self:SetPower(self:GetPower() + pw)
+	local new_pw = math.min(self:GetPower() + pw, self:GetCapacity())
+	self:SetPower(new_pw)
 end
 
 function pg:TakePower(pw)
-	self:SetPower(math.max( self:GetPower() - pw, 0 ) )
+	local new_pw = math.min(self:GetPower() - pw, 0)
+	self:SetPower(new_pw)
 end
 
 function pg:HasPower(pw)
@@ -52,18 +62,76 @@ function pg:Remove()
 	self:SetValid(false)
 end
 
-function pg:Think()
-	local base = self:GetBase()
-	if not base or not self:GetValid() then return end
+function pg:SetPowerIn(n)
+	self._PowerIn = n
+	self:GetNW():Set("PowerIn", n)
+end
 
-	local ents = base:GetEntities()
+function pg:SetPowerOut(n)
+	self._PowerOut = n
+	self:GetNW():Set("PowerOut", n)
+end
+
+function pg:AddEntity(ent)
+	if not ent.IsBaseWars then return end
+	if self:GetAllEntities()[ent] then return end -- already added
+
+	local old_grid = bw.EntityToPowerGrid[ent]
+	if old_grid then
+		old_grid:RemoveEntity(ent)
+	end
+
+	self:GetAllEntities()[ent] = true
+	bw.EntityToPowerGrid[ent] = self
+
+	print(ent.IsElectronic, ent.IsGenerator)
+
+	if ent.IsElectronic then
+		table.insert(self:GetConsumers(), ent)
+		self:Emit("AddedConsumer", ent)
+	elseif ent.IsGenerator then
+		table.insert(self:GetGenerators(), ent)
+		self:Emit("AddedGenerator", ent)
+	end
+end
+
+hook.Add("EntityActuallyRemoved", "PowerGrid_Clear", function(ent)
+	if bw.EntityToPowerGrid[ent] then
+		local pg = bw.EntityToPowerGrid[ent]
+		pg:RemoveEntity(ent)
+		bw.EntityToPowerGrid[ent] = nil
+	end
+end)
+
+function pg:RemoveEntity(ent)
+	if not ent.IsBaseWars then return end
+	if not self:GetAllEntities()[ent] then return end
+
+	self:GetAllEntities()[ent] = nil
+
+	if bw.EntityToPowerGrid[ent] == self then
+		bw.EntityToPowerGrid[ent] = nil
+	end
+
+	if ent.IsElectronic then
+		table.RemoveByValue(self:GetConsumers(), ent)
+		self:Emit("RemovedConsumer", ent)
+	elseif ent.IsGenerator then
+		table.RemoveByValue(self:GetGenerators(), ent)
+		self:Emit("RemovedGenerator", ent)
+	end
 end
 
 ChainAccessor(pg, "_Networkable", "NW")
 ChainAccessor(pg, "_Base", "Base")
-ChainAccessor(pg, "_PowerIn", "PowerIn")
-ChainAccessor(pg, "_PowerOut", "PowerOut")
+ChainAccessor(pg, "_Capacity", "Capacity")
+ChainAccessor(pg, "_Power", "Power", true)
+ChainAccessor(pg, "_PowerIn", "PowerIn", true)
+ChainAccessor(pg, "_PowerOut", "PowerOut", true)
 ChainAccessor(pg, "_Valid", "Valid")
+ChainAccessor(pg, "_Consumers", "Consumers")
+ChainAccessor(pg, "_Generators", "Generators")
+ChainAccessor(pg, "_AllEntities", "AllEntities")
 
 include("powergrid_ext_" .. Rlm(true) .. ".lua")
 AddCSLuaFile("powergrid_ext_cl.lua")

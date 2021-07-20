@@ -27,15 +27,9 @@ end
 
 function ENT:DerivedDataTables()
 	self:NetworkVar("Int", 0, "GridID")
-	self:NetworkVar("Entity", 0, "Line")
+	-- self:NetworkVar("Entity", 0, "Line")
 	self:NetworkVar("Entity", 1, "Hotwired")
 
-	if CLIENT then
-		self:On("DTChanged", "GridID", function(self, name, old, new)
-			if name ~= "GridID" then return end
-			self:OnChangeGridID(new)
-		end)
-	end
 	self:DerivedGenDataTables()
 end
 

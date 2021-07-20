@@ -32,9 +32,11 @@ function ENT:DrainPower(val)
 	return false
 end
 
-function ENT:IsPowered(val)
+function ENT:IsPowered()
 	return self:GetPowered()
 end
+
+ENT.GetPower = ENT.IsPowered
 
 function ENT:SetupDataTables()
 	baseclass.Get(base).SetupDataTables(self)
@@ -155,7 +157,7 @@ else
 
 		self.ConnectDistanceSqr = self.ConnectDistance ^ 2
 
-		self:OnChangeGridID(self:GetGridID())
+		-- self:OnChangeGridID(self:GetGridID())
 		self:CLInit()
 		self:SHInit()
 	end

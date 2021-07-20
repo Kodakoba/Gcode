@@ -1,16 +1,10 @@
-
-
-if BaseWars.Bases then
-	local b = BaseWars.Bases.NW
-	b.Bases:Invalidate()
-	b.Zones:Invalidate()
-
-	b.Bases = Networkable("bw_bases_bases")
-	b.Zones = Networkable("bw_bases_zones")
-end
-
-
 local function init(force)
+
+	--[[if force then
+		b.Bases = Networkable("bw_bases_bases")
+		b.Zones = Networkable("bw_bases_zones")
+	end]]
+
 	if force and BaseWars.Bases then
 		for k,v in pairs(BaseWars.Bases.Bases) do
 			v:Remove()
@@ -21,6 +15,11 @@ local function init(force)
 		end
 	end
 
+	local b = BaseWars.Bases and BaseWars.Bases.NW
+	if b then
+		b.Bases:Invalidate()
+		b.Zones:Invalidate()
+	end
 
 	BaseWars.Bases = (not force and BaseWars.Bases) or Emitter.Make({
 		-- data populated from base_sql_sv
@@ -70,15 +69,7 @@ local function init(force)
 		ZonePaints = {},	-- CL
 	})
 
-	if force then
-		local b = BaseWars.Bases.NW
-		b.Bases:Invalidate()
-		b.Zones:Invalidate()
-
-		b.Bases = Networkable("bw_bases_bases")
-		b.Bases.Yeet = true
-		b.Zones = Networkable("bw_bases_zones")
-	end
+	BaseWars.Bases.Reset = Curry(init, true)
 
 	if force and SERVER then
 		for k,v in ipairs(ents.FindByClass("bw_zone_brush")) do

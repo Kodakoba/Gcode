@@ -302,7 +302,9 @@ function bw.Base:Remove(replaced)
 	end
 
 	BaseWars.Bases.Bases[self:GetID()] = nil
-	bw.NW.Bases:Set(self:GetID(), nil)
+	if bw.NW.Bases:IsValid() then
+		bw.NW.Bases:Set(self:GetID(), nil)
+	end
 
 	self:Emit("Remove")
 	bw:Emit("DeleteBase", self)

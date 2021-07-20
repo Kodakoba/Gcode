@@ -3,84 +3,8 @@ AddCSLuaFile()
 PowerGrid = PowerGrid or Networkable:extend()--Emitter:extend()
 PowerGrids = PowerGrids or {}
 
-PowerGridIDsToEnts = PowerGridIDsToEnts or {}
-
 local clprint = CLIENT and BlankFunc or BlankFunc
 local print = SERVER and BlankFunc or BlankFunc
-
-function PowerGridIDsToEnts.Add(ent, id)
-	if not id then id = ent:GetGridID() end
-
-	local grid = PowerGrids[id]
-	if grid and not grid.AllEntities[ent:EntIndex()] then
-		grid:AddEntity(ent)
-	end
-
-	local arr = PowerGridIDsToEnts[id] or {}
-	PowerGridIDsToEnts[id] = arr
-
-	for k,v in ipairs(arr) do
-		if v == ent then
-			return -- we don't need to re-add an entity we already have
-		end
-	end
-
-	arr[#arr + 1] = ent
-end
-
-local function onlyValid(v)
-	return v:IsValid()
-end
-
-function PowerGridIDsToEnts.Sync(id)
-	local entArray = PowerGridIDsToEnts[id]
-	if not entArray then return end
-
-	local grid = PowerGrids[id]
-	if not grid then return end
-
-	table.Filter(entArray, onlyValid)
-
-	for k,v in ipairs(entArray) do
-		local eID = v:EntIndex()
-		if not grid.AllEntities[eID] then
-			grid:AddEntity(v)
-		end
-	end
-
-end
-
---[[
-
-	networked:
-		0: PowerStored
-
-	emitters:
-		Added[Generator/Line/Consumer]:
-			1 - self: grid
-			2 - entity which got added
-
-		Removed[Generator/Line/Consumer]:
-			1 - self: grid
-			2 - entity which got added
-			3 - was it removed to create a new powergrid for itself?
-
-		GridChanged: when anything in the grid changes (added/removed ent)
-]]
-function PowerGrid.UpdateIDs()
-	for k, grid in pairs(PowerGrids) do
-		--if grid.ID == k then continue end
-
-		grid.ID = k
-
-		for id, ent in pairs(grid.AllEntities) do
-			if not IsValid(ent) then grid.AllEntities[id] = nil continue end --wat
-			if SERVER then 	ent:SetGridID(k) --[[else
-							ent.OldGridID = k]] end
-		end
-	end
-end
-
 
 function PowerGrid:UpdatePowerIn(gen)
 	local pw_in = 0
@@ -108,8 +32,7 @@ PowerGrid:On("AddedConsumer", "UpdatePowerOut", PowerGrid.UpdatePowerOut)
 PowerGrid:On("RemovedConsumer", "UpdatePowerOut", PowerGrid.UpdatePowerOut)
 
 
-function PowerGrid:Initialize(ow, id, id2) --`id` is only used clientside, when we rely on the server fixing up powergrids to be sequential
-										   --`id2` is to fix up CPPIGetOwner returning uniqueID
+function PowerGrid:Initialize(base)
 	if IsPlayer(ow) and ow:UniqueID() == id then
 		id = id2
 	end
@@ -339,7 +262,6 @@ for k,v in pairs(accessors) do
 
 		self:Emit("GridChanged", ent)
 		self:Emit("Removed" .. v.emit, ent, new)
-		
 
 		if new then
 			PowerGrid:new((ent:CPPIGetOwner())):AddEntity(ent)
@@ -359,11 +281,11 @@ function PowerGrid.FindNearestPole(ent, from) --this isn't a class function, it'
 
 	for _, grid in pairs(PowerGrids) do
 		grid.Owner = grid.Owner or table.Random(grid.AllEntities):CPPIGetOwner()
-		if not grid.Owner or not grid.Owner:IsValid() or not grid.Owner:IsTeammate(ow) then print("no", grid.Owner) continue end
+		if not grid.Owner or not grid.Owner:IsValid() or not grid.Owner:IsTeammate(ow) then continue end
 		local mindist, minpole = math.huge
-		print("probing grid", grid.ID, "for powerlines")
+
 		for _, line in ipairs(grid.PowerLines) do
-			if line == ent or line == from or not line:IsValid() then print("not considering", line, line == from) continue end
+			if line == ent or line == from or not line:IsValid() then continue end
 
 			local pos = line:GetPos()
 			local dist = pos:DistToSqr(mypos)
@@ -371,8 +293,6 @@ function PowerGrid.FindNearestPole(ent, from) --this isn't a class function, it'
 			if dist < cable and dist < mindist then
 				mindist = dist
 				minpole = line
-			else
-				print("too far", dist, mindist, cable)
 			end
 		end
 

@@ -18,6 +18,20 @@ end)
 	Networkable decoders
 ---------------------------------------------------------------------------]]
 
+hook.Add("NetworkableInvalidate", "BW_Bases", function(sid, nw)
+	if nw == bw.NW.Zones or nw == bw.NW.Bases then
+		table.Empty(nw:GetNetworked())
+
+		if nw == bw.NW.Zones then
+			table.Empty(bw.Zones)
+		else
+			table.Empty(bw.Bases)
+		end
+
+		return false
+	end
+end)
+
 zNW:On("ReadChangeValue", "DecodeZones", function(self, zID)
 
 	local yiss = net.ReadBool()
@@ -47,7 +61,6 @@ zNW:On("NetworkedChanged", "DecodedAll", function(self)
 	bw:Emit("ReadZones")
 end)
 
-bNW.Yote = true
 bNW:On("ReadChangeValue", "DecodeBases", function(self, key)
 	local yiss = net.ReadBool()
 

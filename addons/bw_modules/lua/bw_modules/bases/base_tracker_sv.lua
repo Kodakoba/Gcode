@@ -283,8 +283,8 @@ hook.Add("EntityEnteredBase", "NetworkBase", function(base, ent)
 	if not IsPlayer(ent) then return end
 
 	local nw = bw.GetPlayerNW(ent)
-	if not nw then return end
-
+	if not nw then print("no player NW for ", ent) return end
+	print("set CurrentBase")
 	nw:Set("CurrentBase", base:GetID())
 	nw:Network()
 end)
@@ -293,8 +293,8 @@ hook.Add("EntityExitedBase", "NetworkBase", function(base, ent)
 	if not IsPlayer(ent) then return end
 
 	local nw = bw.GetPlayerNW(ent)
-	if not nw then return end -- can happen if a player leaves while in a base
-
+	if not nw then print("no player NW for ", ent) return end -- can happen if a player leaves while in a base
+	print("player exited base", ent)
 	nw:Set("CurrentBase", nil)
 	nw:Network()
 end)

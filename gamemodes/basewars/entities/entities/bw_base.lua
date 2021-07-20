@@ -50,7 +50,7 @@ function ENT:BadlyDamaged()
 end
 
 function ENT:GetPower()
-	return true --self:GetPowered()
+	return true
 end
 
 function ENT:SetupDataTables()
@@ -110,31 +110,10 @@ if SERVER then
 			if IsValid(self) then self:RemoveEFlags(EFL_FORCE_CHECK_TRANSMIT) end
 		end)
 
-		timer.Simple(0, function()
-
-			if self:IsValid() then
-				local ply, sid64 = self:CPPIGetOwner()
-				if not IsPlayer(ply) then return end
-
-				if self.IsElectronic then
-					local pole = PowerGrid.FindNearestPole(self)
-
-					if pole then
-						pole.Grid:AddConsumer(self, pole)
-					else
-						PowerGrid:new(ply):AddConsumer(self)
-					end
-				end
-			end
-
-		end)
-
 	end
 
 	function ENT:Repair()
-
 		self:SetHealth(self:GetMaxHealth())
-
 	end
 
 	function ENT:Spark(a, ply)

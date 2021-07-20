@@ -31,8 +31,6 @@ DrawCableDist = DrawCableDist or nil
 DrawCableEntity = DrawCableEntity or nil 	-- Entity: to
 
 function ENT:OpenShit(qm, self, pnl)
-	print("initial open on gen")
-	print('qm:', qm)
 	if not IsValid(pnl) then error("WTF " .. tostring(pnl)) return end
 
 	GeneratorPanel = pnl
@@ -53,10 +51,10 @@ function ENT:OpenShit(qm, self, pnl)
 			local valid = #qm.Panels > 0
 
 			for k, p in ipairs(qm.Panels) do
-				if not IsValid(p) then print(p, "is invalid; recreating all") valid = false break end
+				if not IsValid(p) then valid = false break end
 			end
-			print("all valid?", valid)
-			if valid then print("skipping") goto skipOptions end 	-- every option is valid; don't recreate and bail
+
+			if valid then goto skipOptions end 	-- every option is valid; don't recreate and bail
 												-- had ta use a goto here
 		end
 
@@ -68,7 +66,6 @@ function ENT:OpenShit(qm, self, pnl)
 	::skipOptions::
 
 	if not IsValid(qm.ConnectBtn) then
-		print("connectbtn was not valid")
 		local con = vgui.Create("FButton", pnl)
 		qm.ConnectBtn = con
 		con:SetSize(128, 48)
@@ -86,13 +83,11 @@ function ENT:OpenShit(qm, self, pnl)
 			DrawCable = ent
 			dcFirstFrame = true
 		end
-	else
-		print("connectbtn was valid")
 	end
 
 	if not IsValid(qm.DisconnectBtn) then
 
-		if IsValid(self:GetHotwired()) or IsValid(self:GetLine()) then
+		if IsValid(self:GetHotwired()) then
 
 			local disc = vgui.Create("FButton", pnl)
 			qm.DisconnectBtn = disc
