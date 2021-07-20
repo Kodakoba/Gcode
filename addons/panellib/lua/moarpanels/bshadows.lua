@@ -11,7 +11,6 @@ BSHADOWS = (not updating and BSHADOWS) or {}
 local render = render
 
 BSHADOWS.RenderTarget = GetRenderTarget("bshadows_original", ScrW(), ScrH())
-
 BSHADOWS.RenderTarget2 = GetRenderTarget("bshadows_shadow",  ScrW(), ScrH())
 
 BSHADOWS.ShadowMaterial = BSHADOWS.ShadowMaterial or CreateMaterial("bshadows" .. BSHADOWS_ID,"UnlitGeneric",{
@@ -29,18 +28,31 @@ BSHADOWS.ShadowMaterialGrayscale = (not updating and BSHADOWS.ShadowMaterialGray
 
 BSHADOWS.ShadowMaterialColorscale = (not updating and BSHADOWS.ShadowMaterialColorscale) or CreateMaterial("bshadows_colorscale" .. BSHADOWS_ID,"UnlitGeneric",{
     ["$translucent"] = 1,
-
-    ["$vertexalpha"] = 1,
-
-    ["$alpha"] = 1,
-})
-
-BSHADOWS.ShadowMaterialColor = (not updating and BSHADOWS.ShadowMaterialColor) or CreateMaterial("bshadows_color" .. BSHADOWS_ID,"UnlitGeneric",{
-    ["$translucent"] = 1,
     ["$vertexalpha"] = 1,
     ["$alpha"] = 1,
 })
 
+local function resStr()
+    return ("%dx%d"):format(ScrW(), ScrH())
+end
+
+local originalName = "bshadows_original_" .. resStr()
+local shadowName = "bshadows_shadow_" .. resStr()
+
+local function resize()
+    originalName = "bshadows_original_" .. resStr()
+    shadowName = "bshadows_shadow_" .. resStr()
+
+    BSHADOWS.RenderTarget = GetRenderTarget(originalName, ScrW(), ScrH())
+    BSHADOWS.RenderTarget2 = GetRenderTarget(shadowName,  ScrW(), ScrH())
+
+    if BSHADOWS.ShadowMaterial then BSHADOWS.ShadowMaterial:SetTexture("$basetexture", BSHADOWS.RenderTarget) end
+    if BSHADOWS.ShadowMaterialGrayscale then BSHADOWS.ShadowMaterialGrayscale:SetTexture("$basetexture", BSHADOWS.RenderTarget2) end
+    if BSHADOWS.ShadowMaterialColorscale then BSHADOWS.ShadowMaterialColorscale:SetTexture("$basetexture", BSHADOWS.RenderTarget2) end
+end
+
+hook.Add("OnScreenSizeChanged", "BSHADOWS_Resize", resize)
+resize()
 
 local offsetted = false --is current shadow being offsetted by x,y,w,h args?
 local started = false
