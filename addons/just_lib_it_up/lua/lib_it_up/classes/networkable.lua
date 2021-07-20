@@ -45,7 +45,7 @@ local nw = Networkable
 Networkable._UpdateFrequency = 0.1
 
 Networkable._Sizes = {
-	NUMBERID = 16,
+	NUMBERID = 16, -- if you need more than 65535 networkables, its likely there's a leak
 	CHANGES_COUNT = 12,
 
 	INTERVAL_UPDATE = 1024 * 12 * Networkable._UpdateFrequency, -- 12kb
@@ -175,8 +175,6 @@ end
 
 function nw:SetNetworkableID(id, replace)
 	self.NetworkableID = id
-
-	local before = cache[id]
 
 	if cache[id] and cache[id] ~= self and not replace then
 		errorf("This isn't supposed to happen -- setting NWID with a networkable already existing! NWID: %s", id)

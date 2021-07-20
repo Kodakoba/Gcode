@@ -323,9 +323,7 @@ function ENT:Draw()
 
 
 		local y = h * 0.2 + h * 0.075 + h * 0.05
-		draw.RoundedBox(16, 0, h/2, w, y, Colors.Green)
-		draw.SimpleText("WAAAAAAAOW", "TW48", -w/2, -h/2 - y/2, color_white, 1, 1)
-		print(-w/2, -h/2 - y/2)
+
 		ok, err = pcall(self.DrawUpgradeCost, self, y, w, h)
 		if not ok then print('Printers upgrade cost error:', err) end
 

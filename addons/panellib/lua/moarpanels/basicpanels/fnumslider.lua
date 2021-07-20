@@ -171,7 +171,6 @@ function PANEL:Init()
 
 		surface.SetDrawColor(notchColor:Unpack())
 
-		
 		for i=1, notches do
 			--if interv*i == oneval then continue end --don't draw @ x = 0
 			local h = 12
