@@ -117,7 +117,7 @@ local function determineEncoder(typ, val)
 
 	if typ == "number" then --numbers are a bit more complicated
 		if math.ceil(val) == val then
-			if val >= 0 then
+			if val >= 0 and val < bit.lshift(1, 32) then
 				if val > 65535 then
 					return net.WriteUInt, 7, 32 -- uint
 				else
@@ -127,7 +127,7 @@ local function determineEncoder(typ, val)
 				return net.WriteInt, 9, 32		-- int
 			end
 		else
-			return net.WriteFloat, 10
+			return net.WriteDouble, 10
 		end
 	end
 
@@ -181,6 +181,7 @@ end
 
 function nw:_SVSetNWID(id, replace)
 	local typ = type(id):lower()
+	local before = (replace and cache[id])
 
 	local encoder, encoderID, additionalArg = determineEncoder(typ, id)
 
@@ -190,13 +191,19 @@ function nw:_SVSetNWID(id, replace)
 		IDArg = additionalArg, --additional arg for the encoder function, for cases like UInt and whatnot which require a second arg
 	}
 
-
 	local key = (replace and before and before.NumberID) or #numToID + 1
-	assert(not numToID[key]) -- just in case since luajit has issues with gapped tables iinm
+	assert(not numToID[key]) -- just in case, since luajit has issues with gapped tables iinm
+
+	if key > bit.lshift(1, SZ.NUMBERID) then
+		errorf("Networkable: NumberID's overflowed! (tried to write NWnumID %d, whereas max is %d)",
+			key, bit.lshift(1, SZ.NUMBERID))
+		return
+	end
 
 	numToID[key] = id
 	IDToNum[id] = key
 	self.NumberID = key
+
 end
 
 --[[

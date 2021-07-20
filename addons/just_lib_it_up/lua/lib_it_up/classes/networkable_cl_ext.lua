@@ -53,8 +53,8 @@ local decoders = {
 	["uint"] = {7, net.ReadUInt, 32},
 	["ushort"] = {8, net.ReadUInt, 16},
 
-	["int"] = {9, net.ReadInt},
-	["float"] = {10, net.ReadFloat, 32},
+	["int"] = {9, net.ReadInt, 32},
+	["float"] = {10, net.ReadDouble, 32},
 	["nil"] = {11, BlankFunc}
 }
 
@@ -89,7 +89,7 @@ local function ReadChange(obj)
 	if not k_dec then errorf("Failed to read key decoder ID from %s properly (@ %d)", obj or "NWLess", k_encID) return end
 
 	local decoded_key = k_dec[2](k_dec[3])
-	print("decoded key: %s (dealiased: %s)", decoded_key, obj and (obj.__AliasesBack[decoded_key] or "no alias") or "no obj")
+	printf("decoded key: %s (dealiased: %s)", decoded_key, obj and (obj.__AliasesBack[decoded_key] or "no alias") or "no obj")
 	if obj and obj.__AliasesBack[decoded_key] then decoded_key = obj.__AliasesBack[decoded_key] end
 
 	if obj then
@@ -213,11 +213,17 @@ net.Receive("NetworkableInvalidated", function()
 
 	if not id then print("we dont know that") return end
 
-	_NetworkableData[id] = nil
-	if _NetworkableCache[id] then
-		_NetworkableCache[id]:Invalidate()
+	local can, can_id = hook.Run("NetworkableInvalidate", id, _NetworkableCache[id])
+	if can ~= false then
+		_NetworkableData[id] = nil
+
+		if _NetworkableCache[id] then
+			_NetworkableCache[id]:Invalidate()
+		end
 	end
 
-	_NetworkableNumberToID[num_id] = nil
-	_NetworkableIDToNumber[id] = nil
+	if can_id ~= false then
+		_NetworkableNumberToID[num_id] = nil
+		_NetworkableIDToNumber[id] = nil
+	end
 end)
