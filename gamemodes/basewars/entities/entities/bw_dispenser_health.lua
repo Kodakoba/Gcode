@@ -14,6 +14,10 @@ ENT.EmitUnusableBeeps = false
 
 ENT.StimRegenTime = 30
 ENT.MaxStims = 5
+
+ENT.MaxCharges = 150
+ENT.ChargePerSecond = 5
+
 ENT.IsHealthDispenser = true
 
 function ENT:Init()
@@ -27,12 +31,23 @@ end
 
 function ENT:DerivedDataTables()
 	self:NetworkVar("Int", 1, "Charges")
+	self:NetworkVar("Int", 2, "Stims")
 	self:SetCharges(0)
+	self:SetStims(0)
 
-	self:NetworkVar("Float", 1, "NextCharge")
-	self:SetNextCharge(CurTime() + self.StimRegenTime)
+	self:NetworkVar("Float", 1, "NWNextStim")
+
+	if SERVER then
+		self:SetNextStim(CurTime() + self.StimRegenTime)
+	end
+
+	self.NextCharge = CurTime()
 
 	self:NetworkVar("Bool", 1, "Halted")
+end
+
+function ENT:GetNextStim()
+	return self:GetNWNextStim()
 end
 
 local blk = Color(0, 0, 0, 0)
@@ -137,7 +152,7 @@ function ENT:OpenShit(qm, self, pnl)
 
 		if self.ShouldMouse then
 			DisableClipping(true)
-				local chargeStr = ent:GetCharges() .. "/" .. ent.MaxStims
+				local chargeStr = ent:GetStims() .. "/" .. ent.MaxStims
 				local col = lazy.Get("StimCntCol") or lazy.Set("StimCntCol", color_white:Copy())
 				col.a = math.min(canv.MouseFrac, canv.PowerFrac + 0.05 + math.random() * 0.02) * 255
 
@@ -147,7 +162,7 @@ function ENT:OpenShit(qm, self, pnl)
 				local col = lazy.Get("NextStimCntCol") or lazy.Set("NextStimCntCol", color_white:Copy())
 				col.a = math.min(canv.MouseFrac, canv.PowerFrac) * 65
 
-				local nextCharge = math.max(ent:GetNextCharge() - CurTime(), 0)
+				local nextCharge = math.max(ent:GetNextStim() - CurTime(), 0)
 				draw.SimpleText(Language("NextCharge", nextCharge), "BS24", give_stim.X + give_stim:GetWide() / 2,
 					give_stim.Y - 4 - 32, col, 1, 4)
 
@@ -192,7 +207,7 @@ function ENT:OpenShit(qm, self, pnl)
 		canv.StimAlpha = 120
 		qm.MaxInnerAlpha = 120
 
-		local canUse = ent:IsPowered() and ent:GetCharges() > 1
+		local canUse = ent:IsPowered() and ent:GetStims() > 1
 
 		if not canUse then
 			give_stim:SetColor(Colors.Button, true)
@@ -204,7 +219,7 @@ function ENT:OpenShit(qm, self, pnl)
 			if not ent:IsValid() then return end --thonk
 			
 			local pw = ent:IsPowered()
-			canUse = pw and ent:GetCharges() >= 1
+			canUse = pw and ent:GetStims() >= 1
 
 			canv:To("PowerFrac", pw and 1 or 0, 0.3, 0, 0.3)
 
@@ -234,7 +249,7 @@ function ENT:OpenShit(qm, self, pnl)
 		end
 
 		function give_stim:DoClick()
-			if not ent:IsPowered() or ent:GetCharges() < 1 then return end
+			if not ent:IsPowered() or ent:GetStims() < 1 then return end
 
 			net.Start("HealthDispenser")
 				net.WriteEntity(ent)
@@ -266,25 +281,37 @@ end
 if SERVER then
 
 	function ENT:Think()
+		local t = self:GetTable()
+
 		if not self:IsPowered() then
 			self:Halt()
 			return
-		elseif self:GetCharges() < self.MaxStims then
-			if self.Halted then
-				self:SetNextStim()
+		elseif self:GetStims() < t.MaxStims then
+			if t.Halted then
+				self:SetNextStim(CurTime() + t.StimRegenTime)
 			end
 			self:Halt(false)
 		end
 
-		if not self.Halted and CurTime() > self.NextStim then
+		if not self.Halted then
+			local ct = CurTime()
 
-			if self:GetCharges() < self.MaxStims then
-				self:SetNextStim(self.NextStim + self.StimRegenTime)
-				self:SetCharges(self:GetCharges() + 1)
-			else
-				self:Halt()
+			if ct > t.NextStim then
+				if self:GetStims() < t.MaxStims then
+					self:SetNextStim(t.NextStim + t.StimRegenTime)
+					self:SetStims(self:GetStims() + 1)
+				else
+					self:Halt()
+				end
 			end
 
+			if ct > t.NextCharge then
+				if self:GetCharges() < t.MaxCharges then
+					self:SetCharges(self:GetCharges() + 1)
+				end
+
+				t.NextCharge = t.NextCharge + (1 / t.ChargePerSecond)
+			end
 		end
 	end
 
@@ -310,7 +337,7 @@ if SERVER then
 	function ENT:SetNextStim(when)
 		when = when or CurTime() + self.StimRegenTime
 		self.NextStim = when
-		self:SetNextCharge(when)
+		self:SetNWNextStim(when)
 	end
 
 	function ENT:TakeStim(ply)
