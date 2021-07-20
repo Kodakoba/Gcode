@@ -79,6 +79,23 @@ DarkHUD:On("Rescale", "AmmoResize", function(self, new)
 	createFonts()
 end)
 
+local hl2_recs = {
+	["weapon_smg1"] = 0.01,
+	["weapon_shotgun"] = 0.8,
+	["weapon_ar2"] = 0.025,
+	["weapon_357"] = 3,
+	["weapon_pistol"] = 0.02,
+}
+
+function DarkHUD.Ammo_GetRecoil(wep)
+	if wep.ArcCW then
+		local rec = wep.Recoil * wep:GetBuff_Mult("Mult_Recoil") * 6
+		return rec
+	end
+
+	return hl2_recs[wep:GetClass()] or 0.05 -- default
+end
+
 function DarkHUD.CreateAmmo()
 	if DarkHUD.Ammo then DarkHUD.Ammo:Remove() end
 
@@ -129,6 +146,9 @@ function DarkHUD.CreateAmmo()
 			local shkX, shkY = math.random(-shk, shk), math.random(-shk, shk)
 			self.ShakeX, self.ShakeY = shkX, shkY
 			self:SetPos(fX + shkX, fY + shkY)
+
+			local subRecoil = math.max(self.Recoil * 4 * FrameTime(), FrameTime() * 5)
+			self.Recoil = math.max(self.Recoil - subRecoil, 0)
 		end
 
 	end
@@ -136,13 +156,13 @@ function DarkHUD.CreateAmmo()
 	local fired = FrameNumber()
 
 	function f.OnFire(wep, self)
-		local recoil = (wep.ArcCW and wep.Recoil * wep.VisualRecoilMult) or 0.05
-
+		local recoil = DarkHUD.Ammo_GetRecoil(wep)
 		if fired == FrameNumber() then return end -- deal with shotguns 'n shit
 
 		if f.RecoilAnim then f.RecoilAnim:Stop() end
+
 		f.Recoil = f.Recoil + (recoil * 20) ^ 0.4 * scale
-		f.RecoilAnim = f:To("Recoil", 0, (recoil * 0.4)^0.1, 0, 0.3, true)
+		--f.RecoilAnim = f:To("Recoil", 0, (recoil * 0.4)^0.1, 0, 0.3, true)
 
 		fired = FrameNumber()
 	end
