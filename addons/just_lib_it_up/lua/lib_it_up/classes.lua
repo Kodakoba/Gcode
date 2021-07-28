@@ -229,13 +229,19 @@ Class.Meta.new = Class.new
 Object = Class
 
 
-function ChainAccessor(t, key, func)
-	t["Get" .. func] = function(self)
-		return self[key]
+function ChainAccessor(t, key, func, no_override)
+
+	if not no_override or not t["Get" .. func] then
+		t["Get" .. func] = function(self)
+			return self[key]
+		end
 	end
 
-	t["Set" .. func] = function(self, val)
-		self[key] = val
-		return self
+	if not no_override or not t["Set" .. func] then
+		t["Set" .. func] = function(self, val)
+			self[key] = val
+			return self
+		end
 	end
+
 end
