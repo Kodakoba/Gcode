@@ -8,7 +8,10 @@ local greyed = Color(80, 80, 80)
 local btngray = Color(70, 70, 70)
 
 Colors.Button = btngray
+
 Colors.Header = Color(40, 40, 40)
+Colors.FrameHeader = Colors.Header
+Colors.FrameBody = Color(50, 50, 50)
 
 local close_hov = Color(235, 90, 90)
 local close_unhov = Color(205, 50, 50)

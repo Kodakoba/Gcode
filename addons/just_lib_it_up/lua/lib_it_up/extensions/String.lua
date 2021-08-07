@@ -396,6 +396,15 @@ end
 
 -- there's no reliable way to get if a string is a steamid64 or a steamid3 :(
 
+function string.IsMaybeSteamID64(what)
+	if not isstring(what) then return false end
+	if what:match("[^%d]") then return false end -- no non-numbers possible
+
+	return what:match("^7656%d+") or what:match("^900719%d+")
+end
+
+
+
 function string.Quote(s, single)
 	if single then return '"' .. tostring(s) .. '"' end
 	return "'" .. tostring(s) .. "'"

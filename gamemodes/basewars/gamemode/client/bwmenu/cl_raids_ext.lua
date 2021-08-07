@@ -103,6 +103,7 @@ local function createRaidActions(pnl, fac, canv)
 			self.NotLaidOut = false
 			self:SetWide(sz)
 			self.AnimWidth = sz
+			self:CenterHorizontal()
 		end
 
 		local an, new = self:To("AnimWidth", sz, 0.3, 0, 0.3)

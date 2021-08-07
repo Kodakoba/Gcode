@@ -12,6 +12,7 @@ Raids.RaidDuration = 360
 local raid = BaseWars.Raid
 
 raid.Cooldowns = raid.Cooldowns or {}
+raid.Participants = raid.Participants or {}
 
 function PLAYER:InRaid()
 	return raid.Participants[self]
@@ -220,4 +221,19 @@ function LibItUp.PlayerInfo:SetRaid(rd)
 	rd:On("Stop", "PInfoStore", function()
 		self._Raid = nil
 	end)
+end
+
+function LibItUp.PlayerInfo:IsEnemy(what)
+	what = GetPlayerInfo(what)
+	if not what:IsValid() then return end
+
+	local rd = self:GetRaid()
+	if not rd then return false end
+
+	local rd2 = what:GetRaid()
+	if not rd2 then return false end
+
+	if rd ~= rd2 then return end
+
+	return rd:GetSide(self) ~= rd2:GetSide(what)
 end

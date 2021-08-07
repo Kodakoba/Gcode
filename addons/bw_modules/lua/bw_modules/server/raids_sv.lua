@@ -14,7 +14,7 @@ local raidmeta = raid.RaidMeta or Emitter:callable()
 raid.RaidMeta = raidmeta
 
 raid.OngoingRaids = raid.OngoingRaids or {} 	--{[RaidID] = RaidMeta}
-raid.Participants = raid.Participants or {}		--Participants as {[player/SID64/faction] = RaidMeta}
+--raid.Participants : Participants as {[player/SID64/faction] = RaidMeta}
 
 local log = Logger("BW-RaidsSV")
 local function replyEveryone(accept, ns)
@@ -92,6 +92,7 @@ function raidmeta:AddParticipant(obj, side)
 		if side then
 			obj:InsertByID(self.Participants, side)
 		end
+		obj:SetRaid(self)
 
 	elseif IsFaction(obj) then
 		for k, ply in ipairs(obj:GetMembers()) do
@@ -148,7 +149,10 @@ function raidmeta:GetParticipants()
 end
 
 function raidmeta:GetSide(obj)
-	if IsFaction(obj) and self:IsParticipant(obj) then return self:IsRaider(obj) and 1 or 2 end
+	if IsFaction(obj) and self:IsParticipant(obj) then
+		return self:IsRaider(obj) and 1 or 2
+	end
+
 	return self.Participants[obj]
 end
 
@@ -303,16 +307,7 @@ end
 
 
 function PLAYER:IsEnemy(ply2)
-
-	local part = self:GetRaid()
-	if not part then return false end
-
-	local part2 = ply2:GetRaid()
-	if not part2 then return false end
-
-	if part ~= part2 then return false end --not in the same raid
-
-	return self:GetSide() ~= ply2:GetSide()
+	return GetPlayerInfoGuarantee(self):IsEnemy(GetPlayerInfoGuarantee(ply2))
 end
 
 
@@ -514,14 +509,71 @@ hook.Add("PlayerDeath", "RaidsDeath", function(ply, by, atk)
 	local side = ply:GetSide()
 
 	if side then
-
 		local delay = side * 5 + 5	--raided get (2*5) + 5 = 15s
 		ply:SetRespawnTime(delay)
-
 	end
-
 end)
 
 
 hook.Remove("PlayerSpawn", "RaidsSpawn")
 hook.Remove("PlayerDeathThink", "RaidsDeath")
+
+function raid.CanDealDamage(ply, ent, infl, dmg)
+	if not ent.IsBaseWars then return end
+
+	local ow = ent:BW_GetOwner()
+
+	if ow and not IsPlayerInfo(ow) then
+		-- owner is world
+		if ent:CreatedByMap() then
+			return true -- can break map stuff
+		end
+
+		return false -- might change?
+	end
+
+	if IsPlayerInfo(ow) then
+		if not ow:IsValid() then return true end -- idk, deal damage to invalid owner's stuff. see if i care.
+		if ent.AlwaysRaidable then return true end -- always raidable = always damageable
+
+		if ow == GetPlayerInfo(ply) and not raid.IsParticipant(ply) then
+			return true -- self-damage allowed outside of raids
+		end
+
+		local rd = raid.IsParticipant(ply)
+		local rd2 = raid.IsParticipant(ow)
+
+		if rd and rd2 and -- in raid?
+			rd == rd2 and rd:IsRaider(ply) and rd:IsRaided(ow) then
+			local can = hook.Run("BW_CanDealRaidDamage", ply, ent, infl, dmg) ~= false
+			return can -- raider -> raided allowed
+		end
+	end
+
+	return false -- basewars ents cant get damaged outside of this
+end
+
+function raid.CanBlowtorch(ply, ent, wep)
+	local ow = ent:BW_GetOwner()
+
+	if not IsPlayerInfo(ow) then
+		return false -- cant blowtorch anything unowned or world prop'd
+	end
+
+	if not ow:IsValid() then return false end -- see raid.CanDealDamage
+	if ent.AlwaysRaidable then return false end
+
+	if ow == GetPlayerInfo(ply) then
+		return true
+	end
+
+	local rd = raid.IsParticipant(ply)
+	local rd2 = raid.IsParticipant(ow)
+
+	if rd and rd2 and -- in raid?
+		rd == rd2 and rd:IsRaider(ply) and rd:IsRaided(ow) then
+		local can = hook.Run("BW_CanBlowtorch", ply, ent, wep) ~= false
+		return can -- raider -> raided allowed
+	end
+
+end

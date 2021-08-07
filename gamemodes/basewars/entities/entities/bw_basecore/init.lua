@@ -55,11 +55,15 @@ function ENT:RequestUnclaim(ply)
 	self:Unclaim()
 end
 
-function ENT:Claim(ply, restore)
-	ply = GetPlayerInfoGuarantee(ply):GetPlayer()
-	local fac = ply:GetFaction()
+function ENT:Claim(by, restore)
+	assert(IsFaction(by) or CanGetPInfo(by))
+
+	local ply = not IsFaction(by) and GetPlayerInfoGuarantee(by):GetPlayer()
+	local fac = IsFaction(by) and by or ply:GetFaction()
 	local base = self:GetBase()
 	if not base then error("BaseCore without base, wtf?") return end
+
+	assert(ply or fac)
 
 	local ok
 

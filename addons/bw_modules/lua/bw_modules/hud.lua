@@ -1,10 +1,8 @@
-local MODULE = BaseWars.HUD or {}
-
-MODULE.Name 	= "HUD"
-MODULE.Author 	= "grmx"
-MODULE.Realm 	= 2
-
 if SERVER then return end
+
+local MODULE = BaseWars.HUD or {}
+BaseWars.HUD = MODULE
+
 
 local draw = draw
 
@@ -14,7 +12,6 @@ local hdcol = Color(30, 30, 30)
 local alpha = 0
 
 local w, h = 180, 55
-local headerH = 24
 
 local lastpos = Vector()
 local lastent
@@ -27,12 +24,6 @@ local function AlphaColors(a, ...)
 		v.a = a
 	end
 end
-
-local HPBG = Color(75, 75, 75)
-local HPFG = Color(200, 75, 75)
-
-local white = Color(255, 255, 255)
-local gray = Color(40, 40, 40)
 
 local EntMaxHP = 0
 local EntHP = 0
@@ -47,7 +38,6 @@ local anims
 
 local function make()
 	anims = Animatable(true)
-	anims.EntHPs = {}
 end
 
 if not Animatable then
@@ -62,6 +52,11 @@ local rebootingMaxText = "Rebooting..."
 surface.SetFont("OS18")
 rebootingMaxWidth = (surface.GetTextSize(rebootingMaxText))
 
+local minDist = 80
+local defaultMaxDist = 200
+local maxDist = defaultMaxDist
+local minScale = 0.2
+
 local function DrawStructureInfo()
 
 	local me = LocalPlayer()
@@ -69,30 +64,38 @@ local function DrawStructureInfo()
 	local trace = me:GetEyeTrace()
 	local ent = trace.Entity
 
-	local valid = IsValid(ent) and ent.IsBaseWars
+	local valid = IsValid(ent) -- and ent.IsBaseWars
 
-	local dist = math.max(lastpos:Distance(trace.StartPos) - 96, 0)
+	local dist = lastpos:Distance(trace.StartPos)
 
 	if not valid then
 		anims:To("Alpha", 0, 0.25, 0, 0.2)
 	else
-
 		local wep = me:GetActiveWeapon()
 		local class = (IsValid(wep) and wep:GetClass())
 				-- not holding a physgun = 250,
 				-- holding an entity with the physgun = 140,
 				-- just have the physgun out = 230
 		local to = (class ~= 'weapon_physgun' and 250) or me:GetPhysgunningEntity() and 80 or 230
-		lastpos = ent:LocalToWorld(ent:OBBCenter())
 
-		dist = math.max(lastpos:Distance(trace.StartPos) - 96, 0)
+		local ep = ent:LocalToWorld(ent:OBBCenter())
+
+		dist = ep:Distance(EyePos())
 		lastent = ent
-		EntHP = ent:Health()
-		EntMaxHP = math.max(ent:GetMaxHealth(), 1)
 
 		name = ent.PrintName or "wat"
 
-		if dist < 108 then anims:To("Alpha", to, 0.15, 0, 0.3) else anims:To("Alpha", 0, 0.3, 0, 0.3) end
+		local should, distAppear = hook.Run("BW_ShouldPaintStructureInfo", ent, dist)
+		alphaTo = alphaTo or to
+
+		maxDist = distAppear or defaultMaxDist
+
+		if dist < maxDist * (1 - minScale) and should then
+			anims:To("Alpha", alphaTo, 0.15, 0, 0.3)
+			lastpos = ep
+		else
+			anims:To("Alpha", 0, 0.3, 0, 0.3)
+		end
 	end
 
 	alpha = anims.Alpha or 0
@@ -103,137 +106,41 @@ local function DrawStructureInfo()
 
 	if not ts.visible or alpha < 1 or not IsValid(lastent) then return end
 
-	local scale = math.max(200 - dist, 75) / 200
+	local frac = (math.max(dist, minDist) - minDist) / (maxDist - minDist)
+	local scale = Lerp(1 - frac, minScale, 1)
 
 	local x, y = ts.x, ts.y 	--middle of the window's XY
 	local sx, sy = x, y 		--top left XY
 
+	vm:Identity()
 	vm:SetScale(Vector(scale, scale, 1))
 	vm:SetTranslation(Vector(x, y))
 
 	vm:Translate(Vector(-w/2, -h/2))
 
-
 	sx, sy = sx - w/2 * scale, sy - h/2 * scale
 
-	local hpfrac = (EntHP / EntMaxHP)
-
-	if not anims.EntHPs[lastent:EntIndex()] then
-		anims.EntHPs[lastent:EntIndex()] = hpfrac
-	end
-
-	anims:MemberLerp(anims.EntHPs, lastent:EntIndex(), hpfrac, 0.3, 0, 0.3)
-	local HPFrac = anims.EntHPs[lastent:EntIndex()]
-
-	local hpw = HPFrac * (w-12)
-
-	local hpW = math.floor(math.max(hpw, 8))			--for nice rounding
-
-	--[[
-		Height Calculation
-	]]
-
-		local toH = h
-
-		local rebooting
-		local dead = not lastent:GetPower() and not lastent.Powerless
-
-		if lastent.GetRebootTime and lastent:GetRebootTime() ~= 0 then
-			rebooting = true
-		end
-
-		if dead or rebooting then
-			toH = toH + 18
-		end
-
-		anims:To("Height", toH, 0.3, 0, 0.3)
-
-		local h = anims.Height or toH
-
+	local amult = surface.GetAlphaMultiplier()
 
 	render.PushFilterMin(TEXFILTER.ANISOTROPIC)
-
-	local ok, err = pcall(function()
-
-		cam.PushModelMatrix(vm)
-
-			local ok, err = pcall(function()
-
-				local round = math.min(6, headerH / 2)
-
-				AlphaColors(alpha, hdcol, backcol, HPBG, HPFG, PWFG, white, gray)
-
-				draw.RoundedBoxEx(round, 0, 0, w, headerH, hdcol, true, true)
-				draw.RoundedBoxEx(6, 0, 0 + headerH, w, h - headerH, backcol, nil, nil, true, true)
-
-				draw.SimpleText(name, "TW24", w/2, 0, white, 1, 5)
-
-			end)
-
-			if not ok then
-				print("err #1 >:(", err)
-			end
-
-			draw.RoundedBox(6, 6, headerH + 8, w - 13, 14, HPBG)
-
-			--render.SetScissorRect(sx + 6, bary - 1, sx + 6 + hpw - (1 - scale) * 4, bary + hph + 1, true)
-
-				draw.RoundedBox(6, 6, headerH + 8, hpW, 14, HPFG)
-			--render.SetScissorRect(0, 0, 0, 0, false)
-
-		cam.PopModelMatrix()
-
-		--Prepare for new bar (Power)
-
-		cam.PushModelMatrix(vm)
-			local ok, err = pcall(function()
-
-				local tx = Language("Health", EntHP, EntMaxHP)
-
-				draw.Masked(function()
-					draw.RoundedPolyBox(6, 4, headerH + 3, hpW + 1, 24, HPFG)
-				end, function()
-					draw.SimpleText(tx, "OSB18", 4 + w/2, headerH + 14, white, 1, 1)
-				end, nil, function()
-					draw.SimpleText(tx, "OSB18", 4 + w/2, headerH + 14, gray, 1, 1)
-				end)
-
-				local tY = headerH + 26
-
-				if rebooting then
-					local _, tH = draw.SimpleText("Rebooting" .. ("."):rep((CurTime() * 3) % 3 + 1), "OS18", w/2, tY, white, 1, 5)
-					White()
-					draw.LegacyLoading(w / 2 + rebootingMaxWidth / 2 + 6 + 8, tY + tH / 2, 16, 16)
-					tY = tY + 18
-				elseif dead then
-					anims.NoPowerCol = anims.NoPowerCol or Color(200, 60, 60)
-					local colh, cols, colv = 0, 0.7, 0.78 --values for Color(200, 60, 60)
-					draw.ColorModHSV(anims.NoPowerCol, colh, cols, colv + math.sin(CurTime() * 8) * 0.08)
-					anims.NoPowerCol.a = alpha
-
-					draw.SimpleText("Insufficient power!", "OSB18", w/2, tY, anims.NoPowerCol, 1, 5)
-
-					tY = tY + 18
-
-				end
-
-			end)
-
-
-
-		cam.PopModelMatrix()
-		if not ok then
-			print("err #2 >:(", err)
-		end
-
-	end)
-
-	if not ok then
-		print("Err #3 >:(", err)
-	end
+	cam.PushModelMatrix(vm)
+	surface.SetAlphaMultiplier(amult * (alpha / 255))
+		hook.NHRun("BW_PaintStructureInfo", anims, lastent)
+	surface.SetAlphaMultiplier(amult)
+	cam.PopModelMatrix()
 	render.PopFilterMin()
 end
 
+function MODULE.PaintFrame(w, h, headerH)
+	local round = math.min(6, headerH / 2)
+
+	draw.RoundedBoxEx(round, 0, 0, w, headerH, hdcol, true, true)
+	draw.RoundedBoxEx(6, 0, 0 + headerH, w, h - headerH, backcol, nil, nil, true, true)
+end
+
+--[==================================[
+		Death Cooldown HUD
+--]==================================]
 local vm2 = Matrix()
 
 local ela

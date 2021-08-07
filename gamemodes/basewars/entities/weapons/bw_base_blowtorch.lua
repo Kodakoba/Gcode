@@ -41,14 +41,23 @@ SWEP.Secondary.ClipSize = -1
 SWEP.Secondary.DefaultClip = -1
 SWEP.Secondary.Ammo = "none"
 
-SWEP.Sounds = {"ambient/energy/spark1.wav", "ambient/energy/spark2.wav", "ambient/energy/spark3.wav", "ambient/energy/spark4.wav", "ambient/energy/spark5.wav", "ambient/energy/spark6.wav"}
+SWEP.Sounds = {
+	"ambient/energy/spark1.wav",
+	"ambient/energy/spark2.wav",
+	"ambient/energy/spark3.wav",
+	"ambient/energy/spark4.wav",
+	"ambient/energy/spark5.wav",
+	"ambient/energy/spark6.wav"
+}
+
 SWEP.Range = 80
 SWEP.Penetrates = 3
 SWEP.TorchDamage = 20
 
 local function IsProp(ent)
-	return (IsValid(ent) and ent.GetClass and ent:GetClass()=="prop_physics") or false
+	return (IsValid(ent) and ent.GetClass and ent:GetClass() == "prop_physics") or false
 end
+
 function SWEP:Deploy()
 
 	self:SendWeaponAnim(ACT_VM_IDLE)
@@ -60,199 +69,239 @@ end
 
 local function GetHP(prop)
 	return prop:Health()
-end 
+end
+
+local function GetMaxHP(prop)
+	return prop:GetMaxHealth()
+end
 
 local function SetHP(prop, hp)
-	if hp <= 0 then 
+	if hp <= 0 then
 		prop:Remove()
 		return
-	end 
+	end
 
 	prop:SetHealth(hp)
 end
 
+function SWEP:Zap()
+	self:EmitSound(self.Sounds[math.random(#self.Sounds)],
+		90, math.random(90, 110), 1)
+
+	self:SendWeaponAnim(ACT_VM_PRIMARYATTACK)
+	self:GetOwner():SetAnimation(PLAYER_ATTACK1)
+end
+
+local function isZappable(self, ent)
+	if not IsProp(ent) then return false end
+
+	local ow = ent:BW_GetOwner()
+	return ow
+end
+
+local function canZap(self, ent)
+	if not IsProp(ent) then return false end
+
+	local ow = ent:BW_GetOwner()
+	return IsPlayerInfo(ow) and ow:IsEnemy(self:GetOwner()) and ow
+end
+
 function SWEP:PrimaryAttack()
 	local ply = self:GetOwner()
-	if not IsPlayer(ply) then return end 
+	if not IsPlayer(ply) then return end
 
 	local tr = ply:GetEyeTrace()
 
-	if not IsFirstTimePredicted() then self:SetNextPrimaryFire(CurTime() + self.Primary.Delay) return end --wtf?
-	--[[
-		if not ply:InRaid() then return end 
-		if not IsProp(tr.Entity) then return end 
-
-		self:SendWeaponAnim(ACT_VM_PRIMARYATTACK) 
-		ply:SetAnimation(PLAYER_ATTACK1)
-	return end 
-	]]
-	
 	self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
-	
 
-	if not ply:InRaid() then return end 
+	if not IsProp(tr.Entity) or tr.Fraction * 32768 > self.Range then return end
 
-	if not IsProp(tr.Entity) or tr.Fraction * 32768 > self.Range then return end 
-
-	self:SendWeaponAnim(ACT_VM_PRIMARYATTACK) 
-	ply:SetAnimation(PLAYER_ATTACK1)
-
-	timer.Simple(self:SequenceDuration() - 0.05, function() if IsValid(self) then self:SendWeaponAnim(ACT_VM_IDLE) end end)
 	if CLIENT then return end
-	
-	self.Sounds.BaseClass = nil 
-	
-	self.Owner:EmitSound(table.Random(self.Sounds), 90, math.random(90, 110), 1, CHAN_WEAPON)
-	
-	
 
-	local trent = (IsProp(tr.Entity) and tr.Entity:CPPIGetOwner():IsEnemy(ply) and tr.Entity) or nil
+	local owner = tr.Entity:BW_GetOwner()
+
+	if not canZap(tr.Entity) then return end
+
+	local trent = tr.Entity
 	local trents = {ply, trent}
 
-	if trent then
+	self:Zap()
 
-		for i=1, self.Penetrates - 1 do
-			local newtr = util.TraceLine({
-				start = tr.StartPos,
-				endpos = tr.StartPos + tr.Normal * self.Range,
-				filter = trents,
-			})
-			if IsProp(newtr.Entity) and newtr.Entity:CPPIGetOwner():IsEnemy(ply) then 
-				trents[#trents + 1] = newtr.Entity
-			end
+	for i=1, self.Penetrates - 1 do
+		local newtr = util.TraceLine({
+			start = tr.StartPos,
+			endpos = tr.StartPos + tr.Normal * self.Range,
+			filter = trents,
+		})
+
+		if canZap(newtr.Entity) then
+			trents[#trents + 1] = newtr.Entity
 		end
 
-	else 
-		if IsValid(trent) and trent.CPPIGetOwner and trent:CPPIGetOwner():IsEnemy(ply) and not trent.IsBaseWars then 
-			trent:Remove()
-		end
-		return 
 	end
+
 	table.remove(trents, 1)
 
-	for k,v in pairs(trents) do 
+	for k,v in ipairs(trents) do
 		local hp = GetHP(v)
 		hp = hp - self.TorchDamage
 
 		SetHP(v, hp)
 
-		local frac = hp / v:GetMaxHealth()
+		local frac = hp / GetMaxHP(v)
 
-		v:SetColor(Color(255*frac, 255*frac, 255*frac))
-
+		v:SetColor( Color(255*frac, 255*frac, 255*frac) )
 	end
-
-
-
 end
 
 function SWEP:SecondaryAttack()
 	return false
 end
 
-local shade = Color(0, 0, 0, 140)
-local trans = Color(255, 255, 255, 150)
-local textc = Color(100, 150, 200, 255)
-local hpbck = Color(255, 0  , 0  , 100)
-local red	= Color(255, 0  , 0	 , 245)
 
-local dist = 256/32768
 
-local a = 0 
 
-local x, y = 0, 0
-local lastent
-local stripes
+if not CLIENT then return end
 
-local errmat = Material("__error")
+
+
+
+local displayDist = 256 / 32768
+
+local lastent 		-- last valid ent we looked at
+local x, y = 0, 0 	-- last valid pos of the ent
+local w, h = 200, 50
 
 local strX, strY = 0, 0 --stripes
 local hpfrac = 0
 
-function SWEP:DrawHUD()
-	local tr = LocalPlayer():GetEyeTrace()
-	--stripes = (not MoarPanelsMats["stripes"]:IsError() and MoarPanelsMats["stripes"]) or errmat -- :/
+local anim
 
-	local ent = tr.Entity
-	local okent = true 
+function SWEP:FillData(tr, ent, ow)
+	local prev = lastent
+	lastent = ent
 
-	if not IsValid(ent) or ent:GetClass() ~= "prop_physics" or tr.Fraction > dist then 
-		a = L(a, 0, 20, true) 
-		okent = false
-	else
-		a = L(a, 255, 20, true)
-	end
-
-	local ow = okent and ent.CPPIGetOwner and ent:CPPIGetOwner() 
-
-	local canraid = okent and (IsPlayer(ow) and ow:IsEnemy(LocalPlayer()))
-
-	if okent then
-		lastent = ent
-	end
-	local trent = (IsValid(tr.Entity) and tr.Entity) or nil
+	local trent = ent
 	local trents = {LocalPlayer(), trent}
 
-	if canraid then 
-		
+	for i=1, self.Penetrates - 1 do 	-- -1 because trent is already 1
+		local newtr = util.TraceLine({
+			start = tr.StartPos,
+			endpos = tr.StartPos + tr.Normal * self.Range,
+			filter = trents,
+		})
 
-		for i=1, self.Penetrates - 1 do 	-- -1 because trent is already 1
-			local newtr = util.TraceLine({
-				start = tr.StartPos,
-				endpos = tr.StartPos + tr.Normal * self.Range,
-				filter = trents,
-			})
-			if IsValid(newtr.Entity) and newtr.Entity:GetClass() == "prop_physics" then 
-				trents[#trents + 1] = newtr.Entity
-			end
+		if isZappable(self, newtr.Entity) then
+			trents[#trents + 1] = newtr.Entity
 		end
-
-	end
-
-	if lastent and IsValid(lastent) then
-		local pos = (lastent:GetPos() + Vector(0, 0, 16)):ToScreen()
-		x = pos.x - 100 
-		y = pos.y - 40
 	end
 
 	table.remove(trents, 1)
 
-	local col = (canraid and Color(230, 100, 100, a)) or Color(150, 30, 30, a)
+	return prev ~= lastent
+end
 
-	draw.RoundedBox(6, x, y, 200, 50, Color(50, 50, 50, a - 15))
+local CanRaidColor = Color(230, 100, 100)
+local CantRaidColor = Color(150, 30, 30)
+
+local header = Colors.Header:Copy()
+local body = Colors.FrameBody:Copy()
+
+local hpBarCol = CantRaidColor:Copy()
+local emptyBar = Colors.LightGray:Copy()
+
+local infoCol = Color(40, 40, 40)
+local txCol = Color(220, 220, 220)
+
+local hdSize = 18
+
+function SWEP:DrawHUD()
+	anim = anim or Animatable("blowtorch")
+	local tr = LocalPlayer():GetEyeTrace()
+	--stripes = (not MoarPanelsMats["stripes"]:IsError() and MoarPanelsMats["stripes"]) or errmat -- :/
+
+	local ent = tr.Entity
+	local okent = true
+	local a = anim.A or 0
+
+	if not IsValid(ent) or ent:GetClass() ~= "prop_physics" or tr.Fraction > displayDist then
+		anim:To("A", 0, 0.3, 0, 1)
+		okent = false
+	else
+		anim:To("A", 255, 0.3, 0, 0.3)
+	end
+
+	local ow = isZappable(self, ent)
+	local canraid = IsPlayerInfo(ow) and ow:IsEnemy(LocalPlayer())
+
+	if ow then
+		self:FillData(tr, ent, ow)
+		anim:LerpColor(hpBarCol, CanRaidColor, 0.3, 0, 0.3)
+	else
+		anim:LerpColor(hpBarCol, CantRaidColor, 0.3, 0, 0.3)
+	end
+
+	if lastent and lastent:IsValid() then
+		local pos = (lastent:GetPos() + lastent:OBBCenter()):ToScreen()
+		x = pos.x - w / 2
+		y = pos.y - h / 2
+	end
+
+	body.a = math.max(0, a - 15)
+	header.a = a
+	txCol.a = a
+	infoCol.a = a
+	emptyBar.a = a
+	hpBarCol.a = a -- wtf lol
+
+	if a == 0 then return end
+
+	draw.RoundedBoxEx(6, x, y - hdSize, w, hdSize, header, true, true)
+	draw.RoundedBoxEx(6, x, y, w, h, body, false, false, true, true)
 
 	local hp, max = 0, 0
 
-	if lastent and IsValid(lastent) then 
+	hpfrac = anim.HPFrac or 0
+
+	if lastent and lastent:IsValid() then
 		hp = GetHP(lastent)
-		max = lastent:GetMaxHealth()
-		hpfrac = L(hpfrac, hp/max, 15)
+		max = GetMaxHP(lastent)
+		anim:To("HPFrac", hp / max, 0.2, 0, 0.3)
 	end
 
-	surface.SetDrawColor(Color(80, 80, 80, a))
-	surface.DrawRect(x + 20, y + 12, 160, 16)
+	surface.SetDrawColor(emptyBar)
+	local xpad = 20
+	local barW, barH = w - xpad * 2, 16
+	local barY = y + h / 2 - barH / 2
 
-	draw.SimpleText("H E A L T H", "OSB18", x + 20 + 80, y + 12 + 8, Color(40, 40, 40, a), 1, 1)
+	surface.DrawRect(x + xpad, barY, barW, barH)
 
-	surface.SetDrawColor(col)
-	surface.DrawRect(x + 20, y + 12, hpfrac*160, 16)
+	draw.SimpleText("H E A L T H", "OSB20", x + 20 + 80, barY + barH / 2, infoCol, 1, 1)
 
-	draw.SimpleText(hp .. "/" .. max, "OS18", x + 20 + hpfrac*160, y + 12 + 16, Color(220, 220, 220, a), 1, 5)
-	if not canraid then 
-		strX = (strX + FrameTime()/32)%0.5
-		strY = (strY + FrameTime()/16)%0.5
+	surface.SetDrawColor(hpBarCol)
+	surface.DrawRect(x + xpad, barY, hpfrac * barW, barH)
+
+	draw.SimpleText(hp .. "/" .. max, "OS18",
+		x + xpad + hpfrac * barW,
+		barY + barH,
+		txCol, 1, 5)
+
+	if not canraid then
+		strX = (strX + FrameTime() / 32) % 0.5
+		strY = (strY + FrameTime() / 16) % 0.5
 
 		surface.SetDrawColor(Color(0, 0, 0, math.min(a, 100)))
 
-		render.SetScissorRect(x + 20, y + 12, x + hpfrac*160 + 20, y + 12 + 16, true)
+		render.SetScissorRect(x + xpad, barY, x + hpfrac * barW + xpad, barY + barH, true)
 
 			surface.DrawUVMaterial("https://www.sccpre.cat/mypng/full/11-113784_transparent-stripes-tumblr-huge-freebie-download-for-transparent.png", "stripes.png", x, y, 200, 80, 0.1 - strX, 0.1 - strY, 0.6 - strX, 0.4 - strY)
+			draw.SimpleText("H E A L T H", "OSB20", x + 20 + 80, barY + barH / 2, txCol, 1, 1)
 
-		render.SetScissorRect(0,0,0,0, false)
+		render.SetScissorRect(0, 0, 0, 0, false)
 	end
 
 	if canraid then
-		local str = ("penetrates %s prop%s"):format(#trents, ((#trents ~= 1 and "s") or ""))
+		local str = ("penetrates %s prop%s"):format(#trents, (#trents ~= 1 and "s") or "")
 		draw.SimpleText(str, "OSB18", x + 100, y + 76, Color(200, 200, 200, a), 1, 4)
 	end
 end

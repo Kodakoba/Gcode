@@ -167,8 +167,9 @@ function facmeta:Initialize(ply, id, name, pw, col)
 	self.name = name
 	self.col = col
 	self.pw = pw
-	self.own = ply
-	self.ownInfo = GetPlayerInfo(ply)
+
+
+
 
 	self.members = {}		-- [ply] = true
 	self.memvals = {}		-- [seq_id] = ply
@@ -187,6 +188,9 @@ function facmeta:Initialize(ply, id, name, pw, col)
 	Factions.FactionIDs[id] = self
 
 	if id > 0 then
+		self.own = ply
+		self.ownInfo = GetPlayerInfo(ply)
+
 		self.PublicNW = Networkable:new("Faction:" .. id)
 		self.PublicNW:On("WriteChangeValue", "WritePlayerInfo", self._SerializePlayerInfo)
 

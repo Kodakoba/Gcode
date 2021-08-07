@@ -120,10 +120,6 @@ function SWEP:RechargeLogic(ply, force)
 end
 
 function SWEP:Think()
-	if CLIENT and IsFirstTimePredicted() then
-		self.PredTime = CurTime()
-	end
-
 	self:RechargeLogic(self:GetOwner())
 end
 

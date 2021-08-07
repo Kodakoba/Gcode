@@ -216,6 +216,7 @@ function pg:Think()
 
 		if cur_sub < cur + add then
 			-- we still have some power left to try and power some unpowered ents
+
 			for ent, _ in pairs(self._UnpoweredEnts) do
 				if cur + add > cur_sub + ent.PowerRequired then
 					-- we can upkeep this ent
@@ -223,6 +224,9 @@ function pg:Think()
 					cur_sub = cur_sub + ent.PowerRequired
 				end
 			end
+
+			-- remainder goes into storage
+			self:SetPower(cur + add - cur_sub)
 		end
 	end
 

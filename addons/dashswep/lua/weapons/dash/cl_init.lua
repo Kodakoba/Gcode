@@ -62,7 +62,7 @@ function SWEP:DrawHUD()
 
 	local cdFrac = math.Clamp(
 		(cdDur ~= 0 and cdNext == 0 and 0)
-		or (self.PredTime - cdNext) / cdDur + 1
+		or (CurTime() - cdNext) / cdDur + 1
 		, 0, 1)
 
 	local cdFracUnpred = math.Clamp(
@@ -90,19 +90,11 @@ function SWEP:DrawHUD()
 		BSHADOWS.BeginShadow()
 	end
 
-		draw.SimpleText("CurTime", "OSB32", ScrW()/2 - 80, ScrH() * 0.9 - 64 - 72, color_white, 1, 4)
 		surface.SetDrawColor(dimmedCurCol:Unpack())
-		draw.DrawMaterialCircle(ScrW()/2 - 80, ScrH() * 0.9 - 64, size*2, 20)
+		draw.DrawMaterialCircle(ScrW()/2, ScrH() * 0.9 - 64, size*2, 20)
 
 		surface.SetDrawColor(CurrentColor:Unpack())
-		draw.DrawMaterialCircle(ScrW()/2 - 80, ScrH() * 0.9 - 64, size*2 * cdFrac)
-
-		draw.SimpleText("UnPredictedCurTime", "OSB32", ScrW()/2 + 80, ScrH() * 0.9 - 64 - 90, color_white, 1, 4)
-		surface.SetDrawColor(dimmedCurCol:Unpack())
-		draw.DrawMaterialCircle(ScrW()/2 + 80, ScrH() * 0.9 - 64, size*2, 20)
-
-		surface.SetDrawColor(CurrentColor:Unpack())
-		draw.DrawMaterialCircle(ScrW()/2 + 80, ScrH() * 0.9 - 64, size*2 * cdFracUnpred)
+		draw.DrawMaterialCircle(ScrW()/2, ScrH() * 0.9 - 64, size*2 * cdFracUnpred)
 
 		--draw.NoTexture()
 		--draw.DrawCircle(ScrW()/2, ScrH() * 0.9 - 64, size - 2, 20)

@@ -343,7 +343,7 @@ function button:Draw(w, h)
 	if ic then
 		iW, iH = ic:GetSize()
 	end
-	
+
 	if not t.NoDrawText and label then
 
 		label = tostring(label)
@@ -353,7 +353,6 @@ function button:Draw(w, h)
 
 		local ax = t.TextAX or 1
 		local ay = t.TextAY or 1
-		local realAY = AYToTextY[ay] or 1
 
 		local lblCol = disabled and t.DisabledLabelColor or t.LabelColor
 		local newlines = amtNewlines(label)
@@ -361,7 +360,7 @@ function button:Draw(w, h)
 		local iconX = ic and (ic.IconX or 4) or 0
 
 		self:PreLabelPaint(w, h)
-		
+
 		if newlines > 0 then
 			surface.SetFont(t.Font)
 			surface.SetTextColor(lblCol:Unpack())
@@ -382,9 +381,7 @@ function button:Draw(w, h)
 					lY = ty - lH * (ay / 2)
 				end
 
-				local totalW = tW * ax + iW + iconX
-
-				surface.SetTextPos(tx - totalW / 2, lY + tH * (num - 1))
+				surface.SetTextPos(tx - tW * (ax / 2) + (iW + iconX) / 2, lY + tH * (num - 1))
 				surface.DrawText(s)
 			end
 
@@ -400,10 +397,10 @@ function button:Draw(w, h)
 
 			surface.SetFont(t.Font)
 			local tW, tH = surface.GetTextSize(label)
-						-- 			shhh
+
 			local fullW = iW + iconX + tW
 
-			local iX = math.Round(tx - fullW * (ax / 2))
+			local iX = math.Round(tx - tW * (ax / 2) - (iW + iconX) / 2)
 			local iY = math.Round(ty - iH * (ay / 2))
 
 			t.PaintIcon(self, iX, iY)

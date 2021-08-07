@@ -278,6 +278,11 @@ function ENT:CheckUsable()
 
 end
 
+function ENT:PaintInfo(w, y)
+	draw.SimpleText(self:GetStims() .. " stims", "OS24", w / 2, y, color_white, 1, 5)
+	return 24
+end
+
 if SERVER then
 
 	function ENT:Think()
@@ -344,9 +349,9 @@ if SERVER then
 		local ok = ply:AddStims()
 		if ok == false then return end
 
-		self:SetCharges(self:GetCharges() - 1)
+		self:SetStims(self:GetStims() - 1)
 
-		if self.Halted and self:GetCharges() >= self.MaxStims then
+		if self.Halted and self:GetStims() >= self.MaxStims then
 			self:SetNextStim()
 			self:Halt(false)
 		end
@@ -360,7 +365,7 @@ if SERVER then
 		if not IsValid(ent) or not ent.IsHealthDispenser then return end
 		if ply:GetPos():Distance(ent:GetPos()) > 256 then return end
 		if not ent:IsPowered() then return end
-		if ent:GetCharges() < 1 then return end
+		if ent:GetStims() < 1 then return end
 
 		ent:TakeStim(ply)
 	end)

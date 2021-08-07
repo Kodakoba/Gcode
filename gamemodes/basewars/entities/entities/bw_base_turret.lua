@@ -25,7 +25,7 @@ ENT.NoAmmoSound		= Sound("weapons/pistol/pistol_empty.wav")
 
 ENT.PresetMaxHealth = 500
 
-ENT.AllwaysRaidable = true
+ENT.AlwaysRaidable = true
  
 if SERVER then
 

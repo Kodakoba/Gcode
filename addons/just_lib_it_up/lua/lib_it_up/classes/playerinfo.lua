@@ -125,17 +125,23 @@ function PI:get(id, is_sid64)
 			local info = LibItUp.PlayerInfoTables.Player[ply]
 			info:SetSteamID64(id)
 		end
-	elseif is_sid64 then
-		if LibItUp.PlayerInfoTables.SteamID64[id] then return LibItUp.PlayerInfoTables.SteamID64[id], false end
-
-		local ply = player.GetBySteamID64(id)
-
-		if ply and LibItUp.PlayerInfoTables.Player[ply] then
-			local info = LibItUp.PlayerInfoTables.Player[ply]
-			info:SetSteamID64(id)
-		end
 	else
-		errorf("Unknown ID passed to PlayerInfo:Get() (id = `%s`, is_sid64 = `%s`)", id, is_sid64)
+		-- try to guess the sid64 as a last resort
+		local str = tostring(id)
+		is_sid64 = is_sid64 or str:IsMaybeSteamID64()
+
+		if is_sid64 then
+			if LibItUp.PlayerInfoTables.SteamID64[id] then return LibItUp.PlayerInfoTables.SteamID64[id], false end
+
+			local ply = player.GetBySteamID64(id)
+
+			if ply and LibItUp.PlayerInfoTables.Player[ply] then
+				local info = LibItUp.PlayerInfoTables.Player[ply]
+				info:SetSteamID64(id)
+			end
+		else
+			errorf("Unknown ID passed to PlayerInfo:Get() (id = `%s`, is_sid64 = `%s`)", id, is_sid64)
+		end
 	end
 
 	return PI:new(id, is_sid64), true
@@ -293,6 +299,15 @@ end
 function IsPlayerInfo(what)
 	return istable(what) and what.IsPlayerInfo
 end
+
+function CanGetPInfo(what)
+	-- can we turn the string into an ID?
+	local can_turn = isstring(what) and (what:IsSteamID() or what:IsMaybeSteamID64())
+	return IsPlayer(what) or can_turn or
+			IsPlayerInfo(what)
+end
+
+CanGetPlayerInfo = CanGetPInfo
 
 -- accepts SID, Player, PlayerInfo
 -- accepts SID64 only if 2nd arg is true

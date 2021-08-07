@@ -2,7 +2,6 @@ local raid = Raids
 
 local raidmeta = raid.RaidMeta or Emitter:callable()
 raid.RaidMeta = raidmeta
-raid.Participants = raid.Participants or {}
 
 local function pID(ply)
 	return (ply:IsBot() and "BOT:" .. ply:UserID()) or ply:SteamID64() -- ugh

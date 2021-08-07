@@ -173,6 +173,14 @@ function GM:EntityTakeDamage(ent, dmginfo)
 
 	local IsProp = ent:GetClass() == "prop_physics"
 
+	if IsPlayer(Attacker) then
+		local raidRet = BaseWars.Raid.CanDealDamage(Attacker, ent, Inflictor, Damage)
+		if raidRet ~= nil then
+			return not raidRet
+		end
+	end
+
+	--[[
 	if Owner then
 		if not IsPlayer(Attacker) then return false end
 
@@ -183,7 +191,7 @@ function GM:EntityTakeDamage(ent, dmginfo)
 		local Cant1 = IsOwner and (Owner:InRaid() or IsProp)
 		local Cant2 = not Enemy
 
-		if not ent.AllwaysRaidable and (Cant1 or Cant2) then
+		if not ent.AlwaysRaidable and (Cant1 or Cant2) then
 
 			dmginfo:ScaleDamage(0)
 			dmginfo:SetDamage(0)
@@ -255,6 +263,7 @@ function GM:EntityTakeDamage(ent, dmginfo)
 
 		end
 	end
+	
 
 	if ent.DestructableProp then
 
@@ -287,6 +296,7 @@ function GM:EntityTakeDamage(ent, dmginfo)
 		ent:SetColor(Color)
 
 	return end
+	]]
 
 	if ent:IsPlayer() then
 

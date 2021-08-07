@@ -45,18 +45,9 @@ local function LimitDeduct(ent, class, ply)
 	end
 
 	local plyLimit = BaseWars.Limits:GetOrSet(sid)
-	local purchased = BaseWars.Purchased:GetOrSet(sid)
 
 	ent:CallOnRemove("LimitDeduct" .. sid, function(ent, sid)
 		plyLimit[class] = plyLimit[class] - 1
-
-		for k,v in ipairs(purchased[class]) do
-			if v == ent then
-				table.remove(k, purchased[class])
-				break
-			end
-		end
-
 	end, sid )
 
 	plyLimit[class] = (plyLimit[class] or 0) + 1
