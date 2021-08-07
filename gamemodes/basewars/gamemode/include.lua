@@ -158,7 +158,7 @@ BaseWars.LoadLog:SetShouldNewline(false)
 	end
 
 
-	BaseWars.LoadLog("	Recursively including realm folders...")
+	BaseWars.LoadLog("	Including realm folders...")
 
 	stageStart = SysTime()
 		inlinedFIncRecursive(path .. "shared/*", _SH, nil, shouldInclude)

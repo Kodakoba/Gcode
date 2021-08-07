@@ -25,6 +25,7 @@ local function PopulateBases(bases)
 	end
 
 	bw.Log("SQL data pulled!")
+	hook.NHRun("BWBasesLoaded")
 end
 
 local sides = {"min", "max"}
@@ -41,91 +42,88 @@ for k,v in ipairs(sides) do
 	end
 end
 
-mysqloo.OnConnect(coroutine.wrap(function()
-	local db = mysqloo:GetDatabase()
+function bw.SQLResync()
+	mysqloo.OnConnect(coroutine.wrap(function()
+		local db = mysqloo:GetDatabase()
 
-	-- creating bases table
+		-- creating bases table
 
-	local basesArg = LibItUp.SQLArgList()
-		basesArg:AddArg("base_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT")
-		basesArg:AddArg("base_name VARCHAR(500) NOT NULL")
-		basesArg:AddArg("base_name VARCHAR(500) NOT NULL")
-		basesArg:AddArg("base_data JSON")
-		basesArg:AddArg("UNIQUE KEY `base_name_UNIQUE` (`base_name`)")
+		local basesArg = LibItUp.SQLArgList()
+			basesArg:AddArg("base_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT")
+			basesArg:AddArg("base_name VARCHAR(500) NOT NULL")
+			basesArg:AddArg("base_name VARCHAR(500) NOT NULL")
+			basesArg:AddArg("base_data JSON")
+			basesArg:AddArg("UNIQUE KEY `base_name_UNIQUE` (`base_name`)")
 
-	mysqloo.CreateTable(db, bases_tbl, basesArg):Then(coroutine.Resumer())
+		mysqloo.CreateTable(db, bases_tbl, basesArg):Then(coroutine.Resumer())
 
 
-	local zonesArg = LibItUp.SQLArgList()
+		local zonesArg = LibItUp.SQLArgList()
 
-	zonesArg:AddArg("zone_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT")
-	zonesArg:AddArg("base_id INT NOT NULL")	-- not PK: there can be multiple zones tied to the same base
-	zonesArg:AddArg("base_name VARCHAR(255) NOT NULL") -- you really don't need the name to be any longer than this
+		zonesArg:AddArg("zone_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT")
+		zonesArg:AddArg("base_id INT NOT NULL")	-- not PK: there can be multiple zones tied to the same base
+		zonesArg:AddArg("base_name VARCHAR(255) NOT NULL") -- you really don't need the name to be any longer than this
 
-	for k,v in ipairs(allArgNames) do
-		zonesArg:AddArg(v .. " FLOAT NOT NULL")
-	end
-
-	local em = mysqloo.CreateTable(db, zones_tbl, zonesArg):Then(coroutine.Resumer())
-
-	coroutine.yield(); coroutine.yield()	-- 2 queries, 2 yields
-
-	local selWhat = "a.zone_id, a.zone_name, b.base_id, b.base_name, b.base_data"
-
-	for k,v in pairs(argnames) do
-		for _, v2 in pairs(v) do
-			selWhat = "a." .. v2 .. ", " .. selWhat
+		for k,v in ipairs(allArgNames) do
+			zonesArg:AddArg(v .. " FLOAT NOT NULL")
 		end
-	end
 
-	local q = ("SELECT %s FROM master.%s a RIGHT JOIN master.%s b ON a.base_id = b.base_id;")
-				:format(selWhat, zones_tbl, bases_tbl)
+		local em = mysqloo.CreateTable(db, zones_tbl, zonesArg):Then(coroutine.Resumer())
 
-	em:Do(db:query(q))
-		:Then(function(self, q, data)
-			local bases = {}	-- [base_ID] = { name = string, zones = {...} }
+		coroutine.yield(); coroutine.yield()	-- 2 queries, 2 yields
 
-			for _, row in ipairs(data) do
-				-- read the base ID/name (guaranteed to be present)
+		local selWhat = "a.zone_id, a.zone_name, b.base_id, b.base_name, b.base_data"
 
-				local bID = row.base_id
-				local json = row.base_data
-				local base = bases[bID] or {
-					name = row.base_name,
-					json = json,
-					zones = {}	-- [seq_id] = {zone_id, zone_name, zone_mins, zone_maxs}
-				}
-
-				bases[bID] = base
-
-				-- read the zones data (not guaranteed)
-				local zID = row.zone_id
-				if not zID then continue end
-
-				local mins, maxs = Vector(), Vector()
-				for k,v in pairs(argnames.min) do
-					mins[k] = row[v]
-				end
-
-				for k,v in pairs(argnames.max) do
-					maxs[k] = row[v]
-				end
-
-				base.zones[#base.zones + 1] = {zID, row.zone_name or false, mins, maxs}
+		for k,v in pairs(argnames) do
+			for _, v2 in pairs(v) do
+				selWhat = "a." .. v2 .. ", " .. selWhat
 			end
+		end
 
-			PopulateBases(bases)
+		local q = ("SELECT %s FROM master.%s a RIGHT JOIN master.%s b ON a.base_id = b.base_id;")
+					:format(selWhat, zones_tbl, bases_tbl)
 
-			FInc.AddState("BW_SQLAreasFetched")
+		em:Do(db:query(q))
+			:Then(function(self, q, data)
+				local bases = {}	-- [base_ID] = { name = string, zones = {...} }
 
-		end, mysqloo.QueryError)
+				for _, row in ipairs(data) do
+					-- read the base ID/name (guaranteed to be present)
 
-end))
+					local bID = row.base_id
+					local json = row.base_data
+					local base = bases[bID] or {
+						name = row.base_name,
+						json = json,
+						zones = {}	-- [seq_id] = {zone_id, zone_name, zone_mins, zone_maxs}
+					}
 
+					bases[bID] = base
 
+					-- read the zones data (not guaranteed)
+					local zID = row.zone_id
+					if not zID then continue end
 
+					local mins, maxs = Vector(), Vector()
+					for k,v in pairs(argnames.min) do
+						mins[k] = row[v]
+					end
 
+					for k,v in pairs(argnames.max) do
+						maxs[k] = row[v]
+					end
 
+					base.zones[#base.zones + 1] = {zID, row.zone_name or false, mins, maxs}
+				end
+
+				PopulateBases(bases)
+
+				FInc.AddState("BW_SQLAreasFetched")
+
+			end, mysqloo.QueryError)
+
+	end))
+end
 
 --[[
 	SQL operations

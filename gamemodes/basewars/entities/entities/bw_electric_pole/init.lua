@@ -160,9 +160,6 @@ function ENT:Think()
 end
 
 function ENT:PhysicsUpdate(...)
-	local me = BWEnts.Tables[self]
-	me.CheckDist = true
-
 end
 
 hook.Add("BaseWars_PlayerBuyEntity", "PoleAddPowerGrid", function(ply, ent)

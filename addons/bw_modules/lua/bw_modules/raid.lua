@@ -56,11 +56,16 @@ end
 
 	err.LowLevelPlayer 			= "This player's level is too low!"
 
--- Both:
+--[==================================[
+	Both
+--]==================================]
+
 	err.YouAreRaided 		= "You are currently being raided!"
 	err.YouAreRaiding 		= "You are currently raiding someone else!"
-	err.NoRaidables			= "No raidable entities!"
-	err.Generic				= "Generic error"
+	err.NoRaidables			= "There are no raidable entities!"
+	err.Generic				= "Generic error. Dunno."
+	err.YouNeedBase			= "You need a base to raid others!"
+	err.TheyNeedBase		= "They don't have a base to raid!"
 	err.YouAreUnraidable	= function(why)
 		if why then
 			return ("You are unraidable!\n(%s)"):format(why)
@@ -70,6 +75,7 @@ end
 	end
 
 	err.TargetUnraidable	= function(why)
+		print("target unraidable:", why)
 		if why then
 			return ("Target is unraidable!\n(%s)"):format(why)
 		else
@@ -133,6 +139,10 @@ function raid.CanGenerallyRaid(ply, nonfac)
 		return false, nonfac and err.CantHaveAFaction() or err.NeedAFaction()
 	end
 
+	if not GetPlayerInfoGuarantee(ply):GetBase() then
+		return false, err.YouNeedBase()
+	end
+
 	return true
 end
 
@@ -146,6 +156,10 @@ function raid.CanRaidPlayer(ply, ply2)
 		return false, err.RaidedOnCooldown(ply2)
 	end
 
+	if not ply2:BW_GetBase() then
+		return false, err.TheyNeedBase()
+	end
+
 	if ply:InRaid() then
 		return false, raid.PickRaidedError(ply, ply2)
 	end
@@ -153,24 +167,57 @@ function raid.CanRaidPlayer(ply, ply2)
 	return true
 end
 
-function raid.CanRaidFaction(ply, fac2)
-	local fac = ply:GetFaction()
-	if not fac then return false, err.NeedAFaction end
+function raid.CanRaidFaction(caller, fac2)
+	-- caller isnt guaranteed to be present
+	local self_check = caller == false
+	local fac = not self_check and caller:GetFaction()
+
+	if not fac and not self_check then return false, err.NeedAFaction end
 	if fac == fac2 then return false, err.OwnFaction end
 
-	if fac:InRaid() then
+	if not self_check and fac:InRaid() then
 		local rded = fac:Get("Raided")
-		return 	(rded and (rded == fac2 and err.YouAreRaidedByThem or err.YouAreRaided))
-				or err.YouAreRaiding
+		return raid.PickRaidedError(fac, rded)
 	end
 
 	if fac2:InRaid() then
 		local rded = fac2:Get("Raided")
-		return 	( rded and (rded == fac and err.RaidedByYou or err.RaidedByOthers) )
-				or err.RaidingOthers
+		return raid.PickRaidedError(fac2, rded)
 	end
 
 	if fac2:RaidedCooldown() then
-		return false, raid.PickRaidedError(ply, fac2)
+		return false, raid.PickRaidedError(caller, fac2)
 	end
+
+	if not fac2:GetBase() then
+		return false, caller and err.TheyNeedBase() or err.YouNeedBase()
+	end
+
+	local has_raidables = false
+
+	for k,v in pairs(fac2:GetMembers()) do
+		local ents = BaseWars.Ents.GetOwnedBy(v)
+		for _, ent in ipairs(ents) do
+			if ent.IsValidRaidable then has_raidables = true break end
+		end
+	end
+
+	if has_raidables then
+		return true
+	else
+		return false, err.NoRaidables
+	end
+end
+
+function LibItUp.PlayerInfo:GetRaid()
+	return self._Raid
+end
+
+function LibItUp.PlayerInfo:SetRaid(rd)
+	if not rd:IsValid() then return end
+
+	self._Raid = rd
+	rd:On("Stop", "PInfoStore", function()
+		self._Raid = nil
+	end)
 end

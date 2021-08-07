@@ -380,6 +380,8 @@ function string.TimeParse(time) --this is broken i think
 end
 
 function string.IsSteamID(what)
+	if not isstring(what) then return false end
+
 	local univ, idnum, accnum = what:match("STEAM_(%d):(%d):(%d+)")
 	univ = tonumber(univ)
 	idnum = tonumber(idnum)

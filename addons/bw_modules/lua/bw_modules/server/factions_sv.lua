@@ -60,6 +60,12 @@ end
 
 facmeta.GetOwner = facmeta.GetLeader
 
+function facmeta:GetLeaderInfo()
+	return self.ownInfo
+end
+
+facmeta.GetOwnerInfo = facmeta.GetLeaderInfo
+
 function facmeta:RaidedCooldown()
 	local cd = self.RaidCooldown
 
@@ -162,6 +168,7 @@ function facmeta:Initialize(ply, id, name, pw, col)
 	self.col = col
 	self.pw = pw
 	self.own = ply
+	self.ownInfo = GetPlayerInfo(ply)
 
 	self.members = {}		-- [ply] = true
 	self.memvals = {}		-- [seq_id] = ply
@@ -201,16 +208,24 @@ function facmeta:_SerializePlayerInfo(key, val)
 	end
 end
 
-function facmeta:IsRaidable()
-	local kk = false
-	for k,v in pairs(self.members) do
-		if k.PurchasedItems then
-			for ent, _ in pairs(k.PurchasedItems) do
-				if ent.IsValidRaidable then kk = true break end
-			end
+function facmeta:IsRaidable(caller)
+	-- caller can be nil if it's checked as "generally raidable"
+	local can, err = hook.Run("IsFactionRaidable", self)
+	if can == false then return can, err end
+
+	if caller then
+		can, err = BaseWars.Raid.CanGenerallyRaid(caller, false)
+		if can == false then
+			return can, err
 		end
 	end
-	return kk
+
+	can, err = BaseWars.Raid.CanRaidFaction(caller, self)
+	if can == false then
+		return can, err
+	end
+
+	return true
 end
 
 function facmeta:ChangeOwnership(to)

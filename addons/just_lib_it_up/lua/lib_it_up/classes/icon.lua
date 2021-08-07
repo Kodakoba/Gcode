@@ -67,6 +67,14 @@ function Icon:GetSize()
 	return self.W, self.H
 end
 
+function Icon:GetWide()
+	return self.W
+end
+
+function Icon:GetTall()
+	return self.H
+end
+
 ChainAccessor(Icon, "_Autosize", "Autosize")
 ChainAccessor(Icon, "_Autosize", "AutoResize")
 ChainAccessor(Icon, "_Autosize", "AutoSize")

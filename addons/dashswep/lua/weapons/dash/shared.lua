@@ -89,12 +89,14 @@ function SWEP:RechargeLogic(ply, force)
 
 	if ply:IsOnGround() and self:GetDashCharges() ~= 1 and not dashing then
 		self:SetPostDash(false)
+
 		if self:GetDashCooldown() > 0 and self:GetDashCooldownEnd() == 0 then
 			self:SetDashCooldownEnd(CurTime() + self:GetDashCooldown())
 
 			if IsFirstTimePredicted() then
 				self.CooldownDuration = self:GetDashCooldown()
 				self.CooldownEndsWhen = UnPredictedCurTime() + self:GetDashCooldown()
+				clprintf("FirstPred - unpred: %.2f, pred: %.2f", UnPredictedCurTime(), CurTime())
 			end
 
 		end
@@ -118,6 +120,10 @@ function SWEP:RechargeLogic(ply, force)
 end
 
 function SWEP:Think()
+	if CLIENT and IsFirstTimePredicted() then
+		self.PredTime = CurTime()
+	end
+
 	self:RechargeLogic(self:GetOwner())
 end
 

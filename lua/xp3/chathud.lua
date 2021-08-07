@@ -698,9 +698,15 @@ chathud.CharH = 22
 chathud.WrapStyle = 1  --1 = consider nickname, 0 = ignore nickname start from 0
 
 local shadowfont = "CH_TextShadow"
+setfenv(0, _G)
 
 local function DrawText(txt, buffer, a)
 	if not txt then return false end
+
+	local newtxt = hook.Run("ChatHUD_DrawText", txt)
+	if isstring(newtxt) then
+		txt = newtxt
+	end
 
 	local font = buffer.font or "CH_Text"
 	a = a or buffer.a

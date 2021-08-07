@@ -12,12 +12,17 @@ local sharedScaleVec = Vector(1, 1)
 local sharedTranslVec = Vector(0, 0)
 local mx = Matrix()
 
+ChainAccessor(button, "Font", "Font")
+ChainAccessor(button, "Label", "Text") -- yeet
+
 function button:Init()
 	self.Color = Colors.Button:Copy()
 	self.drawColor = Colors.Button:Copy()
 	self.DisabledColor = Colors.Button:Copy()
 
-	self:SetText("")
+	vgui.GetControlTable("DButton").SetText(self, "")
+	self:SetFont("OS24")
+
 	self:SetDoubleClickingEnabled(false)
 	self.Font = "OS24"
 	self.DrawShadow = true
@@ -47,7 +52,7 @@ function button:Init()
 end
 
 function button:SetIcon(url, name, w, h, col, rot)
-	if IsIcon(url) then self._Icon = url return end
+	if IsIcon(url) then self._Icon = url return self._Icon end
 
 	local t = self._Icon or Icon(url, name)
 	self._Icon = t
@@ -242,8 +247,6 @@ function button:PaintIcon(x, y)
 
 	local iW, iH = ic:GetSize()
 
-	local ioff = ic.IconX or (self.Label and 4) or 0
-
 	local lblCol = self:GetDisabled() and self.DisabledLabelColor or self.LabelColor
 
 	local col = ic.IconColor or lblCol or color_white
@@ -379,7 +382,9 @@ function button:Draw(w, h)
 					lY = ty - lH * (ay / 2)
 				end
 
-				surface.SetTextPos(tx - tW * (ax / 2) + (iW + iconX) / 2, lY + tH * (num - 1))
+				local totalW = tW * ax + iW + iconX
+
+				surface.SetTextPos(tx - totalW / 2, lY + tH * (num - 1))
 				surface.DrawText(s)
 			end
 
@@ -396,7 +401,7 @@ function button:Draw(w, h)
 			surface.SetFont(t.Font)
 			local tW, tH = surface.GetTextSize(label)
 						-- 			shhh
-			local fullW = iW + (iconX * 2) + tW
+			local fullW = iW + iconX + tW
 
 			local iX = math.Round(tx - fullW * (ax / 2))
 			local iY = math.Round(ty - iH * (ay / 2))

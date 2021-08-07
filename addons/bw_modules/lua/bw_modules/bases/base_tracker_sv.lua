@@ -8,6 +8,7 @@ local bw = BaseWars.Bases
 -- and the oldest one will be the current)
 
 -- Current base: [ent] = cur_base
+
 bw.BasePresence = bw.BasePresence or {
 	-- [ent] = base_obj
 }
@@ -32,26 +33,6 @@ bw.ZonePresence = bw.ZonePresence or {}
 for ent, queue in pairs(bw.ZonePresence) do
 	table.Filter(queue, bw.Zone.IsValid)
 end
-
-timer.Create("BWBases_CollectGarbage", 20, 0, function()
-	for ent, v in pairs(bw.ZonePresence) do
-		if not ent:IsValid() then
-			bw.ZonePresence[ent] = nil
-		end
-	end
-
-	for ent, v in pairs(bw.BasePresenceQueue) do
-		if not ent:IsValid() then
-			bw.BasePresenceQueue[ent] = nil
-		end
-	end
-
-	for ent, v in pairs(bw.BasePresence) do
-		if not ent:IsValid() then
-			bw.BasePresence[ent] = nil
-		end
-	end
-end)
 
 local ENTITY = FindMetaTable("Entity")
 
@@ -105,6 +86,10 @@ function ENTITY:BW_GetBase()
 	return getBase(self)
 end
 
+function ENTITY:BW_GetZone()
+	return self:BW_GetNewestZone()
+end
+
 function ENTITY:BW_GetAllBases()
 	return getBaseQueue(self)
 end
@@ -115,9 +100,10 @@ end
 		enter/exit bases manually! Use the base queue instead.
 ---------------------------------------------------------------------------]]
 	local function enterBase(ent, base)
+		if not base:IsValid() then return end
 		bw.BasePresence[ent] = base
-
 		base:EntityEnter(ent)
+
 		base:Emit("EntityEntered", ent)
 
 		ent:Emit("EnteredBase", base)
@@ -137,7 +123,10 @@ end
 
 		bw.BasePresence[ent] = nil
 
-		base:EntityExit(ent)
+		if base:IsValid() then
+			base:EntityExit(ent)
+		end
+
 		base:Emit("EntityExited", ent)
 		ent:Emit("ExitedBase", base)
 		if ent.OnExitedBase then
@@ -191,7 +180,6 @@ local function removeBase(ent, base)
 	for k,v in ipairs(t) do
 		if baseID == v:GetID() then
 			table.remove(t, k)
-
 			-- there was an another base in queue and we were the current base;
 			-- make that one the new current base
 			if t[1] and k == 1 then
@@ -209,6 +197,7 @@ local function checkZoneBases(ent)
 	local bases = getBaseQueue(ent)
 	local revBases = table.KeysToValues(bases) -- [base] = number
 
+	--print("checking zoneBases", ent, #zones, #bases)
 	local newBases = {} -- [confirmed_present_base] = true
 
 	-- check for entering new bases
@@ -219,6 +208,7 @@ local function checkZoneBases(ent)
 		if revBases[base] then newBases[base] = true continue end -- we're already in that base; don't care
 		-- we entered a new base: register
 		addBase(ent, base)
+		--print("	entered a new base!", base)
 		revBases[base] = true
 		newBases[base] = true
 	end
@@ -229,6 +219,7 @@ local function checkZoneBases(ent)
 
 	for _, base in ipairs(bases) do
 		if not newBases[base] then
+			--print("	left base", base)
 			removeBase(ent, base)
 		end
 	end
@@ -240,6 +231,7 @@ local function addZone(ent, zone)
 
 	table.insert(t, zone)
 
+	zone:EntityEnter(ent)
 	checkZoneBases(ent)
 	hook.NHRun("EntityEnteredZone", zone, ent)
 end
@@ -251,11 +243,28 @@ local function removeZone(ent, zone)
 	for k,v in ipairs(t) do
 		if v == zone then
 			table.remove(t, k)
+
+			if zone:IsValid() then
+				zone:EntityExit(ent)
+			end
+
 			checkZoneBases(ent)
 			hook.NHRun("EntityExitedZone", zone, ent)
+
 			return
 		end
 	end
+end
+
+local function removeZones(ent)
+	local t = getZones(ent)
+
+	for i=#t, 1, -1 do
+		removeZone(ent, t[i])
+	end
+
+	bw.BasePresenceQueue[ent] = nil
+	bw.BasePresence[ent] = nil
 end
 
 function bw.Zone:_EntityEntered(brush, ent)
@@ -278,28 +287,35 @@ bw:On("DeleteBase", "Tracker", function(self, delbase)
 	end
 end)
 
+hook.Add("EntityRemoved", "UntrackBases", function(ent)
+	local zones = bw.ZonePresence[ent]
+	if zones then
+		--print("EntityRemoved @", ent)
+		removeZones(ent)
+	end
+end)
 
-hook.Add("EntityEnteredBase", "NetworkBase", function(base, ent)
+hook.Add("EntityEnteredBase", "NetworkPlayerBase", function(base, ent)
 	if not IsPlayer(ent) then return end
 
 	local nw = bw.GetPlayerNW(ent)
-	if not nw then print("no player NW for ", ent) return end
-	print("set CurrentBase")
+	if not nw then return end
+
 	nw:Set("CurrentBase", base:GetID())
 	nw:Network()
 end)
 
-hook.Add("EntityExitedBase", "NetworkBase", function(base, ent)
+hook.Add("EntityExitedBase", "NetworkPlayerBase", function(base, ent)
 	if not IsPlayer(ent) then return end
 
 	local nw = bw.GetPlayerNW(ent)
-	if not nw then print("no player NW for ", ent) return end -- can happen if a player leaves while in a base
-	print("player exited base", ent)
+	if not nw then return end -- can happen if a player leaves while in a base
+
 	nw:Set("CurrentBase", nil)
 	nw:Network()
 end)
 
-hook.Add("EntityEnteredZone", "NetworkZone", function(zone, ent)
+hook.Add("EntityEnteredZone", "NetworkPlayerZone", function(zone, ent)
 	if not IsPlayer(ent) then return end
 
 	local nw = bw.GetPlayerNW(ent)
@@ -309,7 +325,7 @@ hook.Add("EntityEnteredZone", "NetworkZone", function(zone, ent)
 	nw:Network()
 end)
 
-hook.Add("EntityExitedZone", "NetworkZone", function(zone, ent)
+hook.Add("EntityExitedZone", "NetworkPlayerZone", function(zone, ent)
 	if not IsPlayer(ent) then return end
 
 	local nw = bw.GetPlayerNW(ent)
@@ -319,4 +335,30 @@ hook.Add("EntityExitedZone", "NetworkZone", function(zone, ent)
 
 	nw:Set("CurrentZone", z and z:GetID() or nil)
 	nw:Network()
+end)
+
+timer.Create("BWBases_CollectGarbage", 5, 0, function()
+	for ent, v in pairs(bw.ZonePresence) do
+		if not ent:IsValid() then
+			removeZones(ent)
+			bw.ZonePresence[ent] = nil
+		end
+	end
+
+	for ent, v in pairs(bw.BasePresenceQueue) do
+		if not ent:IsValid() then
+			printf("not supposed to happen - NULL [%s] in BasePresenceQueue @ %s\n" ..
+				"even though removeZone should've cleaned it out!", ent, v)
+			bw.BasePresenceQueue[ent] = nil
+		end
+	end
+
+	for ent, v in pairs(bw.BasePresence) do
+		if not ent:IsValid() then
+			printf("not supposed to happen - NULL [%s] in BasePresence @ %s\n" ..
+				"even though removeZone should've cleaned it out!", ent, v)
+
+			bw.BasePresence[ent] = nil
+		end
+	end
 end)

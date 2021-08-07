@@ -25,6 +25,14 @@ BaseWars.Purchased = BaseWars.Purchased or muldim:new()
 }
 ]]
 
+hook.Add("EntityOwnershipChanged", "BW_Limits", function(ply, ent, id)
+	if IsPlayer(ent.BWOwner) and ent.BWOwner ~= ply then
+		-- switched owner, probably
+		local lim = BaseWars.Limits[ent.BWOwner:SteamID64()]
+		lim[ent:GetClass()] = lim[ent:GetClass()] - 1
+	end
+end)
+
 BaseWars.Generators = BaseWars.Generators or muldim:new()
 local gens = BaseWars.Generators
 
@@ -40,7 +48,6 @@ local function LimitDeduct(ent, class, ply)
 	local purchased = BaseWars.Purchased:GetOrSet(sid)
 
 	ent:CallOnRemove("LimitDeduct" .. sid, function(ent, sid)
-
 		plyLimit[class] = plyLimit[class] - 1
 
 		for k,v in ipairs(purchased[class]) do
@@ -53,7 +60,7 @@ local function LimitDeduct(ent, class, ply)
 	end, sid )
 
 	plyLimit[class] = (plyLimit[class] or 0) + 1
-	purchased:GetOrSet(class)[class] = (purchased:GetOrSet(class)[class] or 0) + 1
+	--purchased:GetOrSet(class)[class] = (purchased:GetOrSet(class)[class] or 0) + 1
 
 
 	ent.BWOwner = ply
@@ -130,13 +137,13 @@ function BWSpawn(ply, cat, catID)
 	local sid = ply:SteamID64()
 
 	-- check against limits
-	print("lim?", lim)
+
 	if lim then
 		local plyLimit = BaseWars.Limits:GetOrSet(sid)
-		local purchased = BaseWars.Purchased:GetOrSet(sid)
-
 		local amt = plyLimit[ent]
-		print("amt:", amt)
+
+		printf("buying %d/%d of `%s`", (amt or 0) + 1, lim, ent)
+
 		if lim and amt and lim <= amt then
 			ply:Notify(string.format(Language.EntLimitReached, item, amt), BASEWARS_NOTIFICATION_ERROR)
 			return

@@ -48,16 +48,21 @@ local function replyEveryone(accept, ns)
 end
 
 local function replySender(accept, ns)
-	if not CurrentReply then return end
+	if not CurrentReply then print("no current reply!!!") return end
 
-	ns:SetMode("a")
-	ns:SetCursor(1)
-	CurrentReply:Reply(accept, ns)
+	if ns then
+		ns:SetMode("a")
+		ns:SetCursor(1)
 
-	net.Start("Raid")
-		net.WriteBool(true)
-		net.WriteNetStack(ns)
-	net.Send(CurrentReply.Owner)
+		CurrentReply:Reply(accept, ns)
+
+		net.Start("Raid")
+			net.WriteBool(true)
+			net.WriteNetStack(ns)
+		net.Send(CurrentReply.Owner)
+	else
+		CurrentReply:ReplySend(accept)
+	end
 
 	return ns
 end
@@ -75,27 +80,32 @@ local function Time()
 end
 
 function raidmeta:AddParticipant(obj, side)
+	assert(isnumber(side))
 
-	if IsFaction(obj) then
-		for k, ply in ipairs(obj:GetMembers()) do
-			raid.Participants[ply] = self
-			raid.Participants[ply:SteamID64()] = self
-			if side then
-				self.Participants[ply] = side
-				self.Participants[ply:SteamID64()] = side
-			end
-		end
-	elseif IsPlayer(obj) then
-		raid.Participants[obj:SteamID64()] = self
+	if IsPlayer(obj) then
+		obj = GetPlayerInfo(obj) or obj
+	end
+
+	if IsPlayerInfo(obj) then
+		obj:InsertByID(raid.Participants, self)
+
 		if side then
-			self.Participants[obj:SteamID64()] = side
+			obj:InsertByID(self.Participants, side)
+		end
+
+	elseif IsFaction(obj) then
+		for k, ply in ipairs(obj:GetMembers()) do
+			local pin = ply:GetPInfo()
+			self:AddParticipant(pin, side)
+		end
+
+		raid.Participants[obj] = self
+
+		if side then
+			self.Participants[obj] = side
 		end
 	end
 
-	raid.Participants[obj] = self
-	if side then
-		self.Participants[obj] = side
-	end
 end
 
 -- obj = Player, SteamID64 or Faction
@@ -142,6 +152,10 @@ function raidmeta:GetSide(obj)
 	return self.Participants[obj]
 end
 
+function raidmeta:IsValid()
+	return self._Valid ~= false
+end
+
 function raidmeta:Initialize(rder, rded, fac)
 	if not IsPlayer(rder) and not IsFaction(rder) then
 		errorf("bad argument #1 (expected player or faction, got %s instead)", type(rder))
@@ -159,6 +173,7 @@ function raidmeta:Initialize(rder, rded, fac)
 	self.Raided = rded
 
 	self.Faction = fac
+	self._Valid = true
 
 	local id = uniq.Seq("raid", 16)
 
@@ -187,6 +202,9 @@ end
 function raidmeta:Stop()
 
 	hook.Run("RaidStop", self)
+	self:Emit("Stop")
+
+	self._Valid = false
 
 	-- remove everything that mentions this raid in raid.Participants
 	for k,v in pairs(raid.Participants) do
@@ -195,7 +213,12 @@ function raidmeta:Stop()
 		end
 	end
 
-	table.RemoveByValue(raid.OngoingRaids, self)
+	for k,v in pairs(raid.OngoingRaids) do
+		if v == self then
+			raid.OngoingRaids[k] = nil
+			break
+		end
+	end
 
 	local ns = netstack:new()
 	ns:WriteUInt(3, 4)
@@ -311,9 +334,9 @@ end
 local cdf = "Target is on cooldown!\n(%ds. remaining)"
 
 
-function raid.Start(rder, rded, fac)
+function raid.TryStart(caller, rder, rded, fac)
 	local oncd, rem = rded:RaidedCooldown()
-	if oncd then print('on cd') return false, cdf:format(rem) end
+	if oncd then  return false, cdf:format(rem) end
 
 	if raid.IsParticipant(rder) then
 		return false, raid.PickRaidedError(rder, rded)
@@ -323,11 +346,16 @@ function raid.Start(rder, rded, fac)
 		return false, raid.Errors.YouAreRaiding
 	end
 
-	local rderCan, rderWhy = rder:IsRaidable()
+	local rderCan, rderWhy = rder:IsRaidable(false)
 	if not rderCan then return false, raid.Errors.YouAreUnraidable(rderWhy) end
 
-	local rdedCan, rdedWhy = rded:IsRaidable()
+	local rdedCan, rdedWhy = rded:IsRaidable(caller)
 	if not rdedCan then return false, raid.Errors.TargetUnraidable(rdedWhy) end
+
+	return raid.Start(rder, rded, fac)
+end
+
+function raid.Start(rder, rded, fac)
 
 	local ns = netstack:new()
 
@@ -369,7 +397,7 @@ end)
 
 
 hook.Add("PlayerDisconnected", "RaidLog", function(ply) --aiaiai
-	local rd = ply:GetRaid()
+	--[[local rd = ply:GetRaid()
 	if not rd then return end
 
 	local plys = {}
@@ -383,9 +411,7 @@ hook.Add("PlayerDisconnected", "RaidLog", function(ply) --aiaiai
 	if #plys == 1 then	-- every raider left; stop the raid
 		rd:Stop()
 		return
-	end
-
-	print(ply, "left during a raid, wat do")
+	end]]
 end)
 
 function PLAYER:IsRaidable()
@@ -430,10 +456,10 @@ net.Receive("Raid", function(_, ply)
 		if ply:InRaid() or ent:InRaid() then print('Ply in raid already') return end
 		if ply:InFaction() or ent:InFaction() then print("one of em is in a faction") return end
 		print("starting on", ply, ent)
-		local ok, err = raid.Start(ply, ent, false)
+		local ok, err = raid.TryStart(ply, ply, ent, false)
 		print("ok?", ok, err)
 		if not ok then
-			print("returning no")
+			print("returning no", err)
 			ReportFail(ply, err, pr)
 		end
 	elseif mode == 2 then
@@ -449,19 +475,27 @@ net.Receive("Raid", function(_, ply)
 
 		if fac1:InRaid() or fac2:InRaid() then print('Fac is in raid already') ReportFail(ply, "That faction is in a raid already!") return end
 		print("Mode 2; starting raid(?)")
-		local ok, err = raid.Start(ply:GetFaction(), Factions.GetFaction(fac), true)
+		local ok, err = raid.TryStart(ply, ply:GetFaction(), Factions.GetFaction(fac), true)
 		print(ok, "yes")
 		if not ok then
-			print("returning no")
+			print("returning no", err)
 			ReportFail(ply, err, pr)
 		end
 
-	elseif mode==3 then
-		if not raid.Participants[ply] then print("Ply is not participating in raid") return false end
-		if ply:IsRaided() then print("Not stopping raid from raided") return false end --do not accept concedes from raided
+	elseif mode == 3 then
+		-- these aren't usual, so no need to get all fancy with localization
+		if not raid.Participants[ply] then
+			replySender(false, "yo youre not even participating")
+			return false
+		end
+		if ply:IsRaided() then
+			replySender(false, "yo youre not even the raider")
+			return false
+		end --do not accept concedes from raided
 
 		if ply:IsRaider() then
 			raid.Stop(ply)
+			replySender(true)
 		end
 	end
 

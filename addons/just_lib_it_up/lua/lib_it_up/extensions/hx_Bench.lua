@@ -37,8 +37,6 @@ LibItUp.SetIncluded()
 benchmark = {}
 benchmark.__index = benchmark
 
-local gettick = (CLIENT and FrameNumber) or engine.TickCount
-
 function benchmark.Init(Name)
 	local Info = debug.getinfo(2)
 
@@ -126,10 +124,10 @@ end
 
 benchmark.p = benchmark.print
 
-function benchmark:__concat(Bench)	return self:__tostring() .. Bench:__tostring()						end
-function benchmark:__eq(Bench)		return Bench:Read() == self:Read()									end
-function benchmark:__lt(Bench)		return Bench:Read() < self:Read()									end
-function benchmark:__le(Bench)		return Bench:Read() <= self:Read()									end
+function benchmark:__concat(Bench)	return self:__tostring() .. Bench:__tostring()	end
+function benchmark:__eq(Bench)		return Bench:Read() == self:Read()				end
+function benchmark:__lt(Bench)		return Bench:Read() < self:Read()				end
+function benchmark:__le(Bench)		return Bench:Read() <= self:Read()				end
 
 local i = 1
 

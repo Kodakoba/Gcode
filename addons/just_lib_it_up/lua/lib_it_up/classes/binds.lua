@@ -52,7 +52,6 @@ local function readData()
 	end
 
 	local bindData = util.JSONToTable(table.concat(json))
-	PrintTable(bindData)
 end
 
 Binds.WriteData = writeData

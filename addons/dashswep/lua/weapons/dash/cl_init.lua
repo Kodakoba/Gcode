@@ -1,5 +1,5 @@
 
-include('shared.lua')
+include("shared.lua")
 
 SWEP.PrintName        = "Dash SWEP"
 SWEP.Slot		= 4
@@ -25,6 +25,14 @@ local size = 64
 
 local anim
 
+local function ease(x)
+	if x < 0.2 then
+		return x^4
+	else
+		return x^4 + (x^32) * (1 - x^4)
+	end
+end
+
 function SWEP:DrawHUD()
 	anim = anim or Animatable()
 
@@ -49,21 +57,23 @@ function SWEP:DrawHUD()
 	end
 
 	local cdDur = self.CooldownDuration
-	local cdNext = self:GetDashCooldownEnd()--self.CooldownEndsWhen
+	local cdNext = self:GetDashCooldownEnd() --self.CooldownEndsWhen
+	local cdNextUnpred = self.CooldownEndsWhen
 
 	local cdFrac = math.Clamp(
 		(cdDur ~= 0 and cdNext == 0 and 0)
-		or (CurTime() - cdNext) / cdDur + 1
+		or (self.PredTime - cdNext) / cdDur + 1
+		, 0, 1)
+
+	local cdFracUnpred = math.Clamp(
+		(cdDur ~= 0 and cdNextUnpred == 0 and 0)
+		or (UnPredictedCurTime() - cdNextUnpred) / cdDur + 1
 		, 0, 1)
 
 	local fr = cdFrac
 
-	if cdFrac < 0.2 then
-		cdFrac = cdFrac ^ 4
-	else
-		local f = cdFrac ^ 4
-		cdFrac = f + (cdFrac ^ 32) * (1 - f)
-	end
+	cdFrac = ease(cdFrac)
+	cdFracUnpred = ease(cdFracUnpred)
 
 	local fr = anim.Frac or 0
 	local recfr = anim.RecentChangeFrac or 0
@@ -80,11 +90,20 @@ function SWEP:DrawHUD()
 		BSHADOWS.BeginShadow()
 	end
 
+		draw.SimpleText("CurTime", "OSB32", ScrW()/2 - 80, ScrH() * 0.9 - 64 - 72, color_white, 1, 4)
 		surface.SetDrawColor(dimmedCurCol:Unpack())
-		draw.DrawMaterialCircle(ScrW()/2, ScrH() * 0.9 - 64, size*2, 20)
+		draw.DrawMaterialCircle(ScrW()/2 - 80, ScrH() * 0.9 - 64, size*2, 20)
 
 		surface.SetDrawColor(CurrentColor:Unpack())
-		draw.DrawMaterialCircle(ScrW()/2, ScrH() * 0.9 - 64, size*2 * cdFrac)
+		draw.DrawMaterialCircle(ScrW()/2 - 80, ScrH() * 0.9 - 64, size*2 * cdFrac)
+
+		draw.SimpleText("UnPredictedCurTime", "OSB32", ScrW()/2 + 80, ScrH() * 0.9 - 64 - 90, color_white, 1, 4)
+		surface.SetDrawColor(dimmedCurCol:Unpack())
+		draw.DrawMaterialCircle(ScrW()/2 + 80, ScrH() * 0.9 - 64, size*2, 20)
+
+		surface.SetDrawColor(CurrentColor:Unpack())
+		draw.DrawMaterialCircle(ScrW()/2 + 80, ScrH() * 0.9 - 64, size*2 * cdFracUnpred)
+
 		--draw.NoTexture()
 		--draw.DrawCircle(ScrW()/2, ScrH() * 0.9 - 64, size - 2, 20)
 

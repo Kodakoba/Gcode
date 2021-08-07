@@ -9,6 +9,7 @@ local function pID(ply)
 end
 
 function raidmeta:AddParticipant(obj, side)
+	assert(isnumber(side))
 
 	if IsFaction(obj) then
 		for k, ply in ipairs(obj:GetMembers()) do
@@ -16,18 +17,15 @@ function raidmeta:AddParticipant(obj, side)
 
 			raid.Participants[ply] = self
 			raid.Participants[pid] = self
-			if side then
-				self.Participants[ply] = side
-				self.Participants[pid] = side
-			end
+
+			self.Participants[ply] = side
+			self.Participants[pid] = side
 		end
 
 	elseif IsPlayer(obj) then
 		local pid = pID(obj)
 		raid.Participants[pid] = self
-		if side then
-			self.Participants[pid] = side
-		end
+		self.Participants[pid] = side
 	end
 
 	raid.Participants[obj] = self
@@ -84,9 +82,15 @@ function raidmeta:GetLeft()
 	return self:GetEnd() - CurTime()
 end
 
+function raidmeta:IsValid()
+	return self._Valid ~= false
+end
+
 function raidmeta:Stop()
 	hook.Run("RaidStop", self)
 
+	self:Emit("Stop")
+	self._Valid = false
 	raid.OngoingRaids[self.ID] = nil
 
 	for k,v in pairs(raid.Participants) do
@@ -112,6 +116,7 @@ function raidmeta:Initialize(rder, rded, when, id, vsfac)
 	self.Raided = rded
 
 	self.Faction = vsfac
+	self._Valid = true
 
 	raid.OngoingRaids[id] = self
 

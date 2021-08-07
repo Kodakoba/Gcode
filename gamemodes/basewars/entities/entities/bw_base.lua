@@ -209,7 +209,6 @@ else
 	end
 
 	function ENT:Initialize()
-		BWEnts.Tables[self] = BWEnts.Tables[self] or {}
 		self:CLInit()
 	end
 end

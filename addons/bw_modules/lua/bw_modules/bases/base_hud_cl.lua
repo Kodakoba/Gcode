@@ -74,8 +74,8 @@ local function updateOwner(base, initial)
 
 		piece:ReplaceText(piece.OwnedByOpenerFragment, "  (owned by ", nil, nil, animTable)
 
-		if not fac and owners then -- player-owned
-			local ply = owners:GetPlayer()
+		if not fac then -- player-owned
+			local ply = owners[1]:GetPlayer()
 			local name = ply:IsValid() and ply:Nick() or owners:SteamID64()
 			local _, new = piece:ReplaceText(piece.OwnerFragment, name, nil, nil, animTable)
 			if new then

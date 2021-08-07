@@ -13,8 +13,9 @@ function muldim:Get(...)
 	local curvar = self
 
 	for k,v in ipairs(ks) do
-		if curvar[v] == nil then return end
-		curvar = curvar[v]
+		local nxt = rawget(curvar, v)
+		if nxt == nil then return end
+		curvar = nxt
 	end
 
 	return curvar
@@ -25,8 +26,13 @@ function muldim:GetOrSet(...)
 	local curvar = self
 
 	for k,v in ipairs(ks) do
-		if curvar[v] == nil then curvar[v] = muldim:new() end
-		curvar = curvar[v]
+		if rawget(curvar, v) == nil then
+			local new = muldim:new()
+			rawset(curvar, v, new)
+			curvar = new
+		else
+			curvar = rawget(curvar, v)
+		end
 	end
 
 	return curvar
@@ -37,57 +43,64 @@ function muldim:Set(val, ...)
 	local curvar = self
 
 	for k,v in ipairs(ks) do
-		local nextkey = ks[k + 1]
-
-		if curvar[v] == nil then
+		local nextkey = rawget(ks, k + 1)
+		local nextval = rawget(curvar, v)
+		if nextval == nil then
 
 			if nextkey ~= nil then --if next key in ... exists
-				curvar[v] = muldim:new() --recursively create new dim objects
+				nextval = muldim:new()
+				rawset(curvar, v, nextval) --recursively create new dim objects
 			else
-				curvar[v] = val --or just set the value
+				rawset(curvar, v, val) --or just set the value
 				return val, curvar
 			end
 
 		else
 
 			if nextkey == nil then
-				curvar[v] = val
+				rawset(curvar, v, val)
+				nextval = val
 			end
 
 		end
 
-		curvar = curvar[v]
+		curvar = nextval
 	end
 
 	return val, curvar
 end
 
+-- insert value at #tbl + 1, like table.insert
 function muldim:Insert(val, ...)
 	local ks = {...}
 	local curvar = self
 
 	for k,v in ipairs(ks) do
-		local nextkey = ks[k + 1]
+		local nextkey = rawget(ks, k + 1)
+		local nextval = rawget(curvar, v)
 
-		if curvar[v] == nil then
+		if nextval == nil then
 
 			if nextkey ~= nil then
-				curvar[v] = muldim:new()
+				nextval = muldim:new()
+				rawset(curvar, v, nextval)
 			else
-				curvar[v] = muldim:new()
-				curvar[v][1] = val
+				nextval = muldim:new()
+				rawset(curvar, v, nextval)
+				rawset(rawget(curvar, v), 1, val)
 				return val, curvar
 			end
 
 		else
 
 			if nextkey == nil then
-				curvar[v][#curvar[v] + 1] = val
+				local into = rawget(curvar, v)
+				rawset(into, #into + 1, val)
 			end
 
 		end
 
-		curvar = curvar[v]
+		curvar = nextval
 	end
 
 	return val, curvar

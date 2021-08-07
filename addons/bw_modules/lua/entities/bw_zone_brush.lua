@@ -1,5 +1,6 @@
 ENT.Base = "base_brush"
 ENT.Type = "brush"
+ENT.IsZoneBrush = true
 
 function ENT:Initialize()
 	self._Initialized = true
@@ -9,6 +10,8 @@ function ENT:Initialize()
 	if self.Zone and self.Zone:IsValid() then
 		self:UpdateZone(self.Zone)
 	end
+
+	self.MolestedEnts = {}
 end
 
 function ENT:UpdateZone(zone)
@@ -47,13 +50,48 @@ end
 function ENT:StartTouch(what)
 	if not self.Zone:IsValid() then self:Remove() return end
 
+	-- the _Entity* is defined in the tracker
 	self.Zone:_EntityEntered(self, what)
 	self.Zone:Emit("EntityEntered", self, what)
+	self.MolestedEnts[what] = true
 end
 
 function ENT:EndTouch(what)
 	self.Zone:_EntityExited(self, what)
 	self.Zone:Emit("EntityExited", self, what)
+	self.MolestedEnts[what] = nil
 
 	if not self.Zone:IsValid() then self:Remove() return end
 end
+
+function ENT:ForceScanEnts()
+	-- expensive!
+	if not self.Zone or not self.Zone:IsValid() then return end
+
+	local mins, maxs = self:GetCollisionBounds()
+	mins, maxs = self:LocalToWorld(mins), self:LocalToWorld(maxs)
+
+	for k,v in ipairs(ents.FindInBox(mins, maxs)) do
+		self.Zone:_EntityEntered(self, v)
+		self.Zone:Emit("EntityEntered", self, v)
+	end
+end
+
+hook.PAdd("EntityRemoved", "ZoneBrushUntrack", function(ent)
+	-- the idea is that when the ents within the brush get removed, EndTouch gets called for me
+	-- however if the brush gets removed first, nothing gets called
+	-- so we do that manually
+
+	if not ent.IsZoneBrush then return end
+	if not ent.Zone or not ent.Zone:IsValid() then return end
+
+	local zone = ent.Zone
+	local ents = zone:GetEntities()
+
+	for k,v in pairs(ent.MolestedEnts) do
+		if ents[k] then
+			zone:_EntityExited(ent, k)
+			zone:Emit("EntityExited", ent, k)
+		end
+	end
+end)

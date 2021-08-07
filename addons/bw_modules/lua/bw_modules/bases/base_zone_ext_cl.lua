@@ -92,7 +92,7 @@ function bw.Base:GetOwner()
 	if fac and IsFaction(by) then
 		return by, by:GetMembersInfo()
 	else
-		return false, by
+		return false, {by}
 	end
 end
 

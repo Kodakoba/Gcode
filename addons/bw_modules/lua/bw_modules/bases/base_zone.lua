@@ -24,6 +24,18 @@ function bw.Base:__tostring()
 	return ("BWBase [%d][%s]"):format(self:GetID(), self:GetName())
 end
 
+function bw.GetZone(id)
+	return BaseWars.Bases.Zones[id]
+end
+
+function bw.IsBase(what)
+	return getmetatable(what) == bw.Base
+end
+
+function bw.IsZone(what)
+	return getmetatable(what) == bw.Zone
+end
+
 function LibItUp.PlayerInfo:GetBase(no_owner_check)
 	local fac = self:GetFaction()
 	if fac then
@@ -31,7 +43,20 @@ function LibItUp.PlayerInfo:GetBase(no_owner_check)
 	end
 
 	local base = self._Base
-	if not base then return false end
+	if not base or not base:IsValid() then return false end
+
+	if not no_owner_check and not base:IsOwner(self) then
+		errorf("Something went wrong: %s has base set as %s, but player doesn't own it.", self, base)
+		return false
+	end
+
+	return base
+end
+
+-- this only gets the base if the player is the sole owner of it
+function LibItUp.PlayerInfo:GetPlayerBase(no_owner_check)
+	local base = self._Base
+	if not base or not base:IsValid() then return false end
 
 	if not no_owner_check and not base:IsOwner(self) then
 		errorf("Something went wrong: %s has base set as %s, but player doesn't own it.", self, base)
@@ -118,6 +143,8 @@ function bw.Zone:Validate(optional)
 end
 
 function bw.Zone:SpawnBrush()
+	self:_CheckValidity()
+
 	self.Brush = ents.Create("bw_zone_brush")
 
 	if not self.Brush:IsValid() then
@@ -164,7 +191,11 @@ function bw.Zone:Initialize(id, mins, maxs)
 end
 
 function bw.Zone:Remove(baseless)
-	if not self._Valid then return end
+	if not self:IsValid() then return end
+
+	-- call remove first, then invalidate
+	self:Emit("Remove")
+	bw:Emit("DeleteZone", self)
 
 	if SERVER and self.Brush:IsValid() then
 		self.Brush:Remove()
@@ -178,8 +209,6 @@ function bw.Zone:Remove(baseless)
 	bw.ZonePaints[self:GetID()] = nil
 
 	self._Valid = false
-	self:Emit("Remove")
-	bw:Emit("DeleteZone", self)
 end
 
 ChainAccessor(bw.Zone, "_Name", "Name")
@@ -195,7 +224,25 @@ function bw.Zone:GetBase()
 	return BaseWars.Bases.Bases[self.BaseID]
 end
 
+function bw.Zone:EntityEnter(ent)
+	self:_CheckValidity()
 
+	self.Entities[ent] = ent:EntIndex()
+
+	if IsPlayer(ent) then
+		self.Players[ent] = ent:EntIndex()
+	end
+end
+
+function bw.Zone:EntityExit(ent)
+	self:_CheckValidity()
+
+	self.Entities[ent] = nil
+
+	if IsPlayer(ent) then
+		self.Players[ent] = nil
+	end
+end
 
 --[[-------------------------------------------------------------------------
 	Base object
@@ -269,17 +316,32 @@ function bw.Base:Initialize(id, json)
 
 end
 
-ChainAccessor(bw.Base, "_Entities", "Entities")
-ChainAccessor(bw.Base, "_Players", "Players")
+ChainAccessor(bw.Base, "Entities", "Entities")
+ChainAccessor(bw.Base, "Players", "Players")
+
+ChainAccessor(bw.Zone, "Entities", "Entities")
+ChainAccessor(bw.Zone, "Players", "Players")
 
 function bw.Base:EntityEnter(ent)
+	self:_CheckValidity()
+
 	self.Entities[ent] = ent:EntIndex()
 	self.EntsNW:Set(ent:EntIndex(), true)
+
+	if IsPlayer(ent) then
+		self.Players[ent] = ent:EntIndex()
+	end
 end
 
 function bw.Base:EntityExit(ent)
-	self.Entities[ent] = ent:EntIndex()
-	self.EntsNW:Set(ent:EntIndex(), true)
+	self:_CheckValidity()
+
+	self.Entities[ent] = nil
+	self.EntsNW:Set(ent:EntIndex(), nil)
+
+	if IsPlayer(ent) then
+		self.Players[ent] = nil
+	end
 end
 
 
@@ -323,6 +385,8 @@ function bw.Base:RemoveZone(zone)
 end
 
 function bw.Base:AddZone(zone)
+	self:_CheckValidity()
+
 	if isnumber(zone) then zone = bw.Zones[zone] end
 	CheckArg(1, zone, bw.IsZone, "bwzone")
 
@@ -424,22 +488,23 @@ function bw.GetBase(id)
 	end
 end
 
-function bw.GetZone(id)
-	return BaseWars.Bases.Zones[id]
-end
-
-function bw.IsBase(what)
-	return getmetatable(what) == bw.Base
-end
-
-function bw.IsZone(what)
-	return getmetatable(what) == bw.Zone
-end
-
 function bw.IsCore(what)
 	return IsEntity(what) and what:IsValid() and what:GetClass() == "bw_basecore"
 end
 
+function bw.Zone:_CheckValidity()
+	if not self:IsValid() then
+		errorf("Zone CheckValidity failed!")
+		return
+	end
+end
+
+function bw.Base:_CheckValidity()
+	if not self:IsValid() then
+		errorf("Base CheckValidity failed!")
+		return
+	end
+end
 
 hook.Add("PostCleanupMap", "RespawnBaseZone", function()
 	if CLIENT then return end
@@ -451,12 +516,19 @@ hook.Add("PostCleanupMap", "RespawnBaseZone", function()
 	for k,v in pairs(bw.Bases) do
 		v:SpawnCore()
 	end
+
+
+	for k,v in pairs(bw.Zones) do
+		v:GetBrush():ForceScanEnts()
+	end
 end)
 
 if CLIENT then
 	-- server includes it in base_sql_sv.lua
 	include("areamark/_init.lua")
 end
+
+include("base_zone_ownership_ext.lua")
 
 FInc.FromHere("baseview/_init.lua", _SH, true, FInc.RealmResolver():SetDefault(true))
 FInc.FromHere("powergrid/_init.lua", _SH, true, FInc.RealmResolver():SetDefault(true))

@@ -101,6 +101,8 @@ function PI:__tostring()
 end
 
 function PI:get(id, is_sid64)
+	if IsPlayerInfo(id) then return id end
+
 	-- returns: pinfo, bool (newly created?)
 	if IsPlayer(id) then
 		if LibItUp.PlayerInfoTables.Player[id] then return LibItUp.PlayerInfoTables.Player[id], false end
@@ -140,7 +142,7 @@ function PI:get(id, is_sid64)
 end
 
 function PI:IsValid()
-	return self._Valid
+	return self._Valid ~= false
 end
 
 function PI:_Destroy()
@@ -179,6 +181,28 @@ function PI:GetAbsent()
 	end
 end
 
+function PI:InsertByID(tbl, what, info, ply, sid, sid64)
+	info = (info == nil) or info
+	ply = (ply == nil) or ply
+	sid = (sid == nil) or sid
+	sid64 = (sid64 == nil) or sid64
+
+	if info then
+		tbl[self] = what
+	end
+
+	if ply then
+		tbl[self:GetPlayer()] = what
+	end
+
+	if sid then
+		tbl[self:GetSteamID()] = what
+	end
+
+	if sid64 then
+		tbl[self:GetSteamID64()] = what
+	end
+end
 
 if CLIENT then
 	function PI:SetUserID(uid)	-- as soon as a player with this userID becomes valid, we'll assign steamid and shit to it
@@ -273,6 +297,12 @@ end
 -- accepts SID, Player, PlayerInfo
 -- accepts SID64 only if 2nd arg is true
 function GetPlayerInfo(what, is_sid64)
+	if not IsPlayer(what) and not isstring(what) and not IsPlayerInfo(what) then
+		errorf("bad arg #1 to GetPlayerInfo" ..
+			"(expected string [id], player or playerinfo, got %s)", type(what))
+		return
+	end
+
 	return PI:get(what, is_sid64)
 end
 

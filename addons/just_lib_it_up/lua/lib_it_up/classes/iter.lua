@@ -1,27 +1,7 @@
 
 ValidIterable = ValidIterable or Object:callable()
 
-local function validIterator(self)
-	local k
-	local iter
-
-	iter = function()
-		local key, val = next(self, k)
-		k = key
-		if val ~= nil then
-			if val:IsValid() then
-				return k, val
-			else
-				return iter()
-			end
-		end
-	end
-
-	return iter
-end
-
 ValidIterable._iter = pairs
-
 ValidSeqIterable = ValidSeqIterable or Object:callable()
 
 

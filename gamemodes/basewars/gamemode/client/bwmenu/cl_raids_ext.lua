@@ -63,8 +63,16 @@ local function createRaidActions(pnl, fac, canv)
 
 	raid:SetColor(Colors.Raid, true)
 
-	raid:SetIcon("https://i.imgur.com/xyrD9OM.png", "salilsawaarim.png", 24, 24)
-	raid.Icon.IconX = 8
+	local flagIcon = Icons.Flag128:Copy()
+	flagIcon:SetSize(24, 24)
+	flagIcon.IconX = 4
+
+	local startIcon = Icon("https://i.imgur.com/xyrD9OM.png", "salilsawaarim.png", 24, 24)
+	startIcon:SetSize(24, 24)
+	startIcon.IconX = 4
+
+	raid:SetIcon(startIcon)
+	raid.NotLaidOut = true
 
 	function raid:Disappear()
 		local mn = canv.Main
@@ -75,8 +83,96 @@ local function createRaidActions(pnl, fac, canv)
 		end)
 	end
 
+	function raid:Think()
+		local ic
+
+		if LocalPlayer():InRaid() then
+			self.Label = "Concede Raid"
+			ic = self:SetIcon(flagIcon)
+		else
+			self.Label = "Start raid!"
+			ic = self:SetIcon(startIcon)
+		end
+
+		surface.SetFont(self:GetFont())
+		local tw, th = surface.GetTextSize(self:GetText())
+
+		local sz = tw + ic:GetWide() + ic.IconX + self.RBRadius * 2
+
+		if self.NotLaidOut then
+			self.NotLaidOut = false
+			self:SetWide(sz)
+			self.AnimWidth = sz
+		end
+
+		local an, new = self:To("AnimWidth", sz, 0.3, 0, 0.3)
+
+		if new then
+			an:On("Think", function()
+				self:SetWide(self.AnimWidth)
+				self:CenterHorizontal()
+			end)
+		end
+	end
+
+	local errPnl = vgui.Create("Cloud", mn)
+	errPnl.AlignLabel = 1
+	errPnl.YAlign = 1
+	errPnl.MaxW = 256
+	errPnl.Middle = 1
+	errPnl.Font = "OS20"
+
+	errPnl:SetTextColor(200, 60, 60)
+	errPnl:SetRelPos(raid.X + 8, raid.Y + raid:GetTall() / 2)
+	errPnl.ToY = -32
+
+	--errPnl:
+	raid.A = 1
+
 	function raid:DoClick()
+		if LocalPlayer():InRaid() then
+			local pr = Raids.ConcedeRaid()
+
+			pr:Then(function(...)
+				print("cl - conceded successfully", ...)
+			end, function(...)
+				print("cl - couldnt concede? wtf", net.ReadString())
+			end)
+
+			return
+		end
+
 		local pr = Raids.CallRaid(fac, true)
+		self:To("A", 0, 0.1, 0, 0.3)
+
+		pr:Then(function()
+			self:To("A", 1, 0.1, 0, 0.3)
+		end, function()
+			local why = net.ReadString()
+			self:To("A", 1, 0.1, 0, 0.3)
+
+			errPnl:SetText(why)
+			errPnl:Popup(true)
+			errPnl:SetRelPos(raid.X + raid:GetWide() / 2, raid.Y)
+
+			errPnl.ToX = 0
+			errPnl.ToY = -32
+			errPnl.Middle = 0.5
+
+			local time = why:CountWords() * 0.5
+			if time > 1 then
+				time = time ^ 0.6
+			end
+
+			time = math.max(time, 1.3)
+
+			errPnl.DisappearTime = 0.2
+			errPnl.DisappearEase = 2.3
+
+			errPnl:Timer("raidErr", time, function()
+				errPnl:Popup(false)
+			end)
+		end)
 	end
 	canv:AddElement("Exclusive", raid)
 end
@@ -242,6 +338,7 @@ local function createFactionlessOption(pnl, scr, num, ply)
 	function raid:DoClick()
 		local pr = Raids.CallRaid(ply, false)
 		self:To("A", 0, 0.1, 0, 0.3)
+
 		pr:Then(function()
 			self:To("A", 1, 0.1, 0, 0.3)
 		end, function()
@@ -250,21 +347,22 @@ local function createFactionlessOption(pnl, scr, num, ply)
 
 			errPnl:SetText(why)
 			errPnl:Popup(true)
-			errPnl:SetRelPos(raid.X + 8, raid.Y + raid:GetTall() / 2)
+			errPnl:SetRelPos(raid.X + raid:GetWide() / 2, raid.Y)
 
-			errPnl.ToX = -16
-			errPnl.ToY = 0
+			errPnl.ToX = 0
+			errPnl.ToY = -32
+			errPnl.Middle = 0.5
 
 			local time = why:CountWords() * 0.3
 			if time > 1 then
 				time = time ^ 0.6
 			end
 
+			errPnl.DisappearTime = 0.2
+			errPnl.DisappearEase = 2.3
+
 			errPnl:Timer("raidErr", time, function()
 				errPnl:Popup(false)
-				errPnl:SetRelPos(raid.X + 8 - 16, raid.Y + raid:GetTall() / 2 + 16)
-				errPnl.ToX = 0
-				errPnl.ToY = -16
 			end)
 		end)
 	end

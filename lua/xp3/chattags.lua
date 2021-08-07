@@ -385,6 +385,37 @@ chathud.TagTable["eval"] = {	--it doesn't do anything its just for eval
 	NoRegularUse = true,
 }
 
+local obfusActive = false
+
+local alphabet = "0123456789/?$%&+-#_=^£ABCDEFGHJKLMNOPQRSTUVWXYZabcdeghjmnopqrsuvwxyz" ..
+				"It[]l'Ììíi,;.:!|î~@"
+
+local len = #alphabet
+
+local bad = function()
+	local rand = math.random(1, len)
+	return alphabet:sub(rand, rand)
+end
+
+hook.Add("ChatHUD_DrawText", "obfus", function(txt)
+	if not obfusActive then return end
+	return txt:gsub("[^%s%c]", bad)
+end)
+
+chathud.TagTable["obfus"] = {
+	args = {
+		[1] = {type = "string", default = "-"},
+	},
+
+	TagStart = function(self, markup, buffer, args)
+		obfusActive = true
+	end,
+
+	TagEnd = function(self, markup, buffer, args)
+		obfusActive = false
+	end,
+}
+
 chathud.TagTable["emote"] = {
 	args = {
 		[1] = {type = "string", default = "error"},

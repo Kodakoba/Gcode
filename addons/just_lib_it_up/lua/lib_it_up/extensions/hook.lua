@@ -110,6 +110,22 @@ function hook.OnceRet(hookname, hookid, cb)
 
 end
 
+
+-- nohalt run: will throw an ErrorNoHalt
+local function errPHook(err)
+	local str = ("ProtectedHook error: %s\n%s"):format(err, debug.traceback("", 2))
+	ErrorNoHalt(str)
+end
+
+function hook.PAdd(ev, name, func, ...)
+	hook.Add(ev, name, function(...)
+		local ok, a, b, c, d, e, f = xpcall(func, errPHook, ...)
+		if ok then
+			return a, b, c, d, e, f
+		end
+	end, ...)
+end
+
 function hook.PRun(ev, ...)
 	local ok, a, b, c, d, e, f = pcall(hook.Run, ev, ...)
 
@@ -119,6 +135,7 @@ function hook.PRun(ev, ...)
 		return true, a, b, c, d, e, f
 	end
 end
+
 
 -- nohalt run: will throw an ErrorNoHalt
 local function errNH(err)

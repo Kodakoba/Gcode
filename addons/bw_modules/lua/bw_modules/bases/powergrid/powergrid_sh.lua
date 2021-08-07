@@ -19,9 +19,6 @@ function pg:Initialize(base)
 		:SetAllEntities({})
 		:SetCapacity(1000)
 
-	self._UnpoweredEnts = {}
-	self._PoweredEnts = {}
-
 	self:SetPowerIn(0)
 	self:SetPowerOut(0)
 
@@ -31,6 +28,8 @@ function pg:Initialize(base)
 		nw:Alias("Power", 0)
 		nw:Alias("PowerIn", 1)
 		nw:Alias("PowerOut", 2)
+
+	self:Emit("Initialize", base)
 end
 
 function pg:Update()
@@ -76,6 +75,8 @@ function pg:AddEntity(ent)
 	if not ent.IsBaseWars then return end
 	if self:GetAllEntities()[ent] then return end -- already added
 
+	if self:Emit("CanAddEntity", ent) == false then return end
+
 	local old_grid = bw.EntityToPowerGrid[ent]
 	if old_grid then
 		old_grid:RemoveEntity(ent)
@@ -83,8 +84,6 @@ function pg:AddEntity(ent)
 
 	self:GetAllEntities()[ent] = true
 	bw.EntityToPowerGrid[ent] = self
-
-	print(ent.IsElectronic, ent.IsGenerator)
 
 	if ent.IsElectronic then
 		table.insert(self:GetConsumers(), ent)

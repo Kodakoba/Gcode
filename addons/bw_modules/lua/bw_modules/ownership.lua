@@ -1,19 +1,11 @@
-BaseWars.Ents = BaseWars.Ents or {}
-BWEnts = BaseWars.Ents
+local ENTITY = FindMetaTable("Entity")
+local PLAYER = FindMetaTable("Player")
 
-local bwe = BWEnts
-	bwe.Tables = bwe.Tables or {}
+BaseWars.Ents = BaseWars.Ents or {}
+
+local bwe = BaseWars.Ents
 	bwe.EntsArr = bwe.EntsArr or ValidSeqIterable() 	-- sequential table of all basewars entities
 	bwe.EntsOwners = bwe.EntsOwners or {}				-- table of [sid64] = {ValidSeqIter}
-
-
-timer.Create("BW_CleanupEntGarbage", 30, 0, function()
-	for k,v in pairs(bwe.Tables) do
-		if not k:IsValid() then
-			bwe.Tables[k] = nil
-		end
-	end
-end)
 
 local function getEntry(sid64)
 	if IsPlayer(sid64) then
@@ -35,6 +27,12 @@ local function untrackEnt(ent, owID)
 	local entry = getEntry(owID)
 	entry:remove(ent)
 	bwe.EntsArr:remove(ent)
+end
+
+local function trackEnt(ent, owID)
+	local entry = getEntry(owID)
+	entry:addExclusive(ent) -- just in case :ok_hand:
+	bwe.EntsArr:addExclusive(ent)
 end
 
 function BaseWars.Ents.GetAll()
@@ -71,24 +69,30 @@ function BaseWars.Ents.GetOwnedBy(who)
 end
 
 -- CPPIAssignOwnership runs before the new owner is assigned
-hook.Add("CPPIAssignOwnership", "BWTrackOwner", function(ply, ent)
+hook.Add("CPPIAssignOwnership", "BWTrackOwner", function(ply, ent, id)
 	if not ply:IsValid() then return end
 
-	local _, sid64 = ent:CPPIGetOwner()
+	id = isstring(id) and id or ply:SteamID64()
 
-	if sid64 then
+	if id then
 		-- there was a previous owner before this,
 		-- remove their ownership
-		local their = getEntry(sid64)
+		local their = getEntry(id)
 		their:remove(ent)
-	end
 
-	if IsPlayer(ply) then
-		local t = getEntry(ply)
-		t:add(ent)
+		if IsPlayer(ply) then
+			trackEnt(ent, id)
+		end
 	end
 
 	bwe.EntsArr:addExclusive(ent)
+
+	-- force owner to be set because fpp fucking sucks
+	ent.FPPOwner = ply
+	ent.FPPOwnerID = id
+
+	-- run a new hook because, again, fpp sucks
+	hook.Run("EntityOwnershipChanged", ply, ent, id)
 end)
 
 hook.Add("EntityActuallyRemoved", "BWUntrackOwner", function(ent, entTable)
@@ -98,8 +102,27 @@ hook.Add("EntityActuallyRemoved", "BWUntrackOwner", function(ent, entTable)
 	untrackEnt(ent, owID)
 end)
 
-hook.Add("NotifyShouldTransmit", "BWEntEntry", function(ent, enter)
-	if enter then
-		BWEnts.Tables[ent] = BWEnts.Tables[ent] or {}
+-- returns PlayerInfo, worldspawn or false
+function ENTITY:BW_GetOwner()
+	local o1, o2 = self:CPPIGetOwner()
+	if o1 == nil and o2 == nil then
+		return game.GetWorld()
 	end
-end)
+
+	if SERVER then
+		if self.FPPOwnerID then
+			return GetPlayerInfo(self.FPPOwnerID, true)
+		end
+
+		return false
+	else
+		local id = FPP.entGetOwner(self)
+
+		if IsPlayer(id) then
+			return GetPlayerInfo(id)
+		end
+
+		return false
+	end
+end
+

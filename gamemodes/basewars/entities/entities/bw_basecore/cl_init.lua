@@ -17,6 +17,11 @@ local function makeWheel(ent)
 				wheel._Core:OpenBaseView()
 			end)
 
+		local unclaim = wh:AddOption("Unclaim Base", "He claimed?\nDump eet")
+			unclaim:On("Select", function()
+				wheel._Core:AttemptUnclaim()
+			end)
+
 	else
 		local claim = wh:AddOption("Claim Base", "Yo this our turf now",
 				Icons.Flag128:Copy():SetSize(106 * 0.75, 128 * 0.75))
@@ -66,7 +71,8 @@ function ENT:Draw()
 
 	if lp:BW_GetBase() ~= base then return end
 
-	local using = lp:KeyDown(IN_USE) and lp:GetEyeTrace().Entity == self and lp:GetEyeTrace().Fraction * 32768 < 96
+	local tr = lp:GetEyeTrace()
+	local using = lp:KeyDown(IN_USE) and tr.Entity == self and tr.Fraction * 32768 < 96
 
 	if using then
 		self.Using = math.min(self.Using + FrameTime(), useTime)
@@ -87,6 +93,13 @@ end
 function ENT:AttemptClaim()
 	net.Start("BaseCore")
 		net.WriteUInt(BaseWars.Bases.Actions.Claim, BaseWars.Bases.Actions.SZ)
+		net.WriteEntity(self)
+	net.SendToServer()
+end
+
+function ENT:AttemptUnclaim()
+	net.Start("BaseCore")
+		net.WriteUInt(BaseWars.Bases.Actions.Unclaim, BaseWars.Bases.Actions.SZ)
 		net.WriteEntity(self)
 	net.SendToServer()
 end

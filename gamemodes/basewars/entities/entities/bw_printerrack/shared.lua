@@ -25,9 +25,7 @@ function ENT:GSAT(slot, name,  min, max)
 end
 
 function ENT:DerivedDataTables()
-
 	self:GSAT(2, "Capacity")
 	self:GSAT(3, "Money", 0, "GetCapacity")
 	self:NetworkVar("String", 1, "Printers")
-	
 end

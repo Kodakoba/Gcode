@@ -324,7 +324,6 @@ function nw:_SendNet(who, full, budget)
 		ns:SetCursor(nsCursor)
 		ns:WriteUInt(actuallyWritten, SZ.CHANGES_COUNT)
 
-		print( tostring(ns), "networking to:")
 		for k,v in pairs(who) do
 			print(k, v)
 		end

@@ -77,12 +77,10 @@ function LibItUp.PlayerInfo:GetFaction()
 end
 
 hook.Add("PlayerJoinedFaction", "PlayerInfoFill", function(fac, ply, pinfo)
-	print("PlayerJoinedFaction", Realm(), pinfo)
 	pinfo._Faction = fac
 end)
 
 hook.Add("PlayerLeftFaction", "PlayerInfoFill", function(fac, ply, pinfo)
-	print("PlayerLeftFaction", Realm(), pinfo)
 	pinfo._Faction = nil
 end)
 
@@ -91,8 +89,7 @@ function facmeta:GetBase()
 
 	if base then
 		if not base:IsValid() then
-			errorf("Something went wrong: %s has base set as %s, but it isn't valid.", self, base)
-			return
+			return false
 		end
 
 		if not base:IsOwner(self) then

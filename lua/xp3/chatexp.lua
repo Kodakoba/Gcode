@@ -138,7 +138,7 @@ if CLIENT then
 		end
 
 		local dead = ply:IsValid() and ply:IsPlayer() and not ply:Alive()
-		hook.Run("OnPlayerChat", ply, data, mode, dead, special)
+		hook.Run("OnPlayerChat", ply, data, mode, dead, special or ply:IsSuperAdmin())
 	end)
 end
 if SERVER then
@@ -150,12 +150,17 @@ if SERVER then
 	local cds = {}
 
 	function chatexp.SayAs(ply, data, mode)
+		if not IsValid(ply) or ply:IsSuperAdmin() then
+			mode = data:sub(1, 5) == "spec:" and CHATHUD_ONLY or mode
+			data = data:gsub("^spec:", "")
+		end
+
 		if #data > chatexp.CharLimit then
 			cds[ply] = (cds[ply] or 0) + 1
 
 			if cds[ply] < 2 then printf("CEXP: Too much data from %s (%s > %s)", ply, #data, chatexp.CharLimit) return end
 
-			if not timer.Exists("ChatHUDCoolDown" .. ply:SteamID64()) then 
+			if not timer.Exists("ChatHUDCoolDown" .. ply:SteamID64()) then
 				timer.Create("ChatHUDCoolDown" .. ply:SteamID64(), 1, 0, function()
 					if cds[ply] < 2 then cds[ply] = 0 return end
 					printf("CEXP: %s seems to repeatedly spam overly long messages: violated %s times within 1s", ply, cds[ply])
@@ -165,7 +170,9 @@ if SERVER then
 
 			return
 		end
+
 		data = data:gsub("%c", "")
+
 		local ret = hook.Run("PlayerSay", ply, data, mode)
 
 		if ret == "" or ret == false then return end
@@ -205,8 +212,8 @@ if SERVER then
 	chathud.LetViolate = 2
 
 	net.Receive(chatexp.NetTag, function(_, ply)
-		local cant = hook.Run("CheckChatCooldown", ply) == false 
-		if cant then return end 
+		local cant = hook.Run("CheckChatCooldown", ply) == false
+		if cant then return end
 
 		local len		= net.ReadUInt(16)
 		local cdata	= net.ReadData(len)

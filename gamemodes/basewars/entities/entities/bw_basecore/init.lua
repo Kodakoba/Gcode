@@ -38,12 +38,25 @@ end
 
 function ENT:RequestClaim(ply)
 	-- see: bw_modules/bases/actions
-	if self:GetClaimed() then printf("Core is already claimed; %s can't claim.", ply) return end
+	if self:GetClaimed() then
+		printf("Core %s is already claimed; %s can't claim.", self, ply)
+		return
+	end
 
 	self:Claim(ply)
 end
 
+function ENT:RequestUnclaim(ply)
+	if not self:GetClaimed() then
+		printf("Core %s is already unclaimed; %s can't unclaim.", self, ply)
+		return
+	end
+
+	self:Unclaim()
+end
+
 function ENT:Claim(ply, restore)
+	ply = GetPlayerInfoGuarantee(ply):GetPlayer()
 	local fac = ply:GetFaction()
 	local base = self:GetBase()
 	if not base then error("BaseCore without base, wtf?") return end
@@ -53,7 +66,7 @@ function ENT:Claim(ply, restore)
 	if restore then
 		ok = true
 	else
-		ok = base:Claim(fac or ply)
+		ok = base:AttemptClaim(fac or ply)
 	end
 
 	if ok then
@@ -71,7 +84,7 @@ function ENT:Claim(ply, restore)
 		end
 
 		self:GetBase():Once("Unclaim", self, function()
-			self:Unclaim()
+			self:_UnclaimEnt()
 		end)
 	else
 		printf("%s didn't allow claiming; %s can't claim.", base, ply)
@@ -79,12 +92,16 @@ function ENT:Claim(ply, restore)
 
 end
 
-function ENT:Unclaim()
+function ENT:_UnclaimEnt()
 	self.ClaimedPlayer = nil
 	self.ClaimedFaction = nil
 
 	self:SetClaimedID("")
 	self:SetClaimedByFaction(false)
+end
+
+function ENT:Unclaim()
+	self:GetBase():Unclaim()
 end
 
 function ENT:Use(ply)

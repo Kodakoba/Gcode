@@ -4,7 +4,115 @@ bw.ThinkInterval = 0.3
 local pg = bw.PowerGrid
 
 
--- power i/o tracking
+--[==================================[
+	ownership checks
+--]==================================]
+
+local unowned = bw.GridUnowned or {}
+bw.GridUnowned = unowned
+
+hook.Add("EntityOwnershipChanged", "PGTrackOwned", function(ply, ent, id)
+	print("ownership changed")
+	if unowned[ent] then
+		print("ent was unowned")
+		local pg = unowned[ent]
+		pg:RecheckOwnership(ent)
+	end
+end)
+
+hook.Add("EntityActuallyRemoved", "PG_Unown", function(ent)
+	if unowned[ent] then
+		local pg = unowned[ent]
+		pg:RecheckOwnership(ent)
+	end
+end)
+
+pg:On("Initialize", "ServerTracker", function(self, base)
+	self._UnpoweredEnts = {}
+	self._PoweredEnts = {}
+	self._UnownedEnts = {} -- ents that aren't owned by the base's owner
+
+	base:On("Claim", "OwnerCheck", function()
+		self:RecheckOwnership()
+	end)
+
+	base:On("Unclaim", "OwnerCheck", function()
+		self:RecheckOwnership()
+	end)
+end)
+
+function pg:_unown(ent)
+	print("unown called", self)
+	self._UnownedEnts[ent] = true
+	unowned[ent] = self
+end
+
+function pg:_own(ent)
+	self._UnownedEnts[ent] = nil
+	unowned[ent] = nil
+end
+
+function pg:_checkOwnershipEnt(ent, base)
+	if base:IsEntityOwned(ent) then
+		self:_own(ent)
+		return true
+	else
+		self:_unown(ent)
+		return false
+	end
+end
+
+function pg:RecheckOwnership(specific_ent)
+	local base = self:GetBase()
+	if not base or not base:IsValid() then print("not base or not valid") return end
+
+	if specific_ent then
+		if self:_checkOwnershipEnt(specific_ent, base) then
+			self:AddEntity(specific_ent)
+		else
+			self:RemoveEntity(specific_ent)
+		end
+	else
+		-- unowned entities aren't part of "all" entities
+		-- (they're not consumers nor gens nor batteries)
+
+		-- insert after looping both cuz its possible we'll be double-checking the same ent
+		-- it's not gonna break if we double-check, but i'd rather avoid it
+
+		local add, rem = {}, {}
+		for ent, _ in pairs(self._UnownedEnts) do
+			table.insert(self:_checkOwnershipEnt(ent, base) and add or rem, ent)
+		end
+
+		for ent, _ in pairs(self._AllEntities) do
+			table.insert(self:_checkOwnershipEnt(ent, base) and add or rem, ent)
+		end
+
+		for k,v in ipairs(rem) do
+			self:RemoveEntity(v)
+		end
+
+		for k,v in ipairs(add) do
+			self:AddEntity(v)
+		end
+	end
+end
+
+pg:On("CanAddEntity", "OwnerCheck", function(self, ent)
+	local base = self:GetBase()
+	local ow = ent:BW_GetOwner()
+
+	-- actually owned by non-world & owned not by the base owner
+	if IsValid(ow) and not base:IsEntityOwned(ent) then
+		self:_unown(ent)
+		return false
+	end
+end)
+
+--[==================================[
+	power i/o tracking and ent powering
+--]==================================]
+
 
 function pg:UpdatePowerIn(gen)
 	local pw_in = 0
@@ -38,7 +146,6 @@ pg:On("RemovedConsumer", "UpdatePowerOut", pg.UpdatePowerOut)
 function pg:ConsumerAddList(e)
 	self._UnpoweredEnts[e] = true
 	e:SetPowered(false)
-	print("added to list, unpowered")
 end
 
 function pg:ConsumerRemoveList(e)
@@ -66,7 +173,6 @@ function pg:UnpowerEnt(ent)
 
 	ent:SetPowered(false)
 end
-
 
 
 function pg:Think()
@@ -130,7 +236,7 @@ function pg:Think()
 	end
 end
 
-hook.Add("EntityEnteredBase", "NetworkBase", function(base, ent)
+hook.Add("EntityEnteredBase", "NetworkGridEnts", function(base, ent)
 	if not ent.IsBaseWars then return end
 
 	local grid = base.PowerGrid
@@ -139,7 +245,7 @@ hook.Add("EntityEnteredBase", "NetworkBase", function(base, ent)
 	grid:AddEntity(ent)
 end)
 
-hook.Add("EntityExitedBase", "NetworkBase", function(base, ent)
+hook.Add("EntityExitedBase", "NetworkGridEnts", function(base, ent)
 	if not ent.IsBaseWars then return end
 
 	local grid = base.PowerGrid

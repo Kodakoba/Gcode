@@ -37,6 +37,14 @@ function Raids.CallRaid(what, fac)
 	return pr
 end
 
+function Raids.ConcedeRaid()
+	pr = net.StartPromise("Raid")
+		net.WriteUInt(3, 4) -- concede
+	net.SendToServer()
+
+	return pr
+end
+
 function PLAYER:RaidedCooldown()
 	local left = self:GetNWFloat("RaidCD", 0) - CurTime()
 	return left > 0, left
@@ -94,6 +102,7 @@ net.Receive("Raid", function()
 	if hasReply then
 		local promise, ok = net.ReadPromise()
 		rep = promise
+
 		if ok == false then return end
 	end
 

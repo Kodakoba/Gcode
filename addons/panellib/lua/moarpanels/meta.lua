@@ -88,6 +88,10 @@ local specialKeys = {
 function META:Lerp(key, val, dur, del, ease, forceswap, changeDest)
 	local self2 = specialKeys[key] and self or self:GetTable()
 
+	if not self2 then
+		print("!!! WTF META:Lerp called on", self, key, self2)
+	end
+
 	local anims = self2.__Animations or {}
 	self2.__Animations = anims
 

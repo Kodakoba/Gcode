@@ -85,13 +85,20 @@ local function CreateBWFrame()
 	f:PopIn()
 	f:SetRetractedSize(f:GetRetractedSize() * 1.2)
 	function f:Disappear()
-		self:PopOut(nil, nil, function()
-			self:Remove()
+		self:PopOutHide(nil, nil, function()
 			PopoutTime = CurTime()
 		end)
+
 		self:SetMouseInputEnabled(false)
 		self:SetKeyboardInputEnabled(false)
+
 		self:Emit("Disappear")
+	end
+	
+	function f:Appear()
+		self:PopInShow()
+		self:SetMouseInputEnabled(true)
+		self:SetKeyboardInputEnabled(true)
 	end
 
 	function f:OnKeyCodePressed(key)
@@ -146,8 +153,15 @@ hook.Add("PlayerButtonDown", "BaseWarsMenu", function(ply, btn)
 	local wep = LocalPlayer():GetActiveWeapon()
 	if wep ~= NULL and wep.CW20Weapon and wep.dt.State == (CW_CUSTOMIZE or 4) then return end
 
-	if IsValid(BaseWars.Menu.Frame) then return end
 	if math.abs(PopoutTime - CurTime()) <= 0.1 then return end
+
+	if IsValid(BaseWars.Menu.Frame) then
+		if not BaseWars.Menu.Frame:IsVisible() then
+			BaseWars.Menu.Frame:Appear()
+		end
+
+		return
+	end
 
 	CreateBWFrame()
 

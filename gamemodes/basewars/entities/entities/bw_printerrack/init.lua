@@ -12,10 +12,6 @@ function ENT:Init()
 
 	self.Printers = Networkable(("PrinterRack:%d"):format(self:EntIndex())):Bond(self)
 	self.Printers.Entities = {}
-
-	self.PowerRequired = 5
-
-	self:On("ConsumePower", self.ConsumePower)
 end
 
 --[[local pos = {
@@ -69,41 +65,6 @@ function ENT:NetworkPrinters()
 
 end
 
-function ENT:ConsumePower(req, total, enough)
-
-	local me = self:GetTable()
-	local printers = me.Printers.Entities
-
-	if self:IsRebooting() or not self:IsPowered() then
-		for k, ent in pairs(printers) do
-			ent:SetPowered(false)
-		end
-		return
-	end
-
-	if not enough then
-		local pw = self:GetGrid().PowerStored
-
-		for k,ent in pairs(printers) do
-			if not IsValid(ent) then
-				printers[k] = nil
-				continue
-			end
-
-			local req = ent.PowerRequired
-			if not req or pw <= req then ent:SetPowered(false) print("not nnuff", ent, pw, self.PowerRequired) continue end
-			ent:SetPowered(true)
-			pw = pw - req
-		end
-	else
-		for k,ent in pairs(printers) do
-			if ent:IsRebooting() then continue end
-			ent:SetPowered(true)
-		end
-	end
-
-end
-
 function ENT:AddPrinter(slot, ent)
 
 	if not pos[slot] then error('attempted adding a printer to a slot which doesnt have a pos (' .. slot .. ")") return end
@@ -134,10 +95,6 @@ function ENT:AddPrinter(slot, ent)
 		if v.CurrentValue then self.CurrentValue = self.CurrentValue + v.CurrentValue end
 		self.PowerRequired = self.PowerRequired + v.PowerRequired
 	end
-
-	ent:On("ShouldConsumePower", "RackConsume", function()
-		return false
-	end)
 end
 
 function ENT:Touch(ent)
@@ -212,7 +169,6 @@ function ENT:Eject(num)
 		ent:GetPhysicsObject():EnableGravity(true) --???
 		ent:SetAbsVelocity(Vector(0, 0, 0))
 
-		ent:RemoveListener("ShouldConsumePower", "RackConsume")
 		self.CurrentValue = 15000
 		for k,v in pairs(self.Printers.Entities) do
 			if v.CurrentValue then self.CurrentValue = self.CurrentValue + v.CurrentValue end
