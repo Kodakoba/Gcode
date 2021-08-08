@@ -134,3 +134,12 @@ ChainAccessor(pg, "_AllEntities", "AllEntities")
 
 include("powergrid_ext_" .. Rlm(true) .. ".lua")
 AddCSLuaFile("powergrid_ext_cl.lua")
+
+local ENTITY = FindMetaTable("Entity")
+
+function ENTITY:GetPowerGrid()
+	local base = self:BW_GetBase()
+	if base then
+		return base:GetPowerGrid()
+	end
+end

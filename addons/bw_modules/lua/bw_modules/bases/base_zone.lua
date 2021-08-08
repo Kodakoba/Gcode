@@ -249,6 +249,7 @@ end
 ---------------------------------------------------------------------------]]
 
 ChainAccessor(bw.Base, "BaseCore", "BaseCore")
+ChainAccessor(bw.Base, "PowerGrid", "PowerGrid")
 ChainAccessor(bw.Base, "Networkable", "NW")
 ChainAccessor(bw.Base, "_Claimed", "Claimed")
 

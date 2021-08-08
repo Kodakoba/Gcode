@@ -7,7 +7,7 @@ ENT.Skin = 0
 ENT.Capacity 		= 10000
 ENT.Money 			= 0
 ENT.MaxPaper		= 2500
-ENT.PrintInterval 	= 1 
+ENT.PrintInterval 	= 1
 ENT.PrintAmount		= 10
 ENT.MaxLevel 		= 25
 ENT.UpgradeCost 	= 1000
@@ -19,19 +19,15 @@ ENT.IsValidRaidable = false
 
 ENT.RebootTime = 10
 ENT.PowerRequired = 8
-local Clamp = math.Clamp
 
 local slot = 2
 
 function ENT:MakeFloat(name)
-
 	self:NetworkVar("Float", slot, name)
-
 	slot = slot + 1
 end
 
 function ENT:DerivedDataTables()
-
 	slot = 2
 
 	self:MakeFloat("Capacity")

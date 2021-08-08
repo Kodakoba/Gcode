@@ -13,7 +13,11 @@ local HPFG = Color(200, 75, 75)
 local white = Color(255, 255, 255)
 local gray = Color(40, 40, 40)
 
-local function paint(anims, ent)
+local anims
+
+local function paint(ent, curent, baseAnim, firstFrame)
+	anims = anims or Animatable("HUD_Structures")
+
 	anims.EntHPs = anims.EntHPs or {}
 
 	if ent and ent.IsBaseWars then
@@ -56,7 +60,7 @@ local function paint(anims, ent)
 		toH = toH + 18
 	end
 
-	local h = anims.Height or toH
+	local h = baseAnim.Height or toH
 	local headerH = 24
 
 	BaseWars.HUD.PaintFrame(w, h, headerH)
@@ -98,19 +102,27 @@ local function paint(anims, ent)
 
 	if lastEnt.PaintInfo then
 		local needHeight = lastEnt:PaintInfo(w, tY)
-		toH = toH + (needHeight or 0)
 
 		if not needHeight then
 			print("reminder: ENT:PaintInfo needs to return additional height. return 0 if unnecessary.")
+			needHeight = 0
+		end
+
+		if curent:IsValid() then
+			-- only add the info height if we're actually looking at the ent rn
+			toH = toH + needHeight
 		end
 	end
 
-	anims:To("Height", toH, 0.3, 0, 0.3)
+	if firstFrame then
+		baseAnim:RemoveLerp("Height")
+		baseAnim.Height = toH
+	else
+		baseAnim:To("Height", toH, 0.3, 0, 0.3)
+	end
 end
 
 
-hook.Add("BW_PaintStructureInfo", "BWStructure", paint)
-
 hook.Add("BW_ShouldPaintStructureInfo", "BWStructure", function(ent, dist)
-	return ent.IsBaseWars and dist < 192, 192
+	return ent.IsBaseWars and dist < 192, 192, paint
 end)

@@ -157,11 +157,12 @@ end)
 -- ty garry
 hook.Add("EntityRemoved", "EntityActuallyRemoved", function(ent)
 	local t = ent:GetTable()
+	local eid = ent:EntIndex()
 
 	if CLIENT then
 		timer.Simple(0, function()
 			if not ent:IsValid() then
-				hook.Run("EntityActuallyRemoved", ent, t)
+				hook.Run("EntityActuallyRemoved", ent, t, eid)
 			end
 		end)
 	else

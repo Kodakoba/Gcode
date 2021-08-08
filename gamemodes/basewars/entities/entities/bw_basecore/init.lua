@@ -9,6 +9,7 @@ function ENT:Init(me)
 	self.ClaimedBy = nil
 	self.BWBase = nil
 	self.ClaimedPlayer = {}
+	self:GetPhysicsObject():EnableMotion(false)
 end
 
 function ENT:SetBase(base)

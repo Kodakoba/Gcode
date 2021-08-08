@@ -360,7 +360,7 @@ AddEntities("Generators (T1)", "bw_gen_manual", "Manual Generator", 250, 0, "mod
 AddEntities("Generators (T1)", "bw_gen_solar", "Solar Panel", k * 1.5, 1, "models/props_lab/miniteleport.mdl")
 AddEntities("Generators (T1)", "bw_gen_gas", "Gas Generator", k * 5, 5, "models/xqm/hydcontrolbox.mdl")
 
-AddEntities("Generators (T1)", "bw_electric_pole", "Power Pole", k * 10, 5, "models/grp/powerpole/powerpole.mdl")
+-- AddEntities("Generators (T1)", "bw_electric_pole", "Power Pole", k * 10, 5, "models/grp/powerpole/powerpole.mdl")
 
 AddEntities("Generators (T1)", "bw_gen_coalfired", "Coal Fired Generator", k * 20, 50, "models/props_wasteland/laundry_washer003.mdl")
 AddEntities("Generators (T1)", "bw_gen_fission", "Fission Reactor", k * 75, 100, "models/props/de_nuke/equipment1.mdl")
@@ -375,8 +375,8 @@ AddEntities("Generators (T1)", "bw_gen_combustion", "Combustion Reactor", m * 50
 
 -- Structures (T1)--
 
-AddEntities("Structures (T1)", "bw_weaponbox", "Weapon Box", k * 150, 25, "models/lt_c/sci_fi/box_crate.mdl")
-AddEntities("Structures (T1)", "bw_printerstorage", "Vault", k * 50, 10, "models/props/de_nuke/NuclearContainerBoxClosed.mdl")
+--AddEntities("Structures (T1)", "bw_weaponbox", "Weapon Box", k * 150, 25, "models/lt_c/sci_fi/box_crate.mdl")
+--AddEntities("Structures (T1)", "bw_printerstorage", "Vault", k * 50, 10, "models/props/de_nuke/NuclearContainerBoxClosed.mdl")
 AddEntities("Structures (T1)", "bw_spawnpoint", "Spawnpoint", k * 25, 0, "models/props_trainstation/trainstation_clock001.mdl")
 
 

@@ -480,17 +480,16 @@ net.Receive("Raid", function(_, ply)
 	elseif mode == 3 then
 		-- these aren't usual, so no need to get all fancy with localization
 		if not raid.Participants[ply] then
-			replySender(false, "yo youre not even participating")
+			ReportFail(false, "yo youre not even participating")
 			return false
 		end
 		if ply:IsRaided() then
-			replySender(false, "yo youre not even the raider")
+			ReportFail(false, "yo youre not even the raider")
 			return false
 		end --do not accept concedes from raided
 
 		if ply:IsRaider() then
 			raid.Stop(ply)
-			replySender(true)
 		end
 	end
 

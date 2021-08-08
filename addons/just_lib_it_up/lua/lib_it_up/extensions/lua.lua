@@ -59,3 +59,20 @@ end
 function util.gary()
 	error("gary")
 end
+
+local errorers = {}
+
+-- nohalt run: will throw an ErrorNoHalt
+function GenerateErrorer(err)
+	if errorers[err] then
+		return errorers[err]
+	end
+
+	local fmt = tostring(err) .. " error: %s\n"
+
+	errorers[err] = function(...)
+		return ErrorNoHalt(fmt:format(...))
+	end
+
+	return errorers[err]
+end

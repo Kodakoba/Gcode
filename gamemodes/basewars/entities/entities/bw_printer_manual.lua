@@ -17,6 +17,7 @@ ENT.PrintAmount = 5
 ENT.MaxLevel = 5
 ENT.BypassMaster = true
 ENT.RebootTime = 0
+
 function ENT:UseFunc(act, call)
 	if not self:GetGrid():TakePower(5) then return end
 
@@ -24,7 +25,6 @@ function ENT:UseFunc(act, call)
 
 	act:GiveMoney(printed)
 	hook.Run("BaseWars_PlayerEmptyPrinter", call, self, printed)
-
 end
 
 local misc = {}
@@ -40,6 +40,8 @@ local wrappedsrc
 local lines
 
 local curTipY = 0
+
+function ENT:PaintInfo(w, y) return 0 end
 
 function ENT:DrawTipDisplay(w, h, a)
 	local tipW, tipH = w * 0.5, 72

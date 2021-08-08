@@ -298,7 +298,7 @@ end
 local name = "BaseWars.Disallow_Spawning"
 
 if BaseWars.Config.RestrictProps then
-	hook.Add("PlayerSpawnObject", 	name, Disallow_Spawning)
+	hook.Add("PlayerSpawnObject", name, Disallow_Spawning)
 end
 
 hook.Add("PlayerSpawnSENT", 	name, Disallow_Spawning)

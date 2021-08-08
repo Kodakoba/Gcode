@@ -382,4 +382,23 @@ function Animatable:LerpColor(key, val, dur, del, ease, forceswap)
 
 end
 
+function Animatable:RemoveLerp(key)
+	local anims = self.__Animations or {}
+
+	if anims[key] then
+		anims[key].Think = empty -- no thoughts head empty
+		anims[key].OnEnd = empty
+
+		for k,v in pairs(self.m_AnimList) do
+			if v == anims[key] then
+				self.m_AnimList[k] = nil
+				break
+			end
+		end
+
+	end
+
+	anims[key] = nil
+end
+
 _G.GlobalAnimatable = Animatable:new("Global")

@@ -100,21 +100,21 @@ local ENTITY = FindMetaTable("Entity")
 __SetHealth = __SetHealth or ENTITY.SetHealth
 
 ENTITY.SetHealth = function(self, hp)
-  if self:GetClass() == "prop_physics" then
-    self:SetDTInt(30, hp)
-  else
-    return __SetHealth(self, hp)
-  end
+	if self:GetClass() == "prop_physics" then
+		self:SetDTInt(30, hp)
+	else
+		return __SetHealth(self, hp)
+	end
 end
 
 __Health = __Health or ENTITY.Health
 
 ENTITY.Health = function(self)
-  if self:GetClass() == "prop_physics" then
-    return self:GetDTInt(30)
-  else
-    return __Health(self)
-  end
+	if self:GetClass() == "prop_physics" then
+		return self:GetDTInt(30)
+	else
+		return __Health(self)
+	end
 end
 
 
@@ -599,12 +599,12 @@ function LC(col, dest, vel)
 end
 
 function L(s, d, v, pnl)
-    if not v then v = 5 end
-    if not s then s = 0 end
-    local res = Lerp(FrameTime()*v, s, d)
-    if pnl then
-        local choose = res>s and "ceil" or "floor"
-        res = math[choose](res)
-    end
-    return res
+	if not v then v = 5 end
+	if not s then s = 0 end
+	local res = Lerp(FrameTime()*v, s, d)
+	if pnl then
+		local choose = res>s and "ceil" or "floor"
+		res = math[choose](res)
+	end
+	return res
 end

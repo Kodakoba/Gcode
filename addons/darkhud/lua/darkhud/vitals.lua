@@ -532,6 +532,15 @@ hook.Add("HUDPaint", "DarkHUD_Vitals", function()
 	f:PaintManual()
 end)
 
+local hide = {
+	["CHudHealth"] = true,
+	["CHudBattery"] = true
+}
+
+hook.Add("HUDShouldDraw", "HideHUD", function(name)	--wiki example copypasting gang rise up
+	if hide[name] then return false end
+end)
+
 local wasvalid = false
 
 if IsValid(DarkHUD.Vitals) then

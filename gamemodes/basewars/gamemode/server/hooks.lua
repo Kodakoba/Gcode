@@ -44,8 +44,8 @@ hook.Add("CPPIAssignOwnership", "UpdateSID64", function(ply, ent)
 	if IsPlayer(ply) then
 		ent.FPPSteamID64 = ply:SteamID64()
 	end
-
 end)
+
 hook.Add("BaseWars_PlayerBuyEntity", "Gennies", function(ply, ent)
 	local sid64 = ply:SteamID64()
 
@@ -56,22 +56,5 @@ hook.Add("BaseWars_PlayerBuyEntity", "Gennies", function(ply, ent)
 		end)
 
 	end
-
-end)
-
-hook.Add("BaseWars_PlayerBuyEntity", "AddToPurchased", function(ply, newEnt) -- Player, Entity
-
-	if not ply.PurchasedItems then
-		for k,v in pairs(ents.GetAll()) do
-			if IsValid(v) and v.CPPIGetOwner and IsPlayer(v:CPPIGetOwner()) then
-				local o = v:CPPIGetOwner()
-				o.PurchasedItems = o.PurchasedItems or {}
-				o.PurchasedItems[v] = true
-			end
-		end
-	end
-
-	ply.PurchasedItems = ply.PurchasedItems or {}
-	ply.PurchasedItems[newEnt] = true
 
 end)

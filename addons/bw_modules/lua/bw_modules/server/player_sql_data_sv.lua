@@ -64,6 +64,8 @@ local function setter(q, rep)
 		local third_arg = rep and val or self:SteamID64()
 		local fourth_arg = rep and self:SteamID64() or nil
 
+		print(self)
+	
 		local qry = q:format(name, second_arg, third_arg, fourth_arg, fucking_end_me)
 
 		local q = db:query(qry)

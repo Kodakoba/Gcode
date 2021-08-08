@@ -318,7 +318,8 @@ function Factions.GetSortedFactions()
 		sorted[#sorted + 1] = {name, dat}
 	end
 
-	table.sort(sorted, function(a, b)
+	-- the fucking members can be invalid, wtf????
+	pcall(table.sort, sorted, function(a, b)
 
 		local name1, name2 = a[1], a[2]
 		local a, b = a[2], b[2] --we're looking at facs

@@ -175,61 +175,50 @@ concommand.Add("basewars", BaseWars.Commands.ConCommand)
 hook.Add("PlayerSay", "BaseWars.Commands", BaseWars.Commands.SayCommand)
 
 local dist = 128^2
+
 local function Upgradable(ply, ent)
-
-	local Eyes = ply:EyePos()
-	local Class = ent:GetClass()
-
-	return IsValid(ent) and Eyes:DistToSqr(ent:GetPos()) < dist and ent.Upgrade
-
+	return IsValid(ent) and ply:EyePos():DistToSqr( ent:GetPos() ) < dist and ent.RequestUpgrade
 end
 
 local function Upgrade(ply, amt, ent)
 
 	local trace = ply:GetEyeTrace()
 
-	local Ent = ent or trace.Entity
-	if not Upgradable(ply, Ent) then return false end
+	ent = ent or trace.Entity
+	if not Upgradable(ply, ent) then return false end
 
-    local amnt=tonumber(amount) or 1
-    amnt = math.min(amnt, Ent.MaxLevel or 1)
+	local canTimes = ent.MaxLevel - ent.Level
 
-    for i=1, amnt do
-		local ok = Ent:Upgrade(ply)
-		if ok==false then break end
+	if amt == "max" then
+		amt = canTimes
+	else
+		amt = tonumber(amt) or 1
+		amt = math.min(amt, canTimes)
 	end
 
+	for i=1, amt do
+		local ok = ent:RequestUpgrade(ply, i, amt)
+		if ok == false then break end
+	end
 end
 
 BaseWars.Commands.AddCommand({"upg", "upgrade", "upgr"}, function(ply, amount)
 	Upgrade(ply, amount)
 end, false)
+
 util.AddNetworkString("BW.Upgrade")
+
 net.Receive("BW.Upgrade", function(len, ply)
-
 	local ent = net.ReadEntity()
-	if not Upgradable(ply, ent) then return end
-	Upgrade(ply, 1, ent) --no support for multiple amounts
+	local lvs = net.ReadUInt(8)
+	Upgrade(ply, lvs, ent)
 end)
+
 BaseWars.Commands.AddCommand({"max"}, function(ply)
-
-	local trace = ply:GetEyeTrace()
-
-	local Ent = trace.Entity
-	if not Upgradable(ply, Ent) then return false end
-
-    for i=1, Ent.MaxLevel - Ent.Level do
-
-		local res = Ent:Upgrade(ply)
-		if res==false then break end
-
-	end
-
-
+	Upgrade(ply, "max")
 end, false)
 
 BaseWars.Commands.AddCommand({"tell", "msg"}, function(ply, line, who)
-
 	if not who then return false, BaseWars.LANG.InvalidPlayer end
 
 	local Targ = easylua.FindEntity(who, true)
@@ -237,23 +226,15 @@ BaseWars.Commands.AddCommand({"tell", "msg"}, function(ply, line, who)
 	if not BaseWars.Ents:ValidPlayer(Targ) then return false, BaseWars.LANG.InvalidPlayer end
 
 	local Msg = line:sub(#who + 1):Trim()
-
 	Targ:ChatPrint(ply:Nick() .. " -> " .. Msg)
-
 end, false)
 
 BaseWars.Commands.AddCommand("psa", function(ply, line, text)
-
 	if text then
-
 		BroadcastLua([[BaseWars.PSAText = "]] .. line .. [["]])
-
 	else
-
 		BroadcastLua([[BaseWars.PSAText = nil]])
-
 	end
-
 end, true)
 
 BaseWars.Commands.AddCommand({"sell", "destroy", "remove"}, function(ply)

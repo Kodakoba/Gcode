@@ -2,29 +2,28 @@ local debuggingDownloads = false
 
 
 local BWAddons = {
-    160250458, --wire
-    922947756, --synths
+    "160250458", --wire
+    "922947756", --synths
 
-    296828130, --bw evocity
-    506283460, --csgo kneivs
-    546392647, --media players
-    284266415,
+    "296828130", --bw evocity
+    "506283460", --csgo kneivs
+    "546392647", --media players
+    "284266415",
 
-    2131057232, -- arccw base(d on what)
+    "2131057232", -- arccw base(d on what)
     -- 2179387416, -- arccw arknights charms because aerach
-    2131058270, -- arccw cs+
-    2135529088, -- arccw mw2
-    2175261690, -- arccw fa:s 1
-    2131161276, -- arccw m9k "extras"
-    2257255110, -- arccw GO
-    2393318131, -- arccw fa:s 2
-    2306829669, -- arccw home defense
+    "2131058270", -- arccw cs+
+    "2135529088", -- arccw mw2
+    "2175261690", -- arccw fa:s 1
+    "2131161276", -- arccw m9k "extras"
+    "2257255110", -- arccw GO
+    "2393318131", -- arccw fa:s 2
+    "2306829669", -- arccw home defense
 
     --2360831320, -- "oranche standard issue" basically an arccw pack (update: it sucks)
-    2409364730, -- gunsmith offensive extras
+    "2409364730", -- gunsmith offensive extras
 
-    2155366756, -- vmanip
-
+    "2155366756", -- vmanip
 }
 
 
@@ -89,6 +88,7 @@ end
 timer.Simple(0, function()
 
     for i=1, #BWAddons do
+        print("added workshop id", tostring(BWAddons[i]))
         resource.AddWorkshop(tostring(BWAddons[i]))
     end
 

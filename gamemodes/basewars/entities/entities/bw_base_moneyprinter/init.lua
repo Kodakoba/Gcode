@@ -58,71 +58,48 @@ function ENT:Overclock(lv, mult)
     return true
 end
 
-util.AddNetworkString("OverclockPrinter")
+function ENT:DoUpgrade()
+    local lvl = self:GetLevel()
+    local calcM = self:GetUpgradeValue() * lvl
+    self.CurrentValue = (self.CurrentValue or 0) + calcM
+    self.Level = self.Level + 1
+    self:SetLevel(self.Level)
 
-net.Receive("OverclockPrinter", function(_, ply)
-    local pr = net.ReadEntity()
-    local uid = net.ReadUInt(32)
-    if not pr or not IsValid(pr) or not pr.IsPrinter or not pr.Overclock then return end --printer invalid
-    if not pr.CPPIGetOwner or pr:CPPIGetOwner() ~= ply then return end --owner invalid
-    if not pr.Overclockable then return end --cant overclock
+    self:EmitSound("replay/rendercomplete.wav")
 
-    if not uid or not ply:HasItem(uid) then return end --uid invalid
-
-    local it = ply:HasItem(uid)
-    if not it.ItemID == ItemIDs.Overclocker then return end --not overclocker
-
-    it:SetPermaStat("uses", it:GetPermaStat("uses", 1337) - 1)
-
-    local var = it:GetPermaStat("var", 1)
-    pr:Overclock(var, OverclockGetMult(var))
-    if it:GetPermaStat("uses", 1337) <= 0 then
-        it:Delete()
+    local amt = BaseWars.Printers.GetPrintRate(self)
+    if amt then
+        self:SetPrintAmount(amt)
     end
-end)
+end
 
-function ENT:Upgrade(ply)
+function ENT:RequestUpgrade(ply)
+    if not ply then return end
 
-    if ply then
-        if ply~=self:CPPIGetOwner() then
-            ply:Notify("You can't upgrade others' printers!", BASEWARS_NOTIFICATION_ERROR)
-            return false
-        end
+    local ow = self:BW_GetOwner()
 
-        local lvl = self:GetLevel()
-
-        local plyM = ply:GetMoney()
-
-        local calcM = self:GetUpgradeValue() * lvl
-
-        if plyM < calcM then
-            ply:Notify(BaseWars.LANG.UpgradeNoMoney, BASEWARS_NOTIFICATION_ERROR)
-
-            return false
-        end
-
-        if lvl >= self.MaxLevel then
-
-            ply:Notify(BaseWars.LANG.UpgradeMaxLevel, BASEWARS_NOTIFICATION_ERROR)
-
-            return false
-        end
-
-        ply:TakeMoney(calcM)
-        self.CurrentValue = (self.CurrentValue or 0) + calcM
-
-        self.Level = self.Level + 1
-        self:SetLevel(self.Level)
-
-        self:EmitSound("replay/rendercomplete.wav")
-
-        local amt = BaseWars.Printers.GetPrintRate(self)
-        if amt then
-            self:SetPrintAmount(amt)
-        end
-
+    if GetPlayerInfo(ply) ~= ow then
+        ply:Notify("You can't upgrade others' printers!", BASEWARS_NOTIFICATION_ERROR)
+        return false
     end
 
+    local lvl = self:GetLevel()
+    local plyM = ply:GetMoney()
+    local calcM = self:GetUpgradeValue() * lvl
+
+    if plyM < calcM then
+        ply:Notify(BaseWars.LANG.UpgradeNoMoney, BASEWARS_NOTIFICATION_ERROR)
+        return false
+    end
+
+    if lvl >= self.MaxLevel then
+        ply:Notify(BaseWars.LANG.UpgradeMaxLevel, BASEWARS_NOTIFICATION_ERROR)
+        return false
+    end
+
+    ply:TakeMoney(calcM)
+
+    self:DoUpgrade()
 end
 
 function ENT:NetworkVars()
@@ -133,8 +110,8 @@ function ENT:NetworkVars()
 end
 
 function ENT:PlayerTakeMoney(ply, suppress)
-
-    if self:CPPIGetOwner()~=ply then return end
+    local owInfo = self:BW_GetOwner()
+    if owInfo:GetPlayer() ~= ply then return end
 
     local money = self.Money
 

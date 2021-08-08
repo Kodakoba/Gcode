@@ -286,7 +286,6 @@ function ENT:Draw()
 
 	self:GetCachedPos(mBar, misc, stats)
 
-
 	local me = self:GetTable()
 	local pwd = self:GetPower()
 

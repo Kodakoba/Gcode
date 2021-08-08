@@ -334,7 +334,7 @@ local vgui = GetVGUI()
 			self.chooseb = b
 			b:Dock(RIGHT)
 			b:SetIcon("icon16/eye.png")
-			b:SetText"CHOOSE THIS WORKSHOP ADDON"
+			b:SetText"CHOOSE THIS WORKSHOP COCKSUCKER"
 			b:SizeToContents()
 			b:SetWidth(b:GetSize()+32)
 			b:SetEnabled(false)
@@ -342,8 +342,8 @@ local vgui = GetVGUI()
 				self:WSChoose()
 			end
 			self:GetBrowser():AddFunction( "gmod", "wssubscribe", function() self:WSChoose() end )
-			
-			
+
+		self.browser.OnChangeTargetURL = self.OnChangeTargetURL
 	end
 
 	function PANEL:WSChoose()
@@ -353,8 +353,9 @@ local vgui = GetVGUI()
 			UIChoseWorkshop(self.chosen_id,self.returntoui)
 		end
 	end
-	function PANEL:LoadedURL(url,title)
-		self.BaseClass.LoadedURL(self,url,title)
+	function PANEL:OnChangeTargetURL(url)
+		print("changed url bru", url)
+		self.BaseClass.OnChangeTargetURL(self,url)
 		if not url or url=="" then return end
 		
 		-- sharedfiles/filedetails/?id=422403917&searchtext=playermodel

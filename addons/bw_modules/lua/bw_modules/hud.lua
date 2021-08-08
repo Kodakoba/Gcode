@@ -1,4 +1,7 @@
-if SERVER then return end
+if SERVER then
+	FInc.FromHere("client/huds/*.lua", _CL, false, print)
+	return
+end
 
 local MODULE = BaseWars.HUD or {}
 BaseWars.HUD = MODULE
@@ -52,10 +55,14 @@ local rebootingMaxText = "Rebooting..."
 surface.SetFont("OS18")
 rebootingMaxWidth = (surface.GetTextSize(rebootingMaxText))
 
-local minDist = 80
+local minDist = 64
 local defaultMaxDist = 200
 local maxDist = defaultMaxDist
 local minScale = 0.2
+
+-- is this the first frame that the HUD is present?
+local initialFrame = false
+local lastPainter = nil
 
 local function DrawStructureInfo()
 
@@ -65,7 +72,6 @@ local function DrawStructureInfo()
 	local ent = trace.Entity
 
 	local valid = IsValid(ent) -- and ent.IsBaseWars
-
 	local dist = lastpos:Distance(trace.StartPos)
 
 	if not valid then
@@ -85,9 +91,9 @@ local function DrawStructureInfo()
 
 		name = ent.PrintName or "wat"
 
-		local should, distAppear = hook.Run("BW_ShouldPaintStructureInfo", ent, dist)
+		local should, distAppear, pntr = hook.Run("BW_ShouldPaintStructureInfo", ent, dist)
 		alphaTo = alphaTo or to
-
+		lastPainter = pntr
 		maxDist = distAppear or defaultMaxDist
 
 		if dist < maxDist * (1 - minScale) and should then
@@ -104,7 +110,7 @@ local function DrawStructureInfo()
 
 	local ts = lastpos:ToScreen()
 
-	if not ts.visible or alpha < 1 or not IsValid(lastent) then return end
+	if not ts.visible or alpha < 1 or not IsValid(lastent) then initialFrame = true return end
 
 	local frac = (math.max(dist, minDist) - minDist) / (maxDist - minDist)
 	local scale = Lerp(1 - frac, minScale, 1)
@@ -112,23 +118,28 @@ local function DrawStructureInfo()
 	local x, y = ts.x, ts.y 	--middle of the window's XY
 	local sx, sy = x, y 		--top left XY
 
-	vm:Identity()
-	vm:SetScale(Vector(scale, scale, 1))
-	vm:SetTranslation(Vector(x, y))
 
-	vm:Translate(Vector(-w/2, -h/2))
+	vm:Identity()
+
+	vm:SetScaleNumber(scale, scale)
+	vm:SetTranslationNumber(x, y)
+	vm:TranslateNumber(-w/2, -h/2)
 
 	sx, sy = sx - w/2 * scale, sy - h/2 * scale
 
 	local amult = surface.GetAlphaMultiplier()
 
-	render.PushFilterMin(TEXFILTER.ANISOTROPIC)
-	cam.PushModelMatrix(vm)
-	surface.SetAlphaMultiplier(amult * (alpha / 255))
-		hook.NHRun("BW_PaintStructureInfo", anims, lastent)
-	surface.SetAlphaMultiplier(amult)
-	cam.PopModelMatrix()
-	render.PopFilterMin()
+	if isfunction(lastPainter) then
+		render.PushFilterMin(TEXFILTER.ANISOTROPIC)
+		cam.PushModelMatrix(vm)
+		surface.SetAlphaMultiplier(amult * (alpha / 255))
+			local ok, err = xpcall(lastPainter, GenerateErrorer("BWHUD"), lastent, ent, anims, initialFrame)
+		surface.SetAlphaMultiplier(amult)
+		cam.PopModelMatrix()
+		render.PopFilterMin()
+	end
+
+	initialFrame = false
 end
 
 function MODULE.PaintFrame(w, h, headerH)
@@ -258,12 +269,4 @@ end
 
 hook.Add("HUDPaint", "StructureInfoPaint", PaintStuff)
 
-local hide = {
-	["CHudHealth"] = true,
-	["CHudBattery"] = true
-}
-
-hook.Add( "HUDShouldDraw", "HideHUD", function(name)	--wiki example copypasting gang rise up
-	if hide[name] then return false end
-
-end )
+FInc.FromHere("client/huds/*.lua", _CL, false, print)

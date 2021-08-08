@@ -42,7 +42,7 @@ function PLAYER:AddXP(amt, no_write)
 	self:SyncLevel()
 
 	if not no_write then
-		self:SetBWData("xp", self._xp) 
+		self:SetBWData("xp", self._xp)
 	end
 end
 

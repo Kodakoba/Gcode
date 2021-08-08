@@ -53,6 +53,7 @@ SWEP.Sounds = {
 SWEP.Range = 80
 SWEP.Penetrates = 3
 SWEP.TorchDamage = 20
+SWEP.IsBlowTorch = true
 
 local function IsProp(ent)
 	return (IsValid(ent) and ent.GetClass and ent:GetClass() == "prop_physics") or false
@@ -120,7 +121,7 @@ function SWEP:PrimaryAttack()
 
 	local owner = tr.Entity:BW_GetOwner()
 
-	if not canZap(tr.Entity) then return end
+	if not canZap(self, tr.Entity) then print(Realm(), "trace not zappable", tr.Entity) return end
 
 	local trent = tr.Entity
 	local trents = {ply, trent}
@@ -134,7 +135,7 @@ function SWEP:PrimaryAttack()
 			filter = trents,
 		})
 
-		if canZap(newtr.Entity) then
+		if canZap(self, newtr.Entity) then
 			trents[#trents + 1] = newtr.Entity
 		end
 
@@ -170,7 +171,7 @@ local displayDist = 256 / 32768
 
 local lastent 		-- last valid ent we looked at
 local x, y = 0, 0 	-- last valid pos of the ent
-local w, h = 200, 50
+
 
 local strX, strY = 0, 0 --stripes
 local hpfrac = 0
@@ -214,22 +215,16 @@ local infoCol = Color(40, 40, 40)
 local txCol = Color(220, 220, 220)
 
 local hdSize = 18
+local curBlowtorch
+local frW, frH = 180, 55
 
-function SWEP:DrawHUD()
+local function paint(ent, curent, baseAnim, firstFrame)
+	local self = curBlowtorch
+	if not curBlowtorch then return end
+
 	anim = anim or Animatable("blowtorch")
 	local tr = LocalPlayer():GetEyeTrace()
 	--stripes = (not MoarPanelsMats["stripes"]:IsError() and MoarPanelsMats["stripes"]) or errmat -- :/
-
-	local ent = tr.Entity
-	local okent = true
-	local a = anim.A or 0
-
-	if not IsValid(ent) or ent:GetClass() ~= "prop_physics" or tr.Fraction > displayDist then
-		anim:To("A", 0, 0.3, 0, 1)
-		okent = false
-	else
-		anim:To("A", 255, 0.3, 0, 0.3)
-	end
 
 	local ow = isZappable(self, ent)
 	local canraid = IsPlayerInfo(ow) and ow:IsEnemy(LocalPlayer())
@@ -241,23 +236,12 @@ function SWEP:DrawHUD()
 		anim:LerpColor(hpBarCol, CantRaidColor, 0.3, 0, 0.3)
 	end
 
-	if lastent and lastent:IsValid() then
-		local pos = (lastent:GetPos() + lastent:OBBCenter()):ToScreen()
-		x = pos.x - w / 2
-		y = pos.y - h / 2
-	end
-
-	body.a = math.max(0, a - 15)
-	header.a = a
-	txCol.a = a
-	infoCol.a = a
-	emptyBar.a = a
-	hpBarCol.a = a -- wtf lol
-
 	if a == 0 then return end
 
-	draw.RoundedBoxEx(6, x, y - hdSize, w, hdSize, header, true, true)
-	draw.RoundedBoxEx(6, x, y, w, h, body, false, false, true, true)
+	local headerH = 18
+	local w, h = frW, baseAnim.Height or frH
+
+	BaseWars.HUD.PaintFrame(w, h, headerH)
 
 	local hp, max = 0, 0
 
@@ -270,9 +254,9 @@ function SWEP:DrawHUD()
 	end
 
 	surface.SetDrawColor(emptyBar)
-	local xpad = 20
+	local xpad = 12
 	local barW, barH = w - xpad * 2, 16
-	local barY = y + h / 2 - barH / 2
+	local barY = headerH + (h - headerH) / 2 - barH / 2
 
 	surface.DrawRect(x + xpad, barY, barW, barH)
 
@@ -290,11 +274,12 @@ function SWEP:DrawHUD()
 		strX = (strX + FrameTime() / 32) % 0.5
 		strY = (strY + FrameTime() / 16) % 0.5
 
-		surface.SetDrawColor(Color(0, 0, 0, math.min(a, 100)))
+		surface.SetDrawColor( 0, 0, 0 )
 
 		render.SetScissorRect(x + xpad, barY, x + hpfrac * barW + xpad, barY + barH, true)
 
-			surface.DrawUVMaterial("https://www.sccpre.cat/mypng/full/11-113784_transparent-stripes-tumblr-huge-freebie-download-for-transparent.png", "stripes.png", x, y, 200, 80, 0.1 - strX, 0.1 - strY, 0.6 - strX, 0.4 - strY)
+			surface.DrawUVMaterial("https://i.imgur.com/y9uYf4Y.png", "whitestripes.png",
+				x, y, 200, 80, 0.1 - strX, 0.1 - strY, 0.6 - strX, 0.4 - strY)
 			draw.SimpleText("H E A L T H", "OSB20", x + 20 + 80, barY + barH / 2, txCol, 1, 1)
 
 		render.SetScissorRect(0, 0, 0, 0, false)
@@ -305,3 +290,16 @@ function SWEP:DrawHUD()
 		draw.SimpleText(str, "OSB18", x + 100, y + 76, Color(200, 200, 200, a), 1, 4)
 	end
 end
+
+
+--hook.Add("BW_PaintStructureInfo", "Blowtorch", paint)
+
+hook.Add("BW_ShouldPaintStructureInfo", "Blowtorch", function(ent, dist)
+	local class_ok = ent.IsBaseWars or IsProp(ent)
+	local wep = LocalPlayer():GetActiveWeapon()
+	local wep_ok = wep.IsBlowTorch
+
+	curBlowtorch = wep
+
+	return class_ok and wep_ok and dist < 192, 192, paint
+end)

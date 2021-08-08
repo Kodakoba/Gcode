@@ -62,12 +62,18 @@ local function updateOwner(base, initial)
 	local fac, owners = base:GetOwner()
 
 	local piece = bdt:GetElements()[ baseToID[base:GetID()] ]
+	if not piece then return end
+
+	if bdt:GetCurrentElement() ~= piece then
+		bdt:ActivateElement(baseToID[base:GetID()])
+	end
 
 	local is_owned = fac or owners
 
 	local animTable = {Delay = initial and 0.6 or 0}
 
 	if is_owned then
+
 		if not piece.OwnedByOpenerFragment or not piece.OwnerFragment then
 			return
 		end
@@ -76,7 +82,7 @@ local function updateOwner(base, initial)
 
 		if not fac then -- player-owned
 			local ply = owners[1]:GetPlayer()
-			local name = ply:IsValid() and ply:Nick() or owners:SteamID64()
+			local name = ply:IsValid() and ply:Nick() or owners[1]:GetSteamID64()
 			local _, new = piece:ReplaceText(piece.OwnerFragment, name, nil, nil, animTable)
 			if new then
 				new.Font = "MR18"
@@ -97,7 +103,9 @@ local function updateOwner(base, initial)
 end
 
 local function appear(base)
-	if state then -- we were appearing(-ed) already
+	local bfragID = baseToID[base:GetID()]
+
+	if state and bfragID then -- we were appearing(-ed) already
 		updateOwner(base)
 		return
 	end
@@ -108,7 +116,6 @@ local function appear(base)
 	local banim, bnew = an:To("BaseFrac", 1, 0.4, 0, 0.3)
 
 	-- activate base
-	local bfragID = baseToID[base:GetID()]
 
 	if not bfragID then
 		local piece, key = bdt:AddText("")
@@ -158,7 +165,6 @@ local function disappear()
 		end)
 	end
 
-
 end
 
 
@@ -186,9 +192,6 @@ local function think()
 		end
 	end
 end
-
-local lastBaseName = ""
-
 
 
 hook.Add("HUDPaint", "bas", function()

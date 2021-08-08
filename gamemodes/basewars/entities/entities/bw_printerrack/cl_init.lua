@@ -270,6 +270,7 @@ function ENT:Draw()
 		b2.DoClick = function(self)
 			net.Start("BW.Upgrade")
 				net.WriteEntity(ent)
+				net.WriteUInt(1, 8)
 			net.SendToServer()
 		end
 

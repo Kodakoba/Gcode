@@ -336,7 +336,7 @@ function FInc.FromHere(name, realm, nofold, decider, cb)
 		ErrorNoHalt(err)
 		return
 	end
-
+	print("including:", path .. name)
 	FInc.Recursive(path .. name, realm, nofold, decider, cb)
 
 end

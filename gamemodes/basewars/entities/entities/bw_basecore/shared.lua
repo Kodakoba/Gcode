@@ -40,3 +40,7 @@ function ENT:GetOwners()
 	local fac, ows = base:GetOwner()
 	return fac, ows
 end
+
+hook.Add("PhysgunPickup", "DontPickUpBasecores", function(ply, ent)
+	if ent.IsBaseCore then return false end
+end)

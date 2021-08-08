@@ -1,3 +1,5 @@
+do return end
+
 local tag = "CPPI"
 local PLAYER = debug.getregistry().Player
 local ENTITY = debug.getregistry().Entity
