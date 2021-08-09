@@ -4,10 +4,7 @@ LibItUp.SetIncluded()
 LibItUp.PlayerInfo = LibItUp.PlayerInfo or LibItUp.Emitter:callable()
 local PI = LibItUp.PlayerInfo
 PI.IsPlayerInfo = true
-PI.CleanupIn = 900 -- being absent for 15min = playerinfo is cleaned up (NYI)
-
--- TODO: cleanup is important because networkables are kept in cache
--- this means it'll be networking useless data for each player that ever joined
+PI.CleanupIn = 900 -- being absent for 15min = playerinfo is cleaned up
 
 LibItUp.PlayerInfoTables = LibItUp.PlayerInfoTables or {
 	-- [info] = PI
@@ -53,7 +50,7 @@ function PI:Initialize(id, is_sid64) -- we can't know that the id is a steamID64
 	self:SetSteamID(sid)
 	self:SetSteamID64(sid64)
 
-	self.Networkable = Networkable:new("PI:" .. sid64)
+	self._PubNW = Networkable:new("PI:" .. sid64)
 
 	self._StartedSession = CurTime()
 	self._EndedSession = nil
@@ -67,6 +64,7 @@ end
 ChainAccessor(PI, "_SteamID", "SteamID")	-- 	  !! Using SteamID's is not advised due to its' behavior on bots !!
 											-- Use SteamID64 instead since it has a hack to work on bots on both realms
 ChainAccessor(PI, "_SteamID64", "SteamID64")
+ChainAccessor(PI, "_PubNW", "PublicNW")
 
 function PI:SetSteamID64(id)
 	self._SteamID64 = id
@@ -87,14 +85,27 @@ end
 
 
 function PI:SetPlayer(ply)
-	if not ply:IsValid() then return end
+	if ply and not IsPlayer(ply) then return end
 	self._Player = ply
 	PIT.Player[ply] = self
+	if ply then
+		self._Nick = ply:Nick()
+	end
 end
+
+-- TODO: game event for nick change
+
+ChainAccessor(PI, "_Nick", "Nick")
+ChainAccessor(PI, "_Name", "Name")
+PI.Name = PI.GetNick
+PI.Nick = PI.GetNick
 
 function PI:GetPlayer()
 	return self._Player
 end
+
+PI.SteamID = PI.GetSteamID
+PI.SteamID64 = PI.GetSteamID64
 
 function PI:__tostring()
 	return ("PlayerInfo [%s][ %s ]"):format(self:GetSteamID64() or "No SteamID64", self:GetPlayer() or "No Player")
@@ -152,16 +163,18 @@ function PI:IsValid()
 end
 
 function PI:_Destroy()
-	-- do not call this directly
 	local pi = LibItUp.PlayerInfoTables
-	pi.Player[self:GetPlayer()] = nil
+	if self:GetPlayer() then
+		pi.Player[self:GetPlayer()] = nil
+	end
+
 	pi.SteamID[self:GetSteamID()] = nil
 	pi.SteamID64[self:GetSteamID64()] = nil
 
 	self._Valid = false
 	self:Emit("Destroy")
-	self:Invalidate()
 	hook.Run("PlayerInfoDestroy", self)
+	self:GetPublicNW():Invalidate()
 end
 
 function PI:_OnReconnect()
@@ -169,12 +182,34 @@ function PI:_OnReconnect()
 	self._TotalSession = self._TotalSession + (self._EndedSession - self._StartedSession)
 	self._StartedSession = CurTime()
 	self._EndedSession = nil
+
+	PIT.Absent[self] = nil
+end
+
+function PI:_OnDisconnect()
+	PIT.Player[self:GetPlayer()] = nil
+
+	self:Emit("Disconnect", ply)
+
+	self._AbsentSince = CurTime()
+	self._EndedSession = CurTime()
+	self._Absent = true
+	self._Player = nil
+
+	PIT.Absent[self] = self._AbsentSince
+end
+
+function PI:_GetCurrentSession()
+	return (self._EndedSession or CurTime()) - self._StartedSession
+end
+
+function PI:GetSessionTime()
+	return self._TotalSession + self:_GetCurrentSession()
 end
 
 function PI:GetAbsent()
 	-- return #1: number or false (false if player is not currently absent)
 	-- return #2: last absent duration: number or false (false if the player was never absent)
-	-- both of them can be numbers
 
 	local since, till = self._AbsentSince, (self._AbsentStop or CurTime())
 	if not since then return false, false end
@@ -246,14 +281,7 @@ hook.Add("PlayerDisconnected", "PlayerInfoEmit", function(ply)
 	local pinfo = PIT.SteamID64[sid64]
 	if not pinfo then return end
 
-	PIT.Player[pinfo:GetPlayer()] = nil
-
-	pinfo:Emit("Disconnect", ply)
-
-	pinfo._AbsentSince = CurTime()
-	pinfo._Absent = true
-
-	PIT.Absent[pinfo] = pinfo._AbsentSince
+	pinfo:_OnDisconnect()
 end)
 
 hook.Add("PlayerInitialSpawn", "PlayerInfoEmit", function(ply)
@@ -283,7 +311,7 @@ end)
 
 local function refill()
 	for k,v in ipairs(player.GetAll()) do
-		local pinfo = PI:get(v)
+		PI:get(v)
 	end
 end
 
@@ -328,10 +356,30 @@ function GetPlayerInfoGuarantee(what, is_sid64)
 	return pinfo, pinfo:GetPlayer()
 end
 
+function PIToPlayer(what)
+	if IsPlayer(what) then return what end
+	if IsPlayerInfo(what) then return what:GetPlayer() end
+	if isstring(what) then
+		local info = GetPlayerInfo(what)
+		return info and info:GetPlayer()
+	end
+end
+
+
 hook.Add("NetworkableAttemptCreate", "PlayerInfo", function(nwID)
 	if nwID:match("PI:(%d+)") then
 		local sid64 = nwID:match("PI:(%d+)")
 		GetPlayerInfoGuarantee(sid64, true)
 		return true
+	end
+end)
+
+timer.Create("PlayerInfoCleanup", 1, 0, function()
+	local ct = CurTime()
+	for pin, when in pairs(LibItUp.PlayerInfoTables.Absent) do
+		if ct - when > PI.CleanupIn then
+			LibItUp.PlayerInfoTables.Absent[pin] = nil
+			pin:_Destroy()
+		end
 	end
 end)
