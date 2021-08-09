@@ -18,7 +18,7 @@ local sizes = {
 	Vector = (3 + COORD_INTEGER_BITS + COORD_FRACTIONAL_BITS) * 3 + 3,
 
 	--https://github.com/ValveSoftware/source-sdk-2013/blob/0d8dceea4310fde5706b3ce1c70609d72a38efdf/mp/src/tier1/bitbuf.cpp#L692-L710
-	Normal = (NORMAL_FRACTIONAL_BITS + 1) * 2 + 3, 
+	Normal = (NORMAL_FRACTIONAL_BITS + 1) * 2 + 3,
 
 	-- https://github.com/ValveSoftware/source-sdk-2013/blob/0d8dceea4310fde5706b3ce1c70609d72a38efdf/mp/src/tier1/bitbuf.cpp#L712
 	-- it might've been changed but i'll keep it the same as BitVec3Coord since i don't know for sure
@@ -142,6 +142,8 @@ netstack.__call = net.WriteNetStack
 function netstack:Initialize()
 	self.Ops = {}
 	self.Cursor = 1
+	self.LastOpNum = 1
+	self.LastBits = 0
 end
 
 function netstack:GetOps()
@@ -162,7 +164,18 @@ local blank = {
 function netstack:WriteAtCursor(what)
 	if self.Mode == "a" then
 		table.insert(self.Ops, self.Cursor, what)
+		if self.Cursor < (self.LastOpNum or 1) then
+			-- inserting behind cache cursor; add new bitsize
+			self.LastBits = (self.LastBits or 0) + what.size
+		end
 	else
+		local prev = self.Ops[self.Cursor]
+
+		if prev and self.Cursor < (self.LastOpNum or 1) then
+			-- writing behind cache cursor; update bitsize
+			self.LastBits = (self.LastBits or 0) - prev.size + what.size
+		end
+
 		self.Ops[self.Cursor] = what
 	end
 end
@@ -182,10 +195,21 @@ function netstack:SetMode(m)
 end
 
 function netstack:BytesWritten()
-	local bits = 0
+	local bits = self.LastBits or 0
+	local from, to = self.LastOpNum or 1, #self.Ops
+
+	for i=from, to do
+		bits = bits + self.Ops[i].size
+	end
+
+	self.LastBits = bits
+	self.LastOpNum = to + 1
+
+	--[[local bits = 0
+
 	for k,v in ipairs(self.Ops) do
 		bits = bits + v.size
-	end
+	end]]
 
 	return bits / 8, bits
 end
