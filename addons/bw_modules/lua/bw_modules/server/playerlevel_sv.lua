@@ -2,13 +2,17 @@ BaseWars.PlayerLevel = BaseWars.PlayerLevel or {}
 local MODULE = BaseWars.PlayerLevel
 MODULE.Log = Logger("BW-Level", Color(80, 230, 80))
 
-function PLAYER:SyncLevel()
-	self:SetNWString("BW_Level", self._level)
-	self:SetNWString("BW_XP", self._xp)
+MODULE.Functions = {}
+local FUNCS = MODULE.Functions
+
+local PInfo = LibItUp.PlayerInfo
+
+function FUNCS:SyncLevel()
+	self:GetPublicNW():Set("lvl", self:GetLevel())
+	self:GetPublicNW():Set("xp", self:GetXP())
 end
 
-
-function PLAYER:SetLevel(amt, no_write)
+function FUNCS:SetLevel(amt, no_write)
 	self._level = math.Round(amt)
 	self:SyncLevel()
 
@@ -17,7 +21,7 @@ function PLAYER:SetLevel(amt, no_write)
 	end
 end
 
-function PLAYER:AddLevel(amt, no_write)
+function FUNCS:AddLevel(amt, no_write)
 	self._level = math.Round(self._level + amt)
 	self:SyncLevel()
 
@@ -26,7 +30,7 @@ function PLAYER:AddLevel(amt, no_write)
 	end
 end
 
-function PLAYER:SetXP(amt, no_write)
+function FUNCS:SetXP(amt, no_write)
 	self._xp = math.Round(amt)
 	self:CheckLevels()
 	self:SyncLevel()
@@ -36,7 +40,7 @@ function PLAYER:SetXP(amt, no_write)
 	end
 end
 
-function PLAYER:AddXP(amt, no_write)
+function FUNCS:AddXP(amt, no_write)
 	self._xp = math.Round(self._xp + amt)
 	self:CheckLevels()
 	self:SyncLevel()
@@ -47,7 +51,7 @@ function PLAYER:AddXP(amt, no_write)
 end
 
 
-function PLAYER:LoadLevel(dat, write)
+function FUNCS:LoadLevel(dat, write)
 	local lv = dat.lvl
 	local xp = dat.xp
 
@@ -62,25 +66,24 @@ function PLAYER:LoadLevel(dat, write)
 	self:SetXP(xp, true)
 end
 
-function PLAYER:AwardEXPForMoney(money)
+function FUNCS:AwardEXPForMoney(money)
 	self._xp_money_leftover = self._xp_money_leftover or 0
 	local add, leftover = MODULE.MoneyToXP(money + self._xp_money_leftover, self:GetLevel(), self:GetXP())
 	self._xp_money_leftover = leftover
 
-
 	self:AddXP(add)
 end
 
-function PLAYER:CheckLevels()
+function FUNCS:CheckLevels()
 	local curxp = self:GetXP()	-- player's current lv/xp
 	local curlvl = self:GetLevel()
 
-	local curtotalxp = 	(BaseWars.LevelXP.TotalXP[curlvl] or 0) + curxp		
+	local curtotalxp = 	(BaseWars.LevelXP.TotalXP[curlvl] or 0) + curxp
 	local lvs = curlvl	-- what level they should be
 
 	for i=curlvl, #BaseWars.LevelXP.TotalXP do
-		local req = BaseWars.LevelXP.TotalXP[i+1]
-		
+		local req = BaseWars.LevelXP.TotalXP[i + 1]
+
 		if curtotalxp < req then
 			lvs = i
 			curxp = curtotalxp - (BaseWars.LevelXP.TotalXP[i] or 0)
@@ -93,5 +96,19 @@ function PLAYER:CheckLevels()
 	self:SetLevel(lvs)
 end
 
-hook.Add("BW_LoadPlayerData", "BWLevel.Load", PLAYER.LoadLevel)
+for k,v in pairs(FUNCS) do
+	PLAYER[k] = function(self, ...)
+		local pin = GetPlayerInfoGuarantee(self)
+		return v (pin, ...)
+	end
+
+	PInfo[k] = function(...)
+		return v (...)
+	end
+end
+
+hook.Add("BW_LoadPlayerData", "BWLevel.Load", function(ply, ...)
+	local pin = GetPlayerInfoGuarantee(ply)
+	pin:LoadLevel(...)
+end)
 --hook.Add("BW_SavePlayerData", tag .. ".Save", MODULE.SaveMoney)

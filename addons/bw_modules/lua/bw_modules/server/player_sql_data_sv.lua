@@ -24,8 +24,8 @@ function LoadData(ply)
 	q.onSuccess = function(_, dat)
 		local write = {}
 
-		hook.Run("BW_LoadPlayerData", ply, dat[1] or {}, write)
-		hook.Run("BW_LoadedPlayerData", ply)
+		hook.NHRun("BW_LoadPlayerData", ply, dat[1] or {}, write)
+		hook.NHRun("BW_LoadedPlayerData", ply)
 		-- todo: this is probably unnecessary
 
 		--[[if not table.IsEmpty(write) then
@@ -55,17 +55,19 @@ hook.Add("PlayerAuthed", "BW_SQLDataFetch", LoadData)
 hook.Add("PlayerDisconnected", "BW_SQLDataSave", SaveData)
 
 local function setter(q, rep)
+	-- rep = the column name needs to be repeated
 	return function(self, name, val)
+		local pi = GetPlayerInfo(self)
+		local sid = pi:GetSteamID64()
+
 		name = db:escape(name)
 		val = isnumber(val) and val or db:escape(val)
 
 		-- mfw
 		local second_arg = rep and name or val
-		local third_arg = rep and val or self:SteamID64()
-		local fourth_arg = rep and self:SteamID64() or nil
+		local third_arg = rep and val or sid
+		local fourth_arg = rep and sid or nil
 
-		print(self)
-	
 		local qry = q:format(name, second_arg, third_arg, fourth_arg, fucking_end_me)
 
 		local q = db:query(qry)
@@ -79,6 +81,11 @@ PLAYER.SetBWData = setter(qries.set_column_query)
 PLAYER.AddBWData = setter(qries.add_column_query, true)
 PLAYER.SubBWData = setter(qries.sub_column_query, true)
 
+local PInfo = LibItUp.PlayerInfo
+PInfo.SetBWData = PLAYER.SetBWData
+PInfo.AddBWData = PLAYER.AddBWData
+PInfo.SubBWData = PLAYER.SubBWData
+
 local function onDB(masterdb)
 
 	local q = masterdb:query([[
@@ -90,7 +97,7 @@ local function onDB(masterdb)
 	  PRIMARY KEY (`puid`),
 	  UNIQUE INDEX `puid_UNIQUE` (`puid` ASC) VISIBLE);
 
-	ALTER TABLE `master`.`bw_plydata` 
+	ALTER TABLE `master`.`bw_plydata`
 	CHANGE COLUMN `money` `money` BIGINT UNSIGNED NOT NULL DEFAULT ]] .. BaseWars.Config.StartMoney .. [[,
 	CHANGE COLUMN `lvl` `lvl` INT UNSIGNED NOT NULL DEFAULT '1' ;
 	]])
