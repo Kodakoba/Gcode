@@ -1,6 +1,7 @@
 setfenv(0, _G)
 
 if not Networkable then include("networkable.lua") end -- end me
+do return end -- bad bad bad
 
 --[[
 	terms:

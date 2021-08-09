@@ -41,27 +41,18 @@ LibItUp.Networkable = LibItUp.Networkable or Emitter:callable()
 Networkable = LibItUp.Networkable
 local nw = Networkable
 
+nw.IsNetworkable = true
+nw._UpdateFrequency = 0.1
 
-Networkable._UpdateFrequency = 0.1
-
-Networkable._Sizes = {
+nw._Sizes = {
 	NUMBERID = 16, -- if you need more than 65535 networkables, its likely there's a leak
 	CHANGES_COUNT = 12,
-
-	INTERVAL_UPDATE = 1024 * 12 * Networkable._UpdateFrequency, -- 12kb
-	FULL_UPDATE = 1024 * 32 * Networkable._UpdateFrequency, -- 32kb
 }
-
-
 
 _NetworkableCache = _NetworkableCache or {}
 
 _NetworkableNumberToID = _NetworkableNumberToID or {} 	-- [num] = name
 _NetworkableIDToNumber = _NetworkableIDToNumber or {} 	-- [name] = num
-_NetworkableQueue = _NetworkableQueue or {}				-- [seq_id] = [name] ; FIFO
-
-_NetworkableChanges = _NetworkableChanges or muldim:new()
-_NetworkableAwareness = _NetworkableAwareness or muldim:new() --[ply] = {'NameID', 'NameID'}
 
 _NetworkableData = _NetworkableData or muldim:new() 	-- stores networkable data as [num_id] = {bunch of key-values}
 local idData = _NetworkableData							-- only used clientside for handling net races for primitive nw's
@@ -91,10 +82,6 @@ timer.Create("NetworkableCleanProfiler", 60, 0, function()
 
 end)
 
-
-local update_freq = Networkable._UpdateFrequency
-local SZ = Networkable._Sizes
-
 local realPrint = print
 local print = function(...)
 	if not nw.Verbose then return end
@@ -121,8 +108,11 @@ function nw.ResetAll()
 	table.Empty(numToID)
 	table.Empty(IDToNum)
 
-	table.Empty(_NetworkableChanges)
-	table.Empty(_NetworkableAwareness)
+	if SERVER then
+		table.Empty(_NetworkableChanges)
+		table.Empty(_NetworkableAwareness)
+		table.Empty(_NetworkableQueue)
+	end
 end
 
 function nw.CreateIDPair(id, numid)
@@ -138,6 +128,10 @@ local ns = netstack:new()
 
 nw.AutoAssignID = true
 nw.EncoderLength = 5
+
+function IsNetworkable(what)
+	return istable(what) and what.IsNetworkable
+end
 
 function nw:Initialize(id, ...)
 	self.Networked = {}
@@ -254,12 +248,7 @@ function nw:Set(k, v)
 		return self
 	end
 
-	if self.Networked[k] == v and not istable(v) then --[[adios]] return end
-
-	self.Networked[k] = v
-
-	if v == nil then v = fakeNil end
-	_NetworkableChanges:Set(v, self.NetworkableID, k)
+	self:_ServerSet(k, v)
 	return self
 end
 
@@ -267,7 +256,7 @@ function nw:Get(k, default)
 	--if self.__Aliases[k] ~= nil then k = self.__Aliases[k] end
 
 	local ret = self.Networked[k]
-	if ret == fakeNil then return nil end
+	if ret == fakeNil then return default end
 	if ret == nil then return default end
 
 	return ret
@@ -343,6 +332,31 @@ function nw:Bind(what)
 end
 nw.Bond = nw.Bind
 
+
+function Networkable.Profiling.Print()
+	local entries = {}
+	for ct, dat in pairs(Networkable.Profiling._NWDataInstances) do
+		entries[#entries + 1] = {ct, dat}
+	end
+
+	table.sort(entries, function(a, b) return a[1] < b[1] end)
+
+	for _, t in ipairs(entries) do
+		local ct, dat = unpack(t)
+		local first = true
+
+		for k,v in SortedPairs(dat) do
+			if v > 200 then
+				if first then
+					MsgC(Colors.Red, ("%ds.:\n"):format(ct))
+					first = false
+				end
+
+				MsgC(Colors.Sky, ("	%s: "):format(k), color_white, ("%d bytes\n"):format(v))
+			end
+		end
+	end
+end
 
 if CLIENT then
 	include("networkable_cl_ext.lua")

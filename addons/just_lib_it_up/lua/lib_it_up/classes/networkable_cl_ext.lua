@@ -227,3 +227,6 @@ net.Receive("NetworkableInvalidated", function()
 		_NetworkableIDToNumber[id] = nil
 	end
 end)
+
+function nw:AddDependency() end
+nw.AddDepend = nw.AddDependency

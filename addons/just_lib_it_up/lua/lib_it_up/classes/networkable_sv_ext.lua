@@ -44,10 +44,20 @@ local nw = LibItUp.Networkable
 			Kinda like NetworkVarNotify, except after _everything_ was updated
 ]]
 
+_NetworkableChanges = _NetworkableChanges or muldim:new()
+_NetworkableAwareness = _NetworkableAwareness or muldim:new() --[ply] = {'NameID', 'NameID'}
+_NetworkableQueue = _NetworkableQueue or {}				-- [seq_id] = [name] ; FIFO
+
 local update_freq = Networkable._UpdateFrequency
 local SZ = Networkable._Sizes
 
+SZ.INTERVAL_UPDATE = 1024 * 64 * Networkable._UpdateFrequency 	-- Networkable._UpdateFrequency = kb/nw frame
+SZ.FULL_UPDATE = 1024 * 96										-- kb/s
 
+Networkable.CurrentWritten = Networkable.CurrentWritten or 0
+Networkable.WrittenWhen = Networkable.WrittenWhen or 0
+
+SZ.WRITTEN_DECAY = 1024 * 64 -- 64kb becomes available each second
 
 local realPrint = print
 local print = function(...)
@@ -250,12 +260,15 @@ util.AddNetworkString("NetworkableSync")
 util.AddNetworkString("NetworkableInvalidated")
 
 function nw:_SendNet(who, full, budget)
-	if self:Emit("ShouldNetwork", who) == false then return end
+	if self:Emit("ShouldNetwork", who) == false then return false end
 
-	budget = budget or 32 * 1024 * 8
+	budget = math.min(budget or 32 * 1024, 63 * 1024) -- don't write more than 63kb in one net message
 
 	local numID, nameID = self.NumberID, self.NetworkableID
 	local unaware = full or false
+
+	-- full is either a bool (use _all_ networked data) or a table (use only that networked data)
+	-- done like this because if the network wasn't complete, you can pass the incomplete networked data back
 
 	if not full then -- fullupdate ignores nw awareness
 		for _, ply in ipairs(who) do
@@ -267,21 +280,16 @@ function nw:_SendNet(who, full, budget)
 		end
 	end
 
-	local changes = full and self:GetNetworked() or _NetworkableChanges[nameID]
-	if not changes then return end --/shrug
+	-- `changes` will be modified, so copy the networked table if its a full update
+	-- _NetworkableChanges is intended to be nilled as the changes happen, so don't copy it
+
+	local changes = full and (istable(full) and full or table.Copy(self:GetNetworked())) or _NetworkableChanges[nameID]
+	if not changes then return false end --/shrug
 
 	local changes_count = table.Count(changes)
 
-	--[[
-	for k,v in pairs(changes) do
-		local should = self:Emit("ShouldEncode", k, v)
-		if should == false then changes[k] = nil continue end
-
-		changes_count = changes_count + 1
-	end
-	]]
-
 	local written = 0
+	local needRerun = false -- if we haven't networked everything we had, we'll need a rerun next nw frame
 
 	net.Start("NetworkableSync")
 		local ns = netstack:new()
@@ -306,9 +314,14 @@ function nw:_SendNet(who, full, budget)
 
 			for k,v in pairs(changes) do
 				WriteChange(k, v, self, who)
-				if not full then changes[k] = nil end
+				changes[k] = nil
 				actuallyWritten = actuallyWritten + 1
+
 				if ns:BytesWritten() > budget then
+					if next(changes, k) then
+						needRerun = true -- we're yeeting but we have more changes
+					end
+
 					goto send -- YEET IT
 				end
 			end
@@ -319,6 +332,7 @@ function nw:_SendNet(who, full, budget)
 
 		::send::
 		written = ns:BytesWritten()
+
 		ns:Hijack(false)
 
 		ns:SetCursor(nsCursor)
@@ -338,7 +352,7 @@ function nw:_SendNet(who, full, budget)
 		instances[nameID] = instBytes + (net.BytesWritten())
 	net.Send(who)
 
-	return ns, written
+	return ns, written, needRerun and changes
 end
 
 function Networkable:_Queue()
@@ -347,11 +361,23 @@ function Networkable:_Queue()
 		if v == self.NetworkableID then return end
 	end
 
+	local inj = {}
+	local injLkup = self:_InjectDeps(inj, injLkup)
+
+	for k, obj in pairs(inj) do
+		injLkup = obj:_InjectDeps(inj, injLkup)
+	end
+
+	for k,v in ipairs(inj) do
+		v:_Queue()
+	end
+
 	q[#q + 1] = self.NetworkableID
 end
 
 -- networks all networkables to all players
 local function NetworkAll()
+	Networkable.OverBudget = false
 	if not next(_NetworkableChanges) then return end
 
 	for nwID, changes in pairs(_NetworkableChanges) do
@@ -361,14 +387,23 @@ local function NetworkAll()
 	end
 
 	local all = player.GetAll()
-	local copy = {}
+	local nwTo = {}
 
 	local total_written = 0
+	local ct = CurTime()
+	local budget = Networkable.GetAvailableBudget(false)
 
 	-- every NW that needs networking will be in this queue
 	-- so we pop the first one and network it
 	for i=1, #_NetworkableQueue do
-		local name = table.remove(_NetworkableQueue, 1)
+		if total_written > budget then
+			Networkable._OnOverBudget()
+			Networkable.CurrentWritten = Networkable.CurrentWritten + total_written
+			Networkable.WrittenWhen = ct
+			return
+		end
+
+		local name = _NetworkableQueue[1]
 
 		local obj = _NetworkableCache[name]
 		local shouldFull = false
@@ -376,37 +411,83 @@ local function NetworkAll()
 		if not obj or not obj:IsValid() then continue end
 
 		if obj.Filter then
-			copy = {}
+			nwTo = {}
 
 			for k,v in ipairs(all) do
 				if obj:Filter(v) ~= false then
-					copy[#copy + 1] = v
+					nwTo[#nwTo + 1] = v
 				end
 			end
 		else
-			copy = all
+			nwTo = all
 		end
 
-		local _, written = obj:_SendNet(copy, shouldFull, SZ.INTERVAL_UPDATE - total_written)
-		total_written = total_written + written
-						-- written more than INTERVAL_UPDATE = halt until next nw frame
-		if total_written > SZ.INTERVAL_UPDATE then
-			return
+		local ns, written, remaining = obj:_SendNet(nwTo, shouldFull, SZ.INTERVAL_UPDATE - total_written)
+		if ns then
+			total_written = total_written + written
 		end
+
+		-- technically, the _NetworkableChanges queue-r should handle this
+		-- but this would be the "proper" way i think
+		if not remaining then
+			table.remove(_NetworkableQueue, 1)
+		end
+
+		printf("NetworkAll #%d: `%s`, total written: %.1fkb. / %.1fkb., remaining: %s [%s entries]",
+			i, obj.NetworkableID, total_written / 1024, budget / 1024, remaining, remaining and table.Count(remaining) or "none")
 	end
 
+	Networkable.CurrentWritten = Networkable.CurrentWritten + total_written
+	Networkable.WrittenWhen = ct
 end
 
 _G.NWAll = NetworkAll
 
-local nwErr = Curry(printf, "NetworkableNetwork error: %s")
+local nwErr = Curry(warnf, "NetworkableNetwork error: %s")
 local nwAll = function()
 	xpcall(NetworkAll, nwErr)
+	timer.Adjust("NetworkableNetwork", update_freq, 0, nwAll)
+	hook.NHRun("NetworkableNetworkFrame")
+end
+
+function Networkable._DoDecay()
+	local passed = CurTime() - Networkable.WrittenWhen
+	local decayed = passed * SZ.WRITTEN_DECAY			-- how much data became available since last write
+
+	Networkable.CurrentWritten = math.max(Networkable.CurrentWritten - decayed, 0)
+
+	printf("%.2fs. passed:\n	decay: %.1fkb. / %.1fkb.",
+		passed, decayed / 1024, Networkable.CurrentWritten / 1024)
+end
+
+function Networkable.GetAvailableBudget(full)
+	local total_available = (isnumber(full) and full) or
+		(full and SZ.FULL_UPDATE or SZ.INTERVAL_UPDATE)
+
+	Networkable._DoDecay()
+
+	local budget = total_available - Networkable.CurrentWritten
+
+	printf("budget: %.1fkb. / %.1fkb. [%s]",
+		budget / 1024, total_available / 1024, full)
+
+	return budget
+end
+
+function Networkable._OnOverBudget()
+	-- called when budget gets exceeded during networking
+	-- set a flag and force us to wait until the next networking frame
+	Networkable.OverBudget = true
+	timer.Adjust("NetworkableNetwork", update_freq, 0, nwAll)
 end
 
 -- Updates every player in `who` table on every networkable
 -- in `what` table, regardless of their awareness
-function Networkable.UpdateFull(who, what)
+
+local b = bench("a")
+
+
+function Networkable.UpdateFull(who, what, frag)
 	if not what then
 		what = _NetworkableCache
 	end
@@ -417,27 +498,87 @@ function Networkable.UpdateFull(who, what)
 		who = {who}
 	end
 
-	local copy = {}
+	local nwTo = {} -- table of players to network to
+	local nwObjs
+	local startIter = 1
 
-	for _, obj in pairs(what) do
+
+	if not isnumber(frag) then
+		-- not a fragmented update; copy `what`
+		nwObjs = {}
+
+		local inj = {}
+		local injLkup
+
+		for k, obj in pairs(what) do
+			injLkup = obj:_InjectDeps(inj, injLkup)
+			if not injLkup[obj] then
+				inj[#inj + 1] = obj
+				injLkup[obj] = true
+			end
+		end
+
+		for k,v in ipairs(inj) do
+			nwObjs[#nwObjs + 1] = {v, true} -- [1] = nwObj, [2] = changesToTransmit
+			-- if [2] is a boolean, transmit all
+		end
+
+	else
+		-- fragmented update; `what` already has the format we need
+		nwObjs = what
+		startIter = frag - (what[frag - 1] and 1 or 0)
+	end
+
+	local budget = Networkable.GetAvailableBudget(true)
+
+	local total_written = 0
+
+	for i=startIter, table.maxn(nwObjs) do
+		if total_written > budget then
+			Networkable._OnOverBudget()
+			-- if we go over budget, wait till the next networking frame and
+			-- call the function again with what we couldn't network this time
+			hook.Once("NetworkableNetworkFrame", function()
+				Networkable.UpdateFull(who, nwObjs, i)
+			end)
+
+			Networkable.CurrentWritten = Networkable.CurrentWritten + total_written
+			Networkable.WrittenWhen = CurTime()
+
+			return
+		end
+
+		local dat = nwObjs[i]
+		local obj = dat[1]
 		if obj.Filter then
-			copy = {}
+			nwTo = {}
 
 			for k,v in ipairs(who) do
 				if obj:Filter(v) ~= false then
-					copy[#copy + 1] = v
+					nwTo[#nwTo + 1] = v
 				end
 			end
-
 		else
-			copy = who
+			nwTo = who
 		end
-		print("Fullupdating:")
-		for k,v in pairs(copy) do
-			print("	", k, v)
+
+		local _, written, remaining = obj:_SendNet(nwTo, dat[2], budget - total_written)
+		if written then
+			total_written = total_written + written
 		end
-		obj:_SendNet(copy, true)
+
+		if not remaining then
+			nwObjs[i] = nil
+		else
+			nwObjs[i][2] = remaining
+		end
+
+		printf("UpdateFull #%d: `%s`, total written: %.1fkb. / %.1fkb., remaining: %s",
+			i, obj.NetworkableID, total_written / 1024, budget / 1024, remaining)
 	end
+
+	Networkable.CurrentWritten = Networkable.CurrentWritten + total_written
+	Networkable.WrittenWhen = CurTime()
 end
 
 Networkable.FullUpdate = Networkable.UpdateFull
@@ -448,7 +589,7 @@ hook.Add("PlayerFullyLoaded", "NetworkableUpdate", function(ply)
 	Networkable.UpdateFull(ply, _NetworkableCache)
 end)
 
-function nw:Network(now) 	--networks everything in the next tick (or right now if `now` is true OR networkable has a filter)
+function nw:Network()
 	local to = player.GetAll()
 	local copy = {}
 
@@ -467,3 +608,59 @@ function nw:Network(now) 	--networks everything in the next tick (or right now i
 
 	self:_SendNet(copy)
 end
+
+function nw:_NWNextTick()
+	-- network all the next tick
+	if not Networkable.OverBudget then
+		timer.Adjust("NetworkableNetwork", 0, 0, nwAll)
+	end
+end
+
+function nw:_ServerSet(k, v)
+	if self.Networked[k] == v and not istable(v) then --[[adios]] return end
+
+	self.Networked[k] = v
+	if v == nil then v = fakeNil end
+
+	_NetworkableChanges:Set(v, self.NetworkableID, k)
+end
+
+-- injects the deps of an nw into the table before this nw
+
+--[[
+	nwable1,					nwable1,
+	nwable2,					nwable2,
+ -> depending_nw3,		-->		depended_nw5,
+	nwable4,					depending_nw3,
+	depended_nw5,				nwable4,
+]]
+
+function nw:_InjectDeps(tbl, injected)
+	injected = injected or {[self] = true}
+
+	if self.Dependencies then
+
+		for k,v in ipairs(self.Dependencies) do
+			if not v:IsValid() then continue end
+
+			if not injected[v] then
+				injected[v] = true
+				-- inject the deps' deps recursively
+				v:_InjectDeps(tbl, injected)
+				-- then inject the dep itself
+				table.insert(tbl, v)
+			end
+		end
+
+	end
+
+	return injected
+end
+
+function nw:AddDepend(nw2)
+	assert(IsNetworkable(nw2))
+	self.Dependencies = self.Dependencies or {}
+	table.insert(self.Dependencies, nw2)
+end
+
+nw.AddDependency = nw.AddDepend
