@@ -51,7 +51,6 @@ function bw.SQLResync()
 		local basesArg = LibItUp.SQLArgList()
 			basesArg:AddArg("base_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT")
 			basesArg:AddArg("base_name VARCHAR(500) NOT NULL")
-			basesArg:AddArg("base_name VARCHAR(500) NOT NULL")
 			basesArg:AddArg("base_data JSON")
 			basesArg:AddArg("UNIQUE KEY `base_name_UNIQUE` (`base_name`)")
 
@@ -61,8 +60,8 @@ function bw.SQLResync()
 		local zonesArg = LibItUp.SQLArgList()
 
 		zonesArg:AddArg("zone_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT")
+		zonesArg:AddArg("zone_name VARCHAR(121) NOT NULL") -- you really don't need the name to be any longer than this
 		zonesArg:AddArg("base_id INT NOT NULL")	-- not PK: there can be multiple zones tied to the same base
-		zonesArg:AddArg("base_name VARCHAR(255) NOT NULL") -- you really don't need the name to be any longer than this
 
 		for k,v in ipairs(allArgNames) do
 			zonesArg:AddArg(v .. " FLOAT NOT NULL")
