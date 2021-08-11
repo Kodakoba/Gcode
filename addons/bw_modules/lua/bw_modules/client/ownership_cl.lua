@@ -1,9 +1,10 @@
 
-local eidToOwner = {}
+local eidToOwner = BaseWars.Ents.EIDToOwner or {}
+BaseWars.Ents.EIDToOwner = eidToOwner
 
 function BaseWars.Ents.AssignOwner(eid, sid)
 	if IsEntity(eid) then eid = eid:EntIndex() end
-	if IsPlayer(sid) then sid = sid:SteamID64() end
+	if IsPlayer(sid) then sid = sid:SteamID() end
 
 	assert(isnumber(eid))
 	assert(isstring(sid))
@@ -30,14 +31,14 @@ hook.Add("EntityActuallyRemoved", "BW_OwnershipYeet", function(ent, tbl, eid)
 end)
 
 net.Receive("BW_OwnershipChange", function()
-	local eid, sid64 = net.ReadUInt(16), net.ReadString()
-	BaseWars.Ents.AssignOwner(eid, sid64)
+	local eid, sid = net.ReadUInt(16), net.ReadSteamID()
+	BaseWars.Ents.AssignOwner(eid, sid)
 end)
 
 net.Receive("BW_OwnershipChange_Mass", function()
 	local count = net.ReadUInt(16)
 	for i=1, count do
-		local eid, sid64 = net.ReadUInt(16), net.ReadString()
-		BaseWars.Ents.AssignOwner(eid, sid64)
+		local eid, sid = net.ReadUInt(16), net.ReadSteamID()
+		BaseWars.Ents.AssignOwner(eid, sid)
 	end
 end)

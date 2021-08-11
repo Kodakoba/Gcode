@@ -78,6 +78,8 @@ function PLAYER:IsEnemy()
 end
 
 function PLAYER:IsRaidable()
+	if not self:IsValid() then return end
+
 	local can, err = raid.CanGenerallyRaid(self, true)
 	if can == false then
 		return can, err

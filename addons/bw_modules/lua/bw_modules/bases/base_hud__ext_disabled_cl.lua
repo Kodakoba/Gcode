@@ -1,13 +1,3 @@
---[[local bw = BaseWars.Bases
-local nw = bw.NW
-
-local frames = {}
-
-hook.Add("HUDPaint", "bas", function()
-	local lp = LocalPlayer()
-	local base, zone = lp:BW_GetBase(), lp:BW_GetZone()
-end)]]
-
 local bw = BaseWars.Bases
 local nw = bw.NW
 
@@ -91,8 +81,8 @@ local function updateOwner(base, initial)
 		piece:ReplaceText(piece.OwnedByOpenerFragment, "  (owned by ", nil, nil, animTable)
 
 		if not fac then -- player-owned
-			local name = owners[1]:GetNick()
-
+			local ply = owners[1]:GetPlayer()
+			local name = ply:IsValid() and ply:Nick() or owners[1]:GetSteamID64()
 			local _, new = piece:ReplaceText(piece.OwnerFragment, name, nil, nil, animTable)
 			if new then
 				new.Font = "MR18"

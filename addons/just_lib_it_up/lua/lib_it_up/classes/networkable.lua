@@ -105,8 +105,12 @@ local IDToNum = _NetworkableIDToNumber
 
 function nw.ResetAll()
 	table.Empty(cache)
+
 	table.Empty(numToID)
+	_NetworkableNumberToID = numToID
+
 	table.Empty(IDToNum)
+	_NetworkableIDToNumber = IDToNum
 
 	if SERVER then
 		table.Empty(_NetworkableChanges)
@@ -116,6 +120,9 @@ function nw.ResetAll()
 end
 
 function nw.CreateIDPair(id, numid)
+	if CLIENT then
+		printf("Creating ID pair: %d <-> %s", numid, id)
+	end
 	numToID[numid] = id
 	IDToNum[id] = numid
 end
@@ -196,6 +203,7 @@ end
 
 function nw:SetNetworkableNumberID(numid)
 	assert(self.NetworkableID, "Networkable must have an ID before setting a number ID!")
+	assert(isnumber(numid))
 
 	numToID[numid] = self.NetworkableID
 	IDToNum[self.NetworkableID] = numid
@@ -261,6 +269,15 @@ function nw:Get(k, default)
 
 	return ret
 end
+
+function nw:GetID()
+	return self.NetworkableID
+end
+
+function nw:GetNumID()
+	return _NetworkableIDToNumber[self:GetID()]
+end
+nw.GetNumberID = nw.GetNumID
 
 function nw:Alias(k, k2)
 	if self.__Aliases[k] then

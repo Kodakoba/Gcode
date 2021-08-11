@@ -10,7 +10,7 @@ local bwe = BaseWars.Ents
 hook.Add("CPPIAssignOwnership", "BWTrackOwner", function(ply, ent)
 	if not ply:IsValid() then return end
 
-	local id = ply:SteamID64()
+	local id = ply:SteamID()
 	ent.CPPI_OwnerSID = id
 
 	trackEnt(ent, id)
@@ -18,7 +18,7 @@ hook.Add("CPPIAssignOwnership", "BWTrackOwner", function(ply, ent)
 
 	net.Start("BW_OwnershipChange")
 		net.WriteUInt(ent:EntIndex(), 16)
-		net.WriteString(id)
+		net.WriteSteamID(ply:SteamID())
 	net.Broadcast()
 
 	-- run a new hook because, again, fpp sucks
@@ -33,10 +33,9 @@ function BaseWars.Ents.NetworkAll(ply)
 
 		for k,v in pairs(SPropProtection.Props) do
 			local ent = v.Ent
-			local sid64 = util.SteamIDTo64(v.SteamID)
 
 			net.WriteUInt(ent:EntIndex(), 16)
-			net.WriteString(sid64)
+			net.WriteSteamID(v.SteamID)
 		end
 
 	net.Send(ply)
@@ -45,11 +44,6 @@ end
 hook.Add("PlayerFullyLoaded", "BW_NetworkOwnership", function(ply)
 	BaseWars.Ents.NetworkAll(ply)
 end)
-
-
-
-
-
 
 local function getEntry(sid64)
 	if IsPlayer(sid64) then

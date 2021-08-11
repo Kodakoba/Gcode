@@ -205,21 +205,17 @@ end
 local CanRaidColor = Color(230, 100, 100)
 local CantRaidColor = Color(150, 30, 30)
 
-local header = Colors.Header:Copy()
-local body = Colors.FrameBody:Copy()
-
 local hpBarCol = CantRaidColor:Copy()
 local emptyBar = Colors.LightGray:Copy()
 
 local infoCol = Color(40, 40, 40)
 local txCol = Color(220, 220, 220)
 
-local hdSize = 18
 local curBlowtorch
 local frW, frH = 180, 55
 
 local function paint(ent, curent, baseAnim, firstFrame)
-	local self = curBlowtorch
+	local self = curBlowtorch -- shut up linter
 	if not curBlowtorch then return end
 
 	anim = anim or Animatable("blowtorch")
@@ -231,6 +227,9 @@ local function paint(ent, curent, baseAnim, firstFrame)
 
 	if ow then
 		self:FillData(tr, ent, ow)
+	end
+
+	if canraid then
 		anim:LerpColor(hpBarCol, CanRaidColor, 0.3, 0, 0.3)
 	else
 		anim:LerpColor(hpBarCol, CantRaidColor, 0.3, 0, 0.3)
@@ -247,9 +246,9 @@ local function paint(ent, curent, baseAnim, firstFrame)
 
 	hpfrac = anim.HPFrac or 0
 
-	if lastent and lastent:IsValid() then
-		hp = GetHP(lastent)
-		max = GetMaxHP(lastent)
+	if ent then
+		hp = GetHP(ent)
+		max = GetMaxHP(ent)
 		anim:To("HPFrac", hp / max, 0.2, 0, 0.3)
 	end
 
@@ -262,8 +261,17 @@ local function paint(ent, curent, baseAnim, firstFrame)
 
 	draw.SimpleText("H E A L T H", "OSB20", x + 20 + 80, barY + barH / 2, infoCol, 1, 1)
 
+	if not canraid then
+		draw.BeginMask()
+		draw.SetMaskDraw(true)
+	end
+
 	surface.SetDrawColor(hpBarCol)
 	surface.DrawRect(x + xpad, barY, hpfrac * barW, barH)
+
+	if not canraid then
+		draw.DisableMask()
+	end
 
 	draw.SimpleText(hp .. "/" .. max, "OS18",
 		x + xpad + hpfrac * barW,
@@ -271,23 +279,24 @@ local function paint(ent, curent, baseAnim, firstFrame)
 		txCol, 1, 5)
 
 	if not canraid then
-		strX = (strX + FrameTime() / 32) % 0.5
-		strY = (strY + FrameTime() / 16) % 0.5
+		strX = (strX + FrameTime() / 32) % 1
+		strY = (strY + FrameTime() / 16) % 1
 
-		surface.SetDrawColor( 0, 0, 0 )
+		surface.SetDrawColor(0, 0, 0, 150)
 
-		render.SetScissorRect(x + xpad, barY, x + hpfrac * barW + xpad, barY + barH, true)
+		draw.ReenableMask()
+		draw.DrawOp()
 
-			surface.DrawUVMaterial("https://i.imgur.com/y9uYf4Y.png", "whitestripes.png",
-				x, y, 200, 80, 0.1 - strX, 0.1 - strY, 0.6 - strX, 0.4 - strY)
-			draw.SimpleText("H E A L T H", "OSB20", x + 20 + 80, barY + barH / 2, txCol, 1, 1)
+		surface.DrawUVMaterial("https://i.imgur.com/y9uYf4Y.png", "whitestripes.png",
+			x, y, 200, 80, 0.1 - strX, 0.1 - strY, 0.6 - strX, 0.4 - strY)
+		draw.SimpleText("H E A L T H", "OSB18", x + xpad + barW / 2, math.floor(barY + barH / 2), txCol, 1, 1)
 
-		render.SetScissorRect(0, 0, 0, 0, false)
+		draw.FinishMask()
 	end
 
 	if canraid then
 		local str = ("penetrates %s prop%s"):format(#trents, (#trents ~= 1 and "s") or "")
-		draw.SimpleText(str, "OSB18", x + 100, y + 76, Color(200, 200, 200, a), 1, 4)
+		--draw.SimpleText(str, "OSB18", x + 100, math.floor(y) + 76, Color(200, 200, 200, a), 1, 4)
 	end
 end
 

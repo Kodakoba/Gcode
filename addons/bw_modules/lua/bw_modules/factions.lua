@@ -85,7 +85,13 @@ hook.Add("PlayerLeftFaction", "PlayerInfoFill", function(fac, ply, pinfo)
 end)
 
 function facmeta:GetBase()
-	local base = self._Base
+	local base
+
+	if SERVER then
+		base = self._Base
+	else
+		base = BaseWars.Bases.Bases[self.PublicNW:Get("OwnedBase", -1)]
+	end
 
 	if base then
 		if not base:IsValid() then
@@ -99,6 +105,21 @@ function facmeta:GetBase()
 	end
 
 	return base
+end
+
+function facmeta:SetBase(base)
+	assert(not base or BaseWars.Bases.IsBase(base))
+
+	if base then
+		base:On("Unclaim", self, function(_)
+			if self._Base == base then
+				self:SetBase(nil)
+			end
+		end)
+	end
+
+	self._Base = base
+	self.PublicNW:Set("OwnedBase", base and base:GetID() or nil)
 end
 
 local PLAYER = debug.getregistry().Player

@@ -52,7 +52,7 @@ function bw.Base:Claim(by)
 		self.Owner.Faction = by
 		self.Owner.Player = nil
 
-		by._Base = self
+		by:SetBase(self)
 
 		self:ListenFaction(by)
 
@@ -61,7 +61,7 @@ function bw.Base:Claim(by)
 
 	elseif IsPlayer(by) or IsPlayerInfo(by) then
 		local pinfo = by:GetPInfo()
-		pinfo._Base = self
+		pinfo:SetBase(self)
 
 		self.Owner.Faction = nil
 		self.Owner.Player = pinfo
@@ -95,20 +95,9 @@ end)
 function bw.Base:Unclaim(temporarily)
 	self:_CheckValidity()
 
-
 	if not self:GetClaimed() then
 		errorf("Tried to unclaim an unclaimed base!")
 		return
-	end
-
-	local fac, members = self:GetOwner()
-
-	if fac then
-		fac._Base = nil
-	end
-
-	for k,v in ipairs(members) do
-		v._Base = nil
 	end
 
 	self.Owner.Faction = nil
@@ -161,18 +150,6 @@ function bw.Base:SpawnCore()
 	self:SetBaseCore(core)
 end
 
-function bw.Base:UpdateNW()
-	local plys, nws = {}, {self.OwnerNW, self.EntsNW}
-	local fac, infos = self:GetOwner()
-
-	for k,v in ipairs(infos) do
-		local ply = v:GetPlayer()
-		if ply:IsValid() then plys[#plys + 1] = ply end
-	end
-
-	Networkable.UpdateFull(plys, nws)
-end
-
 -- This filter is used in multiple places
 function bw.Base.OwnerNWFilter(nw, ply)
 	local self = nw.Base
@@ -221,17 +198,6 @@ function bw.Base:IsOwner(what)
 		return false
 	end
 end
-
-function bw.Base:CanClaim()
-	self:_CheckValidity()
-
-	local ow = self.Owner
-	if ow.Faction and ow.Faction:IsValid() then return false end
-	if ow.Player and ow.Player:IsValid() then return false end
-
-	return true
-end
-
 
 ChainAccessor(bw.Zone, "Brush", "Brush")
 

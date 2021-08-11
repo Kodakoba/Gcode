@@ -28,6 +28,8 @@ function pg:Initialize(base)
 		nw:Alias("Power", 0)
 		nw:Alias("PowerIn", 1)
 		nw:Alias("PowerOut", 2)
+		nw:AddDependency(bw.NW.Bases)
+		nw:AddDependency(bw.NW.Zones)
 
 	self:Emit("Initialize", base)
 end
@@ -47,9 +49,16 @@ function pg:AddPower(pw)
 	self:SetPower(new_pw)
 end
 
-function pg:TakePower(pw)
-	local new_pw = math.min(self:GetPower() - pw, 0)
-	self:SetPower(new_pw)
+function pg:TakePower(pw, drain)
+	if not drain then
+		if self:GetPower() < pw then return false end -- can't take that much power
+		self:SetPower(self:GetPower() - pw)
+		return true -- took successfully
+	else
+		-- in drain mode, it tries to drain out power even if it doesnt have enough
+		local new_pw = math.min(self:GetPower() - pw, 0)
+		self:SetPower(new_pw)
+	end
 end
 
 function pg:HasPower(pw)

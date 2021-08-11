@@ -46,12 +46,12 @@ if SERVER then
 		return rtimes[self] or (self.NextSpawnTime - CurTime()) --base gamemode
 	end
 
-	__BotIndex = __BotIndex or 0
 
 	hook.Add("PlayerInitialSpawn", "CountBotIndex", function(ply)
 		if ply:IsBot() then
-			ply:SetNWInt("BotIndex", __BotIndex)
-			__BotIndex = __BotIndex + 1
+			local curSID = ply:SteamID64()
+			local diff = tonumber(curSID:sub(-5)) - tonumber(BotDefaultSteamID64:sub(-5))
+			ply:SetNWInt("BotIndex", diff)
 		end
 	end)
 else
@@ -113,6 +113,8 @@ end
 
 PLAYER.__RealSteamID = PLAYER.__RealSteamID or PLAYER.SteamID
 
+_G.BotDefaultSteamID64 = "90071996842377216"
+
 function PLAYER:SteamID()
 	if self:IsBot() then
 		return util.SteamIDFrom64(self:SteamID64()) -- `NULL` cl or `BOT` sv --> "STEAM_0:0:0", "STEAM_0:0:1", so on
@@ -124,6 +126,10 @@ PLAYER.GetNextRespawn = PLAYER.GetRespawnTime
 
 function IsPred()
 	return CurTime() ~= UnPredictedCurTime()
+end
+
+function PLAYER:Retry()
+	self:ConCommand("retry")
 end
 
 if SERVER then
@@ -148,7 +154,7 @@ if SERVER then
 				if FullyLoaded[ply] then return end
 
 				FullyLoaded[ply] = true
-				hook.Run("PlayerFullyLoaded", ply)
+				hook.NHRun("PlayerFullyLoaded", ply)
 			end
 
 			local should_remove = mv_ply == ply and not cmd:IsForced()

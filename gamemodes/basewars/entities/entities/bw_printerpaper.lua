@@ -10,7 +10,7 @@ ENT.PaperAmount = 1000
 
 if CLIENT then return end
 
-function ENT:SpawnFunction(ply, tr, class)
+function ENT:BW_SpawnFunction(ply, tr, class)
 
 	local pos = ply:GetPos()
 	

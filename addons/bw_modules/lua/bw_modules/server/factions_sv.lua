@@ -77,11 +77,11 @@ function facmeta:RaidedCooldown()
 end
 
 function facmeta:Update(now)
-	self.PublicNW:Set("Members", self.memvals)
-	self.PublicNW:Set("Leader", self.own)
+	--self.PublicNW:Set("Members", self.memvals)
+	print("updating leader to", self.ownInfo)
+	self.PublicNW:Set("Leader", self.ownInfo)
 	self.PublicNW:Set("PlayerInfo", self.meminfovals)
 
-	if now then self.PublicNW:Network(true) end
 	self:Emit("Update")
 end
 
@@ -95,10 +95,6 @@ function facmeta:_AddToMembers(what)
 	pinfo._Faction = self
 	self.members[ply] = true
 	self.meminfo[pinfo] = true
-
-	pinfo:On("Destroy", self, function()
-		self:RemoveFromMembers(pinfo)
-	end)
 
 	if new then
 		self:Emit("JoinFaction", ply, pinfo)
@@ -128,9 +124,9 @@ end
 function facmeta:Join(ply, pw, force)
 
 	if #self.memvals >= 4 then return false, "Too many members!" end
-
 	if ply:InFaction() then return false, "Player is already in a faction!" end
 	if ply:InRaid() then return false, "Player is in a raid!" end
+	if self:IsMember(ply) then return false, "Player is already part of the faction!" end
 
 	if self.pw and self.pw ~= pw and not force then
 		net.Start("Factions")
@@ -168,9 +164,6 @@ function facmeta:Initialize(ply, id, name, pw, col)
 	self.col = col
 	self.pw = pw
 
-
-
-
 	self.members = {}		-- [ply] = true
 	self.memvals = {}		-- [seq_id] = ply
 	self.meminfo = {}		-- [plyInfo] = true
@@ -189,7 +182,7 @@ function facmeta:Initialize(ply, id, name, pw, col)
 
 	if id > 0 then
 		self.own = ply
-		self.ownInfo = GetPlayerInfo(ply)
+		self.ownInfo = GetPlayerInfoGuarantee(ply)
 
 		self.PublicNW = Networkable:new("Faction:" .. id)
 		self.PublicNW:On("WriteChangeValue", "WritePlayerInfo", self._SerializePlayerInfo)
@@ -197,6 +190,8 @@ function facmeta:Initialize(ply, id, name, pw, col)
 		self.PublicNW:Alias("Members", 1)
 		self.PublicNW:Alias("Leader", 2)
 		self.PublicNW:Alias("PlayerInfo", 3)
+
+		self:Update(true)
 	end
 
 	self:On("Raided", "CooldownTracker", self.OnRaided)
@@ -208,6 +203,12 @@ function facmeta:_SerializePlayerInfo(key, val)
 		for k,v in ipairs(val) do
 			net.WriteString(v:GetSteamID64())
 		end
+		return false
+	end
+
+	if key == "Leader" then
+		net.WriteString(val:GetSteamID64())
+		print("sv: writing leader")
 		return false
 	end
 end
@@ -245,6 +246,8 @@ function facmeta:ChangeOwnership(to)
 end
 
 function facmeta:RemovePlayer(ply)
+	if not self:IsMember(ply) then return end
+
 	self:_RemoveFromMembers(ply)
 
 	if ply:IsValid() then
@@ -283,7 +286,6 @@ function facmeta:Remove()
 
 	net.Start("Factions")
 		net.WriteUInt(3, 4)	--delete
-		print("Deleting faction", self.id)
 		net.WriteUInt(self.id, 24)
 	net.Broadcast()
 
@@ -435,10 +437,12 @@ end
 PLAYER.KickFromFaction = Factions.KickOut
 
 hook.Add("PlayerDisconnected", "FactionDisband", function(ply)
+	--[[
 	local fac = ply:GetFaction()
 	if not fac then return end
 
 	fac:RemovePlayer(ply)
+	]]
 end)
 
 local function throwError(ply, uid, lang)
@@ -530,7 +534,7 @@ net.Receive("Factions", function(_, ply)
 
 end)
 
-hook.Add("PlayerInitialSpawn", "FactionNetwork", function(ply)
+hook.NHAdd("PlayerInitialSpawn", "FactionNetwork", function(ply)
 	Factions.FullUpdate()
 end)
 
@@ -562,3 +566,10 @@ end
 function PLAYER:FactionMembers()
 	return (not self:GetFaction() and {self}) or (self:GetFaction() and self:GetFaction().memvals)
 end
+
+
+hook.Add("PlayerInfoDestroy", "FactionRemove", function(pin)
+	if pin:GetFaction() then
+		pin:GetFaction():RemoveFromMembers(pin)
+	end
+end)

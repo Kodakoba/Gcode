@@ -988,13 +988,30 @@ function draw.BeginMask(mask, ...)
 		render.SetStencilTestMask(0xFF)
 		render.SetStencilWriteMask(0xFF)
 
-		render.SetStencilCompareFunction( STENCIL_NEVER )
-		render.SetStencilFailOperation( STENCIL_REPLACE )
+		draw.SetMaskDraw(false)
 
 		render.SetStencilReferenceValue( 1 ) --include
 
 		if mask then mask(...) end
 
+end
+
+function draw.SetMaskDraw(should)
+	if should then
+		render.SetStencilCompareFunction( STENCIL_ALWAYS )
+		render.SetStencilPassOperation( STENCIL_REPLACE )
+	else
+		render.SetStencilCompareFunction( STENCIL_NEVER )
+		render.SetStencilFailOperation( STENCIL_REPLACE )
+	end
+end
+
+function draw.DisableMask()
+	render.SetStencilEnable(false)
+end
+
+function draw.ReenableMask()
+	render.SetStencilEnable(true)
 end
 
 function draw.DeMask(demask, ...) --requires mask to be started

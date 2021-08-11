@@ -23,17 +23,21 @@ function ENT:GenPower()
 
 	self:EmitSound(self.Sounds[math.random(1, #self.Sounds)])
 
-	self:GetGrid():AddPower(self.PowerGenerated2)
-	self:GetGrid():Set("MT", (self:GetGrid().Networked.MT or 0) + 1)
+	local grid = self:GetPowerGrid()
+	if not grid then return end
+
+	local nw = self:GetPowerGrid():GetNW()
+
+	self:GetPowerGrid():AddPower(self.PowerGenerated2)
+	nw:Set("MT", (nw:Get("MT") or 0) + 1)
 
 	--self:GetGrid():Network()
 end
 
 function ENT:GenerateOptions(qm, pnl)
-	print("generating options", qm, pnl)
 
 	local gen = vgui.Create("FButton", pnl)
-	gen:SetLabel("Make some power!")
+	gen:SetLabel("Make power")
 
 	gen:SetSize(160, 48)
 
@@ -50,19 +54,20 @@ function ENT:GenerateOptions(qm, pnl)
 			net.WriteEntity(self)
 		net.SendToServer()
 
-		local grid = self:GetGrid()
+		local grid = self:GetPowerGrid()
+		if not grid then return end
+
+		local nw = self:GetPowerGrid():GetNW()
+
 		grid:AddPower(self.PowerGenerated2)
 
 		local ent = self
 
-		if not grid.ManualTapped then
-			grid:On("NetworkedChanged", self, function(self)
-				self:AddPower((self.ManualTapped - (self.Networked.MT or 0)) * ent.PowerGenerated2)
+		--if not grid.ManualTapped then
+			nw:On("NetworkedChanged", self, function(self)
+
 			end)
-		end
-
-		grid.ManualTapped = (grid.ManualTapped or 0) + 1
-
+		--end
 	end
 
 	local pw = vgui.Create("InvisPanel", pnl)
@@ -75,12 +80,21 @@ function ENT:GenerateOptions(qm, pnl)
 	local w, h = pw:GetContentSize()
 	local ent = self
 
+	local notbase = Color(180, 50, 50)
+	local pwcol = Color(50, 160, 250)
+
 	function pw:Paint(w, h)
 		if not IsValid(ent) then pnl:Remove() return end
 		surface.SetDrawColor(60, 60, 60, 150)
 		surface.DrawRect(0, 0, w, h)
-		local grid = ent:GetGrid()
-		draw.SimpleText(("Power: %d/%d"):format(grid.PowerStored, grid.MaxPowerStored), "OSB24", w/2, h/2, Color(50, 160, 250), 1, 1)
+
+		local grid = ent:GetPowerGrid()
+		if grid then
+			draw.SimpleText(("Power: %d/%d"):format(grid:GetPower(), grid:GetCapacity()),
+				"OSB24", w/2, h/2, pwcol, 1, 1)
+		else
+			draw.SimpleText("Not in your base.", "OSB24", w/2, h/2, notbase, 1, 1)
+		end
 
 		surface.SetDrawColor(0, 0, 0)
 		self:DrawGradientBorder(w, h, 3, 3)

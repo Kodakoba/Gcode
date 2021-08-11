@@ -31,7 +31,6 @@ function facmeta:Initialize(id, name, col, haspw)
 
 	--if id > 0 or CLIENT then
 		self.PublicNW = LibItUp.Networkable:new("Faction:" .. id)
-			self.PublicNW:Alias("Members", 1)
 			self.PublicNW:Alias("Leader", 2)
 			self.PublicNW:Alias("PlayerInfo", 3)
 		self:_HookNW(self.PublicNW)
@@ -68,7 +67,15 @@ function facmeta:InRaid()
 end
 
 function facmeta:GetMembers()
-	return self.PublicNW:Get("Members") or {}
+	local ret = {}
+
+	for k,v in ipairs(self:GetMembersInfo()) do
+		if v:GetPlayer():IsValid() then
+			ret[#ret + 1] = v:GetPlayer()
+		end
+	end
+
+	return ret
 end
 
 function facmeta:GetMembersInfo()
@@ -81,9 +88,17 @@ function facmeta:IsMember(what)
 end
 
 function facmeta:GetLeader()
-	return self.PublicNW:Get("Leader")
+	local ld = self.PublicNW:Get("Leader")
+	if ld and ld:GetPlayer() and ld:GetPlayer():IsValid() then
+		return ld:GetPlayer()
+	end
+
+	return false
 end
 
+function facmeta:GetLeaderInfo()
+	return self.PublicNW:Get("Leader")
+end
 
 function facmeta:GetName()
 	return self.name
@@ -113,13 +128,6 @@ end
 
 function facmeta:_HookNW(nw)
 	nw:On("NetworkedVarChanged", "TrackMembers", function(_, key, old, new)
-		--[[ -- moved to playerinfo
-		if key == "Members" then
-			self:RunPlayerHooks(old, new)
-			return
-		end
-		]]
-
 		if key == "Leader" then
 			hook.NHRun("FactionChangedLeader", self, old, new)
 			return
@@ -131,7 +139,13 @@ function facmeta:_HookNW(nw)
 	end)
 
 	nw:On("ReadChangeValue", "ReadPlayerInfo", function(nw, key)
-		if key ~= "PlayerInfo" then return end
+		print("hmmm", key)
+		if key ~= "PlayerInfo" and key ~= "Leader" then return end
+
+		if key == "Leader" then
+			print("cl: reading leader")
+			return GetPlayerInfoGuarantee(net.ReadString(), true)
+		end
 
 		local prev_membs = self:GetMembersInfo()
 

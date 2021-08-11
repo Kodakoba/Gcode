@@ -126,6 +126,8 @@ function hook.PAdd(ev, name, func, ...)
 	end, ...)
 end
 
+hook.NHAdd = hook.PAdd
+
 function hook.PRun(ev, ...)
 	local ok, a, b, c, d, e, f = pcall(hook.Run, ev, ...)
 

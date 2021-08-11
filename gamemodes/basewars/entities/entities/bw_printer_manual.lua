@@ -19,7 +19,8 @@ ENT.BypassMaster = true
 ENT.RebootTime = 0
 
 function ENT:UseFunc(act, call)
-	if not self:GetGrid():TakePower(5) then return end
+	local pg = self:GetPowerGrid()
+	if not pg or not pg:TakePower(5) then return end
 
 	local printed = self.PrintAmount * self:GetLevel()
 

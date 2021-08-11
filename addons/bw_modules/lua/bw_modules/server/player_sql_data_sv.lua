@@ -52,7 +52,12 @@ function LoadData(ply)
 end
 
 hook.Add("PlayerAuthed", "BW_SQLDataFetch", LoadData)
+
 hook.Add("PlayerDisconnected", "BW_SQLDataSave", SaveData)
+hook.NHAdd("PlayerInitialSpawn", "BW_SQLDataFetch_Bots", function(ply)
+	-- special hook for bots since they don't auth
+	LoadData(ply)
+end)
 
 local function setter(q, rep)
 	-- rep = the column name needs to be repeated

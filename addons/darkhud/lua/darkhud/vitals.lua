@@ -182,7 +182,7 @@ function DarkHUD.CreateVitals()
 
 		end
 
-		pl, pm, pe = lvl, mon
+		pl, pm = lvl, mon
 	end
 
 	local popups = Animatable:new("DarkHUD_Vitals")

@@ -59,7 +59,9 @@ end
 function ENT:Claim(by, restore)
 	assert(IsFaction(by) or CanGetPInfo(by))
 
-	local ply = not IsFaction(by) and GetPlayerInfoGuarantee(by):GetPlayer()
+	local pin = not IsFaction(by) and GetPlayerInfoGuarantee(by)
+	local ply = pin and pin:GetPlayer()
+
 	local fac = IsFaction(by) and by or ply:GetFaction()
 	local base = self:GetBase()
 	if not base then error("BaseCore without base, wtf?") return end
@@ -82,7 +84,7 @@ function ENT:Claim(by, restore)
 			self.ClaimedFaction = fac
 			self.ClaimedPlayer = nil
 		else
-			self:SetClaimedID(ply:UserID())
+			self:SetClaimedID(pin:SteamID64())
 			self:SetClaimedByFaction(false)
 			self.ClaimedPlayer = ply:GetPInfo()
 			self.ClaimedFaction = nil

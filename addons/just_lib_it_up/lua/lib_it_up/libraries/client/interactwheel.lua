@@ -36,15 +36,15 @@ local function resize()
 	local sw, sh = ScrW(), ScrH()
 
 	-- / 2 because its a radius, not a diameter
-	optionInnerRadius = math.min(sw * 0.45 / 2, sh * 0.45 / 2)
-	optionOuterRadius = math.min(sw * 0.7 / 2, sh * 0.7 / 2)
+	optionInnerRadius = math.min(sw * 0.45 / 2, sh * 0.5 / 2)
+	optionOuterRadius = math.min(sw * 0.7 / 2, sh * 0.75 / 2)
 end
 
 hook.Add("OnScreenSizeChanged", "InteractWheelResize", resize)
 resize()
 
-local unselectedColor = Color(0, 0, 0, 157)
-local selectedColor = Color(60, 120, 220, 77)
+local unselectedColor = Color(30, 30, 30, 147)
+local selectedColor = Color(50, 110, 210, 97)
 local arrowColor = Color(250, 250, 250, 180)
 
 local function normalize(x, y)
@@ -55,6 +55,8 @@ end
 local function angXY(x, y)
 	return math.atan2(y, x)
 end
+
+local b = bench("aaa", 600)
 
 function wheel:_PaintPanel(wheel, w, h)
 	-- self = panel
@@ -129,7 +131,6 @@ function wheel:_PaintPanel(wheel, w, h)
 	cam.PopModelMatrix(mtrx)
 
 	BSHADOWS.EndShadow(2, 2, 3)
-
 end
 
 function wheel:_OnMousePressed(wheel, mouse)
@@ -336,7 +337,14 @@ function wheel:Show()
 
 	pnl.Angle = 0
 
-	pnl.Paint = function(pnl, w, h) 	LibItUp.InteractWheel._PaintPanel(pnl, self, w, h) 	end
+	local err = GenerateErrorer("InteractWheel")
+
+	pnl.Paint = function(pnl, w, h)
+		draw.EnableFilters(true, false)
+			xpcall(LibItUp.InteractWheel._PaintPanel, err, pnl, self, w, h)
+		draw.DisableFilters(true, false)
+	end
+
 	pnl.Think = function(pnl) 		LibItUp.InteractWheel._ThinkPanel(pnl, self) 		end
 	pnl.OnMousePressed = function(pnl, ...) LibItUp.InteractWheel._OnMousePressed(pnl, self, ...) end
 
@@ -392,9 +400,14 @@ function InteractWheelOption:Initialize(name, desc, icon, cb)
 	self.DescriptionFont = "OS20"
 	self.TitleFont = "OSB32"
 
+	self:SetDescriptionColor(color_white:Copy())
+	self:SetTitleColor(color_white:Copy())
+
 	self.Icon = icon
 
 	self.HoveredFrac = 0
+
+
 
 	self.Circle = LibItUp.Circle()
 		self.Circle:SetSegments(50)
@@ -417,7 +430,6 @@ function InteractWheelOption:_Setup(num, ang)
 	-- the methods will figure out whether wrapping is actually necessary or nah
 	self:_WrapTitle()
 	self:_WrapDescription()
-
 
 	self.Circle:StopAnimations()
 
@@ -484,6 +496,10 @@ function InteractWheelOption:SetDescription(s)
 	self._WrappedDescription = false
 end
 
+ChainAccessor(InteractWheelOption, "DescriptionColor", "DescriptionColor")
+ChainAccessor(InteractWheelOption, "DescriptionColor", "DescColor")
+ChainAccessor(InteractWheelOption, "TitleColor", "TitleColor")
+
 local optionSelectedScaleMult = 0.15
 
 function InteractWheelOption:_Select()
@@ -501,6 +517,8 @@ function InteractWheelOption:_Select()
 			dur, 0, ease)
 
 	self.Circle:MemberLerp(self, "SelectedFrac", 1, dur, 0, ease)
+	self.Circle:MemberLerp(self, "HoveredFrac", 0, 0.1, 0, 0.2)
+
 	self:Emit("Select")
 end
 
@@ -523,7 +541,7 @@ end
 function InteractWheelOption:_Hide(sel)
 	local circ = self.Circle
 
-	circ:MemberLerp(self, "HoveredFrac", 0, 0.1, 0, 0.2)
+	--circ:MemberLerp(self, "HoveredFrac", 0, 0.1, 0, 0.2)
 
 	if sel then -- if we're hiding because an option was selected, override our own alpha manually
 		circ:MemberLerp(self, "_AlphaOverride", 0, wheelDisappearTime, 0, 0.2)
@@ -763,7 +781,8 @@ function InteractWheelOption:_Paint(x, y, w, h, prevMatrix, innerCircle)
 	local mtrxMiddleX = math.floor(math.cos(segMidRad) * (optionInnerRadius * 0.9))
 	local mtrxMiddleY = math.floor(math.sin(segMidRad) * (optionInnerRadius * 0.9))
 
-	local trX, trY = x + mtrxMiddleX * (1 - fr), y + mtrxMiddleY * (1 - fr)
+	local trFr = 1 - (self.SelectedFrac > 0 and 1 or fr)
+	local trX, trY = x + mtrxMiddleX * trFr, y + mtrxMiddleY * trFr
 
 	-- Scale and translate the matrix
 	local mtrx = self.Matrix
@@ -782,38 +801,50 @@ function InteractWheelOption:_Paint(x, y, w, h, prevMatrix, innerCircle)
 
 	cam.PushModelMatrix(mtrx, true)
 
-		local cy = y - infoH / 2 - (ic and select(2, ic:GetSize()) / 2 or 0)
-		local cy2 = cy
+		local cy = y - infoH / 2 - (ic and ic:GetTall() / 2 or 0)
 
-		if ic then
-			local iw, ih = ic:GetSize()
-			ic:Paint(x - iw/2, cy, iw, ih)
-			cy = cy + ih + iconMargin
-		end
+		if self:Emit("PaintDetails", x, cy) ~= false then
+			local eic = self:Emit("PaintIcon", x, cy)
 
-		if title then
-			surface.SetFont(self.TitleFont)
-			surface.SetDrawColor(color_white)
-			local hgt = draw.GetFontHeight(self.TitleFont)
-
-			for s, line in eachNewline(title) do
-				draw.SimpleText(s, self.TitleFont, x, cy, color_white, 1, 5)
-				cy = cy + hgt
+			if not isnumber(eic) then
+				if ic then
+					local iw, ih = ic:GetSize()
+					ic:Paint(x - iw/2, cy, iw, ih)
+					cy = cy + ih + iconMargin
+				end
+			else
+				cy = cy + eic
 			end
 
-		end
+			local etitle = self:Emit("PaintTitle", x, cy)
 
-		if desc then
+			if not isnumber(etitle) then
+				if title then
+					surface.SetFont(self.TitleFont)
+					local hgt = draw.GetFontHeight(self.TitleFont)
 
-			surface.SetFont(self.DescriptionFont)
-			surface.SetDrawColor(color_white)
-			local hgt = draw.GetFontHeight(self.DescriptionFont)
-
-			for s, line in eachNewline(desc) do
-				draw.SimpleText(s, self.DescriptionFont, x, cy, color_white, 1, 5)
-				cy = cy + hgt
+					for s, line in eachNewline(title) do
+						draw.SimpleText(s, self.TitleFont, x, cy, self.TitleColor, 1, 5)
+						cy = cy + hgt
+					end
+				end
+			else
+				cy = cy + etitle
 			end
 
+			local edesc = self:Emit("PaintDescription", x, cy)
+
+			if not isnumber(edesc) and edesc ~= false and desc then
+
+				surface.SetFont(self.DescriptionFont)
+				local hgt = draw.GetFontHeight(self.DescriptionFont)
+
+				for s, line in eachNewline(desc) do
+					draw.SimpleText(s, self.DescriptionFont, x, cy, self.DescriptionColor, 1, 5)
+					cy = cy + hgt
+				end
+
+			end
 		end
 
 	cam.PopModelMatrix()

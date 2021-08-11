@@ -20,7 +20,7 @@ if SERVER then
 		
 	end
 	
-	function ENT:SpawnFunction(ply, tr, class)
+	function ENT:BW_SpawnFunction(ply, tr, class)
 	
 		local pos = ply:GetPos()
 		
@@ -51,40 +51,31 @@ if SERVER then
 
 	function ENT:UseFunc(activator, caller, usetype, value)
 
-		if not BaseWars.Ents:ValidPlayer(self.OwningPly) then self.OwningPly = nil end
+		if not IsPlayer(self.OwningPly) then self.OwningPly = nil end
 	
 		local ply = activator:IsPlayer() and activator or caller:IsPlayer() and caller or nil
 
 		if ply then
-		
 			self:EmitSound("buttons/blip1.wav")
-			
-			if BaseWars.Ents:Valid(ply.SpawnPoint) then
-				
+			if IsValid(ply.SpawnPoint) then
 				ply.SpawnPoint.OwningPly = false
 				ply.SpawnPoint:EmitSound("ambient/machines/thumper_shutdown1.wav")
-				
 			end
-			
+
 			self.OwningPly = ply
 			ply.SpawnPoint = self
-			
+
 			ply:Notify(BaseWars.LANG.NewSpawnPoint, BASEWARS_NOTIFICATION_GENRL)
-			
+
 		return end
-		
+
 		self:EmitSound("buttons/button10.wav")
-		
 	end
 
 	function ENT:OnRemove()
-
-		if BaseWars.Ents:ValidOwner(self.OwningPly) then
-		
+		if IsPlayer(self.OwningPly) then
 			self.OwningPly.SpawnPoint = nil
-			
 		end
-		
 	end
 
 end

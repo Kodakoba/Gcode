@@ -50,7 +50,7 @@ function PI:Initialize(id, is_sid64) -- we can't know that the id is a steamID64
 	self:SetSteamID(sid)
 	self:SetSteamID64(sid64)
 
-	self._PubNW = Networkable:new("PI:" .. sid64)
+	self:ValidateNW()
 
 	self._StartedSession = CurTime()
 	self._EndedSession = nil
@@ -162,6 +162,13 @@ function PI:IsValid()
 	return self._Valid ~= false
 end
 
+function PI:ValidateNW()
+	if not self:GetPublicNW() or not self:GetPublicNW():IsValid() then
+		self:SetPublicNW( Networkable("PI:" .. self:SteamID64()) )
+		hook.Run("PlayerInfoNWCreate", self)
+	end
+end
+
 function PI:_Destroy()
 	local pi = LibItUp.PlayerInfoTables
 	if self:GetPlayer() then
@@ -173,7 +180,7 @@ function PI:_Destroy()
 
 	self._Valid = false
 	self:Emit("Destroy")
-	hook.Run("PlayerInfoDestroy", self)
+	hook.NHRun("PlayerInfoDestroy", self)
 	self:GetPublicNW():Invalidate()
 end
 
@@ -276,7 +283,7 @@ else
 	end
 end
 
-hook.Add("PlayerDisconnected", "PlayerInfoEmit", function(ply)
+hook.NHAdd("PlayerDisconnected", "PlayerInfoEmit", function(ply)
 	local sid64 = ply:SteamID64()
 	local pinfo = PIT.SteamID64[sid64]
 	if not pinfo then return end
@@ -284,7 +291,7 @@ hook.Add("PlayerDisconnected", "PlayerInfoEmit", function(ply)
 	pinfo:_OnDisconnect()
 end)
 
-hook.Add("PlayerInitialSpawn", "PlayerInfoEmit", function(ply)
+hook.NHAdd("PlayerInitialSpawn", "PlayerInfoEmit", function(ply)
 	local sid64 = ply:SteamID64()
 
 	local pinfo, new = PI:get(sid64, true)
@@ -369,7 +376,28 @@ end
 hook.Add("NetworkableAttemptCreate", "PlayerInfo", function(nwID)
 	if nwID:match("PI:(%d+)") then
 		local sid64 = nwID:match("PI:(%d+)")
-		GetPlayerInfoGuarantee(sid64, true)
+
+		local is_bot = sid64:match("^900") -- uhoh
+
+		if is_bot then
+			print("SID BELONGS TO A BOT HOLY SHIT")
+			-- try to find a bot that'd match maybe possibly and pray
+			-- i HATE GMOD I HATE GMOD I HATE GMOD
+			for k,v in pairs(PIT.Players) do
+				print("Iterating", v:IsValid() and v:SteamID64(), sid64)
+				if v:IsValid() and v:SteamID64() == sid64 then -- updated steamid64?
+					print("FOUNDDDD")
+					pin:SetSteamID64(sid64)
+					pin:SetSteamID(util.SteamIDFrom64(sid64))
+					pin:GetPublicNW():SetNetworkableID(nwID)
+					return pin:GetPublicNW()
+					-- AAAAAAAAAAAAAAAAAAAAAAAAA
+				end
+			end
+		end
+
+		local pin = GetPlayerInfoGuarantee(sid64, true)
+		pin:ValidateNW()
 		return true
 	end
 end)

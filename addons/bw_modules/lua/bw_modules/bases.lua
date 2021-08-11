@@ -78,7 +78,7 @@ local function init(force)
 
 	FInc.FromHere("bases/*.lua", _SH, true, FInc.RealmResolver():SetDefault(true))
 
-	if force or not b then
+	if (force or not b) and SERVER then
 		-- either forced reload or initial; resync from sql
 		BaseWars.Bases.SQLResync()
 	end

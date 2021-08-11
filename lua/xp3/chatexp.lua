@@ -138,7 +138,7 @@ if CLIENT then
 		end
 
 		local dead = ply:IsValid() and ply:IsPlayer() and not ply:Alive()
-		hook.Run("OnPlayerChat", ply, data, mode, dead, special or ply:IsSuperAdmin())
+		hook.Run("OnPlayerChat", ply, data, mode, dead, special or (IsPlayer(ply) and ply:IsSuperAdmin()))
 	end)
 end
 if SERVER then

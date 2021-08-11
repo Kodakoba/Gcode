@@ -42,7 +42,6 @@ pg:On("Initialize", "ServerTracker", function(self, base)
 end)
 
 function pg:_unown(ent)
-	print("unown called", self)
 	self._UnownedEnts[ent] = true
 	unowned[ent] = self
 end
@@ -139,25 +138,33 @@ end
 pg:On("AddedConsumer", "UpdatePowerOut", pg.UpdatePowerOut)
 pg:On("RemovedConsumer", "UpdatePowerOut", pg.UpdatePowerOut)
 
-
+local function indexer(nm)
+	return function(...)
+		return pg[nm] (...)
+	end
+end
 
 -- list tracking
 
 function pg:ConsumerAddList(e)
-	self._UnpoweredEnts[e] = true
-	e:SetPowered(false)
+	if e.PowerRequired and e.PowerRequired > 0 then
+		self._UnpoweredEnts[e] = true
+		e:SetPowered(false)
+	else
+		self:PowerEnt(e)
+	end
 end
 
 function pg:ConsumerRemoveList(e)
+	print("removed from list, unpowered", e)
 	self._UnpoweredEnts[e] = nil
 	self._PoweredEnts[e] = nil
 
 	e:SetPowered(false)
-	print("removed from list, unpowered")
 end
 
-pg:On("AddedConsumer", "UpdateList", pg.ConsumerAddList)
-pg:On("RemovedConsumer", "UpdateList", pg.ConsumerRemoveList)
+pg:On("AddedConsumer", "UpdateList", indexer("ConsumerAddList"))
+pg:On("RemovedConsumer", "UpdateList", indexer("ConsumerRemoveList"))
 
 
 function pg:PowerEnt(ent)

@@ -159,11 +159,11 @@ function SPropProtection.PlayerCanTouch(ply, ent)
 		return true
 	end
 
-	if not ent:GetNWString("Owner") or ent:GetNWString("Owner") == "" and not ent:IsPlayer() then
+	--[[if not ent:GetNWString("Owner") or ent:GetNWString("Owner") == "" and not ent:IsPlayer() then
 		SPropProtection.PlayerMakePropOwner(ply, ent)
 		SPropProtection.Notify(ply, "You now own this prop")
 		return true
-	end
+	end]]
 
 	if ent:GetNWString("Owner") == "World" then
 		if ply:IsAdmin() and tonumber(SPropProtection.Config["awp"]) == 1 and tonumber(SPropProtection.Config["admin"]) == 1 then

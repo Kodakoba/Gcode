@@ -37,6 +37,38 @@ function net.ReadCompressedString(maxsz)
 	return dat
 end
 
+function net.WriteSteamID(what)
+	local id
+	if isstring(what) and what:IsSteamID() then
+		id = what
+	end
+
+	if IsPlayer(what) then
+		id = what:SteamID()
+	end
+
+	if not id then
+		ComplainArg(1, "steamID or player", type(what))
+		return
+	end
+
+	local univ, y, acc_id = id:gsub("^STEAM_", ""):match("^(%d+):(%d+):(%d+)")
+
+	net.WriteUInt(tonumber(univ), 8)
+	net.WriteBit(tonumber(y))
+	net.WriteUInt(tonumber(acc_id), 31)
+end
+
+function net.ReadSteamID()
+	local univ, y, acc_id
+
+	univ = net.ReadUInt(8)
+	y = net.ReadBit()
+	acc_id = net.ReadUInt(31)
+
+	return ("STEAM_%d:%d:%d"):format(univ, y, acc_id)
+end
+
 --[[
 function net.WriteSteamID64()
 

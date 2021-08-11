@@ -409,7 +409,7 @@ AddLoadout("Shotguns", "arccw_shorty", "M3", 50 * k, 15, "models/weapons/w_shot_
 AddLoadout("Shotguns", "arccw_shorty", "arccw_fml_fas_m870", 60 * k, 20, "models/weapons/arccw/fml/fas1/w_m870.mdl")
 
 AddLoadout("Pistols", "arccw_fml_fas_deagle", "Deagle", 25*k, 15, "models/weapons/arccw/fml/fas1/w_deagle.mdl")
-AddLoadout("Pistols", "arccw_mw2_anaconda", ".44 Magnum", 35*k, 20, "models/weapons/arccw/fesiugmw2/worldmodels/w_mw2_44magnum_2.mdl")
+AddLoadout("Pistols", "arccw_mw2_anaconda", ".44 Magnum", 35*k, 20, "models/weapons/w_357.mdl")
 
 AddLoadout("SMGs", "arccw_mw2_tmp", "TMP", 30*k, 15, "models/weapons/arccw/fesiugmw2/worldmodels/w_mw2_m9_2a.mdl")
 AddLoadout("SMGs", "arccw_mw2_miniuzi", "Mini Uzi", 50*k, 20, "models/weapons/arccw/fesiugmw2/worldmodels/w_mw2_uzi_2a.mdl")

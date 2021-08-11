@@ -88,12 +88,10 @@ function ENT:AddPrinter(slot, ent)
 	ent.IsInRack = true
 
 	self:NetworkPrinters()
-	self.CurrentValue = 15000
-	self.PowerRequired = 5
 
-	for k,v in pairs( self.Printers.Entities ) do
+	self.CurrentValue = 15000
+	for k,v in pairs(self.Printers.Entities) do
 		if v.CurrentValue then self.CurrentValue = self.CurrentValue + v.CurrentValue end
-		self.PowerRequired = self.PowerRequired + v.PowerRequired
 	end
 end
 

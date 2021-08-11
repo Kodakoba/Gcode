@@ -105,7 +105,7 @@ local function ReadChange(obj)
 
 	local decoded_val = v_dec[2](v_dec[3])
 
-	--print("	decoded key, val:", decoded_key, decoded_val)
+	print("	decoded key, val:", decoded_key, decoded_val)
 	return decoded_key, decoded_val
 end
 
@@ -143,13 +143,16 @@ net.Receive("NetworkableSync", function(len)
 	local instBytes = instances[nwID] or 0
 	instances[nwID] = instBytes + lBytes
 
-	if not cache[nwID] then
+	local obj = cache[nwID]
+
+	if not obj then
+		printf("object for %s <-> %d didn't exist, creating ID pair", nwID, num_id)
 		Networkable.CreateIDPair(nwID, num_id)
 	else
-		cache[nwID]:SetNetworkableNumberID(num_id)
+		printf("object for %s <-> %d existed, just setting numid", nwID, num_id)
+		obj:SetNetworkableNumberID(num_id)
 	end
 
-	local obj = cache[nwID]
 	if not obj then
 		local added = hook.Run("NetworkableAttemptCreate", nwID)
 
@@ -170,6 +173,9 @@ net.Receive("NetworkableSync", function(len)
 			end
 		end
 
+		if obj then
+			printf("post-creation: %s <-> %s", obj:GetID(), obj:GetNumberID())
+		end
 	end
 
 	if obj and obj:Emit("CustomReadChanges") ~= nil then

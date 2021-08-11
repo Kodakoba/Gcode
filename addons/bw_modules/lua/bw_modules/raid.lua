@@ -157,7 +157,7 @@ function raid.CanRaidPlayer(ply, ply2)
 		return false, err.RaidedOnCooldown(ply2)
 	end
 
-	if not ply2:BW_GetBase() then
+	if not ply2:GetBase() then
 		return false, err.TheyNeedBase()
 	end
 
@@ -198,6 +198,7 @@ function raid.CanRaidFaction(caller, fac2)
 
 	for k,v in pairs(fac2:GetMembers()) do
 		local ents = BaseWars.Ents.GetOwnedBy(v)
+
 		for _, ent in ipairs(ents) do
 			if ent.IsValidRaidable then has_raidables = true break end
 		end

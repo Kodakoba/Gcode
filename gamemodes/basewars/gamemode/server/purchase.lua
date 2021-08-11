@@ -200,10 +200,8 @@ function BWSpawn(ply, cat, catID)
 		local newEnt = ents.Create(ent)
 		if not newEnt then return end
 
-
-		if newEnt.SpawnFunction and sf then
-
-			newEnt = newEnt:SpawnFunction(ply, tr, ent)
+		if newEnt.BW_SpawnFunction then
+			newEnt = newEnt:BW_SpawnFunction(ply, tr, ent) or newEnt
 
 			if newEnt.CPPISetOwner then
 				newEnt:CPPISetOwner(ply)

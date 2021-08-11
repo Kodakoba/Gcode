@@ -3,21 +3,37 @@
 local bw = BaseWars.Bases
 
 local waitingEnts = {}
+bw.EntIDToBase = {}
 
 hook.Add("NotifyShouldTransmit", "BWBaseEntityList", function(ent, enter)
 	local eid = ent:EntIndex()
+	local base = waitingEnts[eid]
 
-	if enter and waitingEnts[eid] and waitingEnts[eid]:IsValid() then
-		waitingEnts[eid].Entities[ent] = eid
+	if enter and base and base:IsValid() then
+		base:EntityEnter(ent)
 		waitingEnts[eid] = nil
 	end
 end)
 
-local function indexFunc(...) -- eek!
-	return bw.Base.NetworkedChanged(...)
+local function indexer(nm, base)
+	return function(...)
+		return bw.Base[nm] (...)
+	end
 end
 
-function bw.Base.NetworkedChanged(self, changes)
+function bw.Base:GetEntities()
+	-- you can't get entities of a base you don't own
+	if not self:IsOwner(LocalPlayer()) then return {} end
+
+	return self.Entities
+end
+
+function bw.Base:GetPlayers()
+	if not self:IsOwner(LocalPlayer()) then return {} end
+	return self.Players
+end
+
+function bw.Base.PubNetworkedChanged(self, changes)
 	--print("pub network change", self:Get("ClaimedBy"))
 	local base = self.Base
 	if self:Get("ClaimedBy") then
@@ -36,6 +52,42 @@ function bw.Base.NetworkedChanged(self, changes)
 	end
 end
 
+function bw.Base:EntNetworkedChanged(changes)
+	-- self is entity nw
+
+	local base = self.Base
+	for entID, change in pairs(changes) do
+		local old, new = change[1], change[2]
+
+		local ent = Entity(entID)
+
+		if not ent:IsValid() then
+			if new then
+				waitingEnts[entID] = base
+				bw.EntIDToBase[entID] = base
+				continue
+			else
+				bw.EntIDToBase[entID] = nil
+				for k,v in pairs(base.Entities) do
+					if v == entID then
+						base.Entities[k] = nil	-- i can't believe i have to do this
+						continue
+					end
+				end
+			end
+		end
+
+		if not old and new then
+			base:EntityEnter(ent)
+			bw.EntIDToBase[ent:EntIndex()] = base
+		elseif old and not new then
+			base:EntityExit(ent)
+			bw.EntIDToBase[ent:EntIndex()] = nil
+		end
+	end
+
+end
+
 function bw.Base:_PostInit()
 	local pub = self.PublicNW
 	local priv = self.OwnerNW
@@ -43,39 +95,8 @@ function bw.Base:_PostInit()
 
 	local base = self
 
-	pub:On("NetworkedChanged", "GetPlayerInfo", indexFunc)
-
-	entNW:On("NetworkedChanged", "GetEntitiesInfo", function(self, changes)
-
-		for entID, change in pairs(changes) do
-			local old, new = change[1], change[2]
-
-			local ent = Entity(entID)
-
-			if not ent:IsValid() then
-				if new then
-					waitingEnts[entID] = base
-					continue
-				else
-					for k,v in pairs(base.Entities) do
-						if v == entID then
-							base.Entities[k] = nil	-- i can't believe i have to do this
-							continue
-						end
-					end
-				end
-			end
-
-			if not old and new then
-				hook.Run("EntityEnteredBase", base, ent)
-				base.Entities[ent] = entID
-			elseif old and not new then
-				hook.Run("EntityExitedBase", base, ent)
-				base.Entities[ent] = nil
-			end
-		end
-
-	end)
+	pub:On("NetworkedChanged", "GetPlayerInfo", indexer("PubNetworkedChanged"))
+	entNW:On("NetworkedChanged", "GetEntitiesInfo", indexer("EntNetworkedChanged"))
 
 end
 
@@ -118,5 +139,32 @@ function bw.Base:IsOwner(what)
 		return by == what or by:IsMember(what)
 	else
 		return by == GetPlayerInfo(what)
+	end
+end
+
+
+function bw.Base:_Ready()
+	if self._Ready then return end
+
+	self:Emit("Ready")
+	hook.Run("BaseReceived", self)
+	self._Ready = true
+end
+
+function bw.Base:_OnReady()
+	local cores = ents.FindByClass("bw_basecore") 	-- find all cores on the map; any cores that enter PVS
+													-- will be handled by NotifyShouldTransmit
+	for k,v in ipairs(cores) do
+		-- TODO:  THE BASE CAN LACK THE BASECLASS TABLE
+		-- MEANING GETBASE WONT EXIST! THANKS GMOD
+
+		local base = v:GetBase()
+		if base == self then
+			self:SetBaseCore(v)
+
+			-- a base is only ready if it has a core assigned to it as well
+			self:_Ready()
+			break
+		end
 	end
 end

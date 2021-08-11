@@ -149,6 +149,18 @@ function MODULE.PaintFrame(w, h, headerH)
 	draw.RoundedBoxEx(6, 0, 0 + headerH, w, h - headerH, backcol, nil, nil, true, true)
 end
 
+MODULE._Ents = {}
+
+function MODULE.StoreEnt(name, ent)
+	if not ent or not ent:IsValid() then return end
+	MODULE._Ents[name] = ent
+end
+
+function MODULE.GetEnt(name)
+	if not MODULE._Ents[name] or not MODULE._Ents[name]:IsValid() then return end
+	return MODULE._Ents[name]
+end
+
 --[==================================[
 		Death Cooldown HUD
 --]==================================]
@@ -238,8 +250,6 @@ local function DrawDeathCoolDown()
 	if left-1 <= 0 then
 		a = (math.max(left, 0)^4)*255
 	end
-
-	print(a)
 
 	surface.SetFont("OSB32")
 	local tw, th = surface.GetTextSize(tostring(math.floor(left)))

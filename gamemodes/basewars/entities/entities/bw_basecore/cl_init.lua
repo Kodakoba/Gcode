@@ -10,32 +10,9 @@ local function makeWheel(ent)
 	wh._Core = ent
 	wheel = wh
 
-	if ent:GetClaimed() then
+	local base = ent:GetBase()
 
-		local view = wh:AddOption("View Base", "Upgrades, modules, stats, etc.")
-			view:On("Select", function()
-				wheel._Core:OpenBaseView()
-			end)
-
-		local unclaim = wh:AddOption("Unclaim Base", "He claimed?\nDump eet")
-			unclaim:On("Select", function()
-				wheel._Core:AttemptUnclaim()
-			end)
-
-	else
-		local claim = wh:AddOption("Claim Base", "Yo this our turf now",
-				Icons.Flag128:Copy():SetSize(106 * 0.75, 128 * 0.75))
-			claim:On("Select", function()
-				wheel._Core:AttemptClaim()
-			end)
-
-		local exam = wh:AddOption("Examine Base", "See fuel supply and inventory space.\n(NYI)",
-				Icons.MagnifyingGlass128:Copy():SetSize(96, 96))
-			exam:On("Select", function()
-				wheel._Core:AttemptClaim()
-			end)
-	end
-
+	BaseWars.Bases.Actions.GenerateWheel(wh, ent, base)
 	return wh
 end
 

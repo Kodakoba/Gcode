@@ -34,6 +34,14 @@ local function createActionCanvas(f, fac)
 	return pnl
 end
 
+local flagIcon = Icons.Flag128:Copy()
+flagIcon:SetSize(24, 24)
+flagIcon.IconX = 4
+
+local startIcon = Icon("https://i.imgur.com/xyrD9OM.png", "salilsawaarim.png", 24, 24)
+startIcon:SetSize(24, 24)
+startIcon.IconX = 4
+
 local function createRaidActions(pnl, fac, canv)
 	local old = true -- = the canvas already existed, aka they switched from faction tab to raid tab
 
@@ -63,14 +71,6 @@ local function createRaidActions(pnl, fac, canv)
 
 	raid:SetColor(Colors.Raid, true)
 
-	local flagIcon = Icons.Flag128:Copy()
-	flagIcon:SetSize(24, 24)
-	flagIcon.IconX = 4
-
-	local startIcon = Icon("https://i.imgur.com/xyrD9OM.png", "salilsawaarim.png", 24, 24)
-	startIcon:SetSize(24, 24)
-	startIcon.IconX = 4
-
 	raid:SetIcon(startIcon)
 	raid.NotLaidOut = true
 
@@ -86,12 +86,15 @@ local function createRaidActions(pnl, fac, canv)
 	function raid:Think()
 		local ic
 
-		if LocalPlayer():InRaid() then
+		local curRd = LocalPlayer():InRaid()
+		if curRd and curRd:IsRaider(LocalPlayer()) then
 			self.Label = "Concede Raid"
 			ic = self:SetIcon(flagIcon)
+			self:SetColor(Colors.Raid)
 		else
 			self.Label = "Start raid!"
 			ic = self:SetIcon(startIcon)
+			self:SetColor(Colors.Golden)
 		end
 
 		surface.SetFont(self:GetFont())
@@ -131,7 +134,8 @@ local function createRaidActions(pnl, fac, canv)
 	raid.A = 1
 
 	function raid:DoClick()
-		if LocalPlayer():InRaid() then
+		local raid = LocalPlayer():InRaid()
+		if raid and raid:IsRaider(LocalPlayer()) then
 			local pr = Raids.ConcedeRaid()
 
 			pr:Then(function(...)
@@ -286,28 +290,35 @@ local function createFactionlessOption(pnl, scr, num, ply)
 	local bad_red = Color(180, 80, 80)
 
 	function raid:Think()
-		local can, why = ply:IsRaidable()
+		local raid = LocalPlayer():InRaid()
+		if not ply:IsValid() then return end
 
-		if self:IsHovered() and why then
-			local cl, new = self:AddCloud("err")
+		if not raid then
+			local can, why = ply:IsRaidable()
 
-			if cl and new then
-				cl.Font = "OS20"
-				cl.MaxW = 400
-				cl.AlignLabel = 1
+			if self:IsHovered() and why then
+				local cl, new = self:AddCloud("err")
 
-				cl:SetTextColor(bad_red)
-				cl:SetRelPos(self:GetWide() / 2)
-				cl.ToY = -8
+				if cl and new then
+					cl.Font = "OS20"
+					cl.MaxW = 400
+					cl.AlignLabel = 1
 
-				cl:SetText(why)
+					cl:SetTextColor(bad_red)
+					cl:SetRelPos(self:GetWide() / 2)
+					cl.ToY = -8
+
+					cl:SetText(why)
+				end
+			else
+				self:RemoveCloud("err")
 			end
-		else
-			self:RemoveCloud("err")
-		end
 
-		self:SetDisabled(not can)
-		self:SetColor(can and Colors.Raid or Colors.Button)
+			self:SetDisabled(not can)
+			self:SetColor(can and Colors.Raid or Colors.Button)
+		else
+			self:SetColor(Colors.Golden)
+		end
 	end
 
 	local errPnl = vgui.Create("Cloud", p)
@@ -324,9 +335,19 @@ local function createFactionlessOption(pnl, scr, num, ply)
 	--errPnl:
 	raid.A = 1
 	local col = color_white:Copy()
+
+
 	function raid:PostPaint(w, h)
 		surface.SetDrawColor(255, 255, 255, self.A * 255)
-		surface.DrawMaterial("https://i.imgur.com/xyrD9OM.png", "salilsawaarim.png", 12, 12, w - 24, w - 24)
+
+		local raid = LocalPlayer():InRaid()
+		if raid and raid:IsRaider(LocalPlayer()) then
+			flagIcon:Paint(12, 12, w - 24, w - 24)
+		else
+			startIcon:Paint(12, 12, w - 24, w - 24)
+		end
+
+		--surface.DrawMaterial("https://i.imgur.com/xyrD9OM.png", "salilsawaarim.png", 12, 12, w - 24, w - 24)
 
 		local rev = 1 - self.A
 
@@ -337,6 +358,19 @@ local function createFactionlessOption(pnl, scr, num, ply)
 	end
 
 	function raid:DoClick()
+		local curRd = LocalPlayer():InRaid()
+		if curRd and curRd:IsRaider(LocalPlayer()) then
+			local pr = Raids.ConcedeRaid()
+
+			pr:Then(function(...)
+				print("cl - conceded successfully", ...)
+			end, function(...)
+				print("cl - couldnt concede? wtf", net.ReadString())
+			end)
+
+			return
+		end
+
 		local pr = Raids.CallRaid(ply, false)
 		self:To("A", 0, 0.1, 0, 0.3)
 
@@ -400,6 +434,13 @@ local function createFactionlessActions(pnl, fac, scr, scrollPlayer)
 	local plyFrames = {}  -- [num] = frame
 	local plyToFrame = {} -- [ply] = frame
 
+	local function plyValid(ply)
+		if not ply:IsValid() or not IsValid(plyFrames[ply]) then
+			table.RemoveByValue(plyFrames, plyFrames[ply])
+			plyFrames[ply] = nil
+		end
+	end
+
 	scr.PlayerFrames = plyFrames
 
 	local function createPlyFrame(k, ply)
@@ -412,7 +453,7 @@ local function createFactionlessActions(pnl, fac, scr, scrollPlayer)
 			p.Avatar:Resize()
 		end
 
-		p:On("Disappear", function()
+		p:On("Disappear", function(self)
 			local where = 0
 
 			for i=#plyFrames, 1, -1 do
@@ -425,23 +466,22 @@ local function createFactionlessActions(pnl, fac, scr, scrollPlayer)
 			end
 
 			for i = where, #plyFrames do
-				plyFrames[i]:Shuffle(i)
+				if plyFrames[i] then
+					plyFrames[i]:Shuffle(i)
+				end
 			end
 		end)
 	end
 
-	local i = 0
-
-	local plys = {}
-
-	for k, ply in ipairs(team.GetPlayers(1)) do
-		i = i + 1
-		plys[i] = ply
-	end
-
-	local curMoney = LocalPlayer():GetMoney()
+	local plys
 
 	local function sortPlayers()
+		plys = {}
+
+		for k, ply in ipairs( team.GetPlayers(Factions.FactionlessTeamID) ) do
+			plys[#plys + 1] = ply
+		end
+
 		table.Filter(plys, IsValid)
 
 		table.sort(plys, function(a, b)
@@ -453,57 +493,76 @@ local function createFactionlessActions(pnl, fac, scr, scrollPlayer)
 
 			return m1 > m2
 		end)
+	end
 
-		PrintTable(plys)
+	local function validateFrames()
+		for k,v in ipairs(plys) do
+			plyValid(v)
+		end
+	end
+
+	local function getFrame(ply)
+		if IsValid(plyToFrame[ply]) then
+			return plyToFrame[ply]
+		end
 	end
 
 	sortPlayers()
+
 	for k, v in ipairs(plys) do
 		createPlyFrame(k, v)
 	end
 
 	hook.Add("PlayerJoined", canv, function(_, ply)
 		if not canv:IsValid() then return end
-		plys[#plys + 1] = ply
 		sortPlayers()
+		validateFrames()
+
 		for k,v in ipairs(plys) do
+			plyValid(v)
+
 			if v == ply then
 				createPlyFrame(k, ply)
-			else
-				plyToFrame[v]:Shuffle(k)
-				plyFrames[k] = plyToFrame[v]
+			elseif getFrame(v) then
+				getFrame(v):Shuffle(k)
+				plyFrames[k] = getFrame(v)
 			end
 		end
 	end)
 
-	hook.Add("MoneyChanged", canv, function(_, ply, old, new)
+	hook.Add("MoneyChanged", canv, function(_, pinfo, old, new)
 		timer.Simple(0, function() -- dumb
 			sortPlayers()
+			validateFrames()
+
 			for k,v in ipairs(plys) do
-				plyToFrame[v]:Shuffle(k)
-				plyFrames[k] = plyToFrame[v]
+				if getFrame(v) then
+					getFrame(v):Shuffle(k)
+					plyFrames[k] = getFrame(v)
+				end
 			end
 		end)
 	end)
 
 	canv:On("Reappear", "RetrackPlayers", function()
 		sortPlayers()
+		validateFrames()
+
 		local rem = {}
 		for k,v in ipairs(plys) do
-			rem[v] = true
-			plyToFrame[v]:Shuffle(k, true)
-			plyFrames[k] = plyToFrame[v]
+			if getFrame(v) then
+				rem[v] = true
+				getFrame(v):Shuffle(k, true)
+				plyFrames[k] = getFrame(v)
+			end
 		end
 
 		-- remove invalid players' frames instantly upon reopen
 		for ply, fr in pairs(plyToFrame) do
-			if not rem[ply] then -- the player is gone
+			if not rem[ply] then -- the player wasnt present in `plys` table
 				fr:Remove()
 				for num, f2 in ipairs(plyFrames) do
-					if fr == f2 then
-						table.remove(plyFrames, num)
-						break
-					end
+					table.RemoveByValue(plyFrames, f2)
 				end
 			end
 		end

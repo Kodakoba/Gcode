@@ -336,16 +336,15 @@ function FInc.FromHere(name, realm, nofold, decider, cb)
 		ErrorNoHalt(err)
 		return
 	end
-	print("including:", path .. name)
-	FInc.Recursive(path .. name, realm, nofold, decider, cb)
 
+	FInc.Recursive(path .. name, realm, nofold, decider, cb)
 end
 
 
 FInc._States = FInc._States or {
 	-- good for checking eg `FInc.OnStates(print, CLIENT or "ServerOnlyState")
 	[true] = true
-}	
+}
 
 FInc._StateCallbacks = FInc._StateCallbacks or {}
 

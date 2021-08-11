@@ -88,6 +88,7 @@ function FAC:Init()
 	self.Main = bord
 	bord.NoDrawBottomGradient = true
 	self:On("FactionSet", "Canvas", function(_, fac)
+
 		local col = getDimmed(fac:GetColor(), 0.2, 0.3, true)
 			local h, s, v = col:ToHSV()
 			draw.ColorModHSV(col, h, s, math.max(v, 0.15))

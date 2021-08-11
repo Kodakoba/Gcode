@@ -126,14 +126,16 @@ local function determineEncoder(typ, val)
 	end
 
 	if typ == "number" then --numbers are a bit more complicated
-		if math.ceil(val) == val then
-			if val >= 0 and val < bit.lshift(1, 32) then
+		if math.ceil(val) == val and math.abs(val) < 2^32 - 1 then
+			if val >= 0 then
+
 				if val > 65535 then
 					return net.WriteUInt, 7, 32 -- uint
 				else
 					return net.WriteUInt, 8, 16 -- ushort
 				end
-			else
+			elseif val < 0 then
+				realPrint("using int", val)
 				return net.WriteInt, 9, 32		-- int
 			end
 		else
@@ -265,25 +267,37 @@ function nw:_SendNet(who, full, budget)
 	budget = math.min(budget or 32 * 1024, 63 * 1024) -- don't write more than 63kb in one net message
 
 	local numID, nameID = self.NumberID, self.NetworkableID
-	local unaware = full or false
+	local unaware = not not full
 
 	-- full is either a bool (use _all_ networked data) or a table (use only that networked data)
 	-- done like this because if the network wasn't complete, you can pass the incomplete networked data back
 
-	if not full then -- fullupdate ignores nw awareness
+	if full ~= true then -- fullupdate ignores nw awareness
 		for _, ply in ipairs(who) do
 			-- if some player didn't know about this NWID, network the ID as well
 			if not _NetworkableAwareness[ply] or not _NetworkableAwareness[ply][nameID] then
 				unaware = true
 				_NetworkableAwareness:Set(true, ply, nameID)
+				printf("%s unware of %s[%d], networking.", ply, nameID, numID)
 			end
 		end
 	end
 
-	-- `changes` will be modified, so copy the networked table if its a full update
-	-- _NetworkableChanges is intended to be nilled as the changes happen, so don't copy it
+	local changes
 
-	local changes = full and (istable(full) and full or table.Copy(self:GetNetworked())) or _NetworkableChanges[nameID]
+	if not full then
+		-- _NetworkableChanges is intended to be nilled as the changes happen, so don't copy it
+		changes = _NetworkableChanges[nameID]
+		from_glob = true
+	else
+		-- `changes` will be modified, so copy the networked table if its a full update
+		if istable(full) then
+			changes = full
+		else
+			changes = table.Copy(self:GetNetworked())
+		end
+	end
+
 	if not changes then return false end --/shrug
 
 	local changes_count = table.Count(changes)
@@ -301,6 +315,7 @@ function nw:_SendNet(who, full, budget)
 
 		if unaware then
 			WriteNWID(self)
+			printf("writing NWID (%s[%d]).", nameID, numID)
 		end
 
 		self:Emit("StartWritingChanges", changes)
@@ -326,9 +341,6 @@ function nw:_SendNet(who, full, budget)
 				end
 			end
 		end
-
-		_NetworkableChanges[nameID] = nil 	-- don't erase all changes if we didn't write all of them
-											-- (eg went over budget)
 
 		::send::
 		written = ns:BytesWritten()
@@ -431,10 +443,13 @@ local function NetworkAll()
 		-- but this would be the "proper" way i think
 		if not remaining then
 			table.remove(_NetworkableQueue, 1)
+			_NetworkableChanges[obj:GetID()] = nil
 		end
 
+		--[[
 		printf("NetworkAll #%d: `%s`, total written: %.1fkb. / %.1fkb., remaining: %s [%s entries]",
 			i, obj.NetworkableID, total_written / 1024, budget / 1024, remaining, remaining and table.Count(remaining) or "none")
+		]]
 	end
 
 	Networkable.CurrentWritten = Networkable.CurrentWritten + total_written
@@ -573,8 +588,8 @@ function Networkable.UpdateFull(who, what, frag)
 			nwObjs[i][2] = remaining
 		end
 
-		printf("UpdateFull #%d: `%s`, total written: %.1fkb. / %.1fkb., remaining: %s",
-			i, obj.NetworkableID, total_written / 1024, budget / 1024, remaining)
+		--[[printf("UpdateFull #%d: `%s`, total written: %.1fkb. / %.1fkb., remaining: %s",
+			i, obj.NetworkableID, total_written / 1024, budget / 1024, remaining)]]
 	end
 
 	Networkable.CurrentWritten = Networkable.CurrentWritten + total_written
@@ -589,7 +604,7 @@ hook.Add("PlayerFullyLoaded", "NetworkableUpdate", function(ply)
 	Networkable.UpdateFull(ply, _NetworkableCache)
 end)
 
-function nw:Network()
+function nw:Network(full)
 	local to = player.GetAll()
 	local copy = {}
 
@@ -606,7 +621,7 @@ function nw:Network()
 		copy = to
 	end
 
-	self:_SendNet(copy)
+	self:_SendNet(copy, not not full)
 end
 
 function nw:_NWNextTick()

@@ -111,8 +111,7 @@ end
 			ent:OnEnteredBase(base)
 		end
 
-		hook.NHRun("EntityEnteredBase", base, ent)
-
+		--hook.NHRun("EntityEnteredBase", base, ent)
 	end
 
 	local function exitBase(ent, base) -- exit a specific base; the only difference is the sanity check
@@ -132,7 +131,7 @@ end
 		if ent.OnExitedBase then
 			ent:OnExitedBase(base)
 		end
-		hook.NHRun("EntityExitedBase", base, ent)
+		--hook.NHRun("EntityExitedBase", base, ent)
 	end
 
 

@@ -137,7 +137,7 @@ end
 
 -- returns true if `obj` is on the Raided side in this Raid
 function raidmeta:IsRaided(obj)
-	if IsPlayer(obj) or isstring(obj) then
+	if IsPlayer(obj) or isstring(obj) or IsPlayerInfo(obj) then
 		return self.Participants[obj] == 2
 	end
 
@@ -241,7 +241,7 @@ function PLAYER:PutOffRaidedCooldown(sec)
 	self:SetNWFloat("RaidCD", 0)
 end
 
-hook.Add("PlayerInitialSpawn", "BeginCooldown", function(ply)
+hook.NHAdd("PlayerInitialSpawn", "BeginCooldown", function(ply)
 
 	local onCD, left = ply:RaidedCooldown()
 	if onCD then -- since it uses sid64, we can safely use this
@@ -385,11 +385,6 @@ function raid.Start(rder, rded, fac)
 	return rtbl
 end
 
-hook.Add("PlayerInitialSpawn", "RaidNetwork", function(ply)
-
-
-end)
-
 
 hook.Add("PlayerDisconnected", "RaidLog", function(ply) --aiaiai
 	--[[local rd = ply:GetRaid()
@@ -414,7 +409,7 @@ function PLAYER:IsRaidable()
 	if can == false then return can, err end
 
 	-- todo: move this V to a hook
-	if self:GetLevel() < 75 then return false, raid.Errors.LowLevelPlayer end
+	-- if self:GetLevel() < 75 then return false, raid.Errors.LowLevelPlayer end
 
 	for _, ent in ipairs(BaseWars.Ents.GetOwnedBy(self)) do
 		if ent.IsValidRaidable then return true end
@@ -519,7 +514,7 @@ hook.Remove("PlayerDeathThink", "RaidsDeath")
 
 function raid.CanDealDamage(ply, ent, infl, dmg)
 	if not ent.IsBaseWars then return end
-
+	if not IsPlayer(ply) then return end -- non-players can't deal damage to basewars ents
 	local ow = ent:BW_GetOwner()
 
 	if ow and not IsPlayerInfo(ow) then

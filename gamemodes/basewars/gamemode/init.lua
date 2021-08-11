@@ -158,7 +158,7 @@ end
 function GM:EntityTakeDamage(ent, dmginfo)
 
 	local Player = ((IsValid(ent) and ent:IsPlayer()) and ent) or false
-	if dmginfo:IsDamageType(DMG_BURN) and not Player then return false end
+	if dmginfo:IsDamageType(DMG_BURN) and not Player then return true end
 
 	local Owner = IsValid(ent) and ent.CPPIGetOwner and ent:CPPIGetOwner()
 	Owner = (IsPlayer(Owner) and Owner) or false
@@ -173,11 +173,10 @@ function GM:EntityTakeDamage(ent, dmginfo)
 
 	local IsProp = ent:GetClass() == "prop_physics"
 
-	if IsPlayer(Attacker) then
-		local raidRet = BaseWars.Raid.CanDealDamage(Attacker, ent, Inflictor, Damage)
-		if raidRet ~= nil then
-			return not raidRet
-		end
+	local raidRet = BaseWars.Raid.CanDealDamage(Attacker, ent, Inflictor, Damage)
+
+	if raidRet ~= nil then
+		return not raidRet
 	end
 
 	--[[

@@ -23,7 +23,7 @@ if CLIENT then
 
 		nw:On("NetworkedVarChanged", "MoneyCallback", function(_, key, old, new)
 			if key ~= "$" then return end
-
+			old = old or -1
 			if ply:IsValid() then
 				ply:Emit("MoneyChanged", old, new)
 			end

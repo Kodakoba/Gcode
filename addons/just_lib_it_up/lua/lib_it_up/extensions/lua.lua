@@ -56,6 +56,10 @@ function CheckArg(num, arg, check, expected_type)
 	end
 end
 
+function ComplainArg(num, wanted, got)
+	errorf("bad argument #%d (expected '%s', got '%s' instead)", num, wanted, got)
+end
+
 function util.gary()
 	error("gary")
 end

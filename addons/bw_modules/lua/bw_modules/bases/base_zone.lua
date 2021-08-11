@@ -42,7 +42,14 @@ function LibItUp.PlayerInfo:GetBase(no_owner_check)
 		return fac:GetBase()
 	end
 
-	local base = self._Base
+	local base
+
+	if SERVER then
+		base = self._Base
+	else
+		base = bw.Bases[self:GetPublicNW():Get("OwnedBase", -1)]
+	end
+
 	if not base or not base:IsValid() then return false end
 
 	if not no_owner_check and not base:IsOwner(self) then
@@ -51,6 +58,21 @@ function LibItUp.PlayerInfo:GetBase(no_owner_check)
 	end
 
 	return base
+end
+
+function LibItUp.PlayerInfo:SetBase(base)
+	assert(not base or BaseWars.Bases.IsBase(base))
+
+	self._Base = base
+	self:GetPublicNW():Set("OwnedBase", base and base:GetID() or nil)
+
+	if base then
+		base:On("Unclaim", self, function(_)
+			if self._Base == base then
+				self:SetBase(nil)
+			end
+		end)
+	end
 end
 
 -- this only gets the base if the player is the sole owner of it
@@ -250,7 +272,10 @@ end
 
 ChainAccessor(bw.Base, "BaseCore", "BaseCore")
 ChainAccessor(bw.Base, "PowerGrid", "PowerGrid")
-ChainAccessor(bw.Base, "Networkable", "NW")
+ChainAccessor(bw.Base, "PublicNW", "NW")
+ChainAccessor(bw.Base, "PublicNW", "PublicNW")
+ChainAccessor(bw.Base, "EntsNW", "EntsNW")
+ChainAccessor(bw.Base, "OwnerNW", "OwnerNW")
 ChainAccessor(bw.Base, "_Claimed", "Claimed")
 
 function bw.Base:Initialize(id, json)
@@ -274,14 +299,17 @@ function bw.Base:Initialize(id, json)
 		pubNW:Alias("ClaimedBy", 1)
 		pubNW:Alias("ClaimedFaction", 2)
 		pubNW.Base = self
+		pubNW:AddDependency(bw.NW.Bases)
 
 	self.OwnerNW = Networkable("BasePriv" .. id)
 		self.OwnerNW.Base = self
 		self.OwnerNW.Filter = self.OwnerNWFilter
+		self.OwnerNW:AddDependency(bw.NW.Bases)
 
 	self.EntsNW = Networkable("BaseEnts" .. id)
 		self.EntsNW.Base = self
 		self.EntsNW.Filter = self.OwnerNWFilter
+		self.EntsNW:AddDependency(bw.NW.Bases)
 
 	self.PowerGrid = bw.PowerGrid:new(self)
 
@@ -290,7 +318,6 @@ function bw.Base:Initialize(id, json)
 		BaseWars.Bases.Bases[id]:Remove(true)
 
 		self.Owner = old.Owner
-		self.Networkable = old.Networkable
 	else
 		self.Owner = {
 			Faction = nil,
@@ -317,8 +344,10 @@ function bw.Base:Initialize(id, json)
 
 end
 
-ChainAccessor(bw.Base, "Entities", "Entities")
-ChainAccessor(bw.Base, "Players", "Players")
+if SERVER then
+	ChainAccessor(bw.Base, "Entities", "Entities")
+	ChainAccessor(bw.Base, "Players", "Players")
+end
 
 ChainAccessor(bw.Zone, "Entities", "Entities")
 ChainAccessor(bw.Zone, "Players", "Players")
@@ -332,6 +361,8 @@ function bw.Base:EntityEnter(ent)
 	if IsPlayer(ent) then
 		self.Players[ent] = ent:EntIndex()
 	end
+
+	hook.NHRun("EntityEnteredBase", self, ent)
 end
 
 function bw.Base:EntityExit(ent)
@@ -343,6 +374,8 @@ function bw.Base:EntityExit(ent)
 	if IsPlayer(ent) then
 		self.Players[ent] = nil
 	end
+
+	hook.NHRun("EntityExitedBase", self, ent)
 end
 
 
@@ -404,70 +437,22 @@ function bw.Base:AddZone(zone)
 	self.ZonesByID[zone.ID] = zone
 end
 
+function bw.Base:IsOwner(what)
+	assert(IsPlayer(what) or isstring(what) or IsPlayerInfo(what) or IsFaction(what))
 
--- CL only
+	self:_CheckValidity()
 
-function bw.Base:_Ready()
-	if self._Ready then return end
+	local fac, infos = self:GetOwner()
 
-	self:Emit("Ready")
-	hook.Run("BaseReceived", self)
-	self._Ready = true
-end
-
-function bw.Base:_OnReady()
-	local cores = ents.FindByClass("bw_basecore") 	-- find all cores on the map; any cores that enter PVS
-													-- will be handled by NotifyShouldTransmit
-
-	for k,v in ipairs(cores) do
-		local base = v:GetBase()
-		if base == self then
-			self:SetBaseCore(v)
-
-			-- a base is only ready if it has a core assigned to it as well
-			self:_Ready()
-			break
+	if IsFaction(what) then
+		return fac == what
+	else
+		local pin = GetPlayerInfo(what)
+		for k,v in ipairs(infos) do
+			if v == pin then return true end
 		end
-	end
 
-end
-
-hook.Add("NotifyShouldTransmit", "ReadyBase", function(e, add)
-	if not add then return end
-	if not bw.IsCore(e) then return end
-
-	local ENT = scripted_ents.GetStored("bw_basecore").t
-	local base = ENT.GetBase(e) -- fucking gmod is insane
-	if not base then print(e, myBaseID, "didn't find base with that ID when entered PVS?") return end
-
-	base:SetBaseCore(e)
-	base:_Ready()
-end)
-
-function bw.Base:ReadNetwork()
-	local name = net.ReadCompressedString(bw.MaxBaseNameLength)
-	self:SetName(name)
-
-	local amtZones = net.ReadUInt(8)
-
-	for z=1, amtZones do
-		local zID = net.ReadUInt(12)
-
-		if not bw.Zones[zID] then
-
-			local eid = ("wait:%d:%d"):format(self:GetID(), zID)
-			bw.NW.Zones:On("ReadZones", eid, function(nw, zones)
-				if zones[zID] then
-					self:AddZone(zones[zID])
-					bw.NW.Zones:RemoveListener("ReadZones", eid)
-					self:_OnReady()
-				end
-			end)
-
-		else
-			self:AddZone(zID)
-			self:_OnReady()
-		end
+		return false
 	end
 end
 
@@ -505,6 +490,15 @@ function bw.Base:_CheckValidity()
 		errorf("Base CheckValidity failed!")
 		return
 	end
+end
+
+function bw.Base:CanClaim(who)
+	self:_CheckValidity()
+	if self:GetClaimed() then return false, bw.Errors.AlreadyClaimed(self) end
+	if who and who:GetBase() then return false, bw.Errors.AlreadyHaveABase(who) end
+	--if ow.Player and ow.Player:IsValid() then return false end
+
+	return true
 end
 
 hook.Add("PostCleanupMap", "RespawnBaseZone", function()
