@@ -342,13 +342,13 @@ function ENT:Draw()
 end
 
 
-function ENT:PaintInfo(w, y)
+function ENT:PaintStructureInfo(w, y)
 	local Cp = self.dt.Capacity
 	local money = self:GetNWMoney()
 	local cur = Language("Price", money)
 	local cap = Language("Price", Cp)
 
-	draw.SimpleText2(cur .. " / " .. cap, "OSB24", w/2, y, color_white, 1, 5)
+	local tw = draw.SimpleText2(cur .. " / " .. cap, "OSB24", w/2, y, color_white, 1, 5)
 
-	return 24
+	return 24, tw
 end

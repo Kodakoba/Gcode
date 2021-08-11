@@ -3,7 +3,7 @@
 local bw = BaseWars.Bases
 
 local waitingEnts = {}
-bw.EntIDToBase = {}
+bw.EntIDToBase = bw.EntIDToBase or {}
 
 hook.Add("NotifyShouldTransmit", "BWBaseEntityList", function(ent, enter)
 	local eid = ent:EntIndex()

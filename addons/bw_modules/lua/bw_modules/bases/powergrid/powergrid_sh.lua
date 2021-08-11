@@ -2,7 +2,9 @@ local bw = BaseWars.Bases
 
 bw.EntityToPowerGrid = {}
 bw.PowerGrid = bw.PowerGrid or Emitter:extend()
+
 local pg = bw.PowerGrid
+pg.ThinkInterval = 0.3
 
 function pg:Initialize(base)
 	CheckArg(1, base, bw.IsBase)

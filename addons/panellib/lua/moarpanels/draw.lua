@@ -77,6 +77,11 @@ local mrad = math.rad
 
 local sizes = {}
 
+function surface.GetTextSizeQuick(tx, font)
+	surface_SetFont(font)
+	return surface_GetTextSize(tx)
+end
+
 function surface.CharSizes(tx, font, unicode)
 	local szs = {}
 	surface_SetFont(font)

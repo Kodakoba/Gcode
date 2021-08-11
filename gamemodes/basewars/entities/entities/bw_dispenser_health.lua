@@ -278,7 +278,7 @@ function ENT:CheckUsable()
 
 end
 
-function ENT:PaintInfo(w, y)
+function ENT:PaintStructureInfo(w, y)
 	draw.SimpleText(self:GetStims() .. " stims", "OS24", w / 2, y, color_white, 1, 5)
 	return 24
 end

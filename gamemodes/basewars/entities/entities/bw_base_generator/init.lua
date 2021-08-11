@@ -1,6 +1,8 @@
 include("shared.lua")
 AddCSLuaFile("shared.lua")
 AddCSLuaFile("cl_init.lua")
+-- AddCSLuaFile("cables.lua")
+
 local m_min = math.min
 local meta = FindMetaTable("Entity")
 

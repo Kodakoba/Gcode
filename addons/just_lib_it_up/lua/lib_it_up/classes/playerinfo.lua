@@ -114,6 +114,11 @@ end
 function PI:get(id, is_sid64)
 	if IsPlayerInfo(id) then return id end
 
+	if is_sid64 and not id:IsMaybeSteamID64() then
+		errorf("`%s` is almost certainly not a SteamID64. (and you tried to pass it off as one!)", id)
+		return
+	end
+
 	-- returns: pinfo, bool (newly created?)
 	if IsPlayer(id) then
 		if LibItUp.PlayerInfoTables.Player[id] then return LibItUp.PlayerInfoTables.Player[id], false end
@@ -380,13 +385,11 @@ hook.Add("NetworkableAttemptCreate", "PlayerInfo", function(nwID)
 		local is_bot = sid64:match("^900") -- uhoh
 
 		if is_bot then
-			print("SID BELONGS TO A BOT HOLY SHIT")
 			-- try to find a bot that'd match maybe possibly and pray
 			-- i HATE GMOD I HATE GMOD I HATE GMOD
 			for k,v in pairs(PIT.Players) do
-				print("Iterating", v:IsValid() and v:SteamID64(), sid64)
+
 				if v:IsValid() and v:SteamID64() == sid64 then -- updated steamid64?
-					print("FOUNDDDD")
 					pin:SetSteamID64(sid64)
 					pin:SetSteamID(util.SteamIDFrom64(sid64))
 					pin:GetPublicNW():SetNetworkableID(nwID)

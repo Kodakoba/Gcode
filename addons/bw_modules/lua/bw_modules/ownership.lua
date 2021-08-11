@@ -12,7 +12,7 @@ function ENTITY:BW_GetOwner()
 
 	if SERVER then
 		if self.CPPI_OwnerSID then
-			return (GetPlayerInfo(self.CPPI_OwnerSID, true)), false
+			return (GetPlayerInfo(self.CPPI_OwnerSID)), false
 		end
 
 		return false

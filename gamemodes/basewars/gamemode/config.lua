@@ -196,6 +196,12 @@ local add = BaseWars.AddToSpawn
 
 local sl = BaseWars.SpawnList
 
+local curTier
+
+local function SetTier(t)
+	curTier = t
+end
+
 local function AddItem(cat, typ, class, name, price, lv, mdl)
 	local t = {}
 
@@ -203,6 +209,7 @@ local function AddItem(cat, typ, class, name, price, lv, mdl)
 	t.Price = price
 	t.Model = mdl
 	t.Level = lv
+	t.Tier = curTier
 
 	t.Name = name
 
@@ -222,7 +229,7 @@ end
 
 local function AddLoadout(typ, class, name, price, lv, mdl, nongun)
 
-	local wep = weapons.Get(class)
+	local wep = weapons.GetStored(class)
 
 	mdl = (mdl ~= "" and mdl) or wep.WorldModel
 	if not mdl then error("Failed getting model for weapon " .. class) return end 
@@ -272,53 +279,72 @@ end
 
 -- Weapons - Misc--
 
-AddLoadout("Weapons - Misc", "weapon_health", "Heal Gun", k * 500, 20, "models/weapons/w_physics.mdl")
-AddLoadout("Weapons - Misc", "epicpickax", "Pickaxe", k * 200, 50, "models/weapons/w_irifle.mdl")
-AddLoadout("Weapons - Misc", "bw_blowtorch_t3", "Blowtorch T3", m * 5, 250, "models/weapons/w_irifle.mdl")
-AddLoadout("Weapons - Misc", "bw_blowtorch_t5", "Blowtorch T5", b * 5, 2500, "models/weapons/w_irifle.mdl")
-AddLoadout("Weapons - Misc", "bw_blowtorch_t4", "Blowtorch T4", m * 250, 1000, "models/weapons/w_irifle.mdl")
-AddLoadout("Weapons - Misc", "bw_blowtorch_t2", "Blowtorch T2", m * 2.5, 75, "models/weapons/w_irifle.mdl")
-AddLoadout("Weapons - Misc", "bw_blowtorch_t1", "Blowtorch T1", k * 1000, 20, "models/weapons/w_irifle.mdl")
+SetTier(1)
+	AddLoadout("Weapons - Misc", "weapon_health", "Heal Gun", k * 500, 20, "models/weapons/w_physics.mdl")
+	AddLoadout("Weapons - Misc", "epicpickax", "Pickaxe", k * 200, 50, "models/weapons/w_irifle.mdl")
+	AddLoadout("Weapons - Misc", "bw_blowtorch_t1", "Blowtorch T1", k * 1000, 20, "models/weapons/w_irifle.mdl")
 
+SetTier(2)
+	AddLoadout("Weapons - Misc", "bw_blowtorch_t2", "Blowtorch T2", m * 2.5, 75, "models/weapons/w_irifle.mdl")
+
+SetTier(3)
+	AddLoadout("Weapons - Misc", "bw_blowtorch_t3", "Blowtorch T3", m * 5, 250, "models/weapons/w_irifle.mdl")
+
+SetTier(4)
+	AddLoadout("Weapons - Misc", "bw_blowtorch_t4", "Blowtorch T4", m * 250, 1000, "models/weapons/w_irifle.mdl")
+
+SetTier(5)
+	AddLoadout("Weapons - Misc", "bw_blowtorch_t5", "Blowtorch T5", b * 5, 2500, "models/weapons/w_irifle.mdl")
+
+
+SetTier(nil)
 
 -- Printers - Misc.--
 
-AddPrinters("Printers - Misc.", "bw_printercap", "Capacity Kit", k * 1000, 0, "models/props_junk/cardboard_box004a.mdl")
-AddPrinters("Printers - Misc.", "bw_printerrack", "Printer Rack", k * 25, 5, "models/grp/rack/rack.mdl")
-AddPrinters("Printers - Misc.", "bw_printercap2", "Heavy Capacity Kit", m * 125, 0, "models/props_junk/cardboard_box004a.mdl")
-AddPrinters("Printers - Misc.", "bw_printerpaper", "Printer Paper", 300, 0, "models/props_junk/garbage_newspaper001a.mdl")
+	AddPrinters("Printers - Misc.", "bw_printercap", "Capacity Kit", k * 1000, 0, "models/props_junk/cardboard_box004a.mdl")
+	AddPrinters("Printers - Misc.", "bw_printerrack", "Printer Rack", k * 25, 5, "models/grp/rack/rack.mdl")
+	AddPrinters("Printers - Misc.", "bw_printercap2", "Heavy Capacity Kit", m * 125, 0, "models/props_junk/cardboard_box004a.mdl")
+	AddPrinters("Printers - Misc.", "bw_printerpaper", "Printer Paper", 300, 0, "models/props_junk/garbage_newspaper001a.mdl")
 
 
 -- Printers (T1)--
 
-AddPrinters("Printers (T1)", "bw_printer_nuclear", "Nuclear Printer", k * 500, 40, "models/props_lab/reciever01a.mdl")
-AddPrinters("Printers (T1)", "bw_printer_platinum", "Platinum Printer", k * 100, 15, "models/props_lab/reciever01a.mdl")
-AddPrinters("Printers (T1)", "bw_printer_manual", "Manual Printer", 100, 0, "models/props_lab/reciever01a.mdl")
-AddPrinters("Printers (T1)", "bw_printer_diamond", "Diamond Printer", k * 200, 25, "models/props_lab/reciever01a.mdl")
-AddPrinters("Printers (T1)", "bw_base_moneyprinter", "Basic Printer", k * 5, 0, "models/props_lab/reciever01a.mdl")
-AddPrinters("Printers (T1)", "bw_printer_copper", "Copper Printer", k * 12.5, 3, "models/props_lab/reciever01a.mdl")
-AddPrinters("Printers (T1)", "bw_printer_silver", "Silver Printer", k * 20, 5, "models/props_lab/reciever01a.mdl")
-AddPrinters("Printers (T1)", "bw_printer_gold", "Gold Printer", k * 50, 10, "models/props_lab/reciever01a.mdl")
+SetTier(1)
+
+	AddPrinters("Printers", "bw_printer_nuclear", "Nuclear Printer", k * 500, 40, "models/props_lab/reciever01a.mdl")
+	AddPrinters("Printers", "bw_printer_platinum", "Platinum Printer", k * 100, 15, "models/props_lab/reciever01a.mdl")
+	AddPrinters("Printers", "bw_printer_manual", "Manual Printer", 100, 0, "models/props_lab/reciever01a.mdl")
+	AddPrinters("Printers", "bw_printer_diamond", "Diamond Printer", k * 200, 25, "models/props_lab/reciever01a.mdl")
+	AddPrinters("Printers", "bw_base_moneyprinter", "Basic Printer", k * 5, 0, "models/props_lab/reciever01a.mdl")
+	AddPrinters("Printers", "bw_printer_copper", "Copper Printer", k * 12.5, 3, "models/props_lab/reciever01a.mdl")
+	AddPrinters("Printers", "bw_printer_silver", "Silver Printer", k * 20, 5, "models/props_lab/reciever01a.mdl")
+	AddPrinters("Printers", "bw_printer_gold", "Gold Printer", k * 50, 10, "models/props_lab/reciever01a.mdl")
 
 
 -- Printers (T2)--
 
-AddPrinters("Printers (T2)", "bw_printer_mobius", "Mobius Printer", m * 6, 75, "models/props_lab/reciever01a.mdl")
-AddPrinters("Printers (T2)", "bw_printer_molecular", "Molecular Printer", m * 85, 200, "models/props_lab/reciever01a.mdl")
-AddPrinters("Printers (T2)", "bw_printer_monolith", "Monolith Printer", m * 35, 120, "models/props_lab/reciever01a.mdl")
-AddPrinters("Printers (T2)", "bw_printer_quantum", "Quantum Printer", m * 55, 150, "models/props_lab/reciever01a.mdl")
-AddPrinters("Printers (T2)", "bw_printer_darkmatter", "Dark Matter Printer", m * 15, 85, "models/props_lab/reciever01a.mdl")
-AddPrinters("Printers (T2)", "bw_printer_redmatter", "Red Matter Printer", m * 25, 100, "models/props_lab/reciever01a.mdl")
+SetTier(2)
+
+	AddPrinters("Printers", "bw_printer_mobius", "Mobius Printer", m * 6, 75, "models/props_lab/reciever01a.mdl")
+	AddPrinters("Printers", "bw_printer_molecular", "Molecular Printer", m * 85, 200, "models/props_lab/reciever01a.mdl")
+	AddPrinters("Printers", "bw_printer_monolith", "Monolith Printer", m * 35, 120, "models/props_lab/reciever01a.mdl")
+	AddPrinters("Printers", "bw_printer_quantum", "Quantum Printer", m * 55, 150, "models/props_lab/reciever01a.mdl")
+	AddPrinters("Printers", "bw_printer_darkmatter", "Dark Matter Printer", m * 15, 85, "models/props_lab/reciever01a.mdl")
+	AddPrinters("Printers", "bw_printer_redmatter", "Red Matter Printer", m * 25, 100, "models/props_lab/reciever01a.mdl")
 
 
 -- Printers (T3)--
 
-AddPrinters("Printers (T3)", "bw_printer_neutron", "Neutron Printer", m * 250, 550, "models/props_lab/reciever01a.mdl")
-AddPrinters("Printers (T3)", "bw_printer_photon", "Photon Printer", m * 500, 900, "models/props_lab/reciever01a.mdl")
-AddPrinters("Printers (T3)", "bw_printer_proton", "Proton Printer", m * 150, 400, "models/props_lab/reciever01a.mdl")
-AddPrinters("Printers (T3)", "bw_printer_atomic", "Atomic Printer", m * 100, 250, "models/props_lab/reciever01a.mdl")
-AddPrinters("Printers (T3)", "bw_printer_electron", "Electron Printer", m * 400, 700, "models/props_lab/reciever01a.mdl")
+SetTier(3)
 
+	AddPrinters("Printers", "bw_printer_neutron", "Neutron Printer", m * 250, 550, "models/props_lab/reciever01a.mdl")
+	AddPrinters("Printers", "bw_printer_photon", "Photon Printer", m * 500, 900, "models/props_lab/reciever01a.mdl")
+	AddPrinters("Printers", "bw_printer_proton", "Proton Printer", m * 150, 400, "models/props_lab/reciever01a.mdl")
+	AddPrinters("Printers", "bw_printer_atomic", "Atomic Printer", m * 100, 250, "models/props_lab/reciever01a.mdl")
+	AddPrinters("Printers", "bw_printer_electron", "Electron Printer", m * 400, 700, "models/props_lab/reciever01a.mdl")
+
+
+SetTier(nil)
 
 -- Misc.--
 
@@ -334,63 +360,61 @@ AddRecreational("Misc.", "synthesizer_guitar", "Synthesizer - Guitar", k * 350, 
 
 -- Defense--
 
-AddEntities("Defense", "bw_turret_laser_rapid", "Rapid Laser Turret", m * 7.5, 1250, "models/Combine_turrets/Floor_turret.mdl")
-AddEntities("Defense", "bw_turret_ballistic", "Ballistic Turret", k * 80, 75, "models/Combine_turrets/Floor_turret.mdl")
-AddEntities("Defense", "bw_turret_laser", "Laser Turret", k * 120, 100, "models/Combine_turrets/Floor_turret.mdl")
-AddEntities("Defense", "bw_turret_ballistic_rapid", "Rapid Ballistic Turret", m * 2.5, 750, "models/Combine_turrets/Floor_turret.mdl")
+-- AddEntities("Defense", "bw_turret_laser_rapid", "Rapid Laser Turret", m * 7.5, 1250, "models/Combine_turrets/Floor_turret.mdl")
+-- AddEntities("Defense", "bw_turret_ballistic", "Ballistic Turret", k * 80, 75, "models/Combine_turrets/Floor_turret.mdl")
+-- AddEntities("Defense", "bw_turret_laser", "Laser Turret", k * 120, 100, "models/Combine_turrets/Floor_turret.mdl")
+-- AddEntities("Defense", "bw_turret_ballistic_rapid", "Rapid Ballistic Turret", m * 2.5, 750, "models/Combine_turrets/Floor_turret.mdl")
 
 
 -- Structures (T2)--
 
-AddEntities("Structures (T2)", "bw_radar", "Radar", m * 250, 250, "models/props_rooftop/roof_dish001.mdl")
+-- AddEntities("Structures", "bw_radar", "Radar", m * 250, 250, "models/props_rooftop/roof_dish001.mdl")
 
 
 -- Consumables (T1)--
 
-AddEntities("Consumables (T1)", "bw_battery", "Battery Kit", m * 2.5, 0, "models/props_junk/cardboard_box004a.mdl")
-AddEntities("Consumables (T1)", "bw_repairkit", "Repair Kit", k * 2.5, 0, "models/Items/car_battery01.mdl")
-AddEntities("Consumables (T1)", "bw_battery", "Heavy Battery Kit", m * 125, 0, "models/props_junk/cardboard_box004a.mdl")
-AddEntities("Consumables (T1)", "bw_entityarmor", "Armor Kit", m * 2.5, 0, "models/props_junk/cardboard_box004a.mdl")
-AddEntities("Consumables (T1)", "bw_entityarmor2", "Heavy Armor Kit", m * 125, 0, "models/props_junk/cardboard_box004a.mdl")
+AddEntities("Consumables", "bw_battery", "Battery Kit", m * 2.5, 0, "models/props_junk/cardboard_box004a.mdl")
+AddEntities("Consumables", "bw_repairkit", "Repair Kit", k * 2.5, 0, "models/Items/car_battery01.mdl")
+AddEntities("Consumables", "bw_battery", "Heavy Battery Kit", m * 125, 0, "models/props_junk/cardboard_box004a.mdl")
+AddEntities("Consumables", "bw_entityarmor", "Armor Kit", m * 2.5, 0, "models/props_junk/cardboard_box004a.mdl")
+AddEntities("Consumables", "bw_entityarmor2", "Heavy Armor Kit", m * 125, 0, "models/props_junk/cardboard_box004a.mdl")
 
 
 -- Generators (T1)--
 
-AddEntities("Generators (T1)", "bw_gen_manual", "Manual Generator", 250, 0, "models/props_c17/TrapPropeller_Engine.mdl")
-AddEntities("Generators (T1)", "bw_gen_solar", "Solar Panel", k * 1.5, 1, "models/props_lab/miniteleport.mdl")
-AddEntities("Generators (T1)", "bw_gen_gas", "Gas Generator", k * 5, 5, "models/xqm/hydcontrolbox.mdl")
+SetTier(1)
+	AddEntities("Generators", "bw_gen_manual", "Manual Generator", 250, 0, "models/props_c17/TrapPropeller_Engine.mdl")
+	AddEntities("Generators", "bw_gen_solar", "Solar Panel", k * 1.5, 1, "models/props_lab/miniteleport.mdl")
+	AddEntities("Generators", "bw_gen_gas", "Gas Generator", k * 5, 5, "models/xqm/hydcontrolbox.mdl")
 
--- AddEntities("Generators (T1)", "bw_electric_pole", "Power Pole", k * 10, 5, "models/grp/powerpole/powerpole.mdl")
+SetTier(2)
+	AddEntities("Generators", "bw_gen_coalfired", "Coal Fired Generator", k * 20, 50, "models/props_wasteland/laundry_washer003.mdl")
+	AddEntities("Generators", "bw_gen_fission", "Fission Reactor", k * 75, 100, "models/props/de_nuke/equipment1.mdl")
+	AddEntities("Generators", "bw_gen_fusion", "Fusion Reactor", k * 300, 500, "models/maxofs2d/thruster_propeller.mdl")
 
-AddEntities("Generators (T1)", "bw_gen_coalfired", "Coal Fired Generator", k * 20, 50, "models/props_wasteland/laundry_washer003.mdl")
-AddEntities("Generators (T1)", "bw_gen_fission", "Fission Reactor", k * 75, 100, "models/props/de_nuke/equipment1.mdl")
-AddEntities("Generators (T1)", "bw_gen_fusion", "Fusion Reactor", k * 300, 500, "models/maxofs2d/thruster_propeller.mdl")
-
-AddEntities("Generators (T1)", "bw_gen_joke", "Numismatic Reactor", m * 150, 3000, "models/props_c17/cashregister01a.mdl")
-AddEntities("Generators (T1)", "bw_gen_hydroelectric", "Hydroelectric Reactor", m * 5, 1250, "models/props_wasteland/laundry_washer001a.mdl")
-AddEntities("Generators (T1)", "bw_gen_combustion", "Combustion Reactor", m * 500, 3000, "models/props_c17/substation_transformer01a.mdl")
-
+SetTier(3)
+	AddEntities("Generators", "bw_gen_joke", "Numismatic Reactor", m * 150, 3000, "models/props_c17/cashregister01a.mdl")
+	AddEntities("Generators", "bw_gen_hydroelectric", "Hydroelectric Reactor", m * 5, 1250, "models/props_wasteland/laundry_washer001a.mdl")
+	AddEntities("Generators", "bw_gen_combustion", "Combustion Reactor", m * 500, 3000, "models/props_c17/substation_transformer01a.mdl")
 
 
 
 -- Structures (T1)--
 
---AddEntities("Structures (T1)", "bw_weaponbox", "Weapon Box", k * 150, 25, "models/lt_c/sci_fi/box_crate.mdl")
---AddEntities("Structures (T1)", "bw_printerstorage", "Vault", k * 50, 10, "models/props/de_nuke/NuclearContainerBoxClosed.mdl")
-AddEntities("Structures (T1)", "bw_spawnpoint", "Spawnpoint", k * 25, 0, "models/props_trainstation/trainstation_clock001.mdl")
+SetTier(1)
+	AddEntities("Structures", "bw_spawnpoint", "Spawnpoint", k * 25, 0, "models/props_trainstation/trainstation_clock001.mdl")
 
 
 -- Dispensers (T1)--
 
-AddEntities("Dispensers (T1)", "bw_vendingmachine", "Vending Machine", k * 20, 10, "models/props_interiors/VendingMachineSoda01a.mdl")
---AddEntities("Dispensers (T1)", "bw_weaponcrafter", "Weapons Crafter", k * 500, 10, "models/props_combine/combine_mortar01b.mdl")
---AddEntities("Dispensers (T1)", "bw_healthpad2", "Health Pad T2", m * 150, 1500, "models/props_lab/teleplatform.mdl")
---AddEntities("Dispensers (T1)", "bw_healthpad", "Health Pad", m * 10, 150, "models/props_lab/teleplatform.mdl")
-AddEntities("Dispensers (T1)", "bw_dispenser_health", "Health Dispenser", k * 25, 50, "models/props_combine/health_charger001.mdl")
-AddEntities("Dispensers (T1)", "bw_dispenser_ammo", "Ammo Dispenser", k * 55, 30, "models/props_lab/reciever_cart.mdl")
-AddEntities("Dispensers (T1)", "bw_dispenser_armor2", "Armor Dispenser T2", m * 15, 1000, "models/props_combine/suit_charger001.mdl")
-AddEntities("Dispensers (T1)", "bw_dispenser_ammo2", "Ammo Dispenser T2", m * 10, 750, "models/props_lab/reciever_cart.mdl")
+SetTier(1)
+	AddEntities("Dispensers", "bw_vendingmachine", "Vending Machine", k * 20, 10, "models/props_interiors/VendingMachineSoda01a.mdl")
+	AddEntities("Dispensers", "bw_dispenser_health", "Health Dispenser", k * 25, 50, "models/props_combine/health_charger001.mdl")
+	AddEntities("Dispensers", "bw_dispenser_ammo", "Ammo Dispenser", k * 55, 30, "models/props_lab/reciever_cart.mdl")
 
+SetTier(2)
+	AddEntities("Dispensers", "bw_dispenser_armor2", "Armor Dispenser T2", m * 15, 1000, "models/props_combine/suit_charger001.mdl")
+	AddEntities("Dispensers", "bw_dispenser_ammo2", "Ammo Dispenser T2", m * 10, 750, "models/props_lab/reciever_cart.mdl")
 
 ----
 
@@ -399,44 +423,53 @@ AddEntities("Dispensers (T1)", "bw_dispenser_ammo2", "Ammo Dispenser T2", m * 10
 
 -- Shit-tier --
 
-AddLoadout("Pistols", "arccw_fml_fas_ots33", "OTS 33", 10*k, 5, "models/weapons/arccw/fml/fas1/w_ots33.mdl")
-AddLoadout("Pistols", "arccw_fml_fas_g20", "Glock 20", 12.5*k, 5, "models/weapons/arccw/fml/fas1/w_g20.mdl")
-AddLoadout("Pistols", "arccw_makarov", "PM", 15*k, 7, "models/weapons/arccw/w_pmt.mdl")
-AddLoadout("Pistols", "arccw_uspmatch", "USP Match", 15*k, 7, "models/weapons/arccw/w_uspmatch.mdl")
+SetTier(1)
+	AddLoadout("Pistols", "arccw_makarov", "PM", 				15*k, 3)
+	AddLoadout("Pistols", "arccw_fml_fas_ots33", "OTS 33", 		10*k, 5)
+	AddLoadout("Pistols", "arccw_go_p2000", "P2000", 			12.5*k, 5)
+	AddLoadout("Pistols", "arccw_go_usp", "USP", 				15*k, 7)
+	AddLoadout("Pistols", "arccw_go_m9", "M9 Beretta", 			15*k, 7)
+	AddLoadout("Pistols", "arccw_go_p250", "P250", 				20*k, 7)
 
-AddLoadout("Shotguns", "arccw_db", "Sawn-off", 25 * k, 10, "models/weapons/arccw/w_sawnoff.mdl")
-AddLoadout("Shotguns", "arccw_shorty", "M3", 50 * k, 15, "models/weapons/w_shot_m3super90.mdl")
-AddLoadout("Shotguns", "arccw_shorty", "arccw_fml_fas_m870", 60 * k, 20, "models/weapons/arccw/fml/fas1/w_m870.mdl")
 
-AddLoadout("Pistols", "arccw_fml_fas_deagle", "Deagle", 25*k, 15, "models/weapons/arccw/fml/fas1/w_deagle.mdl")
-AddLoadout("Pistols", "arccw_mw2_anaconda", ".44 Magnum", 35*k, 20, "models/weapons/w_357.mdl")
+	AddLoadout("Shotguns", "arccw_db", "Sawn-off", 25 * k, 10, "models/weapons/arccw/w_sawnoff.mdl")
+	AddLoadout("Shotguns", "arccw_go_nova", "Nova", 50 * k, 15, nil)
+	AddLoadout("Shotguns", "arccw_dmi_r870_sg_elite", "Remington M870", 60 * k, 20, nil)
 
-AddLoadout("SMGs", "arccw_mw2_tmp", "TMP", 30*k, 15, "models/weapons/arccw/fesiugmw2/worldmodels/w_mw2_m9_2a.mdl")
-AddLoadout("SMGs", "arccw_mw2_miniuzi", "Mini Uzi", 50*k, 20, "models/weapons/arccw/fesiugmw2/worldmodels/w_mw2_uzi_2a.mdl")
-AddLoadout("SMGs", "arccw_fml_fas_mp5", "HK MP5", 75*k, 30, "models/weapons/arccw/fml/fas1/w_mp5.mdl")
-AddLoadout("SMGs", "arccw_fml_fas_extra_comando9", "Commando 9 (?)", 90*k, 30, "models/weapons/arccw/fml/fas1/w_commando9.mdl")
-AddLoadout("SMGs", "arccw_vector", "Vector", 100*k, 30, "models/weapons/arccw/w_vector.mdl")
+	AddLoadout("SMGs", "arccw_dmi_hk94a2_export", "HK94", 		15*k, 15, nil)
+	AddLoadout("SMGs", "arccw_dmi_mkgs_banshee", "Banshee", 	20*k, 15, nil) -- slightly better than hk94, still semi
+	AddLoadout("SMGs", "arccw_mw2_tmp", "TMP", 					30*k, 15)
+	AddLoadout("SMGs", "arccw_mw2_miniuzi", "Mini Uzi", 		50*k, 20)
+	AddLoadout("SMGs", "arccw_go_mp9", "MP9", 					50*k, 20)
 
-AddLoadout("Sniper Rifles", "arccw_contender", "G2 Contender", k * 50, 25, "models/weapons/arccw/w_contender.mdl")
+	AddLoadout("Sniper Rifles", "arccw_contender", "G2 Contender", k * 50, 25, "models/weapons/arccw/w_contender.mdl")
+
+	AddLoadout("Assault Rifles", "arccw_go_ar15", "AR15", 35*k, 20)
+
+
 
 -- Low-Mid tier --
 
+SetTier(2)
+	AddLoadout("Pistols", "arccw_go_fiveseven", "Five-seven", 	25*k, 7)
+	AddLoadout("Pistols", "arccw_go_cz75", "CZ-75", 			25*k, 7)
+	AddLoadout("Pistols", "arccw_go_tec9", "Tec-9", 			25*k, 7)
+	AddLoadout("Pistols", "arccw_go_deagle", "Deagle", 			40*k, 15)
+	AddLoadout("Pistols", "arccw_go_r8", "R8 Revolver", 		50*k, 20)
 
-AddLoadout("Assault Rifles", "arccw_ins2_ak74", "AK-74", 75*k, 30, "models/weapons/arccw/fml/fas1/w_ak47.mdl")
--- the insurgency AK74 sucks dick compared to FA:S AK47
+	AddLoadout("SMGs", "arccw_fml_fas_mp5", "HK MP5K", 					75*k, 30, "models/weapons/w_smg_mp5.mdl")
+	AddLoadout("SMGs", "arccw_go_mp5", "MP5A3", 						75*k, 30, nil)
+	AddLoadout("SMGs", "arccw_fml_fas_extra_comando9", "Commando 9", 	90*k, 30)
+	AddLoadout("SMGs", "arccw_go_ump", "UMP45 (v1)", 					100*k, 30, nil)
+	AddLoadout("SMGs", "arccw_mw2_ump45", "UMP45 (v2)", 				100*k, 40)
 
-AddLoadout("Assault Rifles", "arccw_fml_fas_ak47", "AK-47", 100*k, 35, "models/weapons/arccw/fml/fas1/w_ak47.mdl")
-AddLoadout("Assault Rifles", "arccw_fml_fas_g36c", "G36", 125*k, 35, "models/weapons/arccw/fml/fas1/w_g36c.mdl")
+	AddLoadout("Assault Rifles", "arccw_fml_fas_g36c", "G36", 		75*k, 30, nil)
+	AddLoadout("Assault Rifles", "arccw_fml_fas_ak47", "AK-47", 	75*k, 35, "models/weapons/arccw/fml/fas1/w_ak47.mdl")
+	AddLoadout("Assault Rifles", "arccw_fml_fas_famas", "FAMAS", 	125*k, 40, "models/weapons/arccw/fml/fas1/w_famas.mdl")
+	AddLoadout("Assault Rifles", "arccw_go_ace", "Galil", 			125*k, 40)
+	AddLoadout("Assault Rifles", "arccw_fml_fas_g3a3", "G3A3", 		150*k, 40, "models/weapons/arccw/fml/fas1/w_g3a3.mdl")
 
-AddLoadout("Assault Rifles", "arccw_fml_fas_famas", "FAMAS", 150*k, 40, "models/weapons/arccw/fml/fas1/w_famas.mdl")
-AddLoadout("Assault Rifles", "arccw_fml_fas_g3a3", "G3A3", 150*k, 40, "models/weapons/arccw/fml/fas1/w_g3a3.mdl")
-
-AddLoadout("SMGs", "arccw_mw2_ump45", "UMP45", 125*k, 40, "models/weapons/arccw/fesiugmw2/worldmodels/w_mw2_uzi_2a.mdl")
-AddLoadout("SMGs", "arccw_fml_fas_sterling", "C1-9mm", 125*k, 40, "models/weapons/arccw/fml/fas1/w_sterling.mdl")
-
---AddLoadout("Assault Rifles", "cw_g4p_fn_fal", "FN FAL", 125*k, 50, "models/weapons/w_rif_m4a1.mdl")
---AddLoadout("Assault Rifles", "cw_m14", "M14", 125*k, 50, "models/weapons/w_cstm_m14.mdl")
-
+	AddLoadout("Sniper Rifles", "arccw_go_ssg08", "Scout", 120 * k, 50)
 
 -- Mid tier --
 
@@ -454,7 +487,7 @@ AddLoadout("Sniper Rifles", "arccw_fml_fas_m82", "Barett M82", 350 * k, 60, "mod
 -- Mid-Top tier --
 
 AddLoadout("Assault Rifles", "arccw_fml_fas_m14", "M14", 350*k, 125, "models/weapons/arccw/fml/fas1/w_m14.mdl")
-
+AddLoadout("Assault Rifles", "arccw_mw2_f2000", "F2000", 150*k, 125)
 --AddLoadout("Assault Rifles", "cw_g4p_xm8", "XM8", 500*k, 150, "models/weapons/w_rif_m4a1.mdl")
 --AddLoadout("Assault Rifles", "cw_g4p_m4a1", "M4A1", 750*k, 175, "models/weapons/w_rif_m4a1.mdl")
 AddLoadout("Assault Rifles", "arccw_fml_fas_sg550", "SG550", 250*k, 50, "models/weapons/arccw/fml/fas1/w_sg550.mdl")

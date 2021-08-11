@@ -6,7 +6,7 @@ ENT.PrintName 		= "Manual Generator"
 ENT.Model 			= "models/props_c17/TrapPropeller_Engine.mdl"
 
 ENT.PowerGenerated 	= 0
-ENT.PowerGenerated2 = 50
+ENT.PowerGenerated2 = 0
 ENT.PowerCapacity 	= 5000
 
 ENT.TransmitRadius 	= 300
@@ -19,6 +19,13 @@ ENT.IsManualGen 	= true
 
 if SERVER then util.AddNetworkString("ManualGen") end
 
+function ENT:Init(...)
+	self.BaseClass.Init(self, ...)
+
+	-- generate enough power for a 8pw/s entity to upkeep for 10s
+	self.PowerGenerated2 = math.ceil(8 * 10 / BaseWars.Bases.PowerGrid.ThinkInterval)
+end
+
 function ENT:GenPower()
 
 	self:EmitSound(self.Sounds[math.random(1, #self.Sounds)])
@@ -29,7 +36,6 @@ function ENT:GenPower()
 	local nw = self:GetPowerGrid():GetNW()
 
 	self:GetPowerGrid():AddPower(self.PowerGenerated2)
-	nw:Set("MT", (nw:Get("MT") or 0) + 1)
 
 	--self:GetGrid():Network()
 end

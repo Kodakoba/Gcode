@@ -1,8 +1,5 @@
 local bw = BaseWars.Bases
-bw.ThinkInterval = 0.3
-
 local pg = bw.PowerGrid
-
 
 --[==================================[
 	ownership checks
@@ -12,9 +9,7 @@ local unowned = bw.GridUnowned or {}
 bw.GridUnowned = unowned
 
 hook.Add("EntityOwnershipChanged", "PGTrackOwned", function(ply, ent, id)
-	print("ownership changed")
 	if unowned[ent] then
-		print("ent was unowned")
 		local pg = unowned[ent]
 		pg:RecheckOwnership(ent)
 	end
@@ -269,9 +264,9 @@ end)
 local lastThink = CurTime()
 
 hook.Add("Tick", "PowerGrid_Tick", function()
-	if CurTime() < lastThink + bw.ThinkInterval then return end
+	if CurTime() < lastThink + pg.ThinkInterval then return end
 
-	lastThink = CurTime() + bw.ThinkInterval
+	lastThink = CurTime() + pg.ThinkInterval
 
 	for _, base in pairs(BaseWars.Bases.Bases) do
 		local grid = base.PowerGrid

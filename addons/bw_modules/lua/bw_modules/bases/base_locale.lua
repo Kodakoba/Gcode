@@ -19,6 +19,13 @@ end
 		)
 	end
 
+	err.AlreadyHaveABase = function(ply)
+		return ("You already have a claimed base%s!"):format(
+			ply and ply:GetBase() and (": `%s`"):format( ply:GetBase():GetName() )
+				or ""
+		)
+	end
+
 
 for k,v in pairs(err) do
 	err[k] = makeErr(v)

@@ -5,7 +5,7 @@ local EntMaxHP = 0
 
 local lastEnt
 
-local w, optimal_h = 180, 55
+local optimal_w, optimal_h = 180, 55
 
 local HPBG = Color(75, 75, 75)
 local HPFG = Color(200, 75, 75)
@@ -30,6 +30,26 @@ local function paint(ent, curent, baseAnim, firstFrame)
 
 	if not lastEnt or not lastEnt:IsValid() then return end
 
+	--[==================================[
+				Size calculation
+	--]==================================]
+
+	local toH = optimal_h
+
+	local rebooting = false
+	local dead = not lastEnt:GetPower() and not lastEnt.Powerless
+
+	if dead or rebooting then
+		toH = toH + 18
+	end
+
+	local w = baseAnim.Width or optimal_w
+	local h = baseAnim.Height or toH
+
+	--[==================================[
+			HP Bar Size calculation
+	--]==================================]
+
 	local hpfrac = (EntHP / EntMaxHP)
 
 	if not anims.EntHPs[lastEnt:EntIndex()] then
@@ -43,31 +63,17 @@ local function paint(ent, curent, baseAnim, firstFrame)
 	local hpW = hpfrac * (w - 12)
 	hpW = math.floor(math.max(hpW, 8))			--for nice rounding
 
-	--[[
-		Height Calculation
-	]]
 
-	local toH = optimal_h
+	--[==================================[
+			  Actual paint process
+	--]==================================]
 
-	local rebooting = false
-	local dead = not lastEnt:GetPower() and not lastEnt.Powerless
-
-	--[[if lastEnt.GetRebootTime and lastEnt:GetRebootTime() ~= 0 then
-		rebooting = true
-	end]]
-
-	if dead or rebooting then
-		toH = toH + 18
-	end
-
-	local h = baseAnim.Height or toH
 	local headerH = 24
 
 	BaseWars.HUD.PaintFrame(w, h, headerH)
-	--AlphaColors(alpha, hdcol, backcol, HPBG, HPFG, PWFG, white, gray)
 
 	local name = lastEnt.PrintName
-	draw.SimpleText(name, "TW24", w/2, 0, white, 1, 5)
+	draw.SimpleText(name, "OSB24", w/2, math.floor(headerH / 2), white, 1, 1)
 
 	draw.RoundedBox(6, 6, headerH + 8, w - 13, 14, HPBG)
 	draw.RoundedBox(6, 6, headerH + 8, hpW, 14, HPFG)
@@ -100,25 +106,34 @@ local function paint(ent, curent, baseAnim, firstFrame)
 		tY = tY + 18
 	end
 
-	if lastEnt.PaintInfo then
-		local needHeight = lastEnt:PaintInfo(w, tY)
+	local toW = optimal_w
+
+	if lastEnt.PaintStructureInfo then
+		local needHeight, needWidth = lastEnt:PaintStructureInfo(w, tY)
 
 		if not needHeight then
-			print("reminder: ENT:PaintInfo needs to return additional height. return 0 if unnecessary.")
+			print("reminder: ENT:PaintStructureInfo needs to return additional height. return 0 if unnecessary.")
 			needHeight = 0
 		end
 
-		if curent:IsValid() then
+		if curent then
 			-- only add the info height if we're actually looking at the ent rn
 			toH = toH + needHeight
+			if needWidth then
+				toW = math.max(optimal_w, needWidth)
+			end
 		end
 	end
 
 	if firstFrame then
 		baseAnim:RemoveLerp("Height")
 		baseAnim.Height = toH
-	else
+
+		baseAnim:RemoveLerp("Width")
+		baseAnim.Width = toW
+	elseif curent then
 		baseAnim:To("Height", toH, 0.3, 0, 0.3)
+		baseAnim:To("Width", toW, 0.3, 0, 0.3)
 	end
 end
 

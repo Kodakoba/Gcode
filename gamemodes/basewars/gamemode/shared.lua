@@ -488,11 +488,9 @@ local function BlockInteraction(ply, ent, ret)
 end
 
 local function IsAdmin(ply, ent, ret)
-
 	if BlockInteraction(ply, ent, ret) == false then return false end
 
-	return ply:IsAdmin()
-
+	return BaseWars.IsDev(ply)
 end
 
 function GM:PhysgunPickup(ply, ent)
@@ -518,7 +516,9 @@ function GM:CanTool(ply, tr, tool)
 	local Ret = self.BaseClass:CanTool(ply, tr, tool)
 
 	if BaseWars.Config.BlockedTools[tool] then return IsAdmin(ply, ent, Ret) end
-	if IsValid(tr.Entity) and tr.Entity:GetClass():find("bw_") then return IsAdmin(ply, ent, Ret) end
+	if IsValid(tr.Entity) and tr.Entity.IsBaseWars then
+		return IsAdmin(ply, ent, Ret)
+	end
 
 	return BlockInteraction(ply, ent, Ret)
 

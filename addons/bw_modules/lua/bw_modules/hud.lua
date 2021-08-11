@@ -14,7 +14,7 @@ local hdcol = Color(30, 30, 30)
 
 local alpha = 0
 
-local w, h = 180, 55
+local default_w, default_h = 180, 55
 
 local lastpos = Vector()
 local lastent
@@ -28,15 +28,8 @@ local function AlphaColors(a, ...)
 	end
 end
 
-local EntMaxHP = 0
-local EntHP = 0
-
-local PWFG = Color(50, 140, 240)
 
 local vm = Matrix()
-
-local name = ""
-
 local anims
 
 local function make()
@@ -49,29 +42,29 @@ else
 	make()
 end
 
-local rebootingMaxWidth = 0
-local rebootingMaxText = "Rebooting..."
-
-surface.SetFont("OS18")
-rebootingMaxWidth = (surface.GetTextSize(rebootingMaxText))
-
 local minDist = 64
 local defaultMaxDist = 200
 local maxDist = defaultMaxDist
-local minScale = 0.2
+
+local minScale = 0.3
+local fadeStart = 0.6
+local fadeEnd = minScale
 
 -- is this the first frame that the HUD is present?
 local initialFrame = false
 local lastPainter = nil
 
+local function remap(cur, min, max)
+	return (math.max(cur, min) - min) / (max - min)
+end
 local function DrawStructureInfo()
 
 	local me = LocalPlayer()
 
 	local trace = me:GetEyeTrace()
-	local ent = trace.Entity
+	local ent = trace.Entity:IsValid() and trace.Entity
 
-	local valid = IsValid(ent) -- and ent.IsBaseWars
+	local valid = not not ent -- and ent.IsBaseWars
 	local dist = lastpos:Distance(trace.StartPos)
 
 	if not valid then
@@ -96,28 +89,39 @@ local function DrawStructureInfo()
 		lastPainter = pntr
 		maxDist = distAppear or defaultMaxDist
 
-		if dist < maxDist * (1 - minScale) and should then
+		lastpos = ep
+
+		if should then
 			anims:To("Alpha", alphaTo, 0.15, 0, 0.3)
-			lastpos = ep
 		else
 			anims:To("Alpha", 0, 0.3, 0, 0.3)
 		end
 	end
 
 	alpha = anims.Alpha or 0
+
 	backcol.a = alpha
 	hdcol.a = alpha
 
+	if not IsValid(lastent) then initialFrame = true return end
+
+	local frac = remap(dist, minDist, maxDist)
+	local intScale = Lerp(1 - frac, 0, 1)
+	local scale = math.max(intScale, minScale)
+
+	local scAlpha = remap(intScale, fadeEnd, fadeStart)
+	alpha = alpha * scAlpha
+
+	if alpha < 1 then initialFrame = true return end
+
 	local ts = lastpos:ToScreen()
-
-	if not ts.visible or alpha < 1 or not IsValid(lastent) then initialFrame = true return end
-
-	local frac = (math.max(dist, minDist) - minDist) / (maxDist - minDist)
-	local scale = Lerp(1 - frac, minScale, 1)
+	if not ts.visible then initialFrame = true return end
 
 	local x, y = ts.x, ts.y 	--middle of the window's XY
 	local sx, sy = x, y 		--top left XY
 
+
+	local w, h = anims.Width or default_w, anims.Height or default_h
 
 	vm:Identity()
 
