@@ -110,7 +110,6 @@ for k,v in pairs(families) do
 end
 
 Emitter.HookPaint = function(what)
-	
 	if not what.Paint then
 		what.Paint = function(self, ...)
 			self:Emit("Paint", ...)

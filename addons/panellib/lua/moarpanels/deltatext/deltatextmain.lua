@@ -207,8 +207,8 @@ function DeltaText:GetSize()
 end
 
 function DeltaText:ActivateElement(num) 	--this skips certain elements from the cycle
-
-	local tx = self.Elements[num] --new object to activate
+	local tx = (istable(num) and num.IsDeltaElement and num) or self.Elements[num] --new object to activate
+	num = isnumber(num) and num or (tx and tx.Key)
 	local lasttx = self.LastActiveText
 
 	if tx then

@@ -270,9 +270,12 @@ function Animatable:MemberLerp(tbl, key, val, dur, del, ease, forceswap)
 	self.__Animations = anims
 
 	local as_str = hex(tbl)
+	local ankey = tostring(key) .. as_str
 
-	local anim = anims[tostring(key) .. as_str]
+	local anim = anims[ankey]
 	local from = tbl[key] or 0
+
+	local print = key == "DisappearFrac" and print or BlankFunc
 
 	if tbl[key] == val then
 		if not anim or anim.ToVal == val then
@@ -281,23 +284,24 @@ function Animatable:MemberLerp(tbl, key, val, dur, del, ease, forceswap)
 	end
 
 	if anim then
-		if anim.ToVal == val and not forceswap then return anim, false end
+		if anim.ToVal == val and not forceswap then
+			return anim, false
+		end
 
 		anim.ToVal = val
 		anim:Swap(dur, del, ease)
-
 	else
-
 		anim = self:NewAnimation(dur, del, ease)
 		anim:SetSwappable(true)
 
 		anim.ToVal = val
 		anim.FromTable = tbl
-		anims[tostring(key) .. as_str] = anim
+		anims[ankey] = anim
 	end
 
 	anim:On("Stop", "RemoveAnim", function()
-		anims[tostring(key) .. as_str] = nil
+		anims[ankey] = nil
+		anim:Remove()
 	end)
 
 	anim.Think = function(anim, self, fr)
@@ -399,6 +403,11 @@ function Animatable:RemoveLerp(key)
 	end
 
 	anims[key] = nil
+end
+
+function Animatable:RemoveMemberLerp(t, key)
+	local as_str = hex(tbl)
+	self:RemoveLerp(tostring(key) .. as_str)
 end
 
 _G.GlobalAnimatable = Animatable:new("Global")

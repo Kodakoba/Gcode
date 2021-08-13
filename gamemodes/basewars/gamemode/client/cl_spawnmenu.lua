@@ -1,6 +1,4 @@
 
-local SpawnList = BaseWars.SpawnList
-
 local function IsGroup(ply, group)
 	if not ply.CheckGroup then error("what the fuck where's ULX") return end
 	if not IsValid(ply) or not ply:IsPlayer() then return end
@@ -283,7 +281,7 @@ end
 
 local function openCategory(pnl, btn)
 	local cat = btn.Category
-	if not SpawnList[cat] then
+	if not BaseWars.SpawnList[cat] then
 		errorf("attempt to open unknown basewars spawnlist category: %s", cat)
 		return
 	end
@@ -344,7 +342,7 @@ local function openCategory(pnl, btn)
 
 	pnl:AddCatCanvas(canv)
 
-	for subname, data in SortedPairsByMemberValue(SpawnList[cat].Subcategories, "Priority", true) do
+	for subname, data in SortedPairsByMemberValue(BaseWars.SpawnList[cat].Subcategories, "Priority", true) do
 		createSubCategory(canv, cat, subname, data)
 	end
 
@@ -366,76 +364,89 @@ local function MakeSpawnList()
 	cats:DockMargin(0, 24, 16, 0)
 	cats.GradBorder = true
 	cats.BackgroundColor = Color(200, 200, 200)
+	cats.Categories = {}
 
 	local active
 
-	for k,v in SortedPairs(SpawnList) do
-		local tab = vgui.Create("FButton", cats)
-		tab:Dock(TOP)
-		tab:SetTall(32)
-		tab:DockMargin(0, 0, 0, 4)
-		tab.NoDraw = true
-		tab.Category = v.Name
-		tab.Icon = v.Icon
+	function pnl:Fill()
+		for k,v in SortedPairs(BaseWars.SpawnList) do
+			if cats.Categories[v.Name] then cats.Categories[v.Name]:Remove() end
 
-		local ic = IsIcon(v.Icon) and v.Icon
+			local tab = vgui.Create("FButton", cats)
+			tab:Dock(TOP)
+			tab:SetTall(32)
+			tab:DockMargin(0, 0, 0, 4)
+			tab.NoDraw = true
+			tab.Category = v.Name
+			tab.Icon = v.Icon
+			tab:SetZPos(k)
+			cats.Categories[v.Name] = tab
 
-		local col = Colors.LightGray:Copy()
-		local sel_col = Color(40, 140, 230)
+			local ic = IsIcon(v.Icon) and v.Icon
 
-		local unsel_X = 6
-		local sel_X = 20
+			local col = Colors.LightGray:Copy()
+			local sel_col = Color(40, 140, 230)
 
-		local ic_tx_padding = 4
-		local box_padding = 2
+			local unsel_X = 6
+			local sel_X = 20
 
-		local font = "BS28"
+			local ic_tx_padding = 4
+			local box_padding = 2
 
-		tab.IconX = unsel_X
+			local font = "BS28"
 
-		if IsIcon(v.Icon) then
-			v.Icon:SetColor(col)
-			v.Icon:SetFilter(true)
-		end
-
-		local box_col = Colors.LightGray:Copy()
-		box_col.a = 120
-
-		local fullW = 0
-
-		surface.SetFont(font)
-		local txW = surface.GetTextSize(v.Name)
-		local icW = ic and ((ic:GetSize()) + ic_tx_padding) or 0
-
-		fullW = txW + icW
-		function tab:PostPaint(w, h)
-			--draw.RoundedBox(8, self.IconX - box_padding, 0, fullW + box_padding*2, h, box_col)
-
-			if active == self then
-				self:To("IconX", sel_X, 0.2, 0, 0.15)
-				self:LerpColor(col, sel_col, 0.3, 0, 0.3)
-			else
-				self:To("IconX", unsel_X, 0.2, 0, 0.2)
-				self:LerpColor(col, Colors.LightGray, 0.3, 0, 0.3)
-			end
-
-			local x = math.Round(self.IconX)
+			tab.IconX = unsel_X
 
 			if IsIcon(v.Icon) then
-				local iw, ih = v.Icon:GetSize()
-				v.Icon:Paint(x, h/2 - ih/2)
-				x = x + iw + ic_tx_padding
+				v.Icon:SetColor(col)
+				v.Icon:SetFilter(true)
 			end
 
-			draw.SimpleText(v.Name, "BS28", x, h/2, col, 0, 1)
-		end
+			local box_col = Colors.LightGray:Copy()
+			box_col.a = 120
 
-		function tab:DoClick()
-			local new = openCategory(its, tab)
-			if new then
-				active = self
+			local fullW = 0
+
+			surface.SetFont(font)
+			local txW = surface.GetTextSize(v.Name)
+			local icW = ic and ((ic:GetSize()) + ic_tx_padding) or 0
+
+			fullW = txW + icW
+			function tab:PostPaint(w, h)
+				--draw.RoundedBox(8, self.IconX - box_padding, 0, fullW + box_padding*2, h, box_col)
+
+				if active == self then
+					self:To("IconX", sel_X, 0.2, 0, 0.15)
+					self:LerpColor(col, sel_col, 0.3, 0, 0.3)
+				else
+					self:To("IconX", unsel_X, 0.2, 0, 0.2)
+					self:LerpColor(col, Colors.LightGray, 0.3, 0, 0.3)
+				end
+
+				local x = math.Round(self.IconX)
+
+				if IsIcon(v.Icon) then
+					local iw, ih = v.Icon:GetSize()
+					v.Icon:Paint(x, h/2 - ih/2)
+					x = x + iw + ic_tx_padding
+				end
+
+				draw.SimpleText(v.Name, "BS28", x, h/2, col, 0, 1)
+			end
+
+			function tab:DoClick()
+				local new = openCategory(its, tab)
+				if new then
+					active = self
+				end
 			end
 		end
+	end
+
+	hook.Add("BW_CatalogueFilled", pnl, pnl.Fill)
+
+	if BaseWars.SpawnList then
+		pnl:Fill()
 	end
 
 	its = vgui.Create("GradPanel", pnl)

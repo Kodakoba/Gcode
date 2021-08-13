@@ -21,10 +21,6 @@ function ENT:SetBase(base)
 	end
 end
 
-function ENT:GetBase()
-	return self.BWBase
-end
-
 function ENT:Think()
 	self:AddEFlags( EFL_FORCE_CHECK_TRANSMIT )
 end

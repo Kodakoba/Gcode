@@ -84,7 +84,7 @@ end
 
 function facmeta:IsMember(what)
 	local pinfo = GetPlayerInfoGuarantee(what)
-	return self.meminfo[pinfo] and pinfo
+	return table.HasValue(self:GetMembersInfo(), pinfo) and pinfo
 end
 
 function facmeta:GetLeader()

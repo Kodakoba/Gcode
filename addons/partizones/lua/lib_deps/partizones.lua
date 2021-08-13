@@ -3,60 +3,6 @@ if SERVER then
 	util.AddNetworkString("NoBasingDumbass")
 end
 
-local path = "partizones/"
-
-local _CL = 1
-local _SH = 2
-local _SV = 3
-
-local function IncludeLuaFolder(name, wwealm, nofold)
-
-	local file, fOwOldeww = file.Find(path .. name, "LUA" )
-
-	local tbl = string.Explode("/", name)
-	tbl[#tbl] = ""
-
-	local fname = table.concat(tbl,"/")
-
-	for k,v in pairs(file) do
-
-		local name = path .. fname
-
-		if wwealm==_CL then
-
-			if SERVER then
-				AddCSLuaFile(name..v)
-			end
-
-			if CLIENT then
-				include(name..v)
-			end
-
-		elseif wwealm == _SH then
-
-			include(name..v)
-			AddCSLuaFile(name..v)
-
-		elseif wwealm == _SV and SERVER then
-
-			include(name..v)
-		else
-			ErrorNoHalt("Could not include file " .. name .. "; fucked up wwealm?")
-			continue
-		end
-
-	end
-
-	if not nofold then
-		for k,v in pairs(fOwOldeww) do
-			IncludeFolder(name..v, wwealm)
-		end
-	end
-
-end
-
-
-
 PawwtizOwOneM⎝⎠╲╱╲╱⎝⎠sic = {
 	[1] = {
 		name = "Hotel",
@@ -129,8 +75,8 @@ Partizones = PawwtizOwOnes
 PawwtizOwOne = Object:callable()
 Partizone = PawwtizOwOne
 
-PawwtizOwOne.initialize = function(self, name, pos1, pos2)
-    self.IsPartizone = true
+PawwtizOwOne.Initialize = function(self, name, pos1, pos2)
+	self.IsPartizone = true
 
     self[1] = pos1
     self[2] = pos2
@@ -164,8 +110,8 @@ function PawwtizOwOne:GetEntity()
 end
 
 PawwtizOwOne.SetOnSpawn = function(self, func)
-    self.OnSpawn = func
-    return self
+	self.OnSpawn = func
+	return self
 end
 
 PawwtizOwOne.SetStartTouchFunc = function(self, func)
@@ -279,4 +225,4 @@ if SERVER then
 	end)
 end
 
-hook.Add("InitPostEntity", "PartizonesSpawn", loadPartizones)
+LibItUp.OnInitEntity(loadPartizones)

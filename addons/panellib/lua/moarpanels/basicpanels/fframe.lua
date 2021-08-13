@@ -75,6 +75,35 @@ function PANEL:Init()
 	self.Shadow = {}
 end
 
+function PANEL:_ShadowGenerator(w, h)
+	self = self._Frame
+
+	local hc = self.HeaderColor
+	local bg = self.BackgroundColor
+
+	local hh = self.HeaderSize
+	local tops = true
+
+	local rad = self.RBRadius or 8
+
+	if hh > 0 then
+		draw.RoundedBoxEx(self.HRBRadius or rad, 0, 0, w, hh, hc, true, true)
+		tops = false
+	end
+
+	draw.RoundedBoxEx(rad, 0, hh, w, h - hh, bg, tops, tops, true, true)
+end
+
+function PANEL:CacheShadow(...)
+	self.ShadowHandler = BSHADOWS.GenerateCache("FFrame", self:GetSize())
+
+	local hn = self.ShadowHandler
+	hn:SetGenerator(self._ShadowGenerator)
+	hn._Frame = self
+
+	hn:CacheShadow(...)
+end
+
 function PANEL:SetHeaderSize(sz)
 	local l, t, r, b = self:GetDockPadding()
 	local prev = self.HeaderSize
@@ -148,10 +177,17 @@ function PANEL.DrawHeaderPanel(self, w, h, x, y)
 
 	local icon = (self.Icon and self.Icon.mat) or nil
 
-	if self.Shadow then
+	--self.ShadowHandler = nil
+
+	if self.Shadow and not self.ShadowHandler then
 		--surface.DisableClipping(false)
 		BSHADOWS.BeginShadow()
 		if not x then x, y = self:LocalToScreen(0, 0) end
+	elseif self.ShadowHandler then
+		DisableClipping(true)
+			surface.SetDrawColor(255, 255, 255, 255)
+			self.ShadowHandler:Paint(0, 0, w, h)
+		DisableClipping(false)
 	end
 
 	x = x or 0
@@ -206,7 +242,7 @@ function PANEL.DrawHeaderPanel(self, w, h, x, y)
 		surface.DisableClipping(false)
 	end
 
-	if self.Shadow then
+	if self.Shadow and not self.ShadowHandler then
 		local int = self.Shadow.intensity or 2
 		local spr = self.Shadow.spread or 2
 		local blur = self.Shadow.blur or 2

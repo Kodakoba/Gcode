@@ -12,7 +12,7 @@ PZVolume = PZVolume or 1
 function ENT:Initialize()
 	local name = self:GetZoneName()
 
-	if not PartizonePoints[name] then 	--wait until proper lua scripts are executed
+	if not PartizonePoints or not PartizonePoints[name] then 	--wait until proper lua scripts are executed
 		hook.Add("PartizoneLoad", self, self.Initialize)
 		return
 	end

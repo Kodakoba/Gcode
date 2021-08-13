@@ -36,58 +36,6 @@ function bw.IsZone(what)
 	return getmetatable(what) == bw.Zone
 end
 
-function LibItUp.PlayerInfo:GetBase(no_owner_check)
-	local fac = self:GetFaction()
-	if fac then
-		return fac:GetBase()
-	end
-
-	local base
-
-	if SERVER then
-		base = self._Base
-	else
-		base = bw.Bases[self:GetPublicNW():Get("OwnedBase", -1)]
-	end
-
-	if not base or not base:IsValid() then return false end
-
-	if not no_owner_check and not base:IsOwner(self) then
-		errorf("Something went wrong: %s has base set as %s, but player doesn't own it.", self, base)
-		return false
-	end
-
-	return base
-end
-
-function LibItUp.PlayerInfo:SetBase(base)
-	assert(not base or BaseWars.Bases.IsBase(base))
-
-	self._Base = base
-	self:GetPublicNW():Set("OwnedBase", base and base:GetID() or nil)
-
-	if base then
-		base:On("Unclaim", self, function(_)
-			if self._Base == base then
-				self:SetBase(nil)
-			end
-		end)
-	end
-end
-
--- this only gets the base if the player is the sole owner of it
-function LibItUp.PlayerInfo:GetPlayerBase(no_owner_check)
-	local base = self._Base
-	if not base or not base:IsValid() then return false end
-
-	if not no_owner_check and not base:IsOwner(self) then
-		errorf("Something went wrong: %s has base set as %s, but player doesn't own it.", self, base)
-		return false
-	end
-
-	return base
-end
-
 --[[-------------------------------------------------------------------------
 	Zone object
 ---------------------------------------------------------------------------]]
@@ -446,7 +394,7 @@ function bw.Base:IsOwner(what)
 
 	if IsFaction(what) then
 		return fac == what
-	else
+	elseif infos then
 		local pin = GetPlayerInfo(what)
 		for k,v in ipairs(infos) do
 			if v == pin then return true end
@@ -494,9 +442,9 @@ end
 
 function bw.Base:CanClaim(who)
 	self:_CheckValidity()
+
 	if self:GetClaimed() then return false, bw.Errors.AlreadyClaimed(self) end
 	if who and who:GetBase() then return false, bw.Errors.AlreadyHaveABase(who) end
-	--if ow.Player and ow.Player:IsValid() then return false end
 
 	return true
 end
@@ -520,10 +468,16 @@ end)
 
 if CLIENT then
 	-- server includes it in base_sql_sv.lua
+	include("base_zone_ext_cl.lua")
 	include("areamark/_init.lua")
+else
+	include("base_zone_ext_sv.lua")
 end
 
 include("base_zone_ownership_ext.lua")
 
 FInc.FromHere("baseview/_init.lua", _SH, true, FInc.RealmResolver():SetDefault(true))
 FInc.FromHere("powergrid/_init.lua", _SH, true, FInc.RealmResolver():SetDefault(true))
+FInc.FromHere("hud/*.lua", _CL, true, function()
+	return false -- only addCSLua, dont include
+end)

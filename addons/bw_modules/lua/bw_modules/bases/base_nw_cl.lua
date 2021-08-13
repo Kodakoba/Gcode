@@ -78,41 +78,6 @@ bNW:On("NetworkedChanged", "DecodedAll", function(self)
 	bw:Emit("ReadBases")
 end)
 
-local ENTITY = FindMetaTable("Entity")
-local PLAYER = FindMetaTable("Player")
-
-function PLAYER:BW_GetBase()
-	if self ~= LocalPlayer() then
-		errorf("You can only get base of LocalPlayer! (tried to get %s's base)", self)
-		return
-	end
-
-	local nw = nw.PlayerData
-	if not nw then return end --???
-
-	return bw.GetBase(nw:Get("CurrentBase"))
-end
-
-function PLAYER:BW_GetZone()
-	if self ~= LocalPlayer() then
-		errorf("You can only get zone of LocalPlayer! (tried to get %s's zone)", self)
-		return
-	end
-
-	local nw = nw.PlayerData
-	if not nw then return end --???
-
-	return bw.GetZone( nw:Get("CurrentZone") )
-end
-
-function PLAYER:GetBase()
-	return self:GetPInfo():GetBase()
-end
-
-function ENTITY:BW_GetBase()
-	return BaseWars.Bases.EntIDToBase[self:EntIndex()]
-end
-
 hook.Add("NotifyShouldTransmit", "ReadyBase", function(e, add)
 	if not add then return end
 	if not bw.IsCore(e) then return end

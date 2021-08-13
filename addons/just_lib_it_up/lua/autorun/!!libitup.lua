@@ -23,7 +23,7 @@ ENTITY = FindMetaTable("Entity")
 PANEL = FindMetaTable("Panel")
 WEAPON = FindMetaTable("Weapon")
 
-LibItUp = {}
+LibItUp = LibItUp or {}
 local libTbl = LibItUp
 
 libTbl.DependenciesFolder = "lib_deps"
@@ -217,10 +217,7 @@ local function onLoad(s)
 end
 
 FInc.Recursive("lib_deps/sh_*.lua", _SH, true, nil, onLoad)
-FInc.Recursive("lib_deps/*.lua", _SH, true, function(s) --decider
-	s = file.GetFile(s)
-	if s:match("^cl_") or s:match("^sh_") or s:match("^sv_") then return false, false end
-end, onLoad)
+FInc.Recursive("lib_deps/*.lua", _SH, true, FInc.RealmResolver():SetDefault(true):SetVerbose(), onLoad)
 
 FInc.Recursive("lib_deps/cl_*.lua", _CL, true, nil, onLoad)
 FInc.Recursive("lib_deps/sv_*.lua", _SV, true, nil, onLoad)

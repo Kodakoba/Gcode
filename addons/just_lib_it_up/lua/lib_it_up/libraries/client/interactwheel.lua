@@ -31,7 +31,6 @@ local wheelOuterRadius = 64
 -- options radius:
 local optionInnerRadius, optionOuterRadius
 
-
 local function resize()
 	local sw, sh = ScrW(), ScrH()
 
@@ -79,8 +78,6 @@ function wheel:_PaintPanel(wheel, w, h)
 		mtrx:TranslateNumber(-w/2, -h/2)
 
 	BSHADOWS.BeginShadow()
-
-
 
 	render.ClearStencil()
 	draw.BeginMask()

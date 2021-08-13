@@ -3,7 +3,7 @@ AddCSLuaFile()
 
 BaseWars = BaseWars or {}
 BW = BaseWars
-Basewars = BW 
+Basewars = BW
 
 local rlm = Realm(true, true)
 
@@ -105,7 +105,7 @@ end
 BaseWars.LoadLog = Logger("BW-Load", Color(220, 100, 100))
 
 MsgC("\n")
-BaseWars.LoadLog("Beginning inclusion %s%s", 
+BaseWars.LoadLog("Beginning inclusion %s%s",
 	("[col=%d,%d,%d]"):format(RealmColor():Copy():ModHSV(0, -0.1, -0.2):Unpack()),
 	rlm)
 
@@ -127,7 +127,7 @@ local t1 = SysTime()
 
 
 BaseWars.LoadLog:SetShouldNewline(false)
-	
+
 	BaseWars.LoadLog("	Deriving...")
 		stageStart = SysTime()
 			DeriveGamemode("sandbox")
@@ -179,7 +179,6 @@ if not IncludeBasewarsModules then
 else
 	IncludeBasewarsModules()
 end
-
 
 local t2 = SysTime()
 

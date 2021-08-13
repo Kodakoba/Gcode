@@ -96,6 +96,7 @@ function MODULE.GetHeight()
 end
 
 function MODULE.Paint()
+	do return end
 
 	local w, h = BaseWars.Config.Notifications.Width, MODULE.GetHeight()
 

@@ -35,10 +35,10 @@ function Icon:Initialize(url, name)
 			self.URL = url
 			self.Name = name
 		else
-			local mat = MoarPanelsMats[url] or Material(url)
+			local mat = draw.GetMaterialInfo(url) or Material(url)
 
 			MoarPanelsMats[url] = mat
-			self.Material = mat
+			self.Material = mat.mat
 		end
 
 	end
@@ -79,12 +79,14 @@ ChainAccessor(Icon, "_Autosize", "Autosize")
 ChainAccessor(Icon, "_Autosize", "AutoResize")
 ChainAccessor(Icon, "_Autosize", "AutoSize")
 
+ChainAccessor(Icon, "_PreserveRatio", "PreserveRatio")
+
 function Icon:PaintIcon(x, y, w, h, rot)
 
 	if not self.Material then
 		local mat = surface.DrawMaterial(self.URL, self.Name, x, y, w, h, rot)
 
-		if mat then 			--cache the downloaded material as an IMaterial asap
+		if mat and mat.mat and not mat.failed then 	--cache the downloaded material as an IMaterial asap
 			self.Material = mat.mat
 			if self:GetAutosize() and not self._SizeInitialized then
 				local tex = mat.mat:GetTexture("$basetexture")
@@ -109,15 +111,55 @@ function Icon:PaintIcon(x, y, w, h, rot)
 
 end
 
+function Icon:GetMaterial()
+	if not self.Material then
+		local mat = draw.GetMaterial(self.URL, self.Name)
+
+		if mat and mat.mat and not mat.failed then 			--cache the downloaded material as an IMaterial asap
+			self.Material = mat.mat
+			return mat.mat
+		end
+
+		return false -- no material /shrug
+	else
+		return self.Material
+	end
+end
+
+function Icon:_WHPreseveRatio(w, h)
+	local mat = self:GetMaterial()
+	local info = draw.GetMaterialInfo(mat)
+	if info then
+		local mw, mh = info.w, info.h
+		local scale = 1
+		if w then
+			scale = w / mw
+		else
+			scale = h / mh
+		end
+
+		return mw * scale, mh * scale
+	end
+end
+
 function Icon:Paint(x, y, w, h, rot)
 	self:AnimationThink()
 
-	w = w or self.W
-	h = h or self.H
+	-- size priority: 	#1 provided in paint
+	-- 					#2 preserved ratio
+	-- 					#3 icon width/height
+
 	rot = rot or self.Rotation
 
-	if not w or not h then
-		error("Width or Height not given!")
+	if (w and not h) or (h and not w) and self:GetPreserveRatio() then
+		w, h = self:_WHPreseveRatio(w, h)
+	end
+
+	w = w or self.W
+	h = h or self.H
+
+	if not w and not h then
+		error("Width and Height not given!")
 		return
 	end
 
@@ -141,6 +183,8 @@ function Icon:Paint(x, y, w, h, rot)
 	if self:GetDebug() then
 		surface.DrawOutlinedRect(x, y, w, h)
 	end
+
+	return w, h
 end
 
 function Icon:Copy()

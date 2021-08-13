@@ -18,7 +18,7 @@ local function NewFragment(piece, text, col)
 
 		--AlignX = 0,
 		--AlignY = 0,
-		--AlignFragmentHeight = false,	-- this makes AlignY work off only this fragments' height and not the whole piece
+		--AlignWholeHeight = false,	-- this makes AlignY work off the whole piece's height and not just this fragments'
 
 		-- Alpha = 255,
 		--Color = col,
@@ -35,6 +35,7 @@ local function NewFragment(piece, text, col)
 end
 
 local pmeta = DeltaTextPiece
+pmeta.IsDeltaElement = true
 
 function pmeta:Initialize(par, tx, font, key, rep)
 	self.Text = tx
@@ -77,9 +78,17 @@ function pmeta:Initialize(par, tx, font, key, rep)
 
 end
 
+function pmeta:GetFontHeight()
+	return draw.GetFontHeight(self:GetFont())
+end
+
 function pmeta:SetColor(col, g, b, a)
 	self.Color:Set(col, g, b, a)
 	return self
+end
+
+function pmeta:GetColor()
+	return self.Color
 end
 
 function pmeta:StopAnimation(name)
@@ -228,7 +237,9 @@ function pmeta:GetWide()
 
 	if self.Fragmented then
 		local x = 0
-		local lastw = 0
+
+		local lerpnext = 1
+		local lerpfrom = 0
 
 		for k,v in ipairs(self.Fragments) do
 			local font = v.Font or font -- fragment font takes priority over piece font
@@ -239,19 +250,19 @@ function pmeta:GetWide()
 			end
 
 			local tw, th = surface.GetTextSize(v.Text)
-
-			if not v.RewindTextPos then
-
-				if v.LerpFromLast then
-					local fr = Ease(v.LerpFromLast, v.Ease or 0.6)
-					x = x + Lerp(fr, lastw or tw, tw)
-				elseif not v.Fading then
-					x = x + tw
-				end
-
+			if tw > 10 then
+				--print(v.Text, tw, v.LerpNext, lerpnext, lerpfrom)
 			end
 
-			lastw = v.Fading and tw
+			if v.LerpNext then --if lerpnext is active then this fragment's width will be calculated by the next fragment
+				lerpnext = Ease(v.LerpNext, v.Ease or 0.6)
+				lerpfrom = tw
+			else
+				x = x + Lerp(lerpnext, lerpfrom, tw)
+				lerpnext = 1
+				lerpfrom = 0
+			end
+
 		end
 
 		return x
@@ -274,9 +285,9 @@ function pmeta:Paint(x, y)
 
 	self.Color.a = self.Alpha
 
-	if self.Font ~= parent.LastFont then
-		parent.LastFont = self.Font
-		surface.SetFont(self.Font)
+	if font ~= parent.LastFont then
+		parent.LastFont = font
+		surface.SetFont(font)
 	end
 
 	local curfont = self.Font
@@ -285,14 +296,13 @@ function pmeta:Paint(x, y)
 
 		local x = x
 		local lastw = 0
-		local lasttx = ""
 
 		local lerpnext = 1
 		local lerpfrom = 0
 
 		local totalHeight = 0
 
-		for k,v in pairs(self.Fragments) do
+		for k,v in ipairs(self.Fragments) do
 			local font = v.Font or font -- fragment font takes priority over piece font
 
 			local alignX = v.AlignX or parent.AlignX or 0
@@ -320,48 +330,56 @@ function pmeta:Paint(x, y)
 
 		lastw = 0
 
-
-		for k,v in pairs(self.Fragments) do
+		for k,v in ipairs(self.Fragments) do
 			if v.Text == "" then continue end
-			local alpha = math.min(v.Alpha or 255, self.Alpha, v.Color.a)
-			if alpha == 0 then continue end
-
-			local font = v.Font or font
 
 			--if fragment doesn't have a custom font, and current font is not default font (for example, from last frag)
 			--or fragment has a custom font and it's not the same one as the current,
 			--change it
+
+			local font = v.Font or font
 
 			if curfont ~= font then
 				surface.SetFont(font)
 				curfont = font
 			end
 
-			local oldA = v.Color.a --we only want to change the alpha of the color temporarily, in case there's the same color being used for multiple fragments
-
-			v.Color.a = alpha
-
 			local tw, th = surface.GetTextSize(v.Text)
 
-			local alignX, alignY = v.AlignX or parent.AlignX or 0, v.AlignY or parent.AlignY or 0
-			alignX, alignY = alignX / 2, alignY / 2
+			--local print = tostring(v.Text):match("(x0)") and print or BlankFunc
 
-			--0 = left/top
-			--1 = middle
-			--2 = bottom/right
+			--print(v.Color)
+			local alpha = math.min(v.Alpha or 255, self.Alpha, v.Color and v.Color.a or 0)
+			if alpha == 0 then goto textCalc end
 
-			--current x/y + fragment offset + parent offset + alignment
+			do
+				local oldA = v.Color.a --we only want to change the alpha of the color temporarily, in case there's the same color being used for multiple fragments
+				v.Color.a = alpha
 
-			local tX = x + v.OffsetX + self.Offsets.X -- alignX * tw
-			local yOff = -alignY * th + (not v.AlignFragmentHeight and alignY * totalHeight or 0)
-			local tY = y + v.OffsetY + self.Offsets.Y + yOff
-			self:DrawText(tX, tY, v.Color, v.Text, v)
+				local alignX, alignY = v.AlignX or parent.AlignX or 0, v.AlignY or parent.AlignY or 0
+				alignX, alignY = alignX / 2, alignY / 2
+
+				--0 = left/top
+				--1 = middle
+				--2 = bottom/right
+
+				--current x/y + fragment offset + parent offset + alignment
+
+				local tX = x + v.OffsetX + self.Offsets.X -- alignX * tw
+				local yOff = alignY * th + (v.AlignWholeHeight and alignY * totalHeight or 0)
+				local tY = y + v.OffsetY + self.Offsets.Y + yOff
+
+				self:DrawText(tX, tY, v.Color, v.Text, v)
+
+				v.Color.a = oldA --reset the alpha to what it was
+			end
 
 			-- White()
 			-- surface.DrawOutlinedRect(tX, tY, tw, th)
+			::textCalc::
 
 			if not v.RewindTextPos then
-
+				local nxt = self.Fragments[k + 1]
 				if v.LerpFromLast then
 					local fr = Ease(v.LerpFromLast, v.Ease or 0.6)
 					x = x + Lerp(fr, lastw or tw, tw)
@@ -371,10 +389,7 @@ function pmeta:Paint(x, y)
 
 			end
 
-			v.Color.a = oldA --reset the alpha to what it was
-
 			lastw = v.Fading and tw
-			lasttx = v.Text
 		end
 
 		return
@@ -604,8 +619,6 @@ function pmeta:RemoveFragment(num)
 
 	end, function()
 
-		local found = false
-
 		for k,v in pairs(self.Fragments) do 	--this is done like this because the keys might change by the time the animation finishes
 			if v == frag then
 				table.remove(self.Fragments, k)
@@ -662,6 +675,8 @@ function pmeta:ReplaceText(num, rep, onend, nolerp, anim)
 	local dropstr = self:GetDropStrength()
 
 	local a = frag.Alpha
+	frag.LerpNext = 0
+	frag.RewindTextPos = true
 
 	self:CreateAlphaAnimation(hex(frag) .. "SubText", function(fr)
 		frag.RewindTextPos = true
@@ -705,7 +720,7 @@ function pmeta:ReplaceText(num, rep, onend, nolerp, anim)
 
 	local inswhere = num+1
 
-	for k,v in pairs(self.Fragments) do 	--find latest fragment with this ID which is fading, to put the new frag after it
+	for k,v in ipairs(self.Fragments) do 	--find latest fragment with this ID which is fading, to put the new frag after it
 		if v.Fading and v.ID == num then 	--this is done for text X rewinding to work properly(ORDERRR!)
 			inswhere = k+1
 		end

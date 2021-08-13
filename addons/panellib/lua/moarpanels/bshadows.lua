@@ -10,23 +10,26 @@ BSHADOWS = (not updating and BSHADOWS) or {}
 
 local render = render
 
-BSHADOWS.RenderTarget = GetRenderTarget("bshadows_original", ScrW(), ScrH())
-BSHADOWS.RenderTarget2 = GetRenderTarget("bshadows_shadow",  ScrW(), ScrH())
+--BSHADOWS.RenderTarget = GetRenderTarget("bshadows_original", ScrW(), ScrH())
+--BSHADOWS.RenderTarget2 = GetRenderTarget("bshadows_shadow",  ScrW(), ScrH())
 
-BSHADOWS.ShadowMaterial = BSHADOWS.ShadowMaterial or CreateMaterial("bshadows" .. BSHADOWS_ID,"UnlitGeneric",{
+BSHADOWS.ShadowMaterial = BSHADOWS.ShadowMaterial or
+    CreateMaterial("bshadows" .. BSHADOWS_ID, "UnlitGeneric",{
     ["$translucent"] = 1,
     ["$vertexalpha"] = 1,
     ["alpha"] = 1
 })
 
-BSHADOWS.ShadowMaterialGrayscale = (not updating and BSHADOWS.ShadowMaterialGrayscale) or CreateMaterial("bshadows_grayscale" .. BSHADOWS_ID,"UnlitGeneric",{
+BSHADOWS.ShadowMaterialGrayscale = (not updating and BSHADOWS.ShadowMaterialGrayscale) or
+    CreateMaterial("bshadows_grayscale" .. BSHADOWS_ID,"UnlitGeneric",{
     ["$translucent"] = 1,
     ["$vertexalpha"] = 1,
     ["$alpha"] = 1,
     ["$color"] = "[0 0 0]",
 })
 
-BSHADOWS.ShadowMaterialColorscale = (not updating and BSHADOWS.ShadowMaterialColorscale) or CreateMaterial("bshadows_colorscale" .. BSHADOWS_ID,"UnlitGeneric",{
+BSHADOWS.ShadowMaterialColorscale = (not updating and BSHADOWS.ShadowMaterialColorscale) or
+    CreateMaterial("bshadows_colorscale" .. BSHADOWS_ID,"UnlitGeneric",{
     ["$translucent"] = 1,
     ["$vertexalpha"] = 1,
     ["$alpha"] = 1,
@@ -64,12 +67,81 @@ local realW, realH
 
 local CurRT, ShadowRT
 
-BSHADOWS.BeginShadow = function(x, y, w, h)
+local useRT
 
+function BSHADOWS.UseRT(rt)
+    if isstring(rt) then rt = BSHADOWS.RTs[rt] end
+    assert(type(rt) == "ITexture")
+    useRT = rt
+end
+
+BSHADOWS.RTs = BSHADOWS.RTs or {}
+
+local spreadSize = 16
+
+local handle = BSHADOWS.Handle or Emitter:extend()
+BSHADOWS.Handle = handle
+
+BSHADOWS.Handles = BSHADOWS.Handles or {}
+
+function handle:Initialize(name, rt, mat, w, h)
+    self.Name, self.RT, self.Mat = name, rt, mat
+    self.W, self.H = w, h
+
+    BSHADOWS.Handles[name] = self
+end
+
+function handle:SetGenerator(fn)
+    assert(isfunction(fn))
+
+    self._Generator = fn
+end
+
+function handle:Paint(x, y, w, h)
+    surface.SetMaterial(self.Mat)
+    local ratW, ratH = w / self.W, h / self.H
+    surface.DrawTexturedRect(x - spreadSize * ratW, y - spreadSize * ratH,
+        w + spreadSize * 2 * ratW, h + spreadSize * 2 * ratH)
+end
+
+local err = GenerateErrorer("BShadows Cache")
+
+function handle:CacheShadow(int, spr, blur, color, color2)
+    if not self._Generator then
+        error("handle has no generator")
+        return
+    end
+
+    self:_Begin()
+        xpcall(self._Generator, err, self, self.W, self.H)
+    self:_End(int, spr, blur, color, color2)
+end
+
+function handle:_Begin()
+    BSHADOWS.UseRT(self.RT)
+    BSHADOWS.BeginShadow()
+end
+
+function handle:_End(intensity, spread, blur, color, color2)
+    BSHADOWS.CacheShadow(intensity, spread, blur,
+        255, 0, 0, color, color2)
+end
+
+function handle:Offset(x, y)
+    return x and (x * self.W / realW), y and (y / realH * self.H)
+end
+
+BSHADOWS.GenerateCache = function(name, w, h)
+    local rt, mat = draw.GetRTMat("bshad_cust_" .. name, w + spreadSize * 2, h + spreadSize * 2, "UnlitGeneric")
+    BSHADOWS.RTs[name] = handle:new(name, rt, mat, w, h)
+    return BSHADOWS.RTs[name]
+end
+
+BSHADOWS.BeginShadow = function(x, y, w, h)
  	realW, realH = ScrW(), ScrH()
  	curW, curH = w or realW, h or realH
 
-    local rt1 = BSHADOWS.RenderTarget
+    local rt1 = useRT or BSHADOWS.RenderTarget
     local rt2 = BSHADOWS.RenderTarget2
 
     if not rt1 or not rt2 then print("failed to get Rt for the shadow or somethin?") return end
@@ -77,8 +149,29 @@ BSHADOWS.BeginShadow = function(x, y, w, h)
     CurRT = rt1
     ShadowRT = rt2
 
-    --Set the render target so all draw calls draw onto the render target instead of the screen
-    render.PushRenderTarget(rt1)
+    render.PushRenderTarget(BSHADOWS.RenderTarget)
+        render.Clear(0, 0, 0, 0, true, true)
+    render.PopRenderTarget()
+
+    render.PushRenderTarget(BSHADOWS.RenderTarget2)
+        render.Clear(0, 0, 0, 0, true, true)
+    render.PopRenderTarget()
+
+    render.CopyRenderTargetToTexture(BSHADOWS.RenderTarget2) -- copy contents onto a temporary RT: shadow
+    render.CopyRenderTargetToTexture(BSHADOWS.RenderTarget) -- actual paint (copy)
+
+    if useRT then
+        -- clean up the entire rt
+        render.PushRenderTarget(useRT)
+            render.Clear(0, 0, 0, 0)
+        render.PopRenderTarget()
+
+        -- then only allow drawing on a fraction of it
+        render.PushRenderTarget(useRT, spreadSize, spreadSize,
+            rt1:GetMappingWidth() - spreadSize * 2, rt1:GetMappingHeight() - spreadSize * 2)
+    else
+       render.PushRenderTarget(rt1)
+   end
 
     --Clear is so that theres no color or alpha
     render.OverrideAlphaWriteEnable(true, true)
@@ -120,8 +213,90 @@ local function unscissor()
     render.SetScissorRect(0, 0, 0, 0, false)
 end
 
+
+BSHADOWS.CacheShadow = function(intensity, spread, blur, opacity, direction, distance, color, color2)
+    opacity = opacity or 255
+    direction = direction or 0
+    distance = distance or 0
+
+    local rt = useRT
+    useRT = nil
+
+    render.CopyRenderTargetToTexture(BSHADOWS.RenderTarget2) -- copy contents onto a temporary RT: shadow
+    render.CopyRenderTargetToTexture(BSHADOWS.RenderTarget) -- actual paint (copy)
+
+    if blur > 0 then
+        local sprX, sprY = 0, 0
+
+        if istable(spread) then
+            sprX, sprY = spread[1], spread[2]
+        else
+            sprX, sprY = spread, spread
+        end
+
+        render.OverrideAlphaWriteEnable(true, true)
+            render.BlurRenderTarget(ShadowRT, sprX, sprY, blur) -- then blur it
+        render.OverrideAlphaWriteEnable(false, false)
+    end
+
+    render.PopRenderTarget()
+
+    local shmat = BSHADOWS.ShadowMaterialGrayscale
+    if color or color2 then
+        shmat = BSHADOWS.ShadowMaterialColorscale
+    end
+
+    shmat:SetTexture("$basetexture", ShadowRT)
+
+    if color then
+        local vc = Vector(color.r, color.g, color.b) --nO cOloR mEtatAblE
+
+        shmat:SetVector("$color", vc)               --this is a weird ass shader which adds something like a...halo, i guess
+                                                    --it really looks like a halo more than a shadow
+        shmat:SetUndefined("$color2")               --seems like color2 makes $color behave weird so lets unset it
+    end
+
+    if color2 then
+        local vc = Vector(color2.r, color2.g, color2.b)
+        shmat:SetVector("$color2", vc)  --color2 is more "color of the shadow" than "color of the halo"
+
+        if not color then shmat:SetUndefined("$color") end
+    end
+
+    if color or color2 then
+        shmat:Recompute()
+    end
+
+    local mat = BSHADOWS.ShadowMaterial
+    mat:SetTexture("$basetexture", CurRT)
+
+    --Work out shadow offsets
+
+    shmat:SetFloat("$alpha", opacity / 255)
+
+    --first draw the shadow
+
+    render.SetMaterial(shmat)
+    render.PushRenderTarget(rt)
+    render.Clear(0, 0, 0, 0, true, true)
+        render.OverrideAlphaWriteEnable(true, true)
+
+        for i=1, intensity do
+            render.DrawScreenQuadEx(0, 0, realW, realH)
+        end
+
+        render.OverrideAlphaWriteEnable(false, false)
+    render.PopRenderTarget()
+end
+
+local radar = false
+
 --This will draw the shadow, and mirror any other draw calls the happened during drawing the shadow
 BSHADOWS.EndShadow = function(intensity, spread, blur, opacity, direction, distance, _shadowOnly, color, color2)
+
+    if radar then
+        print("ended shadow:", debug.Trace())
+    end
 
     --Set default opcaity
     opacity = opacity or 255

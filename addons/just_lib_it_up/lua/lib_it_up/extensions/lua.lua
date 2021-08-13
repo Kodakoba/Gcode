@@ -72,10 +72,10 @@ function GenerateErrorer(err)
 		return errorers[err]
 	end
 
-	local fmt = tostring(err) .. " error: %s\n"
+	local fmt = tostring(err) .. " error: %s\n%s\n"
 
-	errorers[err] = function(...)
-		return ErrorNoHalt(fmt:format(...))
+	errorers[err] = function(err)
+		return ErrorNoHalt(fmt:format(err, debug.traceback("", 2)))
 	end
 
 	return errorers[err]

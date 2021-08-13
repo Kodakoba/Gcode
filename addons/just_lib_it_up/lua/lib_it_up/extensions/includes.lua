@@ -14,12 +14,13 @@ FInc.SERVER = 3
 local includes = {
 	[FInc.CLIENT] = function(name, should)
 		-- always add to CSLua,
-		-- don't include clientside if should = false
+		-- don't include clientside if should = false or 1
+		-- 1 because extensions shouldnt be autoincluded
 
 		if SERVER then
 			AddCSLuaFile(name)
 		else
-			if should == false then return end
+			if should == false or should == 1 then return end
 			return include(name)
 		end
 	end,
@@ -30,7 +31,11 @@ local includes = {
 		--sv = false : file is not loaded but can be AddCSLua'd
 
 		if cl ~= false then AddCSLuaFile(name) end
-		if (sv ~= false and SERVER) or (cl ~= false and cl ~= 1 and CLIENT) then return include(name) end
+
+		if (sv ~= false and SERVER) or
+			(cl ~= false and cl ~= 1 and CLIENT) then
+			return include(name)
+		end
 	end,
 
 
@@ -118,12 +123,8 @@ function FInc.Recursive(name, realm, nofold, decider, callback)	--even though wi
 			local cl, sv = decider (inc_name, realm)
 			-- if we're dealing with _SV and the 2nd arg isn't nil,
 			-- shift it to the 1st arg since the includers only take 1 arg for _CL/_SV
-			if realm ~= _SH then
-				if sv ~= nil then
-					if realm == _SV then
-						cl = sv
-					end
-				end
+			if realm == _SV and sv ~= nil then
+				cl = sv
 			end
 
 			includes[realm] (inc_name, cl, sv)
@@ -166,17 +167,17 @@ local function logInclusion(path, cl, sv, why, default)
 	local reason = (why == -1 and "default-less extension-less") or
 					(why == 0 and "extension") or
 					(why == 1 and "default") or
-					(why == 2 and "extension using default (addcslua? -> " .. default .. ")") or
-					(why == 3 and "resolved as '" .. default .. "'")
+					(why == 2 and "extension using default (addcslua? -> " .. tostring(not not default) .. ")") or
+					(why == 3 and "resolved as '" .. tostring(not not default) .. "'")
 
 									-- we can't differentiate between a cl-only extension and
 									-- a shared extension which will be included manually
 
-	local as_what = (cl == 1 and not sv and {color_white, "Shared/Client unincluded"}) or
-					(not cl and sv and {svcol, "Server"}) or
-					(cl and not sv and {clcol, "Client"}) or
-					(cl and sv and {color_white, "Shared"}) or
-					(not cl and not sv and {svcol, "Server unincluded"})
+	local as_what = (cl == 1 and not sv and {color_white, "Shared/Client [unincluded, CS]"}) or
+					(not cl and sv and {svcol, "Server [included, not CS]"}) or
+					(cl and not sv and {clcol, "Client [CL included]"}) or
+					(cl and sv and {color_white, "Any [_CL/_SH/_SV]"}) or
+					(not cl and not sv and {svcol, "None [unincluded, not CS]"})
 
 	MsgC(realmcol, "Resolved ", path, " as ", as_what[1], as_what[2], realmcol, " (", reason, ")\n", color_white)
 end
@@ -194,16 +195,16 @@ local function Resolve(res, path)
 
 	-- failed matching by path; attempt matching by filename
 	if not is_sv and not is_cl and not is_sh then
-		
-
-		is_sv = fn:match("^sv_.+") or fn:match(".+_sv$") or false
-		is_cl = fn:match("^cl_.+") or fn:match(".+_cl$") or false
-		is_sh = fn:match("^sh_.+") or fn:match(".+_sh$") or false				
+		is_sv = fn:match("^sv_.+") or fn:match(".+_sv$") or fn:match("_sv_") or false
+		is_cl = fn:match("^cl_.+") or fn:match(".+_cl$") or fn:match("_cl_") or false
+		is_sh = fn:match("^sh_.+") or fn:match(".+_sh$") or fn:match("_sh_") or false
 	end
 
 	-- extensions get included manually; do not include them
 	-- generally they shouldn't have their own folders so no path-checking here
-	local is_ext = fn:match("_ext$") or fn:match("_extension$") or fn:match("^ext_.+") or fn:match("^extension_.+")
+	local is_ext = fn:match("_ext$") or fn:match("_extension$") or
+		fn:match("^ext_.+") or fn:match("^extension_.+") or
+		fn:match("_ext_")
 
 	-- if we didn't pass cl/sv/sh path check...
 	if not is_sv and not is_cl and not is_sh then

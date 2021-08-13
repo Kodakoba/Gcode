@@ -1,4 +1,5 @@
 MoarPanelsMats = MoarPanelsMats or {}
+MatsBack = MatsBack or {}
 
 setfenv(0, _G) --never speak to me or my son
 
@@ -726,6 +727,8 @@ local function GetOrDownload(url, name, flags, cb)
 
 			mat.mat = cmat
 
+			MatsBack[cmat] = mat
+
 			mat.w = cmat:Width()
 			mat.h = cmat:Height()
 
@@ -744,6 +747,7 @@ local function GetOrDownload(url, name, flags, cb)
 				mat.downloading = false
 				local cmat = Material(fn, flags or "smooth ignorez")
 				mat.mat = cmat
+				MatsBack[cmat] = mat
 
 				mat.w = cmat:Width()
 				mat.h = cmat:Height()
@@ -763,6 +767,7 @@ local function GetOrDownload(url, name, flags, cb)
 		end
 
 	else --mat was already preloaded
+		MatsBack[mat.mat] = mat
 
 		if cb then cb(MoarPanelsMats[key].mat, true) end
 	end
@@ -771,6 +776,10 @@ local function GetOrDownload(url, name, flags, cb)
 end
 
 draw.GetMaterial = GetOrDownload
+
+function draw.GetMaterialInfo(mat)
+	return MatsBack[mat] or MoarPanelsMats[mat]
+end
 
 draw.Rect = surface.DrawRect
 draw.DrawRect = surface.DrawRect
@@ -1134,8 +1143,10 @@ end
 
 function draw.GetRTMat(name, w, h, shader)
 	local rt = draw.GetRT(name, w, h)
+	name = name .. ("%dx%d"):format(w, h)
 	local mat = mats[name]
 	if not mat then
+		print("creating mat", name)
 		mat = CreateMaterial(name, shader or "UnlitGeneric", {
 			["$basetexture"] = rt:GetName(),
 			["$translucent"] = 1,

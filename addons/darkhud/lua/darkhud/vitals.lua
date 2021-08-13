@@ -75,6 +75,8 @@ function DarkHUD.CreateVitals()
 
 
 	f:SetSize(scale*500, scale*200)
+	f:CacheShadow(2, 8, 1)
+
 	local fw, fh = f:GetSize()
 
 	f:SetPos(dh.PaddingX, ScrH() - fh - dh.PaddingY)

@@ -78,7 +78,7 @@ end
 
 function ENTITY:BW_GetAllZones()
 	local t = getZones(self)
-	return t[#t]
+	return table.Copy(t) -- dont fuck it up
 end
 
 
@@ -87,7 +87,7 @@ function ENTITY:BW_GetBase()
 end
 
 function ENTITY:BW_GetZone()
-	return self:BW_GetNewestZone()
+	return self:BW_GetOldestZone() -- self:BW_GetNewestZone()
 end
 
 function ENTITY:BW_GetAllBases()
@@ -320,7 +320,16 @@ hook.Add("EntityEnteredZone", "NetworkPlayerZone", function(zone, ent)
 	local nw = bw.GetPlayerNW(ent)
 	if not nw then return end
 
-	nw:Set("CurrentZone", zone:GetID())
+	local oldest = ent:BW_GetOldestZone()
+
+	if zone:GetBase() ~= oldest:GetBase() then
+		-- different bases; stay in the oldest one
+		nw:Set("CurrentZone", oldest:GetID())
+	else
+		-- same base; update to new zone
+		nw:Set("CurrentZone", zone:GetID())
+	end
+
 	nw:Network()
 end)
 
