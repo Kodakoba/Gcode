@@ -78,6 +78,7 @@ local function CreateBWFrame()
 	f.Scale = BaseWars.Menu.Scale
 	local sc = f.Scale
 	f:SetSize(sc * 700, sc * 500)
+	f:CacheShadow(3, 2, 2)
 	f:Center()
 	f:MakePopup()
 	f.Shadow = {}

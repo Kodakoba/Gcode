@@ -51,7 +51,10 @@ local function facBtnPaint(self, w, h)
 
 	local scale = self:GetMatrixScale()
 
-	render.SetScissorRect(x, y, x + w * frac / scale, y + h, true)
+	local cOff = w * frac - w/2 -- god im good
+	local barSX = x + w * frac - cOff * (1 - scale)
+
+	render.SetScissorRect(x, y, barSX, y + h, true)
 		draw.RoundedBox(self.RBRadius or 8, 0, 0, w, h, bgcol)
 		local fh, fs, fv = self.Faction:GetColor():ToHSV()
 		local col = pickFactionButtonTextColor(fh, fs, fv)
@@ -74,7 +77,7 @@ local function facBtnPaint(self, w, h)
 
 	frac = self.MembFrac or 0
 
-	render.SetScissorRect(x + w * frac / scale, y, x + w, y + h, true)
+	render.SetScissorRect(barSX, y, x + w, y + h, true)
 		draw.SimpleText2(self.Faction.name, nil, w/2, 2, color_white, 1)
 	render.SetScissorRect(0, 0, 0, 0, false)
 end
@@ -169,6 +172,7 @@ function FACSCROLL:AddButton(fac, num)
 	function btn:Disappear()
 		self:PopOut()
 		scr.Factions[fac:GetName()] = nil
+		self:SetMouseInputEnabled(false)
 	end
 
 	return btn, num
@@ -294,7 +298,6 @@ function BaseWars.Menu.CreateFactionList(f)
 
 	local me = LocalPlayer()
 
-
 	hook.Add("FactionsUpdate", scr, function()
 		local sorted = Factions.GetSortedFactions()
 		local facs = scr:GetFactions()
@@ -309,7 +312,6 @@ function BaseWars.Menu.CreateFactionList(f)
 			local name, fac = v[1], v[2]
 
 			if IsValid(facs[name]) then
-
 				facs[name].Sorted = true
 				local desY = scr:GetScroll():GetFactionY(k)
 				facs[name]:MoveTo(8, desY, 0.3, 0, 0.3)
@@ -319,6 +321,14 @@ function BaseWars.Menu.CreateFactionList(f)
 				btn.Sorted = true
 				btn.FacNum = k
 			end
+		end
+
+		local facless = scr:GetScroll().FactionlessButton
+
+		if IsValid(facless) then
+			-- factionless gets shifted after every faction, if valid
+			local desY = scr:GetScroll():GetFactionY(#sorted + 1)
+			facless:MoveTo(8, desY, 0.3, 0, 0.3)
 		end
 
 		for name, btn in pairs(facs) do

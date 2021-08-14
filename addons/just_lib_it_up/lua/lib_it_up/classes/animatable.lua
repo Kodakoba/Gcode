@@ -218,6 +218,10 @@ end
 function Animatable:Lerp(key, val, dur, del, ease, forceswap)
 	if not isnumber(val) then errorf("Animation:Lerp : expected number as arg #2, got %s instead", type(val)) return end
 
+	if val ~= val then
+		error("attempt to lerp to nan")
+	end
+
 	local anims = self.__Animations or {}
 	self.__Animations = anims
 
@@ -344,6 +348,10 @@ end
 	so the color structure will be changed instead
 ]]
 function Animatable:LerpColor(key, val, dur, del, ease, forceswap)
+	if val ~= val then
+		error("attempt to lerp to nan")
+	end
+
 	local anims = self.__Animations or {}
 	self.__Animations = anims
 

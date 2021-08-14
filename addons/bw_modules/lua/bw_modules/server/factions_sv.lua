@@ -50,21 +50,11 @@ function facmeta:GetPassword()
 	return self.pw or false
 end
 
-function facmeta:GetID()
-	return self.id
-end
-
-function facmeta:GetLeader()
-	return self.own
-end
-
-facmeta.GetOwner = facmeta.GetLeader
-
-function facmeta:GetLeaderInfo()
-	return self.ownInfo
-end
-
-facmeta.GetOwnerInfo = facmeta.GetLeaderInfo
+ChainAccessor(facmeta, "id", "ID")
+ChainAccessor(facmeta, "own", "Leader")
+ChainAccessor(facmeta, "own", "Owner")
+ChainAccessor(facmeta, "ownInfo", "LeaderInfo")
+ChainAccessor(facmeta, "ownInfo", "OwnerInfo")
 
 function facmeta:RaidedCooldown()
 	local cd = self.RaidCooldown
@@ -78,7 +68,6 @@ end
 
 function facmeta:Update(now)
 	--self.PublicNW:Set("Members", self.memvals)
-	print("updating leader to", self.ownInfo)
 	self.PublicNW:Set("Leader", self.ownInfo)
 	self.PublicNW:Set("PlayerInfo", self.meminfovals)
 
@@ -105,13 +94,13 @@ end
 function facmeta:_RemoveFromMembers(what)
 	local pinfo, ply = GetPlayerInfoGuarantee(what)
 
-	if Factions.Players[ply] == self:GetName() then Factions.Players[ply] = nil end
+	if ply and Factions.Players[ply] == self then Factions.Players[ply] = nil end
 
 	local had = self.meminfo[pinfo]
 
 	table.RemoveByValue(self.memvals, ply)
 	table.RemoveByValue(self.meminfovals, pinfo)
-	self.members[ply] = nil
+	if ply then self.members[ply] = nil end
 	self.meminfo[pinfo] = nil
 	pinfo._Faction = nil
 
@@ -208,7 +197,6 @@ function facmeta:_SerializePlayerInfo(key, val)
 
 	if key == "Leader" then
 		net.WriteString(val:GetSteamID64())
-		print("sv: writing leader")
 		return false
 	end
 end
@@ -234,32 +222,62 @@ function facmeta:IsRaidable(caller)
 end
 
 function facmeta:ChangeOwnership(to)
+	-- prioritize a random player from _online_ dudes
 	to = to or table.SeqRandom(self.memvals)
-	if not to then
-		self:Remove()
-		error("Noone to change ownership to; killing faction") -- this shouldn't happen
-		return
+	if not to or not IsValid(to) then
+		-- try to pick offline people?
+		to = table.SeqRandom(self:GetMembersInfo())
+		if not to then
+			-- not supposed to happen
+			self:Remove()
+			error("Noone to change ownership to; killing faction")
+			return
+		end
 	end
 
-	self.own = to
+	local pin = GetPlayerInfoGuarantee(to)
+	local ply = IsValid(pin:GetPlayer()) and pin:GetPlayer()
+
+	self:SetOwner(ply) -- they might be invalid for all i know
+	self:SetOwnerInfo(pin)
 	self:Update(true)
+end
+
+function facmeta:CleanMember(ply)
+	if not self:IsMember(ply) then return end
+
+	table.RemoveByValue(self:GetMembers(), ply)
+	self.members[ply] = nil
+end
+
+function facmeta:CleanInvalids()
+	local m = self:GetMembers()
+	for i=#m, 1, -1 do
+		if not IsValid(m[i]) then
+			table.remove(m, i)
+			self.members[i] = nil
+		end
+	end
 end
 
 function facmeta:RemovePlayer(ply)
 	if not self:IsMember(ply) then return end
 
-	self:_RemoveFromMembers(ply)
+	local pin = GetPlayerInfoGuarantee(ply)
+	ply = IsValid(pin:GetPlayer()) and pin:GetPlayer()
 
-	if ply:IsValid() then
+	self:_RemoveFromMembers(pin)
+
+	if ply then
 		ply:SetTeam(1)
 	end
 
-	if #self.memvals == 0 then -- todo: launch a destruction timer in 300s instead of instantly removing
+	if #self:GetMembersInfo() == 0 then
 		self:Remove()
 		return
 	end
 
-	if self.own == ply and #self.memvals > 0 then
+	if self:GetOwnerInfo() == pin then
 		self:ChangeOwnership()
 	end
 	self:Update(true)
@@ -274,7 +292,7 @@ function facmeta:Remove()
 	Factions.FactionIDs[self.id] = nil
 
 	for k,v in ipairs(self.memvals) do
-		v:SetTeam(1)
+		v:SetTeam(Factions.FactionlessTeamID)
 		Factions.Players[v] = nil
 	end
 
@@ -304,6 +322,8 @@ function Factions.Validate()
 	for k,v in pairs(Factions.Factions) do
 		if v == Factions.NoFaction then continue end
 
+		v:CleanInvalids()
+
 		table.Filter(v.members, function(v)
 			return v:IsValid()
 		end)
@@ -316,23 +336,32 @@ function Factions.Validate()
 
 		--Owner checking
 
-		if not IsValid(v.own) then
+		if not IsValid(v:GetOwnerInfo()) then
 			v:ChangeOwnership()
+			if not IsValid(v:GetOwnerInfo()) then
+				-- !?! ?!?
+				v:Remove()
+				ErrorNoHalt("Wtf, ownerinfo invalid even after changing ownership")
+				continue
+			end
 		end
 
-		v:Update()
+		if not IsValid(v:GetOwner()) then
+			v:SetOwner(v:GetOwnerInfo():GetPlayer())
+		end
 
+		-- v:Update()
 	end
 
 end
 
 function Factions.GetPlayerFaction(ply, ply2)
-	if IsPlayer(ply2) then
-		return Factions.Players[ply] == Factions.Players[ply2]
-	elseif isstring(ply2) then
-		return Factions.Players[ply] == ply2
+	local pin, pin2 = GetPlayerInfoGuarantee(ply), ply2 and GetPlayerInfo(ply2)
+
+	if pin2 then
+		return pin:GetFaction() == pin2:GetFaction()
 	else
-		return Factions.Factions[Factions.Players[ply]] or false
+		return pin:GetFaction()
 	end
 end
 
@@ -410,8 +439,8 @@ function Factions.JoinFac(ply, id, pw, force)
 	local fac = Factions.FactionIDs[id] or (IsFaction(id) and id)
 	if not fac then return false, Factions.Errors.NoFac end
 
-	if ply:InRaid() then return false, Factions.Errors.JoinInRaid end
-	if ply:InFaction() then return false, Factions.Errors.JoinInFac end
+	local can, why = Factions.CanJoin(ply, fac)
+	if not can then return false, why end
 
 	if fac.pw and fac.pw ~= pw then
 		return false, Factions.Errors.BadPassword
@@ -436,13 +465,20 @@ end
 
 PLAYER.KickFromFaction = Factions.KickOut
 
-hook.Add("PlayerDisconnected", "FactionDisband", function(ply)
-	--[[
-	local fac = ply:GetFaction()
+hook.Add("PlayerInfoDestroy", "FactionDisband", function(pin)
+	local fac = pin:GetFaction()
 	if not fac then return end
 
-	fac:RemovePlayer(ply)
-	]]
+	if fac:GetOwnerInfo() == pin then
+		fac:ChangeOwnership()
+	end
+end)
+
+hook.Add("PlayerDisconnected", "FactionClean", function(ply)
+	local fac = GetPlayerInfoGuarantee(ply):GetFaction()
+	if not fac then return end
+
+	fac:CleanMember(ply)
 end)
 
 local function throwError(ply, uid, lang)
@@ -570,6 +606,6 @@ end
 
 hook.Add("PlayerInfoDestroy", "FactionRemove", function(pin)
 	if pin:GetFaction() then
-		pin:GetFaction():RemoveFromMembers(pin)
+		pin:GetFaction():RemovePlayer(pin)
 	end
 end)

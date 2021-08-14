@@ -131,7 +131,13 @@ function ENT:DrawMoneyBar(pos, ang, scale, _, _, me, pwd)
 	local cur = Language("Price", money)
 	local cap = Language("Price", Cp)
 
-	draw.SimpleText2(cur .. " / " .. cap, "TW72", w/2, 36, white, 1, 1)
+	local txt = cur .. " / " .. cap
+	if me._LastText ~= txt then
+		me._LastText = txt
+		me._LastFont = Fonts.PickFont("MR", txt, w - 32, 72, 72)
+	end
+
+	draw.SimpleText2(txt, me._LastFont, w/2, 36, white, 1, 1)
 
 end
 
@@ -308,7 +314,7 @@ function ENT:Draw()
 
 	cam.Start3D2D(pos, ang, scale)
 		local ok, err = pcall(self.DrawMoneyBar, self, pos, ang, scale, w, h, me, pwd)
-		if not ok then print('Printers error:', err) end
+		if not ok then print("Printers error:", err) end
 	cam.End3D2D()
 
 
@@ -318,13 +324,13 @@ function ENT:Draw()
 	cam.Start3D2D(pos, ang, scale)
 
 		ok, err = pcall(self.DrawMisc, self, pos, ang, scale, w, h, me, pwd)
-		if not ok then print('Printers misc. error:', err) end
+		if not ok then print("Printers misc. error:", err) end
 
 
 		local y = h * 0.2 + h * 0.075 + h * 0.05
 
 		ok, err = pcall(self.DrawUpgradeCost, self, y, w, h)
-		if not ok then print('Printers upgrade cost error:', err) end
+		if not ok then print("Printers upgrade cost error:", err) end
 
 	cam.End3D2D()
 
@@ -335,12 +341,11 @@ function ENT:Draw()
 
 	cam.Start3D2D(pos, ang, scale)
 		ok, err = pcall(self.DrawStats, self, pos, ang, scale, w, h, me, pwd)
-		if not ok then print('Printers error:', err) end
+		if not ok then print("Printers error:", err) end
 	cam.End3D2D()
 
 
 end
-
 
 function ENT:PaintStructureInfo(w, y)
 	local Cp = self.dt.Capacity
@@ -348,7 +353,10 @@ function ENT:PaintStructureInfo(w, y)
 	local cur = Language("Price", money)
 	local cap = Language("Price", Cp)
 
-	local tw = draw.SimpleText2(cur .. " / " .. cap, "OSB24", w/2, y, color_white, 1, 5)
+	local txt = cur .. " / " .. cap
+	local font = Fonts.PickFont("OSB", txt, w - 16, 24, 24)
 
-	return 24, tw
+	local tw, th = draw.SimpleText2(txt, font or "OSB24", w/2, y, color_white, 1, 5)
+
+	return th
 end

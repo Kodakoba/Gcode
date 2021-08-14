@@ -37,6 +37,14 @@ end
 	err.NeedAFaction 		= "You can't raid a faction without being in a faction yourself!"
 	err.OwnFaction 			= "You can't really raid your own faction..."
 	err.LowLevelFaction 	= "Every player's level in that faction is too low!"
+	err.ThatAintNoFac		= function(what)
+		return ("Fellas, if your value\n" ..
+		"- doesn't pass IsFaction\n" ..
+		"- can't be raided\n" ..
+		"- isn't a player,\n" ..
+		"that's not a faction\n" ..
+		"that's a motherfucking %s"):format(type(what))
+	end
 
 	err.RaidedByOthers 		= "This faction is already being raided by someone else."
 	err.RaidingOthers 		= "This faction is currently raiding someone else."
@@ -148,10 +156,10 @@ function raid.CanGenerallyRaid(ply, nonfac)
 end
 
 function raid.CanRaidPlayer(ply, ply2)
-	local fac = ply:GetFaction()
+	local fac = ply:GetFaction() or ply2:GetFaction()
 
-	if fac then return false, err.CantHaveAFaction end
 	if ply == ply2 then return false, err.RaidingSelf end
+	if fac then return false, err.CantHaveAFaction end
 
 	if ply2:RaidedCooldown() then
 		return false, err.RaidedOnCooldown(ply2)
@@ -161,7 +169,7 @@ function raid.CanRaidPlayer(ply, ply2)
 		return false, err.TheyNeedBase()
 	end
 
-	if ply:InRaid() then
+	if ply:InRaid() or ply2:InRaid() then
 		return false, raid.PickRaidedError(ply, ply2)
 	end
 
@@ -169,10 +177,13 @@ function raid.CanRaidPlayer(ply, ply2)
 end
 
 function raid.CanRaidFaction(caller, fac2)
-	-- caller isnt guaranteed to be present
+	-- caller isnt guaranteed to be present, in that case
+	-- we're checking the raidability of our own faction
+
 	local self_check = caller == false
 	local fac = not self_check and caller:GetFaction()
 
+	if not IsFaction(fac2) then return false, err.ThatAintNoFac(fac2) end
 	if not fac and not self_check then return false, err.NeedAFaction end
 	if fac == fac2 then return false, err.OwnFaction end
 
@@ -186,7 +197,7 @@ function raid.CanRaidFaction(caller, fac2)
 		return raid.PickRaidedError(fac2, rded)
 	end
 
-	if fac2:RaidedCooldown() then
+	if not self_check and fac2:RaidedCooldown() then
 		return false, raid.PickRaidedError(caller, fac2)
 	end
 
@@ -194,20 +205,24 @@ function raid.CanRaidFaction(caller, fac2)
 		return false, caller and err.TheyNeedBase() or err.YouNeedBase()
 	end
 
-	local has_raidables = false
+	if SERVER then
+		local has_raidables = false
 
-	for k,v in pairs(fac2:GetMembers()) do
-		local ents = BaseWars.Ents.GetOwnedBy(v)
+		for k,v in pairs(fac2:GetMembers()) do
+			local ents = BaseWars.Ents.GetOwnedBy(v)
 
-		for _, ent in ipairs(ents) do
-			if ent.IsValidRaidable then has_raidables = true break end
+			for _, ent in ipairs(ents) do
+				if ent.IsValidRaidable then has_raidables = true break end
+			end
 		end
-	end
 
-	if has_raidables then
-		return true
+		if has_raidables then
+			return true
+		else
+			return false, err.NoRaidables
+		end
 	else
-		return false, err.NoRaidables
+		return true
 	end
 end
 

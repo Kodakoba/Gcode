@@ -17,6 +17,7 @@ local alpha = 0
 local default_w, default_h = 180, 55
 
 local lastpos = Vector()
+local lastToScreen = {x = 0, y = 0, visible = false}
 local lastent
 
 
@@ -33,7 +34,7 @@ local vm = Matrix()
 local anims
 
 local function make()
-	anims = Animatable(true)
+	anims = Animatable("bw_basssehud")
 end
 
 if not Animatable then
@@ -57,6 +58,13 @@ local lastPainter = nil
 local function remap(cur, min, max)
 	return (math.max(cur, min) - min) / (max - min)
 end
+
+hook.Add("PostDrawTranslucentRenderables", "StructureInfoToScreen", function()
+	if lastpos then
+		lastToScreen = lastpos:ToScreen()
+	end
+end)
+
 local function DrawStructureInfo()
 
 	local me = LocalPlayer()
@@ -89,7 +97,7 @@ local function DrawStructureInfo()
 		lastPainter = pntr
 		maxDist = distAppear or defaultMaxDist
 
-		lastpos = ep
+		lastpos = hook.Run("BW_StructureInfoGetPos", ent, trace, ep) or ep
 
 		if should then
 			anims:To("Alpha", alphaTo, 0.15, 0, 0.3)
@@ -114,7 +122,7 @@ local function DrawStructureInfo()
 
 	if alpha < 1 then initialFrame = true return end
 
-	local ts = lastpos:ToScreen()
+	local ts = lastToScreen
 	if not ts.visible then initialFrame = true return end
 
 	local x, y = ts.x, ts.y 	--middle of the window's XY

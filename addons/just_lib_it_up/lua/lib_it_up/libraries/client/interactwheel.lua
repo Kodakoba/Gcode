@@ -747,14 +747,14 @@ function InteractWheelOption:_Paint(x, y, w, h, prevMatrix, innerCircle)
 		infoH = infoH + ih
 	end
 
-	local title = self.Title
+	local title = tostring(self.Title)
 	if title then
 		local nls = amtNewlines(title) + 1
 		local hgt = nls * draw.GetFontHeight(self.TitleFont)
 		infoH = infoH + (ic and iconMargin or 0) + hgt
 	end
 
-	local desc = self.Description
+	local desc = tostring(self.Description)
 	if desc then
 		local nls = amtNewlines(desc) + 1
 		local hgt = nls * draw.GetFontHeight(self.DescriptionFont)

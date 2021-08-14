@@ -106,6 +106,7 @@ end
 
 
 local hovHeight = 16 -- members list will expand by (hovHeight)px up when a member is hovered
+Factions.HoverMembersList = 16
 
 function FAC:CreateMemberList()
 	if self.Faction == Factions.NoFaction then return end -- nuh-uh, that one's custom
@@ -118,6 +119,7 @@ function FAC:CreateMemberList()
 	plyList:SetTall(self:GetTall() * 0.15)
 	plyList:InvalidateParent(true)
 	plyList:InvalidateLayout(true)
+	plyList.FoldedY = self:GetTall() - plyList:GetTall()
 
 	local col = Colors.DarkGray
 	local pX, pY = plyList:LocalToScreen(0, 0)
@@ -145,16 +147,17 @@ function FAC:CreateMemberList()
 		self:SetTall(facPnl:GetTall() * 0.15 + hov * hovHeight)
 	end
 
-	plyList.Players = {}
+	plyList.Players = {} -- actually player avatars
 
 	local plys = plyList.Players
-	local amt = #fac:GetMembers()
+	local amt = #fac:GetMembersInfo()
 
 	local avSize, fullW, x, y
 	avSize = plyList:GetTall() * 0.7 -- the panels are square
 
 	local function recalculate()
-		amt = #fac:GetMembers()
+		amt = #fac:GetMembersInfo()
+
 		fullW = (avSize + 8) * amt - 8
 
 		x = plyList:GetWide() / 2 - fullW / 2
@@ -177,7 +180,8 @@ function FAC:CreateMemberList()
 
 	----------------------------------------------
 
-	local function createPlayer(ply)
+	local function createPlayer(pin)
+		local ply = pin:GetPlayer()
 		local av = vgui.Create("DButton", plyList)
 		local real_av = vgui.Create("CircularAvatar", av)
 		local curX, curY = x, y
@@ -186,10 +190,14 @@ function FAC:CreateMemberList()
 		av:SetPos(x, y)
 
 		av.Player = ply
+		av.PInfo = pin
 		av.CurX, av.CurY = curX, curY
 
 		real_av:Dock(FILL)
-		real_av:SetPlayer(ply, 128)
+
+		if ply then
+			real_av:SetPlayer(ply, 64)
+		end
 
 		av.HovFrac = 0
 		av.Size = avSize
@@ -200,12 +208,11 @@ function FAC:CreateMemberList()
 
 		real_av:SetMouseInputEnabled(false)
 
-		local name = ply:Nick()
+		local name = pin:GetNick()
 		local col = wht
 
-		fac:On("LeftPlayer", av, function(self, left)
-			if left ~= ply then return end
-
+		hook.Add("PlayerLeftFaction", av, function(_, _, _, leftpin)
+			if leftpin ~= pin then return end
 			av:MoveBy(0, 16, 0.3, 0, 0.3)
 			av:PopOut()
 
@@ -216,9 +223,7 @@ function FAC:CreateMemberList()
 				end
 			end
 			recalculate()
-
 		end)
-
 
 		function av:DoClick()
 			local mn = vgui.Create("FMenu")
@@ -241,14 +246,26 @@ function FAC:CreateMemberList()
 			end)
 		end
 
-		function av:Paint() end
+		function av:Paint()
+			name = pin:GetNick()
+			if not ply then
+				name = name .. " [left]"
+			end
+
+			if not ply and pin:GetPlayer() then
+				-- player became valid
+				real_av:SetPlayer(pin:GetPlayer(), 64)
+				av.Player = pin:GetPlayer()
+				ply = pin:GetPlayer()
+			end
+		end
 
 		real_av:On("PreDemaskPaint", function(self, w, h)
 
-			local ow = fac:GetLeader()
+			local ow = fac:GetLeaderInfo()
 			render.SetStencilCompareFunction(STENCIL_EQUAL)
 
-			if ow == ply then
+			if ow == pin then
 				col = gold
 				render.SetScissorRect(pX, pY, plyList:GetWide() + pX, plyList:GetTall() + pY, true)
 					DisableClipping(true)
@@ -289,7 +306,7 @@ function FAC:CreateMemberList()
 			self.Y = math.ceil(y - (avSize * 0.5 + 4) * self.HovFrac)
 			--self.X = curX
 
-			if hov and hov ~= self and hov:IsValid() then
+			if hov and hov ~= self and hov:IsValid() or not ply then
 				self:To("Alpha", 70, 0.3, 0, 0.2)
 			else
 				self:To("Alpha", 255, 0.3, 0, 0.2)
@@ -325,13 +342,13 @@ function FAC:CreateMemberList()
 
 	----------------------------------------------
 
-	fac:On("JoinedPlayer", plyList, function(fac, ply)
-		createPlayer(ply)
+	fac:On("JoinedPlayer", plyList, function(fac, ply, pin)
+		createPlayer(pin)
 		recalculate()
 	end)
 
-	for k, ply in ipairs(fac:GetMembers()) do
-		createPlayer(ply)
+	for k, pin in ipairs(fac:GetMembersInfo()) do
+		createPlayer(pin)
 	end
 
 	self.MembersList = plyList

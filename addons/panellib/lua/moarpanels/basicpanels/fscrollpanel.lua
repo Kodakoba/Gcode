@@ -11,10 +11,10 @@ local FScrollPanel = {}
 function FScrollPanel:Init()
 	local scroll = self.VBar
 
-	local dgray = Color(30,30,30)
+	self.ScrollColor = Color(30, 30, 30)
 
-	function scroll:Paint(w,h)
-		draw.RoundedBox(4, 0, 0, w, h, dgray)
+	function scroll.Paint(me, w, h)
+		draw.RoundedBox(4, 0, 0, w, h, self.ScrollColor)
 	end
 
 	scroll:SetWide(10)
@@ -23,19 +23,19 @@ function FScrollPanel:Init()
 	local up = scroll.btnUp
 	local down = scroll.btnDown
 
-	local gripCol = Color(60, 60, 60)
-	local btnCol = Color(80, 80, 80)
+	self.GripColor = Color(60, 60, 60)
+	self.ButtonColor = Color(80, 80, 80)
 
-	function grip:Paint(w,h)
-		draw.RoundedBox(4, 0, 0, w, h, gripCol)
+	function grip.Paint(me, w, h)
+		draw.RoundedBox(4, 0, 0, w, h, self.GripColor)
 	end
 
-	function up:Paint(w,h)
-		draw.RoundedBoxEx(4, 0, 0, w, h, btnCol, true, true)
+	function up.Paint(me, w, h)
+		draw.RoundedBoxEx(4, 0, 0, w, h, self.ButtonColor, true, true)
 	end
 
-	function down:Paint(w,h)
-		draw.RoundedBoxEx(4, 0, 0, w, h, btnCol, false, false, true, true)
+	function down.Paint(me, w, h)
+		draw.RoundedBoxEx(4, 0, 0, w, h, self.ButtonColor, false, false, true, true)
 	end
 
 	self.pnlCanvas:SetName("FScrollPanel Canvas")

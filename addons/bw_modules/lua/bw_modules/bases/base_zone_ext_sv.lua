@@ -3,7 +3,7 @@ local bw = BaseWars.Bases
 function bw.Base:ListenFaction(fac)
 	local listenID = "BaseListen" .. self:GetID()
 
-	fac:On("Remove", listenID, function()
+	--[[fac:On("Remove", listenID, function()
 		if self.Owner.Faction == fac then
 			self:Unclaim()
 		end
@@ -13,7 +13,8 @@ function bw.Base:ListenFaction(fac)
 		if IsValid(fac:GetOwner()) then
 			self:Claim(fac:GetOwner())
 		end
-	end)
+	end)]]
+
 
 	--[[fac:On("LeaveFaction", listenID, function(_, ply, pinfo)
 		print("Player left faction", ply, pinfo, pinfo._Base, pinfo._Base == self)
@@ -23,6 +24,21 @@ function bw.Base:ListenFaction(fac)
 		end
 	end)]]
 end
+
+hook.Add("FactionDisbanded", "BaseListen", function(fac)
+	for k, base in pairs(bw.Bases) do
+		local owfac, ows = base:GetOwner()
+		if owfac == fac then
+			base:Unclaim()
+
+			if IsValid(fac:GetOwnerInfo()) then
+				base:Claim(fac:GetOwnerInfo())
+			end
+		end
+	end
+
+	fac._Base = nil
+end)
 
 function bw.Base:AttemptClaim(by)
 	self:_CheckValidity()
@@ -60,7 +76,7 @@ function bw.Base:Claim(by)
 		self.PublicNW:Set("ClaimedBy", by:GetID())
 
 	elseif IsPlayer(by) or IsPlayerInfo(by) then
-		local pinfo = by:GetPInfo()
+		local pinfo = GetPlayerInfoGuarantee(by)
 		pinfo:SetBase(self)
 
 		self.Owner.Faction = nil
@@ -91,6 +107,12 @@ hook.Add("FactionCreated", "BWBaseOwnership", function(ply, fac)
 		base:Claim(fac)
 	end
 end)
+
+function bw.Base:AttemptUnclaim(by)
+	self:_CheckValidity()
+	if not self:CanUnclaim(by) then return false end
+	return self:Unclaim()
+end
 
 function bw.Base:Unclaim(temporarily)
 	self:_CheckValidity()

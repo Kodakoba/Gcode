@@ -19,7 +19,7 @@ function BaseWars.Ents.UnassignOwner(eid)
 	eidToOwner[eid] = nil
 end
 
-function BaseWars.Ents.EntityToSteamID64(eid)
+function BaseWars.Ents.EntityToSteamID(eid)
 	if IsEntity(eid) then eid = eid:EntIndex() end
 	assert(isnumber(eid))
 

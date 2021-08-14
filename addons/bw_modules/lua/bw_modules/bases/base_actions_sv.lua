@@ -34,12 +34,12 @@ actions[bw.Actions.Unclaim] = function(ply)
 		return
 	end
 
-	local fac, plys = base:GetOwner()
+	--[[local fac, plys = base:GetOwner()
 	if fac and fac:GetOwnerInfo() ~= GetPlayerInfo(ply) then
 		printf("unclaim by %s not allowed: not owner of the faction `%s` (owner: %s)",
 			ply, fac, fac:GetOwnerInfo())
 		return
-	end
+	end]]
 
 	ent:RequestUnclaim(ply)
 end

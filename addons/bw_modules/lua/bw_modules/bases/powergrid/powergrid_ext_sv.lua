@@ -41,12 +41,22 @@ function pg:_unown(ent)
 	unowned[ent] = self
 end
 
+function pg:_yeet(ent)
+	self._UnownedEnts[ent] = nil
+	unowned[ent] = nil
+end
+
 function pg:_own(ent)
 	self._UnownedEnts[ent] = nil
 	unowned[ent] = nil
 end
 
 function pg:_checkOwnershipEnt(ent, base)
+	if ent:IsRemoving() then
+		self:_yeet(ent)
+		return
+	end
+
 	if base:IsEntityOwned(ent) then
 		self:_own(ent)
 		return true

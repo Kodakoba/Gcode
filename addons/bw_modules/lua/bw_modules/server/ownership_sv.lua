@@ -14,6 +14,7 @@ hook.Add("CPPIAssignOwnership", "BWTrackOwner", function(ply, ent)
 	ent.CPPI_OwnerSID = id
 
 	trackEnt(ent, id)
+	print("ownership assigned tracking")
 	bwe.EntsArr:addExclusive(ent)
 
 	net.Start("BW_OwnershipChange")
@@ -45,18 +46,18 @@ hook.Add("PlayerFullyLoaded", "BW_NetworkOwnership", function(ply)
 	BaseWars.Ents.NetworkAll(ply)
 end)
 
-local function getEntry(sid64)
-	if IsPlayer(sid64) then
-		sid64 = sid64:SteamID64()
+local function getEntry(sid)
+	if IsPlayer(sid) then
+		sid = sid:SteamID()
 	end
 
-	local t = bwe.EntsOwners[sid64]
+	local t = bwe.EntsOwners[sid]
 	if t then
 		t:clean()
 		return t
 	else
 		t = ValidSeqIterable()
-		bwe.EntsOwners[sid64] = t
+		bwe.EntsOwners[sid] = t
 		return t
 	end
 end
@@ -84,22 +85,17 @@ function BaseWars.Ents.GetAll()
 end
 
 function BaseWars.Ents.GetOwnedBy(who)
-	local sid64
+	local pin = GetPlayerInfoGuarantee(who)
+	local sid = pin:SteamID()
 
-	if isstring(who) then
-		sid64 = (who:match("STEAM_") and util.SteamIDTo64(who)) or who
-	elseif IsPlayer(who) then
-		sid64 = who:SteamID64()
-	end
-
-	if not sid64 then
+	if not sid then
 		error("bad argument #1 to BaseWars.Ents.GetOwnedBy (steamid/steamid64/player expected," ..
 				"got `" .. type(who) .. "` (" .. tostring(who) .. ")")
 		return
 	end
 
 	local ret = {}
-	for k,v in getEntry(sid64):iter() do
+	for k,v in getEntry(sid):iter() do
 		ret[k] = v
 	end
 

@@ -119,9 +119,11 @@ net.Receive("NetworkableSync", function(len)
 	local nwID
 
 	if is_new then
+		printf("new networkable sync, reading NWID for numid %d", num_id)
 		nwID = ReadNWID(num_id)
 	else
 		nwID = NumberToID(num_id)
+		printf("we're supposed to know the pair for %d [think its %s]", num_id, nwID)
 	end
 
 	if lBytes > Networkable.BytesWarn then

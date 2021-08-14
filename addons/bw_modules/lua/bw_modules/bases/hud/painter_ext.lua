@@ -39,7 +39,7 @@ function ptr:Initialize(base)
 
 	self:SetSize(64, 64)
 
-	hud.BaseToPaint[base:GetID()] = self
+	hud.BaseToPaint[base] = self
 
 	table.insert(hud.ActivePainters, self)
 	hook.Run("BW_BasePainterCreate", self)
@@ -91,10 +91,10 @@ end
 
 function ptr:Delete()
 	table.RemoveByValue(hud.ActivePainters, self)
-	local id = self:GetBase():GetID()
+	local base = self:GetBase()
 
-	if hud.BaseToPaint[id] == self then
-		hud.BaseToPaint[id] = nil
+	if hud.BaseToPaint[base] == self then
+		hud.BaseToPaint[base] = nil
 	end
 end
 
@@ -103,11 +103,13 @@ function ptr:Appear()
 
 	if self.Disappeared then
 		self.DisappearFrac = 0
+		self.AppearFrac = 0
 		self.Disappeared = false
 	end
 
 	local an = hud.Anims
-	an:MemberLerp(self, "AppearFrac", 1, 0.3, 0, 0.3)
+
+	local anim, new = an:MemberLerp(self, "AppearFrac", 1, 0.3, 0, 0.3)
 	an:MemberLerp(self, "DisappearFrac", 0, 0.3, 0, 0.3)
 
 	timer.Remove("PainterInvalidate" .. ("%p"):format(self))
@@ -115,13 +117,11 @@ end
 
 function ptr:Disappear()
 	if self.Disappeared or self.Disappearing then return end
-
 	self.Disappearing = true
 
 	local an = hud.Anims
 	local anim, new = an:MemberLerp(self, "DisappearFrac", 1, 0.2, 0, 2.8)
 	if new then
-
 		anim:Then(function()
 			self.AppearFrac = 0
 			self.DisappearFrac = 1
@@ -190,11 +190,11 @@ function hud.CreateBasePainter(base)
 end
 
 function hud.GetBasePainter(base)
-	if not hud.BaseToPaint[base:GetID()] then
+	if not hud.BaseToPaint[base] then
 		hud.CreateBasePainter(base)
 	end
 
-	return hud.BaseToPaint[base:GetID()]
+	return hud.BaseToPaint[base]
 end
 
 function hud.AddPaintOp(prio, name, tbl)

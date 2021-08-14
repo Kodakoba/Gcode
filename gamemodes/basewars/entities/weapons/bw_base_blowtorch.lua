@@ -8,8 +8,8 @@ SWEP.Spawnable = true
 SWEP.AdminSpawnable = false
 
 SWEP.ViewModelFOV = 65
-SWEP.ViewModel 	= "models/weapons/c_irifle.mdl"
-SWEP.WorldModel = "models/weapons/w_irifle.mdl"
+SWEP.ViewModel 	= "models/weapons/v_superphyscannon.mdl"
+SWEP.WorldModel = "models/weapons/w_rocket_launcher.mdl"
 SWEP.UseHands = true
 
 SWEP.AutoSwitchTo = false
@@ -73,7 +73,7 @@ local function GetHP(prop)
 end
 
 local function GetMaxHP(prop)
-	return prop:GetMaxHealth()
+	return math.max(prop:GetMaxHealth(), 1)
 end
 
 local function SetHP(prop, hp)
@@ -89,8 +89,7 @@ function SWEP:Zap()
 	self:EmitSound(self.Sounds[math.random(#self.Sounds)],
 		90, math.random(90, 110), 1)
 
-	self:SendWeaponAnim(ACT_VM_PRIMARYATTACK)
-	self:GetOwner():SetAnimation(PLAYER_ATTACK1)
+	
 end
 
 local function isZappable(self, ent)
@@ -114,6 +113,8 @@ function SWEP:PrimaryAttack()
 	local tr = ply:GetEyeTrace()
 
 	self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
+	self:SendWeaponAnim(ACT_VM_PRIMARYATTACK)
+	--self:GetOwner():SetAnimation(PLAYER_ATTACK1)
 
 	if not IsProp(tr.Entity) or tr.Fraction * 32768 > self.Range then return end
 
@@ -177,28 +178,29 @@ local strX, strY = 0, 0 --stripes
 local hpfrac = 0
 
 local anim
+local trents = {}
 
 function SWEP:FillData(tr, ent, ow)
 	local prev = lastent
 	lastent = ent
 
 	local trent = ent
-	local trents = {LocalPlayer(), trent}
+	local new_trents = {LocalPlayer(), trent}
 
 	for i=1, self.Penetrates - 1 do 	-- -1 because trent is already 1
 		local newtr = util.TraceLine({
 			start = tr.StartPos,
 			endpos = tr.StartPos + tr.Normal * self.Range,
-			filter = trents,
+			filter = new_trents,
 		})
 
 		if isZappable(self, newtr.Entity) then
-			trents[#trents + 1] = newtr.Entity
+			new_trents[#new_trents + 1] = newtr.Entity
 		end
 	end
 
-	table.remove(trents, 1)
-
+	table.remove(new_trents, 1)
+	trents = new_trents
 	return prev ~= lastent
 end
 
@@ -218,7 +220,7 @@ local function paint(ent, curent, baseAnim, firstFrame)
 	local self = curBlowtorch -- shut up linter
 	if not curBlowtorch then return end
 
-	anim = anim or Animatable("blowtorch")
+	anim = anim or Animatable("blowtorchhud")
 	local tr = LocalPlayer():GetEyeTrace()
 	--stripes = (not MoarPanelsMats["stripes"]:IsError() and MoarPanelsMats["stripes"]) or errmat -- :/
 
@@ -242,7 +244,7 @@ local function paint(ent, curent, baseAnim, firstFrame)
 
 	BaseWars.HUD.PaintFrame(w, h, headerH)
 
-	local hp, max = 0, 0
+	local hp, max = 1, 1
 
 	hpfrac = anim.HPFrac or 0
 
@@ -259,7 +261,7 @@ local function paint(ent, curent, baseAnim, firstFrame)
 
 	surface.DrawRect(x + xpad, barY, barW, barH)
 
-	draw.SimpleText("H E A L T H", "OSB20", x + 20 + 80, barY + barH / 2, infoCol, 1, 1)
+	draw.SimpleText("H E A L T H", "OSB20", x + xpad + barW / 2, barY + barH / 2, infoCol, 1, 1)
 
 	if not canraid then
 		draw.BeginMask()
@@ -296,8 +298,10 @@ local function paint(ent, curent, baseAnim, firstFrame)
 
 	if canraid then
 		local str = ("penetrates %s prop%s"):format(#trents, (#trents ~= 1 and "s") or "")
-		--draw.SimpleText(str, "OSB18", x + 100, math.floor(y) + 76, Color(200, 200, 200, a), 1, 4)
+		draw.SimpleText(str, "OSB18", x + 100, math.floor(y) + 76, Color(200, 200, 200, a), 1, 4)
 	end
+
+	baseAnim:To("Height", frH, 0.3, 0, 0.3)
 end
 
 
@@ -311,4 +315,12 @@ hook.Add("BW_ShouldPaintStructureInfo", "Blowtorch", function(ent, dist)
 	curBlowtorch = wep
 
 	return class_ok and wep_ok and dist < 192, 192, paint
+end)
+
+hook.Add("BW_StructureInfoGetPos", "Blowtorch", function(ent, trace, ep)
+	-- holding primary fire caches a predicted/compensated trace i think
+	-- this fucks up the hud and makes it all jittery
+	-- so we fire a new trace instead of using the cached :GetEyeTrace
+	local tr = util.TraceLine(util.GetPlayerTrace(LocalPlayer()))
+	return tr.HitPos + Vector(0, 0, 8)
 end)

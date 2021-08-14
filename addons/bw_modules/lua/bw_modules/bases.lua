@@ -16,7 +16,8 @@ local function init(force)
 			v:Remove()
 		end
 
-		if b then
+		if b and SERVER then
+			print("INVALIDATING BASE/ZONE NWS")
 			b.Bases:Invalidate()
 			b.Zones:Invalidate()
 		end
@@ -81,6 +82,12 @@ local function init(force)
 	if (force or not b) and SERVER then
 		-- either forced reload or initial; resync from sql
 		BaseWars.Bases.SQLResync()
+	end
+
+	if force then
+		for k,v in ipairs(GetAllPlayerInfos()) do
+			v:SetBase(nil)
+		end
 	end
 end
 

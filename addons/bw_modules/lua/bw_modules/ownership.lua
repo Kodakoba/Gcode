@@ -17,10 +17,10 @@ function ENTITY:BW_GetOwner()
 
 		return false
 	else
-		local id = BaseWars.Ents.EntityToSteamID64(self)
+		local id = BaseWars.Ents.EntityToSteamID(self)
 
 		if isstring(id) then
-			return (GetPlayerInfo(id, true)), false
+			return (GetPlayerInfo(id)), false
 		end
 
 		return false

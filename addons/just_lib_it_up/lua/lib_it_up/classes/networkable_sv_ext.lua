@@ -179,9 +179,12 @@ function nw:_SVSetTable(k, v)
 end
 
 function nw:_SVBroadcastInvalidate()
+	printf("-- BROADCASTING INVALIDATE FOR %s --", self.NetworkableID)
 	_NetworkableChanges[self.NetworkableID] = nil
-
+	self:_Dequeue()
 	for ply, ids in pairs(_NetworkableAwareness) do
+		print("	invalidating awareness for", self.NetworkableID, ply,
+			ids[self.NetworkableID])
 		ids[self.NetworkableID] = nil
 	end
 
@@ -244,7 +247,7 @@ local function WriteChange(key, val, obj, ...)
 		op.Description = "Changed key encoder ID"
 	end
 	-- write val encoderID and the encoded val
-	print("WriteChange called", key, val)
+	--print("WriteChange called", key, val)
 	local unAliased = obj.__AliasesBack[key] or key
 	local res = obj:Emit("WriteChangeValue", unAliased, val, ...)
 
@@ -269,19 +272,9 @@ function nw:_SendNet(who, full, budget)
 	local numID, nameID = self.NumberID, self.NetworkableID
 	local unaware = not not full
 
+
 	-- full is either a bool (use _all_ networked data) or a table (use only that networked data)
 	-- done like this because if the network wasn't complete, you can pass the incomplete networked data back
-
-	if full ~= true then -- fullupdate ignores nw awareness
-		for _, ply in ipairs(who) do
-			-- if some player didn't know about this NWID, network the ID as well
-			if not _NetworkableAwareness[ply] or not _NetworkableAwareness[ply][nameID] then
-				unaware = true
-				_NetworkableAwareness:Set(true, ply, nameID)
-				printf("%s unware of %s[%d], networking.", ply, nameID, numID)
-			end
-		end
-	end
 
 	local changes
 
@@ -299,6 +292,21 @@ function nw:_SendNet(who, full, budget)
 	end
 
 	if not changes then return false end --/shrug
+
+	-- we're networking something for sure at this point; start writing stuff
+
+	-- write ID awareness
+	if full ~= true then -- fullupdate ignores nw awareness
+		for _, ply in ipairs(who) do
+			-- if some player didn't know about this NWID, network the ID as well
+			print("awareness for", nameID, ply, _NetworkableAwareness[ply], _NetworkableAwareness[ply] and _NetworkableAwareness[ply][nameID])
+			if not _NetworkableAwareness[ply] or not _NetworkableAwareness[ply][nameID] then
+				unaware = true
+				_NetworkableAwareness:Set(true, ply, nameID)
+				printf("%s unware of %s[%d], networking.", ply, nameID, numID)
+			end
+		end
+	end
 
 	local changes_count = table.Count(changes)
 
@@ -385,6 +393,13 @@ function Networkable:_Queue()
 	end
 
 	q[#q + 1] = self.NetworkableID
+end
+
+function Networkable:_Dequeue()
+	local q = _NetworkableQueue
+	for i=#q, 1, -1 do
+		if v == self.NetworkableID then table.remove(q, i) end
+	end
 end
 
 -- networks all networkables to all players

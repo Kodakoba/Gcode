@@ -424,14 +424,27 @@ end)
 
 function ReportFail(ply, err)
 	local ns = netstack:new()
-	ns:WriteString(err)
+	ns:WriteString(tostring(err))
 	replySender(false, ns)
 
 	CurrentReply = nil
 end
 
+local CURRENT_PLAYER
+
+local function check(ok, err)
+	if not ok then
+		ReportFail(CURRENT_PLAYER, err)
+		CURRENT_PLAYER = nil
+		return false
+	end
+
+	return true
+end
+
 net.Receive("Raid", function(_, ply)
 	local pr = net.ReplyPromise(ply)
+
 	CurrentReply = pr
 	local mode = net.ReadUInt(4)
 	--1 = start vs. player
@@ -439,33 +452,33 @@ net.Receive("Raid", function(_, ply)
 	--3 = concede
 	print('Received raid request, mode', mode)
 
+	CURRENT_PLAYER = ply
+
 	if mode == 1 then
 		local ent = net.ReadEntity()
-		if not IsPlayer(ent) then print(ent, "not player") return end
-		if ent:RaidedCooldown() then print('on cd') return end
-		if ply:InRaid() or ent:InRaid() then print('Ply in raid already') return end
-		if ply:InFaction() or ent:InFaction() then print("one of em is in a faction") return end
-		print("starting on", ply, ent)
-		local ok, err = raid.TryStart(ply, ply, ent, false)
-		print("ok?", ok, err)
-		if not ok then
-			print("returning no", err)
-			ReportFail(ply, err, pr)
-		end
+		if not IsPlayer(ent) then return end
+
+		check(raid.CanGenerallyRaid(ply, true))
+		check(raid.CanRaidPlayer(ply, ent))
+		check(raid.TryStart(ply, ply, ent, false))
+
 	elseif mode == 2 then
-		local fac = net.ReadUInt(24)
+		local facID = net.ReadUInt(24)
+		print("hnnng")
+		local fac2 = Factions.GetFaction(facID)
 
-		if not ply:GetFaction() or not Factions.GetFaction(fac) then print('Not faction 1 or not faction 2:', ply:GetFaction(), Factions.GetFaction(fac), fac) ReportFail(ply, "Something's gone wrong...\nThis faction doesn't exist anymore?") return end
-
-		local oncd, rem = Factions.GetFaction(fac):RaidedCooldown()
-		if oncd then print('on cd') ReportFail(ply, cdf:format(rem)) return end
+		if not check(raid.CanGenerallyRaid(ply, false)) then return end
+		if not check(raid.CanRaidFaction(ply, fac2)) then return end
 
 		local fac1 = ply:GetFaction()
-		local fac2 = Factions.GetFaction(fac)
 
-		if fac1:InRaid() or fac2:InRaid() then print('Fac is in raid already') ReportFail(ply, "That faction is in a raid already!") return end
+		if fac1:InRaid() or fac2:InRaid() then
+			ReportFail(ply, "That faction is in a raid already!")
+			return
+		end
+
 		print("Mode 2; starting raid(?)")
-		local ok, err = raid.TryStart(ply, ply:GetFaction(), Factions.GetFaction(fac), true)
+		local ok, err = raid.TryStart(ply, ply:GetFaction(), fac2, true)
 		print(ok, "yes")
 		if not ok then
 			print("returning no", err)
@@ -488,6 +501,7 @@ net.Receive("Raid", function(_, ply)
 		end
 	end
 
+	CURRENT_PLAYER = nil
 	CurrentReply = nil
 end)
 

@@ -260,6 +260,9 @@ function Cloud:Paint()
 
 	local oldX, oldY = xoff, finY
 
+	local am = surface.GetAlphaMultiplier()
+	surface.SetAlphaMultiplier(self:GetAlpha() / 255)
+
 	DisableClipping(true)
 
 		if self.Shadow and self.DrawShadow then
@@ -358,6 +361,7 @@ function Cloud:Paint()
 		end
 
 	DisableClipping(false)
+	surface.SetAlphaMultiplier(am)
 
 	self:PostPaint()
 end
@@ -468,6 +472,10 @@ function Cloud:Think()
 		self.Frac = math.max(self.Frac, 0.01) --prevent disappearing for this frame
 	else
 		self:To("Frac", 0, self.DisappearTime, 0, self.DisappearEase)
+	end
+
+	if self.Bonded and not self.Bonded:IsVisible() then
+		self:SetAlpha(0)
 	end
 
 	if self.Frac == 0 and self.RemoveWhenDone then

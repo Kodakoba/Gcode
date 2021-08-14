@@ -60,6 +60,7 @@ function META:AddCloud(name, text)
 		cl.RemoveWhenDone = true
 		cl:Popup(true)
 		cl:Bond(self)
+
 		return cl, true
 	end
 end
@@ -87,6 +88,10 @@ local specialKeys = {
 
 function META:Lerp(key, val, dur, del, ease, forceswap, changeDest)
 	local self2 = specialKeys[key] and self or self:GetTable()
+
+	if val ~= val then
+		error("attempt to lerp to nan")
+	end
 
 	if not self2 then
 		print("!!! WTF META:Lerp called on", self, key, self2)
@@ -145,6 +150,10 @@ end
 function META:MemberLerp(tbl, key, val, dur, del, ease, forceswap)
 	local anims = self.__Animations or {}
 	self.__Animations = anims
+
+	if val ~= val then
+		error("attempt to lerp to nan")
+	end
 
 	local as_str = hex(tbl)
 

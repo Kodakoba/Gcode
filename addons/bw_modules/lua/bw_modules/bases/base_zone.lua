@@ -445,9 +445,28 @@ function bw.Base:CanClaim(who)
 
 	if self:GetClaimed() then return false, bw.Errors.AlreadyClaimed(self) end
 	if who and who:GetBase() then return false, bw.Errors.AlreadyHaveABase(who) end
+	local pin = CanGetPInfo(who) and GetPlayerInfo(who)
+	if pin and pin:GetFaction() and
+		pin:GetFaction():GetOwnerInfo() ~= pin then
+		return false, bw.Errors.NotOwner
+	end
 
 	return true
 end
+
+function bw.Base:CanUnclaim(who)
+	self:_CheckValidity()
+
+	if not self:GetClaimed() then return false, bw.Errors.AlreadyUnclaimed(self) end
+	if who and who:GetBase() ~= self then return false, bw.Errors.NotYourBase end
+	if who and who:GetFaction() and
+		who:GetFaction():GetOwnerInfo() ~= GetPlayerInfo(who) then
+		return false, bw.Errors.NotOwner
+	end
+
+	return true
+end
+
 
 hook.Add("PostCleanupMap", "RespawnBaseZone", function()
 	if CLIENT then return end

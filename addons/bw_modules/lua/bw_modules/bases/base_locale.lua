@@ -11,6 +11,7 @@ local function makeErr(s)
 	return err[id - 1]
 end
 
+	err.AlreadyUnclaimed = "This base doesn't belong to anyone!"
 	err.AlreadyClaimed = function(base)
 		local fac, own = base:GetOwner()
 		return ("This base is already claimed by %s!"):format(
@@ -19,6 +20,7 @@ end
 		)
 	end
 
+	err.NotYourBase = "This isn't even your base!"
 	err.AlreadyHaveABase = function(ply)
 		return ("You already have a claimed base%s!"):format(
 			ply and ply:GetBase() and (": `%s`"):format( ply:GetBase():GetName() )
@@ -26,6 +28,8 @@ end
 		)
 	end
 
+	err.NotOwner = "You're not the owner of your faction to do that!"
+	
 
 for k,v in pairs(err) do
 	err[k] = makeErr(v)

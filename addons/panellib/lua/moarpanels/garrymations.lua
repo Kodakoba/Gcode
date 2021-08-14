@@ -62,10 +62,8 @@ function meta:AnimationThinkInternal()
 
 				if not anim.Ended then
 					anim.Ended = true
-				
 					anim:End()
 					if anim.OnEnd then anim:OnEnd( self ) end
-					
 					anim:Exec()
 				end
 

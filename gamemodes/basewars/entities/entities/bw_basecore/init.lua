@@ -104,7 +104,7 @@ function ENT:_UnclaimEnt()
 end
 
 function ENT:Unclaim()
-	self:GetBase():Unclaim()
+	self:GetBase():AttemptUnclaim()
 end
 
 function ENT:Use(ply)

@@ -183,7 +183,7 @@ function nw:SetNetworkableID(id, replace)
 	end
 	cache[id] = self
 
-	printf("SetNetworkableID called %s %s %s", Realm(true, true), id, idData[id])
+	--printf("SetNetworkableID called %s %s %s", Realm(true, true), id, idData[id])
 
 	if CLIENT and idData[id] then
 		printf("stashed data for %s existed; merging", id)

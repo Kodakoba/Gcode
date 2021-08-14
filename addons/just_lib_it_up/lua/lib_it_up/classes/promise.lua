@@ -3,115 +3,126 @@ if not Emitter then include('emitter.lua') end
 
 --[[
 	Promise:
-		Allows you to stick one async (or sync, see if i care) function in the initializer or first :Then() call
+		i dont fucking remember
 ]]
 Promise = Promise or Emitter:Callable()
+Promise.IsPromise = true
 
-function Promise:Initialize(f, err)
+local errer = GenerateErrorer("Promise")
+function IsPromise(what)
+	return istable(what) and what.IsPromise
+end
 
-	self.__CoroFunction = function(resolve, err, ...)
+function Promise:Initialize(fn, err)
+	self._success = {}
+	self._branches = {}
+	self._fail = {}
 
-		local step = self.__CurrentStep
-
-		if self.__Success[step] then
-			local ok, res = coroutine.resume(self.__Success[step], resolve, err, ...)
-
-			if not ok then
-				error("Promise error: " .. res)
-			end
-
-			if step == self.__CurrentStep then -- we haven't resolved immediately; halt this coroutine
-				if coroutine.running() == self.Coroutine then coroutine.yield() end
-			end
-		end
-
-	end
-
-	self.Coroutine = coroutine.create(self.__CoroFunction)
-
-	self.__CurrentArgs = {}
-	self.__Success = {}
-	self.__Errors = {}
-
-	self.__CurrentStep = 1
-
-	self.__Resolve = function(...)
-		local args = {...}
-		self.__CurrentStep = self.__CurrentStep + 1
-
-		while self.__Success[self.__CurrentStep] do
-			local f = self.__Success[self.__CurrentStep]
-			self.__CurrentStep = self.__CurrentStep + 1
-
-			local new_args = { f( unpack(args) ) }
-
-			for i=1, table.maxn(new_args) do
-				if new_args[i] ~= nil then
-					args[i] = new_args[i]
-				end
-			end
-		end
-
-		if coroutine.running() == self.Coroutine then coroutine.yield() end
-	end
-
-	self.__Error = function(...)
-		self.__CurrentStep = self.__CurrentStep + 1 --next then's error
-		if self.__Errors[self.__CurrentStep] then self.__Errors[self.__CurrentStep] (...) end
-
-		
-		if coroutine.running() == self.Coroutine then coroutine.yield() end
-	end
-
-	self.CatchFunc = nil
-
-	if isfunction(f) or isfunction(err) then
-		self:Then(isfunction(f) and f, isfunction(err) and err)
-	end
+	self._curFillStep = 0
+	self._curRunStep = 0
 end
 
 function Promise:Rewind()
-	self.__CurrentStep = 1
-
-	self.Coroutine = coroutine.create(self.__CoroFunction)
+	self._curRunStep = 0
 end
 
 function Promise:Reset()
-	self.__CurrentArgs = {}
-	self.__Success = {}
-	self.__Errors = {}
+	self._success = {}
+	self._fail = {}
+	self._branches = {}
+	self._curFillStep = 0
 
 	self:Rewind()
 end
 
-function Promise:Then(f, err)
-	local key = #self.__Success + 1
-	self.__Success[key] = (key == 1 and f and coroutine.create(f)) or f
-	if err then self.__Errors[key] = err end
+function Promise:Then(full, rej)
+	self._curFillStep = self._curFillStep + 1
+	local key = self._curFillStep
 
-	return self
-end
+	local nextPr = Promise()
 
-function Promise:Catch(err)
-	self.CatchFunc = (isfunction(err) and err) or defaultCatch
-	return self
-end
-
-function Promise:Exec(...)
-	local stat = coroutine.status(self.Coroutine)
-	if stat == "dead" then print("coroutine is dead") return self end --/shrug
-
-	local ok, err = coroutine.resume(self.Coroutine, self.__Resolve, self.__Error, ...)
-
-	if not ok then
-		error(err)
+	if isfunction(full) then
+		nextPr = Promise()
+		self._success[key] = coroutine.create(full)
+		self._branches[key] = nextPr
 	end
 
-	return self
+	if isfunction(rej) then
+		self._branches[key] = nextPr
+		self._fail[key] = coroutine.create(rej)
+	end
+
+	return nextPr
 end
 
-Promise.Do = Promise.Exec
-Promise.Run = Promise.Exec
+function Promise:_run(...)
+	local s, f = self._success, self._fail
+
+	self._curRunStep = self._curRunStep + 1
+
+	while s[self._curRunStep] or f[self._curRunStep] do
+		local key = self._curRunStep
+
+		if not self._errored then
+			if self._success[key] then
+				local rets = { coroutine.resume(self._success[key], self, ...) }
+				if self._branches[key] and table.maxn(rets) > 0 then
+					self._branches[key]:Resolve(unpack(rets))
+				end
+			end
+		else
+			if self._fail[key] then
+				local rets = { coroutine.resume(self._fail[key], self, ...) }
+				if self._branches[key] and table.maxn(rets) > 0 then
+					self._branches[key]:Reject(unpack(rets))
+				end
+			end
+		end
+
+		self._curRunStep = self._curRunStep + 1
+	end
+end
+
+-- passed into the callbacks, intended to be ran for async
+function Promise:Resolve(x, ...)
+	if x == self then error("fuck you a+ [you passed self into resolve]") return end
+	if IsPromise(x) then
+		x:Then(function(...)
+			self:Resolve(...)
+		end, function(...)
+			self:Reject(...)
+		end)
+	else
+		return self:_run(x, ...)
+	end
+end
+
+function Promise:Reject(err)
+	self._errored = true
+	return self:_run(err)
+end
+
+-- async functions suck and dont let you pass args in? got you covered fam
+function Promise:Resolver()
+	self._resolver = self._resolver or function(...)
+		return self:Resolve(...)
+	end
+
+	return self._resolver
+end
+
+function Promise:Rejector()
+	self._rejector = self._rejector or function(...)
+		return self:Reject(...)
+	end
+
+	return self._rejector
+end
+
+-- backwards compat with my old code :)
+Promise.Exec = Promise.Resolve
+Promise.Do = Promise.Resolve
+Promise.Run = Promise.Resolve
 
 local CurUniqueID = 0
 local uidLen = 16
@@ -123,13 +134,7 @@ local function uid()
 end
 
 function net.StartPromise(name, ns)
-	local prom = Promise():Then(function(good, bad, ok)
-		if not ok then
-			bad()
-		else
-			good()
-		end
-	end)
+	local prom = Promise()
 
 	local uid = uid()
 	NetPromises[uid] = prom
@@ -190,7 +195,16 @@ PromReply.Success = PromReply.Accept
 function net.ReadPromise()
 	local id = net.ReadUInt(uidLen)
 	local ok = net.ReadBool()
-	return NetPromises[id]:Exec(ok), ok
+
+	local prom = NetPromises[id]
+
+	if ok then
+		prom:Resolve()
+	else
+		prom:Reject()
+	end
+
+	return prom, ok
 end
 
 function net.ReplyPromise(who)

@@ -2,6 +2,8 @@ MODULE.Name = "FactionsSH"
 
 --[[
 	Hooks:
+		PLAYERS ARENT GUARANTEED TO BE VALID!!! USE PLAYERINFO
+
 		[SH] PlayerLeftFaction : faction, player, playerinfo
 		[SH] PlayerJoinedFaction : faction, player, playerinfo
 		[SH] FactionDisbanded : faction
@@ -64,7 +66,7 @@ Factions.Errors.NameExists 		= 	makeErr("A faction with this name already exists
 Factions.Errors.NoFac 			= 	makeErr("No such factions exist!")
 Factions.Errors.JoinInRaid 		= 	makeErr("Can't join a faction while being raided!")
 Factions.Errors.JoinInFac 		= 	makeErr("Can't join a faction while already in one!")
-
+Factions.Errors.JoinWithBase	=	makeErr("Can't join a faction while owning a base!")
 
 function LibItUp.PlayerInfo:GetFaction()
 	local fac = self._Faction
@@ -76,12 +78,23 @@ function LibItUp.PlayerInfo:GetFaction()
 	return fac
 end
 
+function LibItUp.PlayerInfo:SetFaction(fac)
+	assert( (IsFaction(fac) and fac:IsValid()) or fac == nil )
+	self._Faction = fac
+end
+
 hook.Add("PlayerJoinedFaction", "PlayerInfoFill", function(fac, ply, pinfo)
-	pinfo._Faction = fac
+	pinfo:SetFaction(fac)
 end)
 
 hook.Add("PlayerLeftFaction", "PlayerInfoFill", function(fac, ply, pinfo)
-	pinfo._Faction = nil
+	pinfo:SetFaction(nil)
+end)
+
+hook.Add("FactionDisbanded", "PlayerInfoFill", function(fac)
+	for k,v in ipairs(fac:GetMembersInfo()) do
+		v:SetFaction(nil)
+	end
 end)
 
 function facmeta:GetBase()
@@ -176,13 +189,17 @@ function Factions.CanJoin(ply, fac)
 		return false, Factions.Errors.JoinInRaid
 	end
 
+	if ply:GetBase() then
+		return false, Factions.Errors.JoinWithBase
+	end
+
 	return true
 end
 
 function Factions.GetFaction(id)
 	if SERVER then Factions.Validate() end
 	if isnumber(id) then return Factions.FactionIDs[id] or false end
-	return Factions.Faction[id] or false
+	return Factions.Factions[id] or false
 end
 
 function Factions.CreateEmptyFaction()

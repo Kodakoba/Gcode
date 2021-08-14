@@ -11,20 +11,24 @@ function raidmeta:AddParticipant(obj, side)
 	assert(isnumber(side))
 
 	if IsFaction(obj) then
-		for k, ply in ipairs(obj:GetMembers()) do
-			local pid = pID(ply)
+		for k, ply in ipairs(obj:GetMembersInfo()) do
+			local pin = GetPlayerInfoGuarantee(ply)
 
-			raid.Participants[ply] = self
-			raid.Participants[pid] = self
+			pin:InsertByID(raid.Participants, self)
 
-			self.Participants[ply] = side
-			self.Participants[pid] = side
+			if side then
+				pin:InsertByID(self.Participants, side)
+			end
+			pin:SetRaid(self)
 		end
 
 	elseif IsPlayer(obj) then
-		local pid = pID(obj)
-		raid.Participants[pid] = self
-		self.Participants[pid] = side
+		local pin = GetPlayerInfoGuarantee(obj)
+		pin:InsertByID(raid.Participants, self)
+		if side then
+			pin:InsertByID(self.Participants, side)
+		end
+		pin:SetRaid(self)
 	end
 
 	raid.Participants[obj] = self

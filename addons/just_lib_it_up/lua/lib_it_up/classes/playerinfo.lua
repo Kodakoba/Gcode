@@ -4,7 +4,7 @@ LibItUp.SetIncluded()
 LibItUp.PlayerInfo = LibItUp.PlayerInfo or LibItUp.Emitter:callable()
 local PI = LibItUp.PlayerInfo
 PI.IsPlayerInfo = true
-PI.CleanupIn = 900 -- being absent for 15min = playerinfo is cleaned up
+PI.CleanupIn = 300 -- being absent for 15min = playerinfo is cleaned up
 
 LibItUp.PlayerInfoTables = LibItUp.PlayerInfoTables or {
 	-- [info] = PI
@@ -14,6 +14,8 @@ LibItUp.PlayerInfoTables = LibItUp.PlayerInfoTables or {
 
 	Absent = {}
 }
+
+LibItUp.AllPlayerInfos = LibItUp.AllPlayerInfos or {}
 
 local PIT = LibItUp.PlayerInfoTables
 
@@ -59,6 +61,8 @@ function PI:Initialize(id, is_sid64) -- we can't know that the id is a steamID64
 	if ply then PIT.Player[ply] = self end
 	PIT.SteamID[sid] = self
 	PIT.SteamID64[sid64] = self
+
+	table.insert(LibItUp.AllPlayerInfos, self)
 end
 
 ChainAccessor(PI, "_SteamID", "SteamID")	-- 	  !! Using SteamID's is not advised due to its' behavior on bots !!
@@ -101,7 +105,7 @@ PI.Name = PI.GetNick
 PI.Nick = PI.GetNick
 
 function PI:GetPlayer()
-	return self._Player
+	return self._Player and self._Player:IsValid() and self._Player
 end
 
 PI.SteamID = PI.GetSteamID
@@ -167,10 +171,14 @@ function PI:IsValid()
 	return self._Valid ~= false
 end
 
+function PI:IsRemoving()
+	return self._Removing ~= false
+end
+
 function PI:ValidateNW()
 	if not self:GetPublicNW() or not self:GetPublicNW():IsValid() then
 		self:SetPublicNW( Networkable("PI:" .. self:SteamID64()) )
-		hook.Run("PlayerInfoNWCreate", self)
+		hook.NHRun("PlayerInfoNWCreate", self)
 	end
 end
 
@@ -183,10 +191,12 @@ function PI:_Destroy()
 	pi.SteamID[self:GetSteamID()] = nil
 	pi.SteamID64[self:GetSteamID64()] = nil
 
-	self._Valid = false
 	self:Emit("Destroy")
 	hook.NHRun("PlayerInfoDestroy", self)
 	self:GetPublicNW():Invalidate()
+	table.RemoveByValue(LibItUp.AllPlayerInfos, self)
+
+	print(self:Nick() .. "'s PlayerInfo was destroyed.")
 end
 
 function PI:_OnReconnect()
@@ -352,9 +362,10 @@ CanGetPlayerInfo = CanGetPInfo
 -- accepts SID, Player, PlayerInfo
 -- accepts SID64 only if 2nd arg is true
 function GetPlayerInfo(what, is_sid64)
-	if not IsPlayer(what) and not isstring(what) and not IsPlayerInfo(what) then
+	if not CanGetPInfo(what) then
 		errorf("bad arg #1 to GetPlayerInfo" ..
-			"(expected string [id], player or playerinfo, got %s)", type(what))
+			"(expected string [id], player or playerinfo, got %s (%s))", type(what),
+			type(what) == "Player" and (what:IsValid() and "valid" or "invalid") or "not player")
 		return
 	end
 
@@ -377,6 +388,9 @@ function PIToPlayer(what)
 	end
 end
 
+function GetAllPlayerInfos()
+	return table.Copy(LibItUp.AllPlayerInfos)
+end
 
 hook.Add("NetworkableAttemptCreate", "PlayerInfo", function(nwID)
 	if nwID:match("PI:(%d+)") then

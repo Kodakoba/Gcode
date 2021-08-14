@@ -9,19 +9,20 @@ local Promises = {}
 
 local function promise()
 	local prom
-	prom = Promise():Then(function(good, bad)
+	prom = Promise()
+	prom:Then(function()
 		local ok = net.ReadBool()
 		local whyNot = not ok and net.ReadLocalString(Factions.Errors)
 
 		if not ok then
-			bad(whyNot)
+			prom:Reject(whyNot)
 		else
-			good(ok)
+			prom:Resolve(ok)
 		end
 	end)
 
 	local uid = uniq.Seq("Faction promises", 8)
-
+	print("Promise", prom, uid)
 	Promises[uid] = prom
 
 	return prom, uid
@@ -70,7 +71,7 @@ function facmeta:GetMembers()
 	local ret = {}
 
 	for k,v in ipairs(self:GetMembersInfo()) do
-		if v:GetPlayer():IsValid() then
+		if v:GetPlayer() then
 			ret[#ret + 1] = v:GetPlayer()
 		end
 	end
@@ -96,9 +97,13 @@ function facmeta:GetLeader()
 	return false
 end
 
+facmeta.GetOwner = facmeta.GetLeader
+
 function facmeta:GetLeaderInfo()
 	return self.PublicNW:Get("Leader")
 end
+
+facmeta.GetOwnerInfo = facmeta.GetLeaderInfo
 
 function facmeta:GetName()
 	return self.name
@@ -134,16 +139,23 @@ function facmeta:_HookNW(nw)
 		end
 	end)
 
+	-- instead of running the hooks straight away, store them here
+	-- and run them after finishing reading the changes
+	local postHookRuns = {}
+
 	nw:On("NetworkedChanged", function()
 		hook.NHRun("FactionsUpdate", self)
+		for k,v in ipairs(postHookRuns) do
+			v()
+		end
+
+		table.Empty(postHookRuns)
 	end)
 
 	nw:On("ReadChangeValue", "ReadPlayerInfo", function(nw, key)
-		print("hmmm", key)
 		if key ~= "PlayerInfo" and key ~= "Leader" then return end
 
 		if key == "Leader" then
-			print("cl: reading leader")
 			return GetPlayerInfoGuarantee(net.ReadString(), true)
 		end
 
@@ -166,14 +178,20 @@ function facmeta:_HookNW(nw)
 		for k, pinfo in ipairs(prev_membs) do
 			local sid =  pinfo:GetSteamID64()
 			if not list[sid] then
-				hook.NHRun("PlayerLeftFaction", self,  pinfo:GetPlayer(), pinfo)
+				table.insert(postHookRuns, function()
+					hook.NHRun("PlayerLeftFaction", self, pinfo:GetPlayer(), pinfo)
+					self:Emit("LeftPlayer", pinfo:GetPlayer(), pinfo)
+				end)
 			end
 
 			list[sid] = nil
 		end
 
 		for sid, pinfo in pairs(list) do
-			hook.NHRun("PlayerJoinedFaction", self, pinfo:GetPlayer(), pinfo)
+			table.insert(postHookRuns, function()
+				hook.NHRun("PlayerJoinedFaction", self, pinfo:GetPlayer(), pinfo)
+				self:Emit("JoinedPlayer", pinfo:GetPlayer(), pinfo)
+			end)
 		end
 
 		return arr
@@ -243,9 +261,11 @@ net.Receive("Factions", function(len)
 	end
 
 	if type==10 then
-
+		print("Received resolver net")
 		local echo_uid = net.ReadUInt(8)
+		print("Resolving id", echo_uid, Promises[echo_uid])
 		if Promises[echo_uid] then
+			print("ayup existed")
 			Promises[echo_uid]:Exec()
 			Promises[echo_uid] = nil
 		end

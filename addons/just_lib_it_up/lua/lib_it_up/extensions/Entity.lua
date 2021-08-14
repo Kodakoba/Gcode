@@ -20,6 +20,8 @@ local BlankFunc = function() end
 
 
 local lookupCache = setmetatable({}, {__mode = "k"})
+EntTableLookup = lookupCache
+
 local ENTITY = FindMetaTable("Entity")
 
 function ENTITY:__index( key )
@@ -153,16 +155,33 @@ hook.Add("FinishMove", "EntitySubscriptions", function(pl, mv)
 	end
 end)
 
+--[=[
+
+ENTITY._PrevIsValid = ENTITY._PrevIsValid or ENTITY.IsValid
+function ENTITY:IsValid()
+	return ENTITY._PrevIsValid(self) --[[and
+		not (lookupCache[self] or self).__removing]]
+end
+
+]=]
+
+function ENTITY:IsRemoving()
+	return not not (lookupCache[self] or self).__removing
+end
 
 -- ty garry
 hook.Add("EntityRemoved", "EntityActuallyRemoved", function(ent)
 	local t = ent:GetTable()
 	local eid = ent:EntIndex()
 
+	ent.__removing = true
+
 	if CLIENT then
 		timer.Simple(0, function()
 			if not ent:IsValid() then
 				hook.Run("EntityActuallyRemoved", ent, t, eid)
+			else
+				ent.__removing = false
 			end
 		end)
 	else

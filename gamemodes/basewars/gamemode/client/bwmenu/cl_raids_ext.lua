@@ -9,6 +9,7 @@ local fonts = BaseWars.Menu.Fonts
 BaseWars.Menu.Tabs["Raids"] = tab
 
 Colors.Raid = Color(180, 70, 70)
+local bad_red = Color(180, 80, 80)
 
 local function removePanel(pnl, hide)
 	if pnl.__selMove then pnl.__selMove:Stop() end
@@ -86,15 +87,51 @@ local function createRaidActions(pnl, fac, canv)
 	function raid:Think()
 		local ic
 
-		local curRd = LocalPlayer():InRaid()
-		if curRd and curRd:IsRaider(LocalPlayer()) then
-			self.Label = "Concede Raid"
-			ic = self:SetIcon(flagIcon)
-			self:SetColor(Colors.Raid)
-		else
+		local can, why = BaseWars.Raid.CanGenerallyRaid(LocalPlayer(), false)
+		if can then
+			can, why = BaseWars.Raid.CanRaidFaction(LocalPlayer(), fac)
+		end
+
+		if why then
+			if self:IsHovered() then
+				local cl, new = self:AddCloud("err")
+
+				if cl and new then
+					cl.Font = "OS20"
+					cl.MaxW = 250
+					cl.AlignLabel = 1
+
+					cl:SetTextColor(bad_red)
+					cl:SetRelPos(self:GetWide() / 2)
+					cl.ToY = -32
+
+					cl.DisappearTime = 0.2
+					cl.DisappearEase = 2.3
+
+					cl:SetText(why)
+				end
+			else
+				self:RemoveCloud("err")
+			end
+
 			self.Label = "Start raid!"
 			ic = self:SetIcon(startIcon)
-			self:SetColor(Colors.Golden)
+			self:SetEnabled(false)
+		else
+			self:SetEnabled(true)
+			self:RemoveCloud("err")
+
+			local curRd = LocalPlayer():InRaid()
+			if curRd and curRd:IsRaider(LocalPlayer()) then
+				self.Label = "Concede Raid"
+				ic = self:SetIcon(flagIcon)
+				self:SetColor(Colors.Raid)
+			else
+				self.Label = "Start raid!"
+				ic = self:SetIcon(startIcon)
+				self:SetColor(Colors.Golden)
+			end
+
 		end
 
 		surface.SetFont(self:GetFont())
@@ -122,7 +159,7 @@ local function createRaidActions(pnl, fac, canv)
 	local errPnl = vgui.Create("Cloud", mn)
 	errPnl.AlignLabel = 1
 	errPnl.YAlign = 1
-	errPnl.MaxW = 256
+	errPnl.MaxW = 250
 	errPnl.Middle = 1
 	errPnl.Font = "OS20"
 
@@ -130,12 +167,14 @@ local function createRaidActions(pnl, fac, canv)
 	errPnl:SetRelPos(raid.X + 8, raid.Y + raid:GetTall() / 2)
 	errPnl.ToY = -32
 
-	--errPnl:
+	errPnl.DisappearTime = 0.2
+	errPnl.DisappearEase = 2.3
+
 	raid.A = 1
 
 	function raid:DoClick()
-		local raid = LocalPlayer():InRaid()
-		if raid and raid:IsRaider(LocalPlayer()) then
+		local rd = LocalPlayer():InRaid()
+		if rd and rd:IsRaider(LocalPlayer()) then
 			local pr = Raids.ConcedeRaid()
 
 			pr:Then(function(...)
@@ -194,11 +233,12 @@ local function createFactionlessOption(pnl, scr, num, ply)
 
 	for i=1, num - 1 do
 		local p = scr.PlayerFrames[i]
+		if p.Disappearing then continue end
 		y = y + p:GetTall()
 	end
 
 	p.Y = y
-	p:SetSize(canv:GetWide(), hgt)
+	p:SetSize(scr:GetWide(), hgt)
 	p:SetColor(Colors.DarkGray)
 
 	local av = vgui.Create("CircularAvatar", p)
@@ -237,7 +277,7 @@ local function createFactionlessOption(pnl, scr, num, ply)
 			self:To("Money", ply:GetMoney(), 0.6, 0, 0.2)
 			-- it doesn't really make sense to lerp levels, but might as well, right?
 			self:To("Level", ply:GetLevel(), 0.6, 0, 0.2)
-			if ply:Team() ~= Factions.FactionlessTeamID then
+			if ply:GetFaction() then
 				self:Disappear()
 			end
 		else
@@ -269,6 +309,7 @@ local function createFactionlessOption(pnl, scr, num, ply)
 
 		for i=1, newID - 1 do
 			local p = scr.PlayerFrames[i]
+			if p.Disappearing then continue end
 			y = y + p:GetTall()
 		end
 
@@ -283,11 +324,9 @@ local function createFactionlessOption(pnl, scr, num, ply)
 
 	local raid = vgui.Create("FButton", p)
 	raid:Dock(RIGHT)
-	raid:DockMargin(4, 4, 4, 4)
+	raid:DockMargin(8, 4, 8, 4)
 	raid:InvalidateParent(true)
 	raid:SetWide(raid:GetTall())
-
-	local bad_red = Color(180, 80, 80)
 
 	function raid:Think()
 		local raid = LocalPlayer():InRaid()
@@ -301,12 +340,18 @@ local function createFactionlessOption(pnl, scr, num, ply)
 
 				if cl and new then
 					cl.Font = "OS20"
-					cl.MaxW = 400
-					cl.AlignLabel = 1
+					cl.MaxW = 250
+					cl.AlignLabel = 2
+					cl.YAlign = 1
+					cl.Middle = 1
 
 					cl:SetTextColor(bad_red)
-					cl:SetRelPos(self:GetWide() / 2)
-					cl.ToY = -8
+					cl:SetRelPos(0, self:GetTall() / 2)
+					cl.ToY = 0
+					cl.ToX = -16
+
+					cl.DisappearTime = 0.2
+					cl.DisappearEase = 2.3
 
 					cl:SetText(why)
 				end
@@ -415,7 +460,6 @@ local function createFactionlessActions(pnl, fac, scr, scrollPlayer)
 		canv:PopInShow()
 		canv:Emit("Reappear")
 		pnl:SetPanel(canv)
-		print("valid, reappeatring")
 		return
 	end
 
@@ -428,58 +472,66 @@ local function createFactionlessActions(pnl, fac, scr, scrollPlayer)
 
 	local scr = vgui.Create("FScrollPanel", canv)
 	scr:Dock(FILL)
+	scr.BackgroundColor = Color(30, 30, 30)
 
-	scr:DockMargin(0, canv:GetTall() * 0.05 * 2 + BaseWars.Menu.Fonts.BoldSizes.Medium, 0, 0)
+	scr:DockMargin(8,
+		canv:GetTall() * 0.07 + BaseWars.Menu.Fonts.BoldSizes.Medium, 8, 8)
+
+	canv:InvalidateLayout(true)
 
 	local plyFrames = {}  -- [num] = frame
 	local plyToFrame = {} -- [ply] = frame
-
-	local function plyValid(ply)
-		if not ply:IsValid() or not IsValid(plyFrames[ply]) then
-			table.RemoveByValue(plyFrames, plyFrames[ply])
-			plyFrames[ply] = nil
-		end
-	end
-
+	local plys = {}
 	scr.PlayerFrames = plyFrames
 
-	local function createPlyFrame(k, ply)
-		local p = createFactionlessOption(pnl, scr, k, ply)
-		plyFrames[k] = p
-		plyToFrame[ply] = p
+	local function frRemove(ply)
+		local fr = plyToFrame[ply]
+		if IsValid(fr) then fr:Remove() end
 
-		if ply == LocalPlayer() then
-			p:SetTall(p:GetTall() * 0.75)
-			p.Avatar:Resize()
-		end
-
-		p:On("Disappear", function(self)
-			local where = 0
-
-			for i=#plyFrames, 1, -1 do
-				local v = plyFrames[i]
-				if p == v then
-					table.remove(plyFrames, i)
-					where = i
-					break
-				end
-			end
-
-			for i = where, #plyFrames do
-				if plyFrames[i] then
-					plyFrames[i]:Shuffle(i)
-				end
-			end
-		end)
+		table.RemoveByValue(plyFrames, fr)
+		plyToFrame[ply] = nil
 	end
 
-	local plys
+	local function plyValid(ply)
+		if not ply:IsValid() or not IsValid(plyToFrame[ply]) then
+			frRemove(ply)
+		end
+	end
+
+	local function getFrame(ply)
+		if IsValid(plyToFrame[ply]) then
+			return plyToFrame[ply]
+		end
+	end
+
+	local function reshuffle()
+		local existed = {}
+
+		local i = 0
+
+		for k,v in ipairs(plys) do
+			existed[v] = true
+
+			if getFrame(v) and not getFrame(v).Disappearing then
+				i = i + 1
+				getFrame(v):Shuffle(i)
+				plyFrames[k] = getFrame(v)
+			end
+		end
+
+		return existed
+	end
 
 	local function sortPlayers()
 		plys = {}
 
-		for k, ply in ipairs( team.GetPlayers(Factions.FactionlessTeamID) ) do
-			plys[#plys + 1] = ply
+		for k, ply in ipairs(player.GetAll()) do
+			-- dont use teams because those are engine = uncontrollable
+			-- whereas faction system is controlled by me =>
+			-- if the player left the faction, :GetFaction() will return false 100%
+			if not ply:GetFaction() then
+				plys[#plys + 1] = ply
+			end
 		end
 
 		table.Filter(plys, IsValid)
@@ -495,15 +547,29 @@ local function createFactionlessActions(pnl, fac, scr, scrollPlayer)
 		end)
 	end
 
+	sortPlayers()
+
+	local function createPlyFrame(k, ply)
+		local p = createFactionlessOption(pnl, scr, k, ply)
+		plyFrames[k] = p
+		plyToFrame[ply] = p
+
+		if ply == LocalPlayer() then
+			p:SetTall(p:GetTall() * 0.75)
+			p.Avatar:Resize()
+		end
+
+		p:On("Disappear", function(self)
+			frRemove(ply)
+			sortPlayers()
+			reshuffle()
+		end)
+	end
+
+
 	local function validateFrames()
 		for k,v in ipairs(plys) do
 			plyValid(v)
-		end
-	end
-
-	local function getFrame(ply)
-		if IsValid(plyToFrame[ply]) then
-			return plyToFrame[ply]
 		end
 	end
 
@@ -513,61 +579,31 @@ local function createFactionlessActions(pnl, fac, scr, scrollPlayer)
 		createPlyFrame(k, v)
 	end
 
-	hook.Add("PlayerJoined", canv, function(_, ply)
+	reshuffle()
+
+	function canv:UpdatePlayers()
 		if not canv:IsValid() then return end
 		sortPlayers()
 		validateFrames()
 
 		for k,v in ipairs(plys) do
-			plyValid(v)
-
-			if v == ply then
-				createPlyFrame(k, ply)
-			elseif getFrame(v) then
-				getFrame(v):Shuffle(k)
-				plyFrames[k] = getFrame(v)
-			end
-		end
-	end)
-
-	hook.Add("MoneyChanged", canv, function(_, pinfo, old, new)
-		timer.Simple(0, function() -- dumb
-			sortPlayers()
-			validateFrames()
-
-			for k,v in ipairs(plys) do
-				if getFrame(v) then
-					getFrame(v):Shuffle(k)
-					plyFrames[k] = getFrame(v)
-				end
-			end
-		end)
-	end)
-
-	canv:On("Reappear", "RetrackPlayers", function()
-		sortPlayers()
-		validateFrames()
-
-		local rem = {}
-		for k,v in ipairs(plys) do
-			if getFrame(v) then
-				rem[v] = true
-				getFrame(v):Shuffle(k, true)
-				plyFrames[k] = getFrame(v)
+			if not getFrame(v) then
+				createPlyFrame(k, v)
 			end
 		end
 
-		-- remove invalid players' frames instantly upon reopen
-		for ply, fr in pairs(plyToFrame) do
-			if not rem[ply] then -- the player wasnt present in `plys` table
-				fr:Remove()
-				for num, f2 in ipairs(plyFrames) do
-					table.RemoveByValue(plyFrames, f2)
-				end
-			end
-		end
+		reshuffle()
+	end
 
+	hook.NHAdd("PlayerJoined", canv, canv.UpdatePlayers)
+	hook.NHAdd("FactionsUpdate", canv, canv.UpdatePlayers)
+	hook.NHAdd("PlayerLeftFaction", canv, canv.UpdatePlayers)
+
+	hook.NHAdd("MoneyChanged", canv, function(_, pinfo, old, new)
+		canv:UpdatePlayers()
 	end)
+
+	canv:On("Reappear", "RetrackPlayers", canv.UpdatePlayers)
 
 	function canv:Disappear()
 		removePanel(self, true)

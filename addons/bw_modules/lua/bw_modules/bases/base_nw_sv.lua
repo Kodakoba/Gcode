@@ -45,7 +45,7 @@ function bw.Base:UpdateNW()
 
 	for k,v in ipairs(infos) do
 		local ply = v:GetPlayer()
-		if ply:IsValid() then plys[#plys + 1] = ply end
+		if ply then plys[#plys + 1] = ply end
 	end
 
 	-- do a full update to keep new players up to speed on the current values

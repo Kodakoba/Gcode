@@ -79,6 +79,7 @@ local function createOwnFactionActions(f, fac, canv)
 
 	local plyList = canv.MembersList
 
+
 	local w, h = canv:GetSize()
 	local leave = vgui.Create("FButton", canv.Main)
 	canv.LeaveBtn = leave
@@ -88,8 +89,7 @@ local function createOwnFactionActions(f, fac, canv)
 	leave:SetWide(w * 0.4)
 	leave:SetTall(h * 0.08)
 
-	leave:SetPos(w / 2 - leave:GetWide() / 2, plyList.Y - leave:GetTall() - 8)
-
+	leave:SetPos(w / 2 - leave:GetWide() / 2, plyList.FoldedY - leave:GetTall() - 8)
 
 	leave.Color = Color(180, 60, 60)
 
@@ -140,7 +140,10 @@ local function createOwnFactionActions(f, fac, canv)
 		local fr = self.HoldFrac
 		local scale = self:GetMatrixScale()
 
-		render.SetScissorRect(sx, sy, sx + w * fr / scale, sy + h, true)
+		local cOff = w * fr - w/2
+		local barSX = sx + w * fr - cOff * (1 - scale)
+
+		render.SetScissorRect(sx, sy, barSX, sy + h, true)
 			draw.RoundedBox(self.RBRadius, 0, 0, w, h, leavingProgressRed)
 		render.SetScissorRect(0, 0, 0, 0, false)
 
@@ -149,9 +152,12 @@ local function createOwnFactionActions(f, fac, canv)
 	end
 
 	function leave:Disappear()
-		self:To("Y", canv.Main:GetTall() + 4, 0.3, 0, 0.3):Then(function()
-			self:Remove()
-		end)
+		local an, new = self:To("Y", canv.Main:GetTall() + 4, 0.3, 0, 0.3)
+		if new then
+			an:Then(function()
+				self:Remove()
+			end)
+		end
 	end
 
 	function leave:FullShake()
@@ -248,8 +254,11 @@ function createFactionActions(f, fac, canv)
 		function te:Disappear(delayed)
 			canv.PasswordEntry = nil
 			local where = te.Y + te:GetTall() + 12
-			self:PopOut(0.2)
-			return self:To("Y", where, 0.25, delayed and 0.5 or 0, 2):Then(function()
+
+			local an, new = self:To("Y", where, 0.2, delayed and 0.5 or 0, 2)
+			te.Disappearing = true
+
+			return an:Then(function()
 				self:Remove()
 			end)
 		end
@@ -268,7 +277,9 @@ function createFactionActions(f, fac, canv)
 		plyList:On("Hovered", join, function(_, hov, amt)
 			if join.Clicked then return end
 			join:To("Y", y - (hov and amt or 0), 0.3, 0, 0.3)
-			te:To("Y", y - (hov and amt or 0), 0.3, 0, 0.3)
+			if not te.Disappearing then
+				te:To("Y", y - (hov and amt or 0), 0.3, 0, 0.3)
+			end
 		end)
 
 		local t = join:GetTable()
@@ -444,7 +455,6 @@ function createFactionActions(f, fac, canv)
 
 			Factions.RequestJoin(fac):Then(function()
 				self:Disappear()
-
 				createOwnFactionActions(f, fac, canv)
 				local prev = canv.LeaveBtn.Y
 				canv.LeaveBtn.Y = where

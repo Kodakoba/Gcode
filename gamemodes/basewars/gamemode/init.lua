@@ -44,7 +44,13 @@ function GM:PlayerInitialSpawn(ply)
 
 	end
 
-	timer.Simple( 0, function() ply:SetTeam(1) end )
+	timer.Simple(0, function()
+		if ply:GetFaction() then
+			ply:SetTeam(ply:GetFaction():GetID())
+		else
+			ply:SetTeam(Factions.FactionlessTeamID)
+		end
+	end)
 
 end
 
