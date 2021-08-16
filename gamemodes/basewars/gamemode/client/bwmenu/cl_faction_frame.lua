@@ -1,4 +1,5 @@
 local FAC = {}
+Factions = Factions or {}
 
 --[[------------------------------]]
 --	   	   	   Helpers

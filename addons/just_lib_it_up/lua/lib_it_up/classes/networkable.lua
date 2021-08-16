@@ -294,6 +294,8 @@ end
 
 
 function nw:Invalidate()
+	if self.Valid == false then return end
+
 	self.Valid = false
 
 	if self.NetworkableID then

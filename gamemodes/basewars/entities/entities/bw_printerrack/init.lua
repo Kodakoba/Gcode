@@ -97,7 +97,7 @@ end
 
 function ENT:Touch(ent)
 
-	if not ent.IsPrinter or ent.IsInRack or self.Printers[ent] or ent:CPPIGetOwner() ~= self:CPPIGetOwner() then return end
+	if not ent.IsPrinter or ent.IsInRack or ent:BW_GetOwner() ~= self:BW_GetOwner() then return end
 
 	local printers = self.Printers.Entities
 	if table.Count(printers) >= max then return end

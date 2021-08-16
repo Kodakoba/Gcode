@@ -1,4 +1,4 @@
-setfenv(1, _G)
+do return end
 module( "halo", package.seeall )
 
 

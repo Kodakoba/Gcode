@@ -14,3 +14,7 @@ end
 function pg:GetPowerOut()
 	return self:GetNW():Get("PowerOut", 0)
 end
+
+function pg:GetCapacity()
+	return self:GetNW():Get("Capacity", pg.DefaultCapacity)
+end

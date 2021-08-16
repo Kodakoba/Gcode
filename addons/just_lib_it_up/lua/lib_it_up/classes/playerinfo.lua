@@ -104,8 +104,8 @@ ChainAccessor(PI, "_Name", "Name")
 PI.Name = PI.GetNick
 PI.Nick = PI.GetNick
 
-function PI:GetPlayer()
-	return self._Player and self._Player:IsValid() and self._Player
+function PI:GetPlayer(invalid)
+	return (invalid and self._Player) or self._Player and self._Player:IsValid() and self._Player
 end
 
 PI.SteamID = PI.GetSteamID
@@ -125,25 +125,31 @@ function PI:get(id, is_sid64)
 
 	-- returns: pinfo, bool (newly created?)
 	if IsPlayer(id) then
-		if LibItUp.PlayerInfoTables.Player[id] then return LibItUp.PlayerInfoTables.Player[id], false end
+		local pin = LibItUp.PlayerInfoTables.Player[id]
+		if pin and pin:IsValid() then return pin, false end
 
 		-- didnt find by player; try to find by sid64
 		local sid64 = id:SteamID64()
 
 		if LibItUp.PlayerInfoTables.SteamID64[sid64] then
 			local pi = LibItUp.PlayerInfoTables.SteamID64[sid64]
-			pi:SetPlayer(id)
-			return pi, false
+			if pi:IsValid() then
+				pi:SetPlayer(id)
+				return pi, false
+			end
 		end
 
 	elseif not is_sid64 and string.IsSteamID(id) then
-		if LibItUp.PlayerInfoTables.SteamID[id] then return LibItUp.PlayerInfoTables.SteamID[id], false end
+		local pin = LibItUp.PlayerInfoTables.SteamID[id]
+		if pin and pin:IsValid() then return pin, false end
 
 		local ply = player.GetBySteamID(id)
 
 		if ply and LibItUp.PlayerInfoTables.Player[ply] then
 			local info = LibItUp.PlayerInfoTables.Player[ply]
-			info:SetSteamID64(id)
+			if info:IsValid() then
+				info:SetSteamID64(id)
+			end
 		end
 	else
 		-- try to guess the sid64 as a last resort
@@ -151,13 +157,16 @@ function PI:get(id, is_sid64)
 		is_sid64 = is_sid64 or str:IsMaybeSteamID64()
 
 		if is_sid64 then
-			if LibItUp.PlayerInfoTables.SteamID64[id] then return LibItUp.PlayerInfoTables.SteamID64[id], false end
+			local pin = LibItUp.PlayerInfoTables.SteamID64[id]
+			if pin and pin:IsValid() then return pin, false end
 
 			local ply = player.GetBySteamID64(id)
 
 			if ply and LibItUp.PlayerInfoTables.Player[ply] then
 				local info = LibItUp.PlayerInfoTables.Player[ply]
-				info:SetSteamID64(id)
+				if info:IsValid() then
+					info:SetSteamID64(id)
+				end
 			end
 		else
 			errorf("Unknown ID passed to PlayerInfo:Get() (id = `%s`, is_sid64 = `%s`)", id, is_sid64)
@@ -216,7 +225,7 @@ function PI:_OnDisconnect()
 	self._AbsentSince = CurTime()
 	self._EndedSession = CurTime()
 	self._Absent = true
-	self._Player = nil
+	-- self._Player = nil
 
 	PIT.Absent[self] = self._AbsentSince
 end
@@ -254,7 +263,7 @@ function PI:InsertByID(tbl, what, info, ply, sid, sid64)
 		tbl[self] = what
 	end
 
-	if ply then
+	if ply and IsValid(self:GetPlayer()) then
 		tbl[self:GetPlayer()] = what
 	end
 

@@ -143,6 +143,18 @@ end
 pg:On("AddedConsumer", "UpdatePowerOut", pg.UpdatePowerOut)
 pg:On("RemovedConsumer", "UpdatePowerOut", pg.UpdatePowerOut)
 
+function pg:UpdateCapacity(con)
+	local storage = pg.DefaultCapacity
+	for k,v in ipairs(self:GetBatteries()) do
+		storage = storage + v.PowerCapacity
+	end
+
+	self:SetCapacity(storage)
+end
+
+pg:On("AddedBattery", "UpdateCapacity", pg.UpdateCapacity)
+pg:On("RemovedBattery", "UpdateCapacity", pg.UpdateCapacity)
+
 local function indexer(nm)
 	return function(...)
 		return pg[nm] (...)

@@ -5,6 +5,7 @@ bw.PowerGrid = bw.PowerGrid or Emitter:extend()
 
 local pg = bw.PowerGrid
 pg.ThinkInterval = 0.3
+pg.DefaultCapacity = 1000
 
 function pg:Initialize(base)
 	CheckArg(1, base, bw.IsBase)
@@ -18,8 +19,9 @@ function pg:Initialize(base)
 		:SetPower(0)
 		:SetConsumers({})
 		:SetGenerators({})
+		:SetBatteries({})
 		:SetAllEntities({})
-		:SetCapacity(1000)
+		:SetCapacity(pg.DefaultCapacity)
 
 	self:SetPowerIn(0)
 	self:SetPowerOut(0)
@@ -82,6 +84,11 @@ function pg:SetPowerOut(n)
 	self:GetNW():Set("PowerOut", n)
 end
 
+function pg:SetCapacity(n)
+	self._Capacity = n
+	self:GetNW():Set("Capacity", n)
+end
+
 function pg:AddEntity(ent)
 	if not ent.IsBaseWars then return end
 	if self:GetAllEntities()[ent] then return end -- already added
@@ -102,6 +109,9 @@ function pg:AddEntity(ent)
 	elseif ent.IsGenerator then
 		table.insert(self:GetGenerators(), ent)
 		self:Emit("AddedGenerator", ent)
+	elseif ent.IsBattery then
+		table.insert(self:GetBatteries(), ent)
+		self:Emit("AddedBattery", ent)
 	end
 end
 
@@ -129,18 +139,22 @@ function pg:RemoveEntity(ent)
 	elseif ent.IsGenerator then
 		table.RemoveByValue(self:GetGenerators(), ent)
 		self:Emit("RemovedGenerator", ent)
+	elseif ent.IsBattery then
+		table.RemoveByValue(self:GetBatteries(), ent)
+		self:Emit("RemovedBattery", ent)
 	end
 end
 
 ChainAccessor(pg, "_Networkable", "NW")
 ChainAccessor(pg, "_Base", "Base")
-ChainAccessor(pg, "_Capacity", "Capacity")
+ChainAccessor(pg, "_Capacity", "Capacity", true)
 ChainAccessor(pg, "_Power", "Power", true)
 ChainAccessor(pg, "_PowerIn", "PowerIn", true)
 ChainAccessor(pg, "_PowerOut", "PowerOut", true)
 ChainAccessor(pg, "_Valid", "Valid")
 ChainAccessor(pg, "_Consumers", "Consumers")
 ChainAccessor(pg, "_Generators", "Generators")
+ChainAccessor(pg, "_Batteries", "Batteries")
 ChainAccessor(pg, "_AllEntities", "AllEntities")
 
 include("powergrid_ext_" .. Rlm(true) .. ".lua")
