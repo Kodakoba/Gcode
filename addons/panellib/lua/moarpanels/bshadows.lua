@@ -8,6 +8,10 @@ BSHADOWS_ID = BSHADOWS_ID + 1
 
 BSHADOWS = (not updating and BSHADOWS) or {}
 
+local handle = BSHADOWS.Handle or Emitter:extend()
+BSHADOWS.Handle = handle
+BSHADOWS.Handles = BSHADOWS.Handles or WeakTable("v")
+
 local render = render
 
 --BSHADOWS.RenderTarget = GetRenderTarget("bshadows_original", ScrW(), ScrH())
@@ -52,6 +56,10 @@ local function resize()
     if BSHADOWS.ShadowMaterial then BSHADOWS.ShadowMaterial:SetTexture("$basetexture", BSHADOWS.RenderTarget) end
     if BSHADOWS.ShadowMaterialGrayscale then BSHADOWS.ShadowMaterialGrayscale:SetTexture("$basetexture", BSHADOWS.RenderTarget2) end
     if BSHADOWS.ShadowMaterialColorscale then BSHADOWS.ShadowMaterialColorscale:SetTexture("$basetexture", BSHADOWS.RenderTarget2) end
+
+    for k,v in pairs(BSHADOWS.Handles) do
+        v._NeedRegen = true
+    end
 end
 
 hook.Add("OnScreenSizeChanged", "BSHADOWS_Resize", resize)
@@ -79,11 +87,6 @@ BSHADOWS.RTs = BSHADOWS.RTs or {}
 
 local spreadSize = 16
 
-local handle = BSHADOWS.Handle or Emitter:extend()
-BSHADOWS.Handle = handle
-
-BSHADOWS.Handles = BSHADOWS.Handles or {}
-
 function handle:Initialize(name, rt, mat, w, h)
     self.Name, self.RT, self.Mat = name, rt, mat
     self.W, self.H = w, h
@@ -98,6 +101,11 @@ function handle:SetGenerator(fn)
 end
 
 function handle:Paint(x, y, w, h)
+    if self._NeedRegen and self._LastArgs then
+        self:CacheShadow(unpack(self._LastArgs))
+        self._NeedRegen = nil
+    end
+
     surface.SetMaterial(self.Mat)
     local ratW, ratH = w / self.W, h / self.H
     surface.DrawTexturedRect(x - spreadSize * ratW, y - spreadSize * ratH,
@@ -111,6 +119,8 @@ function handle:CacheShadow(int, spr, blur, color, color2)
         error("handle has no generator")
         return
     end
+
+    self._LastArgs = {int, spr, blur, color, color2}
 
     self:_Begin()
         xpcall(self._Generator, err, self, self.W, self.H)
@@ -149,22 +159,21 @@ BSHADOWS.BeginShadow = function(x, y, w, h)
     CurRT = rt1
     ShadowRT = rt2
 
-    render.PushRenderTarget(BSHADOWS.RenderTarget)
+    render.PushRenderTarget(rt1)
         render.Clear(0, 0, 0, 0, true, true)
     render.PopRenderTarget()
 
-    render.PushRenderTarget(BSHADOWS.RenderTarget2)
+    render.PushRenderTarget(rt2)
         render.Clear(0, 0, 0, 0, true, true)
     render.PopRenderTarget()
-
-    render.CopyRenderTargetToTexture(BSHADOWS.RenderTarget2) -- copy contents onto a temporary RT: shadow
-    render.CopyRenderTargetToTexture(BSHADOWS.RenderTarget) -- actual paint (copy)
 
     if useRT then
         -- clean up the entire rt
+       --[[
         render.PushRenderTarget(useRT)
             render.Clear(0, 0, 0, 0)
         render.PopRenderTarget()
+        ]]
 
         -- then only allow drawing on a fraction of it
         render.PushRenderTarget(useRT, spreadSize, spreadSize,
@@ -222,8 +231,7 @@ BSHADOWS.CacheShadow = function(intensity, spread, blur, opacity, direction, dis
     local rt = useRT
     useRT = nil
 
-    render.CopyRenderTargetToTexture(BSHADOWS.RenderTarget2) -- copy contents onto a temporary RT: shadow
-    render.CopyRenderTargetToTexture(BSHADOWS.RenderTarget) -- actual paint (copy)
+    render.CopyRenderTargetToTexture(ShadowRT) -- copy contents onto a temporary RT: shadow
 
     if blur > 0 then
         local sprX, sprY = 0, 0
@@ -287,6 +295,8 @@ BSHADOWS.CacheShadow = function(intensity, spread, blur, opacity, direction, dis
 
         render.OverrideAlphaWriteEnable(false, false)
     render.PopRenderTarget()
+
+    cam.End2D()
 end
 
 local radar = false
