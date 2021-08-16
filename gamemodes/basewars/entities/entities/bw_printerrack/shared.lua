@@ -5,10 +5,6 @@ ENT.Model = "models/grp/rack/rack.mdl"
 ENT.Skin = 0
 
 ENT.Capacity 		= 10000
-ENT.Money 			= 0
-ENT.MaxPaper		= 2500
-ENT.PrintInterval 	= 1
-ENT.PrintAmount		= 10
 ENT.MaxLevel 		= 25
 ENT.PowerCapacity = 50000
 

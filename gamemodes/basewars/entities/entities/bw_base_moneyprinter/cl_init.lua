@@ -22,7 +22,7 @@ function ENT:CLInit()
 
 	self:On("DrawCable", "CablesInRack", self.ShouldDrawInRack)
 
-	self:On("DTChanged", "Upgrading", function(self, key, old, new)
+	self:NetworkVarNotify("Level", function(self, key, old, new)
 		if key == "Level" and new > 1 and self:CPPIGetOwner() == LocalPlayer() then
 			cookie.Set("PrinterUpgraded", 1)
 		end
