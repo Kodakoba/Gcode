@@ -100,7 +100,7 @@ hook.Add("ShouldCollide", "NocollideOpenDoors", function(ent1, ent2)
 	local door = ent1.IsMorphDoor and ent1 or ent2
 	local other = ent1.IsMorphDoor and ent2 or ent1
 
-	if other:IsWorld() then print("yeah", ent1, ent2, Realm()) return true end -- ALWAYS collide with world
+	if other:IsWorld() then return true end -- ALWAYS collide with world
 	if door:GetOpen() then
 		return false
 	end

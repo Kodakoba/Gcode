@@ -94,46 +94,35 @@ function ENTITY:BW_GetAllBases()
 	return getBaseQueue(self)
 end
 
---[[-------------------------------------------------------------------------
-	INTERNAL
-		Do not call these directly; you usually don't want to
-		enter/exit bases manually! Use the base queue instead.
----------------------------------------------------------------------------]]
+
+
+
 	local function enterBase(ent, base)
 		if not base:IsValid() then return end
 		bw.BasePresence[ent] = base
 		base:EntityEnter(ent)
-
-		base:Emit("EntityEntered", ent)
-
-		ent:Emit("EnteredBase", base)
-		if ent.OnEnteredBase then
-			ent:OnEnteredBase(base)
-		end
-
-		--hook.NHRun("EntityEnteredBase", base, ent)
 	end
 
+function ENTITY:BW_EnterBase(base)
+	return enterBase(self, base)
+end
+
 	local function exitBase(ent, base) -- exit a specific base; the only difference is the sanity check
-		if base ~= getBase(ent) then
+		--[[if base ~= getBase(ent) then
 			errorf("Sanity check failed: %s != %s", base, getBase(ent))
 			return
-		end
+		end]]
 
 		bw.BasePresence[ent] = nil
 
 		if base:IsValid() then
 			base:EntityExit(ent)
 		end
-
-		base:Emit("EntityExited", ent)
-		ent:Emit("ExitedBase", base)
-		if ent.OnExitedBase then
-			ent:OnExitedBase(base)
-		end
-		--hook.NHRun("EntityExitedBase", base, ent)
 	end
 
+function ENTITY:BW_ExitBase(base)
+	return exitBase(self, base)
+end
 
 --[[-------------------------------------------------------------------------
 	Public

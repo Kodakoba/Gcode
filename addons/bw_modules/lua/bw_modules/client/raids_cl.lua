@@ -64,7 +64,6 @@ function PLAYER:IsRaider() --localplayer's raid only
 end
 
 function PLAYER:IsEnemy()
-
 	if not raid.MyRaid then return false end
 
 	local rd = raid.MyRaid

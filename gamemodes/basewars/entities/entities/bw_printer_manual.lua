@@ -42,6 +42,10 @@ local lines
 
 local curTipY = 0
 
+function ENT:Init()
+	self:SetUpgradeCost(100)
+end
+
 function ENT:PaintStructureInfo(w, y) return 0 end
 
 function ENT:DrawTipDisplay(w, h, a)
