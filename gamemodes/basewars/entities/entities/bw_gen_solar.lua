@@ -2,14 +2,9 @@ AddCSLuaFile()
 
 ENT.Base 			= "bw_base_generator"
 ENT.PrintName 		= "Solar Panel"
-
 ENT.Model 			= "models/props_lab/miniteleport.mdl"
 
-
-ENT.PowerCapacity 	= 300
-
 ENT.TransmitRadius 	= 200
-ENT.TransmitRate 	= 35
 
 ENT.PowerGenerated 	= 0
 
@@ -28,6 +23,7 @@ end
 
 function ENT:DerivedGenDataTables()
 	self:NetworkVar("Bool", 3, "SunAccess")
+	self:NetworkVar("Bool", 4, "BaseAccess")
 end
 
 function ENT:Think()
@@ -56,16 +52,23 @@ function ENT:GenerateOptions(qm, pnl)
 	local txCol = Color(95, 95, 95)
 
 	local sun = ent:GetSunAccess()
-	ind.Efficiency = sun and 100 or 50
+	local base = ent:GetBaseAccess()
+
+	local eff_perc = skylessPower / skyPower
+
+	local eff = base and (sun and 100 or eff_perc) or 0
+	ind.Efficiency = eff
+
+	local boxCol = Color(30, 30, 30, 250)
 
 	ind:On("Paint", "Solar", function(self, w, h)
-		local sun = ent:GetSunAccess()
+		sun = ent:GetSunAccess()
+		base = ent:GetBaseAccess()
+		eff = base and (sun and 100 or eff_perc) or 0
 
-		local eff_perc = skylessPower / skyPower
+		self:To("Efficiency", eff, 0.3, 0, 0.3)
 
-		self:To("Efficiency", sun and 100 or eff_perc * 100, 0.3, 0, 0.3)
-
-		local eff = math.Round(self.Efficiency)
+		eff = math.Round(self.Efficiency)
 
 		local col = sun and activeCol or inactiveCol
 		surface.SetDrawColor(col:Unpack())
@@ -74,6 +77,17 @@ function ENT:GenerateOptions(qm, pnl)
 		local pwtx = pwtx:format( math.Round( skyPower * (self.Efficiency / 100)) )
 		local _, tH = draw.SimpleText(tx, "OS24", w/2, 2 + sz - (24 * 0.125), color_white, 1, 5)
 		draw.SimpleText(pwtx, "OS18", w/2, 2 + sz - (24 * 0.3) + tH, txCol, 1, 5)
+
+		if not base then
+			local tx = "Solar panel output doesn't reach base!"
+			surface.SetFont("OSB24")
+			local tw, th = surface.GetTextSize(tx)
+			DisableClipping(true)
+				draw.RoundedBox(4, w / 2 - tw / 2 - 4, h + 2, tw + 8, th + 4, boxCol)
+				draw.SimpleText(tx, "OSB24",
+					w / 2 - tw / 2, h + 4, Colors.DarkerRed, 0, 5)
+			DisableClipping(false)
+		end
 	end)
 
 
@@ -83,4 +97,9 @@ end
 
 function ENT:Draw()
 	self:DrawModel()
+	local qm = self.IsQMInteracting
+
+	if qm then
+		-- draw a beam from sun scanner pos
+	end
 end
