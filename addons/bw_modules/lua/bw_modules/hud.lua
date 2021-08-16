@@ -59,11 +59,19 @@ local function remap(cur, min, max)
 	return (math.max(cur, min) - min) / (max - min)
 end
 
-hook.Add("PostDrawTranslucentRenderables", "StructureInfoToScreen", function()
-	if lastpos then
-		lastToScreen = lastpos:ToScreen()
+local function updateToscreen(force)
+	if force then
+		cam.Start3D()
 	end
-end)
+
+	lastToScreen = lastpos:ToScreen()
+
+	if force then
+		cam.End3D()
+	end
+end
+
+hook.Add("PostDrawTranslucentRenderables", "StructureInfoToScreen", updateToscreen)
 
 local function DrawStructureInfo()
 
@@ -92,14 +100,14 @@ local function DrawStructureInfo()
 
 		name = ent.PrintName or "wat"
 
-		local should, distAppear, pntr = hook.Run("BW_ShouldPaintStructureInfo", ent, dist)
+		local should, distAppear, pntr, posr = hook.Run("BW_ShouldPaintStructureInfo", ent, dist)
 		alphaTo = alphaTo or to
-		lastPainter = pntr
 		maxDist = distAppear or defaultMaxDist
 
-		lastpos = hook.Run("BW_StructureInfoGetPos", ent, trace, ep) or ep
-
 		if should then
+			lastPainter = pntr
+			lastpos = posr and posr(ent, trace, ep) or ep
+
 			anims:To("Alpha", alphaTo, 0.15, 0, 0.3)
 		else
 			anims:To("Alpha", 0, 0.3, 0, 0.3)
@@ -128,7 +136,6 @@ local function DrawStructureInfo()
 	local x, y = ts.x, ts.y 	--middle of the window's XY
 	local sx, sy = x, y 		--top left XY
 
-
 	local w, h = anims.Width or default_w, anims.Height or default_h
 
 	vm:Identity()
@@ -149,6 +156,8 @@ local function DrawStructureInfo()
 		surface.SetAlphaMultiplier(amult)
 		cam.PopModelMatrix()
 		render.PopFilterMin()
+
+		lastPainter = nil
 	end
 
 	initialFrame = false

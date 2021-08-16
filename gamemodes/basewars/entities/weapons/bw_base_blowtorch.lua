@@ -304,6 +304,13 @@ local function paint(ent, curent, baseAnim, firstFrame)
 	baseAnim:To("Height", frH, 0.3, 0, 0.3)
 end
 
+local function framePos(ent, trace, ep)
+	-- holding primary fire caches a predicted/compensated trace i think
+	-- this fucks up the hud and makes it all jittery
+	-- so we fire a new trace instead of using the cached :GetEyeTrace
+	local tr = util.TraceLine(util.GetPlayerTrace(LocalPlayer()))
+	return tr.HitPos + Vector(0, 0, 8)
+end
 
 --hook.Add("BW_PaintStructureInfo", "Blowtorch", paint)
 
@@ -312,15 +319,9 @@ hook.Add("BW_ShouldPaintStructureInfo", "Blowtorch", function(ent, dist)
 	local wep = LocalPlayer():GetActiveWeapon()
 	local wep_ok = wep.IsBlowTorch
 
+	if not class_ok or not wep_ok or dist > 192 then return end
+
 	curBlowtorch = wep
 
-	return class_ok and wep_ok and dist < 192, 192, paint
-end)
-
-hook.Add("BW_StructureInfoGetPos", "Blowtorch", function(ent, trace, ep)
-	-- holding primary fire caches a predicted/compensated trace i think
-	-- this fucks up the hud and makes it all jittery
-	-- so we fire a new trace instead of using the cached :GetEyeTrace
-	local tr = util.TraceLine(util.GetPlayerTrace(LocalPlayer()))
-	return tr.HitPos + Vector(0, 0, 8)
+	return true, 192, paint, framePos
 end)
