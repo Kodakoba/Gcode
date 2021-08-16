@@ -27,6 +27,7 @@ LibItUp = LibItUp or {}
 local libTbl = LibItUp
 
 libTbl.DependenciesFolder = "lib_deps"
+libTbl.ExtensionsFolder = "lib_exts"
 
 local path = "lib_it_up/"
 
@@ -216,14 +217,22 @@ local function onLoad(s)
 	libTbl.LoadedDeps[fn] = true
 end
 
-FInc.Recursive("lib_deps/sh_*.lua", _SH, true, nil, onLoad)
-FInc.Recursive("lib_deps/*.lua", _SH, true, FInc.RealmResolver():SetDefault(true):SetVerbose(), onLoad)
+local path = libTbl.ExtensionsFolder:gsub("/$", "")
+	FInc.Recursive(path .. "/sh_*.lua", _SH, true, nil)
+	FInc.Recursive(path .. "/*.lua", _SH, true, FInc.RealmResolver():SetDefault(true):SetVerbose())
+	FInc.Recursive(path .. "/cl_*.lua", _CL, true, nil)
+	FInc.Recursive(path .. "/sv_*.lua", _SV, true, nil)
+	FInc.Recursive(path .. "/client/*", _CL, false, nil)
+	FInc.Recursive(path .. "/server/*", _SV, false, nil)
 
-FInc.Recursive("lib_deps/cl_*.lua", _CL, true, nil, onLoad)
-FInc.Recursive("lib_deps/sv_*.lua", _SV, true, nil, onLoad)
+path = libTbl.DependenciesFolder:gsub("/$", "")
+	FInc.Recursive(path .. "/sh_*.lua", _SH, true, nil, onLoad)
+	FInc.Recursive(path .. "/*.lua", _SH, true, FInc.RealmResolver():SetDefault(true):SetVerbose(), onLoad)
+	FInc.Recursive(path .. "/cl_*.lua", _CL, true, nil, onLoad)
+	FInc.Recursive(path .. "/sv_*.lua", _SV, true, nil, onLoad)
+	FInc.Recursive(path .. "/client/*", _CL, false, nil, onLoad)
+	FInc.Recursive(path .. "/server/*", _SV, false, nil, onLoad)
 
-FInc.Recursive("lib_deps/client/*", _CL, false, nil, onLoad)
-FInc.Recursive("lib_deps/server/*", _SV, false, nil, onLoad)
 
 
 local deps_t2 = SysTime()
