@@ -24,6 +24,7 @@ function sol:Think()
 	if CurTime() - self._LastThink < 0.25 then return end
 
 	local grid = self:GetPowerGrid()
+	self:SetBaseAccess(not not grid)
 	if not grid then return end
 
 	local pos = self:LocalToWorld(rayPos)
@@ -50,11 +51,12 @@ function sol:Think()
 	end
 
 	self:SetSunAccess(isSky)
+
 	self._LastThink = CurTime()
 end
 
 local function entToBoth(ent)
-	if not ent.SolarAttachment and ent:GetClass() ~= "bw_gen_solar" then return end
+	if not ent:IsValid() or (not ent.SolarAttachment and ent:GetClass() ~= "bw_gen_solar") then return end
 
 	local solar = ent:GetClass() == "bw_gen_solar" and ent or ent.SolarAttachment
 	local handle = ent.SolarAttachment and ent or ent.BaseHandle
