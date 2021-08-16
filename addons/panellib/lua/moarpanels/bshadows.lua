@@ -66,13 +66,10 @@ hook.Add("OnScreenSizeChanged", "BSHADOWS_Resize", resize)
 resize()
 
 local offsetted = false --is current shadow being offsetted by x,y,w,h args?
-local started = false
-
+local started = 0
 local curX, curY = 0, 0
 local curW, curH
-
 local realW, realH
-
 local CurRT, ShadowRT
 
 local useRT
@@ -112,7 +109,7 @@ function handle:Paint(x, y, w, h)
         w + spreadSize * 2 * ratW, h + spreadSize * 2 * ratH)
 end
 
-local err = GenerateErrorer("BShadows Cache")
+local err = GenerateErrorer("BShadows")
 
 function handle:CacheShadow(int, spr, blur, color, color2)
     if not self._Generator then
@@ -190,14 +187,12 @@ BSHADOWS.BeginShadow = function(x, y, w, h)
     --Start Cam2D as where drawing on a flat surface
 
     if x and y then
-
     	offsetted = true
     	curX, curY = x, y
-
     	--render.SetViewPort(x, y, w, h)
     end
 
-    started = true
+    started = started + 1
 
     cam.Start2D()
 
@@ -296,6 +291,7 @@ BSHADOWS.CacheShadow = function(intensity, spread, blur, opacity, direction, dis
         render.OverrideAlphaWriteEnable(false, false)
     render.PopRenderTarget()
 
+    started = started - 1
     cam.End2D()
 end
 
@@ -398,7 +394,7 @@ BSHADOWS.EndShadow = function(intensity, spread, blur, opacity, direction, dista
 
     if offsetted then
 
-        started = false
+        started = started - 1
 
     	cam.End2D()
 
@@ -412,5 +408,5 @@ BSHADOWS.EndShadow = function(intensity, spread, blur, opacity, direction, dista
     	return
     end
 
-    if started then cam.End2D() started = false end
+    if started > 0 then cam.End2D() started = started - 1 end
 end
