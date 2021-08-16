@@ -22,8 +22,9 @@ if SERVER then util.AddNetworkString("ManualGen") end
 function ENT:Init(...)
 	self.BaseClass.Init(self, ...)
 
+
 	-- generate enough power for a 8pw/s entity to upkeep for 10s
-	self.PowerGenerated2 = math.ceil(8 * 10 / BaseWars.Bases.PowerGrid.ThinkInterval)
+	self.PowerGenerated2 = math.floor(math.ceil(8 * 10 / BaseWars.Bases.PowerGrid.ThinkInterval) / 10) * 10
 end
 
 function ENT:GenPower()
