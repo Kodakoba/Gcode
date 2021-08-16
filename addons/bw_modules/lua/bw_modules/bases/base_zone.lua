@@ -303,11 +303,20 @@ ChainAccessor(bw.Zone, "Players", "Players")
 function bw.Base:EntityEnter(ent)
 	self:_CheckValidity()
 
+	local _, enter = hook.NHRun("EntityEnterBase", self, ent)
+	if SERVER and enter == false then return end
+
 	self.Entities[ent] = ent:EntIndex()
 	self.EntsNW:Set(ent:EntIndex(), true)
 
 	if IsPlayer(ent) then
 		self.Players[ent] = ent:EntIndex()
+	end
+
+	self:Emit("EntityEntered", ent)
+	ent:Emit("EnteredBase", self)
+	if ent.OnEnteredBase then
+		ent:OnEnteredBase(self)
 	end
 
 	hook.NHRun("EntityEnteredBase", self, ent)
@@ -316,11 +325,22 @@ end
 function bw.Base:EntityExit(ent)
 	self:_CheckValidity()
 
+	local _, exit = hook.NHRun("EntityExitBase", self, ent)
+	svprint("base entity exit", exit, ent)
+	if SERVER and exit == false and not ent:IsRemoving() then return end
+	svprint("yeeting")
+	local eid = self.Entities[ent] or ent:EntIndex()
 	self.Entities[ent] = nil
-	self.EntsNW:Set(ent:EntIndex(), nil)
+	self.EntsNW:Set(eid, nil)
 
 	if IsPlayer(ent) then
 		self.Players[ent] = nil
+	end
+
+	self:Emit("EntityExited", ent)
+	ent:Emit("ExitedBase", self)
+	if ent.OnExitedBase then
+		ent:OnExitedBase(self)
 	end
 
 	hook.NHRun("EntityExitedBase", self, ent)

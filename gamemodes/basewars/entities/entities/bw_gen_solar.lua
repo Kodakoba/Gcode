@@ -11,15 +11,20 @@ ENT.PowerCapacity 	= 300
 ENT.TransmitRadius 	= 200
 ENT.TransmitRate 	= 35
 
-local skyPower = 20
-local skylessPower = 10
+ENT.PowerGenerated 	= 0
 
-ENT.PowerGenerated 	= skylessPower
+BaseWars.Solar = BaseWars.Solar or {}
+BaseWars.Solar.SkylessPower = 10
+BaseWars.Solar.SkyPower = 20
 
-local rayPos = Vector(2.4543991088867, -32.136005401611, 3.2566497325897)
+local skylessPower = BaseWars.Solar.SkylessPower
+local skyPower = BaseWars.Solar.SkyPower
 
-local tout = {}
-local tdat = {output = tout}
+function ENT:Init()
+	if CLIENT then return end
+	BaseWars.Solar.Initialize(self)
+	self.PowerGenerated = BaseWars.Solar.SkylessPower
+end
 
 function ENT:DerivedGenDataTables()
 	self:NetworkVar("Bool", 3, "SunAccess")
@@ -28,33 +33,7 @@ end
 function ENT:Think()
 	self.BaseClass.Think(self)
 	if CLIENT then return end
-	if self._LastThink and CurTime() - self._LastThink < 0.3 then return end
-
-	local pos = self:LocalToWorld(rayPos)
-	tdat.start = pos
-	tdat.endpos = pos + self:GetAngles():Up() * 16384,
-
-	util.TraceLine(tdat)
-	local isSky = tout.HitSky
-
-	if isSky then
-		local upd = self.PowerGenerated ~= skyPower
-		self.PowerGenerated = skyPower
-
-		if upd then
-			self:GetGrid():UpdatePowerIn()
-		end
-	else
-		local upd = self.PowerGenerated ~= skylessPower
-		self.PowerGenerated = skylessPower
-
-		if upd then
-			self:GetGrid():UpdatePowerIn()
-		end
-	end
-
-	self:SetSunAccess(isSky)
-	self._LastThink = CurTime()
+	BaseWars.Solar.Think(self)
 end
 
 function ENT:GenerateOptions(qm, pnl)
@@ -100,4 +79,8 @@ function ENT:GenerateOptions(qm, pnl)
 
 	qm:AddPopIn(ind, ind.X, ind.Y, 0, ind:GetTall() / 2)
 	return ind
+end
+
+function ENT:Draw()
+	self:DrawModel()
 end
