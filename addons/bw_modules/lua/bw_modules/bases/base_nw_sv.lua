@@ -64,12 +64,12 @@ function bw.Zone:AddToNW()
 	bw.NW.Zones:Set(self:GetID(), self)
 end
 
+-- TODO: this doesnt get invalidated
 local function initNW(ply)
 	if bw.NW.PlayerData[ply] then return end
 
-	bw.NW.PlayerData[ply] = Networkable("bw_bases_player" .. ply:UserID())
+	bw.NW.PlayerData[ply] = Networkable("bw_bases_player" .. ply:SteamID64())
 	local nw = bw.NW.PlayerData[ply]
-	nw:Bind(ply)
 	nw:Alias("CurrentZone", 1)
 	nw:Alias("CurrentBase", 2)
 	nw:AddDependency(bw.NW.Bases)
@@ -79,15 +79,23 @@ local function initNW(ply)
 	end
 end
 
+hook.Add("PlayerDisconnected", "BasesPlayerNWYeet", function(ply)
+	if bw.NW.PlayerData[ply] then
+		bw.NW.PlayerData[ply]:Invalidate()
+		bw.NW.PlayerData[ply] = nil
+	end
+end)
+
 nw.InitPlayerNW = initNW
 
 function bw.GetPlayerNW(ply)
 	local nw = bw.NW.PlayerData[ply]
-	return (nw and nw:IsValid()) and nw
+	if not nw or not nw:IsValid() then initNW(ply) end
+	return bw.NW.PlayerData[ply]
 end
 
 hook.NHAdd("PlayerInitialSpawn", "InitBaseNWPlayerData", function(ply)
-	initNW(ply)
+	initNW(GetPlayerInfoGuarantee(ply))
 end)
 
 for k,v in ipairs(player.GetAll()) do

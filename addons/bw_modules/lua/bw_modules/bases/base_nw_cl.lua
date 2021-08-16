@@ -6,7 +6,7 @@ local bNW = bw.NW.Bases
 local nw = bw.NW
 
 LibItUp.OnInitEntity(function()
-	nw.PlayerData = nw.PlayerData or Networkable("bw_bases_player" .. LocalPlayer():UserID())
+	nw.PlayerData = nw.PlayerData or Networkable("bw_bases_player" .. LocalPlayer():SteamID64())
 	nw.PlayerData:Alias("CurrentZone", 1)
 	nw.PlayerData:Alias("CurrentBase", 2)
 end)
