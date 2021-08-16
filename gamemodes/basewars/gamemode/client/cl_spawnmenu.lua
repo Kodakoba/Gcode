@@ -78,11 +78,11 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 	local its = table.Copy(items)
 
 	table.sort(its, function(a, b)
-		if a.Level == b.Level then
+		--if a.Level == b.Level then
 			return a.Price < b.Price
-		else
-			return a.Level < b.Level
-		end
+		--else
+		--	return a.Level < b.Level
+		--end
 	end)
 
 	local ply = LocalPlayer()
@@ -184,7 +184,7 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 			--b:Open()
 
 			local enough, way_enough, barely_enough = ply_money >= price, ply_money > price * 50, ply_money < price * 3
-			local enough_lv = ply_level >= lv
+			--local enough_lv = ply_level >= lv
 
 			local col = curCol
 			local txcol = Colors.Money
@@ -194,7 +194,7 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 			if enough then
 				txcol = Colors.Money
 
-				if enough_lv then
+				--if enough_lv then
 					if way_enough then
 						col = wayEnoughColor
 					elseif barely_enough then
@@ -203,19 +203,19 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 					else
 						col = enoughColor
 					end
-				else
+				--[[else
 					col = notEnoughColor
-				end
+				end]]
 
 			else
-				col = enough_lv and notEnoughColor or notEvenCloseColor
+				col = notEnoughColor -- enough_lv and notEnoughColor or notEvenCloseColor
 				txcol = notEnoughColor
 			end
 
 			moneytxCol:Set(txcol or col)
 			moneytxCol.a = 255
 
-			leveltxCol:Set(enough_lv and Colors.Level or notEnoughColor)
+			leveltxCol:Set(notEnoughColor) --enough_lv and Colors.Level or notEnoughColor)
 			leveltxCol.a = 255
 
 			draw.RoundedBox(8, 2, 2, w - 4, h - 4, col)
@@ -243,7 +243,7 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 				cl.AlignLabel = 1
 				cl:AddSeparator(nil, 8)
 				cl:AddFormattedText(Language("Price", price), moneytxCol, "OSB20", 18, nil, 1)
-				cl:AddFormattedText(Language("Level", lv), leveltxCol, "OSB20", nil, nil, 1)
+				--cl:AddFormattedText(Language("Level", lv), leveltxCol, "OSB20", nil, nil, 1)
 				cl:SetRelPos(self:GetWide() / 2)
 				cl.ToY = -8
 
