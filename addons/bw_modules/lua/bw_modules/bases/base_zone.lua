@@ -487,7 +487,6 @@ function bw.Base:CanUnclaim(who)
 	return true
 end
 
-
 hook.Add("PostCleanupMap", "RespawnBaseZone", function()
 	if CLIENT then return end
 

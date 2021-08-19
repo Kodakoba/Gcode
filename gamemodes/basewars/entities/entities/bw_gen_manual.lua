@@ -3,10 +3,10 @@ AddCSLuaFile()
 ENT.Base 			= "bw_base_generator"
 ENT.PrintName 		= "Manual Generator"
 
-ENT.Model 			= "models/props_c17/TrapPropeller_Engine.mdl"
+ENT.Model 			= "models/props_c17/cashregister01a.mdl"
 
 ENT.PowerGenerated 	= 0
-ENT.PowerGenerated2 = 0
+--ENT.PowerGenerated2 = 0
 ENT.PowerCapacity 	= 5000
 
 ENT.TransmitRadius 	= 300
@@ -22,9 +22,9 @@ if SERVER then util.AddNetworkString("ManualGen") end
 function ENT:Init(...)
 	self.BaseClass.Init(self, ...)
 
-
-	-- generate enough power for a 8pw/s entity to upkeep for 10s
-	self.PowerGenerated2 = math.floor(math.ceil(8 * 10 / BaseWars.Bases.PowerGrid.ThinkInterval) / 10) * 10
+	self.PowerGenerated2 = math.floor(
+		math.ceil(8 * 4 / BaseWars.Bases.PowerGrid.ThinkInterval) / 10
+	) * 10
 end
 
 function ENT:GenPower()
@@ -34,15 +34,11 @@ function ENT:GenPower()
 	local grid = self:GetPowerGrid()
 	if not grid then return end
 
-	local nw = self:GetPowerGrid():GetNW()
-
 	self:GetPowerGrid():AddPower(self.PowerGenerated2)
-
-	--self:GetGrid():Network()
 end
 
 function ENT:GenerateOptions(qm, pnl)
-
+	if not self.PowerGenerated2 then self:Init() end
 	local gen = vgui.Create("FButton", pnl)
 	gen:SetLabel("Make power")
 

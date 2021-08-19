@@ -39,4 +39,6 @@ if CLIENT then
 	for k,v in ipairs(player.GetAll()) do
 		hookPly(v)
 	end
+
+	hookPly(LocalPlayer())
 end

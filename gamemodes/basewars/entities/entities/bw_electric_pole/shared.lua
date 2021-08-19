@@ -1,3 +1,5 @@
+do return end
+
 AddCSLuaFile()
 
 ENT.Base = "bw_base"

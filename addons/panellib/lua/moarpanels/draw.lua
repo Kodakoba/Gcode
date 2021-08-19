@@ -799,8 +799,6 @@ function surface.DrawMaterial(url, name, x, y, w, h, rot)
 		return false
 	end
 
-	if x == 0 then print(mat.mat) end
-
 	surface_SetMaterial(mat.mat)
 
 	if rot then
@@ -1146,7 +1144,7 @@ function draw.GetRTMat(name, w, h, shader)
 	name = name .. ("%dx%d"):format(w, h)
 	local mat = mats[name]
 	if not mat then
-		print("creating mat", name)
+
 		mat = CreateMaterial(name, shader or "UnlitGeneric", {
 			["$basetexture"] = rt:GetName(),
 			["$translucent"] = 1,
@@ -1366,9 +1364,6 @@ function draw.DrawOrRender(pnl, mdl, x, y, w, h)
 				if amt == 1 then spic:Remove() end
 			end)
 			return
-
-		else
-			print("not err")
 		end
 
 		draw.DrawLoading(pnl, x + w/2, y + h/2, w, h)

@@ -4,7 +4,7 @@ bw.EntityToPowerGrid = {}
 bw.PowerGrid = bw.PowerGrid or Emitter:extend()
 
 local pg = bw.PowerGrid
-pg.ThinkInterval = 0.3
+pg.ThinkInterval = 0.5
 pg.DefaultCapacity = 1000
 
 function pg:Initialize(base)

@@ -9,6 +9,7 @@ function ENT:OpenShit(qm, self, pnl)
 	if not IsValid(pnl) then error("WTF " .. tostring(pnl)) return end
 
 	local ent = self
+	self.IsQMInteracting = true
 
 	if ent.GenerateOptions then
 
@@ -34,6 +35,7 @@ function ENT:OpenShit(qm, self, pnl)
 end
 
 function ENT:CloseAll(qm, self, pnl)
+	self.IsQMInteracting = false
 	if not IsValid(pnl) then return end
 
 	if qm.Panels then

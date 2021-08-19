@@ -22,6 +22,7 @@ end
 
 function sol:Think()
 	if CurTime() - self._LastThink < 0.25 then return end
+	self._LastThink = CurTime()
 
 	local grid = self:GetPowerGrid()
 	self:SetBaseAccess(not not grid)
@@ -51,8 +52,6 @@ function sol:Think()
 	end
 
 	self:SetSunAccess(isSky)
-
-	self._LastThink = CurTime()
 end
 
 local function entToBoth(ent)

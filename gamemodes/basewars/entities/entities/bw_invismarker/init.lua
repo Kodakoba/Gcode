@@ -1,6 +1,4 @@
-if CLIENT then return end
-
-easylua.StartEntity("bw_invismarker")
+AddCSLuaFile("cl_init.lua")
 
 ENT.Base = "base_gmodentity"
 ENT.Type = "anim"
@@ -27,5 +25,3 @@ hook.Add("ShouldCollide", "CollisionTest", function(a, b)
 		return false
 	end
 end)
-
-easylua.EndEntity()

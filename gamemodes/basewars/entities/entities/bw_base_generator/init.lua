@@ -1,12 +1,6 @@
 include("shared.lua")
 AddCSLuaFile("shared.lua")
 AddCSLuaFile("cl_init.lua")
--- AddCSLuaFile("cables.lua")
-
-local m_min = math.min
-local meta = FindMetaTable("Entity")
-
-util.AddNetworkString("ConnectGenerator")
 
 function ENT:Init()
 	self:AddEFlags(EFL_FORCE_CHECK_TRANSMIT)

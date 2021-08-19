@@ -32,6 +32,7 @@ function IncludeBasewarsModules()
 
 		FInc.Recursive(path .. "*.lua", _SH, true, moduleLoaded, incrementModule)
 		FInc.Recursive(path .. "server/*.lua", _SV, nil, moduleLoaded, incrementModule)
+		FInc.Recursive(path .. "map_edits/*.lua", _SV, nil, moduleLoaded, incrementModule)
 		FInc.Recursive(path .. "client/*.lua", _CL, nil, moduleLoaded, incrementModule)
 
 	s = SysTime() - s

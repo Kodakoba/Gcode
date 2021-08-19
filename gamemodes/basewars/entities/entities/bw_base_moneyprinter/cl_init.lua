@@ -36,6 +36,10 @@ function BaseWars.EverUpgraded()
 	return cookie.GetNumber("PrinterUpgraded", 0) ~= 0
 end
 
+function BaseWars.UnsetUpgraded()
+	cookie.Set("PrinterUpgraded", 0)
+end
+
 local wpad = 32
 
 
@@ -68,23 +72,31 @@ end
 local cache = setmetatable({}, {__mode = "kv"}) --bruh...
 
 function ENT:DrawUpgradeCost(y, w, h)
-	local upW, upH = 0, 64 + 18
-
 	local costMoney = self:GetUpgradeCost() or 0
-	costMoney = costMoney * self:GetLevel()
-	local cost = Language("Price", BaseWars.NumberFormat(costMoney))
-	local what = "Upgrade cost:"
+	local lv = self:GetLevel()
+	costMoney = costMoney * lv
+	local cost
+	local what
 
-	local costW, whatW = cache[cost], cache[what]
+	if lv < self.MaxLevel then
+		cost = Language("Price", BaseWars.NumberFormat(costMoney))
+		what = "Upgrade cost:"
+	else
+		what = "Max. level!"
+	end
 
-	if not costW then
+	local costW, whatW = cost and cache[cost] or 0, cache[what]
+
+	local upW, upH = 0, (cost and 64 * 0.875 or 0) + 48
+
+	if cost and not costW then
 		setFont("BSB64")
 		costW = getTextSize(cost)
 		cache[cost] = costW
 	end
 
 	if not whatW then
-		setFont("BS24")
+		setFont("BS48")
 		whatW = getTextSize(what)
 		cache[what] = whatW
 	end
@@ -98,8 +110,10 @@ function ENT:DrawUpgradeCost(y, w, h)
 
 	--draw.RoundedBox(16, upX, upY, upW, upH, black)
 
-	local _, th = simpleText(what, "BS24", upX + upW / 2, upY, white, 1)
-	simpleText(cost, "BSSB64", upX + upW / 2, upY + (th * 0.875), white, 1)
+	local _, th = simpleText(what, "BS48", upX + upW / 2, upY, white, 1)
+	if cost then
+		simpleText(cost, "BSSB64", upX + upW / 2, upY + (th * 0.875), white, 1)
+	end
 end
 
 function ENT:DrawMoneyBar(pos, ang, scale, _, _, me, pwd)

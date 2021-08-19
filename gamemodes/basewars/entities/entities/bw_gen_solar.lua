@@ -9,8 +9,8 @@ ENT.TransmitRadius 	= 200
 ENT.PowerGenerated 	= 0
 
 BaseWars.Solar = BaseWars.Solar or {}
-BaseWars.Solar.SkylessPower = 10
-BaseWars.Solar.SkyPower = 20
+BaseWars.Solar.SkylessPower = 8
+BaseWars.Solar.SkyPower = 15
 
 local skylessPower = BaseWars.Solar.SkylessPower
 local skyPower = BaseWars.Solar.SkyPower
@@ -64,7 +64,7 @@ function ENT:GenerateOptions(qm, pnl)
 	ind:On("Paint", "Solar", function(self, w, h)
 		sun = ent:GetSunAccess()
 		base = ent:GetBaseAccess()
-		eff = base and (sun and 100 or eff_perc) or 0
+		eff = base and (sun and 100 or eff_perc * 100) or 0
 
 		self:To("Efficiency", eff, 0.3, 0, 0.3)
 

@@ -7,7 +7,7 @@ ENT.Skin = 0
 ENT.Capacity 		= 10000
 ENT.Money 			= 0
 ENT.PrintInterval 	= 1
-ENT.PrintAmount		= 10
+ENT.PrintAmount		= 20
 ENT.MaxLevel 		= 25
 ENT.UpgradeCost 	= 1000
 

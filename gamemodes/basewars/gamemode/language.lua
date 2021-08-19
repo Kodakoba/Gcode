@@ -67,7 +67,11 @@ Language.Yes = "Yes"
 Language.No = "No"
 
 Language.Tip = "Tip!"
-Language.PrinterUpgradeTip = "Type /upg or /upgrade while looking at a printer to upgrade it.\nYou can specify how many levels you want to upgrade something by.\nTry it now!"
+Language.PrinterUpgradeTip = "Type /upg or /upgrade while looking at\n" ..
+	"something to upgrade it.\n" .. 
+	"You can specify how many levels " ..
+	"you want to upgrade something by.\nTry it now!"
+
 Language.PrinterUpgradeTipFont = "OS28"
 
 Language.ChargesCounter = "Charges: %s"

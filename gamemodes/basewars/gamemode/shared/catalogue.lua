@@ -199,9 +199,9 @@ SetType("Misc.")
 
 -- Printers - Misc.--
 
-	ReusePrinters("bw_printercap", "Capacity Kit", k * 1000, "models/props_junk/cardboard_box004a.mdl")
-	ReusePrinters("bw_printerrack", "Printer Rack", k * 25, "models/grp/rack/rack.mdl")
-	ReusePrinters("bw_printercap2", "Heavy Capacity Kit", m * 125, "models/props_junk/cardboard_box004a.mdl")
+	--ReusePrinters("bw_printercap", "Capacity Kit", k * 1000, "models/props_junk/cardboard_box004a.mdl")
+	ReusePrinters("bw_printerrack", "Printer Rack", k * 100, "models/grp/rack/rack.mdl")
+	--ReusePrinters("bw_printercap2", "Heavy Capacity Kit", m * 125, "models/props_junk/cardboard_box004a.mdl")
 
 
 -- Printers (T1)--
@@ -209,12 +209,12 @@ SetType("Money Printers")
 
 	SetTier(1)
 		ReusePrinters("bw_printer_manual", "Manual Printer", 		0)
-		ReusePrinters("bw_base_moneyprinter", "Basic Printer", 		k * 5)
-		ReusePrinters("bw_printer_copper", "Copper Printer", 		k * 12.5)
+		ReusePrinters("bw_base_moneyprinter", "Basic Printer", 		k * 3.5)
+		ReusePrinters("bw_printer_copper", "Copper Printer", 		k * 7.5)
 		ReusePrinters("bw_printer_silver", "Silver Printer", 		k * 20)
-		ReusePrinters("bw_printer_gold", "Gold Printer", 			k * 50)
-		ReusePrinters("bw_printer_platinum", "Platinum Printer", 	k * 100)
-		ReusePrinters("bw_printer_diamond", "Diamond Printer", 		k * 200)
+		ReusePrinters("bw_printer_gold", "Gold Printer", 			k * 60)
+		ReusePrinters("bw_printer_platinum", "Platinum Printer", 	k * 150)
+		ReusePrinters("bw_printer_diamond", "Diamond Printer", 		k * 350)
 		ReusePrinters("bw_printer_nuclear", "Nuclear Printer", 		k * 500)
 
 	SetTier(2)
@@ -251,14 +251,15 @@ SetType("Consumables")
 
 SetType("Generators")
 	SetTier(1)
-		ReuseEntities("bw_gen_manual", "Manual Generator", 0, "models/props_c17/TrapPropeller_Engine.mdl")
+		ReuseEntities("bw_gen_manual", "Manual Generator", 0, "models/props_c17/cashregister01a.mdl")
 		ReuseEntities("bw_gen_solar", "Solar Panel", 750, "models/props_lab/miniteleport.mdl")
-		ReuseEntities("bw_gen_gas", "Gas Generator", k * 7.5, "models/xqm/hydcontrolbox.mdl")
+		ReuseEntities("bw_gen_scrap", "Scrap Generator", k * 5, "models/props_c17/TrapPropeller_Engine.mdl")
+		ReuseEntities("bw_gen_gas", "Gas Generator", k * 20, "models/xqm/hydcontrolbox.mdl")
 
 	SetTier(2)
-		ReuseEntities("bw_gen_coalfired", "Coal Fired Generator", k * 20, "models/props_wasteland/laundry_washer003.mdl")
-		ReuseEntities("bw_gen_fission", "Fission Reactor", k * 75, "models/props/de_nuke/equipment1.mdl")
-		ReuseEntities("bw_gen_fusion", "Fusion Reactor", k * 300, "models/maxofs2d/thruster_propeller.mdl")
+		ReuseEntities("bw_gen_coalfired", "Coal Fired Generator", k * 75, "models/props_wasteland/laundry_washer003.mdl")
+		ReuseEntities("bw_gen_fission", "Fission Reactor", k * 200, "models/props/de_nuke/equipment1.mdl")
+		ReuseEntities("bw_gen_fusion", "Fusion Reactor", k * 500, "models/maxofs2d/thruster_propeller.mdl")
 
 	SetTier(3)
 		ReuseEntities("bw_gen_joke", "Numismatic Reactor", m * 150, "models/props_c17/cashregister01a.mdl")

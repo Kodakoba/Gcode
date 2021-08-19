@@ -5,13 +5,11 @@ ENT.Skin = 0
 
 ENT.Capacity 		= 15000
 ENT.PrintInterval 	= 1
-ENT.PrintAmount		= 15
-ENT.PowerRequired = 10
+ENT.PrintAmount		= 35
+ENT.PowerRequired = 12
 ENT.PrintName = "Copper Printer"
 
 ENT.FontColor = Color(200, 117, 51)
 ENT.BackColor = color_black
-
-ENT.TTR = 100
 
 ENT.IsValidRaidable = false

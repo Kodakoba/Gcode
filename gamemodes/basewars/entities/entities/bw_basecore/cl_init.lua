@@ -30,7 +30,7 @@ function ENT:Initialize()
 	self.Using = 0
 end
 
-local useTime = 0.3
+local useTime = 0
 
 function ENT:Draw()
 	self:DrawModel()
@@ -61,7 +61,7 @@ function ENT:Draw()
 		end
 	end
 
-	if self.Using == useTime and not wheel then
+	if self.Using == useTime and not wheel and using then
 		local wh = makeWheel(self)
 		wh:Show()
 	end

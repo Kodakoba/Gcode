@@ -1,4 +1,6 @@
 AddCSLuaFile()
+AddCSLuaFile("cl_init.lua")
+
 ENT.Base = "bw_base"
 ENT.Type = "anim"
 ENT.PrintName = "Base Battery"
@@ -12,12 +14,4 @@ ENT.PowerCapacity = 1000
 
 function ENT:DerivedDataTables()
 
-end
-
-if not LibItUp then
-	hook.Add("LibbedItUp", "PowerGrid", function()
-		include("power_grid.lua")
-	end)
-else
-	include("power_grid.lua")
 end

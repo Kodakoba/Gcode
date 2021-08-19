@@ -26,17 +26,5 @@ function ENT:DerivedGenDataTables()
 end
 
 function ENT:DerivedDataTables()
-	self:NetworkVar("Int", 0, "GridID")
-	-- self:NetworkVar("Entity", 0, "Line")
-	self:NetworkVar("Entity", 1, "Hotwired")
-
 	self:DerivedGenDataTables()
-end
-
-if not LibItUp then
-	hook.Add("LibbedItUp", "PowerGrid", function()
-		include("power_grid.lua")
-	end)
-else
-	include("power_grid.lua")
 end

@@ -14,8 +14,6 @@ ENT.PrintName = "Mobius Printer"
 ENT.FontColor = Color(255, 0, 255)
 ENT.BackColor = color_black
 
-ENT.TTR = 520
-
 ENT.IsValidRaidable = true
 
 ENT.PresetMaxHealth = 850

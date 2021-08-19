@@ -119,7 +119,7 @@ function ENT:Draw()
 			end
 		end
 
-		local y = h * 0.05 + a * (curTipY + 140)
+		local y =  a * curTipY + 16
 		local ok, err = pcall(self.DrawUpgradeCost, self, y, w, h, a)
 
 		if not ok then
