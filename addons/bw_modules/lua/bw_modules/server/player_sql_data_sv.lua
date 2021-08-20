@@ -7,7 +7,7 @@ local qries = {
 	get_data_query = "SELECT * FROM bw_plyData WHERE puid = %s",
 
 	-- comma-separated columns; comma-separated values
-	upsert_data_query = "REPLACE INTO bw_plyData(%s) VALUES (%s)",
+	upsert_data_query = "REPLACE INTO bw_plyData(%s, puid) VALUES (%s, %s)",
 
 	-- column name ; column value ; puid
 	set_column_query = "UPDATE bw_plyData SET `%s` = %s WHERE puid = %s",
@@ -77,6 +77,7 @@ local function setter(q, rep)
 
 		local q = db:query(qry)
 		q.onError = mysqloo.QueryError
+		q.onSuccess = print
 		q:start()
 	end
 end
@@ -86,8 +87,20 @@ PLAYER.SetBWData = setter(qries.set_column_query)
 PLAYER.AddBWData = setter(qries.add_column_query, true)
 PLAYER.SubBWData = setter(qries.sub_column_query, true)
 
+function PLAYER:InitBWData(name, val)
+	local pi = GetPlayerInfo(self)
+	local sid = pi:GetSteamID64()
+	local qry = qries.upsert_data_query:format(name, val, sid)
+
+	local q = db:query(qry)
+	q.onError = mysqloo.QueryError
+	q.onSuccess = print
+	q:start()
+end
+
 local PInfo = LibItUp.PlayerInfo
 PInfo.SetBWData = PLAYER.SetBWData
+PInfo.InitBWData = PLAYER.InitBWData
 PInfo.AddBWData = PLAYER.AddBWData
 PInfo.SubBWData = PLAYER.SubBWData
 

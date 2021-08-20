@@ -1,4 +1,4 @@
-easylua.StartEntity("bw_printer_manual")
+--easylua.StartEntity("bw_printer_manual")
 
 AddCSLuaFile()
 ENT.Base = "bw_base_moneyprinter"
@@ -164,4 +164,4 @@ end
 function ENT:UseBypass()
 end
 
-easylua.EndEntity("bw_printer_manual")
+--easylua.EndEntity("bw_printer_manual")

@@ -102,6 +102,7 @@ function FUNCS:LoadMoney(dat, write)
 			self:Nick(), self:SteamID64(), Language.Price(money))
 	end
 
+	self:InitBWData("money", money)
 	self:SetMoney(money, true)
 	applyPreInit(self)
 end
