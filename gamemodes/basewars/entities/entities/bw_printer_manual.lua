@@ -1,3 +1,5 @@
+easylua.StartEntity("bw_printer_manual")
+
 AddCSLuaFile()
 ENT.Base = "bw_base_moneyprinter"
 
@@ -12,6 +14,7 @@ ENT.PrintName = "Manual Printer"
 ENT.FontColor = Color(200, 117, 51)
 ENT.BackColor = color_black
 ENT.IsValidRaidable = false
+ENT.Model = "models/grp/printers/printer.mdl"
 
 ENT.PrintAmount = 5
 ENT.MaxLevel = 5
@@ -19,8 +22,30 @@ ENT.BypassMaster = true
 ENT.RebootTime = 0
 
 function ENT:UseFunc(act, call)
+	if self:BW_GetOwner() ~= act:GetPInfo() then return end
+
 	local pg = self:GetPowerGrid()
 	if not pg or not pg:TakePower(5) then return end
+
+	if self:BW_GetOwner():GetMoney() > 25000 then
+		self.BreakingDown = self.BreakingDown + 1
+		self:EmitSound("buttons/combine_button7.wav")
+
+		if self.BreakingDown >= 5 then
+			local efd = EffectData()
+			efd:SetOrigin(self:GetPos())
+			util.Effect("Explosion", efd, nil, true)
+
+			local ply = self:BW_GetOwner():GetPlayer()
+			if IsPlayer(ply) then
+				ply:TakeDamage(
+					math.max(0, 100 - ply:GetPos():Distance(self:GetPos()) / 2), self, self)
+			end
+
+			self:Remove()
+			return
+		end
+	end
 
 	local printed = self.PrintAmount * self:GetLevel()
 
@@ -44,6 +69,7 @@ local curTipY = 0
 
 function ENT:Init()
 	self:SetUpgradeCost(100)
+	self.BreakingDown = 0
 end
 
 function ENT:PaintStructureInfo(w, y) return 0 end
@@ -137,3 +163,5 @@ end
 
 function ENT:UseBypass()
 end
+
+easylua.EndEntity("bw_printer_manual")

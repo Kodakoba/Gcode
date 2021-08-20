@@ -767,9 +767,9 @@ local function GetOrDownload(url, name, flags, cb)
 		end
 
 	else --mat was already preloaded
-		MatsBack[mat.mat] = mat
+		if mat.mat then MatsBack[mat.mat] = mat end
 
-		if cb then cb(MoarPanelsMats[key].mat, true) end
+		if cb then cb(mat.mat, true) end
 	end
 
 	return mat

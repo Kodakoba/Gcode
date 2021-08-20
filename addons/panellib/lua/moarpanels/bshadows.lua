@@ -139,9 +139,10 @@ function handle:Offset(x, y)
 end
 
 BSHADOWS.GenerateCache = function(name, w, h)
+    local key = name .. w .. "x" .. h
     local rt, mat = draw.GetRTMat("bshad_cust_" .. name, w + spreadSize * 2, h + spreadSize * 2, "UnlitGeneric")
-    BSHADOWS.RTs[name] = handle:new(name, rt, mat, w, h)
-    return BSHADOWS.RTs[name]
+    BSHADOWS.RTs[key] = handle:new(key, rt, mat, w, h)
+    return BSHADOWS.RTs[key]
 end
 
 BSHADOWS.BeginShadow = function(x, y, w, h)
@@ -156,40 +157,31 @@ BSHADOWS.BeginShadow = function(x, y, w, h)
     CurRT = rt1
     ShadowRT = rt2
 
-    render.PushRenderTarget(rt1)
-        render.Clear(0, 0, 0, 0, true, true)
-    render.PopRenderTarget()
-
-    render.PushRenderTarget(rt2)
-        render.Clear(0, 0, 0, 0, true, true)
-    render.PopRenderTarget()
-
     if useRT then
-        -- clean up the entire rt
-       --[[
-        render.PushRenderTarget(useRT)
-            render.Clear(0, 0, 0, 0)
+        -- clean out the entire RT cuz if we only push a fraction of it,
+        -- only that fraction will be cleared out
+        render.PushRenderTarget(rt1)
+            render.Clear(0, 0, 0, 0, true, true)
         render.PopRenderTarget()
-        ]]
 
-        -- then only allow drawing on a fraction of it
+        render.PushRenderTarget(rt2)
+            render.Clear(0, 0, 0, 0, true, true)
+        render.PopRenderTarget()
+
+        -- only allow drawing on a fraction of the rt
         render.PushRenderTarget(useRT, spreadSize, spreadSize,
             rt1:GetMappingWidth() - spreadSize * 2, rt1:GetMappingHeight() - spreadSize * 2)
     else
        render.PushRenderTarget(rt1)
+
+       render.OverrideAlphaWriteEnable(true, true)
+            render.Clear(0, 0, 0, 0, true)
+        render.OverrideAlphaWriteEnable(false, false)
    end
-
-    --Clear is so that theres no color or alpha
-    render.OverrideAlphaWriteEnable(true, true)
-        render.Clear(0, 0, 0, 0, true)
-    render.OverrideAlphaWriteEnable(false, false)
-
-    --Start Cam2D as where drawing on a flat surface
 
     if x and y then
     	offsetted = true
     	curX, curY = x, y
-    	--render.SetViewPort(x, y, w, h)
     end
 
     started = started + 1

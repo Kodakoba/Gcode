@@ -94,6 +94,12 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 		bclass = baseclass.Get("FButton")
 	end
 
+	local enoughColor = Color(50, 240, 50, 150)
+	local notEnoughColor = Color(220, 50, 50, 150)
+	local wayEnoughColor = Color(35, 95, 255, 180)
+	local barelyEnoughColor = Color(220, 210, 110, 150)
+	--local notEvenCloseColor = Color(85, 85, 85)
+
 	for _, dat in ipairs(its) do
 		local name, lv, price = dat.Name, dat.Level, dat.Price
 		local mdl = dat.Model
@@ -142,12 +148,6 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 			drawBtn(self, ...)
 			draw.FinishMask()
 		end
-
-		local enoughColor = Color(50, 240, 50, 150)
-		local notEnoughColor = Color(220, 50, 50, 150)
-		local wayEnoughColor = Color(35, 95, 255, 180)
-		local barelyEnoughColor = Color(220, 210, 110, 150)
-		local notEvenCloseColor = Color(85, 85, 85)
 
 		local moneytxCol = notEnoughColor:Copy()
 		local leveltxCol = Colors.Level:Copy()
@@ -243,6 +243,11 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 				cl.AlignLabel = 1
 				cl:AddSeparator(nil, 8)
 				cl:AddFormattedText(Language("Price", price), moneytxCol, "OSB20", 18, nil, 1)
+
+				if dat.GenerateCloudInfo then
+					dat.GenerateCloudInfo(cl, btn)
+				end
+
 				--cl:AddFormattedText(Language("Level", lv), leveltxCol, "OSB20", nil, nil, 1)
 				cl:SetRelPos(self:GetWide() / 2)
 				cl.ToY = -8

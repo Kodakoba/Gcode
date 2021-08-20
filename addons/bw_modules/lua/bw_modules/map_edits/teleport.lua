@@ -89,7 +89,7 @@ local function SetupMapLua()
 	end
 end
 
-hook.Add("InitPostEntity", "SetupMapLua", SetupMapLua)
+LibItUp.OnInitEntity(SetupMapLua)
 hook.Add("PostCleanupMap", "SetupMapLua", SetupMapLua)
 
 local acs = {}
@@ -100,5 +100,3 @@ hook.Add("OnTeleport", "TestTeleportHook", function()
 	acs[ply] = engine.TickCount()
 	changePos(destEnts[teleToDest[CALLER:MapCreationID()]])
 end)
-
-SetupMapLua()

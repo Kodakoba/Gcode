@@ -90,7 +90,7 @@ function ENT:DrawUpgradeCost(y, w, h)
 	local upW, upH = 0, (cost and 64 * 0.875 or 0) + 48
 
 	if cost and not costW then
-		setFont("BSB64")
+		setFont("BSSB64")
 		costW = getTextSize(cost)
 		cache[cost] = costW
 	end

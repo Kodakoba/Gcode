@@ -9,8 +9,8 @@ ENT.TransmitRadius 	= 200
 ENT.PowerGenerated 	= 0
 
 BaseWars.Solar = BaseWars.Solar or {}
-BaseWars.Solar.SkylessPower = 8
-BaseWars.Solar.SkyPower = 15
+BaseWars.Solar.SkylessPower = 4
+BaseWars.Solar.SkyPower = 10
 
 local skylessPower = BaseWars.Solar.SkylessPower
 local skyPower = BaseWars.Solar.SkyPower
@@ -18,7 +18,7 @@ local skyPower = BaseWars.Solar.SkyPower
 function ENT:Init()
 	if CLIENT then return end
 	BaseWars.Solar.Initialize(self)
-	self.PowerGenerated = BaseWars.Solar.SkylessPower
+	self.PowerGenerated = 0
 end
 
 function ENT:DerivedGenDataTables()

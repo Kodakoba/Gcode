@@ -1,7 +1,12 @@
-
 require("mysqloo")
 
-__MYSQL_INFO = {"127.0.0.1", "root", "31415", ""}
+local is_dedi = jit.os == "Linux"
+
+if is_dedi then
+	__MYSQL_INFO = {"51.178.211.29", "u34696_8lGPVh7Gv6", "8Q7geFIU3eYrOe2C", "s34696_main"}
+else
+	__MYSQL_INFO = {"127.0.0.1", "root", "31415", "master"}
+end
 
 mysql = mysqloo
 mysqloo.Info = __MYSQL_INFO
@@ -24,27 +29,36 @@ local function connect(ply)
 
 	rsDB = mysqloo.connect(unpack(__MYSQL_INFO))
 
-	rsDB.onConnected = function(self)
-		local q = self:query("CREATE DATABASE IF NOT EXISTS master; USE master")
+	local function completeLoad(db)
+		mysqloo.__masterSchemaExists = true
+		hook.Run("OnMySQLReady", db)
 
-		q.onSuccess = function()
-			mysqloo.__masterSchemaExists = true
-			hook.Run("OnMySQLReady", self)
-			if mysqloo.__OnConnectCallbacks then
-				for k,v in ipairs(mysqloo.__OnConnectCallbacks) do
-					v[1](unpack(v, 2))
-				end
-				mysqloo.__OnConnectCallbacks = nil
+		if mysqloo.__OnConnectCallbacks then
+			for k,v in ipairs(mysqloo.__OnConnectCallbacks) do
+				v[1](unpack(v, 2))
 			end
+			mysqloo.__OnConnectCallbacks = nil
 		end
+	end
 
-		q.onError = function(self, ...)
-			err("Master MySQL database creation failed.")
-			err("Do `mysql_reconnect` if you want to try again.")
-			err(...)
-		end
+	rsDB.onConnected = function(self)
+		--[[if is_dedi then
+			local q = self:query("CREATE DATABASE IF NOT EXISTS master; USE master")
 
-		q:start()
+			q.onSuccess = function()
+				completeLoad(self)
+			end
+
+			q.onError = function(self, ...)
+				err("Master MySQL database creation failed.")
+				err("Do `mysql_reconnect` if you want to try again.")
+				err(...)
+			end
+
+			q:start()
+		else]]
+			completeLoad(self)
+		--end
 	end
 
 	rsDB.onConnectionFailed = function(self, ...)
@@ -116,6 +130,8 @@ function mysqloo.CreateTable(db, name, ...)
 
 	q = q:format(name, qargs)
 
+	print("querying table creation:", q, db)
+	_LE_DB = db
 	local em = MySQLEmitter(db:query(q), true)
 		:Catch(mysqloo.QueryError)
 

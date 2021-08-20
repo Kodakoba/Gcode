@@ -52,6 +52,8 @@ function bw.Base:UpdateNW()
 	for k,v in ipairs(nws) do
 		v:Network(true)
 	end
+
+	self:GetPowerGrid():UpdateNW(plys)
 end
 
 -- adding to NW will proc a networkable update automatically

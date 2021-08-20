@@ -459,7 +459,7 @@ function GM:PlayerNoClip(ply)
 
 	end
 
-	return Admin and not ply:InRaid()
+	return false and Admin and not ply:InRaid()
 
 end
 

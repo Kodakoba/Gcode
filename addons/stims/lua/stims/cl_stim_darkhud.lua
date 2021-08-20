@@ -21,6 +21,7 @@ local function hookDarkHUD()
 	local size = 48 * scale
 
 	handle:SetGenerator(function(self, w, h)
+		print("generator:", w, size)
 		local ratio = w / size
 
 		surface.SetDrawColor(255, 255, 255)
@@ -37,11 +38,13 @@ local function hookDarkHUD()
 	handle.cached = false
 
 	dh:On("Rescale", "StimRescale", function(_, new)
-		scale = new
+		scale = math.max(new, 1)
+		size = 48 * scale
 		circSize = math.floor(20 * scale)
 		new = math.max(new, 1) -- 1 is max scale
 
-		handle:CacheShadow(4, 8, 2)
+		handle.cached = false
+		--handle:CacheShadow(4, 8, 2)
 
 		surface.CreateFont("DarkHUD_Stims", {
 			font = fontName,

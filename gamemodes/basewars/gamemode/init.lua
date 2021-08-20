@@ -162,6 +162,7 @@ function GM:KeyPress(ply, code)
 end
 
 function GM:EntityTakeDamage(ent, dmginfo)
+	if ent.CanTakeDamage == false then return true end
 
 	local Player = ((IsValid(ent) and ent:IsPlayer()) and ent) or false
 	if dmginfo:IsDamageType(DMG_BURN) and not Player then return true end

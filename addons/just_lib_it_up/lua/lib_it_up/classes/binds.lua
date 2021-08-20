@@ -208,6 +208,7 @@ end
 function Bind:CreateConcommand(name)
 	name = name or self.ID
 	Binds.Concommands[name] = self
+	return self
 end
 
 Bind:AliasMethod(Bind.CreateConcommand, "CreateConcommands")
@@ -382,6 +383,8 @@ local function checkBindHoldable(str)
 end
 
 local function onHold(ply, _, _, str)
+	str = str:gsub("%s*%d+$", "")
+
 	local bnd = checkBindHoldable(str)
 	if not bnd then return end
 
@@ -389,6 +392,8 @@ local function onHold(ply, _, _, str)
 end
 
 local function onUnhold(ply, _, _, str)
+	str = str:gsub("%s*%d+$", "")
+
 	local bnd = checkBindHoldable(str)
 	if not bnd then return end
 	

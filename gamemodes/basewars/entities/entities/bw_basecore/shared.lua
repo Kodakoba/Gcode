@@ -7,6 +7,7 @@ ENT.PrintName = "Base Core"
 ENT.Model = "models/props/de_prodigy/wall_console1.mdl"
 ENT.Skin = 0
 ENT.IsBaseCore = true
+ENT.CanTakeDamage = false
 
 function ENT:DerivedDataTables()
 	self:NetworkVar("Int", 0, "BaseID")

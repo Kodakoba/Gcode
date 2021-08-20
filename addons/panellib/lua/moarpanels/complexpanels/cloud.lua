@@ -438,7 +438,8 @@ function Cloud:ClearFormattedText()
 end
 
 function Cloud:AddPanel(p, num)
-
+	p:SetParent(self)
+	p:SetPaintedManually(true)
 	self._MaxWidth = math.Clamp(p:GetWide() + 16, math.max(self.MinW, self._MaxWidth), self.MaxW)
 	p.IgnoreVisibility = true
 	self.DoneText[num or (#self.DoneText + 1)] = p

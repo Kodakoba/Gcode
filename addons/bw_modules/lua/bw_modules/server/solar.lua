@@ -18,6 +18,9 @@ function sol:Initialize()
 	bh:Spawn()
 
 	self._LastThink = 0
+	self.ForceUpdate = true
+	self:Think()
+	self.ForceUpdate = false
 end
 
 function sol:Think()
@@ -36,14 +39,14 @@ function sol:Think()
 	local isSky = tout.HitSky
 
 	if isSky then
-		local upd = self.PowerGenerated ~= skyPower
+		local upd = self.ForceUpdate or self.PowerGenerated ~= skyPower
 		self.PowerGenerated = skyPower
 
 		if upd then
 			grid:UpdatePowerIn()
 		end
 	else
-		local upd = self.PowerGenerated ~= skylessPower
+		local upd = self.ForceUpdate or self.PowerGenerated ~= skylessPower
 		self.PowerGenerated = skylessPower
 
 		if upd then

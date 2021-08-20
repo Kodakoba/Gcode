@@ -5,7 +5,7 @@ ENT.PrintName 		= "Coal Fired Generator"
 
 ENT.Model 			= "models/props_wasteland/laundry_washer003.mdl"
 
-ENT.PowerGenerated 	= 150
+ENT.PowerGenerated 	= 75
 ENT.PowerCapacity 	= 2000
 
 ENT.TransmitRadius 	= 400

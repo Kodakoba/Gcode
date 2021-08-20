@@ -5,7 +5,7 @@ ENT.PrintName 		= "Fission Reactor"
 
 ENT.Model 			= "models/props/de_nuke/equipment1.mdl"
 
-ENT.PowerGenerated 	= 350
+ENT.PowerGenerated 	= 150
 ENT.PowerCapacity 	= 5000
 
 ENT.TransmitRadius 	= 400

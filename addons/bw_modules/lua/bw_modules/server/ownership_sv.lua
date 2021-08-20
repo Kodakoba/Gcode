@@ -9,12 +9,13 @@ local bwe = BaseWars.Ents
 
 hook.Add("CPPIAssignOwnership", "BWTrackOwner", function(ply, ent)
 	if not ply:IsValid() then return end
+	if ent.CPPI_OwnerSID == ply:SteamID() then return end
 
 	local id = ply:SteamID()
 	ent.CPPI_OwnerSID = id
 
 	trackEnt(ent, id)
-	print("ownership assigned tracking")
+
 	bwe.EntsArr:addExclusive(ent)
 
 	net.Start("BW_OwnershipChange")

@@ -69,7 +69,8 @@ function bw.SQLResync()
 
 		local em = mysqloo.CreateTable(db, zones_tbl, zonesArg):Then(coroutine.Resumer())
 
-		coroutine.yield(); coroutine.yield()	-- 2 queries, 2 yields
+		local a, b = coroutine.yield();
+		local c, d = coroutine.yield()	-- 2 queries, 2 yields
 
 		local selWhat = "a.zone_id, a.zone_name, b.base_id, b.base_name, b.base_data"
 
@@ -79,7 +80,7 @@ function bw.SQLResync()
 			end
 		end
 
-		local q = ("SELECT %s FROM master.%s a RIGHT JOIN master.%s b ON a.base_id = b.base_id;")
+		local q = ("SELECT %s FROM `%s` a RIGHT JOIN %s b ON a.base_id = b.base_id;")
 					:format(selWhat, zones_tbl, bases_tbl)
 
 		em:Do(db:query(q))
@@ -131,7 +132,7 @@ end
 local base_q
 
 mysqloo.OnConnect(function()
-	base_q = mysqloo:GetDatabase():prepare("INSERT INTO bw_bases(base_name) VALUES(?)")
+	base_q = mysqloo:GetDatabase():prepare("INSERT INTO `bw_bases` (base_name) VALUES(?)")
 end)
 
 function bw.SQL.CreateBase(name)
@@ -164,7 +165,7 @@ end
 local zone_q
 
 mysqloo.OnConnect(function()
-	local fuck = "INSERT INTO bw_baseareas(%s, zone_name, base_id) VALUES(%s)"
+	local fuck = "INSERT INTO `bw_baseareas` (%s, zone_name, base_id) VALUES(%s)"
 	fuck = fuck:format(table.concat(allArgNames, ", "), ("?, "):rep(#allArgNames + 2):sub(1, -3))
 
 	zone_q = mysqloo:GetDatabase():prepare(fuck)
@@ -211,20 +212,20 @@ local edit_base_q
 local data_base_q
 
 mysqloo.OnConnect(function()
-	local fuck = "UPDATE master.bw_baseareas SET %s, zone_name = ? WHERE (`zone_id` = ?);"
+	local fuck = "UPDATE `bw_baseareas` SET %s, zone_name = ? WHERE (`zone_id` = ?);"
 	fuck = fuck:format(
 		-- SET `name` = ?, `name` = ?
 		table.concat(allArgNames, " = ?, ") .. " = ?"
 	)
-	-- UPDATE master.bw_baseareas SET zone_name = ?, zone_min_x = ?, zone_min_y = ?, zone_min_z = ?, zone_max_x = ?, zone_max_y = ?, zone_max_z = ? WHERE (`zone_id` = ?);
+	-- UPDATE bw_baseareas SET zone_name = ?, zone_min_x = ?, zone_min_y = ?, zone_min_z = ?, zone_max_x = ?, zone_max_y = ?, zone_max_z = ? WHERE (`zone_id` = ?);
 	edit_zone_q = mysqloo:GetDatabase():prepare(fuck)
 
-	local fuck = "UPDATE master.%s SET base_name = ? WHERE (`base_id` = ?);"
+	local fuck = "UPDATE `%s` SET base_name = ? WHERE (`base_id` = ?);"
 	fuck = fuck:format(bases_tbl)
 
 	edit_base_q = mysqloo:GetDatabase():prepare(fuck)
 
-	local fuck = "UPDATE master.%s SET base_data = ? WHERE (`base_id` = ?);"
+	local fuck = "UPDATE `%s` SET base_data = ? WHERE (`base_id` = ?);"
 	fuck = fuck:format(bases_tbl)
 	data_base_q = mysqloo:GetDatabase():prepare(fuck)
 end)
@@ -303,10 +304,10 @@ local yeet_zone_q
 local yeet_base_q
 
 mysqloo.OnConnect(function()
-	local yeetzone = "DELETE FROM master.%s WHERE (`zone_id` = ?);"
+	local yeetzone = "DELETE FROM `%s` WHERE (`zone_id` = ?);"
 	yeetzone = yeetzone:format(zones_tbl)
 
-	local yeetbase = "DELETE FROM master.%s WHERE (`base_id` = ?);"
+	local yeetbase = "DELETE FROM `%s` WHERE (`base_id` = ?);"
 	yeetbase = yeetbase:format(bases_tbl)
 
 	yeet_zone_q = mysqloo:GetDatabase():prepare(yeetzone)

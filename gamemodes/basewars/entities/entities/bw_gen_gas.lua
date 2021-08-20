@@ -5,4 +5,4 @@ ENT.PrintName 		= "Gas Generator"
 
 ENT.Model 			= "models/xqm/hydcontrolbox.mdl"
 
-ENT.PowerGenerated 	= 60
+ENT.PowerGenerated 	= 25

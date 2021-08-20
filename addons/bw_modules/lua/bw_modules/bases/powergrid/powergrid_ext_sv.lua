@@ -121,7 +121,7 @@ end)
 function pg:UpdatePowerIn(gen)
 	local pw_in = 0
 	for k,v in ipairs(self:GetGenerators()) do
-		pw_in = pw_in + v.PowerGenerated
+		pw_in = pw_in + (v.PowerGenerated or 0)
 	end
 
 	self:SetPowerIn(pw_in)
@@ -134,7 +134,7 @@ pg:On("RemovedGenerator", "UpdatePowerIn", pg.UpdatePowerIn)
 function pg:UpdatePowerOut(con)
 	local pw_out = 0
 	for k,v in ipairs(self:GetConsumers()) do
-		pw_out = pw_out + v.PowerRequired
+		pw_out = pw_out + (v.PowerRequired or 0)
 	end
 
 	self:SetPowerOut(pw_out)
@@ -262,6 +262,10 @@ function pg:Think()
 			self:UnpowerEnt(ent)
 		end
 	end
+end
+
+function pg:UpdateNW(plys)
+	self:GetNW():Network(true)
 end
 
 hook.Add("EntityEnteredBase", "NetworkGridEnts", function(base, ent)

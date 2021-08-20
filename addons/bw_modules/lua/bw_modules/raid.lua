@@ -126,7 +126,7 @@ function raid.PickRaidedError(rder, rded)
 			main = "RaidedByYou"
 		else
 			-- ...someone else
-			main = "RaidedByYou"
+			main = "RaidedByOthers"
 		end
 	end
 

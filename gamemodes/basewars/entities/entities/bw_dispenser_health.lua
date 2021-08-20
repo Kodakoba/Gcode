@@ -12,13 +12,36 @@ ENT.Model = "models/props_combine/health_charger001.mdl"
 ENT.Sound = Sound("HL1/fvox/blip.wav")
 ENT.EmitUnusableBeeps = false
 
-ENT.StimRegenTime = 30
+ENT.StimRegenTime = math.huge
 ENT.MaxStims = 5
 
 ENT.MaxCharges = 150
 ENT.ChargePerSecond = 5
 
 ENT.IsHealthDispenser = true
+ENT.MaxLevel = 5
+
+ENT.LevelsData = {
+	[0] = {
+		Stim = math.huge,
+		Cost = 0,
+	},
+
+	[1] = {
+		Stim = 60,
+		Cost = 125000,
+	},
+
+	[2] = {
+		Stim = 30,
+		Cost = 750000,
+	},
+
+	[3] = {
+		Stim = 15,
+		Cost = 25e9,
+	},
+}
 
 function ENT:Init()
 	self:SetModel(self.Model)
@@ -29,11 +52,20 @@ function ENT:Init()
 	self.NextStim = CurTime() + self.StimRegenTime
 end
 
+function ENT:GetUpgradeCost()
+	local dat = self.LevelsData[self:GetLevel() + 1]
+	if not dat then return end
+
+	return dat.Cost
+end
+
 function ENT:DerivedDataTables()
 	self:NetworkVar("Int", 1, "Charges")
 	self:NetworkVar("Int", 2, "Stims")
+	self:NetworkVar("Int", 3, "Level")
 	self:SetCharges(0)
 	self:SetStims(0)
+	self:SetLevel(0)
 
 	self:NetworkVar("Float", 1, "NWNextStim")
 
@@ -44,6 +76,46 @@ function ENT:DerivedDataTables()
 	self.NextCharge = CurTime()
 
 	self:NetworkVar("Bool", 1, "Halted")
+end
+
+function ENT:DoUpgrade()
+	local calcM = self:GetUpgradeCost()
+	self.CurrentValue = (self.CurrentValue or 0) + calcM
+	self.Level = self.Level + 1
+	self:SetLevel(self.Level)
+
+	self.StimRegenTime = self.LevelsData[self.Level].Stim
+
+	self:EmitSound("replay/rendercomplete.wav")
+	self:SetNextStim(math.min(CurTime() + self.StimRegenTime, self:GetNextStim()))
+end
+
+function ENT:RequestUpgrade(ply)
+	if not ply then return end
+
+	local ow = self:BW_GetOwner()
+
+	if GetPlayerInfo(ply) ~= ow then
+		ply:Notify("You can't upgrade others' entities!", BASEWARS_NOTIFICATION_ERROR)
+		return false
+	end
+
+	local plyM = ply:GetMoney()
+	local calcM = self:GetUpgradeCost()
+
+	if not calcM then
+		ply:Notify(BaseWars.LANG.UpgradeMaxLevel, BASEWARS_NOTIFICATION_ERROR)
+		return false
+	end
+
+	if plyM < calcM then
+		ply:Notify(BaseWars.LANG.UpgradeNoMoney, BASEWARS_NOTIFICATION_ERROR)
+		return false
+	end
+
+	ply:TakeMoney(calcM)
+
+	self:DoUpgrade()
 end
 
 function ENT:GetNextStim()
@@ -163,8 +235,13 @@ function ENT:OpenShit(qm, self, pnl)
 				col.a = math.min(canv.MouseFrac, canv.PowerFrac) * 65
 
 				local nextCharge = math.max(ent:GetNextStim() - CurTime(), 0)
-				draw.SimpleText(Language("NextCharge", nextCharge), "BS24", give_stim.X + give_stim:GetWide() / 2,
-					give_stim.Y - 4 - 32, col, 1, 4)
+				if nextCharge ~= math.huge then
+					draw.SimpleText(Language("NextCharge", nextCharge), "BS24", give_stim.X + give_stim:GetWide() / 2,
+						give_stim.Y - 4 - 32, col, 1, 4)
+				else
+					draw.SimpleText(Language("StimsLevel"), "BS24", give_stim.X + give_stim:GetWide() / 2,
+						give_stim.Y - 4 - 32, col, 1, 4)
+				end
 
 			DisableClipping(false)
 		end

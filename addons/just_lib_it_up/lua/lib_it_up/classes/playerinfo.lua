@@ -123,6 +123,8 @@ function PI:get(id, is_sid64)
 		return
 	end
 
+	local to_ret
+
 	-- returns: pinfo, bool (newly created?)
 	if IsPlayer(id) then
 		local pin = LibItUp.PlayerInfoTables.Player[id]
@@ -193,8 +195,8 @@ end
 
 function PI:_Destroy()
 	local pi = LibItUp.PlayerInfoTables
-	if self:GetPlayer() then
-		pi.Player[self:GetPlayer()] = nil
+	if self:GetPlayer(true) then
+		pi.Player[self:GetPlayer(true)] = nil
 	end
 
 	pi.SteamID[self:GetSteamID()] = nil
@@ -204,6 +206,8 @@ function PI:_Destroy()
 	hook.NHRun("PlayerInfoDestroy", self)
 	self:GetPublicNW():Invalidate()
 	table.RemoveByValue(LibItUp.AllPlayerInfos, self)
+
+	self._Valid = false
 
 	print(self:Nick() .. "'s PlayerInfo was destroyed.")
 end

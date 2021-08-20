@@ -79,7 +79,7 @@ BaseWars.Config = {
 	PayDayRate 			= 60 * 3,
 	PayDayRandom		= 50,
 
-	StartMoney 			= 15000,
+	StartMoney 			= 300,
 
 	ExtraStuff			= true,
 	CleanProps			= false, -- Finds all physics props on the map and removes them when all the entities are frist initialized (AKA: When the map first loads).

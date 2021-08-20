@@ -94,15 +94,15 @@ PInfo.SubBWData = PLAYER.SubBWData
 local function onDB(masterdb)
 
 	local q = masterdb:query([[
-	CREATE TABLE IF NOT EXISTS `master`.`bw_plyData` (
+	CREATE TABLE IF NOT EXISTS `bw_plyData` (
 	  `puid` BIGINT UNSIGNED NOT NULL,
 	  `money` BIGINT NOT NULL DEFAULT ]] .. BaseWars.Config.StartMoney .. [[,
 	  `lvl` INT UNSIGNED NOT NULL DEFAULT 1,
 	  `xp` BIGINT UNSIGNED NOT NULL DEFAULT 0,
 	  PRIMARY KEY (`puid`),
-	  UNIQUE INDEX `puid_UNIQUE` (`puid` ASC) VISIBLE);
+	  UNIQUE INDEX `puid_UNIQUE` (`puid` ASC));
 
-	ALTER TABLE `master`.`bw_plydata`
+	ALTER TABLE `bw_plyData`
 	CHANGE COLUMN `money` `money` BIGINT UNSIGNED NOT NULL DEFAULT ]] .. BaseWars.Config.StartMoney .. [[,
 	CHANGE COLUMN `lvl` `lvl` INT UNSIGNED NOT NULL DEFAULT '1' ;
 	]])

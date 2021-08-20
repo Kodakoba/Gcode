@@ -5,6 +5,8 @@ Stims.Bind = Stims.Bind or Bind("stim")
 	:SetDefaultKey(KEY_G)
 	:SetDefaultMethod(BINDS_HOLD)
 
+Stims.Bind:CreateConcommand()
+
 Stims.Active = {}	   						-- stores [ply] = { activeStimStats }
 Stims.PlayerStims = Stims.PlayerStims or {} -- stores [ply] = { stimStats }
 

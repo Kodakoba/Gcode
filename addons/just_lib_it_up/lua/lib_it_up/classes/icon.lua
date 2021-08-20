@@ -163,6 +163,11 @@ function Icon:Paint(x, y, w, h, rot)
 		return
 	end
 
+	if not x or not y then
+		error("X and/or Y not given!")
+		return
+	end
+
 	local col = self.Color
 	surface.SetDrawColor(col.r, col.g, col.b, col.a)
 
@@ -210,3 +215,8 @@ Icons.Edit = Icon("https://i.imgur.com/ZhVoxFk.png", "edit.png")
 Icons.Flag128 = Icon("https://i.imgur.com/DMgRjSC.png", "flag128.png")
 Icons.MagnifyingGlass128 = Icon("https://i.imgur.com/8NayKhl.png", "mag_glass128.png")
 Icons.Electricity = Icon("https://i.imgur.com/poRxTau.png", "electricity.png")
+Icons.Coins = Icon("https://i.imgur.com/vzrqPxk.png", "coins_pound64.png")
+
+-- https://www.flaticon.com/free-icon/money_61584?term=money&page=1&position=16&page=1&position=16&related_id=61584&origin=tag
+Icons.Money64 = Icon("https://i.imgur.com/NVl7wuF.png", "moneybag_64.png")
+Icons.Money32 = Icon("https://i.imgur.com/lRpS2NE.png", "moneybag_32.png")

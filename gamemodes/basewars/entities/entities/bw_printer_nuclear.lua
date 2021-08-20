@@ -3,12 +3,10 @@ ENT.Base = "bw_base_moneyprinter"
 
 ENT.Skin = 0
 
-
-
 ENT.Capacity 		= 500000
 ENT.PrintInterval 	= 1
 ENT.PrintAmount		= 250
-ENT.PowerRequired = 100
+ENT.PowerRequired = 150
 
 ENT.PrintName = "Nuclear Printer"
 

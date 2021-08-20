@@ -76,6 +76,8 @@ Language.PrinterUpgradeTipFont = "OS28"
 
 Language.ChargesCounter = "Charges: %s"
 Language.NextCharge = "next charge in %.1fs."
+Language.StimsLevel = "stims are only generated at level 2+"
+
 setmetatable(Language, Language)
 
 LocalString = Object:callable()

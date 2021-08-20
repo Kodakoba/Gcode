@@ -101,14 +101,13 @@ local function DrawStructureInfo()
 		name = ent.PrintName or "wat"
 
 		local should, distAppear, pntr, posr = hook.Run("BW_ShouldPaintStructureInfo", ent, dist)
-		alphaTo = alphaTo or to
 		maxDist = distAppear or defaultMaxDist
 
 		if should then
 			lastPainter = pntr
 			lastpos = posr and posr(ent, trace, ep) or ep
 
-			anims:To("Alpha", alphaTo, 0.15, 0, 0.3)
+			anims:To("Alpha", to, 0.15, 0, 0.3)
 		else
 			anims:To("Alpha", 0, 0.3, 0, 0.3)
 		end
@@ -125,7 +124,7 @@ local function DrawStructureInfo()
 	local intScale = Lerp(1 - frac, 0, 1)
 	local scale = math.max(intScale, minScale)
 
-	local scAlpha = remap(intScale, fadeEnd, fadeStart)
+	local scAlpha = remap(math.min(intScale, fadeStart), fadeEnd, fadeStart)
 	alpha = alpha * scAlpha
 
 	if alpha < 1 then initialFrame = true return end

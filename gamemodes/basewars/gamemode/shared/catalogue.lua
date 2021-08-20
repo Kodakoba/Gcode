@@ -139,6 +139,37 @@ end
 local function AddPrinters(typ, class, name, price, mdl, lim)
 	local t = AddItem("Printers", typ, class, name, price, mdl or "models/grp/printers/printer.mdl", lim)
 	t.Limit = 1
+
+	local tbl = scripted_ents.GetStored(class)
+	if not tbl then return t end
+
+	local rate = tbl.t.DisplayPrintAmount or tbl.t.PrintAmount
+	if not rate then return t end
+
+	t.GenerateCloudInfo = function(cl, btn)
+		local pnl = vgui.Create("InvisPanel", cl)
+		cl:AddPanel(pnl)
+
+		local txt = t.RateFormat and t.RateFormat(rate) or Language("Price", rate) .. "/s."
+		local font = "OS20"
+		surface.SetFont(font)
+
+		local tw, th = surface.GetTextSize(txt)
+		local icSz = th * 0.875
+		local fullW = tw + icSz + 4
+		pnl:SetTall(th)
+
+		function pnl:Paint(w, h)
+			Icons.Money:Paint(w / 2 - fullW / 2, h / 2 - icSz / 2,
+				icSz, icSz)
+			surface.SetTextPos(w / 2 - fullW / 2 + icSz + 2, h / 2 - th / 2)
+			surface.SetTextColor(150, 150, 150, 100)
+			surface.SetFont(font)
+			surface.DrawText(txt)
+		end
+	end
+
+	return t
 end
 
 local function ReusePrinters(...)
@@ -155,10 +186,6 @@ end
 
 local function ReuseEntities(...)
 	return AddEntities(curTyp, ...)
-end
-
-local function GSL(t)
-	return add(t)
 end
 
 --[[
@@ -208,7 +235,9 @@ SetType("Misc.")
 SetType("Money Printers")
 
 	SetTier(1)
-		ReusePrinters("bw_printer_manual", "Manual Printer", 		0)
+		local man = ReusePrinters("bw_printer_manual", "Manual Printer", 		0)
+		man.RateFormat = function(t) return Language("Price", t) .. "/use" end
+
 		ReusePrinters("bw_base_moneyprinter", "Basic Printer", 		k * 3.5)
 		ReusePrinters("bw_printer_copper", "Copper Printer", 		k * 7.5)
 		ReusePrinters("bw_printer_silver", "Silver Printer", 		k * 20)
@@ -252,7 +281,7 @@ SetType("Consumables")
 SetType("Generators")
 	SetTier(1)
 		ReuseEntities("bw_gen_manual", "Manual Generator", 0, "models/props_c17/cashregister01a.mdl")
-		ReuseEntities("bw_gen_solar", "Solar Panel", 750, "models/props_lab/miniteleport.mdl")
+		ReuseEntities("bw_gen_solar", "Solar Panel", 1500, "models/props_lab/miniteleport.mdl")
 		ReuseEntities("bw_gen_scrap", "Scrap Generator", k * 5, "models/props_c17/TrapPropeller_Engine.mdl")
 		ReuseEntities("bw_gen_gas", "Gas Generator", k * 20, "models/xqm/hydcontrolbox.mdl")
 
@@ -268,21 +297,21 @@ SetType("Generators")
 
 SetType("Batteries")
 	SetTier(1)
-		ReuseEntities("bw_battery_car", "Car Battery", 1500, "models/items/car_battery01.mdl")
+		ReuseEntities("bw_battery_car", "Car Battery", 1500, "models/items/car_battery01.mdl", 2)
 
 SetType("Structures")
 
 	SetTier(1)
-		ReuseEntities("bw_spawnpoint", "Spawnpoint", k * 25, "models/props_trainstation/trainstation_clock001.mdl")
+		ReuseEntities("bw_spawnpoint", "Spawnpoint", k * 25, "models/props_trainstation/trainstation_clock001.mdl", 1)
 
 
 
 SetType("Dispensers")
 
 	SetTier(1)
-		ReuseEntities("bw_vendingmachine", "Vending Machine", k * 20, "models/props_interiors/VendingMachineSoda01a.mdl")
+		--ReuseEntities("bw_vendingmachine", "Vending Machine", k * 20, "models/props_interiors/VendingMachineSoda01a.mdl")
 		ReuseEntities("bw_dispenser_health", "Health Dispenser", k * 25, "models/props_combine/health_charger001.mdl")
-		ReuseEntities("bw_dispenser_ammo", "Ammo Dispenser", k * 55, "models/props_lab/reciever_cart.mdl")
+		ReuseEntities("bw_dispenser_ammo", "Ammo Dispenser", k * 25, "models/props_lab/reciever_cart.mdl")
 
 	SetTier(2)
 		ReuseEntities("bw_dispenser_armor2", "Armor Dispenser T2", m * 15, "models/props_combine/suit_charger001.mdl")
