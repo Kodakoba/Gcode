@@ -136,9 +136,9 @@ hook.Add("PostDrawTranslucentRenderables", "mittyvis", function(sb, dpth)
 
 	local lp = EyePos()
 
-	local i = 0
 	for k,v in pairs(Memes.Decals) do
-		i = i + 1
+		if not v.PixPos then continue end
+
 		local dist = lp:DistToSqr(v.PixPos)
 
 		if dist > v.MaxDistSqr then
@@ -151,6 +151,7 @@ hook.Add("PostDrawTranslucentRenderables", "mittyvis", function(sb, dpth)
 			--render.DrawSphere(v.PixPos or v.Pos, 8, 16, 16, color_white)
 		end
 
+		v:Emit("CheckVis", v.Vis)
 	end
 
 end)
@@ -209,6 +210,28 @@ hook.Add("PostDrawTranslucentRenderables", "mittypls", function(bd, bs)
 	render.SuppressEngineLighting(false)
 end)
 
+Memes.Decal = Memes.Decal or Emitter:extend()
+local dec = Memes.Decal
+
+ChainAccessor(dec, "Name", "Name")
+ChainAccessor(dec, "Matrix", "Matrix")
+ChainAccessor(dec, "Normal", "Normal")
+ChainAccessor(dec, "Pos", "Pos")
+ChainAccessor(dec, "Ang", "Ang")
+ChainAccessor(dec, "Scale", "Scale")
+ChainAccessor(dec, "PixPos", "PixPos")
+ChainAccessor(dec, "PixRad", "PixRad")
+ChainAccessor(dec, "RTPaint", "RTPaint")
+ChainAccessor(dec, "RTUpdate", "RTUpdate")
+ChainAccessor(dec, "MeshW", "MeshW")
+ChainAccessor(dec, "MeshH", "MeshH")
+ChainAccessor(dec, "Color", "Color")
+
+ChainAccessor(dec, "RtW", "RtW")
+ChainAccessor(dec, "RtH", "RtH")
+
+ChainAccessor(dec, "LightMultiplication", "Light")
+ChainAccessor(dec, "Middle", "Middle")
 
 function Memes.AddDecal(name, pos, ang, scale, normal, col, rtpaint, rtupd, pixpos, pixrad, mw, mh, rtw, rth, light)
 
@@ -234,16 +257,14 @@ function Memes.AddDecal(name, pos, ang, scale, normal, col, rtpaint, rtupd, pixp
 
 		rtw = RT width  ]
 		rth = RT height ] 128 by default
-		
+
 		light = light multiplication for correction
 		------------
 		todo: make this function return a decal object so
 			  you don't have to give so many args
 	]]
 
-	if not rtpaint then error("rtpaint mandatory") return end
-
-	local d = {}
+	local d = Memes.Decal:new()
 
 	d.Name = name
 
@@ -262,24 +283,27 @@ function Memes.AddDecal(name, pos, ang, scale, normal, col, rtpaint, rtupd, pixp
 	d.Ang = ang
 	d.Scale = scale
 
-	d.PixVisHandle = util.GetPixelVisibleHandle()
-	d.PixPos = pixpos or pos
-	d.PixRad = pixrad or 32
-	d.PixRadSqr = (d.PixRad ^ 2) * 2
-
-	d.RTPaint = rtpaint
-	d.RTUpdate = rtupd
-
 	d.MeshW = mw or 64
 	d.MeshH = mh or 64
 
 	d.RTW = rtw or 128
 	d.RTH = rth or 128
 
+	d.PixVisHandle = util.GetPixelVisibleHandle()
+	d.PixPos = pixpos or (pos + ang:Right() * d.MeshW / 2 * d.Scale + ang:Up() * -d.MeshH / 2 * d.Scale)
+
+	d.PixRad = pixrad or 32
+	d.PixRadSqr = (d.PixRad ^ 2) * 2
+
+	d.RTPaint = rtpaint or BlankFunc
+	d.RTUpdate = rtupd
+
 	d.MaxDistSqr = 1024^2
 	d.LightMultiplication = light
 	d.Middle = d.Pos + (d.Ang:Right() * d.MeshW * scale / 2) - (d.Ang:Up() * d.MeshH * scale / 2)
 	Memes.Decals[name] = d
+
+	return d
 end
 
 
@@ -303,14 +327,16 @@ hook.Add("ChatHUDEmotesUpdated", "mittymeme", function(col)
 		local ang = Angle(-180, -90, 180)
 		local scale = Vector(0.3, 0.3, 0.3)
 
-		Memes.AddDecal("mitty", where, ang, scale, Vector(0, -1, 0), nil,
-			function(w, h)
-				if not mitty:Exists() or (mitty:Exists() and mitty:IsDownloading()) then return true end --need downloading
+		local dec = Memes.AddDecal("mitty", where, ang, scale, Vector(0, -1, 0))
+		dec:SetRTPaint(function(w, h)
+			if not mitty:Exists() or (mitty:Exists() and mitty:IsDownloading()) then return true end --need downloading
 
-				surface.SetDrawColor(color_white)
-				mitty:Paint(0, 0, 128, 128)
-			end,
-		false, viswhere, 32)
+			surface.SetDrawColor(color_white)
+			mitty:Paint(0, 0, 128, 128)
+		end)
+
+		dec:SetRTUpdate(false)
+		dec:SetPixPos(viswhere)
 	end
 
 
@@ -373,6 +399,111 @@ do
 	    draw.DrawGIF(url, "cerber", 0, 0, w, h, nil, nil, nil, 7)
 	end
 
+	local dec = Memes.AddDecal("cerberus", pos, ang, scale, normal)
 
-	Memes.AddDecal("cerberus", pos, ang, scale, normal, col, rt, true, nil, nil, nil, nil, nil, nil, 4)
+	dec:SetColor(col)
+	dec:SetRTPaint(rt)
+	dec:SetRTUpdate(true)
+	dec:SetPixPos(viswhere)
+	dec:SetLight(4)
 end
+
+
+do
+	local pos = Vector(4409.6293945313, -3619.03125, 200.04418945313)
+	local ang = Angle(180, -90, 180)
+	local scale = 0.5
+	local normal = -ang:Forward()
+	local col = color_white
+
+	local stage = 0
+
+	local not_looked = false
+	local looked = false
+	local looking = false
+
+	local url = "http://vaati.net/Gachi/shared/thicc.png"
+	local url2 = "https://i.imgur.com/TRh8Lq6.png"
+
+	local snds = {
+		{"https://vaati.net/Gachi/shared/snail1.mp3", 1.2, 2},
+		{"https://vaati.net/Gachi/shared/sn2.mp3", 1.2, 2},
+		{"https://vaati.net/Gachi/shared/sn3.mp3", 1.6, 2.4},
+		{"https://vaati.net/Gachi/shared/sn4.mp3", 0, 0.8},
+	}
+
+	for k,v in pairs(snds) do
+		hdl.DownloadFile(v[1], "mus/snail_" .. k .. ".dat")
+	end
+
+	local ratio = 349 / 893
+	local thiccratio = 2048 / 1927
+	local numPlay = 1
+
+	local playTime = 0
+	local startTime = 0
+	local stopTime = 0
+
+	local thicc = false
+
+	local d = Memes.AddDecal("thicc", pos, ang, scale, normal, col, nil, nil, nil, 100, 256, 256, 1024, 1024, 4)
+
+	local rt = function(w, h)
+		local lookedFor = looked and CurTime() - looked
+		thicc = SysTime() > startTime and SysTime() < stopTime
+
+	    surface.SetDrawColor(col)
+
+	    if not thicc then
+	    	local sz = h * ratio
+	    	local have = surface.DrawMaterial(url2, "omni.png", w / 2 - sz / 2, 20, sz, h)
+	    	if not have then return true end
+	    else
+	    	playTime = 0
+	    	local sc = 0.8
+	    	local sz = h / thiccratio
+	    	local tw, th = w * sc, sz * sc
+	    	local have = surface.DrawMaterial(url, "thiccomni.png", w / 2 - tw / 2, h - th, tw, th)
+	    	if not have then return true end
+	    end
+	    --draw.DrawGIF(url, "cerber", 0, 0, w, h, nil, nil, nil, 7)
+	end
+
+
+	d:SetRTPaint(rt)
+	d:SetRTUpdate(true)
+	d:On("CheckVis", "lmao", function(self, vis)
+		looking = vis > 0
+
+		if not looking then
+			looked = false
+			not_looked = not_looked or CurTime()
+		else
+			not_looked = false
+			looked = looked or (vis > 0.2 and CurTime())
+		end
+
+		if not looking and CurTime() - not_looked > 5 and playTime == 0 and snds[numPlay] then
+
+			sound.PlayFile("data/hdl/mus/snail_" .. numPlay .. ".dat", "noplay 3d", function(ch, eid, en)
+				playTime = -1
+				if not IsValid(ch) then return end
+				ch:Play()
+				ch:SetVolume(2)
+				ch:SetPos(self.PixPos)
+				playTime = SysTime()
+				startTime = snds[numPlay][2] + playTime
+				stopTime = playTime + (snds[numPlay][3] or ch:GetLength())
+				numPlay = numPlay + 1
+			end)
+
+
+		end
+
+		if not looking and CurTime() - not_looked > 30 then
+			numPlay = 0
+		end
+	end)
+end
+
+--https://i.imgur.com/ktA8pLc.jpeg
