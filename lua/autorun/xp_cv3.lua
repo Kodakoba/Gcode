@@ -255,15 +255,21 @@ function chat.AddText(...)
 
 	local cont = {...}
 
-	for k,v in pairs(cont) do 
-		if not isstring(v) then continue end 
+	for k,v in pairs(cont) do
+		if not isstring(v) then continue end
 		cont[k] = v:gsub("%c", "")
 	end
 
-	chatbox.ParseInto(chatbox.GetChatFeed(), ...)
-	chat.old_text(...)
+	local res = chathud:AddText(...)
+	local new_t = {}
+	for k,v in ipairs(res.c) do
+		if isstring(v) or IsColor(v) then
+			table.insert(new_t, v)
+		end
+	end
 
-	chathud:AddText(...)
+	chatbox.ParseInto(chatbox.GetChatFeed(), unpack(new_t))
+	chat.old_text(unpack(new_t))
 
 	if tickSn:GetBool() then
 		chat.PlaySound()

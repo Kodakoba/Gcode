@@ -147,6 +147,8 @@ local function AddPrinters(typ, class, name, price, mdl, lim)
 	if not rate then return t end
 
 	t.GenerateCloudInfo = function(cl, btn)
+		cl:AddSeparator(nil, 16, 4)
+
 		local pnl = vgui.Create("InvisPanel", cl)
 		cl:AddPanel(pnl)
 
@@ -160,7 +162,7 @@ local function AddPrinters(typ, class, name, price, mdl, lim)
 		pnl:SetTall(th)
 
 		function pnl:Paint(w, h)
-			Icons.Money:Paint(w / 2 - fullW / 2, h / 2 - icSz / 2,
+			Icons.Money32:Paint(w / 2 - fullW / 2, h / 2 - icSz / 2,
 				icSz, icSz)
 			surface.SetTextPos(w / 2 - fullW / 2 + icSz + 2, h / 2 - th / 2)
 			surface.SetTextColor(150, 150, 150, 100)

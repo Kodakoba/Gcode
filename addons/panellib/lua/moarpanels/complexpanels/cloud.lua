@@ -186,6 +186,21 @@ function Cloud:PrePaint()
 
 end
 
+function Cloud:_DrawSeparator(sep, x, y, w)
+	surface.SetDrawColor(sep.col)
+
+	local sx = sep.offx
+	local sy = sep.offy
+	local preY, postY = sy, sy
+
+	if istable(sy) then
+		preY, postY = sy[1], sy[2]
+	end
+
+	surface.DrawLine(x + sx, y + preY, x + w - sx, y + preY)
+	return preY + postY
+end
+
 function Cloud:Paint()
 
 	if not self.FullInitted then return end
@@ -309,14 +324,9 @@ function Cloud:Paint()
 
 		if self.Separators[0] then
 			local sep = self.Separators[0]
+			local h = self:_DrawSeparator(sep, X, offy, cw)
 
-			surface.SetDrawColor(sep.col)
-
-			local sx = sep.offx
-			local sy = sep.offy
-
-			surface.DrawLine(X + sx, offy + sy, X + cw - sx, offy + sy)
-			offy = offy + sy*2
+			offy = offy + h
 		end
 
 		-- now draw all the formatted text
@@ -347,14 +357,9 @@ function Cloud:Paint()
 				-- check if that text had a separator after it
 				if self.Separators[k] then
 					local sep = self.Separators[k]
+					local h = self:_DrawSeparator(sep, X, offy, cw)
 
-					surface.SetDrawColor(sep.col)
-
-					local sx = sep.offx
-					local sy = sep.offy
-
-					surface.DrawLine(X + sx, offy + sy, X + cw - sx, offy + sy)
-					offy = offy + sy*2
+					offy = offy + h
 				end
 
 			end
@@ -429,8 +434,14 @@ function Cloud:AddSeparator(col, offx, offy, num)
 	offx = offx or 4
 	offy = offy or 2
 
+	local preY, postY = offy, offy
+
+	if istable(offy) then
+		preY, postY = offy[1], offy[2]
+	end
+
 	self.Separators[num or #self.DoneText] = {col = col or Color(70, 70, 70), offx = offx, offy = offy}
-	self.SepH = self.SepH + offy * 2
+	self.SepH = self.SepH + preY + postY
 end
 
 function Cloud:ClearFormattedText()

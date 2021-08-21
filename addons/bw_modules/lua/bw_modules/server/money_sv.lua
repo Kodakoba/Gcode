@@ -66,7 +66,7 @@ function FUNCS:AddMoney(amt, no_write)
 	self:SyncMoney()
 
 	if not no_write then
-		self:AddBWData("money", amt)
+		self:SetBWData("money", self._money)
 	end
 end
 
@@ -87,7 +87,7 @@ function FUNCS:TakeMoney(amt, no_write)
 	self:SyncMoney()
 
 	if not no_write then
-		self:SubBWData("money", amt)
+		self:SetBWData("money", self._money)
 	end
 end
 FUNCS.SubMoney = FUNCS.TakeMoney

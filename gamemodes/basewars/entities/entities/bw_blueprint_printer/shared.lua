@@ -1,4 +1,5 @@
 AddCSLuaFile()
+include("upgrade.lua")
 
 ENT.Base = "bw_base_electronics"
 ENT.Type = "anim"
@@ -27,14 +28,19 @@ function ENT:CalculateScrollSpeed()
 end
 
 function ENT:DerivedDataTables()
-
 	self:NetworkVar("Float", 1, "NextFinish")
 	self:NetworkVar("Int", 1, "Level")
 	self:NetworkVar("Bool", 2, "Jammed")
 
 	self:SetLevel(1)
-end
 
+	if CLIENT then
+		self:NetworkVarNotify("Level", function(ent, name, old, new)
+			if name ~= "Level" then return end
+			ent:DoUpgrade(new)
+		end)
+	end
+end
 
 function ENT:SHInit()
 	self:SetSubMaterial(1, "!BlueprintPrinter_Line")

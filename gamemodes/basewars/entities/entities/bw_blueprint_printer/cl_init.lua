@@ -67,6 +67,8 @@ function ENT:SlotCreated(slot)
 	end)
 
 	slot:On("Paint", "DrawLocked", function(slot, w, h)
+		slot.Locked = slot.ID > self.Slots
+
 		local locked = slot.Locked
 		if not locked then return end
 
@@ -165,17 +167,19 @@ function ENT:OpenMenu()
 	menu = vgui.Create("NavFrame")
 	menu:SetRetractedSize(40)
 	menu:SetExpandedSize(160)
-	menu:SetSize(300, inv:GetTall())
+	menu:SetSize(320, inv:GetTall())
 	menu.Shadow = {}
+	menu:CenterVertical()
+	menu:PopIn()
 
 	local sumW = menu:GetWide() + 8 + inv:GetWide()
 
-	menu.X = ScrW() / 2 - sumW / 2
-	menu.Y = inv.Y
-	inv.X = menu.X + menu:GetWide() + 8
-
 	inv:Bond(menu)
 	menu:Bond(inv)
+
+	menu.X = ScrW() / 2 - sumW / 2
+	inv.X = menu.X + menu:GetWide() + 8
+	inv:DoAnim()
 
 	menu:MakePopup()
 	menu.Inventory = inv
@@ -187,6 +191,8 @@ function ENT:OpenMenu()
 end
 
 function ENT:Draw()
+	self.Slots = self:GetLevel() * 2
+
 	self:CalculateScrollSpeed()
 	self:DrawModel()
 

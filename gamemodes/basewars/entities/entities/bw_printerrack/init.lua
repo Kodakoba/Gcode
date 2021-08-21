@@ -185,7 +185,7 @@ net.Receive("PrinterRack", function(_, ply)
 	if not IsValid(ent) or
 		ent:GetClass() ~= "bw_printerrack" or
 		ply:GetPos():Distance(ent:GetPos()) > 192 or
-		ent:CPPIGetOwner() ~= ply then
+		ent:BW_GetOwner() ~= ply:GetPInfo() then
 
 		return
 	end

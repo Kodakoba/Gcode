@@ -38,6 +38,7 @@ local function CreateFrame(ent)
 	f:SetPos(0,0)
 	f:SetSize(750, 1500)
 	f:SetDraggable(false)
+	f:SetMouseInputEnabled(false)
 
 	f.Buttons = {}
 	f:SetCloseable(false, true)
@@ -78,7 +79,7 @@ local function CreateFrame(ent)
 	local color = Color(90, 180, 90)
 	function col:Think()
 		if not IsValid(ent) then return end
-		if ent:CPPIGetOwner() ~= LocalPlayer() then
+		if ent:BW_GetOwner() ~= LocalPlayer():GetPInfo() then
 			self:SetColor(Colors.Button)
 		else
 			self:SetColor(color)

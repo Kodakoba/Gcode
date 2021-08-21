@@ -44,8 +44,7 @@ function ENT:Think()
 		end
 	end
 
-	if CurTime() - self.LastPrint >= self.PrintTime then
-
+	if self:GetNextFinish() < CurTime() then
 		if self:IsFull() then self:SetJammed(true) return end
 
 		self.Storage:NewItem("base_bp", function()
@@ -53,10 +52,9 @@ function ENT:Think()
 		end, nil, nil, nil, true)
 
 		self.LastPrint = CurTime()
-
+		self:SetNextFinish(self.LastPrint + self.PrintTime)
 	end
 
-	self:SetNextFinish(self.LastPrint + self.PrintTime)
 end
 
 function ENT:Use(ply)

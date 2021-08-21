@@ -241,7 +241,7 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 				cl.Font = "OS22"
 				cl.MaxW = 450
 				cl.AlignLabel = 1
-				cl:AddSeparator(nil, 8)
+				cl:AddSeparator(nil, 8, {2, 4})
 				cl:AddFormattedText(Language("Price", price), moneytxCol, "OSB20", 18, nil, 1)
 
 				if dat.GenerateCloudInfo then

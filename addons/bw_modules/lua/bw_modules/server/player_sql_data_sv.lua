@@ -59,26 +59,60 @@ hook.NHAdd("PlayerInitialSpawn", "BW_SQLDataFetch_Bots", function(ply)
 	LoadData(ply)
 end)
 
+
+local toSet = {}
+
+local function queueChange(pin)
+	toSet[pin] = true
+end
+
+function SyncBWIntoSQL()
+	local qTpl = qries.set_column_query
+
+	for pi,v in pairs(toSet) do
+		local bwd = pi._bwData
+		local sid = pi:GetSteamID64()
+
+		for name, val in pairs(bwd) do
+			if pi._bwSyncedData[name] == val then continue end
+
+			pi._bwSyncedData[name] = val
+			name = db:escape(name)
+			val = isnumber(val) and val or db:escape(val)
+
+			-- mfw
+			local second_arg = rep and name or val
+			local third_arg = rep and val or sid
+			local fourth_arg = rep and sid or nil
+
+			local qry = qTpl:format(name, second_arg, third_arg, fourth_arg, fucking_end_me)
+
+			local q = db:query(qry)
+
+			q.onError = mysqloo.QueryError
+			q:start()
+		end
+
+		toSet[pi] = nil
+	end
+end
+
+timer.Create("BW_SQLSync", 0.5, 0, function()
+	SyncBWIntoSQL()
+end)
+
 local function setter(q, rep)
 	-- rep = the column name needs to be repeated
 	return function(self, name, val)
 		local pi = GetPlayerInfo(self)
 		local sid = pi:GetSteamID64()
 
-		name = db:escape(name)
-		val = isnumber(val) and val or db:escape(val)
+		pi._bwData = pi._bwData or {}
+		pi._bwSyncedData = pi._bwSyncedData or {}
+		if pi._bwData[name] == val then return end
 
-		-- mfw
-		local second_arg = rep and name or val
-		local third_arg = rep and val or sid
-		local fourth_arg = rep and sid or nil
-
-		local qry = q:format(name, second_arg, third_arg, fourth_arg, fucking_end_me)
-
-		local q = db:query(qry)
-		q.onError = mysqloo.QueryError
-		q.onSuccess = print
-		q:start()
+		pi._bwData[name] = val
+		queueChange(pi)
 	end
 end
 

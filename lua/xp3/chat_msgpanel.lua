@@ -1,26 +1,3 @@
---[[
-
-			Look.
-
-			What you're about to see will make you gouge your fucking eyes out
-			I got confused in my own code like 3 times while making this, and what usually happens as a result is
-			fucking spaghetti code which I myself am not sure on how it works or even why it works
-	
-			If this ever breaks or bugs out, god bless because i'm gonna need to quite literally take a dip in
-			a load of shit to fish that bug out and fix it. If you wanna do it; go ahead buddy.
-
-			You have been warned.
-
-]]
-
-
-
-
-
-
---okay.
-
-
 
 local MSG = {}	
 

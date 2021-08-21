@@ -13,24 +13,27 @@ function IsPromise(what)
 	return istable(what) and what.IsPromise
 end
 
-function Promise:Initialize(fn, err)
+function Promise:Initialize()
 	self._success = {}
 	self._branches = {}
 	self._fail = {}
 
 	self._curFillStep = 0
-	self._curRunStep = 0
+	self._curRunStep = 1
+
+	self._Resolved = false
+	self._Rejected = false
 end
 
 function Promise:Rewind()
-	self._curRunStep = 0
+	self._curRunStep = 1
 end
 
 function Promise:Reset()
 	self._success = {}
 	self._fail = {}
 	self._branches = {}
-	self._curFillStep = 0
+	self._curFillStep = 1
 
 	self:Rewind()
 end
@@ -52,40 +55,58 @@ function Promise:Then(full, rej)
 		self._fail[key] = coroutine.create(rej)
 	end
 
+	-- then'd an already resolved promise; instantly run it
+	if self._Resolved then
+		self:_run(unpack(self._Resolved))
+	elseif self._Rejected then
+		self:_run(self._Rejected)
+	end
+
 	return nextPr
 end
 
 function Promise:_run(...)
+	if self._running then return end -- can't run again. idiot.
 	local s, f = self._success, self._fail
-
-	self._curRunStep = self._curRunStep + 1
+	self._running = true
 
 	while s[self._curRunStep] or f[self._curRunStep] do
 		local key = self._curRunStep
+		self._curRunStep = self._curRunStep + 1
 
-		if not self._errored then
+		if not self._Rejected then
 			if self._success[key] then
 				local rets = { coroutine.resume(self._success[key], self, ...) }
-				if self._branches[key] and table.maxn(rets) > 0 then
-					self._branches[key]:Resolve(unpack(rets))
+				if not rets[1] then errer(rets[2]) return end
+
+				if self._branches[key] and table.maxn(rets) > 1 then
+					self._branches[key]:Resolve(unpack(rets, 2))
 				end
 			end
 		else
 			if self._fail[key] then
 				local rets = { coroutine.resume(self._fail[key], self, ...) }
-				if self._branches[key] and table.maxn(rets) > 0 then
-					self._branches[key]:Reject(unpack(rets))
+				if not rets[1] then errer(rets[2]) return end
+
+				if self._branches[key] and table.maxn(rets) > 1 then
+					self._branches[key]:Reject(unpack(rets, 2))
 				end
 			end
 		end
-
-		self._curRunStep = self._curRunStep + 1
 	end
+
+	self._running = false
 end
 
 -- passed into the callbacks, intended to be ran for async
 function Promise:Resolve(x, ...)
 	if x == self then error("fuck you a+ [you passed self into resolve]") return end
+	if self._Rejected then
+		error("Can't resolve a rejected promise!")
+		return
+	end
+
+	self._Resolved = {x, ...}
 	if IsPromise(x) then
 		x:Then(function(...)
 			self:Resolve(...)
@@ -98,7 +119,12 @@ function Promise:Resolve(x, ...)
 end
 
 function Promise:Reject(err)
-	self._errored = true
+	if self._Resolved then
+		error("Can't reject a resolved promise!")
+		return
+	end
+
+	self._Rejected = err
 	return self:_run(err)
 end
 
@@ -117,6 +143,88 @@ function Promise:Rejector()
 	end
 
 	return self._rejector
+end
+
+local function toTbl(tbl, ...)
+	local prs = {}
+
+	if istable(tbl) and not IsPromise(tbl) then
+		prs = tbl
+	elseif IsPromise(tbl) then
+		prs[1] = tbl
+		for i=1, select("#", ...) do
+			prs[i + 1] = select(i, ...)
+		end
+	end
+
+	return prs
+end
+
+function Promise.OnAll(tbl, ...)
+	local prs = toTbl(tbl, ...)
+
+	local left = #prs
+	local prRets = {}
+
+	local retPr = Promise()
+	local imdeadbru = false
+
+	local supa_secret_key = ("onAll_key:%p"):format(prs)
+
+	local function checkDone()
+		if left == 0 then
+			if imdeadbru then
+				retPr:Reject(prRets)
+			else
+				retPr:Resolve(prRets)
+			end
+		end
+	end
+
+	checkDone()
+
+	local function incrResolve(self, ...)
+		left = left - 1
+		prRets[self[supa_secret_key]] = {...}
+		checkDone()
+
+		self[supa_secret_key] = nil
+	end
+
+	local function incrReject(self, ...)
+		imdeadbru = true
+		left = left - 1
+		prRets[self[supa_secret_key]] = {...}
+		checkDone()
+
+		self[supa_secret_key] = nil
+	end
+
+	for k,v in ipairs(prs) do
+		v[supa_secret_key] = k
+		v:Then(incrResolve, incrReject)
+	end
+
+	return retPr
+end
+
+function Promise.OnFirst(tbl, ...)
+	local prs = toTbl(tbl, ...)
+
+	local retPr = Promise()
+	local resolved = false
+
+	local function survival_of_the_fastest(self, ...)
+		if resolved then return end
+		resolved = true
+		retPr:Resolve(...)
+	end
+
+	for k,v in ipairs(prs) do
+		v:Then(survival_of_the_fastest)
+	end
+
+	return retPr
 end
 
 -- backwards compat with my old code :)
