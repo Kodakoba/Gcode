@@ -108,6 +108,7 @@ function DarkHUD.CreateAmmo()
 	f:SetSize(scale * 500, scale * 120)
 	f:SetPos(ScrW() - f:GetWide() - dh.PaddingX, ScrH() - f:GetTall() - dh.PaddingY)
 	f.HeaderSize = scale * 32
+	f:SetPaintedManually(true)
 
 	local rad = f.RBRadius or 8
 	local fX, fY = f:GetPos()
@@ -287,8 +288,10 @@ function DarkHUD.CreateAmmo()
 				self:To("AmmoGrad", 1.5, 0.1, 0, 0.3)
 				local anim, new = self:To("AmmoMissingFrac", frW, (dist ^ 0.1) * 0.2, 0.2, 0.2)
 
-				if anim then
+				if new then
+					print("putting then on anim", anim)
 					anim:Then(function()
+						print("anim then ran, turning grad to 0", anim)
 						self:To("AmmoGrad", 0, 0.6, 0.2, 0.3)
 					end)
 				end
@@ -452,5 +455,11 @@ if DarkHUD.Vitals then
 	DarkHUD.CreateAmmo()
 end
 
+hook.Add("HUDPaint", "DarkHUD_Ammo", function()
+	local f = DarkHUD.Ammo
+	if not IsValid(f) then return end
+
+	f:PaintManual()
+end)
 
 DarkHUD:On("Ready", "CreateAmmo", DarkHUD.CreateAmmo)

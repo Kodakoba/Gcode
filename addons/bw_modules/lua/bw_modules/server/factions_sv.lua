@@ -356,7 +356,16 @@ function Factions.Validate()
 end
 
 function Factions.GetPlayerFaction(ply, ply2)
-	local pin, pin2 = GetPlayerInfoGuarantee(ply), ply2 and GetPlayerInfo(ply2)
+	local pin = GetPlayerInfoGuarantee(ply)
+	-- passed a name as the second arg; check if player belongs to
+	-- the named faction
+	if isstring(ply2) and not CanGetPInfo(ply2) then
+		local fac2 = Factions.Factions[ply2]
+
+		return pin:GetFaction() == fac2
+	end
+
+	local pin2 = CanGetPInfo(ply2) and GetPlayerInfo(ply2)
 
 	if pin2 then
 		return pin:GetFaction() == pin2:GetFaction()
@@ -368,6 +377,9 @@ end
 PLAYER.GetFaction = Factions.GetPlayerFaction
 PLAYER.InFaction = Factions.GetPlayerFaction
 
+function Factions.Get(name)
+	return Factions.Factions[name]
+end
 
 function Factions.RandomizeOwner(name)
 	local fac = IsFaction(name) and name or Factions.Factions[name]
