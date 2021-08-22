@@ -7,7 +7,7 @@ ENT.PowerRequired = 250
 
 ENT.Capacity 		= 60000000
 ENT.PrintInterval 	= 1
-ENT.PrintAmount		= 110000
+ENT.PrintAmount		= 100000
 
 ENT.PrintName = "Molecular Printer"
 

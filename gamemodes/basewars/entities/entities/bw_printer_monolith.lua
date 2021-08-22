@@ -7,7 +7,7 @@ ENT.PowerRequired = 150
 
 ENT.Capacity 		= 30000000
 ENT.PrintInterval 	= 1
-ENT.PrintAmount		= 52000
+ENT.PrintAmount		= 22000
 
 ENT.PrintName = "Monolith Printer"
 

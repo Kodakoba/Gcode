@@ -7,7 +7,7 @@ ENT.PowerRequired = 200
 
 ENT.Capacity 		= 45000000
 ENT.PrintInterval 	= 1
-ENT.PrintAmount		= 87000
+ENT.PrintAmount		= 45000
 
 ENT.PrintName = "Quantum Printer"
 

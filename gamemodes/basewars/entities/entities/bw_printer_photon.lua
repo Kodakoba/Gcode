@@ -6,7 +6,7 @@ ENT.PowerCapacity = 10000
 
 ENT.Capacity 		= 75*1000000
 ENT.PrintInterval 	= 1
-ENT.PrintAmount		= 150000
+ENT.PrintAmount		= 1500000
 
 ENT.PrintName = "Photon Printer"
 

@@ -9,7 +9,7 @@ ENT.PowerCapacity = 10000
 
 ENT.Capacity 		= 50*1000000
 ENT.PrintInterval 	= 1
-ENT.PrintAmount		= 90000
+ENT.PrintAmount		= 750000
 
 ENT.PrintName = "Electron Printer"
 

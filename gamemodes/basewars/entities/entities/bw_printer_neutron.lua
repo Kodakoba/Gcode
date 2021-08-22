@@ -8,7 +8,7 @@ ENT.PowerCapacity = 10000
 
 ENT.Capacity 		= 40*1000000
 ENT.PrintInterval 	= 1
-ENT.PrintAmount		= 60000
+ENT.PrintAmount		= 500000
 
 ENT.PrintName = "Neutron Printer"
 
