@@ -97,6 +97,9 @@ function DarkHUD.Ammo_GetRecoil(wep)
 end
 
 function DarkHUD.CreateAmmo()
+	DarkHUD.HideHUDs.CHudAmmo = true
+	DarkHUD.HideHUDs.CHudSecondaryAmmo = true
+
 	if DarkHUD.Ammo then DarkHUD.Ammo:Remove() end
 
 	local me = LocalPlayer()
@@ -289,9 +292,7 @@ function DarkHUD.CreateAmmo()
 				local anim, new = self:To("AmmoMissingFrac", frW, (dist ^ 0.1) * 0.2, 0.2, 0.2)
 
 				if new then
-					print("putting then on anim", anim)
 					anim:Then(function()
-						print("anim then ran, turning grad to 0", anim)
 						self:To("AmmoGrad", 0, 0.6, 0.2, 0.3)
 					end)
 				end

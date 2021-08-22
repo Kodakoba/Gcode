@@ -150,3 +150,9 @@ hook.Add("OnScreenSizeChanged", "DarkHUD_Scale", DarkHUD.ReScale)
 hook.Add("InitPostEntity", "HUDCreate", function()
 	DarkHUD:Emit("Ready")
 end)
+
+DarkHUD.HideHUDs = DarkHUD.HideHUDs or {}
+
+hook.Add("HUDShouldDraw", "DarkHUD_Hide", function(name)
+	if DarkHUD.HideHUDs[name] then return false end
+end)

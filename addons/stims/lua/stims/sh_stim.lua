@@ -25,8 +25,8 @@ function Stims.AddStim(ply, dat)
 		-- delay between the stim stopping to heal and the stim being outta your hand
 		DeinjectTime = dat.RemoveTime or STIMPAK_REMOVE_TIME,
 
-		Heal = dat.HealAmount or 50,	-- how much HP the stim will heal
-		HealTime = dat.HealTime or 1,	-- how much time will it take to heal
+		Heal = dat.HealAmount or 75,	-- how much HP the stim will heal
+		HealTime = dat.HealTime or 1.5,	-- how much time will it take to heal
 
 		LastHeal = 0, -- internal
 	}

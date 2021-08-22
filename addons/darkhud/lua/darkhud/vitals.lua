@@ -67,6 +67,9 @@ DarkHUD:On("Rescale", "VitalsResize", function(self, new)
 end)
 
 function DarkHUD.CreateVitals()
+	DarkHUD.HideHUDs.CHudHealth = true
+	DarkHUD.HideHUDs.CHudBattery = true
+
 	if DarkHUD.Vitals then DarkHUD.Vitals:Remove() end
 	DarkHUD.Vitals = vgui.Create("FFrame", nil, "DarkHUD - Vitals")
 
@@ -533,7 +536,7 @@ hook.Add("OnContextMenuOpen", "DarkHUD_Vitals", function()
 	local f = DarkHUD.Vitals
 
 	if not IsValid(f) then
-		DarkHUD.Create()
+		DarkHUD.CreateVitals()
 		f = DarkHUD.Vitals
 		if not IsValid(DarkHUD.Vitals) then return end
 	end
@@ -569,15 +572,6 @@ hook.Add("HUDPaint", "DarkHUD_Vitals", function()
 	if not IsValid(f) then return end
 
 	f:PaintManual()
-end)
-
-local hide = {
-	["CHudHealth"] = true,
-	["CHudBattery"] = true
-}
-
-hook.Add("HUDShouldDraw", "HideHUD", function(name)	--wiki example copypasting gang rise up
-	if hide[name] then return false end
 end)
 
 local wasvalid = false
