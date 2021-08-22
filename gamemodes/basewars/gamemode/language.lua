@@ -1,6 +1,6 @@
 AddCSLuaFile()
 
-local CURRENCY = "£"
+local CURRENCY = "$" --"£"
 
 Language = Language or {}
 

@@ -306,21 +306,19 @@ function GM:EntityTakeDamage(ent, dmginfo)
 
 	if ent:IsPlayer() then
 
-		if not Attacker:IsPlayer() and dmginfo:IsDamageType(DMG_CRUSH) and (Attacker:IsWorld() or (IsValid(Attacker) and not Attacker:CreatedByMap())) then
-
+		if not Attacker:IsPlayer() and dmginfo:IsDamageType(DMG_CRUSH) and
+			(Attacker:IsWorld() or (IsValid(Attacker) and not Attacker:CreatedByMap())) then
 			dmginfo:SetDamage(0)
-
 			return
-
 		end
 
 		local FriendlyFire = BaseWars.Config.AllowFriendlyFire
-		local Team = ent:GetFactionName()
 
-		if not (ent == Attacker) and not FriendlyFire and ent:InFaction() and Attacker:IsPlayer() and Attacker:InFaction(Team) then
+		if ent ~= Attacker and not FriendlyFire
+			and ent:InFaction() and Attacker:IsPlayer()
+			and Attacker:InFaction(ent) then
 			dmginfo:SetDamage(0)
 			return
-
 		end
 
 	end
