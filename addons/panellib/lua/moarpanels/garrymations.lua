@@ -64,7 +64,7 @@ function meta:AnimationThinkInternal()
 					anim.Ended = true
 					anim:End()
 					if anim.OnEnd then anim:OnEnd( self ) end
-					anim:Exec()
+					anim:Resolve()
 				end
 
 				if anim.Swappable then continue end

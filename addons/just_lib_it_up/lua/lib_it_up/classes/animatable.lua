@@ -1,8 +1,8 @@
-LibItUp.SetIncluded()
+--LibItUp.SetIncluded()
 
 if not Promise then include('promise.lua') end
 if not LibItUp.Emitter then include('emitter.lua') end
-
+setfenv(1, _G)
 Animatable = Animatable or LibItUp.Emitter:callable()
 LibItUp.Animatable = Animatable
 
@@ -66,7 +66,6 @@ function AnimMeta:SetSwappable(b)
 end
 
 function AnimMeta:Swap(length, delay, ease, callback)
-
 	self:Reset() --reset promise
 
 	self.StartTime = delay + SysTime()
@@ -160,7 +159,8 @@ function Animatable:AnimationThink()
 					anim.Ended = true
 					if anim.OnEnd then anim:OnEnd( self ) end
 					anim:End()
-					anim:Exec() -- start promise :Then's
+
+					anim:Resolve() -- start promise :Then's
 				end
 
 				if anim.Swappable then continue end
@@ -230,7 +230,6 @@ function Animatable:Lerp(key, val, dur, del, ease, forceswap)
 
 	local oldAnim = anims[key]
 
-	--print(key, self[key], val, oldAnim, oldAnim and oldAnim.ToVal, val)
 	if self[key] == val then
 		if not oldAnim or oldAnim.ToVal == val then
 			return false, false

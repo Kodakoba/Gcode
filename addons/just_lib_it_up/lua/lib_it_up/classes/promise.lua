@@ -1,4 +1,4 @@
-LibItUp.SetIncluded()
+--LibItUp.SetIncluded()
 if not Emitter then include('emitter.lua') end
 
 --[[
@@ -33,7 +33,7 @@ function Promise:Reset()
 	self._success = {}
 	self._fail = {}
 	self._branches = {}
-	self._curFillStep = 1
+	self._curFillStep = 0
 
 	self:Rewind()
 end
@@ -66,7 +66,7 @@ function Promise:Then(full, rej)
 end
 
 function Promise:_run(...)
-	if self._running then return end -- can't run again. idiot.
+	if self._running then print("Can't run again idiot", self) return end -- can't run again. idiot.
 	local s, f = self._success, self._fail
 	self._running = true
 
