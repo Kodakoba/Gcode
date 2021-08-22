@@ -7,7 +7,7 @@ ENT.PowerRequired = 60
 
 ENT.Capacity 		= 6000000
 ENT.PrintInterval 	= 1
-ENT.PrintAmount		= 1300
+ENT.PrintAmount		= 3500
 
 ENT.PrintName = "Mobius Printer"
 
