@@ -194,18 +194,18 @@ function PI:ValidateNW()
 end
 
 function PI:_Destroy()
-	local pi = LibItUp.PlayerInfoTables
+
 	if self:GetPlayer(true) then
-		pi.Player[self:GetPlayer(true)] = nil
+		PIT.Player[self:GetPlayer(true)] = nil
 	end
 
-	pi.SteamID[self:GetSteamID()] = nil
-	pi.SteamID64[self:GetSteamID64()] = nil
+	PIT.SteamID[self:GetSteamID()] = nil
+	PIT.SteamID64[self:GetSteamID64()] = nil
+	table.RemoveByValue(LibItUp.AllPlayerInfos, self)
 
 	self:Emit("Destroy")
 	hook.NHRun("PlayerInfoDestroy", self)
 	self:GetPublicNW():Invalidate()
-	table.RemoveByValue(LibItUp.AllPlayerInfos, self)
 
 	self._Valid = false
 
@@ -312,9 +312,12 @@ else
 end
 
 hook.NHAdd("PlayerDisconnected", "PlayerInfoEmit", function(ply)
-	local sid64 = ply:SteamID64()
-	local pinfo = PIT.SteamID64[sid64]
-	if not pinfo then return end
+	local pinfo = PIT.Player[ply]
+	if not pinfo then
+		ErrorNoHalt("!!! PLAYER INFO FOR " .. tostring(ply) .. " HASN'T BEEN FOUND TO REMOVE !!!\n")
+		ErrorNoHalt("!!! SteamID: " .. tostring(ply:SteamID()) .. ", SteamID64: " .. tostring(ply:SteamID64()) .. " !!!\n")
+		return
+	end
 
 	pinfo:_OnDisconnect()
 end)
