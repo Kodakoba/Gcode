@@ -106,22 +106,31 @@ function MODULE.PlayerSetHandsModel(ply, ent)
 end
 hook.Add("PlayerSetHandsModel", tag .. ".PlayerSetHandsModel", (MODULE.PlayerSetHandsModel))
 
+local traceOut = {}
+
+local traceIn = {
+	--mask = MASK_SOLID,
+	collisiongroup = COLLISION_GROUP_PLAYER,
+	output = traceOut,
+}
+
+
 function MODULE.Stuck(ply, pos)
 
-	local t = {}
+	local t = traceIn
+	local o = traceOut
 
 	t.start 	= pos or ply:GetPos()
 	t.endpos 	= t.start
 	t.filter 	= ply
-	t.mask 		= MASK_PLAYERSOLID
 	t.mins 		= ply:OBBMins()
 	t.maxs 		= ply:OBBMaxs()
 
-	t = util.TraceHull(t)
+	util.TraceHull(t)
 
-	local ent = t.Entity
+	local ent = o.Entity
 
-	return t.StartSolid or (ent and (ent:IsWorld() or IsValid(ent)))
+	return o.StartSolid or (ent and (ent:IsWorld() or IsValid(ent)))
 
 end
 PLAYER.Stuck = (MODULE.Stuck)

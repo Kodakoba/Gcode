@@ -521,12 +521,14 @@ function GM:PlayerSpawn(ply)
 	self:SetPlayerSpeed(ply, BaseWars.Config.DefaultWalk, BaseWars.Config.DefaultRun)
 
 	local Spawn = ply.SpawnPoint
+
 	if IsValid(Spawn) and (not Spawn.IsPowered or Spawn:IsPowered()) then
-
 		local Pos = Spawn:GetPos() + BaseWars.Config.Ents.SpawnPoint.Offset
-
+		local ang = Spawn.SpawnAngle
+		ang[1] = 0
+		ang[3] = 0
 		ply:SetPos(Pos)
-
+		ply:SetEyeAngles(ang)
 	end
 
 	for k, v in next, BaseWars.Config.SpawnWeps do
