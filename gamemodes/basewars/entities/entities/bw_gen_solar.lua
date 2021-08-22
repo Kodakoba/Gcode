@@ -1,3 +1,5 @@
+easylua.StartEntity("bw_gen_solar")
+
 AddCSLuaFile()
 
 ENT.Base 			= "bw_base_generator"
@@ -95,11 +97,21 @@ function ENT:GenerateOptions(qm, pnl)
 	return ind
 end
 
+local rayPos = Vector(2.4543991088867, -32.136005401611, 3.2566497325897)
+local ray = Material("trails/physbeam")
+
 function ENT:Draw()
 	self:DrawModel()
 	local qm = self.IsQMInteracting
 
 	if qm then
+		local pos = self:LocalToWorld(rayPos)
+		local pos2 = pos + self:GetAngles():Up() * 16384
+
+		render.SetMaterial(ray)
+		render.DrawBeam(pos, pos2, 8, 0, 1, color_white)
 		-- draw a beam from sun scanner pos
 	end
 end
+
+easylua.EndEntity("bw_gen_solar")

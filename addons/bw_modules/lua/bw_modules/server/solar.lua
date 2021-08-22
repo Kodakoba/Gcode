@@ -1,6 +1,9 @@
 BaseWars.Solar = BaseWars.Solar or {}
 local sol = BaseWars.Solar
 
+BaseWars.Solar.SkylessPower = 4
+BaseWars.Solar.SkyPower = 10
+
 local rayPos = Vector(2.4543991088867, -32.136005401611, 3.2566497325897)
 local tout = {}
 local tdat = {output = tout}
@@ -32,8 +35,10 @@ function sol:Think()
 	if not grid then return end
 
 	local pos = self:LocalToWorld(rayPos)
+	tdat.output = tout
 	tdat.start = pos
-	tdat.endpos = pos + self:GetAngles():Up() * 16384,
+	tdat.endpos = pos + self:GetAngles():Up() * 16384
+	tdat.filter = {self}
 
 	util.TraceLine(tdat)
 	local isSky = tout.HitSky
