@@ -1,7 +1,7 @@
 
 
 
-local loaded = false 
+local loaded = false
 
 function ulx.showMotdMenu( steamid )
 	loaded = false
@@ -11,11 +11,11 @@ function ulx.showMotdMenu( steamid )
 	window:Center()
 	window:MakePopup()
 	window.Shadow = {}
-	
+
 	function window:PostPaint(w, h)
 		draw.SimpleText("ATTENTION! ALL EPIC GAMERS", "TWB36", w/2, self.HeaderSize, color_white, 1, 5)
 
-		draw.DrawText("We are currently playtesting. Expect bugs, and, please,\nbreak it as much as possible.", "OS24", 16, self.HeaderSize + 48, color_white, 0, 5)
+		draw.DrawText("I'm fucking cumming", "OS24", 16, self.HeaderSize + 48, color_white, 0, 5)
 		draw.SimpleText("Thankssssssssssss", "OS18", 16, self.HeaderSize + 108, color_white, 0, 5)
 	end
 
