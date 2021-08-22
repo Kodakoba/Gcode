@@ -48,6 +48,9 @@ function PI:Initialize(id, is_sid64) -- we can't know that the id is a steamID64
 		return
 	end
 
+	print(sid .. " new PlayerInfo created.", self:GetPublicNW(), self:GetPublicNW() and self:GetPublicNW():IsValid())
+	print(PIT.Player[ply], PIT.Player[sid], PIT.Player[sid64])
+
 	if ply then self:SetPlayer(ply) end
 	self:SetSteamID(sid)
 	self:SetSteamID64(sid64)
@@ -195,19 +198,22 @@ end
 
 function PI:_Destroy()
 
+	table.RemoveByValue(LibItUp.AllPlayerInfos, self)
+
+	-- run the hooks first in the event anyone tries to GetPlayerInfo
+	xpcall(self.Emit, GenerateErrorer("PlayerInfoDestroyer"), self, "Destroy")
+	hook.NHRun("PlayerInfoDestroy", self)
+	self:GetPublicNW():Invalidate()
+
+	-- and then get rid of ourselves
+	self._Valid = false
+
 	if self:GetPlayer(true) then
 		PIT.Player[self:GetPlayer(true)] = nil
 	end
 
 	PIT.SteamID[self:GetSteamID()] = nil
 	PIT.SteamID64[self:GetSteamID64()] = nil
-	table.RemoveByValue(LibItUp.AllPlayerInfos, self)
-
-	self:Emit("Destroy")
-	hook.NHRun("PlayerInfoDestroy", self)
-	self:GetPublicNW():Invalidate()
-
-	self._Valid = false
 
 	print(self:Nick() .. "'s PlayerInfo was destroyed.")
 end
@@ -417,7 +423,7 @@ hook.Add("NetworkableAttemptCreate", "PlayerInfo", function(nwID)
 		if is_bot then
 			-- try to find a bot that'd match maybe possibly and pray
 			-- i HATE GMOD I HATE GMOD I HATE GMOD
-			for k,v in pairs(PIT.Players) do
+			for k,v in pairs(PIT.Player) do
 
 				if v:IsValid() and v:SteamID64() == sid64 then -- updated steamid64?
 					pin:SetSteamID64(sid64)
