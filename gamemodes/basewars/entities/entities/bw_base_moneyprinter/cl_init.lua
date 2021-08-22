@@ -200,7 +200,8 @@ function ENT:DrawStats(pos, ang, scale, _, _, me, pwd)
 		local str = "Full in "
 
 		if left > 1 then
-			local t = string.FormattedTime(left, "%01i:%02i")
+			local t = string.FormattedTime(left)
+			t = ("%02i:%02i"):format(t.h * 60 + t.m, t.s)
 			str = str .. t
 		else
 			str = "Full!"
