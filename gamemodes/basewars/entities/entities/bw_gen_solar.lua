@@ -1,5 +1,3 @@
-easylua.StartEntity("bw_gen_solar")
-
 AddCSLuaFile()
 
 ENT.Base 			= "bw_base_generator"
@@ -113,5 +111,3 @@ function ENT:Draw()
 		-- draw a beam from sun scanner pos
 	end
 end
-
-easylua.EndEntity("bw_gen_solar")

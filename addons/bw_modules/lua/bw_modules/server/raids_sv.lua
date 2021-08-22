@@ -386,7 +386,7 @@ function raid.Start(rder, rded, fac)
 end
 
 
-hook.Add("PlayerDisconnected", "RaidLog", function(ply) --aiaiai
+hook.NHAdd("PlayerDisconnected", "RaidLog", function(ply) --aiaiai
 	--[[local rd = ply:GetRaid()
 	if not rd then return end
 

@@ -486,7 +486,7 @@ hook.Add("PlayerInfoDestroy", "FactionDisband", function(pin)
 	end
 end)
 
-hook.Add("PlayerDisconnected", "FactionClean", function(ply)
+hook.NHAdd("PlayerDisconnected", "FactionClean", function(ply)
 	local fac = GetPlayerInfoGuarantee(ply):GetFaction()
 	if not fac then return end
 

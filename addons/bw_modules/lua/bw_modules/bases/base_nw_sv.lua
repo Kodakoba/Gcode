@@ -81,7 +81,7 @@ local function initNW(ply)
 	end
 end
 
-hook.Add("PlayerDisconnected", "BasesPlayerNWYeet", function(ply)
+hook.NHAdd("PlayerDisconnected", "BasesPlayerNWYeet", function(ply)
 	if bw.NW.PlayerData[ply] then
 		bw.NW.PlayerData[ply]:Invalidate()
 		bw.NW.PlayerData[ply] = nil
