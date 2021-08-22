@@ -37,7 +37,7 @@ function FM:Init()
 	self.Options = {}
 
 	self.Font = "OSB24"
-	self.DescriptionFont = "TW24"
+	self.DescriptionFont = "OS20"
 
 	self:SetIsMenu(true)
 	self:SetDrawOnTop(true)
@@ -159,16 +159,14 @@ function FMO:Paint(w,h)
 	self:PostPaint(w, h)
 
 end
-function FM:PerformLayout()
 
+function FM:DoLayout()
 	local w = self:GetMinimumWidth()
 
 	-- Find the widest one
 	for k, pnl in pairs( self:GetCanvas():GetChildren() ) do
-
-		pnl:PerformLayout()
+		--pnl:PerformLayout()
 		w = math.max( w, pnl:GetWide() )
-
 	end
 
 	self:SetWide( self.WOverride or w )
@@ -178,25 +176,32 @@ function FM:PerformLayout()
 	for k, pnl in pairs( self:GetCanvas():GetChildren() ) do
 		pnl:SetWide( w )
 		pnl:SetPos( 0, pnl.PutMeAtY or y )
-
 		y = y + pnl:GetTall()
-
 	end
 
-	y = math.min( y, self:GetMaxHeight() )
+	y = math.min( y, 9999 )
 
 	self:SetTall( y )
 
 	derma.SkinHook( "Layout", "Menu", self )
 
 	DScrollPanel.PerformLayout( self )
+end
 
+function FM:PerformLayout()
+	self:DoLayout()
 end
 
 function FM:CreateDescription()
 	local f = vgui.Create("Panel", self)
 	f:SetSize(self:GetWide(), 1)
-	function f:PerformLayout() end
+	local me = self
+
+	function f:PerformLayout()
+		self.Y = me:GetTall() - self:GetTall()
+		me:DoLayout()
+	end
+
 	self.DescPanel = f
 	f.desc = "fuk"
 	local m = self
@@ -217,17 +222,16 @@ function FM:CreateDescription()
 			local lx, ly = self:LocalToScreen(0,0)
 
 			render.SetScissorRect(lx, ly, lx + w, ly + h, true)
-				self.DescY = 24 + ty * amt + 4
+				self.DescY = ty + ty * amt + 4
 				draw.DrawText(wrapped[self.desc].txt, m.DescriptionFont, 8, 2, Color(255,255,255), 0)
-			render.SetScissorRect(0,0,0,0,false)
+			render.SetScissorRect(0, 0, 0, 0,false)
 
 		surface.DisableClipping(false)
 	end
 
 	function f:Think()
+		local hov = false
 
-		local hov = false 
-		
 		for k,v in pairs(m:GetCanvas():GetChildren()) do
 			if v == self then continue end
 
@@ -240,17 +244,15 @@ function FM:CreateDescription()
 		if self:IsHovered() then -- use last description
 			hov = true
 		end
+
 		if hov then
 			self:SetTall(L(self:GetTall(), self.DescY or 50, 15, true))
 		else
 			self:SetTall(L(self:GetTall(), 0, 15, true))
 		end
-
 	end
 
 	self:AddPanel(f)
-
-
 end
 
 function FM:AddOption( strText, funcFunction )
