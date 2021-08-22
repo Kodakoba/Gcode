@@ -9,7 +9,7 @@ hud.Anims = hud.Anims or Animatable("bases")
 
 include("hud/painter_ext.lua")
 
-hook.Add("HUDPaint", "bas", function()
+hook.Add("HUDPaint", "basePainter", function()
 	local lp = LocalPlayer()
 	local base, zone = lp:BW_GetBase(), lp:BW_GetZone()
 	hud.DoPainters(base, zone)

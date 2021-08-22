@@ -326,9 +326,9 @@ function bw.Base:EntityExit(ent)
 	self:_CheckValidity()
 
 	local _, exit = hook.NHRun("EntityExitBase", self, ent)
-	svprint("base entity exit", exit, ent)
+
 	if SERVER and exit == false and not ent:IsRemoving() then return end
-	svprint("yeeting")
+
 	local eid = self.Entities[ent] or ent:EntIndex()
 	self.Entities[ent] = nil
 	self.EntsNW:Set(eid, nil)
@@ -466,6 +466,9 @@ function bw.Base:CanClaim(who)
 	if self:GetClaimed() then return false, bw.Errors.AlreadyClaimed(self) end
 	if who and who:GetBase() then return false, bw.Errors.AlreadyHaveABase(who) end
 	local pin = CanGetPInfo(who) and GetPlayerInfo(who)
+
+	--print(pin, pin:GetFaction(), pin:GetFaction():GetOwnerInfo(), pin)
+
 	if pin and pin:GetFaction() and
 		pin:GetFaction():GetOwnerInfo() ~= pin then
 		return false, bw.Errors.NotOwner

@@ -408,6 +408,36 @@ do
 	dec:SetLight(4)
 end
 
+do
+	local pos = Vector (-7220.75390625, -4795.423828125, 173.40898132324)
+	local ang = Angle(0.54, -180.38, 0)
+	local scale = 0.2
+	local normal = -ang:Forward()
+	local col = color_white
+
+
+	local url = "https://i.imgur.com/nsUQcic.png"
+
+	local rt = function(w, h)
+	    surface.SetDrawColor(col)
+	    surface.DrawMaterial(url, "jermy_clrkson.png", 0, 0, w, h)
+	end
+
+	local dec = Memes.AddDecal("kfc_man", pos, ang, scale, normal)
+
+	dec:SetColor(col)
+	dec:SetRTPaint(rt)
+	dec:SetRTUpdate(true)
+	dec:SetPixPos(viswhere)
+	dec:SetLight(4)
+	dec:SetMeshW(128)
+	dec:SetMeshH(256)
+	dec:SetRtW(128)
+	dec:SetRtH(256)
+	dec:On("CheckVis", "lmao", function(self, vis)
+		render.DrawWireframeSphere(self.PixPos, 16, 16, 16, color_white, false)
+	end)
+end
 
 do
 	local pos = Vector(4409.6293945313, -3619.03125, 200.04418945313)
@@ -433,7 +463,7 @@ do
 	}
 
 	for k,v in pairs(snds) do
-		hdl.DownloadFile(v[1], "mus/snail_" .. k .. ".dat")
+		hdl.DownloadFile(v[1], "mus/snail_" .. k .. ".dat", print, ErrorNoHalt)
 	end
 
 	local ratio = 349 / 893
@@ -473,6 +503,8 @@ do
 	d:SetRTPaint(rt)
 	d:SetRTUpdate(true)
 	d:On("CheckVis", "lmao", function(self, vis)
+		if LocalPlayer():GetPos():DistToSqr(self.PixPos or vector_origin) > 262144 then return end
+
 		looking = vis > 0
 
 		if not looking then
@@ -492,6 +524,7 @@ do
 				ch:SetVolume(2)
 				ch:SetPos(self.PixPos)
 				playTime = SysTime()
+				print("numPlay", numPlay)
 				startTime = snds[numPlay][2] + playTime
 				stopTime = playTime + (snds[numPlay][3] or ch:GetLength())
 				numPlay = numPlay + 1
@@ -501,7 +534,7 @@ do
 		end
 
 		if not looking and CurTime() - not_looked > 30 then
-			numPlay = 0
+			numPlay = 1
 		end
 	end)
 end
