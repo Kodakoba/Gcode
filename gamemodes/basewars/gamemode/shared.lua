@@ -1,3 +1,6 @@
+local tag = "BaseWars.UTIL"
+BaseWars.UTIL = {}
+
 GM.Name 		= "BaseWars"
 
 GM.Author 		= "Original: Q2F2, Ghosty, Liquid, Tenrys, Trixter, User4992\nModded: gachirmx"
@@ -187,9 +190,6 @@ BASEWARS_NOTIFICATION_RAID 	= Color(255, 255, 0, 255)
 BASEWARS_NOTIFICATION_GENRL = Color(255, 0, 255, 255)
 BASEWARS_NOTIFICATION_DRUG	= Color(0, 255, 255, 255)
 
-local tag = "BaseWars.UTIL"
-
-BaseWars.UTIL = {}
 
 local colorRed 		= Color(255, 0, 0)
 local colorBlue 	= Color(0, 0, 255)
@@ -197,7 +197,10 @@ local colorWhite 	= Color(255, 255, 255)
 
 local function Pay(ply, amt, name, own)
 
-	ply:Notify(string.format(own and Language.PayOutOwner or Language.PayOut, BaseWars.NumberFormat(amt), name), BASEWARS_NOTIFICATION_GENRL)
+	ply:Notify(
+		string.format(own and Language.PayOutOwner or Language.PayOut,
+			BaseWars.NumberFormat(amt),
+			name or "...something?"), BASEWARS_NOTIFICATION_GENRL)
 
 	ply:GiveMoney(amt)
 
@@ -205,12 +208,22 @@ end
 
 function BaseWars.UTIL.PayOut(ent, attacker, full, ret)
 
-	if not IsValid(ent) or not (IsValid(attacker) and attacker:IsPlayer()) then return 0 end
+	local validEnt = IsValid(ent)
+
+	local Owner = validEnt and ent.CPPIGetOwner and IsValid(ent:CPPIGetOwner()) and ent:CPPIGetOwner()
+	local Val = validEnt and ent.CurrentValue * (not full and not ret and BaseWars.Config.DestroyReturn or 1)
+	local Name = validEnt and (ent.PrintName or ent:GetClass())
+
+	if not IsValid(ent) or not (IsValid(attacker) and attacker:IsPlayer()) then
+		if Owner then
+			Pay(Owner, Val, Name, true)
+		end
+		return 0
+	end
 
 	if not ent.CurrentValue then ErrorNoHalt("ERROR! NO CURRENT VALUE! CANNOT PAY OUT!\n") return 0 end
 
-	local Owner = IsValid(ent) and ent.CPPIGetOwner and IsValid(ent:CPPIGetOwner()) and ent:CPPIGetOwner()
-	local Val = ent.CurrentValue * (not full and not ret and BaseWars.Config.DestroyReturn or 1)
+	
 
 	if Val ~= Val or Val == math.huge then
 
@@ -240,21 +253,15 @@ function BaseWars.UTIL.PayOut(ent, attacker, full, ret)
 	if #Members > 1 then
 
 		for k, v in next, Members do
-
 			Pay(v, Fraction, Name)
-
 		end
 
 	else
-
 		Pay(attacker, Fraction, Name)
-
 	end
 
 	if Owner then
-
 		Pay(Owner, Fraction, Name, true)
-
 	end
 
 	return Val
@@ -487,10 +494,16 @@ local function BlockInteraction(ply, ent, ret)
 
 end
 
-local function IsAdmin(ply, ent, ret)
+local function IsDev(ply, ent, ret)
 	if BlockInteraction(ply, ent, ret) == false then return false end
 
 	return BaseWars.IsDev(ply)
+end
+
+local function IsAdmin(ply, ent, ret)
+	if BlockInteraction(ply, ent, ret) == false then return false end
+
+	return ply:IsAdmin()
 end
 
 function GM:PhysgunPickup(ply, ent)
@@ -517,10 +530,10 @@ function GM:CanTool(ply, tr, tool)
 
 	if BaseWars.Config.BlockedTools[tool] then return IsAdmin(ply, ent, Ret) end
 	if IsValid(tr.Entity) and tr.Entity.IsBaseWars then
-		return IsAdmin(ply, ent, Ret)
+		return IsDev(ply, tr.Entity, Ret)
 	end
 
-	return BlockInteraction(ply, ent, Ret)
+	return BlockInteraction(ply, tr.Entity, Ret)
 
 end
 
