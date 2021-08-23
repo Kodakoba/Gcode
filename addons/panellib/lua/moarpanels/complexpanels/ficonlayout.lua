@@ -18,7 +18,6 @@ function FIC:Init()
 	self.MarginY = 8
 	self.AutoMargin = false
 
-
 	self.IncompleteCenter = true
 
 	self.Rows = {}				-- [num] = {curW, curH}
@@ -29,6 +28,16 @@ function FIC:Init()
 	self.Color = Color(40, 40, 40)
 	self.drawColor = self.Color:Copy()
 
+end
+
+ChainAccessor(FIC, "MarginX", "MarginX")
+ChainAccessor(FIC, "MarginX", "SpaceX")
+
+ChainAccessor(FIC, "MarginY", "MarginY")
+ChainAccessor(FIC, "MarginY", "SpaceY")
+
+function FIC:SetBorder(n)
+	self.PadX, self.PadY = n, n
 end
 
 function FIC:SetColor(col, g, b, a)
@@ -46,8 +55,8 @@ function FIC:Paint(w, h)
 end
 
 function FIC:ShiftPanel(pnl, x, y)
-	if self:Emit("ShiftPanel", pnl, x, y) ~= nil then return end
 	if pnl.X == x and pnl.Y == y then return end -- avoid infinite layouts
+	if self:Emit("ShiftPanel", pnl, x, y) ~= nil then return end
 
 	pnl:SetPos(x, y)
 end
@@ -57,7 +66,7 @@ function FIC:OnRowShift(row, curX, w)
 	row.PnlW = row.PnlW - self.MarginX
 	local pad = (w - row.PnlW) / 2
 	local x = self.AutoPad and pad or self.PadX
-	row.PadX = pad
+	row.PadX = x
 
 	for _, pnl in ipairs(row) do
 		row.Positions[pnl][1] = x
@@ -86,13 +95,15 @@ function FIC:UpdateSize(w, h)
 	local curX = self.PadX
 	local curY = self.PadY
 
-	table.Filter(self.Panels, IsValid)
+	local panels = self.ToLayout or self.Panels
+
+	table.Filter(panels, IsValid)
 
 	self:InvalidateRows()
 	self:Emit("UpdateSize")
 	local curRow = self.CurRow
 
-	for k,v in ipairs( self.Panels ) do
+	for k,v in ipairs( panels ) do
 		local row = self.Rows[curRow] or self:_CreateRow(curRow)
 
 		local vW, vH = v:GetSize()
@@ -123,6 +134,7 @@ function FIC:UpdateSize(w, h)
 	local lastRow = self.Rows[curRow]
 
 	if lastRow and not lastRow.Full then
+		-- incomplete row
 		if self.IncompleteCenter then
 			self:OnRowShift(lastRow, curX, w)
 		else
@@ -141,10 +153,16 @@ function FIC:UpdateSize(w, h)
 	end
 
 	if self.AutoResize then
+		local curH = self.ThinkingH or self:GetTall()
+		local newH = curY + (lastRow and lastRow.MaxH or 8) + self.PadY --math.max(curY + (lastRow and lastRow.MaxH or 8), curH)
 
-		local curH = self:GetTall()
-		local newH = curY + (lastRow and lastRow.MaxH or 8) --math.max(curY + (lastRow and lastRow.MaxH or 8), curH)
 		if newH ~= curH then
+			local ret = self:Emit("LayoutResize", newH)
+			if ret ~= nil then
+				if isnumber(ret) then self.ThinkingH = ret end
+				return
+			end
+
 			self:SetTall(newH)
 		end
 	end
