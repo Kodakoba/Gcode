@@ -8,3 +8,5 @@ function fuckyou()
 end
 
 timer.Create("fuckyou", 30, 0, fuckyou)
+hook.Add("InitPostEntity", "fuckoff_crydent", fuckyou)
+fuckyou()
