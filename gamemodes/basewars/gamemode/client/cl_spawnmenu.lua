@@ -1,3 +1,9 @@
+setfenv(1, _G)
+
+BaseWars.Spawnmenu = BaseWars.Spawnmenu or {}
+BaseWars.SpawnMenu = BaseWars.Spawnmenu
+
+local sm = BaseWars.Spawnmenu
 
 local function IsGroup(ply, group)
 	if not ply.CheckGroup then error("what the fuck where's ULX") return end
@@ -27,54 +33,179 @@ end)
 
 --local b = bench("btns", 600)
 
+function sm.MakeHeader(pnl)
+	local hd, ics = pnl.Header, pnl.Icons
+	local dat = pnl.Data
+
+	local titleFont = "OSB28"
+
+	surface.SetFont(titleFont)
+	local tw, th = surface.GetTextSize(dat.Name)
+
+	local tierX = tw + (dat.Icon and (dat.Icon:GetWide() + 4) or 0) + 4 + 8
+
+	function hd:Paint(w, h)
+		local tX = 4
+
+		if dat.Icon then
+			local iW, iH = dat.Icon:GetSize()
+							-- V the top part is 32px iirc
+			dat.Icon:Paint(tX, 16 - iH / 2)
+			tX = tX + iW + 4
+		end
+
+		draw.SimpleText(dat.Name, "OSB28", tX, h / 2 - th / 2, color_white)
+	end
+
+	local tBtns = {}
+	pnl.ActiveCat = "All"
+	pnl.SwitchedCat = false
+
+	local function makeTier(n)
+		local tBtn = vgui.Create("FButton", hd)
+		local key = #tBtns + 1
+		tBtns[key] = tBtn
+
+		tBtn:SetTall(hd:GetTall() * 0.8)
+		tBtn:SetWide(tBtn:GetTall())
+		tBtn:CenterVertical()
+		tBtn.X = tierX + (key - 1) * (tBtn:GetWide() + 4)
+		tBtn.RBRadius = 4
+		tBtn.Shadow.Intensity = 1
+		tBtn.Shadow.MaxSpread = 0.2
+		tBtn.Cat = n
+
+		function tBtn:Activate()
+			pnl.ActiveCat = n
+			pnl.SwitchedCat = true
+			pnl:SetTier(self.Cat)
+		end
+
+		function tBtn:DoClick()
+			if pnl.ActiveCat == self.Cat then return end
+			self:Activate()
+		end
+
+		function tBtn:Think()
+			if self.Cat == pnl.ActiveCat then
+				self:SetColor(Colors.Sky)
+			else
+				self:SetColor(Colors.Button)
+			end
+		end
+
+		return tBtn
+	end
+
+	local tAll = makeTier("All")
+	tAll:SetIcon(Icons.Star)
+
+	for k,v in pairs(dat.Tiers) do
+		local tier = makeTier(k)
+		tier:SetText("T" .. k)
+	end
+end
+
 local function createSubCategory(canv, cat_name, subcat_name, data)
 	local items = data.Items
 
 	local pnl = vgui.Create("InvisPanel", canv) --holder for diconlayout
+	pnl.Category = cat_name
+	pnl.Subcategory = subcat_name
+	pnl.Data = data
+
 	pnl:Dock(TOP)
 	pnl:DockMargin(0, 8, 0, 4)
 	pnl:SetWide(canv:GetWide())
 	pnl:SetTall(5000)
 
+	local headerSize = 32
+
+	local hd = vgui.Create("InvisPanel", pnl)
+	hd:Dock(TOP)
+	hd:SetTall(headerSize)
+	pnl.Header = hd
+
 	local pnlcol = Colors.LightGray:Copy()
 	pnlcol.a = 160
 
+	local ics = vgui.Create("FIconLayout", pnl)
+	pnl.Icons = ics
 
-
-	local ics = vgui.Create("DIconLayout", pnl)
 	ics:Dock(BOTTOM)
-	ics:DockMargin(4, 0, 4, 8)
+	ics:DockMargin(4, 0, 4, 4)
 
 	ics:SetSpaceX(4)
 	ics:SetSpaceY(4)
 	ics:SetBorder(4)
 
+	ics.IncompleteCenter = false
+	ics.AutoPad = false
+
+	ics:On("ShiftPanel", "groovy", function(self, btn, x, y)
+		local om = pnl.SwitchedCat and not btn._NoMove and btn._Moving
+
+		btn._Moving = {x, y}
+		btn._NoMove = false
+		if not om then return end -- first layout, dont move em
+
+		if om[1] == x and om[2] == y then return false end
+
+		local data = btn.Data
+
+		local leftX = -ics:GetWide() + btn.X
+		local rightX
+
+		local dist = ics:GetWide() -- - btn:GetWide()
+
+		local xyeet = -dist
+		local xfrom = -ics:GetWide() + x - btn:GetWide()
+
+		if y ~= btn.Y and y ~= om[2] then
+			local anim = btn:MoveTo(xyeet, btn.Y, math.min(dist / 350, 0.2), 0, 1.8)
+
+			if anim then
+				anim:Then(function()
+					btn:SetPos(xfrom, y)
+					btn:MoveTo(x, y, 0.25, 0, 0.2)
+				end)
+			else
+				btn:SetPos(xfrom, y)
+				btn:MoveTo(x, y, 0.25, 0, 0.2)
+			end
+		else
+			btn:MoveTo(x, y, 0.2, 0, 0.3)
+		end
+
+		return false
+	end)
+
+	ics:On("LayoutResize", "groovy", function(self, newh)
+		if not pnl.SwitchedCat then return end
+		local delay = newh > self:GetTall() and 0 or 0.2
+		self:SizeTo(-1, newh, 0.3, delay, 0.3)
+		return newh
+	end)
+
 	local icscol = Color(205, 205, 205)
+
+	sm.MakeHeader(pnl)
+
+	function ics:Paint(w, h)
+		draw.RoundedBox(8, 0, 0, w, h, icscol)
+	end
 
 	function pnl:Paint(w, h)
 		draw.RoundedBox(8, 0, 0, w, h, pnlcol)
-
-		local tX = 4
-
-		if data.Icon then
-			local iW, iH = data.Icon:GetSize()
-							-- V the top part is 32px iirc
-			data.Icon:Paint(tX, 16 - iH / 2)
-			tX = tX + iW + 4
-		end
-
-		draw.SimpleText(data.Name, "OSB28", tX, 16, color_white, 0, 1)
-		-- holy shit diconlayout sucks
-		local iX, iY = ics:GetPos()
-		local iW, iH = ics:GetSize()
-		draw.RoundedBox(8, iX, iY, iW, iH + 4, icscol)
-
 		draw.EnableFilters()
 	end
 
 	function pnl:PaintOver()
 		draw.DisableFilters()
 	end
+
+	pnl.Items = {}
+
 	local its = table.Copy(items)
 
 	table.sort(its, function(a, b)
@@ -84,6 +215,57 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 		--	return a.Level < b.Level
 		--end
 	end)
+
+	function pnl:SetTier(t)
+		if t == "All" then
+			ics.ToLayout = nil
+			ics:InvalidateLayout()
+
+			for _, dat in ipairs(its) do
+				local btn = pnl.Items[dat]
+				btn:PopInShow(0.1, 0, nil, true)
+				btn._NoMove = btn._FilteredOut
+				btn._FilteredOut = false
+			end
+
+			return
+		end
+
+		local keep = {}
+		local keepBtns = {}
+		ics.ToLayout = keepBtns
+
+		for _, dat in ipairs(its) do
+			if dat.Tier == t then
+				-- keeping this button in
+				keep[dat] = true
+				local btn = pnl.Items[dat]
+				btn:PopInShow(0.1, 0, nil, true)
+				btn._NoMove = btn._FilteredOut
+				btn._FilteredOut = false
+				keepBtns[#keepBtns + 1] = btn
+			end
+		end
+
+		local i = 0
+
+		for _, dat in ipairs(its) do
+			if keep[dat] then i = i + 1 continue end
+
+			-- removing this button
+			local btn = pnl.Items[dat]
+			btn._FilteredOut = true
+			local anim = btn:PopOutHide(nil, 0.05)
+			if anim then
+				anim:Then(function()
+					btn._NoMove = true
+				end)
+			end
+
+		end
+
+		ics:InvalidateLayout(true)
+	end
 
 	local ply = LocalPlayer()
 
@@ -106,6 +288,9 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 		local btn = ics:Add("FButton")
 		btn:SetSize(76, 76)
 
+		pnl.Items[dat] = btn
+		btn.Data = dat
+		btn.Helpme = dat.Name:find("Hydroelectric")
 		btn.Shadow.MaxSpread = 1.1
 		btn.Shadow.Alpha = 150
 		btn.Shadow.Intensity = 2
@@ -280,7 +465,11 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 
 	function ics:PerformLayout(w, h)
 		perf_layout(self, w, h)
-		pnl:SetTall(ics:GetTall() + 8 + 32)
+
+		local new_h = ics:GetTall() + 4 + headerSize
+		if pnl:GetTall() ~= new_h then
+			pnl:SetTall(new_h)
+		end
 	end
 end
 
