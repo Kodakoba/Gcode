@@ -1158,8 +1158,8 @@ function draw.GetRTMat(name, w, h, shader)
 	return rt, mat
 end
 
-local minstate = false
-local magstate = false
+local minstate = 0
+local magstate = 0
 
 local anis = TEXFILTER.ANISOTROPIC
 
@@ -1173,14 +1173,15 @@ function draw.EnableFilters(min, mag)
 		mag = true
 	end
 
-	min = not minstate and min -- if min/mag already enabled, set to false
-	mag = not magstate and mag -- otherwise, use original
+	local omin, omag = min, mag
+
+	min = minstate == 0 and min -- if min/mag already enabled, set to false
+	mag = magstate == 0 and mag -- otherwise, use original
+
+	minstate = minstate + (omin and 1 or 0)
+	magstate = magstate + (omag and 1 or 0)
 
 	if not min and not mag then return end
-
-	minstate = minstate or min
-	magstate = magstate or mag
-
 
 	if min then render.PushFilterMin(anis) end
 	if mag then render.PushFilterMag(anis) end
@@ -1195,14 +1196,15 @@ function draw.DisableFilters(min, mag)
 		mag = true
 	end
 
-	min = minstate and min -- if min/mag already disabled, set to false (dont need to disable whats disabled)
-	mag = magstate and mag -- otherwise, use original
+	local omin, omag = min, mag
+
+	min = minstate == 1 and min -- if min/mag already disabled, set to false (dont need to disable whats disabled)
+	mag = magstate == 1 and mag -- otherwise, use original
+
+	minstate = minstate - (omin and 1 or 0)
+	magstate = magstate - (omag and 1 or 0)
 
 	if not min and not mag then return end
-
-	minstate = Either(min, false, minstate) -- if `min` is true, it'll be popped, therefore minstate is false
-	magstate = Either(mag, false, magstate)
-
 
 	if mag then render.PopFilterMag() end
 	if min then render.PopFilterMin() end
