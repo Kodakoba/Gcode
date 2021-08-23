@@ -379,9 +379,9 @@ function META:PopOut(dur, del, rem)
 	return anim
 end
 
-function META:PopInShow(dur, del, rem)
+function META:PopInShow(dur, del, rem, noalpha)
 	self:Show()
-	return self:PopIn(dur or 0.1, del or 0, nil)
+	return self:PopIn(dur or 0.1, del or 0, rem, noalpha)
 end
 
 function META:PopOutHide(dur, del, rem)
@@ -511,9 +511,6 @@ Animations = {}
 
 local latest = 0
 anims = {}
-
-
-local SysTime = CurTime --switch up to CurTime for host timescale to have an effect on animations
 
 animmeta = {}
 

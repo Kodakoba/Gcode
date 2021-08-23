@@ -60,6 +60,10 @@ function meta:AnimationThinkInternal()
 
 			if ( Fraction == 1 ) then
 
+				if self.m_AnimList[k] == v then
+					self.m_AnimList[k] = nil -- ya never know
+				end
+
 				if not anim.Ended then
 					anim.Ended = true
 					anim:End()
@@ -69,7 +73,6 @@ function meta:AnimationThinkInternal()
 
 				if anim.Swappable then continue end
 
-				self.m_AnimList[k] = nil
 				anim.Valid = false
 				anim.Key = 0	--this animation isn't "valid" anymore; zero out the key so stopping the animation actually does nothing
 			end
@@ -147,6 +150,13 @@ function meta:NewAnimation( length, delay, ease, callback )
 
 	end
 
+	if length < 0 or delay < 0 then
+		ErrorNoHalt( ("attempt to create animation with negative time! ( %.2f, %.2f )\n%s\n")
+				:format(length, delay, debug.traceback()) )
+	end
+
+	delay = math.max(delay, 0)
+
 	local anim = AnimMeta:new()
 	table.Merge(anim, {
 		EndTime = delay + length,
@@ -170,11 +180,14 @@ function meta:NewAnimation( length, delay, ease, callback )
 end
 
 local function MoveThink( anim, panel, fraction )
+	if ( !anim.StartPos ) then anim.StartPos = {panel.x, panel.y} end
 
-	if ( !anim.StartPos ) then anim.StartPos = Vector( panel.x, panel.y, 0 ) end
-	local pos = LerpVector( fraction, anim.StartPos, anim.Pos )
-	panel:SetPos( pos.x, pos.y )
+	local sx, sy = anim.StartPos[1], anim.StartPos[2]
+	local tx, ty = anim.Pos[1], anim.Pos[2]
+	local x = Lerp(fraction, sx, tx)
+	local y = Lerp(fraction, sy, ty)
 
+	panel:SetPos(x, y)
 end
 
 --[[---------------------------------------------------------
@@ -182,10 +195,12 @@ end
 -----------------------------------------------------------]]
 function meta:MoveTo( x, y, length, delay, ease, callback )
 
+	if self._MoveToAnim then self._MoveToAnim:Stop() end
 	if ( self.x == x && self.y == y ) then return end
 
 	local anim = self:NewAnimation( length, delay, ease, callback )
-	anim.Pos = Vector( x, y, 0 )
+	self._MoveToAnim = anim
+	anim.Pos = {x, y}
 	anim.Think = MoveThink
 
 	return anim
