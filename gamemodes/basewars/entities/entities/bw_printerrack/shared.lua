@@ -11,13 +11,10 @@ ENT.PowerCapacity = 50000
 ENT.PrintName 		= "Printer Rack"
 
 ENT.IsValidRaidable = false
-
-local Clamp = math.Clamp
+ENT.Powerless = true
 
 function ENT:GSAT(slot, name,  min, max)
-
 	self:NetworkVar("Float", slot, name)
-
 end
 
 function ENT:DerivedDataTables()

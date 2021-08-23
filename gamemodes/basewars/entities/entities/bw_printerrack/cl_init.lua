@@ -1,3 +1,4 @@
+--easylua.StartEntity("bw_printerrack")
 AddCSLuaFile()
 include("shared.lua")
 
@@ -47,7 +48,7 @@ local function CreateFrame(ent)
 	f:DockPadding(16, 64, 16, 16)
 	f.ScaleDown = ScrH() < 800
 	f.Shadow = false
-	
+
 	local col = vgui.Create("FButton", f)
 
 	f:On("Think", function(self)
@@ -77,6 +78,7 @@ local function CreateFrame(ent)
 	col:SetZPos(32766)
 
 	local color = Color(90, 180, 90)
+
 	function col:Think()
 		if not IsValid(ent) then return end
 		if ent:BW_GetOwner() ~= LocalPlayer():GetPInfo() then
@@ -234,6 +236,8 @@ function ENT:Draw()
 		b2.TextX = 18 + 32 + 8
 
 		function b2:PostPaint(w, h)
+			if not ent:IsValid() then self:Remove() return end
+
 			surface.SetDrawColor(255, 255, 255)
 			surface.DrawMaterial("https://i.imgur.com/6CyUc0d.png", "upgrade.png", 18, 13, 32, 32)
 
@@ -247,7 +251,6 @@ function ENT:Draw()
 
 			local cost = BaseWars.NumberFormat(ent:GetUpgradeValue() * ent:GetLevel())
 			draw.SimpleText("$" .. cost, "OS36", 18 + 32 + 8, h/2, ColorAlpha(color_white, 255 - lc.a), 0, 1)
-
 		end
 
 
@@ -286,11 +289,12 @@ function ENT:Draw()
 
 	for k,v in pairs(f.Buttons) do
 		if not IsValid(v) then f.Buttons[k] = nil continue end
-		if t[v.ID]==0 then v:PopOut() f.Buttons[k] = nil continue end
+		if t[v.ID] == 0 then v:PopOut() f.Buttons[k] = nil continue end
 	end
 
 	vgui.Start3D2D( pos, ang, scale )
 		self.Frame:Paint3D2D()
 	vgui.End3D2D()
-
 end
+
+--easylua.EndEntity("bw_printerrack")
