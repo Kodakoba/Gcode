@@ -517,8 +517,9 @@ end
 
 include("base_zone_ownership_ext.lua")
 
-FInc.FromHere("baseview/_init.lua", _SH, true, FInc.RealmResolver():SetDefault(true))
-FInc.FromHere("powergrid/_init.lua", _SH, true, FInc.RealmResolver():SetDefault(true))
+-- not deprecated, fuck you.
+IncludeCS("baseview/_init.lua")
+IncludeCS("powergrid/_init.lua")
 FInc.FromHere("hud/*.lua", _CL, true, function()
 	return false -- only addCSLua, dont include
 end)

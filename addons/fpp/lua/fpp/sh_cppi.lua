@@ -1,3 +1,55 @@
+CPPI = CPPI or {}
+
+if SERVER then
+	function ENTITY:CPPISetOwnerUID(UID)
+		local ply = UID and player.GetByUniqueID(tostring(UID)) or nil
+		if UID and not IsValid(ply) then return false end
+		return self:CPPISetOwner(ply)
+	end
+
+	function ENTITY:CPPICanTool(ply, tool)
+		local Value = FPP.Protect.CanTool(ply, nil, tool, self)
+		if Value ~= false and Value ~= true then Value = true end
+		return Value
+	end
+
+	function ENTITY:CPPICanPhysgun(ply)
+		return FPP.plyCanTouchEnt(ply, self, "Physgun")
+	end
+
+	function ENTITY:CPPICanPickup(ply)
+		return FPP.plyCanTouchEnt(ply, self, "Gravgun")
+	end
+
+	function ENTITY:CPPICanPunt(ply)
+		return FPP.plyCanTouchEnt(ply, self, "Gravgun")
+	end
+
+	function ENTITY:CPPICanUse(ply)
+		return FPP.plyCanTouchEnt(ply, self, "PlayerUse")
+	end
+
+	function ENTITY:CPPICanDamage(ply)
+		return FPP.plyCanTouchEnt(ply,  self, "EntityDamage")
+	end
+
+	function ENTITY:CPPIDrive(ply)
+		local Value = FPP.Protect.CanDrive(ply, self)
+		if Value ~= false and Value ~= true then Value = true end
+		return Value
+	end
+
+	function ENTITY:CPPICanProperty(ply, property)
+		local Value = FPP.Protect.CanProperty(ply, property, self)
+		if Value ~= false and Value ~= true then Value = true end
+		return Value
+	end
+
+	function ENTITY:CPPICanEditVariable(ply, key, val, editTbl)
+		return self:CPPICanProperty(ply, "editentity")
+	end
+end
+
 do return end
 
 CPPI = CPPI or {}
