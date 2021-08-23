@@ -18,7 +18,7 @@ end
 
 if CLIENT then
 	local function hookPly(ply)
-		local pin = ply:GetPInfo()
+		local pin = GetPlayerInfo(ply)
 		local nw = pin:GetPublicNW()
 
 		nw:On("NetworkedVarChanged", "MoneyCallback", function(_, key, old, new)
@@ -36,9 +36,11 @@ if CLIENT then
 	end
 
 	hook.Add("PlayerJoined", "SetupMoneyCallback", hookPly)
-	for k,v in ipairs(player.GetAll()) do
-		hookPly(v)
-	end
 
-	hookPly(LocalPlayer())
+	LibItUp.OnInitEntity(function()
+		hookPly(LocalPlayer())
+		for k,v in ipairs(player.GetAll()) do
+			hookPly(v)
+		end
+	end)
 end
