@@ -93,6 +93,11 @@ function DarkHUD.Ammo_GetRecoil(wep)
 		return rec
 	end
 
+	if wep.CW20Weapon or wep.IsFAS2Weapon then
+		return wep.Recoil * 3
+	end
+
+
 	return hl2_recs[wep:GetClass()] or 0.05 -- default
 end
 
@@ -112,6 +117,7 @@ function DarkHUD.CreateAmmo()
 	f:SetPos(ScrW() - f:GetWide() - dh.PaddingX, ScrH() - f:GetTall() - dh.PaddingY)
 	f.HeaderSize = scale * 32
 	f:SetPaintedManually(true)
+	f:CacheShadow(2, 8, 2)
 
 	local rad = f.RBRadius or 8
 	local fX, fY = f:GetPos()
@@ -171,11 +177,22 @@ function DarkHUD.CreateAmmo()
 		fired = FrameNumber()
 	end
 
+	function f:IsWeaponValid(wep)
+		return wep and wep:IsValid()
+	end
+
+	function f:ShouldDrawAmmo(wep)
+		return self:IsWeaponValid(wep) and
+			(wep.DrawAmmo or wep:IsEngine() or
+				wep.IsFAS2Weapon or wep.CW20Weapon)
+			and wep:GetMaxClip1() > 0
+	end
+
 	f:On("Think", "Recoil", function(self)
 		local wep = me:GetActiveWeapon()
-		local valid = wep and wep:IsValid()
+		local valid = f:ShouldDrawAmmo(wep)
 
-		if valid and (wep:IsEngine() or wep.DrawAmmo) and wep:GetMaxClip1() > 0 then
+		if valid then
 
 			if not wep:GetListener("FiredBullet", self) then
 				wep:On("FiredBullet", self, f.OnFire, f)
@@ -216,7 +233,7 @@ function DarkHUD.CreateAmmo()
 			rad = f.RBRadius or 8
 
 			local wep = me:GetActiveWeapon()
-			local valid = wep and wep:IsValid() and (wep:IsEngine() or wep.DrawAmmo) and wep:GetMaxClip1() > 0
+			local valid = f:ShouldDrawAmmo(wep)
 
 			local x, y = self:LocalToScreen(0, 0)
 
