@@ -22,24 +22,24 @@ ENT.IsHealthDispenser = true
 ENT.MaxLevel = 5
 
 ENT.LevelsData = {
-	[0] = {
+	[1] = {
 		Stim = math.huge,
 		Cost = 0,
 	},
 
-	[1] = {
+	[2] = {
 		Stim = 60,
 		Cost = 125000,
 	},
 
-	[2] = {
+	[3] = {
 		Stim = 30,
 		Cost = 750000,
 	},
 
-	[3] = {
+	[4] = {
 		Stim = 15,
-		Cost = 25e9,
+		Cost = 5e6,
 	},
 }
 
@@ -107,6 +107,8 @@ function ENT:RequestUpgrade(ply)
 		ply:Notify(BaseWars.LANG.UpgradeMaxLevel, BASEWARS_NOTIFICATION_ERROR)
 		return false
 	end
+
+	print("next upgrade cost", calcM)
 
 	if plyM < calcM then
 		ply:Notify(BaseWars.LANG.UpgradeNoMoney, BASEWARS_NOTIFICATION_ERROR)
