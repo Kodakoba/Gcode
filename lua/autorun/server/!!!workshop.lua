@@ -19,11 +19,29 @@ local BWAddons = {
     "2257255110", -- arccw GO
     "2393318131", -- arccw fa:s 2
     "2306829669", -- arccw home defense
+    "2427171109", -- gso unlamifier
 
     --2360831320, -- "oranche standard issue" basically an arccw pack (update: it sucks)
     "2409364730", -- gunsmith offensive extras
 
     "2155366756", -- vmanip
+
+    -- cw2
+    "427204862", -- raging bull
+    "838920776", -- bullpups
+    "591075724", -- mosin
+    "1589205037", -- acr
+    "349050451", -- cw2 base
+    "657241323", -- ins2
+    "358608166", -- cw2 unofficial
+
+    --[[
+    -- fas
+    "180507408", -- base
+    "181656972", -- rifles
+    "201027715", -- unoff. rifles
+    "183140076", -- shotguns
+    ]]
 }
 
 

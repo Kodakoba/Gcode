@@ -25,6 +25,7 @@ local function CreateSubcategory(cat, subcat)
 	local t = {
 		Name = subcat,
 		Items = {},
+		Tiers = {},
 
 		Priority = 0,
 		Icon = nil
@@ -53,18 +54,33 @@ local cLoadout = CreateCategory("Loadout")
 		--local scMelee = CreateSubcategory("Loadout", "Melee")
 		--scMelee.Priority = 10
 
-		local scPistols = CreateSubcategory("Loadout", "Pistols")
+		local scPistols = CreateSubcategory("Loadout", "[CW] Pistols")
 		scPistols.Priority = 9
 		scPistols.Icon = Icon("https://i.imgur.com/VkH8Yvy.png", "gun.png"):SetSize(24, 24)
 
-		local scShotguns = CreateSubcategory("Loadout", "Shotguns")
-		scShotguns.Priority = 8
+		local scArcPistols = CreateSubcategory("Loadout", "[ACW] Pistols")
+		scArcPistols.Priority = 8
+		scArcPistols.Icon = Icon("https://i.imgur.com/VkH8Yvy.png", "gun.png"):SetSize(24, 24)
 
-		local scSMGs = CreateSubcategory("Loadout", "SMGs")
-		scSMGs.Priority = 7
+		local scShotguns = CreateSubcategory("Loadout", "[CW] Shotguns")
+		scShotguns.Priority = 7
+		--scShotguns.Icon = Icon("https://i.imgur.com/VkH8Yvy.png", "gun.png"):SetSize(24, 24)
 
-		local scRifles = CreateSubcategory("Loadout", "Assault Rifles")
-		scRifles.Priority = 6
+		local scArcShotguns = CreateSubcategory("Loadout", "[ACW] Shotguns")
+		scArcShotguns.Priority = 6
+		--scShotguns.Icon = Icon("https://i.imgur.com/VkH8Yvy.png", "gun.png"):SetSize(24, 24)
+
+		local scSMGs = CreateSubcategory("Loadout", "[CW] SMGs")
+		scSMGs.Priority = 5
+
+		local scArcSMGs = CreateSubcategory("Loadout", "[ACW] SMGs")
+		scArcSMGs.Priority = 4
+
+		local scRifles = CreateSubcategory("Loadout", "[CW] Assault Rifles")
+		scRifles.Priority = 3
+
+		local scArcRifles = CreateSubcategory("Loadout", "[ACW] Assault Rifles")
+		scArcRifles.Priority = 2
 	end
 
 local cPrinters = CreateCategory("Printers")
@@ -110,6 +126,9 @@ local function AddItem(cat, typ, class, name, price, mdl)
 
 	cat_t.Items[#cat_t.Items + 1] = t
 	subcat_t.Items[#subcat_t.Items + 1] = t
+	if curTier then
+		subcat_t.Tiers[curTier] = true
+	end
 
 	t.CatID = #cat_t.Items
 	t.SubcatID = #subcat_t.Items
@@ -208,19 +227,19 @@ SetType("Weapons - Misc")
 	SetTier(1)
 		ReuseLoadout("weapon_health", "Heal Gun", k * 500, "models/weapons/w_physics.mdl")
 		ReuseLoadout("epicpickax", "Pickaxe", k * 200, "models/weapons/w_irifle.mdl")
-		ReuseLoadout("bw_blowtorch_t1", "Blowtorch T1", k * 1000, "models/weapons/w_irifle.mdl")
+		ReuseLoadout("bw_blowtorch_t1", "Blowtorch T1", k * 500, "models/weapons/w_irifle.mdl")
 
 	SetTier(2)
-		ReuseLoadout("bw_blowtorch_t2", "Blowtorch T2", m * 2.5, "models/weapons/w_irifle.mdl")
+		ReuseLoadout("bw_blowtorch_t2", "Blowtorch T2", m * 1, "models/weapons/w_irifle.mdl")
 
 	SetTier(3)
-		ReuseLoadout("bw_blowtorch_t3", "Blowtorch T3", m * 5, "models/weapons/w_irifle.mdl")
+		ReuseLoadout("bw_blowtorch_t3", "Blowtorch T3", m * 2.5, "models/weapons/w_irifle.mdl")
 
 	SetTier(4)
-		ReuseLoadout("bw_blowtorch_t4", "Blowtorch T4", m * 250, "models/weapons/w_irifle.mdl")
+		ReuseLoadout("bw_blowtorch_t4", "Blowtorch T4", m * 5, "models/weapons/w_irifle.mdl")
 
 	SetTier(5)
-		ReuseLoadout("bw_blowtorch_t5", "Blowtorch T5", b * 5, "models/weapons/w_irifle.mdl")
+		ReuseLoadout("bw_blowtorch_t5", "Blowtorch T5", m * 10, "models/weapons/w_irifle.mdl")
 
 
 SetTier(nil)
@@ -293,9 +312,9 @@ SetType("Generators")
 		ReuseEntities("bw_gen_fusion", "Fusion Reactor", k * 500, "models/maxofs2d/thruster_propeller.mdl")
 
 	SetTier(3)
-		ReuseEntities("bw_gen_joke", "Numismatic Reactor", m * 150, "models/props_c17/cashregister01a.mdl")
-		ReuseEntities("bw_gen_hydroelectric", "Hydroelectric Reactor", m * 5, "models/props_wasteland/laundry_washer001a.mdl")
-		ReuseEntities("bw_gen_combustion", "Combustion Reactor", m * 500, "models/props_c17/substation_transformer01a.mdl")
+		--ReuseEntities("bw_gen_joke", "Numismatic Reactor", m * 150, "models/props_c17/cashregister01a.mdl")
+		ReuseEntities("bw_gen_hydroelectric", "Hydroelectric Reactor", m * 1.5, "models/props_wasteland/laundry_washer001a.mdl")
+		ReuseEntities("bw_gen_combustion", "Combustion Reactor", m * 20, "models/props_c17/substation_transformer01a.mdl")
 
 SetType("Batteries")
 	SetTier(1)
@@ -314,36 +333,48 @@ SetType("Dispensers")
 		--ReuseEntities("bw_vendingmachine", "Vending Machine", k * 20, "models/props_interiors/VendingMachineSoda01a.mdl")
 		ReuseEntities("bw_dispenser_health", "Health Dispenser", k * 25, "models/props_combine/health_charger001.mdl")
 		ReuseEntities("bw_dispenser_ammo", "Ammo Dispenser", k * 25, "models/props_lab/reciever_cart.mdl")
+		ReuseEntities("bw_dispenser_armor", "Armor Dispenser", k * 75, "models/props_combine/suit_charger001.mdl")
 
 	SetTier(2)
-		ReuseEntities("bw_dispenser_armor2", "Armor Dispenser T2", m * 15, "models/props_combine/suit_charger001.mdl")
-		ReuseEntities("bw_dispenser_ammo2", "Ammo Dispenser T2", m * 10, "models/props_lab/reciever_cart.mdl")
+		--ReuseEntities("bw_dispenser_armor2", "Armor Dispenser T2", m * 15, "models/props_combine/suit_charger001.mdl")
+		--ReuseEntities("bw_dispenser_ammo2", "Ammo Dispenser T2", m * 10, "models/props_lab/reciever_cart.mdl")
 
 
 
 
+SetType("[CW] Pistols")
+	SetTier(1)
+		ReuseLoadout("cw_makarov", 		"Makarov", 		5 * k)
+		ReuseLoadout("cw_m1911", 		"M1911", 		7.5 * k)
+		ReuseLoadout("cw_p99", 			"P99", 			10 * k)
+		ReuseLoadout("cw_mr96", 		"MR96", 		15 * k)
+		ReuseLoadout("cw_ragingbull", 	"Raging Bull",	20 * k)
+		ReuseLoadout("cw_deagle", 		"Deagle", 		30 * k)
 
-
-SetType("Pistols")
+SetType("[ACW] Pistols")
 
 	SetTier(1)
-		-- AddLoadout("arccw_makarov", "PM", 				15*k)
-		ReuseLoadout("arccw_fml_fas_ots33", "OTS 33", 		10*k)
-		ReuseLoadout("arccw_go_p2000", "P2000", 			12.5*k)
-		ReuseLoadout("arccw_go_usp", "USP", 				15*k)
-		ReuseLoadout("arccw_go_m9", "M9 Beretta", 			15*k)
-		ReuseLoadout("arccw_go_p250", "P250", 				20*k)
+		ReuseLoadout("arccw_go_usp", 	"USP", 		15 * k)
+		ReuseLoadout("arccw_go_p250", 	"P250", 	20 * k)
+		ReuseLoadout("arccw_go_tec9", 	"Tec-9", 	25 * k)
 
 	SetTier(2)
-		ReuseLoadout("arccw_go_fiveseven", "Five-seven", 	25*k)
-		ReuseLoadout("arccw_go_cz75", "CZ-75", 			25*k)
-		ReuseLoadout("arccw_go_tec9", "Tec-9", 			25*k)
-		ReuseLoadout("arccw_go_deagle", "Deagle", 			40*k)
-		ReuseLoadout("arccw_go_r8", "R8 Revolver", 		50*k)
+		ReuseLoadout("arccw_go_fiveseven", 	"Five-seven", 	30 * k)
+		ReuseLoadout("arccw_go_cz75", 		"CZ-75", 		40 * k)
+		ReuseLoadout("arccw_go_deagle", 	"Deagle", 		50 * k)
+		ReuseLoadout("arccw_go_r8",		 	"R8 Revolver",	50 * k)
 
 
 
-SetType("Shotguns")
+SetType("[CW] Shotguns")
+
+	SetTier(1)
+		ReuseLoadout("cw_shorty", 				"Shorty", 	15 * k)
+		ReuseLoadout("cw_m3super90", 			"M3", 		25 * k)
+		ReuseLoadout("cw_saiga12k_official", 	"Saiga", 	40 * k)
+		ReuseLoadout("cw_xm1014_official", 		"M4", 		50 * k)
+
+SetType("[ACW] Shotguns")
 
 	SetTier(1)
 		ReuseLoadout("arccw_db", "Sawn-off", 25 * k, "models/weapons/arccw/w_sawnoff.mdl")
@@ -351,17 +382,24 @@ SetType("Shotguns")
 		ReuseLoadout("arccw_dmi_r870_sg_elite", "Remington M870", 60 * k, nil)
 
 
+SetType("[CW] SMGs")
+	SetTier(1)
+		ReuseLoadout("cw_ump45", 		"UMP45", 	15*k)
+		ReuseLoadout("cw_mp9_official", "MP9", 		20*k)
+		ReuseLoadout("cw_mac11", 		"MAC11", 	20*k)
+		ReuseLoadout("cw_mp5", 			"MP5", 		30*k)
+		ReuseLoadout("cw_mp7_official", "MP7", 		40*k)
 
-SetType("SMGs")
+SetType("[ACW] SMGs")
 
 	SetTier(1)
-		ReuseLoadout("arccw_dmi_hk94a2_export", "HK94", 	15*k, nil)
-		ReuseLoadout("arccw_dmi_mkgs_banshee", "Banshee", 	20*k, nil) -- slightly better than hk94, still semi
-		ReuseLoadout("arccw_mw2_tmp", "TMP", 				30*k)
-		ReuseLoadout("arccw_mw2_miniuzi", "Mini Uzi", 		50*k)
-		ReuseLoadout("arccw_go_mp9", "MP9", 				50*k)
+		ReuseLoadout("arccw_dmi_mkgs_banshee", "[ACW] Banshee", 20*k)
+		ReuseLoadout("arccw_mw2_tmp", "TMP", 					30*k)
+		ReuseLoadout("arccw_mw2_miniuzi", "Mini Uzi", 			50*k)
+		ReuseLoadout("arccw_go_mp9", "MP9", 					50*k)
 
 	SetTier(2)
+		ReuseLoadout("arccw_go_mac10", "MAC10", 					75*k)
 		ReuseLoadout("arccw_fml_fas_mp5", "HK MP5K", 				75*k, "models/weapons/w_smg_mp5.mdl")
 		ReuseLoadout("arccw_go_mp5", "MP5A3", 						75*k)
 		ReuseLoadout("arccw_fml_fas_extra_comando9", "Commando 9", 	90*k)
@@ -370,7 +408,7 @@ SetType("SMGs")
 
 
 
-SetType("Assault Rifles")
+SetType("[ACW] Assault Rifles")
 
 	SetTier(1)
 		ReuseLoadout("arccw_go_ar15", "AR15", 35*k)
@@ -388,8 +426,29 @@ SetType("Assault Rifles")
 		ReuseLoadout("arccw_fml_fas_sg550", "SG550", 250*k, "models/weapons/arccw/fml/fas1/w_sg550.mdl")
 
 
+SetType("[CW] Assault Rifles")
 
-SetType("Sniper Rifles")
+	SetTier(1)
+		ReuseLoadout("cw_ak74", "AK74", 	40*k)
+		ReuseLoadout("cw_g36c", "G36C", 	50*k)
+		ReuseLoadout("cw_acr", "ACR", 		60*k)
+		ReuseLoadout("cw_l85a2", "L85A2", 	60*k)
+
+	SetTier(2)
+		ReuseLoadout("cw_vss", "VSS", 				75*k)
+		ReuseLoadout("cw_g3a3", "G3A3", 			75*k)
+		ReuseLoadout("cw_scarh", "SCAR-H", 			100*k)
+		ReuseLoadout("cw_tr09_tar21", "TAR-21", 	125*k)
+
+	SetTier(3)
+		ReuseLoadout("cw_famasg2_official", "FAMAS",250*k)
+		ReuseLoadout("cw_tr09_qbz97", "QBZ-97", 	250*k)
+		ReuseLoadout("cw_tr09_auga3", "AUG A3", 	300*k)
+		ReuseLoadout("cw_ar15", "AR15", 			350*k)
+
+
+
+SetType("[ACW] Sniper Rifles")
 
 	SetTier(1)
 		ReuseLoadout("arccw_contender", "G2 Contender", k * 50, "models/weapons/arccw/w_contender.mdl")
