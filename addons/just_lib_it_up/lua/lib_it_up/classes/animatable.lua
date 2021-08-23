@@ -9,7 +9,6 @@ LibItUp.Animatable = Animatable
 Animetable = Animatable
 
 AnimatableObjects = AnimatableObjects or setmetatable({}, {__mode = "v"}) -- dont keep references to prevent leaking
-AnimatableObjectsDirty = AnimatableObjectsDirty or false -- if true, next Think will sequentialize the table
 AnimatableIDs = AnimatableIDs or setmetatable({}, {__mode = "v"})
 
 
@@ -42,8 +41,9 @@ function AnimMeta:Remove()
 	local ans = self.Parent.m_AnimList
 	if ans[self.Key] == self then
 		ans[self.Key] = nil
-		self.Valid = false
 	end
+
+	self.Valid = false
 end
 
 function AnimMeta:IsValid()

@@ -1,5 +1,6 @@
---LibItUp.SetIncluded()
+LibItUp.SetIncluded()
 if not Emitter then include('emitter.lua') end
+
 
 --[[
 	Promise:
@@ -85,11 +86,11 @@ function Promise:_run(...)
 			end
 		else
 			if self._fail[key] then
-				local rets = { coroutine.resume(self._fail[key], self, ...) }
+				local rets = { coroutine.resume(self._fail[key], self, unpack(self._Rejected)) }
 				if not rets[1] then errer(rets[2]) return end
 
-				if self._branches[key] and table.maxn(rets) > 1 then
-					self._branches[key]:Reject(unpack(rets, 2))
+				if self._branches[key] then
+					self._branches[key]:Reject(unpack(self._Rejected))
 				end
 			end
 		end
@@ -118,13 +119,13 @@ function Promise:Resolve(x, ...)
 	end
 end
 
-function Promise:Reject(err)
+function Promise:Reject(...)
 	if self._Resolved then
 		error("Can't reject a resolved promise!")
 		return
 	end
 
-	self._Rejected = err
+	self._Rejected = {...}
 	return self:_run(err)
 end
 
@@ -243,6 +244,7 @@ end
 
 function net.StartPromise(name, ns)
 	local prom = Promise()
+	prom._isnet = name or "yes"
 
 	local uid = uid()
 	NetPromises[uid] = prom
