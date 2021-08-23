@@ -189,6 +189,8 @@ local function Resolve(res, path)
 	local pt = file.GetPathTable(path)
 	local fn = file.GetFile(path):gsub("%.lua", "")
 
+	if fn:match("^_") then return false, false end -- _stuff don't get included
+
 	local is_sv = table.HasValue(pt, "server") or table.HasValue(pt, "sv") or false
 	local is_cl = not is_sv and (table.HasValue(pt, "client") or table.HasValue(pt, "cl")) or false
 	local is_sh = table.HasValue(pt, "shared") or table.HasValue(pt, "sh") or false
