@@ -3,7 +3,7 @@ ENT.Base = "bw_base_moneyprinter"
 
 ENT.Skin = 0
 
-ENT.Capacity 		= 250000
+ENT.Capacity 		= 400000
 ENT.PrintInterval 	= 1
 ENT.PrintAmount		= 650
 ENT.PowerRequired = 75

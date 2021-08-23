@@ -5,7 +5,7 @@ ENT.Skin = 0
 
 ENT.PowerRequired = 200
 
-ENT.Capacity 		= 45000000
+ENT.Capacity 		= 55e6
 ENT.PrintInterval 	= 1
 ENT.PrintAmount		= 45000
 

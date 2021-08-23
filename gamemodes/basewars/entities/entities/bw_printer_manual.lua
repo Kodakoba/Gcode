@@ -5,10 +5,7 @@ ENT.Base = "bw_base_moneyprinter"
 
 ENT.Skin = 0
 
-ENT.Capacity        = 15000
-ENT.PrintAmount     = 15
-ENT.PowerRequired = 0
-ENT.PowerCapacity = 50
+ENT.Capacity        = 0
 ENT.PrintName = "Manual Printer"
 
 ENT.FontColor = Color(200, 117, 51)
@@ -16,7 +13,8 @@ ENT.BackColor = color_black
 ENT.IsValidRaidable = false
 ENT.Model = "models/grp/printers/printer.mdl"
 
-ENT.PrintAmount = 5
+ENT.PrintAmount = 0
+ENT.PrintAmount2 = 5
 ENT.MaxLevel = 5
 ENT.BypassMaster = true
 ENT.RebootTime = 0
@@ -47,7 +45,7 @@ function ENT:UseFunc(act, call)
 		end
 	end
 
-	local printed = self.PrintAmount * self:GetLevel()
+	local printed = self.PrintAmount2 * self:GetLevel()
 
 	act:GiveMoney(printed)
 	hook.Run("BaseWars_PlayerEmptyPrinter", call, self, printed)
