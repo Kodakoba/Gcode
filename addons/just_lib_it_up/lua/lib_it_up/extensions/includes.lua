@@ -311,17 +311,21 @@ function FInc.FromHere(name, realm, nofold, decider, cb)
 
 	local where = debug.getinfo(2).source
 
-	local search = "gamemodes/(%s/gamemode/.+)" --we'll need to capture [gamemodename/gamemode/*]
+	local search = "gamemodes/(%s/.+)" --we'll need to capture [gamemodename/gamemode/*]
 	search = search:format(gm)
-	
+
 	local gm_where = where:match(search)
 
 	if not gm_where then
 		where = where:match(".+/[lua]*/(.+)") 	--addonname/lua/(addon_folder/...)
 	else										--or addonname/lua/(addon_file.lua)
-		where = gm_where
+		if gm_where:match("/entities/") then
+			where = gm_where:match("/entities/(entities/.+)")
+		else
+			where = gm_where
+		end
 	end
-	
+
 	if not where or where:sub(-4) ~= ".lua" then
 		local err = "FInc.FromHere called from invalid path! %s\n"
 		err = err:format(where)
