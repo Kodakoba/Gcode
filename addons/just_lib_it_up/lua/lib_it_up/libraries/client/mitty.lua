@@ -503,7 +503,10 @@ do
 	d:SetRTPaint(rt)
 	d:SetRTUpdate(true)
 	d:On("CheckVis", "lmao", function(self, vis)
-		if LocalPlayer():GetPos():DistToSqr(self.PixPos or vector_origin) > 262144 then return end
+		if LocalPlayer():GetPos():DistToSqr(self.PixPos or vector_origin) > 262144 then
+			looked = false not_looked = CurTime()
+			return
+		end
 
 		looking = vis > 0
 
@@ -516,6 +519,8 @@ do
 		end
 
 		if not looking and CurTime() - not_looked > 5 and playTime == 0 and snds[numPlay] then
+
+			playTime = SysTime()
 
 			sound.PlayFile("data/hdl/mus/snail_" .. numPlay .. ".dat", "noplay 3d", function(ch, eid, en)
 				playTime = -1
