@@ -13,8 +13,10 @@ function bit.GetFirst(num, n)
 	return bit.rshift(num, math.max(len - n, 0))
 end
 
+local FUCK = math.log(2)
+
 function bit.GetLen(num)
-	return math.max(0, math.floor(math.log(math.abs(num), 2) + 1))
+	return math.max(0, math.floor( (math.log(num) / FUCK) + 1 ) )
 end
 
 -- returns whether every bit in ... is present in num
