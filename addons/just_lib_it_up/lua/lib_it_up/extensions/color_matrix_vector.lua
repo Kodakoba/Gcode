@@ -11,7 +11,9 @@ Colors.Red = Color(255, 70, 70)
 
 Colors.DarkerRed = Color(205, 40, 40)
 
-Colors.LighterGray = Color(75, 75, 75)
+
+Colors.LighterGray = Color(110, 110, 110)
+Colors.MediumGray = Color(85, 85, 85)
 Colors.LightGray = Color(65, 65, 65)
 Colors.Gray = Color(50, 50, 50)
 Colors.DarkGray = Color(35, 35, 35)

@@ -28,8 +28,6 @@ local function createFonts()
 	fonts.MoneyHeight = 28 * scale
 	fonts.VitalsNumberHeight = 12 + 16 * scale
 
-	print(scale)
-
 	surface.CreateFont("DarkHUD_Name", {
 		font = fonts.NameFont,
 		size = fonts.NameHeight
@@ -79,8 +77,6 @@ function DarkHUD.CreateVitals()
 	f.HeaderSize = 18
 
 	local hs = f.HeaderSize
-
-	f:CacheShadow(2, 8, 1)
 
 	local fw, fh
 
@@ -134,6 +130,7 @@ function DarkHUD.CreateVitals()
 
 		self:SetSize(fw, fh)
 		self:SetPos(dh.PaddingX, ScrH() - fh - dh.PaddingY)
+		self:CacheShadow(2, 8, 1)
 
 		local vlsH = math.max(barH, draw.GetFontHeight("DarkHUD_VitalsNumber")) * 2 + barPad
 		vls:SetSize(fw, vlsH)
@@ -251,7 +248,6 @@ function DarkHUD.CreateVitals()
 	end)
 
 	function f:PrePaint(w,h)
-
 		if #popups.Money > 0 then
 			popups:To("MoneyFrac", 1, 0.3, 0, 0.3)
 		else
@@ -385,7 +381,7 @@ function DarkHUD.CreateVitals()
 	vls.HPFrac = 0
 	vls.ARFrac = 0
 
-	local gray = Colors.LighterGray:Copy()
+	local gray = Colors.LightGray:Copy()
 	local hpCol = Color(240, 70, 70)
 	local arCol = Color(40, 120, 255)
 
