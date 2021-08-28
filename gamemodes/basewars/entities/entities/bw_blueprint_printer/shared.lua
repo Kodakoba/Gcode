@@ -34,12 +34,7 @@ function ENT:DerivedDataTables()
 
 	self:SetLevel(1)
 
-	if CLIENT then
-		self:NetworkVarNotify("Level", function(ent, name, old, new)
-			if name ~= "Level" then return end
-			ent:DoUpgrade(new)
-		end)
-	end
+	self:UseNetDTNotify()
 end
 
 function ENT:SHInit()
@@ -59,6 +54,10 @@ function ENT:SHInit()
 	self.Storage:On("CanMoveItem", "NoMoving", function(self, it)
 		return false
 	end)
+
+	self.Storage.ActionCanCrossInventoryFrom = true
+	self.Storage.ActionCanCrossInventoryTo = false
+	self.Storage.SupportsSplit = false
 
 	--timer.Simple(0, function() self:SetSubMaterial(1, "!BlueprintPrinterPaper") end)
 end

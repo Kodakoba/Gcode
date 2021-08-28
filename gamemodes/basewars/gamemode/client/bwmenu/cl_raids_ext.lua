@@ -285,23 +285,24 @@ local function createFactionlessOption(pnl, scr, num, ply)
 		end
 	end
 
-	local lvCol = (ply:GetLevel() > 75 and Colors.LighterGray or Colors.DarkerRed):Copy()
+	--local lvCol = (ply:GetLevel() > 75 and Colors.LighterGray or Colors.DarkerRed):Copy()
 
 	p:On("Paint", "DrawName", function(self, w, h)
 		local tW, tH = draw.SimpleText(nm, BaseWars.Menu.Fonts.MediumSmall, av.X + av:GetWide() + 6, av.Y, color_white, 0, 5)
 
 		if ply == LocalPlayer() then
-			draw.SimpleText("  (" .. Language.You:lower() .. "!)", BaseWars.Menu.Fonts.Small, av.X + av:GetWide() + 6 + tW, av.Y + tH * 0.875, Colors.LighterGray, 0, 4)
+			draw.SimpleText("  (" .. Language.You:lower() .. "!)", BaseWars.Menu.Fonts.Small,
+				av.X + av:GetWide() + 6 + tW, av.Y + tH * 0.875, Colors.LightGray, 0, 4)
 			return
 		end
 
 
 		local _, moneyH = draw.SimpleText(Language("Price", self.Money), BaseWars.Menu.Fonts.Small, av.X + av:GetWide() + 6,
-			av.Y + tH * 0.75 + 2, Colors.LighterGray, 0, 5)
+			av.Y + tH * 0.75 + 2, Colors.LightGray, 0, 5)
 
-		self:LerpColor(lvCol, self.Level > 75 and Colors.LighterGray or Colors.DarkerRed, 0.3, 0, 0.3)
+		--[[self:LerpColor(lvCol, self.Level > 75 and Colors.LighterGray or Colors.DarkerRed, 0.3, 0, 0.3)
 		draw.SimpleText(Language("Level", self.Level), BaseWars.Menu.Fonts.Small, av.X + av:GetWide() + 6,
-			av.Y + tH * 0.75 + 2 + moneyH * 0.875, lvCol, 0, 5)
+			av.Y + tH * 0.75 + 2 + moneyH * 0.875, lvCol, 0, 5)]]
 	end)
 
 	function p:Shuffle(newID, now)

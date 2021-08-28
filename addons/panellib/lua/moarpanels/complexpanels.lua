@@ -232,7 +232,7 @@ function flv_l:Init(w, h)
 
 				v.drawColor = LC(v.drawColor or tc, tc, 35)
 
-				draw.SimpleText(tx, "TW18", x, y, v.drawColor or Color(235, 235, 235), 1, 1)
+				draw.SimpleText(tx, "OS18", x, y, v.drawColor or Color(235, 235, 235), 1, 1)
 			end
 
 		end

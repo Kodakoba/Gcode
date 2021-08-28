@@ -19,6 +19,7 @@ function button:Init()
 	self.Color = Colors.Button:Copy()
 	self.drawColor = Colors.Button:Copy()
 	self.DisabledColor = Colors.Button:Copy()
+	-- self.Random = math.random()
 
 	vgui.GetControlTable("DButton").SetText(self, "")
 	self:SetFont("OS24")
@@ -212,10 +213,11 @@ function button:DrawButton(x, y, w, h)
 
 	local rad = self.RBRadius or 8
 
-	
+
 	local bg = self.drawColor or self.Color or RED
 
 	local rbinfo = self.RBEx
+	-- bg.a = 255 - math.abs(math.sin(CurTime()) * 250)
 
 	local w2, h2 = w, h
 	local x2, y2 = x, y
@@ -225,7 +227,7 @@ function button:DrawButton(x, y, w, h)
 		local bw, bh = self.Border.w or 2, self.Border.h or 2
 		if bw > 0 or bh > 0 then
 			dRB(rad, x, y, w, h, bordercol, rbinfo)
-			
+
 			w2, h2 = w - bw*2, h - bh*2
 			x2, y2 = x + bw, y + bh
 		end
@@ -281,9 +283,10 @@ local AYToTextY = {
 	[2] = 5
 }
 --mostly shadow logic and caller for Draw* functions
+
 function button:Draw(w, h)
 	local t = self:GetTable()
-	
+
 	local shadow = t.Shadow
 	local disabled = self:GetDisabled()
 
@@ -293,12 +296,13 @@ function button:Draw(w, h)
 
 	local spr = shadow.Spread or 0
 	local label = t.Label or nil
+	-- spr = self.Random > 0.5 and 1 or spr
 
 	if not t.NoDraw then
-		
+
 		if (t.DrawShadow and spr > 0) or t.AlwaysDrawShadow then
 			BSHADOWS.BeginShadow()
-			x, y = self:LocalToScreen(0,0)
+			x, y = self:LocalToScreen(0, 0)
 
 			if t.ActiveMatrix then
 				cam.PushModelMatrix(t.ActiveMatrix, true)
@@ -311,7 +315,9 @@ function button:Draw(w, h)
 		if (t.DrawShadow and spr > 0) or t.AlwaysDrawShadow then
 			local int = shadow.Intensity
 			local blur = shadow.Blur
-			local a = shadow.Alpha or 255
+			local a = shadow.Alpha or math.min(self:GetAlpha(),
+				self.drawColor and self.drawColor.a or 255,
+				self.Color.a)
 
 			if t.AlwaysDrawShadow then
 				--int = 3

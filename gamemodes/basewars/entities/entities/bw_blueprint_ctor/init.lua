@@ -24,18 +24,20 @@ end
 
 function ENT:Think()
 	local diff = CurTime() - self.LastThink
-	if diff < math.max(CurTime() - self:GetNextFinish(), 0.5) or not self:GetActive() then
-		return
+	local nextThink = self:GetActive() and math.min(self:GetNextFinish() - CurTime(), 0.5) or 0.5
+	if diff < nextThink or not self:GetActive() then
+		self:SetHasBP(self.Storage.Slots[1] ~= nil)
+		self:NextThink(CurTime() + nextThink)
+		return true
 	end
 
+	self:SetHasBP(self.Storage.Slots[1] ~= nil)
 	self.LastThink = CurTime()
 
 	if not self:IsPowered() then self:SetNextFinish(self:GetNextFinish() + diff) return end
 
-	print("print in", CurTime() - self:GetNextFinish())
 
 	if self:GetNextFinish() < CurTime() then
-		print("printing")
 		local itm = Inventory.Blueprints.Generate(self:GetBPTier(), self:GetBPType())
 		itm._CtorPrinted = true
 		self.Storage:InsertItem(itm):Then(function()
@@ -43,8 +45,7 @@ function ENT:Think()
 		end)
 
 		self:SetActive(false)
-		self:SetBPType("")
-		self:SetBPTier(0)
+		self:SetHasBP(true)
 	end
 
 end
@@ -53,7 +54,10 @@ function ENT:QueueCreation(tier, type)
 	self:SetActive(true)
 	self:SetBPType(type)
 	self:SetBPTier(tier)
-	self:SetNextFinish(CurTime() + 10 * tier / 10)
+	self:SetNextFinish( CurTime() + self:TimeForTier(tier) )
+	self:SetBPStart(CurTime())
+	self:SetHasBP(false)
+	self.LastThink = CurTime()
 end
 
 function ENT:Use(ply)
@@ -69,8 +73,8 @@ net.Receive("BlueprintConstructor", function(_, ply)
 
 	local ent = net.ReadEntity()
 
-	if not ent.BlueprintConstructor then return end
-	if not ply:IsSubscribed(ent) then return end
+	if not ent.BlueprintConstructor then print("not ctor") return end
+	if not ply:IsSubscribed(ent) then print("not sub") return end
 
 	local tier = net.ReadUInt(4)
 	local type = net.ReadString()
@@ -94,8 +98,8 @@ net.Receive("BlueprintConstructor", function(_, ply)
 
 	print("full cost is", full_cost)
 
-	local ok = Inventory.TakeItems(ply.Inventory.Backpack, "base_bp", full_cost)
-	if not ok then print("player didnt have enough bp's (" .. full_cost .. ")") return end
+	--local ok = Inventory.TakeItems(ply.Inventory.Backpack, "blank_bp", full_cost)
+	--if not ok then print("player didnt have enough bp's (" .. full_cost .. ")") return end
 
 	ent:QueueCreation(tier, type)
 	ply:UI(ply.Inventory.Backpack)

@@ -117,9 +117,12 @@ local mats = {	-- "random" will be rendered from an RT as soon as the menu opens
 }
 
 function ENT:CreateCreationCanvas(menu, inv) -- hm
+	local ent = self
 	local canv = vgui.Create("InvisPanel", menu)
 	canv:SetSize(menu:GetWide(), menu:GetTall() - menu.HeaderSize)
 	canv.Y = menu.HeaderSize
+
+	local cy = canv.Y
 
 	canv.Delta = DeltaText()
 
@@ -144,7 +147,6 @@ function ENT:CreateCreationCanvas(menu, inv) -- hm
 	delta:SetFont("MR36")
 
 	local bp_col = color_white:Copy()
-
 
 	function canv:UpdateCost()
 		local newcost = Inventory.Blueprints.GetCost(SelectedTier, SelectedType)
@@ -200,6 +202,13 @@ function ENT:CreateCreationCanvas(menu, inv) -- hm
 			self.Cost:Paint(w/2, h - 150)
 		end
 
+
+		local x, y = self:LocalToScreen(math.max(-self.X, 0), 0)
+		BSHADOWS.SetScissor(x, y, x + w, y + h)
+	end
+
+	function canv:PaintOver(w, h)
+		BSHADOWS.SetScissor()
 	end
 
 	local tw = icons:GetWide()
@@ -337,7 +346,7 @@ function ENT:CreateCreationCanvas(menu, inv) -- hm
 			canv:UpdateCost()
 		end
 
-		canv.HasBlueprintsAmt = Inventory.Util.GetItemCount(LocalPlayer().Inventory.Backpack, "base_bp")
+		canv.HasBlueprintsAmt = Inventory.Util.GetItemCount(LocalPlayer().Inventory.Backpack, "blank_bp")
 
 
 		canv.Cost = DeltaText():SetFont("MR48")
@@ -376,7 +385,7 @@ function ENT:CreateCreationCanvas(menu, inv) -- hm
 		btn.Label = "Begin!"
 
 		function btn:Think()
-			canv.HasBlueprintsAmt = Inventory.Util.GetItemCount(LocalPlayer().Inventory.Backpack, "base_bp")
+			canv.HasBlueprintsAmt = Inventory.Util.GetItemCount(LocalPlayer().Inventory.Backpack, "blank_bp")
 
 			local _, frag = canv.CostPiece:ReplaceText(haveind, format:format(canv.HasBlueprintsAmt))
 
@@ -392,18 +401,17 @@ function ENT:CreateCreationCanvas(menu, inv) -- hm
 				self:SetColor(50, 150, 250)
 				LC(canv.CostFragment.Color, Colors.Blue, 15)
 
-				self.Disabled = false
+				self:SetEnabled(true)
 			else
 				local grey = Colors.Button
 				self:SetColor()
 				LC(canv.CostFragment.Color, Colors.DarkerRed, 15)
 
-				self.Disabled = true
+				self:SetEnabled(false)
 			end
 		end
 
 		function btn:DoClick()
-			if self.Disabled then return end
 			net.Start("BlueprintConstructor")
 				net.WriteEntity(ent)
 				net.WriteUInt(SelectedTier, 4)
@@ -414,7 +422,6 @@ function ENT:CreateCreationCanvas(menu, inv) -- hm
 	end
 
 	function canv:MakeTier(tier)
-
 		if not cycled then
 			delta:CycleNext()
 			dtext.Fragments[ptier].Text = tier
@@ -435,6 +442,27 @@ function ENT:CreateCreationCanvas(menu, inv) -- hm
 		if not cType then -- this is the first time we're making tier info: create panels
 			self:GenerateDetails()
 		end
-
 	end
+
+	function canv:Disappear(now)
+		if now then
+			self:SetPos(-self:GetWide(), cy)
+			--self:Hide()
+		else
+			self:MoveTo(-self:GetWide(), cy, 0.4, 0, 0.3)
+			self:PopOutHide(0.4, 0.3)
+		end
+	end
+
+	function canv:Appear(now)
+		if now then
+			self:SetPos(0, cy)
+			self:Show()
+		else
+			self:MoveTo(0, cy, 0.4, 0, 0.3)
+			self:PopInShow(0.4)
+		end
+	end
+
+	return canv
 end

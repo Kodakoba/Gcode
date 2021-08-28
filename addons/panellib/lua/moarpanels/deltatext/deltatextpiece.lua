@@ -61,7 +61,7 @@ function pmeta:Initialize(par, tx, font, key, rep)
 	self.Offsets.XDisappear = 0
 	self.Offsets.YDisappear = 24
 
-	aninfo.Length = 0.3
+	aninfo.Length = 0.4
 	aninfo.Ease = 0.4
 	aninfo.Delay = 0
 	aninfo.AnimationFunction = function(self, len, delay, ease, onend, think) return NewAnimation(len, delay, ease, onend) end
@@ -101,6 +101,16 @@ function pmeta:StopAnimation(name)
 		return an
 	end
 
+end
+
+function pmeta:SetChangeDirection(up, str)
+	if up then
+		self:SetDropStrength(-str)
+		self:SetLiftStrength(str)
+	else
+		self:SetDropStrength(str)
+		self:SetLiftStrength(-str)
+	end
 end
 
 ChainAccessor(pmeta, "DropStrength", "DropStrength")
@@ -295,6 +305,7 @@ function pmeta:Paint(x, y)
 	if self.Fragmented then
 
 		local x = x
+		local totalW = 0
 		local lastw = 0
 
 		local lerpnext = 1
@@ -304,6 +315,7 @@ function pmeta:Paint(x, y)
 
 		for k,v in ipairs(self.Fragments) do
 			local font = v.Font or font -- fragment font takes priority over piece font
+			local nxt = self.Fragments[k + 1]
 
 			local alignX = v.AlignX or parent.AlignX or 0
 			alignX = alignX / 2
@@ -315,23 +327,27 @@ function pmeta:Paint(x, y)
 			local tw, th = surface.GetTextSize(v.Text)
 			totalHeight = math.max(totalHeight, th)
 
+			local twfr = v.LerpWidth or 1
+
 			if v.LerpNext then --if lerpnext is active then this fragment's width will be calculated by the next fragment
 				lerpnext = Ease(v.LerpNext, v.Ease or 0.6)
-				lerpfrom = tw * alignX
+				lerpfrom = tw * alignX * twfr
 			else
-				x = x - Lerp(lerpnext, lerpfrom, tw * alignX)
+				local addW = Lerp(lerpnext, lerpfrom, tw * alignX * twfr)
+				x = x - addW
+				totalW = totalW + addW
 				lerpnext = 1
 				lerpfrom = 0
 			end
 
-			lastw = v.Fading and tw
+			lastw = v.Fading and tw * twfr
 
 		end
 
 		lastw = 0
 
 		for k,v in ipairs(self.Fragments) do
-			if v.Text == "" then continue end
+			local doDraw = v.Text ~= ""
 
 			--if fragment doesn't have a custom font, and current font is not default font (for example, from last frag)
 			--or fragment has a custom font and it's not the same one as the current,
@@ -350,7 +366,7 @@ function pmeta:Paint(x, y)
 
 			--print(v.Color)
 			local alpha = math.min(v.Alpha or 255, self.Alpha, v.Color and v.Color.a or 0)
-			if alpha == 0 then goto textCalc end
+			if alpha == 0 or not doDraw then goto textCalc end
 
 			do
 				local oldA = v.Color.a --we only want to change the alpha of the color temporarily, in case there's the same color being used for multiple fragments
@@ -378,6 +394,9 @@ function pmeta:Paint(x, y)
 			-- surface.DrawOutlinedRect(tX, tY, tw, th)
 			::textCalc::
 
+			local twfr = v.LerpWidth or 1
+			tw = tw * twfr
+
 			if not v.RewindTextPos then
 				local nxt = self.Fragments[k + 1]
 				if v.LerpFromLast then
@@ -392,7 +411,7 @@ function pmeta:Paint(x, y)
 			lastw = v.Fading and tw
 		end
 
-		return
+		return totalW
 	end
 
 	local tw, th = surface.GetTextSize(self.Text)
@@ -407,6 +426,7 @@ function pmeta:Paint(x, y)
 
 	self:DrawText(tX, tY, self.Color, self.Text)
 
+	return tw
 end
 
 function pmeta:GetText(ignore_fading)
@@ -669,6 +689,7 @@ function pmeta:ReplaceText(num, rep, onend, nolerp, anim)
 	newfrag.AlignX = frag.AlignX
 	newfrag.AlignY = frag.AlignY
 	newfrag.Color = frag.Color
+	newfrag.RewindTextPos = true
 
 	self:StopAnimation(hex(frag) .. "AddText")	--in case it existed
 
@@ -676,11 +697,13 @@ function pmeta:ReplaceText(num, rep, onend, nolerp, anim)
 
 	local a = frag.Alpha
 	frag.LerpNext = 0
-	frag.RewindTextPos = true
+	--frag.RewindTextPos = true
+	--frag.LerpFromLast = 1
 
 	self:CreateAlphaAnimation(hex(frag) .. "SubText", function(fr)
 		frag.RewindTextPos = true
 		frag.LerpFromLast = 1
+		frag.LerpNext = fr
 
 		frag.OffsetY = nolerp and dropstr or fr * dropstr
 		frag.Alpha = nolerp and 0 or a - fr*a
@@ -689,8 +712,6 @@ function pmeta:ReplaceText(num, rep, onend, nolerp, anim)
 		newfrag.LerpFromLast = fr --doing it in the fading _out_ looks better than doing it on fading _in_
 
 	end, function()
-
-		local found = false
 
 		for k,v in pairs(self.Fragments) do 	--this is done like this because the keys might change by the time the animation finishes
 			if v == frag then
@@ -701,12 +722,18 @@ function pmeta:ReplaceText(num, rep, onend, nolerp, anim)
 
 		newfrag.Finished = true
 		--newfrag.LerpFromLast = 0
-	end, settings.Length, settings.Delay)
+	end, nolerp and 0 or settings.Length, nolerp and 0 or settings.Delay)
 
 	local appstr = self:GetLiftStrength()
 
+	--newfrag.LerpWidth = 0
+	--newfrag.LerpNext = 1
+
 	self:CreateAlphaAnimation(hex(newfrag) .. "AddText", function(fr)
 		newfrag.RewindTextPos = false
+		--newfrag.LerpNext = 1 - fr
+		--newfrag.LerpWidth = fr
+		--[[newfrag.LerpMinWidth = frag]]
 
 		newfrag.OffsetY = nolerp and 0 or appstr - (fr * appstr)
 		newfrag.Alpha = nolerp and 255 or fr * 255
@@ -714,9 +741,7 @@ function pmeta:ReplaceText(num, rep, onend, nolerp, anim)
 
 	function()
 		if onend then onend() end
-	end,
-	settings.Length,
-	settings.Delay)	--delay
+	end, nolerp and 0 or settings.Length, nolerp and 0 or settings.Delay)
 
 	local inswhere = num+1
 

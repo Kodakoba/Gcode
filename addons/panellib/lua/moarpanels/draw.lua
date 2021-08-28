@@ -89,6 +89,8 @@ function surface.CharSizes(tx, font, unicode)
 	local cache = sizes[font] or {}
 	sizes[font] = cache
 
+	if #tx == 0 then return {} end
+
 	if unicode then
 		local codes = {utf8.codepoint(tx, 1, #tx)}
 		for i=1, #codes do
@@ -1097,7 +1099,7 @@ local function CreateRT(name, w, h)
 		w,
 		h,
 		RT_SIZE_OFFSCREEN,			--the wiki claims rendertargets change sizes to powers of 2 and clamp it to screen size; lets prevent that
-		MATERIAL_RT_DEPTH_SHARED, 	--idfk?
+		MATERIAL_RT_DEPTH_SEPARATE, 	--idfk?
 		2, 	--texture filtering, the enum doesn't work..?
 		CREATERENDERTARGETFLAGS_HDR,--wtf
 		IMAGE_FORMAT_RGBA8888		--huh

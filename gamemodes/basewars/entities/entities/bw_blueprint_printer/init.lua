@@ -8,6 +8,7 @@ util.AddNetworkString("BlueprintPrinter")
 function ENT:Init(me)
 	self.LastPrint = CurTime()
 	self.LastThink = CurTime()
+	self:SetNextFinish(self.LastPrint + self.PrintTime)
 end
 
 function ENT:SendInfo(ply)
@@ -30,9 +31,13 @@ end
 
 function ENT:Think()
 	local diff = CurTime() - self.LastThink
+	if diff < math.max(CurTime() - self:GetNextFinish(), 0.5) then
+		return
+	end
+
 	self.LastThink = CurTime()
 
-	if not self:IsPowered() then self.LastPrint = self.LastPrint + diff return end
+	if not self:IsPowered() then self:SetNextFinish(self:GetNextFinish() + diff) return end
 
 	if self:GetJammed() then
 		if self:IsFull() then
@@ -47,7 +52,7 @@ function ENT:Think()
 	if self:GetNextFinish() < CurTime() then
 		if self:IsFull() then self:SetJammed(true) return end
 
-		self.Storage:NewItem("base_bp", function()
+		self.Storage:NewItem("blank_bp", function()
 			self:SendInfo()
 		end, nil, nil, nil, true)
 

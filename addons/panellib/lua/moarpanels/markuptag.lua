@@ -1,5 +1,6 @@
 setfenv(1, _G)
-MarkupTags = Class:callable()
+MarkupTags = MarkupTags or Class:callable()
+MarkupTag = MarkupTags
 local tag = MarkupTags
 tag.IsTag = true
 
@@ -52,7 +53,15 @@ function tag:Initialize(name, ...)
 
 			local typ = btarg.type
 
-			local ret = MarkupTagArgTypes[typ](arg) or btarg.default
+			local ret
+
+			if MarkupTagArgTypes[typ] then
+				ret = MarkupTagArgTypes[typ](arg) or btarg.default
+			elseif typ == "any" then
+				ret = arg
+			else
+				errorf("unknown arg type: %s", typ)
+			end
 
 			local min = btarg.min
 			local max = btarg.max
@@ -220,29 +229,18 @@ ChainAccessor(buf, "TextColor", "TextColor")
 
 ChainAccessor(buf, "BackgroundColor", "TextColor")
 
-local fontheights = {}
-
-local t = {}
-local tlen = 0
-for i=32, 127 do
-	tlen = tlen + 1
-	t[tlen] = i
-end
-
-local alphabet = string.char(unpack(t)) --wtf
-
 function buf:Initialize(w)
 	self.x = 0
 	self.y = 0
 
 	self.width = w
+	self:SetAlignment(0)
 end
 
 function buf:SetFont(font)
 	if font == self.Font then return end
 
-	surface.SetFont(font)
-	local h = fontheights[font] or select(2, surface.GetTextSize(alphabet)) --get da highest char
+	local h = draw.GetFontHeight(font)
 	self:SetTextHeight(h)
 	self.Font = font
 	return self
@@ -281,6 +279,19 @@ function buf:AllocateSpace(w, h)
 	end
 end
 
+function buf:Newline(times)
+	times = times or 1
+	local y = times * self:GetTextHeight()
+	self:Offset(0, y)
+	return y
+end
+
+ChainAccessor(buf, "Alignment", "Alignment")
+
+function buf:SetAlignment(n)
+	self.Alignment = n
+end
+
 function buf:WrapText(tx, width, font)
 	if not self:GetTextHeight() then
 		error("please :SetFont() on the buffer before wrapping text")
@@ -288,14 +299,14 @@ function buf:WrapText(tx, width, font)
 
 	font = font or self:GetFont()
 
-	local fontcache = self._wrapCache[font] or {}
+	local fontcache = self._wrapCache[font] or WeakTable("kv")
 	self._wrapCache[font] = fontcache
 
-	local key = self.x .. ":" .. width .. ":" .. tx
+	local key = ("%d:%d:%d:%p"):format(self.x, width, self.Alignment, tx)
 	local txcache = fontcache[key]
 
 	if txcache then
-		local tw, th = txcache[2], (txcache[3] + 1) * self:GetTextHeight()
+		local tw = txcache[2]
 
 		local offX = 0
 
@@ -305,8 +316,9 @@ function buf:WrapText(tx, width, font)
 			offX = tw
 		end
 
-		self:Offset(offX, th - self:GetTextHeight())
-		return txcache[1], tw, th
+		th = self:Newline(txcache[3])
+		self:Offset(offX)
+		return txcache[1], tw, th + self:GetTextHeight(), txcache[3]
 	else
 
 		local wrapped, cur_wid, didwrap = string.WordWrap2(tx, {width - self.x, width}, font)
@@ -320,12 +332,13 @@ function buf:WrapText(tx, width, font)
 		end
 
 		local _, lines = wrapped:gsub("\n", "")
-		local th = (lines + 1) * self:GetTextHeight()
-		self:Offset(offX, th - self:GetTextHeight())
+
+		local th = self:Newline(lines)
+		self:Offset(offX)
 
 		fontcache[key] = {wrapped, cur_wid, lines, didwrap}
 
-		return wrapped, cur_wid, th
+		return wrapped, cur_wid, th + self:GetTextHeight(), lines
 	end
 
 end
@@ -406,24 +419,34 @@ hsv:SetEnd(function(tag, buf, args)
 	buf:SetTextColor(tag.curColor)
 end)
 
+
+
 local col = MarkupBaseTag("color")
 
-col:AddArg("number", 255)	--R
+col:AddArg("any", 255)	--R
 col:AddArg("number", 255)	--G
 col:AddArg("number", 255)	--B
 
 col:SetStart(function(tag, buf, args)
 	local cur = buf:GetTextColor()
 
+	local col = IsColor(args[1]) and args[1]
+
 	tag.curColor = tag.curColor or {}
 	tag.curColor[1], tag.curColor[2], tag.curColor[3] = cur:Unpack()
 
-	cur:Set(args[1], args[2], args[3])
+	if col then
+		cur:Set(col)
+	else
+		cur:Set(args[1], args[2], args[3])
+	end
 end)
 
 col:SetEnd(function(tag, buf, args)
 	buf:GetTextColor():Set(tag.curColor[1], tag.curColor[2], tag.curColor[3])
 end)
+
+
 
 local chtr = MarkupBaseTag("chartranslate")
 
@@ -435,14 +458,32 @@ chtr:SetStart(function(tag, buf, args)
 
 	mtrx2:Set(mtrx)
 	mtrx2:Translate(vec)
-	cam.PushModelMatrix(mtrx2)
+	cam.PushModelMatrix(mtrx2, true)
 end)
 
 chtr:SetEnd(function(tag, buf, args)
-	cam.PopModelMatrix(mtrx2)
+	cam.PopModelMatrix()
 end)
 
 chtr.ExecutePerChar = true
+
+local chhsv = MarkupBaseTag("charhsv")
+
+chhsv:AddArg("number", 0)	--H
+chhsv:AddArg("number", 1)	--S
+chhsv:AddArg("number", 1)	--V
+
+chhsv:SetStart(function(tag, buf, args)
+	local cur = buf:GetTextColor()
+	tag.curColor = cur
+	local col = HSVToColor(args[1] % 360, args[2], args[3])
+	setmetatable(col, COLOR)
+	buf:SetTextColor(col)
+end)
+
+chhsv:SetEnd(function(tag, buf, args)
+	buf:SetTextColor(tag.curColor)
+end)
 
 local emote = MarkupBaseTag("emote")
 

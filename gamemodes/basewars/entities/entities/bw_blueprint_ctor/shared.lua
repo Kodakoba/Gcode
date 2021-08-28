@@ -13,7 +13,10 @@ ENT.BlueprintConstructor = true
 
 function ENT:DerivedDataTables()
 	self:NetworkVar("Float", 1, "NextFinish")
+	self:NetworkVar("Float", 2, "BPStart")
+
 	self:NetworkVar("Bool", 2, "Active")
+	self:NetworkVar("Bool", 3, "HasBP") -- use DTs to not make race conditions (inv nw vs. active)
 
 	self:NetworkVar("Int", 2, "BPTier")
 	self:NetworkVar("String", 0, "BPType")
@@ -34,9 +37,18 @@ function ENT:SHInit()
 		return false
 	end)
 
+	self.Storage:On("CrossInventoryMovedFrom", "ResetStates", function(str, itm, inv)
+		self:SetActive(false)
+		self:SetHasBP(false)
+	end)
+
 	self.Storage.ActionCanCrossInventoryFrom = true
 	self.Storage.ActionCanCrossInventoryTo = false
 	self.Storage.SupportsSplit = false
+end
+
+function ENT:TimeForTier(t)
+	return 2 * (2 * t)
 end
 
 local cl = {

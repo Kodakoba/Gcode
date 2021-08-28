@@ -39,7 +39,33 @@ function ENT:OpenMenu()
 	inv:MoveRightOf(menu, 8)
 	inv.Y = menu.Y
 
-	self:CreateCreationCanvas(menu, inv)
+	local make = self:CreateCreationCanvas(menu, inv)
+	local claim = self:CreateClaimCanvas(menu, inv)
+
+	local lastState
+
+	local function selCanv(now)
+		local active = ent:GetActive() or ent.Storage.Slots[1] ~= nil or ent:GetHasBP()
+		local should = lastState ~= active
+		lastState = active
+
+		if not should then return end
+
+		if active then
+			make:Disappear(now)
+			claim:Appear(now)
+		else
+			make:Appear(now)
+			claim:Disappear(now)
+		end
+	end
+
+	selCanv(true)
+
+	function menu:Think()
+		selCanv()
+	end
+
 end
 
 function ENT:Draw()

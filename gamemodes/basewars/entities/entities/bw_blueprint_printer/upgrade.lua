@@ -61,6 +61,7 @@ function ENT:DoUpgrade(lv)
 end
 
 function ENT:RequestUpgrade(ply)
+	print("requesting", ply)
 	if not ply then return end
 
 	local ow = self:BW_GetOwner()
