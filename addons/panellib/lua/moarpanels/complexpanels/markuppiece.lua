@@ -4,6 +4,7 @@ local PANEL = {}
 
 function PANEL:Init()
 	self.Elements = {}
+	self.Lines = {}			-- [lineNum] = x
 
 	self.DrawQueue = {}
 	self.Texts = {}
@@ -85,11 +86,19 @@ function PANEL:CalculateTextSize(dat)
 	return self.Buffer:WrapText(dat.text, self:GetWide(), dat.font or self.Font)
 end
 
+function PANEL:SetAlignment(al)
+	self.Buffer:SetAlignment(al)
+end
+
+function PANEL:GetAlignment(al)
+	return self.Buffer:GetAlignment()
+end
+
 function PANEL:Recalculate()
 	table.Empty(self.DrawQueue)
 	table.Empty(self.Texts)
 
-	local maxH = self:GetTall() - 1
+	local maxH = 0 --self:GetTall() - 1
 	local buf = self.Buffer
 	buf:Reset()
 
@@ -99,23 +108,28 @@ function PANEL:Recalculate()
 	surface.SetFont(self.Font)
 	local ownWide = self:GetWide()
 
+	local curLineWidth = 0
+	local curLine = 1
+	local align = self:GetAlignment()
+
 	for k,v in ipairs(self.Elements) do
 
 		if v.isText then
 			local off = v.offset or 0
-			local algn = v.align or 0
 
 			buf.x = buf.x + off
+
+			-- im not sure this is supposed to happen?
 			if buf.x > ownWide then
 				buf.x = 0
 				buf.y = buf.y + buf:GetTextHeight()
 			end
+
 			local curX, curY = buf.x, buf.y
-			print('calctextsize', v, v.text, v.isText)
-			local wtx, tw, th = self:CalculateTextSize(v)
-			print("text height", th, v.text)
+			local wrapped, tw, th, times = self:CalculateTextSize(v)
+
 			local t = table.Copy(v)
-			t.text = wtx
+			t.text = wrapped
 
 			t.x, t.y = curX, curY
 			t.endX, t.endY = buf.x, buf.y
@@ -123,10 +137,21 @@ function PANEL:Recalculate()
 			t.w, t.h = tw, th
 
 			local segs = t.segments
+			v.drawInfo = t
+
 			table.Empty(segs)
 
-			for s, line in eachNewline(wtx) do
+			for s, line in eachNewline(wrapped) do
 				local tw, th = surface.GetTextSize(s)
+
+				if line > 1 then
+					self.Lines[curLine] = ownWide * (align / 2) - curLineWidth * (align / 2)
+					curLine = curLine + 1
+					curLineWidth = 0
+					buf.x = tw
+				end
+
+				curLineWidth = curLineWidth + tw
 
 				segs[#segs + 1] = {
 					w = tw,
@@ -134,17 +159,18 @@ function PANEL:Recalculate()
 
 					x = (line == 1 and curX) or 0,
 					y = curY + (line - 1) * th,
+					line = curLine,
 
 					text = s,
 
+					-- used for selection logic
 					sizes = surface.CharSizes(s, self.Font, true),
-
 					selStart = nil, selEnd = nil
 				}
+
 			end
-			
+
 			maxH = math.max(maxH, t.y + t.h)
-			print(t.h, t.y, maxH, wtx)
 			self.DrawQueue[#self.DrawQueue + 1] = t
 			self.Texts[#self.Texts + 1] = t
 		elseif ispanel(v) then
@@ -163,6 +189,29 @@ function PANEL:Recalculate()
 			self.DrawQueue[#self.DrawQueue + 1] = v --no custom handler; just add it
 		end
 
+	end
+
+	self.Lines[curLine] = ownWide * (align / 2) - curLineWidth * (align / 2)
+
+	if align > 0 then
+		-- second pass; change X of text segments to align with the whole line
+
+		local lastW = 0
+		local lastLine = 0
+
+		for k,v in ipairs(self.Texts) do
+			if not v.isText then continue end
+
+			for k,v in ipairs(v.segments) do
+				if lastLine ~= v.line then
+					lastW = 0
+					lastLine = v.line
+				end
+
+				v.x = self.Lines[v.line] + lastW
+				lastW = lastW + v.w
+			end
+		end
 	end
 
 	local res = self:Emit("RecalculateHeight", buf, maxH)
@@ -350,12 +399,8 @@ end
 
 
 function PANEL:PaintText(dat, buf)
-	--surface.SetFont(buf:GetFont())
-	--surface.SetTextColor(buf:GetTextColor():Unpack())
-
 	surface.SetTextPos(dat.x, dat.y)
 
-	--print(dat.text, "was:", buf:GetPos())
 	if #self.ExecutePerChar > 0 then
 
 		for i=1, #dat.text do
@@ -372,9 +417,7 @@ function PANEL:PaintText(dat, buf)
 	else
 		surface.DrawText(dat.text)
 	end
-	
-	--print(dat.text, "became:", buf:GetPos())
-	--surface.DrawNewlined(dat.text, 0, dat.y, dat.x, dat.y)
+
 end
 
 function PANEL:ExecuteTag(tag, buf, ...)
@@ -385,7 +428,49 @@ function PANEL:OnKeyCodePressed()
 
 end
 
+function PANEL:_PaintTextElement(w, h, buf, el)
+	buf:SetPos(el.x, el.y)
+	buf:SetFont(el.font)
+	surface.SetFont(buf:GetFont())
+	surface.SetTextColor(buf:GetTextColor():Unpack())
+	--print("drawing text", el.text)
+	--self:PaintText(el, buf)
+
+	for k, seg in ipairs(el.segments) do
+		if not self:IsTextVisible(seg) then continue end
+		--surface.SetDrawColor(color_white)
+		--surface.DrawOutlinedRect(v.x, v.y, v.w, v.h)
+		self:PaintText(seg, buf)
+		if seg.selStart then
+			surface.SetDrawColor(Colors.Red)
+			local sx = seg.x
+			for i=1, seg.selStart-1 do
+				sx = sx + seg.sizes[i]
+			end
+
+			local ex = 0
+
+			for i=seg.selStart, seg.selEnd do
+				if not seg.sizes[i] then continue end
+				ex = ex + seg.sizes[i]
+			end
+
+			surface.DrawOutlinedRect(sx, seg.y, ex, seg.h)
+		end
+	end
+
+	buf:SetPos(el.endX, el.endY)
+end
+
 function PANEL:Paint(w, h)
+	--draw.EnableFilters()
+	local sx, sy = self:LocalToScreen(0, 0)
+	render.SetScissorRect(sx, sy, sx + w, sy + h, true)
+	local clip
+	if self.IgnoreVisibility then
+		clip = DisableClipping(true)
+	end
+
 	self:Emit("PrePaint", w, h)
 	local buf = self.Buffer
 	buf:Reset()
@@ -395,36 +480,7 @@ function PANEL:Paint(w, h)
 	for k,v in ipairs(self.DrawQueue) do
 
 		if v.isText then
-			buf:SetPos(v.x, v.y)
-			buf:SetFont(v.font)
-			surface.SetFont(buf:GetFont())
-			surface.SetTextColor(buf:GetTextColor():Unpack())
-			--print("drawing text", v.text)
-			--self:PaintText(v, buf)
-			for k,v in ipairs(v.segments) do
-				if not self:IsTextVisible(v) then continue end
-				--surface.SetDrawColor(color_white)
-				--surface.DrawOutlinedRect(v.x, v.y, v.w, v.h)
-				self:PaintText(v, buf)
-				if v.selStart then
-					surface.SetDrawColor(Colors.Red)
-					local sx = v.x
-					for i=1, v.selStart-1 do
-						sx = sx + v.sizes[i]
-					end
-
-					local ex = 0
-
-					for i=v.selStart, v.selEnd do
-						if not v.sizes[i] then continue end
-						ex = ex + v.sizes[i]
-					end
-
-					surface.DrawOutlinedRect(sx, v.y, ex, v.h)
-				end
-			end
-
-			buf:SetPos(v.endX, v.endY)
+			self:_PaintTextElement(w, h, buf, v)
 		elseif IsTag(v) then
 			local base = v:GetBaseTag()
 			if base and not base.ExecutePerChar then self:ExecuteTag(v, buf) end
@@ -449,16 +505,26 @@ function PANEL:Paint(w, h)
 		if not v.Ended and not v.HasEnder and not v.ender then v:End(buf) end
 	end
 
+	table.Empty(self.ActiveTags)
 	table.Empty(self.ExecutePerChar)
 
 	self.LastFont = ""
 	self:Emit("PostPaint", w, h)
+
+	if self.IgnoreVisibility then
+		DisableClipping(clip)
+	end
+end
+
+function PANEL:PaintOver()
+	--draw.DisableFilters()
+	render.SetScissorRect(0, 0, 0, 0, false)
 end
 
 function PANEL:PerformLayout()
 	self:Recalculate()
 	self:Emit("Layout")
-	self:InvalidateParent(true)	-- cancer
+	self:InvalidateParent(true)	-- i don't know why this is here?
 	self:RecacheBounds()
 end
 
@@ -504,7 +570,7 @@ end
 function PANEL:AddText(tx, offset, align)
 	if not tx or not tostring(tx) then return end
 
-	self.Elements[#self.Elements + 1] = {
+	local t = {
 		isText = true,
 		text = tx,
 		font = self.Font,
@@ -512,8 +578,10 @@ function PANEL:AddText(tx, offset, align)
 		align = align,
 		segments = {}
 	}
+
+	self.Elements[#self.Elements + 1] = t
 	self:InvalidateLayout()
-	return self
+	return t
 end
 
 function PANEL:AddObject(obj) 					--no guarantees it will work :)
