@@ -415,10 +415,12 @@ function meta:OnStartDragging()
 
 	end
 
+	if self.OnDragStart then self:OnDragStart() end
 end
 
 function meta:OnStopDragging()
 	self.Dragging = false
+	if self.OnDragStop then self:OnDragStop() end
 end
 
 function meta:DragMousePress( mcode )

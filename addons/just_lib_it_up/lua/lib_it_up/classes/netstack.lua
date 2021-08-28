@@ -33,7 +33,7 @@ local function determineSize(typ, ...)
 	if typ == "UInt" or typ == "Int" then
 		return select(2, ...)
 	elseif typ == "String" then
-		return #(select(1, ...)) * 8 + 8 -- + 8 = null byte
+		return #(select(1, ...) or "") * 8 + 8 -- + 8 = null byte
 	elseif typ == "Data" then
 		return select(2, ...) * 8
 	else

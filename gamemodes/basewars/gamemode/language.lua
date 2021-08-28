@@ -78,6 +78,10 @@ Language.ChargesCounter = "Charges: %s"
 Language.NextCharge = "next charge in %.1fs."
 Language.StimsLevel = "stims are only generated at level 2+"
 
+Language.BPNextPrint = "Next print in:"
+Language.BPNextPrintTime = "%.1fs."
+Language.BPNextPrintNextTime = "LV%d.: %.1fs."
+
 setmetatable(Language, Language)
 
 LocalString = Object:callable()

@@ -276,10 +276,12 @@ function DeltaText:Paint(x, y)
 	self.TextWidth = tw
 
 	local offx = -self.Alignment / 2 * tw
+	local maxW = 0
 
 	for k, tp in pairs(self.Active) do
 		if not tp.Paint then continue end
-		tp:Paint(x + offx, y)
+		local pw = tp:Paint(x + offx, y)
+		maxW = math.max(maxW, pw)
 	end
 
 	local timing = self.Timings[self.LastActive + 1]
@@ -294,4 +296,6 @@ function DeltaText:Paint(x, y)
 			--self:ActivateElement(timing.key)
 		end
 	end
+
+	return maxW
 end

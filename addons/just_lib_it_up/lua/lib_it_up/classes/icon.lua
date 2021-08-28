@@ -132,14 +132,26 @@ function Icon:_WHPreseveRatio(w, h)
 	if info then
 		local mw, mh = info.w, info.h
 		local scale = 1
-		if w then
+		if w and not h then
 			scale = w / mw
-		else
+		elseif h and not w then
 			scale = h / mh
+		else
+			local min = math.min(w, h)
+			scale = min / (min == w and mw or mh)
 		end
 
 		return mw * scale, mh * scale
 	end
+end
+
+function Icon:RatioSize(w, h)
+	local sw, sh = self:GetSize()
+	w = w or sw
+	h = h or sh
+
+	local nw, nh = self:_WHPreseveRatio(w, h)
+	return nw, nh
 end
 
 function Icon:Paint(x, y, w, h, rot)
@@ -151,12 +163,13 @@ function Icon:Paint(x, y, w, h, rot)
 
 	rot = rot or self.Rotation
 
-	if (w and not h) or (h and not w) and self:GetPreserveRatio() then
+	if (w or h) and self:GetPreserveRatio() then
 		w, h = self:_WHPreseveRatio(w, h)
 	end
 
 	w = w or self.W
 	h = h or self.H
+
 
 	if not w and not h then
 		error("Width and Height not given!")

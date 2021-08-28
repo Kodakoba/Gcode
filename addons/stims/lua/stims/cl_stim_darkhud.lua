@@ -21,7 +21,6 @@ local function hookDarkHUD()
 	local size = 48 * scale
 
 	handle:SetGenerator(function(self, w, h)
-		print("generator:", w, size)
 		local ratio = w / size
 
 		surface.SetDrawColor(255, 255, 255)

@@ -24,11 +24,34 @@ local cachetbl = {}
 local cachenums = {}
 
 
+--[[
 function eachNewline(s) --meant to be used as 'for s in eachNewline(tx) do...'
-	local iter, line = (s:gmatch("[^\r\n]+")), 0
+	local iter, line = (s:gmatch("[^|]*")), 0
 	return function()
 		line = line + 1
 		return iter(), line
+	end
+end
+]]
+
+function eachNewline(s) --meant to be used as 'for s in eachNewline(tx) do...'
+	local ps = 1
+	local st, e
+	local i = 0
+
+	return function()
+		st, e = s:find("[\r\n]", ps)
+		i = i + 1
+
+		if st then
+			local ret = s:sub(ps, st - 1)
+			ps = e + 1
+			return ret, i
+		elseif ps < #s then
+			local ret = s:sub(ps)
+			ps = #s
+			return ret, i
+		end
 	end
 end
 
@@ -177,7 +200,7 @@ local function WrapByLetters(txt, curwid, fullwid, wids, line)
 
 		if charw > curwid then
 
-			local shoulddash = ret:sub(#ret):match("[^%s%c]") --not a space or control char; need to dash it
+			local shoulddash = ret:sub(-1):match("%a") -- only letters need to be hyphenated
 			ret = ret .. (shoulddash and "-" or "") .. "\n" .. char
 
 			if wids then
@@ -207,7 +230,7 @@ local function WrapWord(word, curwid, fullwid, widtbl, line, first)
 
 	local wrapped = false --did word wrap?
 
-	if curwid + tw > fullwid - 8 then --have to wrap
+	if curwid + tw > fullwid then --have to wrap
 		local should_hyphenate = false
 						  		-- if both parts of the word would have three or more letters, we hyphenate
 
@@ -245,6 +268,13 @@ local function WrapWord(word, curwid, fullwid, widtbl, line, first)
 	return ret, curwid, line, wrapped
 end
 
+local nonWords = "()[].,!?;:-" -- i don't like what lua's %p matches so i'll make my own list
+nonWords = nonWords:PatternSafe()
+nonWords = nonWords .. "%s%c"
+
+local wordPattern = ("[%s]*[^%s]*[%s]*"):format(nonWords, nonWords, nonWords)
+local matchWordPattern = ("[%s]"):format(nonWords)
+
 function string.WordWrap2(txt, wid, font)
 	if font then surface.SetFont(font) end
 
@@ -259,7 +289,7 @@ function string.WordWrap2(txt, wid, font)
 		local line = 1
 		local firstWord = true
 
-		for word in string.gmatch(txt, "[%s%c%p]*[^%s%c%p]*[%s%c%p]*") do
+		for word in string.gmatch(txt, wordPattern) do
 			local r2, w2, lines, didwrap = WrapWord(word, curwid, nil, wid, line, firstWord)
 
 			ret = ret .. lastWord
@@ -289,7 +319,7 @@ function string.WordWrap2(txt, wid, font)
 		local needwid = wid
 		local curwid = 0
 
-		for word in string.gmatch(txt, "[%s%c%p]*[^%s%c%p]*[%s%c%p]*") do
+		for word in string.gmatch(txt, wordPattern) do
 			local r2, w2, _, didwrap = WrapWord(word, curwid, needwid)
 
 			if didwrap == 1 then
@@ -316,7 +346,7 @@ local trim = function(s, ptrn) -- non-patternsafe trimming
 	return string.match( s, "^" .. ptrn .. "*(.-)" .. ptrn .. "*$" )
 end
 function string.CountWords(tx)
-	return select(2, trim(tx, "[%s%c%p]"):gsub("[%s%c%p]*[^%s%c%p]*[%s%c%p]*", "")) - 1
+	return select(2, trim(tx, matchWordPattern):gsub(wordPattern, "")) - 1
 end
 -- faster than string.Comma :)
 

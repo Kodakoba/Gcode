@@ -138,14 +138,26 @@ function Cloud:MoveAbove(pnl, px)
 	self:SetAbsPos(x, y - (px or 8))
 end
 
-function Cloud:SetLabel(txt)
-	self.Label = tostring(txt)
+function Cloud:SetMaxW(w)
+	self.MaxW = w
+	self:RecalculateLabel()
+end
+
+function Cloud:GetMaxW(w)
+	return self.MaxW
+end
+
+function Cloud:RecalculateLabel()
+	if not self.Label then return end
 
 	surface.SetFont(self.Font)
-	local w = (surface.GetTextSize(self.Label))
+	local origW = (surface.GetTextSize(self.Label))
+	local w = origW
+	local wrapped = self.Label
 
-	if w > self.MaxW then -- uh oh time to wordwrap
-		local wrapped = string.WordWrap2(self.Label, self.MaxW)
+	if origW > self.MaxW then -- uh oh time to wordwrap
+		wrapped = string.WordWrap2(self.Label, self.MaxW - 16)
+
 		local maxW = 0
 		for s, line in eachNewline(wrapped) do
 			maxW = math.max(maxW, (surface.GetTextSize(s)))
@@ -154,8 +166,14 @@ function Cloud:SetLabel(txt)
 		w = maxW
 	end
 
+	self.wwrapped[self.Label] = wrapped
 	self.LabelWidth = w
+	self.UnwrappedWidth = origW
+end
 
+function Cloud:SetLabel(txt)
+	self.Label = tostring(txt)
+	self:RecalculateLabel()
 end
 
 Cloud.SetText = Cloud.SetLabel
@@ -172,10 +190,7 @@ end
 
 function Cloud:SetFont(font)
 	self.Font = font
-
-	surface.SetFont(self.Font)
-	self.LabelWidth = (surface.GetTextSize(self.Label))
-
+	self:RecalculateLabel()
 end
 
 function Cloud:PostPaint()
@@ -220,10 +235,7 @@ function Cloud:Paint()
 	end
 
 	local cw = math.min(math.max(self._MaxWidth, self.LabelWidth + 16, self.MinW), self.MaxW)
-
-	local lab = self.wwrapped[self.Label] or string.WordWrap2(self.Label, cw, self.Font)
-
-	self.wwrapped[self.Label] = lab
+	local lab = self.wwrapped[self.Label] or "??"
 
 	surface.SetFont(self.Font)
 
@@ -335,7 +347,7 @@ function Cloud:Paint()
 			local v = doneText[k]
 
 			if ispanel(v) then
-				if not v.NoCloudFit and v:GetWide() ~= cw then v:SetWide(cw) end
+				if not v.NoCloudFit and v:GetWide() ~= cw then v:SetWide(cw - v.X * 2) end
 				local scrX, scrY = self:LocalToScreen(X, offy)
 				v:PaintAt(scrX + v.X, scrY)
 				offy = offy + v:GetTall()
@@ -353,16 +365,16 @@ function Cloud:Paint()
 				draw.DrawText(v.Text, font, tx, offy, v.Color, v.Align or 0)
 
 				offy = offy + v.YOff
-
-				-- check if that text had a separator after it
-				if self.Separators[k] then
-					local sep = self.Separators[k]
-					local h = self:_DrawSeparator(sep, X, offy, cw)
-
-					offy = offy + h
-				end
-
 			end
+
+			-- check if this element had a separator after it
+			if self.Separators[k] then
+				local sep = self.Separators[k]
+				local h = self:_DrawSeparator(sep, X, offy, cw)
+
+				offy = offy + h
+			end
+
 		end
 
 	DisableClipping(false)

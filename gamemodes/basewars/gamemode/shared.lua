@@ -211,8 +211,10 @@ function BaseWars.UTIL.PayOut(ent, attacker, full, ret)
 	local validEnt = IsValid(ent)
 
 	local Owner = validEnt and ent.CPPIGetOwner and IsValid(ent:CPPIGetOwner()) and ent:CPPIGetOwner()
-	local Val = validEnt and ent.CurrentValue * (not full and not ret and BaseWars.Config.DestroyReturn or 1)
+	local Val = validEnt and ent.CurrentValue and ent.CurrentValue * (not full and not ret and BaseWars.Config.DestroyReturn or 1)
 	local Name = validEnt and (ent.PrintName or ent:GetClass())
+
+	if not Val then return 0 end
 
 	if not IsValid(ent) or not (IsValid(attacker) and attacker:IsPlayer()) then
 		if Owner then
@@ -474,7 +476,7 @@ local function BlockInteraction(ply, ent, ret)
 
 	if ent then
 
-		if not IsValid(ent) then return false end
+		if not IsValid(ent) then return true end
 
 		local Classes = BaseWars.Config.PhysgunBlockClasses
 		if Classes[ent:GetClass()] then return false end

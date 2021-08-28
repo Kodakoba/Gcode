@@ -13,12 +13,12 @@ function FCB:Init()
 
 	self:SetValue("")
 
-	self.Font = "TWB24"
+	self.Font = "OSB28"
 	self:SetFont(self.Font)
 
 	self:SetTextColor(color_white)
 
-	self.OptionsFont = "TW24"
+	self.OptionsFont = "MR24"
 
 	self.OnCreateFuncs = {}
 	self.Text = "self.Text = ???"

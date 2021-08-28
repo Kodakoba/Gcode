@@ -59,10 +59,7 @@ local slotPadX, slotPadY = 8, 8
 local slotSize = 64
 
 function ENT:SlotCreated(slot)
-
-	slot.HoverGradientColor = Colors.Red -- you can't put anything in my dude
-
-	slot:On("Drop", "DropOre", function(slot, slot2, item)
+	slot:On("Drop", "NoDrop", function(slot, slot2, item)
 		return false
 	end)
 
@@ -118,7 +115,16 @@ function ENT:GenerateWithdrawMenu(menu, old)
 		slot:SetSize(slotSize, slotSize)
 		slot:SetPos(x, y)
 		slot.Locked = locked
-		slot.Unlocks = row + 1
+
+		local unlockAt = 0
+		for k,v in ipairs(self.LevelsData) do
+			if i <= v.Slots then
+				unlockAt = k
+				break
+			end
+		end
+
+		slot.Unlocks = unlockAt
 
 		slot.ID = i
 
@@ -130,7 +136,7 @@ function ENT:GenerateWithdrawMenu(menu, old)
 		local is_pw = ent:IsPowered()
 
 		local left = math.max(fin - CurTime(), 0)
-		local tx = ("%.1f s."):format(left, 2)
+		local tx = ("%.1f s."):format(left)
 
 		surface.SetDrawColor(Colors.DarkGray)
 		surface.DrawRect(w - infoW, 0, infoW, h)
@@ -139,13 +145,24 @@ function ENT:GenerateWithdrawMenu(menu, old)
 		surface.SetMaterial(MoarPanelsMats.gl)
 		surface.DrawTexturedRect(w - infoW, 0, 5, h)
 
+		local th = draw.GetFontHeight("MR18")
+		local tw
+
 		if not is_pw then
 			draw.SimpleText("No power.", "MR18", w - infoW/2, h/2, Colors.LightGray, 1, 1)
 		elseif ent:GetJammed() then
 			draw.SimpleText("Full!", "MR18", w - infoW/2, h/2, Colors.Red, 1, 1)
 		else
-			draw.SimpleText("Next print in:", "MR18", w - infoW/2, h/2 - 9, color_white, 1, 1)
-			draw.SimpleText(tx, "MR18", w - infoW/2, h/2 + 9, color_white, 1, 1)
+			local can_upg = ent.LevelsData[ent:GetLevel() + 1]
+			draw.SimpleText(Language("BPNextPrint"), "MR18", w - infoW/2, h/2 - th / 2, color_white, 1, 4)
+			draw.SimpleText(tx, "MR18", w - infoW/2, h/2, color_white, 1, 1)
+
+			if can_upg then
+				draw.SimpleText(Language("BPNextPrintNextTime", ent:GetLevel() + 1, can_upg.PrintTime),
+					"MR18", w - infoW/2, h/2 + th / 2, Colors.LighterGray, 1, 5)
+			else
+
+			end
 		end
 	end
 end
@@ -221,3 +238,12 @@ net.Receive("BlueprintPrinter", function()
 
 	ent:OpenMenu()
 end)
+
+function ENT:ReadLevel(key, old, new)
+	print("ReadLevel", key, old, new)
+	if key == "Level" then
+		self:DoUpgrade(new)
+	end
+end
+
+ENT.OnDTChanged = ENT.ReadLevel

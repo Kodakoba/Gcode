@@ -10,6 +10,10 @@ function BaseWars.Ents.AssignOwner(eid, sid)
 	assert(isstring(sid))
 
 	eidToOwner[eid] = sid
+
+	if IsValid(Entity(eid)) then
+		hook.Run("EntityOwnershipChanged", player.GetBySteamID(sid), Entity(eid))
+	end
 end
 
 function BaseWars.Ents.UnassignOwner(eid)
