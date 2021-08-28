@@ -12,7 +12,8 @@ LibItUp.PlayerInfoTables = LibItUp.PlayerInfoTables or {
 	SteamID = {},
 	SteamID64 = {},
 
-	Absent = {}
+	Absent = {},
+	Invalid = {},
 }
 
 LibItUp.AllPlayerInfos = LibItUp.AllPlayerInfos or {}
@@ -118,7 +119,7 @@ function PI:__tostring()
 	return ("PlayerInfo [%s][ %s ]"):format(self:GetSteamID64() or "No SteamID64", self:GetPlayer() or "No Player")
 end
 
-function PI:get(id, is_sid64)
+function PI:get(id, is_sid64, revalidate)
 	if IsPlayerInfo(id) then return id end
 
 	if is_sid64 and not id:IsMaybeSteamID64() then
@@ -128,9 +129,13 @@ function PI:get(id, is_sid64)
 
 	local to_ret
 
+	-- dont return invalidated playerinfos if the player didnt join back
+	if PIT.Invalid[id] and not revalidate then return false end
+
 	-- returns: pinfo, bool (newly created?)
 	if IsPlayer(id) then
 		local pin = LibItUp.PlayerInfoTables.Player[id]
+
 		if pin and pin:IsValid() then return pin, false end
 
 		-- didnt find by player; try to find by sid64
@@ -214,6 +219,10 @@ function PI:_Destroy()
 
 	PIT.SteamID[self:GetSteamID()] = nil
 	PIT.SteamID64[self:GetSteamID64()] = nil
+
+	PIT.Invalid[self:GetSteamID64()] = true
+	PIT.Invalid[self:GetSteamID()] = true
+	PIT.Invalid[self:GetPlayer(true)] = true
 
 	print(self:Nick() .. "'s PlayerInfo was destroyed.")
 end
@@ -343,7 +352,7 @@ hook.NHAdd("PlayerInitialSpawn", "PlayerInfoEmit", function(ply)
 end)
 
 hook.Add("PlayerAuthed", "PlayerInfoEmit", function(ply, sid)
-	local pinfo = PI:get(ply)
+	local pinfo = PI:get(ply, false, true)
 	pinfo:Emit("StartReconnect", ply)
 
 	pinfo._AbsentStop = CurTime()
