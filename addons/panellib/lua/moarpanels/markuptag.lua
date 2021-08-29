@@ -292,7 +292,7 @@ function buf:SetAlignment(n)
 	self.Alignment = n
 end
 
-function buf:WrapText(tx, width, font)
+function buf:WrapText(tx, width, font, wrapDat)
 	if not self:GetTextHeight() then
 		error("please :SetFont() on the buffer before wrapping text")
 	end
@@ -302,10 +302,13 @@ function buf:WrapText(tx, width, font)
 	local fontcache = self._wrapCache[font] or WeakTable("kv")
 	self._wrapCache[font] = fontcache
 
-	local key = ("%d:%d:%d:%p"):format(self.x, width, self.Alignment, tx)
+	local do_cache = not wrapDat or not wrapDat.NoCache
+
+	local scaleUID = wrapDat and ("%s"):format(wrapDat.ScaleW) or ""
+	local key = ("%s:%d:%d:%d:%p"):format(scaleUID, self.x, width, self.Alignment, tx)
 	local txcache = fontcache[key]
 
-	if txcache then
+	if do_cache and txcache then
 		local tw = txcache[2]
 
 		local offX = 0
@@ -321,7 +324,7 @@ function buf:WrapText(tx, width, font)
 		return txcache[1], tw, th + self:GetTextHeight(), txcache[3]
 	else
 
-		local wrapped, cur_wid, didwrap = string.WordWrap2(tx, {width - self.x, width}, font)
+		local wrapped, cur_wid, didwrap = string.WordWrap2(tx, {width - self.x, width}, font, wrapDat)
 
 		local offX = 0
 
@@ -336,7 +339,9 @@ function buf:WrapText(tx, width, font)
 		local th = self:Newline(lines)
 		self:Offset(offX)
 
-		fontcache[key] = {wrapped, cur_wid, lines, didwrap}
+		if do_cache then
+			fontcache[key] = {wrapped, cur_wid, lines, didwrap}
+		end
 
 		return wrapped, cur_wid, th + self:GetTextHeight(), lines
 	end
@@ -379,10 +384,13 @@ rot:SetStart(function(tag, buf, args, pnl)
 	local x, y = pnl:LocalToScreen(0, 0)
 	local bx, by = buf:GetPos()
 
-	ang.y = args[1]
+	ang[2] = args[1]
 	rotmtrx:Set(mtrx)
 
 	offset.x, offset.y = x + bx, y + by
+
+	--surface.SetDrawColor(255, 0, 0)
+	--surface.DrawRect(bx, by, 2, 2)
 
 	rotmtrx:Translate(offset)
 		rotmtrx:SetAngles(ang)
@@ -391,11 +399,11 @@ rot:SetStart(function(tag, buf, args, pnl)
 
 	offset:Set(vector_origin)
 
-	cam.PushModelMatrix(rotmtrx, true)
+	cam.PushModelMatrix(rotmtrx)
 end)
 
 rot:SetEnd(function(tag, buf, args, pnl)
-	if not pnl then return end 
+	if not pnl then return end
 	cam.PopModelMatrix()
 end)
 

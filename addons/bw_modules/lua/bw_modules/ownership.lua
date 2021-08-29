@@ -27,3 +27,10 @@ function ENTITY:BW_GetOwner()
 	end
 end
 
+function ENTITY:BW_IsOwner(what)
+	local pin = GetPlayerInfo(what)
+	local ow = self:BW_GetOwner()
+
+	if not ow or not pin then return false end
+	return pin == ow
+end

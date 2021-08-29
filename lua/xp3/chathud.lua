@@ -692,8 +692,6 @@ surface.CreateFont("CH_TextShadow", {
     blursize = 2,
 })
 
-local matrix = Matrix()
-
 chathud.CharH = 22
 chathud.WrapStyle = 1  --1 = consider nickname, 0 = ignore nickname start from 0
 
@@ -754,7 +752,7 @@ local function DrawText(txt, buffer, a)
 		if shouldpaint then
 
 			surface.SetFont(shadowfont)
-			surface.SetTextColor( ColorAlpha(Color(0, 0, 0), a) )
+			surface.SetTextColor(0, 0, 0, a)
 
 			for i=1, 2 do
 				surface.SetTextPos(tx + i, ty + i )
@@ -766,7 +764,7 @@ local function DrawText(txt, buffer, a)
 			end
 
 			surface.SetFont(font)
-			surface.SetTextColor(ColorAlpha(col, a))
+			surface.SetTextColor(col.r, col.g, col.b, a)
 			surface.SetTextPos(tx, ty)
 
 			surface.DrawText(s)
@@ -799,7 +797,7 @@ local function DrawText(txt, buffer, a)
 		if shouldpaint then
 
 			surface.SetFont(shadowfont)
-			surface.SetTextColor( ColorAlpha(Color(0,0,0), a) )
+			surface.SetTextColor(0, 0, 0, a)
 
 			for i=1, 2 do
 				surface.SetTextPos(tx + i, ty + i )
@@ -810,7 +808,7 @@ local function DrawText(txt, buffer, a)
 			end
 
 			surface.SetFont(font)
-			surface.SetTextColor(ColorAlpha(col, a))
+			surface.SetTextColor(col.r, col.g, col.b, a)
 			surface.SetTextPos(tx, ty)
 
 			surface.DrawText(lastword)

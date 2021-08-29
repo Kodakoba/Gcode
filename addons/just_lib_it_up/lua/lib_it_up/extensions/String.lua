@@ -187,6 +187,7 @@ function string.WordWrap(name, w, font)	-- this should be deprecated cuz it suck
 	return text, widths, height
 end
 
+local WrapData
 
 local function WrapByLetters(txt, curwid, fullwid, wids, line)
 	local ret = ""
@@ -194,9 +195,11 @@ local function WrapByLetters(txt, curwid, fullwid, wids, line)
 	local line = line or 0
 	local wrapped = false
 
+	local wmult = WrapData and WrapData.ScaleW or 1
+
 	for i, code in utf8.codes(txt) do
 		local char = utf8.char(code)
-		local charw = (surface.GetTextSize(char))
+		local charw = (surface.GetTextSize(char)) * wmult
 
 		if charw > curwid then
 
@@ -222,12 +225,14 @@ end
 --returns: wrapped text, current width, current line, 1 if wrapped entire word, 2 if partially
 
 local function WrapWord(word, curwid, fullwid, widtbl, line, first)
-	local tw, th = surface.GetTextSize(word)
+	local tw, _ = surface.GetTextSize(word)
 	local ret = ""
 
 	line = line or 1
 	fullwid = fullwid or widtbl[line] or widtbl[#widtbl]
 
+	local wmult = WrapData and WrapData.ScaleW or 1
+	tw = tw * wmult
 	local wrapped = false --did word wrap?
 
 	if curwid + tw > fullwid then --have to wrap
@@ -235,9 +240,9 @@ local function WrapWord(word, curwid, fullwid, widtbl, line, first)
 						  		-- if both parts of the word would have three or more letters, we hyphenate
 
 		-- if this passes, the first 3 letters can remain on this line
-		if #word > 6 and (surface.GetTextSize(word:sub(1, 3))) < fullwid - curwid then
+		if #word > 6 and (surface.GetTextSize(word:sub(1, 3))) * wmult < fullwid - curwid then
 			--if this passes, there are at least 3 letters on the next line
-			if (surface.GetTextSize(word:sub(1, #word - 3))) > fullwid - curwid then
+			if (surface.GetTextSize(word:sub(1, #word - 3))) * wmult > fullwid - curwid then
 				should_hyphenate = true -- hyphenate, if at least 3 letters remain on the previous line and at least 3 letters can be carried over
 			end
 		end
@@ -275,9 +280,10 @@ nonWords = nonWords .. "%s%c"
 local wordPattern = ("[%s]*[^%s]*[%s]*"):format(nonWords, nonWords, nonWords)
 local matchWordPattern = ("[%s]"):format(nonWords)
 
-function string.WordWrap2(txt, wid, font)
+function string.WordWrap2(txt, wid, font, dat)
 	if font then surface.SetFont(font) end
 
+	WrapData = dat
 	local wrapped = false
 
 	if istable(wid) then
@@ -313,7 +319,6 @@ function string.WordWrap2(txt, wid, font)
 
 		return ret, curwid, wrapped
 	else
-
 		local ret = ""
 
 		local needwid = wid
@@ -337,9 +342,9 @@ function string.WordWrap2(txt, wid, font)
 		end
 
 		return ret, curwid, wrapped and true
-
 	end
 
+	WrapData = nil
 end
 
 local trim = function(s, ptrn) -- non-patternsafe trimming

@@ -67,7 +67,6 @@ function wheel:_PaintPanel(wheel, w, h)
 										-- will result in no-ops on circle stencils and blur
 	draw.ScuffedBlur(self, fr * wheel.BlurAmount, 0, 0, w, h)
 
-
 	local ang = self.Angle
 	local options = wheel.Options
 

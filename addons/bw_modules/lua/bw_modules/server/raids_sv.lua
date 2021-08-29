@@ -61,7 +61,7 @@ local function replySender(accept, ns)
 			net.WriteNetStack(ns)
 		net.Send(CurrentReply.Owner)
 	else
-		CurrentReply:ReplySend(accept)
+		CurrentReply:ReplySend("Raid", accept)
 	end
 
 	return ns

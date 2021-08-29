@@ -130,8 +130,6 @@ function mysqloo.CreateTable(db, name, ...)
 
 	q = q:format(name, qargs)
 
-	print("querying table creation:", q, db)
-	_LE_DB = db
 	local em = MySQLEmitter(db:query(q), true)
 		:Catch(mysqloo.QueryError)
 

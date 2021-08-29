@@ -24,6 +24,9 @@ MoarPanelsMats.gr = Material("vgui/gradient-r")
 MoarPanelsMats.gl = Material("vgui/gradient-l")
 MoarPanelsMats.g = Material("gui/gradient", "noclamp smooth")
 
+local sin = math.sin
+local cos = math.cos
+local mrad = math.rad
 
 local spinner = Material("data/hdl/spinner.png")
 local spinner32 = Material("data/hdl/spinner32.png")
@@ -47,7 +50,6 @@ _ = cout:IsError() and hdl.DownloadFile("https://i.imgur.com/huBY9vo.png", "circ
 _ = cout128:IsError() and hdl.DownloadFile("https://i.imgur.com/mLZEMpW.png", "circle_outline128.png", function(fn) cout128 = Material(fn, "mips") end)
 _ = cout64:IsError() and hdl.DownloadFile("https://i.imgur.com/kY0Isiz.png", "circle_outline64.png", function(fn) cout64 = Material(fn, "mips") end)
 
-local circles = {rev = {}, reg = {}} --reverse and regular
 
 local function LerpColor(frac, col, dest, src)
 
@@ -479,9 +481,8 @@ function draw.ScuffedBlur(pnl, int, x, y, w, h)
 	render.SetMaterial(blur)
 	render.DrawScreenQuadEx(sx, sy, sx + x + w, sy + y + h)
 
-	
 	int = math.max(int, 1)
-	
+
 	draw.DrawOp()
 
 	for i=0, int do
@@ -619,6 +620,10 @@ local magstate = 0
 
 local anis = TEXFILTER.ANISOTROPIC
 
+local function rep(str)
+	return ("	"):rep(minstate) .. str
+end
+
 function draw.EnableFilters(min, mag)
 	local gm, gmg = min, mag
 	if min == nil then
@@ -639,6 +644,7 @@ function draw.EnableFilters(min, mag)
 
 	if not min and not mag then return end
 
+	--print("+ filters", min, mag)
 	if min then render.PushFilterMin(anis) end
 	if mag then render.PushFilterMag(anis) end
 end
@@ -652,6 +658,10 @@ function draw.DisableFilters(min, mag)
 		mag = true
 	end
 
+	if minstate == 0 and magstate == 0 then
+		error("retard both are off")
+	end
+
 	local omin, omag = min, mag
 
 	min = minstate == 1 and min -- if min/mag already disabled, set to false (dont need to disable whats disabled)
@@ -662,10 +672,30 @@ function draw.DisableFilters(min, mag)
 
 	if not min and not mag then return end
 
+	--print("- filters", min, mag)
 	if mag then render.PopFilterMag() end
 	if min then render.PopFilterMin() end
 end
 
+hook.Add("PostRender", "ResetFilters", function()
+	local min, mag
+
+	if minstate > 0 then
+		minstate = 1
+		min = true
+	end
+
+	if magstate > 0 then
+		magstate = 1
+		mag = true
+	end
+
+	if min or mag then
+		draw.DisableFilters(min, mag)
+		errorf("Leaked filters! Min: %s, mag: %s", min, mag)
+	end
+
+end)
 
 function surface.DrawNewlined(tx, x, y, first_x, first_y)
 	local i = 0

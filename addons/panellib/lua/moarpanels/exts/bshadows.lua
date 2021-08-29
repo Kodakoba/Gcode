@@ -205,6 +205,7 @@ local screct = BSHADOWS.ScissorRect
 local function scissor()
 	render.SetScissorRect(screct.x, screct.y, screct.x + screct.w, screct.y + screct.h, true)
 end
+
 local function unscissor()
 	render.SetScissorRect(0, 0, 0, 0, false)
 end
@@ -376,6 +377,8 @@ BSHADOWS.EndShadow = function(intensity, spread, blur, opacity, direction, dista
 				curW or screct.w or ScrW(), curH or screct.h or ScrH())
 		if screct.x then unscissor() end
 	end
+
+	if screct.x then render.Rescissor() end
 
 	if offsetted then
 		cam.End2D()

@@ -64,15 +64,24 @@ function FScrollPanel:Init()
 	self.ScrollPower = 1
 
 	self.ScissorShadows = true
+	self.Scissor = true
+
+	self.NoDraw = false
 end
 
 
 function FScrollPanel:Draw(w, h)
-	if self.NoDraw then return end
+	local sx, sy = self:LocalToScreen(0, 0)
 
 	if self.ScissorShadows then
-		local x, y = self:LocalToScreen(0, 0)
 		BSHADOWS.SetScissor(x, y, w, h)
+	end
+
+	if self.NoDraw then
+		if self.Scissor then
+			render.PushScissorRect(sx, sy, sx + w, sy + h)
+		end
+		return
 	end
 
 	local ebh, eth = 0, 0
@@ -116,6 +125,25 @@ function FScrollPanel:Draw(w, h)
 		BSHADOWS.EndShadow(int, spr, blur, alpha, nil, nil, nil, color)
 	end
 
+	if self.Scissor then
+		render.PushScissorRect(sx, sy, sx + w, sy + h)
+	end
+end
+
+function FScrollPanel:PaintOver(w, h)
+	self:Emit("PaintOver", w, h)
+	if self.ScissorShadows then
+		BSHADOWS.SetScissor()
+	end
+
+	if self.Scissor then
+		render.PopScissorRect()
+	end
+
+	if self.GradBorder and not self.NoDraw then
+		local bl, bt, br, bb = self:GetBorders()
+		self:DrawBorder(w, h, bt, bb, br, bl)
+	end
 end
 
 function FScrollPanel:PostPaint(w, h)
@@ -175,19 +203,6 @@ function FScrollPanel:SetBorders(bl, bt, br, bb)
 	self.BorderTH = bt
 	self.BorderR = br
 	self.BorderL = bl
-end
-
-function FScrollPanel:PaintOver(w, h)
-	self:Emit("PaintOver", w, h)
-	if self.ScissorShadows then
-		BSHADOWS.SetScissor()
-	end
-
-	if self.GradBorder then
-		local bl, bt, br, bb = self:GetBorders()
-		self:DrawBorder(w, h, bt, bb, br, bl)
-	end
-
 end
 
 function FScrollPanel:OnMouseWheeled( dlta )

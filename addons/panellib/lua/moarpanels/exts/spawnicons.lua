@@ -1,4 +1,6 @@
---
+
+local surface_DrawTexturedRect = surface.DrawTexturedRect
+local surface_SetMaterial = surface.SetMaterial
 
 local mdls = {}
 

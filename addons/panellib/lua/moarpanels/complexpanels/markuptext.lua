@@ -9,11 +9,6 @@ function PANEL:Init()
 	self:SetName("Markup Text")
 end
 
-
-function PANEL:Paint(w, h)
-	--draw.RoundedBox(8, 0, 0, w, h, Colors.DarkGray)
-end
-
 function PANEL:PerformLayout()
 	local h = 0
 	for k,v in ipairs(self.Pieces) do

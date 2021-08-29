@@ -242,12 +242,21 @@ local function uid()
 	return CurUniqueID % bit.lshift(1, uidLen)
 end
 
-function net.StartPromise(name, ns)
+local function sdrID(sdr)
+	return SERVER and IsPlayer(sdr) and sdr:UserID() or ""
+end
+
+function net.StartPromise(name, ns, sdr)
+	if SERVER and not IsPlayer(sdr) then
+		error("StartPromise requires a sender!")
+		return
+	end
+
 	local prom = Promise()
 	prom._isnet = name or "yes"
 
 	local uid = uid()
-	NetPromises[uid] = prom
+	NetPromises[sdrID(sdr) .. uid] = prom
 
 	if name then net.Start(name) end
 		net.WriteUInt(uid, uidLen)
@@ -302,11 +311,16 @@ function PromReply:Accept()
 end
 PromReply.Success = PromReply.Accept
 
-function net.ReadPromise()
+function net.ReadPromise(sdr)
+	if SERVER and not IsPlayer(sdr) then
+		error("ReadPromise requires a sender!")
+		return
+	end
+
 	local id = net.ReadUInt(uidLen)
 	local ok = net.ReadBool()
 
-	local prom = NetPromises[id]
+	local prom = NetPromises[sdrID(sdr) .. tostring(id)]
 
 	if ok then
 		prom:Resolve()

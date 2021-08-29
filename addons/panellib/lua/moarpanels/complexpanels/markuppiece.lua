@@ -4,7 +4,7 @@ local PANEL = {}
 
 function PANEL:Init()
 	self.Elements = {}
-	self.Lines = {}			-- [lineNum] = x
+	self.Lines = {}			-- [lineNum] = startX
 
 	self.DrawQueue = {}
 	self.Texts = {}
@@ -25,7 +25,7 @@ function PANEL:Init()
 	self.curY = 0
 
 	self.Selectable = true
-	self.Color = color_white
+	self.Color = color_white:Copy()
 
 	self:SetName("Markup Piece")
 end
@@ -83,7 +83,17 @@ function PANEL:IsTextVisible(text)
 end
 
 function PANEL:CalculateTextSize(dat)
-	return self.Buffer:WrapText(dat.text, self:GetWide(), dat.font or self.Font)
+	return self.Buffer:WrapText(dat.text, self:GetWide(), dat.font or self.Font, dat.WrapData)
+end
+
+function PANEL:_GetDatSize(str, dat)
+	local wd = dat.WrapData
+	local tw, th = surface.GetTextSize(str)
+
+	if wd and wd.ScaleW then tw = tw * wd.ScaleW end
+	if wd and wd.ScaleH then th = th * wd.ScaleH end
+
+	return tw, th
 end
 
 function PANEL:SetAlignment(al)
@@ -131,10 +141,13 @@ function PANEL:Recalculate()
 			local t = table.Copy(v)
 			t.text = wrapped
 
+			local wm = v.WrapData and v.WrapData.ScaleW or 1
+
 			t.x, t.y = curX, curY
 			t.endX, t.endY = buf.x, buf.y
 
 			t.w, t.h = tw, th
+			t.line = curLine
 
 			local segs = t.segments
 			v.drawInfo = t
@@ -142,7 +155,7 @@ function PANEL:Recalculate()
 			table.Empty(segs)
 
 			for s, line in eachNewline(wrapped) do
-				local tw, th = surface.GetTextSize(s)
+				local tw, th = self:_GetDatSize(s, v)
 
 				if line > 1 then
 					self.Lines[curLine] = ownWide * (align / 2) - curLineWidth * (align / 2)
@@ -199,18 +212,22 @@ function PANEL:Recalculate()
 		local lastW = 0
 		local lastLine = 0
 
-		for k,v in ipairs(self.Texts) do
-			if not v.isText then continue end
+		for k, tx in ipairs(self.Texts) do
+			if not tx.isText then continue end
 
-			for k,v in ipairs(v.segments) do
-				if lastLine ~= v.line then
+			tx.x = self.Lines[tx.line] + lastW
+
+			for k, seg in ipairs(tx.segments) do
+				if lastLine ~= seg.line then
 					lastW = 0
-					lastLine = v.line
+					lastLine = seg.line
 				end
 
-				v.x = self.Lines[v.line] + lastW
-				lastW = lastW + v.w
+				seg.x = self.Lines[seg.line] + lastW
+				lastW = lastW + seg.w
 			end
+
+			tx.endX = self.Lines[lastLine] + lastW
 		end
 	end
 
@@ -463,9 +480,9 @@ function PANEL:_PaintTextElement(w, h, buf, el)
 end
 
 function PANEL:Paint(w, h)
-	--draw.EnableFilters()
+	draw.EnableFilters()
 	local sx, sy = self:LocalToScreen(0, 0)
-	render.SetScissorRect(sx, sy, sx + w, sy + h, true)
+	render.PushScissorRect(sx, sy, sx + w, sy + h)
 	local clip
 	if self.IgnoreVisibility then
 		clip = DisableClipping(true)
@@ -474,6 +491,7 @@ function PANEL:Paint(w, h)
 	self:Emit("PrePaint", w, h)
 	local buf = self.Buffer
 	buf:Reset()
+	buf:SetPos(self.Lines[1])
 
 	--draw.RoundedBox(8, 0, 0, w, h, Colors.DarkerRed)
 
@@ -510,15 +528,16 @@ function PANEL:Paint(w, h)
 
 	self.LastFont = ""
 	self:Emit("PostPaint", w, h)
-
 	if self.IgnoreVisibility then
 		DisableClipping(clip)
 	end
+
+	draw.DisableFilters()
 end
 
 function PANEL:PaintOver()
 	--draw.DisableFilters()
-	render.SetScissorRect(0, 0, 0, 0, false)
+	render.PopScissorRect()
 end
 
 function PANEL:PerformLayout()
@@ -567,7 +586,7 @@ function PANEL:EndTag(num)
 
 end
 
-function PANEL:AddText(tx, offset, align)
+function PANEL:AddText(tx, offset)
 	if not tx or not tostring(tx) then return end
 
 	local t = {
@@ -575,7 +594,6 @@ function PANEL:AddText(tx, offset, align)
 		text = tx,
 		font = self.Font,
 		offset = offset,
-		align = align,
 		segments = {}
 	}
 

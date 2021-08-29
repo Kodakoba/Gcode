@@ -189,3 +189,66 @@ function draw.Masked(mask, op, demask, deop, ...)
 	render.SetStencilEnable(false)
 
 end
+
+
+local yote = {}
+
+ScissorRects = ScissorRects or {}
+local srs = ScissorRects
+
+function render.PushSR(x, y, x2, y2, override)
+	local cx, cy, cx2, cy2 = x, y, x2, y2
+	local t
+
+	local len = #srs
+
+	for i=len, 1, -1 do
+		local v = srs[i]
+		cx, cy = math.max(cx, v[1]), math.max(cy, v[2])
+		cx2, cy2 = math.min(cx2, v[3]), math.min(cy2, v[4])
+	end
+
+	if override then
+		t = {x, y, x2, y2, true}
+		render.SetScissorRect(x, y, x2, y2, true)
+	else
+		t = {cx, cy, cx2, cy2, false}
+		render.SetScissorRect(cx, cy, cx2, cy2, true)
+	end
+
+	srs[len + 1] = t
+end
+render.PushScissorRect = render.PushSR
+
+function render.PopSR(dbg)
+	local len = #srs
+	if dbg then yote[#yote + 1] = srs[len] end
+	srs[len] = nil
+
+	local nxt = srs[len - 1]
+	if nxt then
+		render.SetScissorRect(nxt[1], nxt[2], nxt[3], nxt[4], true)
+	else
+		render.SetScissorRect(0, 0, 0, 0, false)
+	end
+end
+render.PopScissorRect = render.PopSR
+
+function render.Rescissor()
+	if srs[#srs] then
+		local dat = srs[#srs]
+		print("rescissoring")
+		render.SetScissorRect(dat[1], dat[2], dat[3], dat[4], true)
+	end
+end
+
+hook.Add("PostRender", "scissors", function()
+	cam.Start2D()
+	surface.SetDrawColor(255, 0, 0)
+	for k,v in ipairs(yote) do
+		surface.DrawOutlinedRect(v[1], v[2], v[3] - v[1], v[4] - v[2])
+	end
+
+	yote = {}
+	cam.End2D()
+end)

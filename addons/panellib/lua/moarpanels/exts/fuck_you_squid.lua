@@ -1,3 +1,7 @@
+local circles = {rev = {}, reg = {}} --reverse and regular
+
+local surface_DrawPoly = surface.DrawPoly
+
 local function BenchPoly(...)	--shh
 	return surface_DrawPoly(...)
 end

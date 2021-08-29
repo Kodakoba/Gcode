@@ -743,19 +743,20 @@ function META:Bond(to)
 		local name = ("bondThink:%p:%p"):format(self, to) --ptrs
 
 		hook.Add("Think", name, function()
+			if not IsValid(self) then
+				hook.Remove("Think", name)
+			end
+
 			if not IsValid(to) then
 				if IsValid(self) then self:Remove() end
 				hook.Remove("Think", name)
 				return
 			end
-
-			if not IsValid(self) then
-				hook.Remove("Think", name)
-			end
 		end)
 
-	elseif self.__HasBonded ~= to then
-		error("Can't bond a panel to multiple objects.")
+	-- why not!
+	--elseif self.__HasBonded ~= to then
+	--	error("Can't bond a panel to multiple objects.")
 	end
 
 	self.__HasBonded = to

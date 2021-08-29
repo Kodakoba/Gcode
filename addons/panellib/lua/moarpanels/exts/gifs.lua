@@ -1,3 +1,8 @@
+
+local surface_DrawTexturedRect = surface.DrawTexturedRect
+local surface_DrawTexturedRectUV = surface.DrawTexturedRectUV
+local surface_SetMaterial = surface.SetMaterial
+
 --[[
 	GIF header (tailer? it's last):
 		2 bytes: first frame delay time (in centiseconds)
