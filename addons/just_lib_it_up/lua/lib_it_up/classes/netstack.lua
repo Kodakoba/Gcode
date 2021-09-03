@@ -51,7 +51,8 @@ for k,v in pairs(net) do
 				size = determineSize(k, ...),
 				func = function()
 					net[k](unpack(aeiou)) --i cant use ... cuz its outside of this function!!!
-				end
+				end,
+				trace = debug.traceback()
 			}
 
 			local where = self:Emit("WriteOp", k, tbl)
@@ -95,7 +96,7 @@ function net.WriteNetStack(ns)
 
 			str = str:sub(1, #str - 2)
 
-			local errs = "Error while writing netstack: \"%s\"\nError while writing op #%d\nType: %s\nArgs: %s\nCaller traceback: \n\n\n"
+			local errs = "Error while writing netstack: \"%s\"\nError while writing op #%d\nType: %s\nArgs: %s\nCaller traceback: %s\n\n\n"
 
 			errs = errs:format(err, k, v.type, str, v.trace)
 			error(errs)

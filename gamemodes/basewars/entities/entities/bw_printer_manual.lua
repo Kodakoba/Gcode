@@ -19,6 +19,8 @@ ENT.MaxLevel = 5
 ENT.BypassMaster = true
 ENT.RebootTime = 0
 
+ENT.PowerRequired = 0
+
 function ENT:UseFunc(act, call)
 	if self:BW_GetOwner() ~= act:GetPInfo() then return end
 

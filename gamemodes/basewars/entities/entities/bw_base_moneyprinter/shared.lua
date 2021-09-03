@@ -8,7 +8,7 @@ ENT.Capacity 		= 10000
 ENT.Money 			= 0
 ENT.PrintInterval 	= 1
 ENT.PrintAmount		= 20
-ENT.MaxLevel 		= 25
+ENT.MaxLevel 		= 5
 ENT.UpgradeCost 	= 1000
 
 ENT.PrintName 		= "Basic Printer"
@@ -52,9 +52,9 @@ function ENT:DerivedDataTables()
 end
 
 local mults = {
-    [1] = 1.5,
-    [2] = 1.3,
-    [3] = 1.15
+	[1] = 1.5,
+	[2] = 1.3,
+	[3] = 1.15
 }
 
 function OverclockGetMult(var)

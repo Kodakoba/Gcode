@@ -52,15 +52,15 @@ Language.Level 			= function(str)
 	end
 end
 
-Language.WelcomeBackCrash = "Welcome back!"
-Language.Refunded		= "You were refunded %s after a crash."
+Language.WelcomeBackCrash 	= "Welcome back!"
+Language.Refunded			= "You were refunded %s after a crash."
 
-Language.RaidStart 		= "%s has started a raid against %s!"
+Language.RaidStart 			= "%s has started a raid against %s!"
 
-Language.Health = "Health: %s/%s"
-Language.Power = "Power: %s/%s"
+Language.Health 			= "Health: %s/%s"
+Language.Power 				= "Power: %s/%s"
 
-Language.SpawnMenuConf = "Confirm Purchase"
+Language.SpawnMenuConf 		= "Confirm Purchase"
 Language.SpawnMenuBuyConfirm = "Are you sure you want to purchase %s for " .. Language.Currency .. "%s?"
 
 Language.Yes = "Yes"
@@ -68,7 +68,7 @@ Language.No = "No"
 
 Language.Tip = "Tip!"
 Language.PrinterUpgradeTip = "Type /upg or /upgrade while looking at\n" ..
-	"something to upgrade it.\n" .. 
+	"something to upgrade it.\n" ..
 	"You can specify how many levels " ..
 	"you want to upgrade something by.\nTry it now!"
 

@@ -195,7 +195,7 @@ function CreateRaidFrame(noanim)
 	local scale = sw / 1920
 
 	f:SetSize(scale*600, 192)
-
+	f:Hide()	-- !!!!!!!!!! DISABLED !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	f:SetPos(ScrW()/2 - scale*300, 36)
 
 	f.Label = "Raids"

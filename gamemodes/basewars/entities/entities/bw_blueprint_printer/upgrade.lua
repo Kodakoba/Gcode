@@ -47,7 +47,10 @@ function ENT:DoUpgrade(lv)
 	local calcM = self:GetUpgradeCost(lv)
 	self.CurrentValue = (self.CurrentValue or 0) + calcM
 	self.Level = lv
-	if SERVER then self:SetLevel(self.Level) end
+
+	if SERVER then
+		self:SetLevel(self.Level)
+	end
 
 	local dat = self.LevelsData[self.Level]
 
@@ -55,13 +58,11 @@ function ENT:DoUpgrade(lv)
 	self.PrintTime = dat.PrintTime
 	self.Storage.MaxItems = self.Slots
 
-	self:EmitSound("replay/rendercomplete.wav")
 	self:SetNextFinish(math.min(CurTime() + self.PrintTime, self:GetNextFinish()))
 	self:CalculateScrollSpeed()
 end
 
-function ENT:RequestUpgrade(ply)
-	print("requesting", ply)
+function ENT:RequestUpgrade(ply, cur, total)
 	if not ply then return end
 
 	local ow = self:BW_GetOwner()
@@ -87,4 +88,8 @@ function ENT:RequestUpgrade(ply)
 	ply:TakeMoney(calcM)
 
 	self:DoUpgrade(self:GetLevel() + 1)
+
+	if cur == total then
+		self:EmitSound("replay/rendercomplete.wav")
+	end
 end

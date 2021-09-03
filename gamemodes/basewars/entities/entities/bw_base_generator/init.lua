@@ -2,6 +2,7 @@ include("shared.lua")
 AddCSLuaFile("shared.lua")
 AddCSLuaFile("cl_init.lua")
 
+--[[
 function ENT:Init()
 	self:AddEFlags(EFL_FORCE_CHECK_TRANSMIT)
 end
@@ -28,3 +29,4 @@ function ENT:Think()
 
 	self:Emit("Think")
 end
+]]

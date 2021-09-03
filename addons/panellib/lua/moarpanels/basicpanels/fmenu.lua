@@ -176,7 +176,7 @@ function FM:DoLayout()
 	for k, pnl in pairs( self:GetCanvas():GetChildren() ) do
 		pnl:SetWide( w )
 		pnl:SetPos( 0, pnl.PutMeAtY or y )
-		y = y + pnl:GetTall()
+		y = y + (pnl.DesHeight or pnl:GetTall())
 	end
 
 	y = math.min( y, 9999 )
@@ -271,14 +271,19 @@ function FM:AddOption( strText, funcFunction )
 end
 
 function FM:Paint(w,h)
+	local sx, sy = self:LocalToScreen(0, 0)
 
-	surface.DisableClipping(true)
-		draw.RoundedBox(4, -2, -2, w + 4, h + 4, self.Color)
+	BSHADOWS.BeginShadow()
+		draw.RoundedBox(0, sx - 5, sy - 5, w + 10, h + 10, self.Color)
 		local sx, sy = self:LocalToScreen(0, 0)
 		if sy + h > ScrH() then
 			self:SetPos(sx, L(self.Y, ScrH() - h - 12, 15, true))
 		end
-	surface.DisableClipping(false)
+	BSHADOWS.EndShadow(1, 1, 1, nil, nil, nil, true)
+
+	DisableClipping(true)
+		draw.RoundedBox(2, -1, -1, w + 2, h + 2, self.Color)
+	DisableClipping(false)
 end
 
 vgui.Register("FMenu", FM, "DMenu")

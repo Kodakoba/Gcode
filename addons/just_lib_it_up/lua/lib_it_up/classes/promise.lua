@@ -146,6 +146,15 @@ function Promise:Rejector()
 	return self._rejector
 end
 
+local function typecheck(tbl)
+	for k,v in ipairs(tbl) do
+		if not IsPromise(v) then
+			errorf("not a promise @ #%d (%q: %s)", k, type(v), v)
+			return
+		end
+	end
+end
+
 local function toTbl(tbl, ...)
 	local prs = {}
 
@@ -157,6 +166,8 @@ local function toTbl(tbl, ...)
 			prs[i + 1] = select(i, ...)
 		end
 	end
+
+	typecheck(tbl)
 
 	return prs
 end

@@ -86,21 +86,22 @@ function SWEP:DrawHUD()
 
 	local a = recfr * 600
 
+	local y = ScrH() * 0.9 - 64
 	if a > 5 and spr > 0 then
 		BSHADOWS.BeginShadow()
 	end
 
 		surface.SetDrawColor(dimmedCurCol:Unpack())
-		draw.DrawMaterialCircle(ScrW()/2, ScrH() * 0.9 - 64, size*2, 20)
+		draw.DrawMaterialCircle(ScrW()/2, y, size*2, 20)
 
 		surface.SetDrawColor(CurrentColor:Unpack())
-		draw.DrawMaterialCircle(ScrW()/2, ScrH() * 0.9 - 64, size*2 * cdFracUnpred)
+		draw.DrawMaterialCircle(ScrW()/2, y, size*2 * cdFracUnpred)
 
 		--draw.NoTexture()
 		--draw.DrawCircle(ScrW()/2, ScrH() * 0.9 - 64, size - 2, 20)
 
 	if a > 5 and spr > 0 then
-		BSHADOWS.EndShadow(int, spr, blur, a, nil, nil, nil, Color(255, 255, 255))
+		BSHADOWS.EndShadow(int, spr, blur, a, nil, nil, nil, color_white)
 	end
 
 	dimmedCurCol:Set(CurrentColor)

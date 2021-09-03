@@ -8,7 +8,7 @@ local pg = bw.PowerGrid
 local unowned = bw.GridUnowned or {}
 bw.GridUnowned = unowned
 
-hook.Add("EntityOwnershipChanged", "PGTrackOwned", function(ply, ent, id)
+hook.Add("EntityOwnershipChanged", "PGTrackOwned", function(ply, ent)
 	if unowned[ent] then
 		local pg = unowned[ent]
 		pg:RecheckOwnership(ent)
@@ -165,19 +165,17 @@ end
 
 function pg:ConsumerAddList(e)
 	if e.PowerRequired and e.PowerRequired > 0 then
-		self._UnpoweredEnts[e] = true
-		e:SetPowered(false)
+		self:UnpowerEnt(e)
 	else
 		self:PowerEnt(e)
 	end
 end
 
 function pg:ConsumerRemoveList(e)
-	print("removed from list, unpowered", e)
+	self:UnpowerEnt(e)
+
 	self._UnpoweredEnts[e] = nil
 	self._PoweredEnts[e] = nil
-
-	e:SetPowered(false)
 end
 
 pg:On("AddedConsumer", "UpdateList", indexer("ConsumerAddList"))
@@ -189,6 +187,10 @@ function pg:PowerEnt(ent)
 	self._UnpoweredEnts[ent] = nil
 
 	ent:SetPowered(true)
+
+	if ent.OnPower then
+		ent:OnPower()
+	end
 end
 
 function pg:UnpowerEnt(ent)
@@ -196,6 +198,10 @@ function pg:UnpowerEnt(ent)
 	self._UnpoweredEnts[ent] = true
 
 	ent:SetPowered(false)
+
+	if ent.OnUnpower then
+		ent:OnUnpower()
+	end
 end
 
 

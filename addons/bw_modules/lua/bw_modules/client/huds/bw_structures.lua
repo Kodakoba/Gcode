@@ -15,6 +15,8 @@ local gray = Color(40, 40, 40)
 
 local anims
 
+local paintEntityLevel
+
 local function paint(ent, curent, baseAnim, firstFrame)
 	anims = anims or Animatable("HUD_Structures")
 
@@ -106,6 +108,11 @@ local function paint(ent, curent, baseAnim, firstFrame)
 		tY = tY + 18
 	end
 
+
+	local uY, uH = paintEntityLevel(lastEnt, w, tY)
+	tY = tY + uY
+	toH = toH + uH
+
 	local toW = optimal_w
 
 	if lastEnt.PaintStructureInfo then
@@ -137,6 +144,23 @@ local function paint(ent, curent, baseAnim, firstFrame)
 	end
 end
 
+local lvFont = "OSB24"
+local fh = draw.GetFontHeight(lvFont)
+
+function paintEntityLevel(ent, w, y)
+	if not ent.GetLevel or not chat.IsOpen() then
+		anims:To("LevelFrac", 0, 0.3, 0, 0.3)
+		return (anims.LevelFrac or 0) * fh, 0
+	end
+
+	anims:To("LevelFrac", 1, 0.3, 0, 0.3)
+
+	local fr = anims.LevelFrac or 0
+	draw.SimpleText(Language("Level", ent:GetLevel()),
+		lvFont, w / 2, y, color_white, 1)
+
+	return fh * fr, fh
+end
 
 hook.Add("BW_ShouldPaintStructureInfo", "BWStructure", function(ent, dist)
 	return ent.IsBaseWars and dist < 192, 192, paint

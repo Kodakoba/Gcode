@@ -300,7 +300,7 @@ function qobj:AddCanvas(pnl)
 end
 
 -- autocreate a canvas and grab it (cached panel)
-function qobj:GetCanvas()
+function qobj:GetCanvas(nocreate)
 	if not openedQM then
 		error("Can't get QM canvas without the main QM panel existing!")
 		return
@@ -308,7 +308,7 @@ function qobj:GetCanvas()
 	local ret = IsValid(self.__Canvas) and self.__Canvas
 	local new = false
 
-	if not ret then
+	if not ret and not nocreate then
 		ret = vgui.Create("InvisPanel", openedQM)
 		ret:SetSize(openedQM:GetSize())
 
@@ -409,7 +409,7 @@ function CreateQuickMenu()
 	p.CircleOuterColor = circleOuterCol
 
 	p.CircleInnerColor = Color(250, 250, 250)
-	p.MaxInnerAlpha = 255
+	p._CircleAlpha = 255
 	p.MaxCircleSize = 64
 	p.MinCircleSize = 40
 
@@ -501,12 +501,14 @@ function CreateQuickMenu()
 		end
 
 		self.CircleOuterColor.a = perc * 100
-		self.CircleInnerColor.a = perc * self.MaxInnerAlpha
+		self.CircleInnerColor.a = perc * self._CircleAlpha
 
-		if qm and qm.MaxInnerAlpha then
-			self:To("MaxInnerAlpha", qm.MaxInnerAlpha, qm:GetTime() * (1 - perc), 0, 0.3)
+		local canv = qm:GetCanvas(true)
+	
+		if canv and canv.MaxInnerAlpha then
+			self:To("_CircleAlpha", canv.MaxInnerAlpha, qm:GetTime(), 0, 0.3)
 		else
-			self:To("MaxInnerAlpha", 255, 0.3, 0, 0.3)
+			self:To("_CircleAlpha", 255, qm:GetTime(), 0, 0.3)
 		end
 
 		surface.SetDrawColor(self.CircleOuterColor:Unpack())

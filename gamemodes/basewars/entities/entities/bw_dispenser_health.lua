@@ -65,7 +65,7 @@ function ENT:DerivedDataTables()
 	self:NetworkVar("Int", 3, "Level")
 	self:SetCharges(0)
 	self:SetStims(0)
-	self:SetLevel(0)
+	self:SetLevel(1)
 
 	self:NetworkVar("Float", 1, "NWNextStim")
 
@@ -141,7 +141,6 @@ function ENT:QMOnBeginClose(qm, self, pnl)
 
 	stimBtn:CircleMoveTo(x, y, 0.3, 0.4, true)
 	local anim = stimBtn:PopOutHide(0.2)
-
 end
 
 local blur = Material( "pp/blurscreen" )
@@ -155,6 +154,8 @@ function ENT:QMOnReopen(qm, self, pnl)
 
 	pnl:MemberLerp(blk, "a", minput and 160 or 90, 0.3, 0, 0.3)
 	pnl:To("MouseFrac", minput and 1 or 0, 0.3, 0, 0.3)
+	canv.MaxInnerAlpha = minput and 255 or 40
+
 	--[[local healBtn = pnl.HealBtn
 	healBtn:CircleMoveTo(healBtn.ToX, healBtn.ToY, 0.3, 0.4)
 	healBtn:PopIn(0.2)]]
@@ -196,7 +197,7 @@ function ENT:OpenShit(qm, self, pnl)
 			surface.SetDrawColor(blk:Unpack())
 			surface.DrawRect(-ScrW(), -ScrH(), ScrW() * 2, ScrH() * 2)
 
-			if self:IsMouseInputEnabled() then
+			if pnl:IsMouseInputEnabled() then
 				-- only blur if the user wants to interact with the dispenser
 				render.UpdateScreenEffectTexture()
 				surface.SetMaterial(blur)
@@ -212,6 +213,7 @@ function ENT:OpenShit(qm, self, pnl)
 			self.ShouldMouse = true
 			canv:MemberLerp(blk, "a", 160, 0.3, 0, 0.3)
 			canv:To("MouseFrac", 1, 0.3, 0, 0.3)
+			canv.MaxInnerAlpha = 255
 
 			if canv.GiveStimBtn and canv.GiveStimBtn:IsValid() then
 				local b = canv.GiveStimBtn
@@ -220,7 +222,6 @@ function ENT:OpenShit(qm, self, pnl)
 				b:MemberLerp(b.Shadow, "MinSpread", 1.2, 0.2, 0, 0.3)
 
 				canv.StimAlpha = 255
-				qm.MaxInnerAlpha = 255
 			end
 		end
 
@@ -284,7 +285,8 @@ function ENT:OpenShit(qm, self, pnl)
 
 		canv.GiveStimBtn = give_stim
 		canv.StimAlpha = 120
-		qm.MaxInnerAlpha = 120
+
+		canv.MaxInnerAlpha = 40
 
 		local canUse = ent:IsPowered() and ent:GetStims() > 1
 

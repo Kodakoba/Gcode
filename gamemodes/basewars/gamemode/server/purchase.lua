@@ -2,34 +2,51 @@ if not muldim then include("lib_it_up/classes/multidim.lua") end
 
 BaseWars.SpawnList = BaseWars.SpawnList or {}
 
-BaseWars.Limits = BaseWars.Limits or muldim:new()
+local function decrLimit(ent)
+	if not ent._incrLimit then return end
 
---[[
-{
-	[sid64] = {
-		[ent_class] = number,
-		...
-	}
-}
-]]
+	local class = ent:GetClass()
+	local pin = ent._incrLimit
+	pin.BW_EntLimits[class] = pin.BW_EntLimits[class] - 1
+end
 
-BaseWars.Purchased = BaseWars.Purchased or muldim:new()
---[[
-{
-	[sid64] = {
-		[ent_class] = {
-			[1] = Entity,
-			[2] = Entity, ...
-		}
-	}
-}
-]]
+local function incrLimit(ent, pin)
+	if ent._incrLimit == pin then return end
 
-hook.Add("EntityOwnershipChanged", "BW_Limits", function(ply, ent, id)
-	if IsPlayer(ent.BWOwner) and ent.BWOwner ~= ply then
-		-- switched owner, probably
-		local lim = BaseWars.Limits[ent.BWOwner:SteamID64()]
-		lim[ent:GetClass()] = lim[ent:GetClass()] - 1
+	if ent._incrLimit then
+		decrLimit(ent)
+	end
+
+	local class = ent:GetClass()
+	ent._incrLimit = pin
+
+	pin.BW_EntLimits = pin.BW_EntLimits or {}
+	pin.BW_EntLimits[class] = (pin.BW_EntLimits[class] or 0) + 1
+end
+
+
+
+hook.NHAdd("EntityOwnershipChanged", "BW_Limits", function(ply, ent, oldID)
+	if not ent.Bought then return end
+
+	local old = oldID and GetPlayerInfo(oldID)
+	local new = ent:BW_GetOwner()
+	local class = ent:GetClass()
+	local entry = BaseWars.Catalogue[class]
+
+	if not entry then
+		errorf("ownership changed on a bought non-catalogue entity!?\n" ..
+			"class: %q; owners: %s -> %s", class, old, new)
+	end
+
+	if new then
+		incrLimit(ent, new)
+
+		if entry.Limit and entry.Limit < new.BW_EntLimits[class] then
+			errorf("ownership changed so new owner is over the limit!?\n" ..
+				"class: %q; owners: %s -> %s; limits: %d/%d",
+				class, old, new, new.BW_EntLimits[class], entry.Limit)
+		end
 	end
 end)
 
@@ -37,25 +54,26 @@ BaseWars.Generators = BaseWars.Generators or muldim:new()
 local gens = BaseWars.Generators
 
 local function LimitDeduct(ent, class, ply)
+	local pinfo = GetPlayerInfo(ply)
 
-	local sid = ""
+	ent:CallOnRemove("LimitDeduct", function(ent, sid)
+		decrLimit(ent)
+	end, sid)
 
-	if IsValid(ply) then
-		sid = ply:SteamID64()
-	end
-
-	local plyLimit = BaseWars.Limits:GetOrSet(sid)
-
-	ent:CallOnRemove("LimitDeduct" .. sid, function(ent, sid)
-		plyLimit[class] = plyLimit[class] - 1
-	end, sid )
-
-	plyLimit[class] = (plyLimit[class] or 0) + 1
-	--purchased:GetOrSet(class)[class] = (purchased:GetOrSet(class)[class] or 0) + 1
-
+	incrLimit(ent, pinfo)
 
 	ent.BWOwner = ply
 	ent.Bought = true
+end
+
+local function postSpawn(ply, class, ent, info)
+	if info.Limit then
+		LimitDeduct(ent, class, ply)
+	end
+
+	if info.Price and info.Price > 0 then
+		ply:SetMoney(ply:GetMoney() - info.Price)
+	end
 end
 
 function BWSpawn(ply, cat, catID)
@@ -77,25 +95,25 @@ function BWSpawn(ply, cat, catID)
 	if not i then print("no item with catid:", catID, cat) return end
 
 	local item = i.Name
-	local model, price, ent, sf, lim, vip, trust = i.Model, i.Price, i.ClassName, i.UseSpawnFunc, i.Limit, i.vip, i.trust
+	local model, price, class = i.Model, i.Price, i.ClassName
+	local lim, vip, trust = i.Limit, i.vip, i.trust
+
 	local gun = i.Gun
 
 	if vip and not IsGroup(ply, "vip") then ply:EmitSound("buttons/button10.wav") return end
 	if trust and not IsGroup(ply, "trusted") then ply:EmitSound("buttons/button10.wav") return end
-	local sid64 = ply:SteamID64()
 
 	local level = i.Level
 	if gun and (not level or level < BaseWars.Config.LevelSettings.BuyWeapons) then level = BaseWars.Config.LevelSettings.BuyWeapons end
 
-	if level and not ply:HasLevel(level) then
-
+	--[[if level and not ply:HasLevel(level) then
 		ply:EmitSound("buttons/button10.wav")
-
-	return end
+		return
+	end]]
 
 	local tr
 
-	if ent then
+	if class then
 
 		tr = {}
 
@@ -125,17 +143,16 @@ function BWSpawn(ply, cat, catID)
 		return
 	end
 
-	local sid = ply:SteamID64()
-
 	-- check against limits
 
 	if lim then
-		local plyLimit = BaseWars.Limits:GetOrSet(sid)
-		local amt = plyLimit[ent]
+		local pin = GetPlayerInfoGuarantee(ply)
+		local plyLimit = pin.BW_EntLimits or {}
+		local amt = plyLimit[class]
 
-		printf("buying %d/%d of `%s`", (amt or 0) + 1, lim, ent)
+		printf("buying %d/%d of `%s`", (amt or 0) + 1, lim, class)
 
-		if lim and amt and lim <= amt then
+		if amt and lim <= amt then
 			ply:Notify(string.format(Language.EntLimitReached, item, amt), BASEWARS_NOTIFICATION_ERROR)
 			return
 		end
@@ -145,9 +162,9 @@ function BWSpawn(ply, cat, catID)
 	local Res, Msg
 
 	if gun then
-		Res, Msg = hook.Run("BaseWars_PlayerCanBuyGun", ply, ent) -- Player, Gun class
-	elseif ent then
-		Res, Msg = hook.Run("BaseWars_PlayerCanBuyEntity", ply, ent) -- Player, Entity class
+		Res, Msg = hook.Run("BaseWars_PlayerCanBuyGun", ply, class) -- Player, Gun class
+	elseif class then
+		Res, Msg = hook.Run("BaseWars_PlayerCanBuyEntity", ply, class) -- Player, Entity class
 	end
 
 	if Res == false then
@@ -158,7 +175,6 @@ function BWSpawn(ply, cat, catID)
 	end
 
 	if price > 0 then
-
 		local plyMoney = ply:GetMoney()
 
 		if plyMoney < price then
@@ -166,116 +182,74 @@ function BWSpawn(ply, cat, catID)
 			return
 		end
 
-		ply:SetMoney(plyMoney - price)
 		ply:EmitSound("mvm/mvm_money_pickup.wav")
-
 		ply:Notify(string.format(Language.SpawnMenuBuy, item, BaseWars.NumberFormat(price)), BASEWARS_NOTIFICATION_MONEY)
+	else
+		local scrapSounds = lazy.Get("ScrapSounds") or {
+			"buttons/lever1.wav",
+			"buttons/lever3.wav",
+			"buttons/lever5.wav",
+			"buttons/lever8.wav",
+			"buttons/button4.wav",
+		}
 
+		lazy.Set("ScrapSounds", scrapSounds)
+		local snd = scrapSounds[math.random(#scrapSounds)]
+
+		if math.random() < 0.05 and
+			(ply:SteamID64() == "76561198386657099" or BaseWars.IsDev(ply)) then
+			snd = "vo/breencast/br_overwatch07.wav"
+		end
+
+		ply:EmitSound(snd)
 	end
 
 	if gun then
 
-		local Ent = ents.Create("bw_weapon")
-			Ent.WeaponClass = ent
-			Ent.Model = model
-			Ent:SetPos(SpawnPos)
-			Ent:SetAngles(SpawnAng)
-			Ent:Spawn()
-			Ent:Activate()
+		local newEnt = ents.Create("bw_weapon")
+			newEnt.WeaponClass = class
+			newEnt.Model = model
+			newEnt:SetPos(SpawnPos)
+			newEnt:SetAngles(SpawnAng)
+			newEnt:Spawn()
+			newEnt:Activate()
 
-		if lim then
-			LimitDeduct(Ent, ent, ply)
-		end
-
-		hook.Run("BaseWars_PlayerBuyGun", ply, Ent) -- Player, Gun entity
-
-	return end
-
-
-	local prop
-	local noundo
-
-	if ent then
-
-		local newEnt = ents.Create(ent)
-		if not newEnt then return end
-
-		if newEnt.BW_SpawnFunction then
-			newEnt = newEnt:BW_SpawnFunction(ply, tr, ent) or newEnt
-
-			if newEnt.CPPISetOwner then
-				newEnt:CPPISetOwner(ply)
-			end
-
-			if lim then
-				LimitDeduct(newEnt, ent, ply)
-			end
-
-			newEnt.CurrentValue = price
-			if newEnt.SetUpgradeCost then newEnt:SetUpgradeCost(price) end
-
-			newEnt.DoNotDuplicate = true
-
-			hook.Run("BaseWars_PlayerBuyEntity", ply, newEnt) -- Player, Entity
-
-			return
-		end
-
-		newEnt.Bought = true
-		newEnt.BWOwner = ply
-
-		if lim then
-			LimitDeduct(newEnt, ent, ply)
-		end
-
-		if newEnt.IsGenerator then
-			gens[sid64] = (gens[sid64] or 0) + 1
-		end
-
-		newEnt.CurrentValue = price
-		if newEnt.SetUpgradeCost then newEnt:SetUpgradeCost(price) end
-
-		newEnt.DoNotDuplicate = true
-
-		prop = newEnt
-		noundo = true
-
+		postSpawn(ply, class, newEnt, i)
+		hook.Run("BaseWars_PlayerBuyGun", ply, newEnt) -- Player, Gun entity
+		return
 	end
 
-	if not prop then prop = ents.Create(ent or "prop_physics") end
-	if not noundo then undo.Create("prop") end
-
-	if not prop or not IsValid(prop) then return end
-
-	prop:SetPos(SpawnPos)
-	prop:SetAngles(SpawnAng)
-	prop:Spawn()
-	prop:Activate()
-
-	prop:DropToFloor()
-
-	local phys = prop:GetPhysicsObject()
-
-	if IsValid(phys) then
-
-		if i.ShouldFreeze then
-
-			phys:EnableMotion(false)
-
-		end
-
+	local newEnt = ents.Create(class)
+	if not newEnt then
+		return
 	end
 
-	undo.AddEntity(prop)
-	undo.SetPlayer(ply)
-	undo.Finish()
-
-	if prop.CPPISetOwner then
-		prop:CPPISetOwner(ply)
+	if newEnt.BW_SpawnFunction then
+		newEnt = newEnt:BW_SpawnFunction(ply, tr, class) or newEnt
 	end
 
-	hook.Run("BaseWars_PlayerBuyEntity", ply, prop) -- Player, Entity
+	newEnt.Bought = true
+	newEnt.BWOwner = ply
+	newEnt.DoNotDuplicate = true
+	newEnt.CurrentValue = price
+	if newEnt.SetUpgradeCost then newEnt:SetUpgradeCost(price) end
+	newEnt:CPPISetOwner(ply)
 
+	newEnt:Spawn()
+	newEnt:Activate()
+	newEnt:SetPos(SpawnPos)
+	newEnt:SetAngles(SpawnAng)
+	newEnt:DropToFloor()
+
+	local phys = newEnt:GetPhysicsObject()
+
+	if i.ShouldFreeze and IsValid(phys) then
+		phys:EnableMotion(false)
+	end
+
+	postSpawn(ply, class, newEnt, i)
+
+	hook.Run("BaseWars_PlayerBuyEntity", ply, newEnt) -- Player, Entity
 end
 
 

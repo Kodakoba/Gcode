@@ -212,5 +212,6 @@ else
 
 	function ENT:Initialize()
 		self:CLInit()
+		self:SHInit()
 	end
 end

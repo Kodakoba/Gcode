@@ -237,7 +237,6 @@ render.PopScissorRect = render.PopSR
 function render.Rescissor()
 	if srs[#srs] then
 		local dat = srs[#srs]
-		print("rescissoring")
 		render.SetScissorRect(dat[1], dat[2], dat[3], dat[4], true)
 	end
 end

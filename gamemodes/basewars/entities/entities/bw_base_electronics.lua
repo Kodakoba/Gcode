@@ -25,13 +25,6 @@ function ENT:Reboot()
 	self:SetRebooting(true)
 end
 
-function ENT:DrainPower(val)
-	local pw = self.Power
-	if pw and CurTime() - self.Power < 1.1 then return true end
-
-	return false
-end
-
 function ENT:IsPowered()
 	return self:GetPowered()
 end
@@ -66,54 +59,22 @@ end
 
 if SERVER then
 
-	function ENT:CheckCableDistance()
-		local bwe = self:GetTable()
-		if bwe.CheckDist and IsValid(self:GetLine()) then
-			local pos = self:GetPos()
-
-			local cto = self:GetLine()
-			local pos2 = cto:GetPos()
-
-			if pos:DistToSqr(pos2) > bwe.ConnectDistanceSqr then
-				self:StartBitching()
-			else
-				bwe.CheckDist = nil
-			end
-		end
-	end
-
 	function ENT:Think()
 		local me = self:GetTable()
-		local bwe = me
-
-		self:CheckCableDistance(bwe)
-
-		local pow = self:DrainPower()
-		if not pow then return end
 
 		local hpfrac = self:Health() / self:GetMaxHealth()
 
-		if hpfrac < 0.2 and CurTime() > (bwe.NextSpark or 0) and math.random(0, 10) == 0 then
-
+		if hpfrac < 0.2 and
+			CurTime() > (me.NextSpark or 0) and
+			math.random(0, 10) == 0 then
 			self:Spark()
-
-			bwe.NextSpark = CurTime() + math.random(5, 15) / 10
+			me.NextSpark = CurTime() + math.random(5, 15) / 10
 		end
 
 		me.ThinkFunc(self)
-
-	end
-
-	function ENT:StartBitching()
-		self:SetLine(NULL)
-
-		local grid = PowerGrid:new( (self:CPPIGetOwner()) )
-		grid:AddConsumer(self)
 	end
 
 	function ENT:CheckUsable()
-
-
 
 	end
 
@@ -135,31 +96,14 @@ if SERVER then
 
 	end
 
-	function ENT:OnPhysicsUpdate()
-
-	end
-
-	function ENT:PhysicsUpdate(...)
-		self.CheckDist = true
-		self:OnPhysicsUpdate(...)
-	end
-
-	function ENT:Initialize()
+	--[[function ENT:Initialize()
 		baseclass.Get("bw_base").Initialize(self)
-		self.ConnectDistanceSqr = self.ConnectDistance ^ 2
-		self:Init()
-	end
+	end]]
 
 else
 
-	function ENT:Initialize()
+	--[[function ENT:Initialize()
 		baseclass.Get("bw_base").Initialize(self)
-
-		self.ConnectDistanceSqr = self.ConnectDistance ^ 2
-
-		-- self:OnChangeGridID(self:GetGridID())
-		self:CLInit()
-		self:SHInit()
-	end
+	end]]
 
 end

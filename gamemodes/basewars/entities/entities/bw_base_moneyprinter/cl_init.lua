@@ -69,7 +69,7 @@ if not simpleText then
 	simpleText = draw.SimpleText2
 end
 
-local cache = setmetatable({}, {__mode = "kv"}) --bruh...
+local cache = WeakTable("kv") --bruh...
 
 function ENT:DrawUpgradeCost(y, w, h)
 	local costMoney = self:GetUpgradeCost() or 0
@@ -122,8 +122,7 @@ function ENT:DrawMoneyBar(pos, ang, scale, _, _, me, pwd)
 
 	local w, h = 580, 144
 
-	local Cp = me.dt.Capacity
-
+	local cap = me:GetCapacity()
 	local money = me:GetNWMoney()
 
 	setDrawColor(0, 0, 0)
@@ -137,13 +136,13 @@ function ENT:DrawMoneyBar(pos, ang, scale, _, _, me, pwd)
 	setDrawColor(backCol:Unpack())
 	rect(wpad, yoff, (w - wpad*2), barH)
 
-	local perc = money / Cp
+	local perc = money / cap
 
 	setDrawColor(fontCol:Unpack())
 	rect(wpad, yoff, (w - wpad*2) * perc, barH)
 
 	local cur = Language("Price", money)
-	local cap = Language("Price", Cp)
+	local cap = Language("Price", cap)
 
 	local txt = cur .. " / " .. cap
 	if me._LastText ~= txt then
@@ -333,7 +332,6 @@ function ENT:Draw()
 	cam.End3D2D()
 
 
-
 	pos, ang, scale, w, h = misc[1], misc[2], misc[3], misc[4], misc[5]
 
 	cam.Start3D2D(pos, ang, scale)
@@ -350,15 +348,12 @@ function ENT:Draw()
 	cam.End3D2D()
 
 
-
-
 	pos, ang, scale, w, h = stats[1], stats[2], stats[3], stats[4], stats[5]
 
 	cam.Start3D2D(pos, ang, scale)
 		ok, err = pcall(self.DrawStats, self, pos, ang, scale, w, h, me, pwd)
 		if not ok then print("Printers error:", err) end
 	cam.End3D2D()
-
 
 end
 

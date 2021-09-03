@@ -12,7 +12,17 @@ function ENT:SlotCreated(slot)
 	function slot:DrawBorder(w, h)
 		draw.RoundedBox(4, 0, 0, w, h, Colors.DarkGray)
 
-		local fr = math.min(math.TimeFraction(ent:GetBPStart(), ent:GetNextFinish(), CurTime()), 1)
+		local fr
+		if not ent:IsPowered() then
+			local left = ent:GetTimeLeft()
+			local diff = ent:GetBPDur()
+			fr = left == 0 and 1 or (1 - left / diff)
+		else
+			fr = (CurTime() - ent:GetBPStart()) / ent:GetBPDur()
+		end
+
+		fr = math.min(fr, 1)
+	
 		draw.RoundedBox(4, 0, h - fr * h, w, fr * h, Colors.Sky)
 	end
 
@@ -79,9 +89,13 @@ function ENT:CreateClaimCanvas(menu, inv)
 	function canv:Paint(w, h)
 		local sx, sy = slot:GetPos()
 		local tx, ty = sx + slot:GetWide() / 2, sy - 8
-		
+
 		local fmt = "%02d:%02d.%02d"
-		local left = math.max(ent:GetNextFinish() - CurTime(), 0)
+		local left = math.max(ent:GetBPStart() + ent:GetBPDur() - CurTime(), 0)
+		if not ent:IsPowered() then
+			left = ent:GetTimeLeft()
+		end
+
 		local tm = string.FormattedTime(left, fmt)
 		draw.SimpleText(tm, font, tx - tw / 2, ty, Colors.LighterGray, 0, 4)
 

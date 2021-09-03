@@ -278,8 +278,6 @@ function Animatable:MemberLerp(tbl, key, val, dur, del, ease, forceswap)
 	local anim = anims[ankey]
 	local from = tbl[key] or 0
 
-	local print = key == "DisappearFrac" and print or BlankFunc
-
 	if tbl[key] == val then
 		if not anim or anim.ToVal == val then
 			return false, false
@@ -413,7 +411,7 @@ function Animatable:RemoveLerp(key)
 end
 
 function Animatable:RemoveMemberLerp(t, key)
-	local as_str = hex(tbl)
+	local as_str = hex(t)
 	self:RemoveLerp(tostring(key) .. as_str)
 end
 

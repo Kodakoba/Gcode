@@ -15,10 +15,32 @@ function sol:Initialize()
 	self.BaseHandle = ents.Create("bw_invismarker")
 	local bh = self.BaseHandle
 
+	local solMax = self:OBBMaxs()
+	local solCenter = self:OBBCenter()
+
 	bh:SetParent(self)
-	bh:SetPos(self:GetPos() + Vector(0, 0, -192))
 	bh.SolarAttachment = self
+
+	bh.CustomOBB = {
+		Vector(-50, -50, -200),
+		Vector(50, 50, 200),
+	}
+
+	bh.Model = false
 	bh:Spawn()
+	bh:Activate()
+
+	local bhMin, bhMax = unpack(bh.CustomOBB)
+
+	local vertOff = bhMax.z - bhMin.z
+
+	local horOff = Vector()
+
+	horOff[1] = -(bhMax.z + bhMin.z) / 2
+	horOff[2] = (bhMax.y + bhMin.y) / 2
+	horOff[3] = -vertOff / 2
+
+	bh:SetPos(horOff)
 
 	self._LastThink = 0
 	self.ForceUpdate = true

@@ -1,6 +1,4 @@
 -- no not the nsfw fucking mats
-local bad = Material("materials/icon16/cancel.png")
-
 local customMats = {}
 
 MoarPanelsMats._ReloadAll = function()

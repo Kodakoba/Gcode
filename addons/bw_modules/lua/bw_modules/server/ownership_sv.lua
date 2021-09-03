@@ -11,6 +11,7 @@ hook.Add("CPPIAssignOwnership", "BWTrackOwner", function(ply, ent)
 	if not ply:IsValid() then return end
 	if ent.CPPI_OwnerSID == ply:SteamID() then return end
 
+	local old = ent.CPPI_OwnerSID
 	local id = ply:SteamID()
 	ent.CPPI_OwnerSID = id
 
@@ -24,7 +25,7 @@ hook.Add("CPPIAssignOwnership", "BWTrackOwner", function(ply, ent)
 	net.Broadcast()
 
 	-- run a new hook because, again, fpp sucks
-	hook.Run("EntityOwnershipChanged", ply, ent, id)
+	hook.Run("EntityOwnershipChanged", ply, ent, old)
 end)
 
 function BaseWars.Ents.NetworkAll(ply)

@@ -135,6 +135,7 @@ end
 	Desc: Creates a new animation
 -----------------------------------------------------------]]
 function meta:NewAnimation( length, delay, ease, callback )
+	if not IsValid(self) then error("its null mate") return end
 
 	if ( delay == nil ) then delay = 0 end
 	if ( ease == nil ) then ease = -1 end

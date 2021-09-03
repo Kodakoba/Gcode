@@ -74,7 +74,7 @@ function FScrollPanel:Draw(w, h)
 	local sx, sy = self:LocalToScreen(0, 0)
 
 	if self.ScissorShadows then
-		BSHADOWS.SetScissor(x, y, w, h)
+		BSHADOWS.SetScissor(sx, sy, w, h)
 	end
 
 	if self.NoDraw then

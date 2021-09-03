@@ -141,6 +141,7 @@ META.To = META.Lerp
 function META:GetTo(key)
 	return self.__Animations and self.__Animations[key]
 end
+
 local format = string.format
 
 local function hex(t)
@@ -189,6 +190,30 @@ function META:MemberLerp(tbl, key, val, dur, del, ease, forceswap)
 	end
 
 	return anim
+end
+
+function META:RemoveLerp(key)
+	local anims = self.__Animations or {}
+
+	if anims[key] then
+		anims[key].Think = empty -- no thoughts head empty
+		anims[key].OnEnd = empty
+
+		for k,v in pairs(self.m_AnimList) do
+			if v == anims[key] then
+				self.m_AnimList[k] = nil
+				break
+			end
+		end
+
+	end
+
+	anims[key] = nil
+end
+
+function META:RemoveMemberLerp(t, key)
+	local as_str = hex(t)
+	self:RemoveLerp(tostring(key) .. as_str)
 end
 
 --CW has its' own LerpColor which seems to work differently from this
@@ -739,7 +764,7 @@ end
 
 
 function META:Bond(to)
-	if not self.__HasBonded then
+	--if not self.__HasBonded then
 		local name = ("bondThink:%p:%p"):format(self, to) --ptrs
 
 		hook.Add("Think", name, function()
@@ -757,9 +782,9 @@ function META:Bond(to)
 	-- why not!
 	--elseif self.__HasBonded ~= to then
 	--	error("Can't bond a panel to multiple objects.")
-	end
+	--end
 
-	self.__HasBonded = to
+	--self.__HasBonded = to
 end
 
 function META:GetAutoCanvas(name, class)

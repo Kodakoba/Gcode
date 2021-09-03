@@ -12,8 +12,9 @@ ENT.Cableable = true
 ENT.BlueprintConstructor = true
 
 function ENT:DerivedDataTables()
-	self:NetworkVar("Float", 1, "NextFinish")
+	self:NetworkVar("Float", 1, "BPDur")
 	self:NetworkVar("Float", 2, "BPStart")
+	self:NetworkVar("Float", 3, "TimeLeft")
 
 	self:NetworkVar("Bool", 2, "Active")
 	self:NetworkVar("Bool", 3, "HasBP") -- use DTs to not make race conditions (inv nw vs. active)

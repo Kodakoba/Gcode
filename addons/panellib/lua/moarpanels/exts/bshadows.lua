@@ -366,18 +366,18 @@ BSHADOWS.EndShadow = function(intensity, spread, blur, opacity, direction, dista
 	if screct.x then unscissor() end
 
 	--then whatever the user has drawn
-	render.OverrideAlphaWriteEnable(true, false)
+	-- render.OverrideAlphaWriteEnable(true, false)
 
 	if not _shadowOnly then
 		mat:SetTexture("$basetexture", CurRT)
 
 		render.SetMaterial(mat)
 		if screct.x then scissor() end
-			render.DrawScreenQuadEx(curX or screct.x, curY or screct.y,
-				curW or screct.w or ScrW(), curH or screct.h or ScrH())
-		if screct.x then unscissor() end
+			render.DrawScreenQuadEx(curX, curY, curW, curH)
 	end
 
+	-- https://github.com/Facepunch/garrysmod-issues/issues/4635
+	-- restore any scissors that were ruined due to this issue
 	if screct.x then render.Rescissor() end
 
 	if offsetted then

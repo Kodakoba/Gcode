@@ -227,6 +227,10 @@ function ENT:CreateCreationCanvas(menu, inv) -- hm
 		local tier = icons:Add("FButton")
 
 		tier:SetSize(96, 120 - 16)
+		if i > 1 then
+			tier:SetEnabled(false)
+			tier:SetAlpha(60)
+		end
 
 		function tier:PostPaint(w, h)
 			if BlueprintPaints[i] then

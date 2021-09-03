@@ -77,9 +77,6 @@ ChainAccessor(ptr, "H", "Tall")
 function ptr:SizeTo(w, h, time, del, ease)
 	local an = hud.Anims
 
-	an:RemoveMemberLerp(self, "W")
-	an:RemoveMemberLerp(self, "H")
-
 	if w ~= -1 then
 		an:MemberLerp(self, "W", w, time, del, ease)
 	end
@@ -153,6 +150,8 @@ end
 local errer = GenerateErrorer("BasePainter")
 
 function ptr:Paint()
+	if self.DisappearFrac == 1 then return end
+
 	local cury = 0
 
 	self:_GenMatrix()
