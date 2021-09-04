@@ -87,14 +87,15 @@ hook.Add("BW_LoadPlayerData", "BWLevel.Load", function(ply, ...)
 	local q = db:query(fmt)
 	q.onError = mysqloo.QueryError
 	q.onSuccess = function(_, data)
-		print("money", data[1].money)
 		local mon = data[1].money
-		local wth = rb.PlayerWorth[pin]
-
+		local wth = rb.PlayerWorth[pin] or 0
+		-- getting rollback from SQL when there's worth in memory
+		-- should, like, never happen; good to handle it nonetheless i think
 		local to_add = mon - wth
 
 		if to_add > 0 then
-			print("adding", to_add)
+			pin:AddMoney(to_add)
+			pin:SetBWData("Worth", wth)
 		end
 	end
 	q:start()
