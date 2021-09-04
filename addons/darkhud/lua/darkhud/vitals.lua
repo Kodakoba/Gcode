@@ -5,6 +5,8 @@
 	DarkHUD:On("VitalsEconomyPainted")
 ]]
 
+setfenv(1, _G)
+
 local render = render
 local surface = surface
 local dh = DarkHUD
@@ -493,34 +495,6 @@ function DarkHUD.CreateVitals()
 	end
 
 	function ecn:Paint(w,h)
-
-		local x, y = av:GetPos()
-
-		local barH = math.floor(16 * Lerp(0.5, scale, 1) / 2) * 2 --brings to multiple of 2
-		local rndrad = barH/2
-
-		local barsH = barH * 2 + 8
-		local barY = h/2 - barH/2
-
-		local iconSize = 24 * Lerp(0.5, scale, 1)
-		surface.SetDrawColor(255, 255, 255)
-		surface.DrawMaterial("https://i.imgur.com/8b0nZI7.png", "moneybag.png", x + 18, 4, iconSize, iconSize)
-
-		draw.SimpleText(Language.Currency .. BaseWars.NumberFormat(LocalPlayer():GetMoney()), "DarkHUD_Money", x + 50, 4 + iconSize/2, color_white, 0, 1)
-
-
-		local expBoxX = w - 180 * scale - 8
-		local expBoxY = barY
-
-		local expY = 4 + iconSize + 8*scale + iconSize/2
-		local expw, exph = draw.SimpleText(LocalPlayer():GetLevel(), "DarkHUD_Money", expBoxX + 64, 4 + iconSize/2, color_white, 1, 1)
-		expBoxY = 4 + iconSize/2 + exph/2 + 2
-
-		surface.DrawMaterial("https://i.imgur.com/YYXglpb.png", "star.png", expBoxX + 64 - expw/2 - 4 - iconSize, 4, iconSize, iconSize)
-
-		draw.RoundedBox(rndrad, expBoxX, expBoxY, 180*scale, barH, Color(75, 75, 75))
-		draw.RoundedBox(rndrad, expBoxX, expBoxY, 180*scale * (LocalPlayer():GetXP() / LocalPlayer():GetXPNextLevel()), barH, Color(140, 80, 220))
-
 		DarkHUD:Emit("VitalsEconomyPainted", w, h)
 	end
 
