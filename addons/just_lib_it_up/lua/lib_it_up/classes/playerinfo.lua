@@ -18,6 +18,17 @@ LibItUp.PlayerInfoTables = LibItUp.PlayerInfoTables or {
 
 LibItUp.AllPlayerInfos = LibItUp.AllPlayerInfos or {}
 
+function LibItUp.CleanupAllPIs()
+	-- extremely debug feature
+	for k,v in pairs(LibItUp.PlayerInfoTables) do
+		if istable(v) then
+			LibItUp.PlayerInfoTables[k] = {}
+		end
+	end
+
+	table.Empty(LibItUp.AllPlayerInfos)
+end
+
 local PIT = LibItUp.PlayerInfoTables
 
 function PI:Initialize(id, is_sid64) -- we can't know that the id is a steamID64
@@ -67,6 +78,8 @@ function PI:Initialize(id, is_sid64) -- we can't know that the id is a steamID64
 	PIT.SteamID64[sid64] = self
 
 	table.insert(LibItUp.AllPlayerInfos, self)
+
+	PI.Revalidate(sid)
 end
 
 ChainAccessor(PI, "_SteamID", "SteamID")	-- 	  !! Using SteamID's is not advised due to its' behavior on bots !!
@@ -101,6 +114,15 @@ function PI:SetPlayer(ply)
 	end
 end
 
+function PI.Revalidate(id)
+	local inv = PIT.Invalid[id]
+	if not inv then return end
+
+	PIT.Invalid[inv:GetSteamID64()] = nil
+	PIT.Invalid[inv:GetSteamID()] = nil
+	PIT.Invalid[inv:GetPlayer(true)] = nil
+end
+
 -- TODO: game event for nick change
 
 ChainAccessor(PI, "_Nick", "Nick")
@@ -119,7 +141,8 @@ function PI:__tostring()
 	return ("PlayerInfo [%s][ %s ]"):format(self:GetSteamID64() or "No SteamID64", self:GetPlayer() or "No Player")
 end
 
-function PI:get(id, is_sid64, revalidate)
+-- mark "invalid" if youre ok with getting invalid PInfo
+function PI:get(id, is_sid64, invalid)
 	if IsPlayerInfo(id) then return id end
 
 	if is_sid64 and not id:IsMaybeSteamID64() then
@@ -127,10 +150,8 @@ function PI:get(id, is_sid64, revalidate)
 		return
 	end
 
-	local to_ret
-
 	-- dont return invalidated playerinfos if the player didnt join back
-	if PIT.Invalid[id] and not revalidate then return false end
+	if PIT.Invalid[id] and not invalid then return false end
 
 	-- returns: pinfo, bool (newly created?)
 	if IsPlayer(id) then
@@ -220,9 +241,9 @@ function PI:_Destroy()
 	PIT.SteamID[self:GetSteamID()] = nil
 	PIT.SteamID64[self:GetSteamID64()] = nil
 
-	PIT.Invalid[self:GetSteamID64()] = true
-	PIT.Invalid[self:GetSteamID()] = true
-	PIT.Invalid[self:GetPlayer(true)] = true
+	PIT.Invalid[self:GetSteamID64()] = self
+	PIT.Invalid[self:GetSteamID()] = self
+	PIT.Invalid[self:GetPlayer(true)] = self
 
 	print(self:Nick() .. "'s PlayerInfo was destroyed.")
 end
@@ -342,7 +363,7 @@ hook.NHAdd("PlayerInitialSpawn", "PlayerInfoEmit", function(ply)
 
 	local pinfo, new = PI:get(sid64, true)
 
-	if new then
+	if not new then
 		PIT.Player[ply] = pinfo
 		pinfo:_OnReconnect()
 		pinfo:NotifyEveryone()
@@ -352,14 +373,18 @@ hook.NHAdd("PlayerInitialSpawn", "PlayerInfoEmit", function(ply)
 end)
 
 hook.Add("PlayerAuthed", "PlayerInfoEmit", function(ply, sid)
-	local pinfo = PI:get(ply, false, true)
-	pinfo:Emit("StartReconnect", ply)
+	PI.Revalidate(sid)
 
-	pinfo._AbsentStop = CurTime()
-	pinfo._Absent = false
+	local pinfo, new = PI:get(ply, false)
+
+	if not new then
+		pinfo:Emit("StartReconnect", ply)
+		pinfo._AbsentStop = CurTime()
+		pinfo._Absent = false
+		PIT.Absent[pinfo] = nil
+	end
+
 	pinfo:NotifyEveryone()
-
-	PIT.Absent[pinfo] = nil
 end)
 
 local function refill()
