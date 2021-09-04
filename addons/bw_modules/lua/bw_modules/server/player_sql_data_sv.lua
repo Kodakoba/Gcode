@@ -1,3 +1,6 @@
+BaseWars.PlayerData = BaseWars.PlayerData or {}
+local pd = BaseWars.PlayerData
+
 local PLAYER = debug.getregistry().Player
 
 local db
@@ -63,10 +66,16 @@ end)
 local toSet = {}
 
 local function queueChange(pin)
+	pin = GetPlayerInfoGuarantee(pin)
 	toSet[pin] = true
 end
 
-function SyncBWIntoSQL()
+pd.QueueChange = queueChange
+
+local autoSync = {"money", "xp", "level"}
+autoSync = table.KeysToValues(autoSync)
+
+function pd.SyncBWIntoSQL()
 	local qTpl = qries.set_column_query
 
 	for pi,v in pairs(toSet) do
@@ -74,6 +83,11 @@ function SyncBWIntoSQL()
 		local sid = pi:GetSteamID64()
 
 		for name, val in pairs(bwd) do
+			if not autoSync[name] then
+				hook.Run("BW_DataSync" .. name, pi, val)
+				continue
+			end
+
 			if pi._bwSyncedData[name] == val then continue end
 
 			pi._bwSyncedData[name] = val
@@ -94,28 +108,29 @@ function SyncBWIntoSQL()
 		end
 
 		toSet[pi] = nil
+		hook.Run("BW_DataSync", pi)
 	end
+
 end
 
 timer.Create("BW_SQLSync", 0.5, 0, function()
-	SyncBWIntoSQL()
+	pd.SyncBWIntoSQL()
 end)
 
 local function setter(q, rep)
 	-- rep = the column name needs to be repeated
 	return function(self, name, val)
 		local pi = GetPlayerInfo(self)
-		local sid = pi:GetSteamID64()
 
 		pi._bwData = pi._bwData or {}
 		pi._bwSyncedData = pi._bwSyncedData or {}
 		if pi._bwData[name] == val then return end
 
 		pi._bwData[name] = val
+
 		queueChange(pi)
 	end
 end
-
 
 PLAYER.SetBWData = setter(qries.set_column_query)
 PLAYER.AddBWData = setter(qries.add_column_query, true)
