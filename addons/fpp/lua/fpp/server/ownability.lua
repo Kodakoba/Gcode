@@ -101,7 +101,7 @@ local function calculateCanTouchForType(ply, ent, touchType)
     end
 
     -- touch own props
-    local owner = ent.FPPOwner -- Circumvent CPPI for micro-optimisation
+    local owner = ent:CPPIGetOwner() -- Circumvent CPPI for micro-optimisation
     if owner == ply then
         return not getPlySetting(ply, "FPP_PrivateSettings_OwnProps"),
                reasonNumbers.owner
