@@ -3,6 +3,9 @@ local surface_DrawTexturedRect = surface.DrawTexturedRect
 local surface_DrawTexturedRectUV = surface.DrawTexturedRectUV
 local surface_SetMaterial = surface.SetMaterial
 
+local framesPerRow = 5
+local framePad = 4
+
 --[[
 	GIF header (tailer? it's last):
 		2 bytes: first frame delay time (in centiseconds)
@@ -87,6 +90,10 @@ local function ParseGIFInfo(_, name, info)
 
 	tbl.w = cmat:Width()
 	tbl.h = cmat:Height()
+
+	local intended = framesPerRow * (info.wid + framePad)
+	tbl.scale = tbl.w / intended
+
 	tbl.i = info
 
 	tbl.frw = info.wid
@@ -222,10 +229,12 @@ function draw.DrawGIF(url, name, x, y, dw, dh, frw, frh, start, frametime, pnl)
 	end
 
 	surface_SetMaterial(mat.mat)
+	local scale = mat.scale
 	local w, h = mat.w, mat.h
 
-	frw = frw or mat.frw
-	frh = frh or mat.frh
+	frw = (frw or mat.frw) * scale
+	frh = (frh or mat.frh) * scale
+
 
 	if not start then start = 0 end
 	local ct = CurTime()
@@ -247,11 +256,11 @@ function draw.DrawGIF(url, name, x, y, dw, dh, frw, frh, start, frametime, pnl)
 		end
 	end
 
-	local row, col = (frame % 5), math.floor(frame / 5)
+	local row, col = (frame % framesPerRow), math.floor(frame / framesPerRow)
 
-	local xpad, ypad = 4, 4
+	local xpad, ypad = framePad, framePad
 
-	local xo, yo = xpad, ypad
+	local xo, yo = xpad * scale, ypad * scale
 
 	local startX = row * frw + row * xo
 	local endX = startX + frw
