@@ -676,7 +676,7 @@ end
 
 function easylua.EndEntity(spawn, reinit)
 
-	ENT.Model = ENT.Model or Model("models/props_borealis/bluebarrel001.mdl")
+	--ENT.Model = ENT.Model or Model("models/props_borealis/bluebarrel001.mdl")
 
 	if not ENT.Base then -- there can be Base without Type but no Type without base without redefining every function so um
 		ENT.Base = "base_anim"
