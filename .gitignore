@@ -10,6 +10,7 @@ addons/research/**
 
 addons/arccw*
 addons/cw*
+!addons/cw2_base*
 addons/fas*
 
 addons/inventory/inventory_1.0.zip
