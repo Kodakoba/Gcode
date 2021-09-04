@@ -175,6 +175,7 @@ BSHADOWS.BeginShadow = function(x, y, w, h)
 	else
 		render.PushRenderTarget(rt1)
 
+		render.SetScissorRect(0, 0, 0, 0, false) -- mighty annoying
 		render.OverrideAlphaWriteEnable(true, true)
 			render.Clear(0, 0, 0, 0, true)
 		render.OverrideAlphaWriteEnable(false, false)
@@ -237,6 +238,7 @@ BSHADOWS.CacheShadow = function(intensity, spread, blur, opacity, direction, dis
 	render.PopRenderTarget()
 
 	local shmat = BSHADOWS.ShadowMaterialGrayscale
+
 	if color or color2 then
 		shmat = BSHADOWS.ShadowMaterialColorscale
 	end
@@ -248,7 +250,9 @@ BSHADOWS.CacheShadow = function(intensity, spread, blur, opacity, direction, dis
 
 		shmat:SetVector("$color", vc)               --this is a weird ass shader which adds something like a...halo, i guess
 													--it really looks like a halo more than a shadow
-		shmat:SetUndefined("$color2")               --seems like color2 makes $color behave weird so lets unset it
+		if not color2 then
+			shmat:SetUndefined("$color2")
+		end
 	end
 
 	if color2 then
@@ -272,6 +276,7 @@ BSHADOWS.CacheShadow = function(intensity, spread, blur, opacity, direction, dis
 		render.OverrideAlphaWriteEnable(true, true)
 
 		for i=1, intensity do
+			-- Bro
 			render.DrawScreenQuad()
 		end
 
@@ -331,14 +336,18 @@ BSHADOWS.EndShadow = function(intensity, spread, blur, opacity, direction, dista
 
 		shmat:SetVector("$color", vc)				--this is a weird ass shader which adds something like a...halo, i guess
 													--it really looks like a halo more than a shadow
-		shmat:SetUndefined("$color2")				--seems like color2 makes $color behave weird so lets unset it
+		if not color2 then
+			shmat:SetUndefined("$color2")
+		end
 	end
 
 	if color2 then
 		local vc = Vector(color2.r, color2.g, color2.b)
 		shmat:SetVector("$color2", vc)	--color2 is more "color of the shadow" than "color of the halo"
 
-		if not color then shmat:SetUndefined("$color") end
+		if not color then
+			shmat:SetVector("$color", Vector())
+		end
 	end
 
 	if color or color2 then
