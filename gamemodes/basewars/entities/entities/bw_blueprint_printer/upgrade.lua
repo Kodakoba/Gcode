@@ -45,7 +45,7 @@ function ENT:DoUpgrade(lv)
 	lv = lv or self:GetLevel() + 1
 
 	local calcM = self:GetUpgradeCost(lv)
-	self.CurrentValue = (self.CurrentValue or 0) + calcM
+	BaseWars.Worth.Add(self, calcM)
 	self.Level = lv
 
 	if SERVER then

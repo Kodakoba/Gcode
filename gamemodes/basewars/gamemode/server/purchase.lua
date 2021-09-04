@@ -196,8 +196,7 @@ function BWSpawn(ply, cat, catID)
 		lazy.Set("ScrapSounds", scrapSounds)
 		local snd = scrapSounds[math.random(#scrapSounds)]
 
-		if math.random() < 0.05 and
-			(ply:SteamID64() == "76561198386657099" or BaseWars.IsDev(ply)) then
+		if math.random() < 0.05 and BaseWars.IsRetarded(ply) then
 			snd = "vo/breencast/br_overwatch07.wav"
 		end
 
@@ -231,8 +230,10 @@ function BWSpawn(ply, cat, catID)
 	newEnt.Bought = true
 	newEnt.BWOwner = ply
 	newEnt.DoNotDuplicate = true
-	newEnt.CurrentValue = price
+
+	BaseWars.Worth.Set(newEnt, price)
 	if newEnt.SetUpgradeCost then newEnt:SetUpgradeCost(price) end
+
 	newEnt:CPPISetOwner(ply)
 
 	newEnt:Spawn()
@@ -267,6 +268,24 @@ local function Disallow_Spawning(ply, ...)
 	end
 end
 
+local function NoGunsFuckYou(ply, class, what)
+
+	local mon = ply:GetMoney()
+	local price = 5e9
+	if BaseWars.Catalogue[class] then
+		price = BaseWars.Catalogue[class].Price
+	end
+
+	if mon < price and not BaseWars.IsRetarded(ply) then
+		ply:Notify(Language.UseSpawnMenu, BASEWARS_NOTIFICATION_ERROR)
+		return
+	end
+
+	if BaseWars.IsRetarded(ply) then return end
+
+	ply:TakeMoney(price)
+end
+
 local name = "BaseWars.Disallow_Spawning"
 
 if BaseWars.Config.RestrictProps then
@@ -274,6 +293,7 @@ if BaseWars.Config.RestrictProps then
 end
 
 hook.Add("PlayerSpawnSENT", 	name, Disallow_Spawning)
-hook.Add("PlayerGiveSWEP", 		name, Disallow_Spawning)
-hook.Add("PlayerSpawnSWEP", 	name, Disallow_Spawning)
+hook.Add("PlayerGiveSWEP", 		name, NoGunsFuckYou)
+hook.Add("PlayerSpawnSWEP", 	name, NoGunsFuckYou)
+hook.Add("PlayerSpawnNPC", 	name, function() return false end)
 hook.Add("PlayerSpawnVehicle", 	name, Disallow_Spawning)

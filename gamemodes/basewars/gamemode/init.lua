@@ -117,9 +117,7 @@ function GM:SetupPlayerVisibility(ply)
 end
 
 function GM:PreCleanupMap()
-
 	BaseWars.UTIL.RefundAll()
-
 end
 
 function GM:PostCleanupMap()

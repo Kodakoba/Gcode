@@ -22,8 +22,8 @@ function ENT:Initialize()
 	self.Overclocker = false
 	self.Mods = {}
 
-	if self.TTR and self.CurrentValue then
-		self.PrintAmount = math.Round(self.CurrentValue / self.TTR)
+	if self.TTR then
+		self.PrintAmount = math.Round(BaseWars.Worth.Get(self) / self.TTR)
 	end
 
 	self:SetPrintAmount(self.PrintAmount)
@@ -57,7 +57,7 @@ end
 function ENT:DoUpgrade(final)
 	local lvl = self:GetLevel()
 	local calcM = self:GetUpgradeValue() * lvl
-	self.CurrentValue = (self.CurrentValue or 0) + calcM
+	BaseWars.Worth.Add(self, calcM)
 	self.Level = self.Level + 1
 
 	if final then

@@ -80,7 +80,7 @@ end
 
 function ENT:DoUpgrade()
 	local calcM = self:GetUpgradeCost()
-	self.CurrentValue = (self.CurrentValue or 0) + calcM
+	BaseWars.Worth.Add(self, calcM)
 	self.Level = self.Level + 1
 	self:SetLevel(self.Level)
 
