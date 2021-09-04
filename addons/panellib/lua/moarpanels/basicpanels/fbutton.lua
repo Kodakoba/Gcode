@@ -109,7 +109,7 @@ function button:HoverLogic(dis, w, h)
 
 	if self:IsDown() then
 		local min = math.max(w, h)
-		local scaleFrac = math.min(6, min * 0.25) / min -- minimum between 25% and 6px
+		local scaleFrac = math.min(6, min * 0.12) / min -- minimum between 12% and 6px
 		self:To("MxScale", t.MxScaleDown or (1 - scaleFrac), 0.05, 0, 0.2)
 	elseif self.MxScale ~= 1 then
 		self:To("MxScale", 1, 0.1, 0, 0.3)
