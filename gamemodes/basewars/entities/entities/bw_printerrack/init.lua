@@ -88,11 +88,6 @@ function ENT:AddPrinter(slot, ent)
 	ent.IsInRack = true
 
 	self:NetworkPrinters()
-
-	--[[self.CurrentValue = 15000
-	for k,v in pairs(self.Printers.Entities) do
-		if v.CurrentValue then self.CurrentValue = self.CurrentValue + v.CurrentValue end
-	end]]
 end
 
 function ENT:Touch(ent)
@@ -175,11 +170,6 @@ function ENT:Eject(num)
 
 		ent:GetPhysicsObject():EnableGravity(true) --???
 		ent:SetAbsVelocity(Vector(0, 0, 0))
-
-		--[[self.CurrentValue = 15000
-		for k,v in pairs(self.Printers.Entities) do
-			if v.CurrentValue then self.CurrentValue = self.CurrentValue + v.CurrentValue end
-		end]]
 	else
 		self:EmitSound("buttons/button10.wav", 65, 100, 1)
 	end

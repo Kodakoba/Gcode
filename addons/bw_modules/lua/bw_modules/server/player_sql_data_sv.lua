@@ -84,7 +84,7 @@ function pd.SyncBWIntoSQL()
 
 		for name, val in pairs(bwd) do
 			if not autoSync[name] then
-				hook.Run("BW_DataSync" .. name, pi, val)
+				hook.NHRun("BW_DataSync" .. name, pi, val)
 				continue
 			end
 
@@ -108,7 +108,7 @@ function pd.SyncBWIntoSQL()
 		end
 
 		toSet[pi] = nil
-		hook.Run("BW_DataSync", pi)
+		hook.NHRun("BW_DataSync", pi)
 	end
 
 end
@@ -135,6 +135,10 @@ end
 PLAYER.SetBWData = setter(qries.set_column_query)
 PLAYER.AddBWData = setter(qries.add_column_query, true)
 PLAYER.SubBWData = setter(qries.sub_column_query, true)
+PLAYER.GetBWData = function(self, key)
+	local pi = GetPlayerInfo(self)
+	return pi._bwData[key]
+end
 
 function PLAYER:InitBWData(name, val)
 	local pi = GetPlayerInfo(self)

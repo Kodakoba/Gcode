@@ -77,7 +77,7 @@ function wth.PayOut(ent, atk, full)
 			Pay(own, val, Name, true)
 		end
 
-		hook.Run("EntityPaidWorth", ent, own, val)
+		hook.NHRun("EntityPaidWorth", ent, own, val)
 		return 0
 	end
 
@@ -103,16 +103,16 @@ function wth.PayOut(ent, atk, full)
 	if TeamAmt > 1 then
 		for k, v in ipairs(Members) do
 			Pay(v, Fraction, Name)
-			hook.Run("EntityPaidWorth", ent, v, Fraction)
+			hook.NHRun("EntityPaidWorth", ent, v, Fraction)
 		end
 	else
 		Pay(atk, Fraction, Name)
-		hook.Run("EntityPaidWorth", ent, atk, Fraction)
+		hook.NHRun("EntityPaidWorth", ent, atk, Fraction)
 	end
 
 	if own then
 		Pay(own, Fraction, Name, true)
-		hook.Run("EntityPaidWorth", ent, own, Fraction)
+		hook.NHRun("EntityPaidWorth", ent, own, Fraction)
 	end
 end
 

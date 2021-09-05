@@ -130,7 +130,7 @@ function ENT:PlayerTakeMoney(ply, suppress)
 		ply:EmitSound("mvm/mvm_money_pickup.wav")
 	end
 
-	hook.Run("BaseWars_PlayerEmptyPrinter", ply, self, money)
+	hook.NHRun("BaseWars_PlayerEmptyPrinter", ply, self, money)
 
 	return money
 end

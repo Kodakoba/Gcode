@@ -96,14 +96,14 @@ if SERVER then
 
 	end
 
-	--[[function ENT:Initialize()
+	function ENT:Initialize()
 		baseclass.Get("bw_base").Initialize(self)
-	end]]
+	end
 
 else
 
-	--[[function ENT:Initialize()
+	function ENT:Initialize()
 		baseclass.Get("bw_base").Initialize(self)
-	end]]
+	end
 
 end

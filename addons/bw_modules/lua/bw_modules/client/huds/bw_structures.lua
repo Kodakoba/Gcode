@@ -159,6 +159,9 @@ function paintEntityLevel(ent, w, y)
 	draw.SimpleText(Language("Level", ent:GetLevel()),
 		lvFont, w / 2, y, color_white, 1)
 
+	--[[draw.SimpleText(Language("Level", ent:GetLevel()),
+		lvFont, w / 2, y, color_white, 1)]]
+
 	return fh * fr, fh
 end
 

@@ -78,7 +78,7 @@ hook.Add("BW_DataSyncWorth", "RollbackSync", function(pin, wth)
 	q:start()
 end)
 
-hook.Add("BW_LoadPlayerData", "BWLevel.Load", function(ply, ...)
+hook.Add("BW_LoadPlayerData", "RollbackLoad", function(ply, ...)
 	local pin = GetPlayerInfoGuarantee(ply)
 
 	local fmt = "SELECT `money` FROM `bw_rollback` WHERE puid = %s"
@@ -87,6 +87,8 @@ hook.Add("BW_LoadPlayerData", "BWLevel.Load", function(ply, ...)
 	local q = db:query(fmt)
 	q.onError = mysqloo.QueryError
 	q.onSuccess = function(_, data)
+		if not data[1] then return end
+
 		local mon = data[1].money
 		local wth = rb.PlayerWorth[pin] or 0
 		-- getting rollback from SQL when there's worth in memory
