@@ -98,5 +98,24 @@ hook.Add("OnTeleport", "TestTeleportHook", function()
 	local ply = ACTIVATOR
 	if acs[ply] == engine.TickCount() then return end
 	acs[ply] = engine.TickCount()
-	changePos(destEnts[teleToDest[CALLER:MapCreationID()]])
+	local teleID = CALLER:MapCreationID()
+	local dest = teleToDest[teleID]
+	if not dest then
+		regenerate()
+		dest = teleToDest[teleID]
+	end
+
+	local destEnt = dest and destEnts[dest]
+
+	if not dest then
+		ErrorNoHalt("failed to find destination ID for teleport " .. tonumber(teleID))
+		return
+	end
+
+	if not destEnt then
+		ErrorNoHalt("failed to find destination ent for destination ID " .. tonumber(dest))
+		return
+	end
+
+	changePos(destEnt)
 end)
