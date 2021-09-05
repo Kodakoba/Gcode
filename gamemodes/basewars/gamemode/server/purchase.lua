@@ -268,10 +268,14 @@ local function Disallow_Spawning(ply, ...)
 	end
 end
 
+local banned = {
+	["arccw_nade_incendiary"] = true,
+}
+
 local function NoGunsFuckYou(ply, class, what)
 
 	local mon = ply:GetMoney()
-	local price = 5e9
+	local price = 5e6
 	if BaseWars.Catalogue[class] then
 		price = BaseWars.Catalogue[class].Price
 	end

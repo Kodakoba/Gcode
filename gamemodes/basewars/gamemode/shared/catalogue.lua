@@ -481,6 +481,7 @@ SetType("Refinement")
 
 SetType("Production")
 	ReuseInventory("bw_blueprint_printer", "Blueprint Printer", 1 * m, "models/props_lab/plotter.mdl", 1)
+	ReuseInventory("workbench", "Workbench", 2.5 * m, "models/props/CS_militia/table_shed.mdl", 1)
 
 hook.Run("BW_CatalogueFilled")
 
