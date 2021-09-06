@@ -1,9 +1,0 @@
-"AddonInfo"
-{
-	"name"        "GCompute"
-	"version"     "0.01"
-	"author_name" "!cake"
-	"author_url"  ""
-	"info"        "Now with 50% more turing-completeness."
-	"override"    "0"
-}

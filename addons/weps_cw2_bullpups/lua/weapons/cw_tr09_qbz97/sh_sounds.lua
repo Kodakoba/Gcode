@@ -1,0 +1,10 @@
+CustomizableWeaponry:addFireSound("CW_QBZ97_FIRE", "weapons/cw_tr09_qbz97/fire.wav", 1, 100, CHAN_STATIC)
+CustomizableWeaponry:addFireSound("CW_QBZ97_FIRE_SUPPRESSED", "weapons/cw_tr09_qbz97/fire_suppressed.wav", 1, 75, CHAN_STATIC)
+
+CustomizableWeaponry:addReloadSound("CW_QBZ97_MAGRELEASE", "weapons/cw_tr09_qbz97/magrelease.wav")
+CustomizableWeaponry:addReloadSound("CW_QBZ97_MAGOUT", "weapons/cw_tr09_qbz97/magout.wav")
+CustomizableWeaponry:addReloadSound("CW_QBZ97_MAGIN", "weapons/cw_tr09_qbz97/magin.wav")
+CustomizableWeaponry:addReloadSound("CW_QBZ97_BOLTBACK", "weapons/cw_tr09_qbz97/boltback.wav")
+CustomizableWeaponry:addReloadSound("CW_QBZ97_BOLTRELEASE", "weapons/cw_tr09_qbz97/boltrelease.wav")
+CustomizableWeaponry:addReloadSound("CW_QBZ97_RATTLE", "weapons/cw_tr09_qbz97/rattle.wav")
+CustomizableWeaponry:addReloadSound("CW_QBZ97_CLOTH", "weapons/cw_tr09_qbz97/cloth.wav")

@@ -1,8 +1,0 @@
-"VertexLitGeneric"
-{
-	"$basetexture" "kobilica/wire_monitor"
-	"$bumpmap" "kobilica/wire_monitor_normal"
-	"$nodecal" "1"
-	"$model" "1"
-
-}
