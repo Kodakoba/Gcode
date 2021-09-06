@@ -1,4 +1,4 @@
-[submodule "addons/ArcCW_MP"]
-	path = addons/ArcCW_MP
+[submodule "addons/weps_arccw_mp"]
+	path = addons/weps_arccw_mp
 	url = https://github.com/2048khz-gachi-rmx/ArcCW_MP.git
 	branch = recoil-rehaul
