@@ -1,15 +1,15 @@
 ENT.Base = "base_brush"
 ENT.Type = "brush"
 
-local points = SafezonePoints or {}
-
-
 Safezones = Safezones or {}
+Safezones.Brushes = Safezones.Brushes or {}
+Safezones.Points = Safezones.Points or {}
 
+local points = Safezones.Points
 
 function ENT:Initialize()
 	self:SetSolid(SOLID_BBOX)
-	Safezones[#Safezones+1] = self
+	Safezones.Brushes[#Safezones.Brushes + 1] = self
 
 	local d = ents.Create("bw_safezone_dummy")
 	d.ZoneName = self.ZoneName
@@ -72,9 +72,9 @@ function ENT:Touch(ent)
 	end
 
 end
-function ReloadSafezones()
+function Safezones.Reload()
 
-	for k,v in pairs(Safezones) do
+	for k,v in pairs(Safezones.Brushes) do
 
 		if IsValid(v) then
 			if IsValid(v.Dummy) then
@@ -82,7 +82,7 @@ function ReloadSafezones()
 			end
 
 			v:Remove()
-			Safezones[k] = nil
+			Safezones.Brushes[k] = nil
 		end
 
 	end
@@ -93,16 +93,15 @@ function ReloadSafezones()
 		me:Spawn()
 
 		me:SetBrushBounds(v[1], v[2])
-
 	end
 end
-hook.Add("InitPostEntity", "SafezonesSpawn", ReloadSafezones)
-hook.Add("OnReloaded", "SafezonesSpawn", ReloadSafezones)
+hook.Add("InitPostEntity", "SafezonesSpawn", Safezones.Reload)
+hook.Add("OnReloaded", "SafezonesSpawn", Safezones.Reload)
 
 hook.Add("PlayerShouldTakeDamage", "Safezones", function( ply, atk )
 	if not IsValid(ply) then return end
-	if ply:GetNWFloat("Safezone", 0)~=0 and ply:GetNWFloat("Safezone", 0) < CurTime()-5 then return false end
+	if ply:GetNWFloat("Safezone", 0) ~= 0 and ply:GetNWFloat("Safezone", 0) < CurTime() - 5 then return false end
 	if atk:GetNWFloat("Safezone", 0) > 0 then return false end
 
 end)
-hook.Add("PostCleanupMap", "Safezones", ReloadSafezones)
+hook.Add("PostCleanupMap", "Safezones", Safezones.Reload)

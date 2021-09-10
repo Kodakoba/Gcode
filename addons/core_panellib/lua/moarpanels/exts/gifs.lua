@@ -212,6 +212,8 @@ function DownloadGIF(url, name)
 	return MoarPanelsMats[name]
 end
 
+draw.DownloadGIF = DownloadGIF
+
 local bad = Material("materials/icon16/cancel.png")
 
 function draw.DrawGIF(url, name, x, y, dw, dh, frw, frh, start, frametime, pnl)

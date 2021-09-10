@@ -33,14 +33,13 @@ if SERVER then
 		return false
 	end]]
 
-	function ENT:BW_SpawnFunction(ply, tr, class)
+	function ENT:BW_PostBuy(ply, tr, class)
 		local pos = ply:GetPos()
 
-		local ent = ents.Create(class)
-		ent:SetPos(pos)
-		ent.SpawnAngle = ply:EyeAngles()
-		ent:Spawn()
-		ent:Activate()
+		self:SetPos(pos)
+		self.SpawnAngle = ply:EyeAngles()
+		self:Spawn()
+		self:Activate()
 
 		self:EmitSound("buttons/blip1.wav")
 		if IsValid(ply.SpawnPoint) then
@@ -49,9 +48,7 @@ if SERVER then
 		end
 
 		self.OwningPly = ply
-		ply.SpawnPoint = ent
-
-		return ent
+		ply.SpawnPoint = self
 	end
 
 	function ENT:OnRemove()

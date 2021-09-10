@@ -109,7 +109,7 @@ local function do_hook()
 			return chatexp._oldGamemodeHook(self, ply, msg, mode, dead)
 		end
 
-		if hook.Run("CheckChatCooldown", ply) == false then 
+		if hook.Run("CheckChatCooldown", ply) == false then
 			return false
 		end
 
@@ -262,7 +262,8 @@ function chat.AddText(...)
 
 	local res = chathud:AddText(...)
 	local new_t = {}
-	for k,v in ipairs(res.c) do
+
+	for k,v in ipairs(res.nowrap_c) do
 		if isstring(v) or IsColor(v) then
 			table.insert(new_t, v)
 		end

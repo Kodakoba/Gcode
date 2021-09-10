@@ -9,5 +9,7 @@ ENT.Type = "anim"
 
 function ENT:Initialize()
 	self:SetModel(self.Model)
-	self:SetZoneName(self.ZoneName)
+	local dat = Safezones.Points[self.ZoneName]
+	self:SetMinsZone(dat[1])
+	self:SetMaxsZone(dat[2])
 end

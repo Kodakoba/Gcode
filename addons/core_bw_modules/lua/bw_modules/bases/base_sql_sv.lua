@@ -52,7 +52,8 @@ function bw.SQLResync()
 			basesArg:AddArg("base_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT")
 			basesArg:AddArg("base_name VARCHAR(500) NOT NULL")
 			basesArg:AddArg("base_data JSON")
-			basesArg:AddArg("UNIQUE KEY `base_name_UNIQUE` (`base_name`)")
+			basesArg:AddArg("map_name VARCHAR(128)")
+			basesArg:AddArg("UNIQUE KEY `base_name_UNIQUE` (`base_name`, `map_name`)")
 
 		mysqloo.CreateTable(db, bases_tbl, basesArg):Then(coroutine.Resumer())
 
@@ -80,8 +81,10 @@ function bw.SQLResync()
 			end
 		end
 
-		local q = ("SELECT %s FROM `%s` a RIGHT JOIN %s b ON a.base_id = b.base_id;")
-					:format(selWhat, zones_tbl, bases_tbl)
+		local q = ([[SELECT %s FROM `%s` a RIGHT JOIN %s b
+			ON a.base_id = b.base_id
+			WHERE b.map_name = "%s";]])
+					:format(selWhat, zones_tbl, bases_tbl, db:escape(game.GetMap()))
 
 		em:Do(db:query(q))
 			:Then(function(self, q, data)
@@ -132,7 +135,9 @@ end
 local base_q
 
 mysqloo.OnConnect(function()
-	base_q = mysqloo:GetDatabase():prepare("INSERT INTO `bw_bases` (base_name) VALUES(?)")
+	local qry = "INSERT INTO `bw_bases` (`base_name`, `map_name`) VALUES(?, %q)"
+	qry = qry:format( mysqloo:GetDatabase():escape(game.GetMap()))
+	base_q = mysqloo:GetDatabase():prepare(qry)
 end)
 
 function bw.SQL.CreateBase(name)

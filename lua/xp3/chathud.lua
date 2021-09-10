@@ -502,21 +502,12 @@ function chathud:AddText(...)
 	local time = CurTime()
 	local nw = 0
 
-
-
-	local msgstarted = false
-	local entparsed = false
-	local hasentity = false
-
 	local name = ""	--sender name
-
-	local retcont = {}
 
 	local fulltxt = ""
 	local curtext = ""
 
 	local wrappedtxt = ""
-
 
 	for k,v in ipairs(cont) do
 
@@ -540,6 +531,7 @@ function chathud:AddText(...)
 	local curwidth = 0
 
 	local merged = {} --final table, containing everything
+	local merged_nowrap = {}
 
 	local namewid = 0
 
@@ -553,6 +545,7 @@ function chathud:AddText(...)
 			local col = GAMEMODE.GetTeamColor and GAMEMODE:GetTeamColor(v)
 
 			merged[#merged + 1] = col
+			merged_nowrap[#merged_nowrap + 1] = col
 
 			local n = IsValid(v) and (
 				(v.Nick and v:Nick()) or
@@ -565,6 +558,7 @@ function chathud:AddText(...)
 			names[v], nw = string.WordWrap2(n, chathud.W, "CH_Name")
 			curwidth = curwidth + nw
 			merged[#merged + 1] = n
+			merged_nowrap[#merged_nowrap + 1] = n
 
 			name = name .. names[v]
 			entparsed = true
@@ -612,6 +606,8 @@ function chathud:AddText(...)
 
 					wrappedtxt = wrappedtxt .. str
 					merged[#merged + 1] = str
+					merged_nowrap[#merged_nowrap + 1] = tg
+
 					continue
 				end
 
@@ -625,15 +621,11 @@ function chathud:AddText(...)
 
 		if IsColor(v) then
 			merged[#merged + 1] = v
+			merged_nowrap[#merged_nowrap + 1] = v
 		end
 	end
 
-	local ignore = {}
-
 	contents = untagged
-
-	--surface.SetFont("CH_Text")
-	--local tw, th = surface.GetTextSize(name .. ": ")
 
 	local key = #self.History + 1
 	self.History[key] = {
@@ -646,6 +638,7 @@ function chathud:AddText(...)
 
 		fulltxt = fulltxt,	--just the text
 		wrappedtxt = wrappedtxt,
+		nowrap_c = merged_nowrap,
 
 		tags = {},		--tags tbl which will be filled in
 		buffer = buffer,	--buffer to use

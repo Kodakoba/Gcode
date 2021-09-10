@@ -206,10 +206,15 @@ if SERVER then
 
 	local lastmsges = {}
 
-	chathud.ChatCDPadding = 1
-	chathud.ChatCD = 0.5
-	chathud.ChatSpamCD = 3 
+	chathud.ChatCD_TimeTillWear = 1 -- how many seconds before violations start wearing off
+	chathud.ChatCD_SecondsWear = 1 -- s. / 1 cooldown violation reset
+	chathud.ChatCD = 1
+
 	chathud.LetViolate = 2
+
+	chathud.StrikeCD = 2
+	chathud.StrikePenalty = 2 -- 2s per each new strike
+	chathud.StrikeWearoff = 10 -- 15s to wear off one strike penalty
 
 	net.Receive(chatexp.NetTag, function(_, ply)
 		local cant = hook.Run("CheckChatCooldown", ply) == false
@@ -234,6 +239,7 @@ if SERVER then
 	end)
 
 	hook.Add("CheckChatCooldown", "ChatHUD", function(ply)
+		if ply:IsSuperAdmin() then return end
 
 		local cd = ply.ChatCD
 
@@ -241,22 +247,28 @@ if SERVER then
 
 			local cd = ply.ChatCD
 
-			local overcd = CurTime() < cd.NextWrite
+			local in_cd = CurTime() < cd.NextWrite
 
-			if overcd then 
-				
+			if in_cd then
+				-- cooldown still not up
+				print("cd violated")
 				cd.Violations = cd.Violations + 1
 
-				if cd.Violations <= chathud.LetViolate then --lets you violate chat cooldown a few times before giving you a big cooldown
-
+				if cd.Violations <= chathud.LetViolate then
+					-- lets you violate chat cooldown a few times before giving you a big cooldown
 					goto docd
-				else 
+				else
+					if not cd.ViolationCooldown then
+						local curPenalty = chathud.StrikeCD + (cd.StrikedTimes or 0) * chathud.StrikePenalty
 
-					if not cd.ViolationCooldown then 
-						cd.NextWrite = CurTime() + chathud.ChatSpamCD
-						local t = CurTime() + 5
+						cd.StrikedTimes = (cd.StrikedTimes or 0) + 1
+						cd.NextStrikeCD = chathud.StrikeCD + cd.StrikedTimes * chathud.StrikePenalty
+						cd.NextWrite = CurTime() + curPenalty
+						cd.LastStrikeGone = CurTime() + curPenalty
+
+						local t = math.Round(cd.NextWrite, 1)
 						local holyshit = [[<eval=[env.of=lt(t(), %.2f)]><color=[(env.of and 220 or 140) + sin(t()*6)*40],[140 + sin(t()*6) *30],[(env.of and 140 or 220)+sin(t()*6)*40]>You're <text=[(env.of and "now on cooldown for ".. string.format("%%.2f", %.2f-t()) .." seconds") or "not on cooldown anymore."]>]]
-						holyshit = holyshit:format(math.Round(cd.NextWrite, 1), math.Round(cd.NextWrite, 1))
+						holyshit = holyshit:format(t, t)
 						ply:SendChatHUD(holyshit)
 					end --we haven't punished yet
 
@@ -264,21 +276,27 @@ if SERVER then
 					return false
 				end
 
-			else 
+			else
+				local passed = math.max(CurTime() - cd.NextWrite, 0)
+				local passedCD = passed - chathud.ChatCD_TimeTillWear
+				local passedStrike = CurTime() - (cd.LastStrikeGone or CurTime())
 
-				local nextcd = math.min((CurTime() - cd.NextWrite) / chathud.ChatCDPadding, chathud.ChatCDPadding)
-				cd.NextWrite = CurTime() + chathud.ChatCD + (chathud.ChatCDPadding - nextcd)
+				cd.NextWrite = CurTime() + chathud.ChatCD
 
-				local newviol = math.max(
-					(nextcd < chathud.ChatCDPadding/2 and 0)
-					or cd.Violations - 1,
-				0)
+				-- adjust strikes
+				local wearStrikes = math.max(math.floor(passedStrike / chathud.StrikeWearoff), 0)
+				print("wearing off", wearStrikes)
 
+				cd.StrikedTimes = math.max((cd.StrikedTimes or 0) - wearStrikes, 0)
+				-- adjust violations
+				local newviol = (cd.Violations or 0) - math.floor(passedCD / chathud.ChatCD_SecondsWear)
+				newviol = math.max(newviol, 0)
+				print("new violations", newviol)
 				cd.Violations = newviol
 				goto allow
 			end
 
-		else 
+		else
 			ply.ChatCD = {NextWrite = CurTime() + chathud.ChatCD, Violations = 0}
 			cd = ply.ChatCD
 		end

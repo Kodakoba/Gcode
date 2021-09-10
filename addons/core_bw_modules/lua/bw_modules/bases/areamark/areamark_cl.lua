@@ -96,11 +96,7 @@ local needSelection = false
 hook.Add("PlayerButtonDown", "IWishThisWasInTOOL", function(ply, btn)
 
 	if btn == MOUSE_5 and IsFirstTimePredicted() and TOOL:GetInstance() then
-		hook.Once("PostDrawTranslucentRenderables", "IWishEyePosWasntScuffed", function()
-			if TOOL:GetInstance() then
-				TOOL:GetInstance():SelectPoint(EyePos())
-			end
-		end) 
+		TOOL:GetInstance():SelectPoint(LocalPlayer():EyePos())
 	end
 
 end)
@@ -225,14 +221,14 @@ function TOOL:ShowBaseSelection(cur)
 		pnl = vgui.Create("FFrame")
 		cur[1] = pnl
 
-		pnl:SetSize(ScrW() * 0.15, ScrH() * 0.5)
+		pnl:SetSize(ScrW() * 0.2, ScrH() * 0.8)
 		pnl:SetPos(ScrW(), 0)
 		pnl:CenterVertical()
 		pnl.Tool = tool
 
 		pnl:MakePopup()
 		pnl:SetKeyBoardInputEnabled(false)
-		gui.SetMousePos(ScrW() * 0.9 - pnl:GetWide() / 2, pnl.Y + pnl:GetTall() / 2)
+		gui.SetMousePos(ScrW() * 0.97 - pnl:GetWide() / 2, pnl.Y + pnl:GetTall() / 2)
 
 		pnl.AppearFrac = 0
 		
@@ -267,7 +263,7 @@ function TOOL:ShowBaseSelection(cur)
 
 		local function makeBtn(base, inv)
 			local fb = vgui.Create("FButton", nil, "Base " .. base:GetName())
-			fb:SetSize(180, 40)
+			fb:SetSize(scr:GetWide() * 0.9, 32)
 			scr:Add(fb, base:GetName() or "[unnamed?]")
 			fb.Label = base:GetName() or "[unnamed?]"
 
@@ -351,7 +347,7 @@ function TOOL:ShowBaseSelection(cur)
 	end
 
 	pnl:To("AppearFrac", 1, appearTime, 0, appearEase)
-	pnl:MoveTo(ScrW() * 0.9 - pnl:GetWide(), pnl.Y, appearTime, 0, appearEase)
+	pnl:MoveTo(ScrW() * 0.97 - pnl:GetWide(), pnl.Y, appearTime, 0, appearEase)
 	self.BaseSelection = pnl
 end
 

@@ -63,8 +63,6 @@ function wth.PayOut(ent, atk, full)
 	local val = price * (not full and not ret and BaseWars.Config.DestroyReturn or 1)
 	local Name = ent.PrintName or ent:GetClass()
 
-	print(own, val)
-
 	wth.Set(ent, nil, true)
 
 	if ent.GetLevel then
@@ -72,7 +70,6 @@ function wth.PayOut(ent, atk, full)
 	end
 
 	if not IsValid(atk) or atk == own then
-		print("paying out without attacker", own, val)
 		if own then
 			Pay(own, val, Name, true)
 		end

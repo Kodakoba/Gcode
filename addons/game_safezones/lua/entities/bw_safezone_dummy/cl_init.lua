@@ -25,38 +25,38 @@ end
 
 function ENT:Initialize()
 	self:SetModel(self.Model)
-	local name = self:GetZoneName()
-	local pos = SafezonePoints[name]
 
-	self:SetRenderBoundsWS(pos[1], pos[2],Vector(2,2,2))
+	local min = self:GetMinsZone()
+	local max = self:GetMaxsZone()
 
-	self.min = pos[1]
-	self.max = pos[2]
-	print(pos[1], pos[2])
+	self:SetRenderBoundsWS(min, max, Vector(2,2,2))
+
+	self.min = min
+	self.max = max
+
 	self.BoxCol = Color(25,225,25,0)
 end
 
 local a = 0
 local ba = 0
-
+local exp = Vector(2, 2, 2)
 local drawDist = 2048
 function ENT:Draw()		--shhhh sneaky workaround
 	local pos = self:GetPos()
 
-	local min = self.min
-	local max = self.max
+	local min = self:GetMinsZone()
+	local max = self:GetMaxsZone()
 	local mepos = EyePos()
 
 	local bmin = min - pos
 	local bmax = max - pos
-
 
 	local rbmin, rbmax = self:GetRenderBounds()
 
 	local rbsum = math.abs(rbmin.x + rbmin.y + rbmin.z) --totally not how vectors work but who cares?
 	local bsum = math.abs(bmin.x + bmin.y + bmin.z)		--also this is to set renderbounds if they're not what they're supposed to be: Initialize() seems to..not work?
 	if rbsum - bsum < 6 then
-		self:SetRenderBoundsWS(min, max,Vector(2,2,2))
+		self:SetRenderBoundsWS(min, max, Vector(2,2,2))
 	end
 
 	render.SetColorMaterial()

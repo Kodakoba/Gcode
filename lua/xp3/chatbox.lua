@@ -348,12 +348,13 @@ function chatbox.OpenEmotesMenu(btn)
 				b.Emote = v
 
 				function b:Paint(w, h)
-					--[[if not MoarPanelsMats[self.Emote:GetHDLPath()] and not emotesLoading then 	-- emote material hasn't preloaded and we're not loading anything
+					if not MoarPanelsMats[self.Emote:GetHDLPath()] and not emotesLoading then 	-- emote material hasn't preloaded and we're not loading anything
 						emotesLoading = true													-- switch emotesLoading to true and allow 1 mat to load
+						self.Emote:Download()
 					elseif emotesLoading then 													-- emote material is loading and we're already loading something, don't do anything
 						draw.DrawLoading(self, w/2, h/2, w, h)
 						return
-					end]]
+					end
 
 					surface.SetDrawColor(color_white)
 					local ok = self.Emote:Paint(0, 0, w, h, self)
@@ -366,7 +367,7 @@ function chatbox.OpenEmotesMenu(btn)
 					if not IsValid(self.Cloud) then
 						self.Cloud = vgui.Create("Cloud", self)
 						self.Cloud:SetText(self.Emote:GetName())
-						self.Cloud:SetSize(self:GetSize())	--makes cloud always paint even if 0,0 of the button is hidden
+						--self.Cloud:SetSize(self:GetSize())	--makes cloud always paint even if 0,0 of the button is hidden
 
 						self.Cloud.YAlign = 0 --align by top cuz the cloud is at the bottom of the emotes panel
 						self.Cloud.MaxW = 300
@@ -385,7 +386,8 @@ function chatbox.OpenEmotesMenu(btn)
 
 				function b:DoClick()
 					if IsValid(chatbox.frame.chat.input) then
-						chatbox.frame.chat.input:SetValue(chatbox.frame.chat.input:GetValue() .. ":" .. self.Emote:GetShortcut() .. ":")
+						chatbox.frame.chat.input:SetValue(chatbox.frame.chat.input:GetValue() ..
+							":" .. self.Emote:GetShortcut() .. ":")
 					end
 				end
 			end

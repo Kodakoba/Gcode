@@ -1,5 +1,3 @@
-easylua.StartEntity("bw_printer_chinese")
-
 ENT.Base = "bw_base_moneyprinter"
 
 ENT.Skin = 0
@@ -63,5 +61,3 @@ function ENT:Use()
 		self:Explode()
 	end
 end
-
-easylua.EndEntity()

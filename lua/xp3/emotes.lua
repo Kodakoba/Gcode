@@ -88,15 +88,20 @@ end
 
 function emote:Download()
 	self.Downloading = true
-	draw.GetMaterial(self:GetURL(), self:GetHDLPath() .. ".png", nil, function()
-		self.Downloading = false
-	end)
+
+	if self:GetAnimated() then
+		draw.DownloadGIF(self:GetURL(), self:GetHDLPath())
+	else
+		draw.GetMaterial(self:GetURL(), self:GetHDLPath() .. ".png", nil, function()
+			self.Downloading = false
+		end)
+	end
 end
 
 
 
 function emote:Paint(x, y, w, h, pnl)
-	if not self:Exists() then self.Downloading = true return false end
+	if not self:Exists() then self:Download() return false end
 
 	if self:GetAnimated() then
 		draw.DrawGIF(self:GetURL(), self:GetHDLPath(), x, y, w, h, nil, nil, nil, nil, pnl)

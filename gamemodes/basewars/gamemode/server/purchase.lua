@@ -236,11 +236,16 @@ function BWSpawn(ply, cat, catID)
 
 	newEnt:CPPISetOwner(ply)
 
-	newEnt:Spawn()
-	newEnt:Activate()
 	newEnt:SetPos(SpawnPos)
 	newEnt:SetAngles(SpawnAng)
 	newEnt:DropToFloor()
+
+	newEnt:Spawn()
+	newEnt:Activate()
+
+	if newEnt.BW_PostBuy then
+		newEnt:BW_PostBuy(ply, tr, class)
+	end
 
 	local phys = newEnt:GetPhysicsObject()
 
@@ -282,7 +287,7 @@ local function NoGunsFuckYou(ply, class, what)
 
 	if mon < price and not BaseWars.IsRetarded(ply) then
 		ply:Notify(Language.UseSpawnMenu, BASEWARS_NOTIFICATION_ERROR)
-		return
+		return false
 	end
 
 	if BaseWars.IsRetarded(ply) then return end
@@ -299,5 +304,5 @@ end
 hook.Add("PlayerSpawnSENT", 	name, Disallow_Spawning)
 hook.Add("PlayerGiveSWEP", 		name, NoGunsFuckYou)
 hook.Add("PlayerSpawnSWEP", 	name, NoGunsFuckYou)
-hook.Add("PlayerSpawnNPC", 	name, function() return false end)
+hook.Add("PlayerSpawnNPC", 		name, function() return false end)
 hook.Add("PlayerSpawnVehicle", 	name, Disallow_Spawning)
