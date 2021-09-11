@@ -1,1 +1,0 @@
--- CustomizableWeaponry:addFireSound("CW_KK_INS2_DOI_VICKERS_FIRE", "weapons/vickers/vickers_fp.wav", 1, 100, CHAN_STATIC)

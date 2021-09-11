@@ -1,7 +1,7 @@
 AddCSLuaFile()
 
 SWEP.PrintName 	= "Blowtorch T???"
-SWEP.Author = "1488khz gachi remix"
+SWEP.Author = "grmx"
 SWEP.Instructions = "Destroy others' props in a raid."
 
 SWEP.Spawnable = true
@@ -27,7 +27,7 @@ SWEP.Category = "BaseWars"
 SWEP.DrawAmmo = false
 SWEP.Base = "weapon_base"
 
-SWEP.Primary.Damage = 20
+SWEP.Primary.Damage = 0
 SWEP.Primary.ClipSize = -1
 SWEP.Primary.Ammo = "none"
 SWEP.Primary.DefaultClip = -1
@@ -88,8 +88,6 @@ end
 function SWEP:Zap()
 	self:EmitSound(self.Sounds[math.random(#self.Sounds)],
 		90, math.random(90, 110), 1)
-
-	
 end
 
 local function isZappable(self, ent)
@@ -99,11 +97,13 @@ local function isZappable(self, ent)
 	return ow
 end
 
-local function canZap(self, ent)
+local function canZap(self, ent, dmg)
 	if not IsProp(ent) then return false end
 
-	local ow = ent:BW_GetOwner()
-	return IsPlayerInfo(ow) and ow:IsEnemy(self:GetOwner()) and ow
+	return BaseWars.Raid.CanBlowtorch(self:GetOwner(), ent, self, dmg)
+
+	--
+	--
 end
 
 function SWEP:PrimaryAttack()
@@ -122,14 +122,21 @@ function SWEP:PrimaryAttack()
 
 	local owner = tr.Entity:BW_GetOwner()
 
-	if not canZap(self, tr.Entity) then print(Realm(), "trace not zappable", tr.Entity) return end
+	local dmg = DamageInfo()
+	dmg:SetDamage(self.TorchDamage)
+	dmg:SetAttacker(ply)
+	dmg:SetInflictor(self)
+
+	if not canZap(self, tr.Entity, dmg) then
+		return
+	end
 
 	local trent = tr.Entity
 	local trents = {ply, trent}
 
 	self:Zap()
 
-	for i=1, self.Penetrates - 1 do
+	--[[for i=1, self.Penetrates - 1 do
 		local newtr = util.TraceLine({
 			start = tr.StartPos,
 			endpos = tr.StartPos + tr.Normal * self.Range,
@@ -140,13 +147,13 @@ function SWEP:PrimaryAttack()
 			trents[#trents + 1] = newtr.Entity
 		end
 
-	end
+	end]]
 
 	table.remove(trents, 1)
-
+	dmg = dmg:GetDamage()
 	for k,v in ipairs(trents) do
 		local hp = GetHP(v)
-		hp = hp - self.TorchDamage
+		hp = hp - dmg
 
 		SetHP(v, hp)
 
@@ -187,7 +194,7 @@ function SWEP:FillData(tr, ent, ow)
 	local trent = ent
 	local new_trents = {LocalPlayer(), trent}
 
-	for i=1, self.Penetrates - 1 do 	-- -1 because trent is already 1
+	--[[for i=1, self.Penetrates - 1 do 	-- -1 because trent is already 1
 		local newtr = util.TraceLine({
 			start = tr.StartPos,
 			endpos = tr.StartPos + tr.Normal * self.Range,
@@ -197,7 +204,7 @@ function SWEP:FillData(tr, ent, ow)
 		if isZappable(self, newtr.Entity) then
 			new_trents[#new_trents + 1] = newtr.Entity
 		end
-	end
+	end]]
 
 	table.remove(new_trents, 1)
 	trents = new_trents
@@ -225,7 +232,7 @@ local function paint(ent, curent, baseAnim, firstFrame)
 	--stripes = (not MoarPanelsMats["stripes"]:IsError() and MoarPanelsMats["stripes"]) or errmat -- :/
 
 	local ow = isZappable(self, ent)
-	local canraid = IsPlayerInfo(ow) and ow:IsEnemy(LocalPlayer())
+	local canraid = canZap(self, ent) --IsPlayerInfo(ow) and ow:IsEnemy(LocalPlayer())
 
 	if ow then
 		self:FillData(tr, ent, ow)
@@ -297,8 +304,8 @@ local function paint(ent, curent, baseAnim, firstFrame)
 	end
 
 	if canraid then
-		local str = ("penetrates %s prop%s"):format(#trents, (#trents ~= 1 and "s") or "")
-		draw.SimpleText(str, "OSB18", x + 100, math.floor(y) + 76, Color(200, 200, 200, a), 1, 4)
+		--local str = ("penetrates %s prop%s"):format(#trents, (#trents ~= 1 and "s") or "")
+		--draw.SimpleText(str, "OSB18", x + 100, math.floor(y) + 76, Color(200, 200, 200, a), 1, 4)
 	end
 
 	baseAnim:To("Height", frH, 0.3, 0, 0.3)

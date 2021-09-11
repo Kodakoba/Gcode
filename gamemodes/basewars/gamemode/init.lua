@@ -178,132 +178,23 @@ function GM:EntityTakeDamage(ent, dmginfo)
 
 	local IsProp = ent:GetClass() == "prop_physics"
 
-	local raidRet = BaseWars.Raid.CanDealDamage(Attacker, ent, Inflictor, Damage)
+	if not ent:IsPlayer() then
+		-- custom logic goes first
+		local ret = hook.Run("BW_CanDealEntityDamage", Attacker, ent, Inflictor, dmginfo)
+		if ret ~= nil then
+			BaseWars.DealDamage(ent, dmginfo)
+			return not ret
+		end
+	end
+
+	-- raid logic comes after
+	local raidRet = BaseWars.Raid.CanDealDamage(Attacker, ent, Inflictor, dmginfo)
 
 	if raidRet ~= nil then
 		return not raidRet
 	end
 
-	--[[
-	if Owner then
-		if not IsPlayer(Attacker) then return false end
-
-		local IsOwner = Attacker == Owner
-
-		local Enemy = IsOwner or Owner:IsEnemy(Attacker)
-
-		local Cant1 = IsOwner and (Owner:InRaid() or IsProp)
-		local Cant2 = not Enemy
-
-		if not ent.AlwaysRaidable and (Cant1 or Cant2) then
-
-			dmginfo:ScaleDamage(0)
-			dmginfo:SetDamage(0)
-
-		return false end
-
-	end
-
-	if not Owner and not Player and IsPlayer(Attacker) then --no owner; attacked isn't a player and attacker is a player
-		local sid64 = ent.FPPSteamID64
-
-		if sid64 then
-
-			if BaseWars.Raid.WasInRaid(sid64) then --ononono you aint escaping the shame
-				local sids = BaseWars.Raid.WasInRaid(sid64).SteamIDs
-
-				local atk = Attacker
-				local atkside = 0
-
-				local ow = Owner
-				local owside = 0
-
-				for k,v in pairs(sids) do
-
-					if k == sid64 then
-						owside = v
-					end
-
-					if k == Attacker:SteamID64() then
-						atkside = v
-					end
-
-				end
-
-				if not (owside==2 and atkside==1) then --only (owner: raided, attacker: raider) gets a pass
-					dmginfo:ScaleDamage(0)
-					dmginfo:SetDamage(0)
-					return false
-				end
-
-				if ent.DestructableProp then
-					local hp = ent:Health()
-					local ActualDmg = Damage * PropDamageScale
-					hp = hp - ActualDmg
-
-					if hp < 0 then
-						ent:Remove()
-						return
-					end
-
-					ent:SetHealth(hp)
-
-					local M 		= hp / ent.MaxHealth
-					local OldCol 	= ent:GetColor()
-					local Color 	= Color(255 * M, 255 * M, 255 * M, OldCol.a)
-
-					ent:SetColor(Color)
-
-					return
-				end
-
-			else
-
-				dmginfo:ScaleDamage(0)
-				dmginfo:SetDamage(0)
-
-				return false
-			end
-
-		end
-	end
-	
-
-	if ent.DestructableProp then
-
-		if not Owner then return end
-
-		local IsOwner = Attacker == Owner
-
-		local Enemy = IsOwner or Owner:IsEnemy(Attacker)
-
-		local Cant1 = IsOwner and Owner:InRaid()
-		local Cant2 = not Enemy
-
-		if Cant1 or Cant2 then return false end
-
-		local hp = ent:Health()
-		local ActualDmg = Damage * PropDamageScale
-		hp = hp - ActualDmg
-
-		if hp < 0 then
-			ent:Remove()
-			return
-		end
-
-		ent:SetHealth(hp)
-
-		local M 		= hp / ent.MaxHealth
-		local OldCol 	= ent:GetColor()
-		local Color 	= Color(255 * M, 255 * M, 255 * M, OldCol.a)
-
-		ent:SetColor(Color)
-
-	return end
-	]]
-
 	if ent:IsPlayer() then
-
 		if not Attacker:IsPlayer() and dmginfo:IsDamageType(DMG_CRUSH) and
 			(Attacker:IsWorld() or (IsValid(Attacker) and not Attacker:CreatedByMap())) then
 			dmginfo:SetDamage(0)
@@ -318,7 +209,6 @@ function GM:EntityTakeDamage(ent, dmginfo)
 			dmginfo:SetDamage(0)
 			return
 		end
-
 	end
 
 end
