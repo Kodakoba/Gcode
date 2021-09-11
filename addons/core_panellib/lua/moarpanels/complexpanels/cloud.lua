@@ -1,3 +1,4 @@
+setfenv(1, _G)
 --[[-------------------------------------------------------------------------
 --  Pop-up Cloud (It's crappy)
 
@@ -87,6 +88,8 @@ function Cloud:Init()
 	self.ToX = 0
 	self.ToY = 0
 
+	self.AlignLabel = 1
+
 	self.AppearTime = 0.2
 	self.DisappearTime = 0.2
 
@@ -145,6 +148,10 @@ end
 
 function Cloud:GetMaxW(w)
 	return self.MaxW
+end
+
+function Cloud:GetPieces()
+	return self.DoneText
 end
 
 function Cloud:RecalculateLabel()
@@ -331,14 +338,14 @@ function Cloud:Paint()
 
 		local offy = finY + ch + 2
 
-		-- there's a separator at index 0 which means
+		-- there's (a) separator(s) at index 0 which means
 		-- right after the label, not after a formatted text
 
 		if self.Separators[0] then
-			local sep = self.Separators[0]
-			local h = self:_DrawSeparator(sep, X, offy, cw)
-
-			offy = offy + h
+			for _, sep in ipairs(self.Separators[0]) do
+				local h = self:_DrawSeparator(sep, X, offy, cw)
+				offy = offy + h
+			end
 		end
 
 		-- now draw all the formatted text
@@ -347,7 +354,9 @@ function Cloud:Paint()
 			local v = doneText[k]
 
 			if ispanel(v) then
-				if not v.NoCloudFit and v:GetWide() ~= cw then v:SetWide(cw - v.X * 2) end
+				if not v.NoCloudFit and v:GetWide() ~= cw then
+					v:SetWide(cw - v.X * 2)
+				end
 				local scrX, scrY = self:LocalToScreen(X, offy)
 				v:PaintAt(scrX + v.X, scrY)
 				offy = offy + v:GetTall()
@@ -369,10 +378,11 @@ function Cloud:Paint()
 
 			-- check if this element had a separator after it
 			if self.Separators[k] then
-				local sep = self.Separators[k]
-				local h = self:_DrawSeparator(sep, X, offy, cw)
-
-				offy = offy + h
+				local seps = self.Separators[k]
+				for _, sep in ipairs(seps) do
+					local h = self:_DrawSeparator(sep, X, offy, cw)
+					offy = offy + h
+				end
 			end
 
 		end
@@ -452,7 +462,10 @@ function Cloud:AddSeparator(col, offx, offy, num)
 		preY, postY = offy[1], offy[2]
 	end
 
-	self.Separators[num or #self.DoneText] = {col = col or Color(70, 70, 70), offx = offx, offy = offy}
+	local t = self.Separators[num or #self.DoneText] or {}
+	self.Separators[num or #self.DoneText] = t
+	t[#t + 1] =  {col = col or Color(70, 70, 70), offx = offx, offy = offy}
+
 	self.SepH = self.SepH + preY + postY
 end
 
@@ -465,7 +478,9 @@ function Cloud:AddPanel(p, num)
 	p:SetPaintedManually(true)
 	self._MaxWidth = math.Clamp(p:GetWide() + 16, math.max(self.MinW, self._MaxWidth), self.MaxW)
 	p.IgnoreVisibility = true
+	print("adding", p, num or (#self.DoneText + 1), p.naem)
 	self.DoneText[num or (#self.DoneText + 1)] = p
+
 end
 
 function Cloud:SetAbsPos(x, y)

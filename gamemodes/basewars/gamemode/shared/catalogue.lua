@@ -239,7 +239,7 @@ end
 SetType("Weapons - Misc")
 	SetTier(1)
 		ReuseLoadout("weapon_health", "Heal Gun", k * 500, "models/weapons/w_physics.mdl")
-		ReuseLoadout("epicpickax", "Pickaxe", k * 200, "models/weapons/w_irifle.mdl")
+		ReuseLoadout("epicpickax", "Harvester", k * 200, "models/weapons/w_irifle.mdl")
 		ReuseLoadout("bw_blowtorch_t1", "Blowtorch T1", k * 500, "models/weapons/w_irifle.mdl")
 
 	SetTier(2)
@@ -477,11 +477,16 @@ SetTier(nil)
 
 SetType("Refinement")
 	ReuseInventory("refinery", "Smeltery", 500 * k, "models/props/CS_militia/furnace01.mdl", 1)
+		.Limit = 1
+
 	ReuseInventory("bw_blueprint_ctor", "Blueprint Constructor", 2.5 * m, "models/grp/bpmachine/bpmachine.mdl", 1)
+		.Limit = 1
 
 SetType("Production")
 	ReuseInventory("bw_blueprint_printer", "Blueprint Printer", 1 * m, "models/props_lab/plotter.mdl", 1)
+		.Limit = 1
 	ReuseInventory("workbench", "Workbench", 2.5 * m, "models/props/CS_militia/table_shed.mdl", 1)
+		.Limit = 1
 
 hook.Run("BW_CatalogueFilled")
 

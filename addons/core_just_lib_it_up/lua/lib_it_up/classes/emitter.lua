@@ -151,12 +151,12 @@ function Emitter:Emit(event, ...)
 
 			local a, b, c, d, e, why = v[1](self, unpack(t))
 			--hook.Call intensifies
-			if a ~= nil or b ~= nil or c ~= nil or d ~= nil or e ~= nil then
+			if a ~= nil then
 				return a, b, c, d, e, why
 			end
 		else
 			local a, b, c, d, e, why = v[1](self, ...)
-			if a ~= nil or b ~= nil or c ~= nil or d ~= nil or e ~= nil then
+			if a ~= nil then
 				return a, b, c, d, e, why
 			end
 		end

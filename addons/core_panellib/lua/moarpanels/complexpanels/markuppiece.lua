@@ -12,7 +12,9 @@ function PANEL:Init()
 	self.ActiveTags = {}
 	self.ExecutePerChar = {} --table of tags that need to be executed per each character
 
-	self.Buffer = MarkupBuffer(self:GetWide()):SetFont("OS24"):SetTextColor(color_white)
+	self.Buffer = MarkupBuffer(self:GetWide())
+		:SetFont("OS24")
+		:SetTextColor(color_white)
 
 	self.Buffer:On("Reset", self, function(buf)
 		buf:SetTextColor(self.Color)

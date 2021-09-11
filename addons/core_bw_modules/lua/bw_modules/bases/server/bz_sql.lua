@@ -53,7 +53,7 @@ function bw.SQLResync()
 			basesArg:AddArg("base_name VARCHAR(500) NOT NULL")
 			basesArg:AddArg("base_data JSON")
 			basesArg:AddArg("map_name VARCHAR(128)")
-			basesArg:AddArg("UNIQUE KEY `base_name_UNIQUE` (`base_name`, `map_name`)")
+			basesArg:AddArg("ADD UNIQUE INDEX `base_name_UNIQUE`(`base_name` ASC, `map_name` ASC);")
 
 		mysqloo.CreateTable(db, bases_tbl, basesArg):Then(coroutine.Resumer())
 
