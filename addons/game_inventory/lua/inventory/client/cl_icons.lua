@@ -1,1 +1,0 @@
-Icons.BlankBlueprint = Icon("https://i.imgur.com/SpRAhWY.jpg", "crafting/baseblueprint.jpg"):SetAutoSize(true)
