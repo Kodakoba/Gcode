@@ -89,27 +89,34 @@ function wth.PayOut(ent, atk, full)
 		return 0
 	end
 
+	local inRaid = atk:IsEnemy(own)
 	local Members = atk:GetFaction() and atk:GetFaction():GetMembers()
-	local TeamAmt = (Members and #Members) or 1
+	local Involved = inRaid and (Members and #Members) or 1
 
-	-- add +1 for owner
-	local Involved = own and TeamAmt + 1 or TeamAmt
+	-- raiders get 60% of the cost if there _is_ a raid
+	-- +20% if the owner is somehow missing (owner's fraction)
 
-	local Fraction = math.floor(val / Involved)
+	local raidFrac = (val * 0.8) / Involved
 
-	if TeamAmt > 1 then
-		for k, v in ipairs(Members) do
-			Pay(v, Fraction, Name)
-			hook.NHRun("EntityPaidWorth", ent, v, Fraction)
+	-- owner gets 20% of the cost back on raid destruction
+	-- and 60% on every other possibility
+	local ownfrac = inRaid and val * 0.2 or val
+
+	if inRaid then
+		if Members then
+			for k, v in ipairs(Members) do
+				Pay(v, raidFrac, Name)
+				hook.NHRun("EntityPaidWorth", ent, v, raidFrac)
+			end
+		elseif inRaid then
+			Pay(atk, raidFrac, Name)
+			hook.NHRun("EntityPaidWorth", ent, atk, raidFrac)
 		end
-	else
-		Pay(atk, Fraction, Name)
-		hook.NHRun("EntityPaidWorth", ent, atk, Fraction)
 	end
 
 	if own then
-		Pay(own, Fraction, Name, true)
-		hook.NHRun("EntityPaidWorth", ent, own, Fraction)
+		Pay(own, ownfrac, Name, true)
+		hook.NHRun("EntityPaidWorth", ent, own, ownfrac)
 	end
 end
 

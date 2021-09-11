@@ -349,3 +349,26 @@ hook.Add("OnContextMenuClose", "RaidClose", function()
 	Raids.Frame:PopOut(nil, nil, function() end)
 
 end)
+
+function Raids.CanBlowtorch(ply, ent, wep)
+
+	local ow = ent:BW_GetOwner()
+
+	if not IsPlayerInfo(ow) then
+		return false
+	end
+
+	if ow == GetPlayerInfo(ply) then
+		return true
+	end
+
+	if not ow:IsValid() then return false end -- see raid.CanDealDamage
+	if ent.AlwaysRaidable then return false end
+
+	if ow:IsEnemy(ply) then
+		local can = hook.Run("BW_CanBlowtorch", ply, ent, wep) ~= false
+		return can -- raider -> raided allowed
+	else
+		return hook.Run("BW_CanBlowtorchRaidless", ply, ent, wep)
+	end
+end

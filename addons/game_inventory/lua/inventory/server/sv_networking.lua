@@ -288,6 +288,10 @@ function nw.NetworkInventory(ply, inv, typ, just_return, key) --mark 'just_retur
 
 	hook.Run("InventoryNetwork", ply, inv)
 
+	if not just_return then
+		print("!! inv nw", typ == INV_NETWORK_FULLUPDATE and "fullupdate" or "not full", debug.traceback())
+	end
+
 	if IsInventory(inv) then
 		inv:SetLastResync(CurTime()) -- track when we last resynced the inventory
 
@@ -477,6 +481,7 @@ end
 
 
 hook.Add("PlayerFullyLoaded", "InventoryNetwork", function(ply)
-	nw.NetworkItemNames(ply)
-	nw.NetworkInventory(ply)
+	-- eh just let the player request the resync
+	--nw.NetworkItemNames(ply)
+	--nw.NetworkInventory(ply)
 end)

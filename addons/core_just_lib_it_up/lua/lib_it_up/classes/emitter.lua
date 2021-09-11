@@ -150,10 +150,15 @@ function Emitter:Emit(event, ...)
 			table.InsertVararg(t, ...)
 
 			local a, b, c, d, e, why = v[1](self, unpack(t))
-			if a ~= nil then return a, b, c, d, e, why end --hook.Call intensifies
+			--hook.Call intensifies
+			if a ~= nil or b ~= nil or c ~= nil or d ~= nil or e ~= nil then
+				return a, b, c, d, e, why
+			end
 		else
 			local a, b, c, d, e, why = v[1](self, ...)
-			if a ~= nil then return a, b, c, d, e, why end
+			if a ~= nil or b ~= nil or c ~= nil or d ~= nil or e ~= nil then
+				return a, b, c, d, e, why
+			end
 		end
 
 	end

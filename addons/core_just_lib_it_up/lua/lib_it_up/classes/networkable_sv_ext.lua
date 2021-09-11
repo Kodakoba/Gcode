@@ -368,6 +368,7 @@ function nw:_SendNet(who, full, budget)
 
 		local instBytes = instances[nameID] or 0
 
+		print(ns)
 		net.WriteNetStack(ns)
 		instances[nameID] = instBytes + (net.BytesWritten())
 	net.Send(who)

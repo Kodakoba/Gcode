@@ -93,8 +93,12 @@ local function ReadChange(obj)
 	if obj and obj.__AliasesBack[decoded_key] then decoded_key = obj.__AliasesBack[decoded_key] end
 
 	if obj then
-		local customValue, setNil = obj:Emit("ReadChangeValue", decoded_key)
-		print("custom decoder returned", customValue)
+		-- try to emit for this key's decoder specifically first
+		local customValue, setNil = obj:Emit("ReadChange" .. tostring(decoded_key))
+		if customValue ~= nil or setNil then return decoded_key, customValue end
+
+		-- try to emit for generic custom decoder
+		customValue, setNil = obj:Emit("ReadChangeValue", decoded_key)
 		if customValue ~= nil or setNil then return decoded_key, customValue end
 	end
 

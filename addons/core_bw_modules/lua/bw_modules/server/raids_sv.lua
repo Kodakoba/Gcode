@@ -529,6 +529,7 @@ hook.Remove("PlayerDeathThink", "RaidsDeath")
 function raid.CanDealDamage(ply, ent, infl, dmg)
 	if not ent.IsBaseWars then return end
 	if not IsPlayer(ply) then return end -- non-players can't deal damage to basewars ents
+
 	local ow = ent:BW_GetOwner()
 
 	if ow and not IsPlayerInfo(ow) then
@@ -561,7 +562,7 @@ function raid.CanDealDamage(ply, ent, infl, dmg)
 	return false -- basewars ents cant get damaged outside of this
 end
 
-function raid.CanBlowtorch(ply, ent, wep)
+function raid.CanBlowtorch(ply, ent, wep, dmg)
 	local ow = ent:BW_GetOwner()
 
 	if not IsPlayerInfo(ow) then
@@ -575,13 +576,16 @@ function raid.CanBlowtorch(ply, ent, wep)
 		return true
 	end
 
+
 	local rd = raid.IsParticipant(ply)
 	local rd2 = raid.IsParticipant(ow)
 
 	if rd and rd2 and -- in raid?
 		rd == rd2 and rd:IsRaider(ply) and rd:IsRaided(ow) then
-		local can = hook.Run("BW_CanBlowtorch", ply, ent, wep) ~= false
+		local can = hook.Run("BW_CanBlowtorch", ply, ent, wep, dmg) ~= false
 		return can -- raider -> raided allowed
+	else
+		return hook.Run("BW_CanBlowtorchRaidless", ply, ent, wep, dmg)
 	end
 
 end

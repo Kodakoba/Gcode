@@ -46,7 +46,7 @@ nw._UpdateFrequency = 0.1
 
 nw._Sizes = {
 	NUMBERID = 16, -- if you need more than 65535 networkables, its likely there's a leak
-	CHANGES_COUNT = 12,
+	CHANGES_COUNT = 14,
 }
 
 _NetworkableCache = _NetworkableCache or {}
@@ -65,17 +65,18 @@ nw.BytesWarn = nw.BytesWarn or 500
 
 nw.Profiling = {}
 nw.Profiling._NWDataInstances = {}
+nw.Profiling.CleanTime = 900
 
 nw.FakeNil = newproxy() --lul
 local fakeNil = nw.FakeNil
 
 -- { [CurTime] = { [nameID] = amt_bytes, ... }
 
-timer.Create("NetworkableCleanProfiler", 60, 0, function()
+timer.Create("NetworkableCleanProfiler", nw.Profiling.CleanTime, 0, function()
 	local ct = CurTime()
 
 	for time, data in pairs(nw.Profiling._NWDataInstances) do
-		if time < ct - 60 then
+		if time < ct - nw.Profiling.CleanTime then
 			nw.Profiling._NWDataInstances[time] = nil
 		end
 	end
