@@ -527,7 +527,7 @@ hook.Remove("PlayerSpawn", "RaidsSpawn")
 hook.Remove("PlayerDeathThink", "RaidsDeath")
 
 function raid.CanDealDamage(ply, ent, infl, dmg)
-	if not ent.IsBaseWars then return end
+	-- if not ent.IsBaseWars then return end
 	if not IsPlayer(ply) then return end -- non-players can't deal damage to basewars ents
 
 	local ow = ent:BW_GetOwner()
@@ -554,6 +554,10 @@ function raid.CanDealDamage(ply, ent, infl, dmg)
 
 		if rd and rd2 and -- in raid?
 			rd == rd2 and rd:IsRaider(ply) and rd:IsRaided(ow) then
+			if not ent.IsBaseWars then
+				dmg:ScaleDamage(0.25)
+			end
+
 			local can = hook.Run("BW_CanDealRaidDamage", ply, ent, infl, dmg) ~= false
 			return can -- raider -> raided allowed
 		end

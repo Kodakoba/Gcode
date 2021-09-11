@@ -182,7 +182,10 @@ function GM:EntityTakeDamage(ent, dmginfo)
 		-- custom logic goes first
 		local ret = hook.Run("BW_CanDealEntityDamage", Attacker, ent, Inflictor, dmginfo)
 		if ret ~= nil then
-			BaseWars.DealDamage(ent, dmginfo)
+			if ret then
+				BaseWars.DealDamage(ent, dmginfo)
+			end
+
 			return not ret
 		end
 	end
@@ -191,6 +194,10 @@ function GM:EntityTakeDamage(ent, dmginfo)
 	local raidRet = BaseWars.Raid.CanDealDamage(Attacker, ent, Inflictor, dmginfo)
 
 	if raidRet ~= nil then
+		if raidRet then
+			BaseWars.DealDamage(ent, dmginfo)
+		end
+
 		return not raidRet
 	end
 
