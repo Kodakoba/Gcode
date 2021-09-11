@@ -1,6 +1,8 @@
 ENT.Base = "base_brush"
 ENT.Type = "brush"
 
+include("logic.lua")
+
 Safezones = Safezones or {}
 Safezones.Brushes = Safezones.Brushes or {}
 Safezones.Points = Safezones.Points or {}
@@ -33,45 +35,20 @@ function ENT:SetBrushBounds(p1, p2)
 	d.P2 = p2
 end
 
-local RemoveEm = {}
-
 function ENT:StartTouch(ent)
 	if not IsValid(ent) then return end
-
-	if ent:IsPlayer() then
-		ent:SetNWFloat("Safezone", CurTime())
-	end
-	if ent.IsBaseWars then
-		if IsValid(ent:CPPIGetOwner()) then
-			ent:CPPIGetOwner():ChatPrint("Remove your " .. (ent.PrintName or ent:GetClass()) .. " from spawn or it will be removed!")
-			RemoveEm[ent] = CurTime()
-		end
-	end
-
+	Safezones.StartTouch(self, ent)
 end
 
 
 function ENT:EndTouch(ent)
-
-	if IsValid(ent) and ent:IsPlayer() then
-		ent:SetNWFloat("Safezone", 0)
-	end
-
-	RemoveEm[ent] = nil
+	Safezones.EndTouch(self, ent)
 end
-
 
 function ENT:Touch(ent)
-
-	if RemoveEm[ent] and CurTime() - RemoveEm[ent] >= 5 then
-		ent:Remove()
-		if IsValid(ent:CPPIGetOwner()) then
-			ent:CPPIGetOwner():ChatPrint("Your " .. (ent.PrintName or ent:GetClass()) .. " was destroyed because it was in a safezone for too long!")
-			RemoveEm[ent] = nil
-		end
-	end
-
+	Safezones.Touch(self, ent)
 end
+
 function Safezones.Reload()
 
 	for k,v in pairs(Safezones.Brushes) do

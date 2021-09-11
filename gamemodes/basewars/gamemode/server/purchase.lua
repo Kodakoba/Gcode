@@ -238,10 +238,11 @@ function BWSpawn(ply, cat, catID)
 
 	newEnt:SetPos(SpawnPos)
 	newEnt:SetAngles(SpawnAng)
-	newEnt:DropToFloor()
 
 	newEnt:Spawn()
 	newEnt:Activate()
+
+	newEnt:DropToFloor()
 
 	if newEnt.BW_PostBuy then
 		newEnt:BW_PostBuy(ply, tr, class)

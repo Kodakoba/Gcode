@@ -1,3 +1,4 @@
+AddCSLuaFile()
 ENT.Base = "bw_base_moneyprinter"
 
 ENT.Skin = 0

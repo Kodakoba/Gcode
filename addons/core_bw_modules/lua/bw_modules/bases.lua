@@ -1,13 +1,10 @@
 local function init(force)
 
-	--[[if force then
-		b.Bases = Networkable("bw_bases_bases")
-		b.Zones = Networkable("bw_bases_zones")
-	end]]
 
 	local b = BaseWars.Bases and BaseWars.Bases.NW
+	local reload = not not b
 
-	if force and BaseWars.Bases then
+	if force and reload then
 		for k,v in pairs(BaseWars.Bases.Bases) do
 			v:Remove()
 		end
@@ -17,7 +14,6 @@ local function init(force)
 		end
 
 		if b and SERVER then
-			print("INVALIDATING BASE/ZONE NWS")
 			b.Bases:Invalidate()
 			b.Zones:Invalidate()
 		end
@@ -79,7 +75,7 @@ local function init(force)
 
 	FInc.FromHere("bases/*.lua", _SH, true, FInc.RealmResolver():SetDefault(true))
 
-	if (force or not b) and SERVER then
+	if (force or not reload) and SERVER then
 		-- either forced reload or initial; resync from sql
 		BaseWars.Bases.SQLResync()
 	end

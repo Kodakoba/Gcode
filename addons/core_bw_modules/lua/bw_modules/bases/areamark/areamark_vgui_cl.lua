@@ -220,9 +220,8 @@ function TOOL:OpenBaseGUI(base)
 		end
 
 		local pr = bw.RequestZoneYeet(z:GetID())
-		print("deleting", z, z:GetID())
+
 		pr:Then(function()
-			print("deleted successfully", z:GetID())
 			if selectedZone == zb then
 				zb:DoClick()
 			end
@@ -230,7 +229,6 @@ function TOOL:OpenBaseGUI(base)
 			z:Remove()
 			zb:Remove()
 		end, function()
-			print("didnt delete properly tf?")
 			local why = net.ReadCompressedString()
 			pnl:AddError(why)
 		end)

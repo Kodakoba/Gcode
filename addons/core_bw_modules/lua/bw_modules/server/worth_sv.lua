@@ -90,7 +90,7 @@ function wth.PayOut(ent, atk, full)
 	end
 
 	local Members = atk:GetFaction() and atk:GetFaction():GetMembers()
-	local TeamAmt = #Members
+	local TeamAmt = (Members and #Members) or 1
 
 	-- add +1 for owner
 	local Involved = own and TeamAmt + 1 or TeamAmt

@@ -1,7 +1,12 @@
 local ps = {
-	Spawn = {
-		[1] = Vector (-207, -1488.9, 59),
-		[2] = Vector (1341, -365, -195)
+	Spawn1 = {
+		[1] = Vector (1340.9650878906, -364.29116821289, -195.96875),
+		[2] = Vector (674.03125, -615.94561767578, 175.70983886719)
+	},
+
+	Spawn2 = {
+		[1] = Vector (1340.9189453125, -616.00738525391, -195.96875),
+		[2] = Vector (-204.96875, -1484.8403320313, 175.92169189453)
 	}
 }
 
@@ -39,7 +44,7 @@ function Safezones.Read(map)
 end
 
 
---WriteSafezones(nil, ps)
+--Safezones.Write(nil, ps)
 Safezones.Read()
 
 if Safezones.Reload then
