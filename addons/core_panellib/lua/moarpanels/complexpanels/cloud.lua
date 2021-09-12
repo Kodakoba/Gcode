@@ -478,14 +478,13 @@ function Cloud:AddPanel(p, num)
 	p:SetPaintedManually(true)
 	self._MaxWidth = math.Clamp(p:GetWide() + 16, math.max(self.MinW, self._MaxWidth), self.MaxW)
 	p.IgnoreVisibility = true
-	print("adding", p, num or (#self.DoneText + 1), p.naem)
-	self.DoneText[num or (#self.DoneText + 1)] = p
 
+	self.DoneText[num or (#self.DoneText + 1)] = p
 end
 
 function Cloud:SetAbsPos(x, y)
 	-- does not work properly
-	print("reminder: Cloud:SetAbsPos does not work properly")
+	print("reminder: Cloud:SetAbsPos does not work properly or something")
 	local sx, sy = self:ScreenToLocal(x, y)
 
 	self.OffsetX = sx

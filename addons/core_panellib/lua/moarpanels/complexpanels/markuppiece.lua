@@ -5,6 +5,7 @@ local PANEL = {}
 function PANEL:Init()
 	self.Elements = {}
 	self.Lines = {}			-- [lineNum] = startX
+	self.LineWidths = {}	-- [lineNum] = textWidth
 
 	self.DrawQueue = {}
 	self.Texts = {}
@@ -85,7 +86,10 @@ function PANEL:IsTextVisible(text)
 end
 
 function PANEL:CalculateTextSize(dat)
-	return self.Buffer:WrapText(dat.text, self:GetWide(), dat.font or self.Font, dat.WrapData)
+	return self.Buffer:WrapText(dat.text,
+		self.AllowedWidth or self:GetWide(),
+		dat.font or self.Font,
+		dat.WrapData)
 end
 
 function PANEL:_GetDatSize(str, dat)
@@ -124,6 +128,8 @@ function PANEL:Recalculate()
 	local curLine = 1
 	local align = self:GetAlignment()
 
+	local maxX = 0
+
 	for k,v in ipairs(self.Elements) do
 
 		if v.isText then
@@ -148,6 +154,8 @@ function PANEL:Recalculate()
 			t.x, t.y = curX, curY
 			t.endX, t.endY = buf.x, buf.y
 
+			maxX = math.max(maxX, t.x + tw)
+
 			t.w, t.h = tw, th
 			t.line = curLine
 
@@ -161,6 +169,7 @@ function PANEL:Recalculate()
 
 				if line > 1 then
 					self.Lines[curLine] = ownWide * (align / 2) - curLineWidth * (align / 2)
+					self.LineWidths[curLine] = curLineWidth
 					curLine = curLine + 1
 					curLineWidth = 0
 					buf.x = tw
@@ -207,6 +216,7 @@ function PANEL:Recalculate()
 	end
 
 	self.Lines[curLine] = ownWide * (align / 2) - curLineWidth * (align / 2)
+	self.LineWidths[curLine] = curLineWidth
 
 	if align > 0 then
 		-- second pass; change X of text segments to align with the whole line
@@ -240,6 +250,22 @@ function PANEL:Recalculate()
 
 	self:SetTall(res + 1)
 	self:GetParent():SetTall(math.max(self:GetParent():GetTall(), res + 1))
+end
+
+function PANEL:RewrapWidth(to)
+	assert(isnumber(to))
+	self.AllowedWidth = math.max(self:GetWide(), to)
+	self:Recalculate()
+	self.AllowedWidth = nil
+
+	local maxW = 0
+	for k,v in ipairs(self.LineWidths) do
+		maxW = math.max(maxW, v)
+	end
+
+	self:SetWide(maxW)
+	print("rewrap: setting wide", maxW)
+	return maxW
 end
 
 function PANEL:OnKeyCodePressed(key)

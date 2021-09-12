@@ -11,17 +11,13 @@ Colors.Red = Color(255, 70, 70)
 
 Colors.DarkerRed = Color(205, 40, 40)
 
-
+-- shit
 Colors.LighterGray = Color(110, 110, 110)
 Colors.MediumGray = Color(85, 85, 85)
 Colors.LightGray = Color(65, 65, 65)
 Colors.Gray = Color(50, 50, 50)
 Colors.DarkGray = Color(35, 35, 35)
 Colors.DarkerGray = Color(20, 20, 20)
-
--- i used gray's too much already and they're all quite dark
--- i need a light-gray color palette now but all `light + gray` are already taken
--- this is my shitty solution :v
 
 Colors.White = Color(255, 255, 255)
 Colors.DarkWhite = Color(220, 220, 220)
