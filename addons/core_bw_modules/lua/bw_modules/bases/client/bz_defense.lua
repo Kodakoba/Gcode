@@ -1,6 +1,6 @@
 --
 local bz = BaseWars.Bases
-bz.NW.Residence = Networkable("bw_base_residence")
+bz.NW.Residence = bz.NW.Residence or Networkable("bw_base_residence")
 
 local resid = bz.NW.Residence
 
