@@ -49,13 +49,17 @@ function bw.SQLResync()
 		-- creating bases table
 
 		local basesArg = LibItUp.SQLArgList()
-			basesArg:AddArg("base_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT")
-			basesArg:AddArg("base_name VARCHAR(500) NOT NULL")
-			basesArg:AddArg("base_data JSON")
-			basesArg:AddArg("map_name VARCHAR(128)")
-			basesArg:AddArg("ADD UNIQUE INDEX `base_name_UNIQUE`(`base_name` ASC, `map_name` ASC);")
+			basesArg:AddArg("base_id", "INT NOT NULL PRIMARY KEY AUTO_INCREMENT")
+			basesArg:AddArg("base_name", "VARCHAR(500) NOT NULL")
+			basesArg:AddArg("base_data", "JSON")
+			basesArg:AddArg("map_name", "VARCHAR(128)")
 
-		mysqloo.CreateTable(db, bases_tbl, basesArg):Then(coroutine.Resumer())
+		local additional = {
+			"ADD UNIQUE INDEX `base_name_UNIQUE`(`base_name` ASC, `map_name` ASC)",
+		}
+
+		mysqloo.CreateTable(db, bases_tbl, basesArg, unpack(additional))
+			:Then(coroutine.Resumer())
 
 
 		local zonesArg = LibItUp.SQLArgList()
