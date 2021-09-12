@@ -25,6 +25,10 @@ local nw = LibItUp.Networkable
 						If you return false from this, the change won't be written (but will be lost to networking!)
 						Should be primarily used for equality checks
 
+		SV: "WriteChange" : key, value, players
+			If you return false from this, the change key/value won't be written
+			Should be primarily used to encode both the key AND the value in your own way
+
 		SV: "WriteChangeValue" : key, value, players
 			If you return false from this, the change value won't be written
 			Should be primarily used to encode a value your own way
@@ -121,7 +125,7 @@ ns:Hijack(false)
 ns = nil
 
 local function determineEncoder(typ, val)
-	if val == fakeNil then --lol
+	if val == fakeNil or val == nil then --lol
 		return BlankFunc, 11
 	end
 
@@ -236,6 +240,12 @@ local function WriteChange(key, val, obj, ...)
 	local key_typ = type(key):lower()
 	local val_typ = type(val):lower()
 
+	if val == fakeNil then val = nil end
+
+	local unAliased = obj.__AliasesBack[key] or key
+	local res = obj:Emit("WriteChange", unAliased, val, ...)
+	if res == false then printf("WriteChangeValue asked to not write key/value (%s = %s)", unAliased, val) return end
+
 	local k_encoder, k_encoderID, k_additionalArg = determineEncoder(key_typ, key)
 	local v_encoder, v_encoderID, v_additionalArg = determineEncoder(val_typ, val)
 
@@ -248,7 +258,7 @@ local function WriteChange(key, val, obj, ...)
 	end
 	-- write val encoderID and the encoded val
 	--print("WriteChange called", key, val)
-	local unAliased = obj.__AliasesBack[key] or key
+
 	local res = obj:Emit("WriteChangeValue", unAliased, val, ...)
 
 	if res == false then printf("WriteChangeValue asked to not write change (%s = %s)", unAliased, val) return end
