@@ -1,14 +1,12 @@
 --
 local bz = BaseWars.Bases
-bz.NW.Residence = Networkable("bw_base_residence")
+bz.NW.Residence = bz.NW.Residence or Networkable("bw_base_residence")
 
 local resid = bz.NW.Residence
 
 resid:On("WriteChangeValue", "WriteEnt", function(self, eid, dat)
 	local resides = dat and dat[1]
 	local protected = dat and dat[2]
-
-	print("WriteChangeValue", eid, resides, protected)
 
 	net.WriteBool(resides)
 	if resides then
@@ -19,15 +17,22 @@ resid:On("WriteChangeValue", "WriteEnt", function(self, eid, dat)
 end)
 
 local function exitBase(ent, base)
+	if ent:CreatedByMap() or ent:IsPlayer()
+		or not ent:BW_GetOwner() then return end
+
 	local eid = isnumber(ent) and ent or ent:EntIndex()
 
 	if resid:Get(eid) then
-		resid:Set(eid, false)
+		resid:Set(eid, nil)
 	end
 end
 
 local function enterBase(ent, base)
 	local eid = isnumber(ent) and ent or ent:EntIndex()
+	ent = Entity(eid)
+
+	if ent:CreatedByMap() or ent:IsPlayer()
+		or not ent:BW_GetOwner() then return end
 
 	resid:Set(eid, {true, base:IsEntityOwned(Entity(eid))})
 end
@@ -89,7 +94,7 @@ hook.Add("BW_CanDealEntityDamage", "ResidenceCheck", function(atk, ent, imfl, dm
 
 		-- base owner deals 3x bullet damage to others' props in his base
 		if IsPlayer(atk) and base:IsOwner(atk)
-			and not base:IsOwner(ent:BW_GetOwner()) then
+			and not base:IsEntityOwned(ent) then
 			dmg:ScaleDamage(3)
 			return true
 		end
