@@ -526,9 +526,14 @@ end)
 hook.Remove("PlayerSpawn", "RaidsSpawn")
 hook.Remove("PlayerDeathThink", "RaidsDeath")
 
+
 function raid.CanDealDamage(ply, ent, infl, dmg)
 	-- if not ent.IsBaseWars then return end
 	if not IsPlayer(ply) then return end -- non-players can't deal damage to basewars ents
+
+	if IsPlayer(ent) then
+		return raid.CanDealDamagePlayer(ply, ent, infl, dmg)
+	end
 
 	local ow = ent:BW_GetOwner()
 
@@ -593,3 +598,69 @@ function raid.CanBlowtorch(ply, ent, wep, dmg)
 	end
 
 end
+
+function raid.CanDealDamagePlayer(ply, vict, infl, dmg)
+	if not ply:InRaid() and not vict:InRaid() then return end
+
+	local r1, r2 = ply:InRaid(), vict:InRaid()
+
+	if r1 and not r2 then
+		-- raider attacks non-raider: start duel
+		return raid.RaidDuelRaider(ply, vict, infl, dmg)
+	elseif r2 and not r1 then
+		-- non-raider attacks raider: check for a duel
+		return raid.RaidDuelNonRaider(ply, vict, infl, dmg)
+	end
+
+	-- raider and raider
+	if ply:IsEnemy(vict) then
+		return true
+	end
+end
+
+function raid.RaidDuelRaider(rder, rded, infl, dmg)
+	local last = rder.DuelChallenged and rder.DuelChallenged[rded]
+	rder.DuelChallenged = rder.DuelChallenged or {}
+	-- 10s with no damage dealt = duel abort
+	-- 1st time is start time, 2nd is time since last damage apply
+	rder.DuelChallenged[rded] = rder.DuelChallenged[rded] or {CurTime(), CurTime()}
+
+	if not last or CurTime() - last[1] < 0.5 then
+		return false -- some time between getting shot and damage starting to go through
+	end
+
+	if CurTime() - rder.DuelChallenged[rded][2] > 10 then
+		-- 10s passed with no damage; reset duel state
+		rder.DuelChallenged[rded] = {CurTime(), CurTime()}
+		return false
+	end
+
+	rder.DuelChallenged[rded][2] = CurTime()
+end
+
+function raid.RaidDuelNonRaider(rded, rder, infl, dmg)
+	-- raider never shot the attacker; disallow damage
+	if not rder.DuelChallenged or not rder.DuelChallenged[rded] then
+		return false
+	end
+	local dat = rder.DuelChallenged[rded]
+
+	if CurTime() - dat[1] < 0.5 then
+		return false -- some time between getting shot and damage starting to go through
+	end
+
+	if CurTime() - dat[2] > 10 then
+		-- 10s passed with no damage; reset duel state
+		rder.DuelChallenged[rded] = nil
+		return false
+	end
+
+	dat[2] = CurTime() -- allow damage, reset timer
+end
+
+hook.Add("PlayerDeath", "RaidDuels", function(ply, infl, atk)
+	ply.DuelChallenged = nil
+	if IsPlayer(atk) and atk.DuelChallenged then
+		atk.DuelChallenged[ply] = nil
+	end
+end)
