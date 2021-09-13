@@ -2,6 +2,7 @@
 	path = addons/weps_arccw_mp
 	url = https://github.com/2048khz-gachi-rmx/arccw_mp_priv.git
 	branch = recoil-rehaul
-[submodule "inventory2"]
-	path = addons/
-	url = https://github.com/qraxes/inventory2.git
+
+[submodule "addons/game_inventory"]
+	path = addons/game_inventory
+	url = https://github.com/qraxes/inventory2
