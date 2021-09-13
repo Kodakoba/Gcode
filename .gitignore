@@ -4,8 +4,6 @@
 !lua/notagain/**
 # But descend into directories
 addons/game_inventory/**
-addons/game_epic_miningaddon/**
-addons/game_research/**
 
 addons/arccw*
 addons/cw*
