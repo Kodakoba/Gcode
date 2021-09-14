@@ -191,7 +191,7 @@ function ENT:FillModsPanel(mods, dropper)
 		--mup:Debug()
 
 		local mod = Inventory.Modifiers.Get(modName)
-		mod.Markup(itm, mup, tier)
+		mod:GenerateMarkup(itm, mup, tier)
 
 		return mup
 	end
