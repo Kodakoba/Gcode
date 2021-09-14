@@ -690,3 +690,23 @@ function errorf(s, ...)
 	return error(s:format(...), 2)
 end
 
+function errorNHf(s, ...)
+	return ErrorNoHaltWithStack(s:format(...))
+end
+
+ErrorNoHaltf = errorNHf
+errorNHF = errorNHf
+
+function assertf(cond, err, ...)
+	if not cond then
+		if not err then err = "assertion failed!" end
+		errorf(err, ...)
+	end
+end
+
+function assertNHf(cond, err, ...)
+	if not cond then
+		if not err then err = "assertion failed!" end
+		errorNHf(err, ...)
+	end
+end
