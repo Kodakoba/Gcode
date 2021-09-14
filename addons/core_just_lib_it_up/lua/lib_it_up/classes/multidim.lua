@@ -106,6 +106,44 @@ function muldim:Insert(val, ...)
 	return val, curvar
 end
 
+function muldim:RemoveSeq(key, ...)
+	local tbl = self:Get(...)
+	if not tbl then return end
+
+	table.remove(tbl, key)
+end
+
+function muldim:RemoveSeqValue(val, ...)
+	local tbl = self:Get(...)
+	if not tbl then return end
+
+	for i = #tbl, 1, -1 do
+		if tbl[i] == val then
+			table.remove(tbl, i)
+			break
+		end
+	end
+end
+
+function muldim:Remove(key, ...)
+	local tbl = self:Get(...)
+	if not tbl then return end
+
+	tbl[key] = nil
+end
+
+function muldim:RemoveValue(val, ...)
+	local tbl = self:Get(...)
+	if not tbl then return end
+
+	for k,v in pairs(tbl) do
+		if v == val then
+			tbl[k] = nil
+			break
+		end
+	end
+end
+
 function muldim:Initialize(mode)
 	if mode then
 		if not mode == "k" or mode == "v" or mode == "kv" then
