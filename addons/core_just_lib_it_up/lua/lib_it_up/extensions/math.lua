@@ -41,6 +41,17 @@ function math.Length(num) --length of number in base 10, kind of works for retar
 	return (ret > 14 and 0 or 1) + ret
 end
 
+local temp = {}
+function math.Sort(...)
+	for i=1, select("#", ...) do
+		temp[i] = select(i, ...)
+	end
+
+	table.sort(temp)
+
+	return unpack(temp)
+end
+
 -- reverse math.clamp basically lol
 -- if a number is not within [min; max], returns it
 
