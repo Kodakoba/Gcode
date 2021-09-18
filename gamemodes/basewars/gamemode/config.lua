@@ -1,9 +1,6 @@
 BASEWARS_CHOSEN_LANGUAGE = "ENGLISH"
 
-BackupWeaponKeys = {
-	"Primary", "Secondary", "Recoil_Orig", "FireDelay_Orig", "Damage_Orig"
-
-}
+BackupWeaponKeys = {}
 
 BaseWars.Watery = false
 

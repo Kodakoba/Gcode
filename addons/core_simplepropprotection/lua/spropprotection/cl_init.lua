@@ -46,7 +46,9 @@ function SPropProtection.HUDPaint()
 		end
 	end
 end
-hook.Add("HUDPaint", "SPropProtection.HUDPaint", SPropProtection.HUDPaint)
+
+-- screw off
+--hook.Add("HUDPaint", "SPropProtection.HUDPaint", SPropProtection.HUDPaint)
 
 function SPropProtection.AdminPanel(Panel)
 	Panel:ClearControls()

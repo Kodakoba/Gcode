@@ -224,6 +224,7 @@ Make some adv SurfaceInfo functions.
 	function meta:GetMesh() 	-- Generates a mesh-table for the surfaceinfo.
 		if not self:IsValid() then return end
 		if self.t_mesh then return table.Copy(self.t_mesh) end
+
 		local verts = self:GetVerticesNoParallel()
 		if #verts < 3 then 
 			self.b_invalid = false
@@ -248,6 +249,7 @@ Make some adv SurfaceInfo functions.
 			table.insert(t, {pos = verts[i],		u = uvt[i].u,v = uvt[i].v, 			normal = n})
 		end
 		self.t_mesh = t
+
 		return table.Copy(self.t_mesh)
 	end
 	function meta:GetMinSide()

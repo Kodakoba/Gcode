@@ -71,6 +71,7 @@ local realmExclusive = {
 	["networkable_sv_ext.lua"] = _NONE,
 	["networkable_cl_ext.lua"] = _CL,
 	["chat.lua"] = _CL,
+	["render.lua"] = _CL,
 }
 
 libTbl.Included = {} -- not auto-refresh friendly on purpose; allows reloading everything

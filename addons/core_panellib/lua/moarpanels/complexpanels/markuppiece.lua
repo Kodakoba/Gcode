@@ -411,29 +411,7 @@ function PANEL:Think()
 	self:Emit("Think")
 end
 
-local b = bench("selection")
 function PANEL:GetSelected()
-	--[[b:Open()
-	local sel = ""
-
-	for _, tx in ipairs(self.Texts) do
-		for _, seg in ipairs(tx.segments) do --oh lord
-			if not seg.selStart then continue end
-
-			local codenz = {utf8.codepoint(seg.text, 1, #seg.text)}
-			local codes = {}
-
-			for i=seg.selStart, seg.selEnd do
-				codes[#codes + 1] = codenz[i]
-			end
-
-			local tx = utf8.char(unpack(codes)) --seg.text:sub(seg.selStart+1, seg.selEnd)
-			sel = sel .. tx
-		end
-	end
-	b:Close():print()
-	b:Reset()
-	return sel]]
 	return self.SelectedText or ""
 end
 
@@ -509,6 +487,7 @@ end
 
 function PANEL:Paint(w, h)
 	draw.EnableFilters()
+
 	local sx, sy = self:LocalToScreen(0, 0)
 	render.PushScissorRect(sx, sy, sx + w, sy + h)
 	local clip

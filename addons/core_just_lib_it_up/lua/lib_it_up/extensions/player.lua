@@ -218,3 +218,71 @@ else
 	end)
 end
 
+local TRACE = {}
+
+function util.GetPlayerTrace( ply, dir )
+	dir = dir or ply:GetAimVector()
+
+	TRACE.start = ply:EyePos()
+	TRACE.endpos = TRACE.start + ( dir * ( 4096 * 8 ) )
+	TRACE.filter = ply
+
+	return TRACE
+end
+
+function util.QuickTrace( origin, dir, filter )
+	TRACE.start = origin
+	TRACE.endpos = origin + dir
+	TRACE.filter = filter
+
+	return util.TraceLine( TRACE )
+end
+
+function PLAYER:GetEyeTrace()
+	local t = self:GetTable()
+
+	if ( CLIENT ) then
+		local framenum = FrameNumber()
+
+		if ( t.LastPlayerTrace == framenum ) then
+			return t.PlayerTrace
+		end
+
+		t.LastPlayerTrace = framenum
+	end
+
+	local tr = t.PlayerTrace or {}
+	t.PlayerTrace = tr
+
+	local trDat = util.GetPlayerTrace(self)
+	trDat.output = tr
+		util.TraceLine(trDat)
+	trDat.output = nil
+
+	return tr
+end
+
+function PLAYER:GetEyeTraceNoCursor()
+	local t = self:GetTable()
+
+	if ( CLIENT ) then
+		local framenum = FrameNumber()
+
+		if ( t.LastPlayerAimTrace == framenum ) then
+			return t.PlayerAimTrace
+		end
+
+		t.LastPlayerAimTrace = framenum
+	end
+
+	local tr = t.PlayerAimTrace or {}
+	t.PlayerAimTrace = tr
+
+	local trDat = util.GetPlayerTrace( self, self:EyeAngles():Forward() )
+
+	trDat.output = tr
+		util.TraceLine(trDat)
+	trDat.output = nil
+
+	return tr
+end

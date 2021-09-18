@@ -834,6 +834,7 @@ function chathud:TagPanic()
 end
 
 function chathud:Draw()
+	do return end
 	if #self.History < 1 then return end
 
 	local b

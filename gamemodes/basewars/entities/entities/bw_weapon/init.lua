@@ -12,8 +12,11 @@ local function IsGroup(ply, group)
 	if not ply.CheckGroup then error("what the fuck where's ULX") return end
 	if not IsValid(ply) or not ply:IsPlayer() then return end
 
-	if ply:CheckGroup(string.lower(group)) or (ply:IsAdmin() and (group=="vip" or group=="trusted")) or ply:IsSuperAdmin() then 
-		return true 
+	if ply:CheckGroup(string.lower(group)) or
+		(ply:IsAdmin() and (group=="vip" or group=="trusted"))
+		or ply:IsSuperAdmin() then
+
+		return true
 	end
 
 	return false
@@ -21,7 +24,6 @@ local function IsGroup(ply, group)
 end
 
 function ENT:Initialize()
-
 	self.BaseClass:Initialize()
 
 	self:SetModel(self.Model)
@@ -33,9 +35,8 @@ function ENT:Initialize()
 	self:PhysWake()
 
 	self:Activate()
-	
+
 	self:SetUseType(SIMPLE_USE)
-	
 end
 local kt = {
 	"bowie",
@@ -55,16 +56,16 @@ function ENT:Use(act, call, usetype, value)
 
 	local Class = self.WeaponClass
 	local Wep = act:GetWeapon(Class)
-	local ply = act 
+	local ply = act
 
 	if Class == "csgo_default_knife" then
-		if IsGroup(ply, "vip") then 
+		if IsGroup(ply, "vip") then
 
 			local ktype = "default"
 
 			if ply.KnifeType then
 
-				for k,v in pairs(kt) do 
+				for k,v in pairs(kt) do
 					if v==ply.KnifeType then ktype = v break end
 				end
 				ply:Give("csgo_"..ktype)
@@ -77,20 +78,18 @@ function ENT:Use(act, call, usetype, value)
 	end
 
 	if IsValid(Wep) then
-	
 		local Clip = Wep.Primary and Wep.Primary.DefaultClip
-		
-		ply:GiveAmmo(Clip or 30, Wep:GetPrimaryAmmoType())
-		
-	else
-	
-		local wep = ply:Give(Class)
-		if self.Backup then 
-			table.Merge(wep:GetTable(), self.Backup)
-		end
-	end
-	
-	
-	self:Remove()
 
+		ply:GiveAmmo(Clip or 30, Wep:GetPrimaryAmmoType())
+	else
+		Wep = ply:Give(Class)
+		if self.Backup then
+			table.Merge(Wep:GetTable(), self.Backup)
+		end
+
+		hook.Run("BW_WeaponPickedUp", self, Wep, ply)
+	end
+
+
+	self:Remove()
 end

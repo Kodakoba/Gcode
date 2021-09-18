@@ -159,8 +159,12 @@ function FInc.NonRecursive(name, realm, decider, cb) --mhm
 	return FInc.Recursive(name, realm, true, decider, cb)
 end
 
-local svcol = Color( 137, 222, 255 )
-local clcol = Color( 255, 222, 102 )
+local svcol = Color( 70, 195, 255 )
+local clcol = Color( 255, 200, 60 )
+
+local incsvcol = Color( 137, 222, 255 )
+local incclcol = Color( 255, 222, 102 )
+
 local realmcol = SERVER and svcol or clcol
 
 local function logInclusion(path, cl, sv, why, default)
@@ -174,8 +178,8 @@ local function logInclusion(path, cl, sv, why, default)
 									-- a shared extension which will be included manually
 
 	local as_what = (cl == 1 and not sv and {color_white, "Shared/Client [unincluded, CS]"}) or
-					(not cl and sv and {svcol, "Server [included, not CS]"}) or
-					(cl and not sv and {clcol, "Client [CL included]"}) or
+					(not cl and sv and {incsvcol, "Server [included, not CS]"}) or
+					(cl and not sv and {incclcol, "Client [CL included]"}) or
 					(cl and sv and {color_white, "Any [_CL/_SH/_SV]"}) or
 					(not cl and not sv and {svcol, "None [unincluded, not CS]"})
 

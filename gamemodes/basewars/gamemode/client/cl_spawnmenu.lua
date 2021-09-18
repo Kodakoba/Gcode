@@ -625,7 +625,9 @@ local function MakeSpawnList()
 					x = x + iw + ic_tx_padding
 				end
 
-				draw.SimpleText(v.Name, "BS28", x, h/2, col, 0, 1)
+				local tw, th = draw.SimpleText(v.Name, "BS28", x, h/2, col, 0, 1)
+
+				self.MxScaleCenterX = tw / 2 + x
 			end
 
 			function tab:DoClick()

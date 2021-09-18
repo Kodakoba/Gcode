@@ -281,7 +281,7 @@ BaseWars.Commands.AddCommand({"dw", "dropwep"}, function(ply)
 
 		for k,v in pairs(BackupWeaponKeys) do
 			if Wep[v] then
-				bkup[v] = (istable(Wep[v]) and table.Copy(Wep[v])) or Wep[v]
+				bkup[v] = Wep[v]
 			end
 		end
 
@@ -309,6 +309,7 @@ BaseWars.Commands.AddCommand({"dw", "dropwep"}, function(ply)
 		Ent:Spawn()
 		Ent:Activate()
 
+		hook.Run("BW_DropWeapon", ply, Wep, Ent)
 		ply:StripWeapon(Class)
 
 	end

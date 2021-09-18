@@ -9,10 +9,11 @@ local weak = muldim:callable()
 weak.__mode = "kv"
 
 function muldim:Get(...)
-	local ks = {...}
 	local curvar = self
 
-	for k,v in ipairs(ks) do
+	for k=1, select("#", ...) do
+		local v = select(k, ...)
+
 		local nxt = rawget(curvar, v)
 		if nxt == nil then return end
 		curvar = nxt
@@ -22,10 +23,11 @@ function muldim:Get(...)
 end
 
 function muldim:GetOrSet(...)
-	local ks = {...}
 	local curvar = self
 
-	for k,v in ipairs(ks) do
+	for k=1, select("#", ...) do
+		local v = select(k, ...)
+
 		if rawget(curvar, v) == nil then
 			local new = muldim:new()
 			rawset(curvar, v, new)
@@ -39,11 +41,14 @@ function muldim:GetOrSet(...)
 end
 
 function muldim:Set(val, ...)
-	local ks = {...}
 	local curvar = self
+	local cachednext
 
-	for k,v in ipairs(ks) do
-		local nextkey = rawget(ks, k + 1)
+	for k=1, select("#", ...) do
+		local v = (cachednext ~= nil and cachednext) or select(k, ...)
+		local nextkey = select(k + 1, ...)
+		cachednext = nextkey
+
 		local nextval = rawget(curvar, v)
 		if nextval == nil then
 
@@ -72,11 +77,14 @@ end
 
 -- insert value at #tbl + 1, like table.insert
 function muldim:Insert(val, ...)
-	local ks = {...}
 	local curvar = self
+	local cachednext
 
-	for k,v in ipairs(ks) do
-		local nextkey = rawget(ks, k + 1)
+	for k=1, select("#", ...) do
+		local v = (cachednext ~= nil and cachednext) or select(k, ...)
+		local nextkey = select(k + 1, ...)
+		cachednext = nextkey
+
 		local nextval = rawget(curvar, v)
 
 		if nextval == nil then

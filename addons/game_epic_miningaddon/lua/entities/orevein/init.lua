@@ -342,13 +342,20 @@ end
 local function readOreData()
 	Inventory.OresPositions = Inventory.OresPositions or {}
 
-	local dat = file.Read("inventory/ore_positions.dat", "DATA")
+	local map = game.GetMap()
+
+
+	local dat = file.Read("inventory/ores/" .. map .. ".dat", "DATA")
 	if not dat then
-		file.Write("inventory/ore_positions.dat", "")
+		file.Write("inventory/ores/" .. map .. ".dat", "")
 		return
 	end
 
 	local poses = util.JSONToTable(dat)
+	if not poses then
+		error("failed to read ores for map " .. map)
+		return
+	end
 
 	for k,v in ipairs(poses) do
 		if not table.HasValue(Inventory.OresPositions, v) then	-- O(n^2) lets goooo

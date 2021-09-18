@@ -116,6 +116,7 @@ hook.Add("PreDrawHalos", "BaseCoreHalo", function()
 	end
 
 	local blur = math.min(2, fr * 18)
+
 	if blur > 0 then
 		local h,s,v = colThroughWalls:ToHSV()
 		core.Colors[1]:SetHSV( h, s, v * (blur / 2) )

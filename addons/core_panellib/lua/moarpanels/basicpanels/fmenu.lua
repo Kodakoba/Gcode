@@ -7,7 +7,6 @@ local FMO = {}
 local wrapped = {}
 
 function FMO:PerformLayout()
-
 	self:SizeToContents()
 	self:SetWide( self:GetWide() + 30 )
 
@@ -24,11 +23,10 @@ function FMO:PerformLayout()
 	end
 
 	DButton.PerformLayout( self )
-	
-	self.DragMouseRelease = function() return false end --Fuck you
-	self.Options = {}
 
+	self.DragMouseRelease = function() return false end --Fuck you
 end
+
 vgui.Register("FMenuOption", FMO, "DMenuOption")
 
 function FM:Init()
@@ -44,17 +42,13 @@ function FM:Init()
 	self:SetPos(self:GetParent():ScreenToLocal(gui.MousePos()))
 
 	function self:GetDeleteSelf()
-		return true 
+		return true
 	end
 
 	RegisterDermaMenuForClose( self )
-
-	timer.Simple(0, function()
-		if not IsValid(self) then return end
-		self:CreateDescription()
-	end)
-
+	self:CreateDescription()
 end
+
 function FMO:Init()
 	self.Color = Color(40, 40, 40)
 	self.drawColor = Color(40, 40, 40)
@@ -195,6 +189,7 @@ end
 function FM:CreateDescription()
 	local f = vgui.Create("Panel", self)
 	f:SetSize(self:GetWide(), 1)
+	f:SetZPos(32767)
 	local me = self
 
 	function f:PerformLayout()
@@ -253,13 +248,14 @@ function FM:CreateDescription()
 	end
 
 	self:AddPanel(f)
+	f:Dock(TOP)
 end
 
 function FM:AddOption( strText, funcFunction )
-
 	local pnl = vgui.Create( "FMenuOption", self )
 	pnl:SetMenu( self )
 	pnl:SetText( strText )
+	pnl:Dock(TOP)
 	pnl.DesHeight = 28
 	if ( funcFunction ) then pnl.DoClick = funcFunction end
 
@@ -267,7 +263,6 @@ function FM:AddOption( strText, funcFunction )
 	self.Options[strText] = pnl
 
 	return pnl
-
 end
 
 function FM:Paint(w,h)

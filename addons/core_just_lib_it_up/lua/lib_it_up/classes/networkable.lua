@@ -67,7 +67,7 @@ nw.Profiling = {}
 nw.Profiling._NWDataInstances = {}
 nw.Profiling.CleanTime = 900
 
-nw.FakeNil = newproxy() --lul
+nw.FakeNil = nw.FakeNil or newproxy() --lul
 local fakeNil = nw.FakeNil
 
 -- { [CurTime] = { [nameID] = amt_bytes, ... }

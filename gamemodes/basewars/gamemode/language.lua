@@ -82,6 +82,21 @@ Language.BPNextPrint = "Next print in:"
 Language.BPNextPrintTime = "%.1fs."
 Language.BPNextPrintNextTime = "LV%d.: %.1fs."
 
+
+Language.Inv_StatSpread    = "Spread"
+Language.Inv_StatHipSpread = "Hip Spread"
+Language.Inv_StatMoveSpread  = "Moving Spread"
+Language.Inv_StatDamage      = "Damage"
+Language.Inv_StatRPM         = "RPM"
+Language.Inv_StatRange       = "Range"
+Language.Inv_StatReloadTime  = "Reload Time"
+Language.Inv_StatMagSize     = "Mag Size"
+Language.Inv_StatRecoil      = "Recoil"
+Language.Inv_StatHandling    = "Sight Time"
+Language.Inv_StatMoveSpeed   = "Movement Speed"
+Language.Inv_StatDrawTime    = "Draw Time"
+
+
 setmetatable(Language, Language)
 
 LocalString = Object:callable()

@@ -320,6 +320,11 @@ function draw.RoundedPolyBox(rad, x, y, w, h, col, notr, nobr, nobl, notl)
 	surface_SetDrawColor(col:Unpack())
 	draw.NoTexture()
 
+	notr = not not notr
+	nobr = not not nobr
+	nobl = not not nobl
+	notl = not not notl
+
 	local cache = rbcache:Get(rad, x, y, w, h, notr, nobr, nobl, notl)
 
 	if not cache then

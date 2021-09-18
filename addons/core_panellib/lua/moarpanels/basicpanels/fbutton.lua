@@ -488,8 +488,10 @@ function button:Paint(w, h)
 		sharedScaleVec[1] = scale
 		sharedScaleVec[2] = scale
 
-		local x, y = self:LocalToScreen(0, 0)
-		sharedTranslVec[1], sharedTranslVec[2] = x + w/2, y + h/2
+		local xf, yf = self.MxScaleCenterX or w / 2, self.MxScaleCenterY or h / 2
+		local x, y = self:LocalToScreen(xf, yf)
+
+		sharedTranslVec[1], sharedTranslVec[2] = x, y
 
 		mx:Translate(sharedTranslVec)
 			mx:SetScale(sharedScaleVec)
@@ -505,7 +507,6 @@ function button:Paint(w, h)
 	self:PrePaint(w,h)
 	self:Draw(w, h)
 	self:PostPaint(w,h)
-
 end
 
 vgui.Register("FButton", button, "DButton")

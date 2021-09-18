@@ -160,7 +160,9 @@ local function HUDPaint()
     --Show the owner:
     local ply = LocalPlayer()
 
-    local LAEnt = ply:GetEyeTraceNoCursor().Entity
+    local tr = ply:GetEyeTraceNoCursor()
+
+    local LAEnt = tr.Entity
     if not IsValid(LAEnt) then return end
 
     local weapon = ply:GetActiveWeapon()

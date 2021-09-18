@@ -113,15 +113,15 @@ local function CreateFFZShortcuts(update)
 					end
 
 						if !file.Exists(filename, "DATA") then
-						file.Write(filename, "")
-						file.Append(filename, b .. " " )
+							file.Write(filename, "")
+							file.Append(filename, b .. " " )
 						else
 							file.Append(filename, b .. " " )
 						end
 
 				end, function() print("send help") end)
 		end
-		
+
 		local function ReadChannelInfo(filename, chan)
 
 		filename = string.lower(filename)
@@ -129,7 +129,12 @@ local function CreateFFZShortcuts(update)
 			if file.Exists(filename, "DATA") and not update then
 				local data = file.Read(filename, "DATA")
 				local d = util.JSONToTable(data)
-				if not d then file.Delete(filename) DownloadChannelInfo(chan) return ErrorNoHalt("[NT]: Failed to read existing FFZ Emote cache. Deleting and attempting redownload...\n") end
+				if not d then
+					file.Delete(filename)
+					DownloadChannelInfo(chan)
+					return ErrorNoHalt("[NT]: Failed to read existing FFZ Emote cache. Deleting and attempting redownload...\n")
+				end
+
 				local name
 				for name1, v in pairs(d) do
 					if name1=="sets" then
@@ -137,7 +142,7 @@ local function CreateFFZShortcuts(update)
 							name=_
 						end
 						continue
-					end 
+					end
 				end
 
 				if not name then return end
@@ -147,7 +152,7 @@ local function CreateFFZShortcuts(update)
 							if (cont.name) and not EmoteShortcuts[cont.name] then 
 								local url
 								if cont.urls[4] then url=cont.urls[4] elseif cont.urls[2] then url=cont.urls[2] else url=cont.urls[1] end
-								print(url, cont.display_name or cont.name)
+
 								EmoteShortcuts[cont.display_name or cont.name] = string.Replace( url, "//cdn.frankerfacez.com/", "" )
 								EmoteSize[cont.display_name or cont.name] = {cont.width or 32, cont.height or 32}
 							end
@@ -156,8 +161,7 @@ local function CreateFFZShortcuts(update)
 				end
 			end
 		end
-				
-		
+
 		local found = file.Find("emoticon_cache/ffz_global_emotes_*.dat", "DATA")
 
 		for k,chan in pairs(FFZChannels) do
@@ -192,14 +196,13 @@ local function GetFFZEmoticon(emoticon)
 		return emoticon_cache[id] or false
 	end
 
-	print("Downloading FFZ emoticon https://cdn.frankerfacez.com/" .. emoticon)
 	http.Fetch("https://cdn.frankerfacez.com/" .. emoticon, function(body, len, headers, code)
 		if code == 200 then
 			if body == "" then
-				print("Server returned OK but empty response")
+				print("Titles FFZ: Server returned OK but empty response")
 				return
 			end
-			Msg"NT " print("Download OK")
+
 			file.Write("emoticon_cache/ffz/" .. id, body)
 			MakeCache("emoticon_cache/ffz/" .. id, emoticon, id)
 		else
@@ -915,23 +918,19 @@ function Titles.DrawNonPlayer(title, color, name, pnl, x, y, font1)
 				surface.DrawText(txt)
 
 				TextTranslate = {0, 0}
-				
 			end
 
 			return fullx, err
 		end
 
-
-	--cam.End3D2D()
-
 end
 
-hook.Add("PostPlayerDraw", "Titles", function(ply)	--https://i.imgur.com/BOVGRRd.png thanks zeni :^)
+hook.Add("PostPlayerDraw", "Titles", function(ply)
 	Titles.Draw(ply)
 end)
 
 hook.Add("HUDDrawTargetID", "NoTargetID", function()
-	if enabled:GetInt()~=0 then return false end
+	if enabled:GetInt() ~= 0 then return false end
 end)
 
 local reported = true

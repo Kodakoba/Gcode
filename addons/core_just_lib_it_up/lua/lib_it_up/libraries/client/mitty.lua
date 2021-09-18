@@ -81,7 +81,6 @@ Memes.MakeMesh = MakeMesh
 local col = Color(150, 150, 150)
 
 local function RTRender(make2d, rt, func) --if make2d, make ur own 2d context
-
 	--local w, h = ScrW(), ScrH()
 	local w, h = rt:Width(), rt:Height()
 
@@ -106,6 +105,7 @@ local function RTRender(make2d, rt, func) --if make2d, make ur own 2d context
 		print("Decal error:", err)
 	end
 
+	return err
 end
 
 local function CreateRTAndMat(dec)
@@ -113,12 +113,15 @@ local function CreateRTAndMat(dec)
 	local rt = dec.RT or draw.GetRT(dec.Name .. "Decal", dec.RTW, dec.RTH)
 	dec.RT = rt
 
-	local mat = dec.Mat or CreateMaterial(dec.Name, "VertexLitGeneric", {
-		["$basetexture"] = rt:GetName(),
-		["$translucent"] = 1,
-		["$vertexalpha"] = 1,
-		["$vertexcolor"] = 1,
-	})
+	local mat = dec.Mat
+	if not mat then
+		mat = CreateMaterial(dec.Name, "VertexLitGeneric", {
+			["$basetexture"] = rt:GetName(),
+			["$translucent"] = 1,
+			["$vertexalpha"] = 1,
+			["$vertexcolor"] = 1,
+		})
+	end
 
 	mat:SetTexture("$basetexture", rt:GetName()) --in the event it changed
 
@@ -158,46 +161,38 @@ end)
 
 Memes.Decals = Memes.Decals or {}
 
-hook.Remove("PostDrawViewModel", "mittypls")
-for k,v in pairs(hook.GetTable()) do if v.mittypls then hook.Remove(k, "mittypls") end end
+local function drawDecal(v, lp)
+	local rt, mat = CreateRTAndMat(v)
+	local mesh = MakeMesh(v, rt)
+	if not mesh then return end
+
+	local lr = render.ComputeLighting(v.Middle, v.Normal)--:Unpack()
+	lr:Mul(v.LightMultiplication or 1)
+
+	v.Mat:SetVector("$color", lr)
+	render.SetMaterial(v.Mat)
+
+	mesh:Draw()
+
+	if lp:FlashlightIsOn() then
+		v.Mat:SetVector("$color", Vector(1, 1, 1))
+		render.PushFlashlightMode(true)
+			mesh:Draw()
+		render.PopFlashlightMode()
+	end
+end
 
 hook.Add("PostDrawTranslucentRenderables", "mittypls", function(bd, bs)
-
 	if bd or bs then return end
 
 	render.SuppressEngineLighting(true)
-	for k,v in pairs(Memes.Decals) do
+	local lp = LocalPlayer()
 
+	for k,v in pairs(Memes.Decals) do
 		if not v.Vis or v.Vis > 0 then
 
-			local lr = render.ComputeLighting(v.Middle, v.Normal)--:Unpack()
-			lr:Mul(v.LightMultiplication or 1)
-
-			local rt, mat = CreateRTAndMat(v)
-			local mesh = MakeMesh(v, rt)
-
-			if not mesh then return end
-
-			local w, h = ScrW(), ScrH()
-
 			cam.PushModelMatrix(v.Matrix)
-
-				local ok, err = pcall(function()
-
-					v.Mat:SetVector("$color", lr)
-					render.SetMaterial(v.Mat)
-
-					mesh:Draw()
-
-					if LocalPlayer():FlashlightIsOn() then
-						v.Mat:SetVector("$color", Vector(1, 1, 1))
-						render.PushFlashlightMode(true)
-							mesh:Draw()
-						render.PopFlashlightMode()
-					end
-
-				end)
-
+				local ok, err = pcall(drawDecal, v, lp)
 			cam.PopModelMatrix()
 
 			--render.DrawLine(v.Pos, v.Pos + v.Normal * 32)
@@ -420,14 +415,15 @@ do
 
 	local rt = function(w, h)
 	    surface.SetDrawColor(col)
-	    surface.DrawMaterial(url, "jermy_clrkson.png", 0, 0, w, h)
+	    local ret = surface.DrawMaterial(url, "jermy_clrkson.png", 0, 0, w, h)
+	    if not ret then return false end
 	end
 
 	local dec = Memes.AddDecal("kfc_man", pos, ang, scale, normal)
 
 	dec:SetColor(col)
 	dec:SetRTPaint(rt)
-	dec:SetRTUpdate(true)
+	dec:SetRTUpdate(false)
 	dec:SetPixPos(viswhere)
 	dec:SetLight(4)
 	dec:SetMeshW(128)

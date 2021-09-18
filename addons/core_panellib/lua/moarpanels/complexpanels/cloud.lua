@@ -124,6 +124,8 @@ function Cloud:Init()
 	self.Shadow = {}
 	self.DrawShadow = true
 
+	self.ScreenClamp = true
+
 	CLOUDS[#CLOUDS + 1] = self
 end
 
@@ -292,6 +294,16 @@ function Cloud:Paint()
 
 	finY = yoff + boxh * aY
 
+	if self.ScreenClamp then
+		local glx, gty = self:ScreenToLocal(4, 4)
+		local gby = gty + ScrH() - boxh - 4
+		local grx = glx + ScrW() - cw - 8
+
+		xoff = math.Clamp(xoff - cw*self.Middle, glx, grx) + cw*self.Middle
+		finY = math.Clamp(yoff + boxh * aY, gty, gby)
+	end
+
+
 	local oldX, oldY = xoff, finY
 
 	local am = surface.GetAlphaMultiplier()
@@ -337,6 +349,10 @@ function Cloud:Paint()
 		draw.DrawText(lab, self.Font, labX, Y + 2, self.TextColor, self.AlignLabel)
 
 		local offy = finY + ch + 2
+
+		--[[if self.ScreenClamp then
+			offy = math.Clamp(offy, 4, ScrH() - boxh - 4)
+		end]]
 
 		-- there's (a) separator(s) at index 0 which means
 		-- right after the label, not after a formatted text
@@ -400,7 +416,6 @@ function Cloud:AddFormattedText(txt, col, font, overy, num, align) --if you're u
 
 	local yo = 0
 
-
 	surface.SetFont(font or self.DescFont)
 
 	local wid, chary = surface.GetTextSize(nd)
@@ -429,7 +444,7 @@ function Cloud:AddFormattedText(txt, col, font, overy, num, align) --if you're u
 	tbl.Color = col
 	tbl.YOff = yo
 	tbl.Font = font
-	tbl.prio = num
+	tbl.prio = tonumber(num) or key
 
 	if yo == 0 then --different colors but same string, happens
 		tbl.Continuation = true
@@ -441,9 +456,7 @@ function Cloud:AddFormattedText(txt, col, font, overy, num, align) --if you're u
 	self.DoneText[key] = tbl
 
 	table.sort(self.DoneText, function(a, b)
-		local p1, p2 = a.prio, b.prio
-
-		return (p1 and not p2) or (p1 and p2 and p1 < p2)
+		return a.prio < b.prio
 	end)
 
 	self.LatestKey = key
@@ -478,7 +491,7 @@ function Cloud:AddPanel(p, num)
 	p:SetPaintedManually(true)
 	self._MaxWidth = math.Clamp(p:GetWide() + 16, math.max(self.MinW, self._MaxWidth), self.MaxW)
 	p.IgnoreVisibility = true
-
+	p.prio = num or (#self.DoneText + 1)
 	self.DoneText[num or (#self.DoneText + 1)] = p
 end
 

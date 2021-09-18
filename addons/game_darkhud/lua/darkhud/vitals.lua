@@ -320,10 +320,14 @@ function DarkHUD.CreateVitals()
 		end
 	end
 
+	local circle = LibItUp.Circle()
+	circle:SetSegments(16)
+
 	local function Mask(av, x, y, w2, h2)
 		draw.NoTexture()
 		surface.SetDrawColor(0, 0, 0, 255)
-		draw.DrawCircle(x+w2/2, y+h2/2, w2/2 + 2, 50)
+		circle:SetRadius(w2 / 2 + 2)
+		circle:Paint(x + w2 / 2, y + h2 / 2)
 	end
 
 	local function Paint(av)

@@ -219,9 +219,14 @@ function nw:_SVSetNWID(id, replace)
 		return
 	end
 
-	numToID[key] = id
-	IDToNum[id] = key
-	self.NumberID = key
+	local b4NumID = self.NumberID
+	self:SetNetworkableNumberID(key)
+
+	if b4NumID and b4NumID ~= key then
+		for ply, nws in pairs(_NetworkableAwareness) do
+			nws[id] = nil
+		end
+	end
 
 end
 
