@@ -101,19 +101,7 @@ function GM:OnEntityCreated(ent)
 end
 
 function GM:SetupPlayerVisibility(ply)
-
 	self.BaseClass:SetupPlayerVisibility(ply)
-
-	for _, v in next, ents.FindByClass("bw_bomb_*") do
-
-		if v.IsExplosive and v:GetNWBool("IsArmed") then
-
-			AddOriginToPVS(v:GetPos())
-
-		end
-
-	end
-
 end
 
 function GM:PreCleanupMap()
@@ -132,6 +120,7 @@ function GM:GetFallDamage(ply, speed)
 
 end
 
+--[[
 function GM:SetupMove(ply, move)
 
 	local State = self.BaseClass:SetupMove(ply, move)
@@ -145,18 +134,16 @@ function GM:SetupMove(ply, move)
 	return State
 
 end
+]]
 
-local Jump = Sound("npc/zombie/claw_miss1.wav")
 function GM:KeyPress(ply, code)
-
 	self.BaseClass:KeyPress(ply, code)
 
-	if code == IN_JUMP and (ply.Stuck and ply:Stuck()) and ply:GetMoveType() == MOVETYPE_WALK then
-
+	if code == IN_JUMP and
+		ply:GetMoveType() == MOVETYPE_WALK and
+		(ply.Stuck and ply:Stuck()) then
 		ply:UnStuck()
-
 	end
-
 end
 
 function GM:EntityTakeDamage(ent, dmginfo)
@@ -172,11 +159,10 @@ function GM:EntityTakeDamage(ent, dmginfo)
 
 	local Inflictor = dmginfo:GetInflictor()
 	local Attacker 	= dmginfo:GetAttacker()
-	local Damage 	= dmginfo:GetDamage()
 
-	local PropDamageScale = 0.5
-
-	local IsProp = ent:GetClass() == "prop_physics"
+	--local Damage 	= dmginfo:GetDamage()
+	--local PropDamageScale = 0.5
+	--local IsProp = ent:GetClass() == "prop_physics"
 
 	if not ent:IsPlayer() then
 		-- custom logic goes first
@@ -235,7 +221,6 @@ local LastThink = CurTime()
 local Spawns 	= {}
 
 local function ScanEntities()
-
 	Spawns = {}
 
 	for k, v in next, ents.GetAll() do
@@ -251,7 +236,6 @@ local function ScanEntities()
 		end
 
 	end
-
 end
 --[[
 function GM:PlayerShouldTakeDamage(ply, atk)
@@ -326,64 +310,37 @@ function GM:Think()
 
 	if LastThink < CurTime() - 5 then
 
-		BaseWars.UTIL.WriteCrashRollback()
-
-		for k, v in next, ents.GetAll() do
-
-			if v:IsOnFire() then
-
-				v:Extinguish()
-
-			end
-
-
-		end
-
-		for k, s in next, Spawns do
-
+		for k, s in ipairs(Spawns) do
 			if not s or not IsValid(s) then
-
 				ScanEntities()
-
 				return State
-
 			end
 
 			local Ents = ents.FindInSphere(s:GetPos(), 256)
 
 			if #Ents < 2 then
-
 				continue
-
 			end
 
-			for _, v in next, Ents do
+			for _, v in ipairs(Ents) do
 
 				if v.BeingRemoved or v.NoFizz then
-
 					continue
-
 				end
 
 				local Owner = v:CPPIGetOwner()
 
 				if not Owner or not IsValid(Owner) or not Owner:IsPlayer() then
-
 					continue
-
 				end
 
 				if v:GetClass() == "prop_physics" then
-
 					v.BeingRemoved = true
 					v:Remove()
 
 					Owner:Notify(BaseWars.LANG.DontBuildSpawn, BASEWARS_NOTIFICATION_ERROR)
-
 				end
-
 			end
-
 		end
 
 		LastThink = CurTime()
@@ -401,9 +358,7 @@ function GM:InitPostEntity()
 	ScanEntities()
 
 	for k, v in next, ents.FindByClass("*door*") do
-
 		v:Fire("unlock")
-
 	end
 
 	BaseWars.UTIL.WriteCrashRollback(true)

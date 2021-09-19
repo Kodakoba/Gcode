@@ -23,6 +23,8 @@ end
 
 function ENT:Think()
 	self:AddEFlags( EFL_FORCE_CHECK_TRANSMIT )
+	self:NextThink(CurTime() + 3)
+	return true
 end
 
 function ENT:UpdateTransmitState()
