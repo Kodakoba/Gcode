@@ -6,7 +6,6 @@ local wheel = LibItUp.InteractWheel
 wheel.Matrix = Matrix()
 --wheel.Options = {}
 
-local vec = Vector()
 wheel.Frac = 0
 
 function wheel:Initialize()
@@ -71,6 +70,7 @@ function wheel:_PaintPanel(wheel, w, h)
 	local options = wheel.Options
 
 	local mtrx = wheel.Matrix
+		mtrx:Identity()
 		mtrx:TranslateNumber(w/2, h/2)
 		local scale = 0.3 + fr * 0.7
 		mtrx:SetScaleNumber(scale, scale)
