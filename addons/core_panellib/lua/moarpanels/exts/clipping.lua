@@ -1,9 +1,9 @@
 local sz = 512
 
-local circMaskRT = GetRenderTargetEx("__CircleMaskRT", sz, sz, RT_SIZE_OFFSCREEN,
-									MATERIAL_RT_DEPTH_SHARED, 0, 0, -1)
+local circMaskRT = GetRenderTargetEx("_CircleMaskRT", sz, sz, RT_SIZE_OFFSCREEN,
+									MATERIAL_RT_DEPTH_SEPARATE, 0, 0, -1)
 
-local circMaskRTMat = CreateMaterial("__CircleMaskRTMat", "UnlitGeneric", {
+local circMaskRTMat = CreateMaterial("_CircleMaskRTMat", "UnlitGeneric", {
 	["$basetexture"] = circMaskRT:GetName(),
 	["$translucent"] = 1,
 })
@@ -16,10 +16,10 @@ local circURL, circName = "https://i.imgur.com/XAWPA15.png", "medium-circle.png"
 
 
 
-local circMaskMatRT = GetRenderTargetEx("__CircleMaskMatRT", sz, sz, RT_SIZE_OFFSCREEN,
-									MATERIAL_RT_DEPTH_SHARED, 0, 0, -1)
+local circMaskMatRT = GetRenderTargetEx("_CircleMaskMatRT", sz, sz, RT_SIZE_OFFSCREEN,
+									MATERIAL_RT_DEPTH_SEPARATE, 0, 0, -1)
 
-local circMaskMat = CreateMaterial("__CircleMaskMat", "UnlitGeneric", {
+local circMaskMat = CreateMaterial("_CircleMaskMat", "UnlitGeneric", {
 	['$basetexture'] = circMaskMatRT:GetName(),
 	["$translucent"] = 1,
 })
@@ -92,9 +92,11 @@ function draw.DisableMaskCircle(x, y, rad)
 
 	render.OverrideColorWriteEnable(true, true)
 	render.OverrideAlphaWriteEnable(true, true)
-	surface.SetDrawColor(0, 0, 0, 120)
-	surface.SetMaterial(circMaskRTMat)
-	surface.DrawTexturedRect(x or 0, y or 0, rad, rad)
+		surface.SetDrawColor(255, 255, 255, 255)
+		surface.SetMaterial(circMaskRTMat)
+		surface.DrawTexturedRect(x or 0, y or 0, rad, rad)
+	render.OverrideColorWriteEnable(false, true)
+	render.OverrideAlphaWriteEnable(false, true)
 end
 
 function draw.BeginMask(mask, ...)

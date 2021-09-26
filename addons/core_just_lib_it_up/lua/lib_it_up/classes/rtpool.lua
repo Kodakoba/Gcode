@@ -60,7 +60,7 @@ end
 function RTPool:_CreateRT(num)
 	local szFlag = (self:GetWide() > ScrW() or self:GetTall() > ScrH()) and (RT_SIZE_OFFSCREEN or 5) or (RT_SIZE_DEFAULT or 1)
 	local rt = GetRenderTargetEx(frmt("RTPool", self.ID, num), self:GetWide(), self:GetTall(),
-								szFlag, MATERIAL_RT_DEPTH_SHARED, 2 + 1048576, 0, -1)
+								szFlag, MATERIAL_RT_DEPTH_SEPARATE, 2 + 1048576, 0, -1)
 																-- eheheheheheh
 
 	return rt

@@ -47,7 +47,6 @@ function PANEL:Init()
 			if ret == false then return end
 		end
 
-
 		if self:GetDeleteOnClose() then
 			self:Remove()
 		else
@@ -132,7 +131,7 @@ function PANEL:SetColor(r, g, b)
 end
 
 
-function PANEL:SetCloseable(bool,remove)
+function PANEL:SetCloseable(bool, remove)
 	self.PreventClosing = not bool --shh
 	if remove and IsValid(self.CloseButton) then
 		self.CloseButton:Remove()

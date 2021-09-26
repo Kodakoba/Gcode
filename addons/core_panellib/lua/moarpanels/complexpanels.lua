@@ -332,8 +332,8 @@ function ebutton:Init()
 		self:CreateExpandPanel(self:GetSize())
 	end
 
-	self.ExpandTime = 0.4
-	self.Easing = 0.3
+	self.ExpandTime = 0.25
+	self.Easing = 0.2
 
 	self.Initted = true
 

@@ -82,17 +82,17 @@ function BWSpawn(ply, cat, catID)
 	if not ply:Alive() then ply:Notify(Language.DeadBuy, BASEWARS_NOTIFICATION_ERROR) return end
 
 	local l = BaseWars.SpawnList
-	if not l then print("no spawnlist") return end
+	if not l then return end
 
-	if not cat or not catID then print("no cat or num") return end
+	if not cat or not catID then return end
 
 	-- category -> subcategory -> item number
 
 	local i = l[cat]
-	if not i then print("no cat:", cat) return end
+	if not i then return end
 
 	i = i.Items[catID]
-	if not i then print("no item with catid:", catID, cat) return end
+	if not i then return end
 
 	local item = i.Name
 	local model, price, class = i.Model, i.Price, i.ClassName
@@ -150,8 +150,6 @@ function BWSpawn(ply, cat, catID)
 		local plyLimit = pin.BW_EntLimits or {}
 		local amt = plyLimit[class]
 
-		printf("buying %d/%d of `%s`", (amt or 0) + 1, lim, class)
-
 		if amt and lim <= amt then
 			ply:Notify(string.format(Language.EntLimitReached, item, amt), BASEWARS_NOTIFICATION_ERROR)
 			return
@@ -183,7 +181,7 @@ function BWSpawn(ply, cat, catID)
 		end
 
 		ply:EmitSound("mvm/mvm_money_pickup.wav")
-		ply:Notify(string.format(Language.SpawnMenuBuy, item, BaseWars.NumberFormat(price)), BASEWARS_NOTIFICATION_MONEY)
+		--ply:Notify(string.format(Language.SpawnMenuBuy, item, BaseWars.NumberFormat(price)), BASEWARS_NOTIFICATION_MONEY)
 	else
 		local scrapSounds = lazy.Get("ScrapSounds") or {
 			"buttons/lever1.wav",

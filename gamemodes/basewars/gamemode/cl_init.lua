@@ -13,11 +13,11 @@ end
 ScoreBoard = ScoreBoard or nil
 
 surface.CreateFont("SB_TeamName", {
-		font = "Roboto",
-		size = 48,
-		weight = 600,
-		antialias = true,
-	})
+	font = "Open Sans SemiBold",
+	size = 36,
+	weight = 600,
+	antialias = true,
+})
 
 local scale = 1
 
@@ -29,16 +29,33 @@ function CreatePlayerFrame(sb, ply)
 
 	local f = vgui.Create("EButton", sb)
 
-	f:SetTall(72)
+	f:SetTall(64)
 	f.DrawShadow = false
 	f.ExpandTo = 64
+	f:SetColor(Color(50, 50, 50), true)
 
-
-	function f:DoClick()
+	function f:OnClick()
 		for k,v in pairs(sb.Frs) do
-			if v ~= self and v.Expand then v.Expand = false end
+			if v ~= self and IsValid(v) then v:RetractBtn() end
 		end
-		self.Expand = not self.Expand
+	end
+
+	local av = vgui.Create("AvatarImage", f)
+	av:SetPlayer(ply, 64)
+	av:SetSize(48, 48)
+	av.HovSize = 56
+	av.X = 12
+	av:CenterVertical()
+
+	av:SetPaintedManually(true)
+	av:SetMouseInputEnabled(true)
+
+	local avbtn = vgui.Create("FButton", av)
+	avbtn:Dock(FILL)
+	avbtn.NoDraw = true
+
+	function avbtn:DoClick()
+		ply:ShowProfile()
 	end
 
 	local sidcol = Color(150, 150, 150)
@@ -196,46 +213,11 @@ function CreatePlayerFrame(sb, ply)
 		ply:ShowProfile()
 	end
 
-	local av = vgui.Create("AvatarImage", f)
-	av:SetPlayer(ply, 64)
-	av:SetSize(64, 64)
-	av:SetPos(12, 72/2-32)
-
-	local size = 20
-
-	local op = av.Paint
-	av:SetPaintedManually(true)
-	av:SetMouseInputEnabled(true)
-
-	local avbtn = vgui.Create("FButton", av)
-	avbtn:Dock(FILL)
-	avbtn.NoDraw = true
-
-	function avbtn:DoClick()
-		ply:ShowProfile()
-	end
-
 	local lastnick = ply:Nick()
 	local lv = ply:GetLevel()
 	local mon = ply:GetMoney()
 	local time = ply:GetPlayTime()
 	local col = f.TeamColor
-
-	local anim
-
-	local function newanim(from, by)
-
-		if IsValid(anim) then
-			anim:Swap(0.1, 0, 1)
-		else
-			anim = f:NewAnimation(0.1, 0, 1)
-		end
-
-		anim.Think = function(anim, self, fr)
-			size = from + by * fr
-		end
-
-	end
 
 	local cloud = vgui.Create("Cloud")
 
@@ -245,35 +227,23 @@ function CreatePlayerFrame(sb, ply)
 
 
 	function avbtn:OnHover()
-
 		f.ForceHovered = true
 
-		local start = size
-		local left = 28 - start
-
-		newanim(start, left)
-
 		cloud:Popup(true)
-
 		cloud:MoveAbove(self)
-
+		av:To("HovFrac", 1, 0.3, 0, 0.3)
 	end
 
 	function avbtn:OnUnhover()
-
 		f.ForceHovered = false
 
-		local start = size
-		local left = 20 - start
-
-		newanim(start, left)
-
 		cloud:Popup(false)
-
+		av:To("HovFrac", 0, 0.3, 0, 0.3)
 	end
 
-	function f:PostPaint(w, h)
+	local avSz = av:GetSize()
 
+	function f:PostPaint(w, h)
 
 		if not IsValid(ply) then --ok bye bye
 			if not self.ByeBye then
@@ -291,13 +261,24 @@ function CreatePlayerFrame(sb, ply)
 			col = col or team.GetColor(ply:Team())
 		end
 
-		av.X = 46 - 44 + size*0.5
-		av.Y = 36 - 44 + size*0.5
-		av:SetSize(88 - size, 88 - size)
+		local newSz = Lerp(av.HovFrac or 0, avSz, av.HovSize)
+		av.X = 16 - (newSz - avSz) / 2
+
+		av:SetSize(newSz, newSz)
+		-- centervertical wont work properly due to expand button
+		av.Y = h / 2 - av:GetTall() / 2 
 
 		draw.SimpleText(lastnick .. " ", "TW32", 88, 2, color_white)
-		draw.SimpleText(Language.Currency .. mon, "OS20", w - 32, 8, color_white, 2, 5)
-		draw.SimpleText("Level " .. lv, "OS20", w - 32, 28, color_white, 2, 5)
+
+		local infoFont = "OS20"
+		local lines = 2
+		local lHgt = draw.GetFontHeight(infoFont) * lines
+
+		local y = h / 2 - lHgt / 2
+
+		local _, th = draw.SimpleText(Language.Currency .. mon, "OS20",
+			w - 32, y, color_white, 2, 5)
+		y = y + th
 
 		local time = string.FormattedTime(time)
 		local str = "%s%s%s"
@@ -317,44 +298,28 @@ function CreatePlayerFrame(sb, ply)
 		secs = ("%ss."):format(time.s)
 		str = str:format(hrs, mins, secs)
 
-		draw.SimpleText(str, "OS20", w - 32, 48, color_white, 2, 5)
+		_, th = draw.SimpleText(str, "OS20", w - 32, y, color_white, 2, 5)
+		y = y + th
 
-		local w, h = av:GetSize()
-		local x,y = av.X, av.Y
+		local aW, aH = av:GetSize()
+		local x, y = av.X, av.Y
 
 		col.a = 255
 
-		render.SetStencilEnable(true)
+		draw.BeginMask()
 
-			render.ClearStencil()
-			render.SetStencilWriteMask( 1 )
-			render.SetStencilTestMask( 1 )
+			surface.SetDrawColor(color_white)
+			draw.Circle(x + aW/2, y + aH/2, aW / 2 - 2, 16)
 
-			render.SetStencilCompareFunction( STENCIL_ALWAYS )
-			render.SetStencilPassOperation( STENCIL_REPLACE )
-
-			render.SetStencilReferenceValue( 1 ) --include
-
-			surface.SetDrawColor(Color(0, 0, 0, 1))
-
-			draw.Circle(x+w/2, y+h/2, 16+size/2, 50)
-
-			render.SetStencilCompareFunction( STENCIL_ALWAYS )
-			render.SetStencilPassOperation( STENCIL_REPLACE )
-
-
-			render.SetStencilCompareFunction( STENCIL_EQUAL )
-			render.SetStencilFailOperation( STENCIL_KEEP )
-			render.SetStencilZFailOperation( STENCIL_KEEP )
-			render.SetStencilReferenceValue( 1 ) --include
-
+		draw.DrawOp()
 			av:SetAlpha(255)
 			av:PaintManual()
 
-		render.SetStencilEnable(false)
+		draw.DisableMask()
 
 		surface.SetDrawColor(ColorAlpha(col, self:GetAlpha()))
-		surface.DrawMaterial("https://i.imgur.com/VMZue2h.png", "circle_outline.png", x + w/2 - 16 - size/2 - 2, y+h/2 - 16 - size/2 - 2, 36+size, 36+size)
+		surface.DrawMaterial("https://i.imgur.com/VMZue2h.png",
+			"circle_outline.png", x, y, aW, aH)
 
 
 	end
@@ -394,8 +359,6 @@ function GM:ScoreboardShow()
 
 	function saveme:DoClick()
 		sb:SetSize(60, 40)
-		print(vgui.FocusedHasParent(GetHUDPanel()), vgui.FocusedHasParent(self:GetParent()), vgui.FocusedHasParent(self:GetParent():GetParent()))
-		print(self:GetParent():GetParent())
 	end
 
 	local function NewPlayerFrame(ply, col)
@@ -461,22 +424,19 @@ function GM:ScoreboardShow()
 		local col = teaminfo[k].Color
 		local name = teaminfo[k].Name
 		local tn = vgui.Create("InvisPanel", scr)
+		local bgCol = Colors.Button
 
 		function tn:Paint(w,h)
-			draw.RoundedBox(8, 0, 0, w, h, Color(40, 40, 40, 250))
+			draw.RoundedBox(8, 0, 0, w, h, bgCol)
 			draw.SimpleText(name, "SB_TeamName", 16, h/2, col, 0, 1)
 
 		end
 		tn:Dock(TOP)
 		tn:DockMargin(0, 4, 18, 4)
-		tn:SetTall(56)
-
-		local px, py = scale*25, ty + 52
+		tn:SetTall(48)
 
 		for num, ply in pairs(v) do
-
 			NewPlayerFrame(ply, col)
-
 		end
 
 		--ty = ty + py + 24

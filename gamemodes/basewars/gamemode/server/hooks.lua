@@ -29,13 +29,38 @@ hook.Add( "CheckPassword", "BroadcastJoin", function( steamID64, ip, pw1, pw2, n
 	net.Broadcast()
 end )
 
-hook.Add("BaseWars_PlayerCanBuyEntity", "Gennies", function(ply, ent)
-	if ent and scripted_ents.GetStored(ent).t.IsGenerator then
-		local gens = BaseWars.Generators[ply:SteamID64()] or 0
+Basewars.GenEntsOwners = Basewars.GenEntsOwners or {}
 
-		if gens >= 3 then
-			ply:Notify("The generator limiting hook was temporarily disabled. Reactivate when going public.", Color(100, 200, 100))
-			return true--false, "You can't have more than 3 generators active!"
+hook.NHAdd("EntityOwnershipChanged", "BW_GenLimit", function(ply, ent, oldID)
+	if not ent.Bought or not ent.IsGenerator then return end
+
+	local old = oldID and GetPlayerInfo(oldID)
+	local new = ent:BW_GetOwner()
+
+	if old then
+		old._Gens = (old._Gens or 1) - 1
+	end
+
+	if new then
+		new._Gens = (new._Gens or 0) + 1
+	end
+
+	ent._genHooked = new
+end)
+
+hook.NHAdd("EntityRemoved", "BW_GenLimit", function(ent)
+	if not ent._genHooked then return end
+	local pin = ent._genHooked
+	pin._Gens = pin._Gens - 1
+end)
+
+hook.Add("BaseWars_PlayerCanBuyEntity", "Gennies", function(ply, ent)
+
+	if scripted_ents.IsBasedOn(ent, "bw_base_generator") then
+		local gens = GetPlayerInfo(ply)._Gens
+		if gens and gens >= 3 then
+			--ply:Notify("The generator limiting hook was temporarily disabled. Reactivate when going public.", Color(100, 200, 100))
+			return false, "You can't have more than 3 generators active!"
 		end
 	end
 end)
