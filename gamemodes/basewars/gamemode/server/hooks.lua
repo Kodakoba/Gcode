@@ -10,7 +10,7 @@ util.AddNetworkString("StartConnect")
 
 hook.Add( "CheckPassword", "BroadcastJoin", function( steamID64, ip, pw1, pw2, name )
 	local sid = util.SteamIDFrom64( steamID64 )
-	if pw1 and pw2 and pw1 ~= pw2 then
+	if pw1 and pw2 and #pw1 > 0 and pw1 ~= pw2 then
 
 		local id_tx = "%s (%s) failed password."
 
