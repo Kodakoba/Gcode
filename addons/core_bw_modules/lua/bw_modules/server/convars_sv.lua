@@ -1,17 +1,26 @@
-GSLT_Set = false
+GSLT_Set = GSLT_Set
+
+local function addGSLT()
+	local gslt = Settings.Get("GSLT")
+	if not gslt then
+		for i=1, 10 do
+			print("!!! GSLT setting missing !!!")
+		end
+
+		return
+	end
+
+	RunConsoleCommand("sv_setsteamaccount", Settings.Get("GSLT", "74E5FAD9CD89DC9EB6072C344D75185E"))
+end
 
 function fuckyou()
 	if jit.os == "Linux" then
 		RunConsoleCommand("hostname", "lodestar | dev alpha")
-		if not GSLT_Set then
-		    RunConsoleCommand("sv_setsteamaccount", "6F077E7730DE463EDF6E19BC4D343E4C")
-		    GSLT_Set = true
-		end
-	else
-		if not GSLT_Set then
-		    RunConsoleCommand("sv_setsteamaccount", "74E5FAD9CD89DC9EB6072C344D75185E")
-		    GSLT_Set = true
-		end
+	end
+
+	if not GSLT_Set then
+		addGSLT()
+		GSLT_Set = true
 	end
 
 	--RunConsoleCommand("sv_downloadurl", "https://vaati.net/Gachi/garrysmod")
