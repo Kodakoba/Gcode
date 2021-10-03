@@ -302,6 +302,8 @@ function Memes.AddDecal(name, pos, ang, scale, normal, col, rtpaint, rtupd, pixp
 end
 
 
+if not game.GetMap():find("evocity") then return end
+
 local mia, mitty
 
 
