@@ -250,7 +250,6 @@ do -- util
 	end, "developers")
 end
 
-
 do -- countdown
 	if SERVER then
 		aowl.AddCommand({"abort", "stop"}, function(player, line)

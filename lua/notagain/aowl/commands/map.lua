@@ -1,13 +1,37 @@
+--[[local function doSwitch(map, time)
+	time = tonumber(time) or 10
+
+	aowl.CountDown(time, "CHANGING MAP TO " .. map, function()
+		game.ConsoleCommand("changelevel " .. map .. "\n")
+	end)
+end
+
 aowl.AddCommand("map", function(ply, line, map, time)
+	if not map then return false, "map required" end
+
 	if map and file.Exists("maps/"..map..".bsp", "GAME") then
-		time = tonumber(time) or 10
-		aowl.CountDown(time, "CHANGING MAP TO " .. map, function()
-			game.ConsoleCommand("changelevel " .. map .. "\n")
-		end)
+		doSwitch(map, time)
+		return
 	else
+		local maps = file.Find("maps/*.bsp", "GAME")
+		local match
+
+		for k,v in ipairs(maps) do
+			if v:match(map) then
+				if match then
+					return false, ("multiple matching maps found (`%s` and `%s`)"):format(match, map)
+				end
+
+				match = v
+			end
+		end
+
+		if match then doSwitch(match, time) return end
+
 		return false, "map not found"
 	end
-end, "developers")
+
+end, "developers")]]
 
 aowl.AddCommand("setnextmap", function(ply, line, map)
 	if map and file.Exists("maps/"..map..".bsp", "GAME") then
@@ -103,6 +127,7 @@ aowl.AddCommand("cleanup", function(player, line,target)
 	return false, aowl.TargetNotFound(target)
 end)
 
+--[[
 aowl.AddCommand("restart", function(player, line, seconds, reason)
 	local time = math.max(tonumber(seconds) or 20, 1)
 
@@ -123,6 +148,7 @@ aowl.AddCommand("reboot", function(player, line, target)
 		end)
 	end)
 end, "developers")
+]]
 
 aowl.AddCommand("uptime",function()
 	PrintMessage(3,"Server uptime: "..string.NiceTime(SysTime()))

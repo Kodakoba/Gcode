@@ -287,7 +287,6 @@ local NumTable = {
 function BaseWars.NumberFormat(num)
 
 	for i = 1, #NumTable do
-
 		local Div = NumTable[i][1]
 		local Str = NumTable[i][2]
 
@@ -296,11 +295,9 @@ function BaseWars.NumberFormat(num)
 			return string.Comma2(math.Round(num / Div, 1)) .. " " .. Str
 
 		end
-
 	end
 
 	return string.Comma2(math.Round(num))
-
 end
 
 local PlayersCol = Color(125, 125, 125, 255)
