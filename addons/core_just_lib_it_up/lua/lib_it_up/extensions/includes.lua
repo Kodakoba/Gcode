@@ -207,10 +207,11 @@ local function Resolve(res, path)
 	end
 
 	-- extensions get included manually; do not include them
-	-- generally they shouldn't have their own folders so no path-checking here
+	-- folders can only have the full _extension name, not _ext
+
 	local is_ext = fn:match("_ext$") or fn:match("_extension$") or
 		fn:match("^ext_.+") or fn:match("^extension_.+") or
-		fn:match("_ext_")
+		fn:match("_ext_") or path:match("_?extension_?")
 
 	-- if we didn't pass cl/sv/sh path check...
 	if not is_sv and not is_cl and not is_sh then
