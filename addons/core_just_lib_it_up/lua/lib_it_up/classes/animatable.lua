@@ -23,7 +23,7 @@ local objs = AnimatableObjects
 
 AnimMeta = Promise:extend()
 
-if SERVER then return end --bruh
+-- if SERVER then return end --bruh
 
 local systime = SysTime()
 
