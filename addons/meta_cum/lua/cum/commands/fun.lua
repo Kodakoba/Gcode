@@ -35,7 +35,7 @@ local function GuessPlayer(cur, ply, arg)
 end
 
 
-CUM.AddCommand({"armor", "a"}, function(ply, amt)
+CUM.AddCommand({"armor", "a"}, function(_, ply, amt)
 	if not ply then return end
 	ply:SetArmor(amt)
 end)
@@ -51,16 +51,13 @@ end)
 
 	:SetSilent(true)
 
-CUM.AddCommand({"hp", "health"}, function(ply, amt, ...)
+CUM.AddCommand({"hp", "health"}, function(_, ply, amt, ...)
 	if not ply then return end
-	print(ply, amt, ...)
-	log("Setting for %s to %d", ply, amt)
 	ply:SetHealth(amt or ply:GetMaxHealth())
 end)
 	:AddPlayerArg(true, GuessPlayer, "Player whose health to set", true)
 
 	:AddNumberArg(true, function(ply, num, ...)
-		print(num, ply)
 		return tonumber(num) or tonumber(ply) or (IsValid(ply) and ply:GetMaxHealth()) or 100
 	end, "Health to set to")
 
@@ -71,7 +68,7 @@ end)
 	:SetSilent(true)
 
 
-CUM.AddCommand("slap", function(ply, amt)
+CUM.AddCommand("slap", function(_, ply, amt)
 	if not ply then return end
 	ply:SetVelocity(Vector(math.random(-amt/2, amt/2), math.random(-amt/2, amt/2), amt))
 end)
@@ -105,7 +102,7 @@ local urlps = {
 	["q2f2laugh"] = "https://b.vaati.net/aruc.mp3"
 }
 
-CUM.AddCommand("ps", function(ply, line)
+CUM.AddCommand("ps", function(_, ply, line)
 	if not GachiRP then return end
 	if not IsValid(ply) then return false, "Console?" end
 

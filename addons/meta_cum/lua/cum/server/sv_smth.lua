@@ -184,7 +184,7 @@ function cmdfuncs:AddBoolArg(opt, def, desc)
 	return self
 end
 
-local txColor = Color(230, 230, 230)
+local txColor = Color(160, 180, 220)
 
 local function checkcol(tbl, col)
 	if tbl[#tbl+1] ~= col then
@@ -210,7 +210,7 @@ function cmdfuncs:SetReportFunc(func, recname)
 		if recname then
 			receipts = CUM.Receipts[recname]
 			if not receipts then
-				print("[CUM] Invalid name for recepients in report func! ("..recname..")\n" .. debug.traceback())
+				CUM.Log("Invalid name for recepients in report func! ("..recname..")\n" .. debug.traceback())
 			end
 		else
 			receipts = player.GetAll()
@@ -220,10 +220,9 @@ function cmdfuncs:SetReportFunc(func, recname)
 		local plys = {}
 
 		for _, ply in pairs(receipts) do
-			print("reporting for", ply)
 			local str, custtbl = func(self, ply, ...)
 
-			if not str or not isstring(str) then print('well ok', str) continue end
+			if not str or not isstring(str) then continue end
 
 			if custtbl then table.Merge(repargs, custtbl) end
 
@@ -487,7 +486,12 @@ function CUM.MissingArgFormat(cmd, num)
 	return form:format(num, cmd.Args[num].type, usage)
 end
 
+function CUM.GetRunner()
+	return CUM._Runner
+end
+
 function CUM.SendError(ply, str)
+	ply = ply or CUM._Runner
 	ply:ChatAddText(Color(250, 150, 20), str)
 end
 
@@ -518,6 +522,8 @@ hook.Add("PlayerSay", "CUM.Commands", function(ply, str)
 		local needsfull = false
 
 		cmdtbl.Runner = ply
+		CUM._Runner = ply
+
 		cmdtbl.Executing = true
 		cmdtbl.ExecArgs = {}
 		cmdtbl.ReportArgs = {}
@@ -527,7 +533,6 @@ hook.Add("PlayerSay", "CUM.Commands", function(ply, str)
 		if not cmdtbl.HideCaller then cmdtbl.ReportArgs[0] = ply end
 		local opts = 0
 
-		PrintTable(args)
 		for k,v in ipairs(cmdtbl.Args) do --preparse optional args & shift optional to required
 
 			local arg = args[k]
@@ -556,8 +561,6 @@ hook.Add("PlayerSay", "CUM.Commands", function(ply, str)
 
 
 		for k,v in ipairs(cmdtbl.Args) do --fill up and parse execargs
-
-
 			local arg = cmdtbl.ExecArgs[k]
 
 			if v.full then
@@ -608,10 +611,11 @@ hook.Add("PlayerSay", "CUM.Commands", function(ply, str)
 			table.insert(cmdtbl.ExecArgs, 1, ply)
 		end
 
-		local ok, err = pcall(cmdtbl.func, unpack(cmdtbl.ExecArgs))
+		local ok, err = pcall(cmdtbl.func, ply, unpack(cmdtbl.ExecArgs))
 
 		if not ok then
-			print("[CUM] Error! :", err)
+			CUM.Log("Error! %s", err)
+			return
 		end
 
 		if cmdtbl.reportfunc and err ~= false then
@@ -627,6 +631,8 @@ hook.Add("PlayerSay", "CUM.Commands", function(ply, str)
 		end
 
 		cmdtbl.Runner = nil
+		CUM._Runner = nil
+
 		cmdtbl.Executing = false
 		cmdtbl.ExecArgs = {}
 		return RETURN
@@ -640,7 +646,13 @@ concommand.Add("CUM", function(ply, _, argt, argstr)
 
 	if not cmdtbl then return end
 
-	if cmdtbl.Executing then cmdtbl.Runner = false cmdtbl.Executing = false cmdtbl.ExecArgs = {} end
+	if cmdtbl.Executing then
+		cmdtbl.Runner = false
+		CUM._Runner = nil
+
+		cmdtbl.Executing = false
+		mdtbl.ExecArgs = {}
+	end
 
 	local argstr = table.Copy(argt)
 	table.remove(argstr, 1)
@@ -657,6 +669,8 @@ concommand.Add("CUM", function(ply, _, argt, argstr)
 	local needsfull = false
 
 	cmdtbl.Runner = ply
+	CUM._Runner = ply
+
 	cmdtbl.Executing = true
 	cmdtbl.ExecArgs = {}
 	cmdtbl.ReportArgs = {}
@@ -737,6 +751,7 @@ concommand.Add("CUM", function(ply, _, argt, argstr)
 			end
 		end
 	cmdtbl.Runner = nil
+	CUM._Runner = nil
 	cmdtbl.Executing = false
 	cmdtbl.ExecArgs = {}
 
