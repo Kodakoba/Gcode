@@ -17,7 +17,7 @@ local queued = hdl.queued
 
 hdl.downloading = hdl.downloading or {}
 local downloading = hdl.downloading
-local function Download(url, name, func, fail)
+local function Download(url, name, func, fail, pr)
 	local timed_out = false
 
 	http.Fetch(url, function(body)
@@ -29,6 +29,7 @@ local function Download(url, name, func, fail)
 		downloading[name] = nil
 
 		func("data/" .. name, body)
+		pr:Resolve("data/" .. name, body)
 
 		local q = [[INSERT INTO hdl_Data(name, url) VALUES('%s', '%s')
   		ON CONFLICT(name) DO UPDATE SET url = excluded.url;]]
@@ -45,6 +46,7 @@ local function Download(url, name, func, fail)
 
 		if fail then
 			fail(a)
+			pr:Reject(a)
 		else
 			print("Failed to download!\n 	", a)
 		end
@@ -56,6 +58,7 @@ local function Download(url, name, func, fail)
 			downloading[name] = nil
 			if fail then
 				fail("Timed out")
+				pr:Reject("Timed out")
 			else
 				print("Failed to download!\n 	Timed out")
 			end
@@ -95,6 +98,9 @@ local exts = {
 ]]
 function hdl.DownloadFile(url, name, func, fail, ovwrite, onqueue)
 	if not url then return end
+
+	local pr = Promise()
+
 	func = func or BlankFunc
 	fail = fail or BlankFunc
 	onqueue = onqueue or BlankFunc
@@ -149,15 +155,17 @@ function hdl.DownloadFile(url, name, func, fail, ovwrite, onqueue)
 		if istable(url2) then
 			url2 = url2[1].url
 
-			if url~=url2 then
-				Download(url, name, func, fail)
+			if url ~= url2 then
+				Download(url, name, func, fail, pr)
 				onqueue()
-				return
+				return pr
 			end
 		end
 
-		func("data/" .. name, file.Read("data/" .. name, "DATA"))
-		return
+		local dat = file.Read("data/" .. name, "DATA")
+		func("data/" .. name, dat)
+		pr:Resolve("data/" .. name, dat)
+		return pr
 	end
 
 	if not name then
@@ -175,11 +183,11 @@ function hdl.DownloadFile(url, name, func, fail, ovwrite, onqueue)
 
 	end
 
-	local t = {url = url, name = name, func = func, fail = fail, onqueue = onqueue}
+	local t = {url = url, name = name, func = func, fail = fail, onqueue = onqueue, promise = pr}
 	local key = #queued + 1
 
 	queued[key] = t
-
+	return pr
 end
 
 httpReady = httpReady or (not GachiRP) or false
@@ -193,7 +201,7 @@ hook.Add("Think", "HDL", function()
 		if table.Count(downloading) >= 7 then break end --do not allow more than 7 downloads at a time
 
 		downloading[v.name] = true
-		Download(v.url, v.name, v.func, v.fail)
+		Download(v.url, v.name, v.func, v.fail, v.promise)
 		v.onqueue()
 		table.remove(queued, k)
 	end
