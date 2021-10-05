@@ -60,10 +60,9 @@ local function IsProp(ent)
 end
 
 function SWEP:Deploy()
-
-	self:SendWeaponAnim(ACT_VM_IDLE)
-
+	-- self:SendWeaponAnim(ACT_VM_IDLE)
 end
+
 function SWEP:Initialize()
 	self:SetHoldType(self.HoldType)
 end
@@ -101,9 +100,6 @@ local function canZap(self, ent, dmg)
 	if not IsProp(ent) then return false end
 
 	return BaseWars.Raid.CanBlowtorch(self:GetOwner(), ent, self, dmg)
-
-	--
-	--
 end
 
 function SWEP:PrimaryAttack()
@@ -112,24 +108,29 @@ function SWEP:PrimaryAttack()
 
 	local tr = ply:GetEyeTrace()
 
-	self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
-	self:SendWeaponAnim(ACT_VM_PRIMARYATTACK)
-	--self:GetOwner():SetAnimation(PLAYER_ATTACK1)
 
-	if not IsProp(tr.Entity) or tr.Fraction * 32768 > self.Range then return end
-
-	if CLIENT then return end
+	if not IsProp(tr.Entity) or tr.Fraction * 32768 > self.Range then
+		return
+	end
 
 	local owner = tr.Entity:BW_GetOwner()
+
+	if not canZap(self, tr.Entity, dmg) then
+		return
+	end
+
+	self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
+	self:SendWeaponAnim(ACT_VM_SECONDARYATTACK)
+
+	local snd = self.Sounds[math.random(#self.Sounds)]
+	self:EmitSound(snd)
+
+	if CLIENT then return end
 
 	local dmg = DamageInfo()
 	dmg:SetDamage(self.TorchDamage)
 	dmg:SetAttacker(ply)
 	dmg:SetInflictor(self)
-
-	if not canZap(self, tr.Entity, dmg) then
-		return
-	end
 
 	local trent = tr.Entity
 	local trents = {ply, trent}
