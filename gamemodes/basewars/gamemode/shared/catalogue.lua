@@ -243,16 +243,16 @@ SetType("Weapons - Misc")
 		ReuseLoadout("bw_blowtorch_t1", "Blowtorch T1", k * 500, "models/weapons/w_irifle.mdl")
 
 	SetTier(2)
-		ReuseLoadout("bw_blowtorch_t2", "Blowtorch T2", m * 1, "models/weapons/w_irifle.mdl")
+		ReuseLoadout("bw_blowtorch_t2", "Blowtorch T2", m * 2.5, "models/weapons/w_irifle.mdl")
 
 	SetTier(3)
-		ReuseLoadout("bw_blowtorch_t3", "Blowtorch T3", m * 2.5, "models/weapons/w_irifle.mdl")
+		ReuseLoadout("bw_blowtorch_t3", "Blowtorch T3", m * 20, "models/weapons/w_irifle.mdl")
 
 	SetTier(4)
-		ReuseLoadout("bw_blowtorch_t4", "Blowtorch T4", m * 5, "models/weapons/w_irifle.mdl")
+		ReuseLoadout("bw_blowtorch_t4", "Blowtorch T4", m * 75, "models/weapons/w_irifle.mdl")
 
 	SetTier(5)
-		ReuseLoadout("bw_blowtorch_t5", "Blowtorch T5", m * 10, "models/weapons/w_irifle.mdl")
+		ReuseLoadout("bw_blowtorch_t5", "Blowtorch T5", m * 200, "models/weapons/w_irifle.mdl")
 
 
 SetTier(nil)
