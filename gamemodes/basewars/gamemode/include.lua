@@ -67,6 +67,8 @@ function inlinedFIncRecursive(name, realm, nofold, callback)	--even though with 
 
 	for k,v in pairs(file) do
 		if not v:match(".+%.lua$") then continue end --if file doesn't end with .lua, ignore it
+		if v:match("^_[^/]+%.lua$") then continue end -- prefixed with _ dont get included
+
 		local inc_name = path .. v
 		if inc_name:match("extensions/includes%.lua") then continue end --don't include yourself
 
