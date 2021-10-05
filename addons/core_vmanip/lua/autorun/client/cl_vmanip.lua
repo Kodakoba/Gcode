@@ -506,6 +506,7 @@ hook.Add("PostDrawViewModel", "VManip", function(vm,ply,weapon)
 		end
 		end
 
+
 		if VManip.Cycle>=1 and !VManip.Loop then
 			if VManip:IsSegmented() and !VManip.SegmentFinished then
 				VManip.SegmentFinished=true
@@ -513,18 +514,23 @@ hook.Add("PostDrawViewModel", "VManip", function(vm,ply,weapon)
 			elseif VManip:IsSegmented() and VManip.LastSegment then
 				if VManip.VMatrixlerp>=1 then VManip:Remove() end
 			elseif !VManip:IsSegmented() then
-			if VManip.CurGestureData["loop"] then
-				if VManip.VMatrixlerp>=1 then VManip:Remove() end
-			else VManip.Remove() return
-			end
+				if VManip.CurGestureData["loop"] then
+					if VManip.VMatrixlerp>=1 then VManip:Remove() end
+				else
+
+					hook.Run("VManipSequenceFinished", VManip.CurGesture)
+					VManip.Remove()
+					return
+				end
 			end
 		end
 
-		elseif VManip.QueuedAnim then
-		if VManip:PlayAnim(VManip.QueuedAnim) then VManip.QueuedAnim=nil end
-
+		hook.Run("VManipThink", VManip.CurGesture)
+	elseif VManip.QueuedAnim then
+		if VManip:PlayAnim(VManip.QueuedAnim) then
+			VManip.QueuedAnim=nil
+		end
 	end
-
 end)
 
 local anglef=Angle(0,1,0)

@@ -53,7 +53,6 @@ if CLIENT then
 	)
 
 
-
 	VManip:RegisterAnim("stim_inject_end",
 		{
 			["model"] = nm,

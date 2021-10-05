@@ -108,18 +108,9 @@ local function DownloadFolder(str, mask)
 end
 
 timer.Simple(0, function()
-
     for i=1, #BWAddons do
         resource.AddWorkshop(tostring(BWAddons[i]))
     end
-
-    DownloadFolder("sound/gachi")
-
-    DownloadFolder("sound/dash")
-
-    DownloadFolder("sound/snds")
-
-    DownloadFolder("sound/playsound")
 
     DownloadFolder("materials/vgui/prestige")
 
@@ -138,8 +129,11 @@ timer.Simple(0, function()
 
     DownloadFolder("resource/fonts", "*.ttf")
 
+    DownloadFolder("sound/gachi")
+    DownloadFolder("sound/dash")
+    DownloadFolder("sound/snds")
+    DownloadFolder("sound/playsound")
+    DownloadFolder("sound/stims")
     DownloadFolder("sound/mus")
-
     DownloadFolder("sound/vgui")
-
 end)

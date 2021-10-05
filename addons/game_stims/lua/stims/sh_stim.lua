@@ -95,4 +95,32 @@ end)
 hook.Add("PlayerUsedStimpak", "UseStim", function(ply, dat)
 	ply:TakeStims(1)
 	ply:SetNW2Float("UsedStimpak", CurTime())
+
+	if SERVER then
+		ply:Timer("stim_sound", dat.WorkTime, 1, ply.EmitSound,
+			Stims.Sound("healthshot_success_01"), 70, math.random(90, 110))
+	end
 end)
+
+local lkup = {}
+for k,v in ipairs(file.Find("sound/stims/*", "GAME")) do
+	local key = v:match("_(.+)%.mp3")
+	lkup[key] = v
+	lkup[v:match("(.+)%.mp3")] = v
+end
+
+local fmt = "stims/%s"
+
+function Stims.Sound(name)
+	name = tostring(name)
+	name = name:gsub("%.mp3$", "")
+
+	if not lkup[name] then errorf("no stim sound: %s", name) return end
+
+	return fmt:format(lkup[name] or "")
+end
+
+
+function Stims.AllSounds()
+	return lkup
+end

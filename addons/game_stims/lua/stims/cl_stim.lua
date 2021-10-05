@@ -28,13 +28,39 @@ Stims.Bind:On("Activate", "BeginStim", function(self, ply)
 	local can = VManip:PlayAnim("stim_inject_start")
 	if not can then return end -- trust the client, YEET
 
+	VManip._PlayedStim = false
+
 	net.Start("ProcStim")
 	net.SendToServer()
 
 	Stims.AddStim(ply)
+
+	ply:EmitSound(Stims.Sound("adrenaline_deploy_1"), 75)
+	ply:Timer("stim_cap_off", 0, 1, ply.EmitSound,
+		Stims.Sound("needle_open"), 80)
 end)
 
 
+
+hook.Add("VManipPlaySegment", "Stims", function()
+	if VManip:GetCurrentSegment() == "stim_inject_end" then
+		ply:EmitSound(Stims.Sound("thud_01"), 50, 170, 0.3)
+	end
+end)
+
+hook.Add("VManipThink", "Stims", function()
+	local cur = VManip:GetCurrentSegment() or VManip:GetCurrentAnim()
+
+	if cur == "stim_inject_start" then
+		local cyc = VManip.Cycle
+		if cyc > 0.6 and not VManip._PlayedStim then
+			VManip._PlayedStim = true
+			ply:EmitSound(Stims.Sound("thud_01"), 75)
+		end
+	elseif name == "stim_inject_end" then
+
+	end
+end)
 
 local function stimDeinject()
 	if not CLIENT then return end
