@@ -1,9 +1,10 @@
 require("mysqloo")
 
 local is_dedi = jit.os == "Linux"
+local liveDBInfo = {"51.178.211.29", "u34696_8lGPVh7Gv6", "8Q7geFIU3eYrOe2C", "s34696_main"}
 
 if is_dedi then
-	__MYSQL_INFO = {"51.178.211.29", "u34696_8lGPVh7Gv6", "8Q7geFIU3eYrOe2C", "s34696_main"}
+	__MYSQL_INFO = liveDBInfo
 else
 	__MYSQL_INFO = {"127.0.0.1", "root", "31415", "master"}
 end
@@ -142,6 +143,54 @@ function mysqloo.OnConnect(cb, ...)
 	else
 		table.insert(mysqloo.__OnConnectCallbacks, {cb, ...})
 	end
+end
+
+local liveDB
+local onLiveConnect = {}
+
+function mysqloo.UseLiveDB()
+	local pr = Promise()
+
+	if liveDB then
+		if mysqloo.__liveConnected then
+			pr:Resolve(mysqloo.LiveDatabase)
+		else
+			onLiveConnect[#onLiveConnect + 1] = pr
+		end
+
+		return pr
+	end
+
+	if is_dedi then
+		mysqloo.OnConnect(pr:Resolver(), rsDB)
+		return pr
+	end
+
+	liveDB = mysqloo.connect(unpack(liveDBInfo))
+
+	local function completeLoad(db)
+		mysqloo.__liveConnected = true
+		hook.Run("OnLiveMySQLReady", db)
+
+		for k,v in ipairs(onLiveConnect) do
+			v:Resolve(db)
+		end
+	end
+
+	liveDB.onConnected = completeLoad
+
+	liveDB.onConnectionFailed = function(self, ...)
+		err("Live MySQL database connection failed.")
+		err("Do `live_mysql_reconnect` if you want to try again.")
+		err(...)
+	end
+
+	onLiveConnect[#onLiveConnect + 1] = pr
+
+	liveDB:connect()
+	mysqloo.LiveDatabase = liveDB
+
+	return pr
 end
 
 function mysql.quote(db, str)

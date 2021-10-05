@@ -42,10 +42,11 @@ end
 
 if not mysqloo.OnConnect then include("mysql.lua") end
 
-mysqloo.OnConnect(function()
-	tododb = mysqloo.GetDB()
+local pr = mysqloo.UseLiveDB():Then(function(self, db)
+	tododb = db
 	prepareQueries()
 end)
+
 
 
 function todo.Add(str)
