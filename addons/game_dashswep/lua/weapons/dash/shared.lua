@@ -87,7 +87,7 @@ end)
 function SWEP:RechargeLogic(ply, force)
 	local dashing = (SERVER and DashTable[ply]) or (CLIENT and self:GetDashing())
 
-	if ply:IsOnGround() and self:GetDashCharges() ~= 1 and not dashing then
+	if (ply:IsOnGround() or ply:WaterLevel() >= 2) and self:GetDashCharges() ~= 1 and not dashing then
 		self:SetPostDash(false)
 
 		if self:GetDashCooldown() > 0 and self:GetDashCooldownEnd() == 0 then
@@ -294,13 +294,13 @@ function SWEP:PrimaryAttack()
 		t = CurTime(),
 		dir = dir,
 		wep = self,
-		ground = owner:IsOnGround(),
+		ground = owner:IsOnGround() or owner:WaterLevel() >= 1,
 	}
 
 	local dt = DashTable[owner]
 
 
-	dt.ground = owner:IsOnGround()
+	dt.ground = owner:IsOnGround() or owner:WaterLevel() >= 1
 
 	dt.jump = owner:KeyDown(IN_JUMP)
 	dt.down = dir.z < -0.15
@@ -317,7 +317,7 @@ hook.Add("FinishMove", "Dash", function(ply, mv, cmd)
 	if not dash or not dash:IsValid() or not dash.IsDash then return end
 
 	if dash.EndSuperMove and SERVER then
-		if mv:GetVelocity():Length() < 600 or ply:IsOnGround() then
+		if mv:GetVelocity():Length() < 600 or ply:IsOnGround() or ply:WaterLevel() >= 1 then
 			dash:SetSuperMoving(false)
 			dash:SetPostSuperMove(false)
 			dash:SetPostDash(false)
