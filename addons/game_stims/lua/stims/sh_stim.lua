@@ -97,8 +97,14 @@ hook.Add("PlayerUsedStimpak", "UseStim", function(ply, dat)
 	ply:SetNW2Float("UsedStimpak", CurTime())
 
 	if SERVER then
-		ply:Timer("stim_sound", dat.WorkTime, 1, ply.EmitSound,
-			Stims.Sound("healthshot_success_01"), 70, math.random(90, 110))
+
+		ply:Timer("stim_sound", dat.WorkTime - 0.06, 1, function()
+			local heal_amt = ply:GetMaxHealth() - ply:Health()
+			local pitch = Lerp(heal_amt / dat.Heal, 170, 90)
+			local lv = Lerp(heal_amt / dat.Heal, 40, 80)
+			ply:EmitSound(Stims.Sound("healthshot_success_01"), lv, pitch)
+		end)
+
 	end
 end)
 
