@@ -426,12 +426,12 @@ SetType("[ACW] Assault Rifles")
 
 	SetTier(1)
 		ReuseLoadout("arccw_go_ar15", "AR15", 100 * k)
-
+		ReuseLoadout("arccw_go_ace", "ACE 22", 			350*k)
 	SetTier(2)
-		ReuseLoadout("arccw_fml_fas_g36c", "G36", 		350*k, nil)
-		ReuseLoadout("arccw_fml_fas_ak47", "AK-47", 	750*k, "models/weapons/arccw/fml/fas1/w_ak47.mdl")
-		ReuseLoadout("arccw_fml_fas_famas", "FAMAS", 	2*m, "models/weapons/arccw/fml/fas1/w_famas.mdl")
-		ReuseLoadout("arccw_go_ace", "Galil", 			7.5*m)
+		ReuseLoadout("arccw_go_galil_ar", "Galil", 		600*k)
+		ReuseLoadout("arccw_fml_fas_g36c", "G36", 		1.5*m, nil)
+		ReuseLoadout("arccw_fml_fas_ak47", "AK-47", 	5*m, "models/weapons/arccw/fml/fas1/w_ak47.mdl")
+		ReuseLoadout("arccw_fml_fas_famas", "FAMAS", 	12.5*m, "models/weapons/arccw/fml/fas1/w_famas.mdl")
 		ReuseLoadout("arccw_fml_fas_g3a3", "G3A3", 		20*m, "models/weapons/arccw/fml/fas1/w_g3a3.mdl")
 
 	SetTier(3)
