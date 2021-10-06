@@ -7,7 +7,9 @@ table.sort(BaseWars.RestartWarnings, function(a, b) return a > b end)
 
 BaseWars.RestartTime = 12 * 60 * 60
 
-
+function BaseWars.GetNextRestart()
+	return BaseWars.RestartTime - CurTime()
+end
 
 local ct = CurTime()
 

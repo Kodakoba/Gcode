@@ -222,7 +222,7 @@ local function WrapByLetters(txt, curwid, fullwid, wids, line)
 	return ret, (fullwid - curwid), line, wrapped
 end
 
---returns: wrapped text, current width, current line, 1 if wrapped entire word, 2 if partially
+--returns: wrapped text, current width, current line, 1 if wrapped entire word, 2 if partially (hyphenated or by letters)
 
 local function WrapWord(word, curwid, fullwid, widtbl, line, first)
 	local tw, _ = surface.GetTextSize(word)
@@ -230,6 +230,11 @@ local function WrapWord(word, curwid, fullwid, widtbl, line, first)
 
 	line = line or 1
 	fullwid = fullwid or widtbl[line] or widtbl[#widtbl]
+
+	if word:match("^[\r\n]") then
+		curwid = 0
+		line = line + 1
+	end
 
 	local wmult = WrapData and WrapData.ScaleW or 1
 	local dash = not WrapData or WrapData.AllowDashing ~= false
@@ -272,6 +277,11 @@ local function WrapWord(word, curwid, fullwid, widtbl, line, first)
 	else
 		ret = ret .. word
 		curwid = curwid + tw
+	end
+
+	if ret:match("[\r\n]$") then
+		curwid = 0
+		line = line + 1
 	end
 
 	return ret, curwid, line, wrapped

@@ -628,6 +628,7 @@ function chathud:AddText(...)
 	contents = untagged
 
 	local key = #self.History + 1
+
 	self.History[key] = {
 		t = time,	--time(for history time tracking)
 		a = 50,	--alpha(for history fadeout)
@@ -660,9 +661,9 @@ function chathud:PerformLayout()
 end
 
 surface.CreateFont("CH_Text", {
-        font = "Roboto",
-        size = 22,
-        weight = 400,
+	font = "Roboto",
+	size = 22,
+	weight = 400,
 })
 
 surface.CreateFont("CH_Name", {
@@ -726,7 +727,7 @@ local function DrawText(txt, buffer, a)
 			dat.cache = dat.cache or {}
 			local newtx = string.WordWrap2(txt, {chathud.W - buffer.x, chathud.W}, font)
 
-			local newnewlines = select(2, newtx:gsub("%c", ""))
+			local newnewlines = select(2, newtx:gsub("[\r\n]", ""))
 
 			dat.newlines = dat.newlines - newlines + newnewlines 	--re-calculate amount of newlines for height calculation: only applies next frame :(
 
@@ -741,6 +742,7 @@ local function DrawText(txt, buffer, a)
 	local tx, ty = buffer.x, buffer.y + (dat.heights[buffer.curline] or buffer.curh)/2 - h/2
 
 	for s in string.gmatch(txt, "(.-)\n") do
+		s = s:gsub("\t", "      ")
 
 		if shouldpaint then
 
@@ -783,9 +785,10 @@ local function DrawText(txt, buffer, a)
 
 	end
 
-	local lastword = txt:match("[^%c]+$")
+	local lastword = txt:match("[^\r\n]+$")
 
 	if lastword then
+		lastword = lastword:gsub("\t", "      ")
 
 		if shouldpaint then
 
@@ -1103,7 +1106,7 @@ function chathud:Draw()
 				local amtoflines = dat.newlines
 
 				if not amtoflines then
-					amtoflines = 1 + select(2, string.gsub(dat.wrappedtxt, "%c", ""))
+					amtoflines = 1 + select(2, string.gsub(dat.wrappedtxt, "[\r\n]", ""))
 					dat.newlines = amtoflines
 				end
 

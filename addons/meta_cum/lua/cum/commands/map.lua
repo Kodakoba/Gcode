@@ -11,7 +11,7 @@ local found
 CUM.AddCommand({"map", "changemap", "setmap"}, function(ply, map, time)
 	found = nil
 
-	if file.Exists("maps/"..map..".bsp", "GAME") then
+	if file.Exists("maps/" .. map .. ".bsp", "GAME") then
 		found = map
 		doSwitch(map, time)
 		return
@@ -49,6 +49,7 @@ end)
 	end)
 
 CUM.AddCommand({"reboot", "restart"}, function(ply, time)
+	print("time is", time)
 	local time = math.max(tonumber(time) or 20, 1)
 
 	aowl.CountDown(time, "RESTARTING SERVER" .. (reason and reason ~= "" and Format(" (%s)", reason) or ""), function()
@@ -62,3 +63,4 @@ end)
 	:SetReportFunc(function(self, rply, caller, time)
 		return "{1} is restarting server in {2} seconds!", {[3] = "<col=100,220,100>" .. tostring(time)}
 	end)
+

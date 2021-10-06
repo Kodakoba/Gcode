@@ -36,7 +36,7 @@ end
 
 
 CUM.AddCommand({"armor", "a"}, function(_, ply, amt)
-	if not ply then return end
+	if not IsValid(ply) then return end
 	ply:SetArmor(amt)
 end)
 	:AddPlayerArg(true, GuessPlayer, "Player whose armor to set", true)
@@ -52,7 +52,7 @@ end)
 	:SetSilent(true)
 
 CUM.AddCommand({"hp", "health"}, function(_, ply, amt, ...)
-	if not ply then return end
+	if not IsValid(ply) then return end
 	ply:SetHealth(amt or ply:GetMaxHealth())
 end)
 	:AddPlayerArg(true, GuessPlayer, "Player whose health to set", true)
@@ -76,7 +76,7 @@ end)
 	:AddNumberArg(true, 400, "Velocity to slap with")
 
 	:SetReportFunc(function(self, rply, caller, ply, amt)
-		local sa = rply:IsSuperAdmin()
+		local sa = not IsValid(rply) or rply:IsSuperAdmin()
 		local rep = {}
 
 		if sa then
@@ -159,12 +159,13 @@ CUM.AddCommand("ps", function(_, ply, line)
 
 
 end)
+:SetPerms("user")
 :SetSilent(true)
 :SetDescription("Play one of the predefined sounds.")
 :SetReportFunc(function(self, rply, caller, caller2, snd)
 	if not snd or snd=="" then return end
 
-	if rply:Distance(caller) < 768 or rply == caller then
+	if not IsValid(rply) or rply:Distance(caller) < 768 or rply == caller then
 		return "{1} played sound {2}.", {[2] = "<color=100,230,100>"..snd..".ogg"}
 	end
 end)

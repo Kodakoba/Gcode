@@ -251,7 +251,6 @@ if SERVER then
 
 			if in_cd then
 				-- cooldown still not up
-				print("cd violated")
 				cd.Violations = cd.Violations + 1
 
 				if cd.Violations <= chathud.LetViolate then
@@ -285,13 +284,12 @@ if SERVER then
 
 				-- adjust strikes
 				local wearStrikes = math.max(math.floor(passedStrike / chathud.StrikeWearoff), 0)
-				print("wearing off", wearStrikes)
 
 				cd.StrikedTimes = math.max((cd.StrikedTimes or 0) - wearStrikes, 0)
 				-- adjust violations
 				local newviol = (cd.Violations or 0) - math.floor(passedCD / chathud.ChatCD_SecondsWear)
 				newviol = math.max(newviol, 0)
-				print("new violations", newviol)
+
 				cd.Violations = newviol
 				goto allow
 			end

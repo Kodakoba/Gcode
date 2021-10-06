@@ -30,9 +30,11 @@ function CUM.UpdateRanks()
 	end
 
 	CUM.Receipts["superadmins"] = sadms
+	CUM.Receipts["console"] = {}
 
 	CUM.Receipts["all"] = player.GetAll()
 end
+
 CUM.UpdateRanks()
 
 timer.Create("CUM.UpdateRanks", 10, 0, CUM.UpdateRanks)
@@ -156,6 +158,16 @@ function cmdfuncs:AddFullArg()
 	return self
 end
 
+function cmdfuncs:SetPerms(perms)
+	if isstring(perms) then
+		table.insert(self.Permissions, perms)
+	else
+		table.Merge(self.Permissions, perms)
+	end
+
+	return self
+end
+
 function cmdfuncs:AddStringArg(opt, desc)
 	local opt = opt or false
 
@@ -200,122 +212,150 @@ function cmdfuncs:AddCallerArg()
 	return self
 end
 
-function cmdfuncs:SetReportFunc(func, recname)
+-- wtf is this awfulness
 
-	self.reportfunc = function(self, ...)
-		local repargs = {...}
+function CUM.ParseOutput(str, out, repargs, strs, plys, key, ply)
+	if str:match("{(%d+)}") then
+		local lastend = 0
+		local str2 = str
 
-		local receipts
+		local lastcol
 
-		if recname then
-			receipts = CUM.Receipts[recname]
-			if not receipts then
-				CUM.Log("Invalid name for recepients in report func! ("..recname..")\n" .. debug.traceback())
+		str:gsub( "({%d+})", function( i )
+			local num = tonumber(i:match("{(%d+)}"))
+			local arg = repargs[num]
+			local where, ends = str2:find(i)
+			checkcol(out, txColor)
+			local subbed = str2:sub(lastend+1, where-1)
+			if #subbed >= 1 then
+				out[#out + 1] = subbed
 			end
-		else
-			receipts = player.GetAll()
-		end
 
-		local strs = {}
-		local plys = {}
+			lastend = ends
 
-		for _, ply in pairs(receipts) do
-			local str, custtbl = func(self, ply, ...)
+			if not arg then return "" end
 
-			if not str or not isstring(str) then continue end
+			local is_console = IsEntity(arg) and not IsValid(arg)
 
-			if custtbl then table.Merge(repargs, custtbl) end
+			if IsPlayer(arg) and num == 0 then
+				-- player who the report is being delivered to
+				checkcol(out, Color(100, 220, 100))
+				lastcol = Color(100, 220, 100)
+				out[#out + 1] = arg:Nick()
 
-			local key = str .. table.ToString(repargs)
+			elseif IsPlayer(arg) or is_console then
+				if is_console then
+					checkcol(out, CUM.InvalidCallerColor)
+					lastcol = CUM.InvalidCallerColor
 
-			local tbl = {}
-
-			if strs[key] then
-
-				tbl = strs[key]
-				plys[key][#plys[key] + 1] = ply
-			else
-
-				if str:match("{(%d+)}") then
-
-					local lastend = 0
-					local str2 = str
-
-					local lastcol
-
-					str:gsub( "({%d+})", function( i )
-						local num = tonumber(i:match("{(%d+)}"))
-						local arg = repargs[num]
-						local where, ends = str2:find(i)
-						checkcol(tbl, txColor)
-						local subbed = str2:sub(lastend+1, where-1)
-						if #subbed >= 1 then
-							tbl[#tbl + 1] = subbed
-						end
-
-						lastend = ends
-
-						if not arg then return "" end
-
-						if IsPlayer(arg) and num == 0 then
-							checkcol(tbl, Color(100, 220, 100))
-							lastcol = Color(100, 220, 100)
-							tbl[#tbl + 1] = arg:Nick()
-
-						elseif IsPlayer(arg) then
-							checkcol(tbl, team.GetColor(arg:Team()))
-							lastcol = team.GetColor(arg:Team())
-
-							tbl[#tbl + 1] = arg:Nick()
-							if lastcol ~= txColor then
-								checkcol(tbl, txColor)
-								lastcol = txColor
-							end
-
-						elseif tostring(arg) then
-							arg = tostring(arg)
-							local match = arg:match("<col=(.+)>") or arg:match("<color=(.+)")
-							local where, ends = arg:find("<col=.+>")
-							if not where and match then
-								where, ends = arg:find("<color=.+>")
-							end
-							if match then
-								local r,g,b = match:match("(%d+),(%d+),(%d+)")
-								tbl[#tbl + 1] = Color(r or 0, g or 0, b or 0)
-								lastCol = tbl[#tbl]
-							end
-
-							tbl[#tbl + 1] = arg:sub((ends or 0) + 1, #arg)
-						end
-
-						return ""
-					end )
+					out[#out + 1] = CUM.InvalidCallerName
 
 					if lastcol ~= txColor then
-						checkcol(tbl, txColor)
-						lastCol = txColor
+						checkcol(out, txColor)
+						lastcol = txColor
 					end
+				else
+					checkcol(out, team.GetColor(arg:Team()))
+					lastcol = team.GetColor(arg:Team())
 
-					tbl[#tbl + 1] = str2:sub(lastend+1, #str)
+					out[#out + 1] = arg:Nick()
 
-					strs[key] = tbl
-
-					plys[key] = {}
-					plys[key][1] = ply
+					if lastcol ~= txColor then
+						checkcol(out, txColor)
+						lastcol = txColor
+					end
 				end
 
+			elseif tostring(arg) then
+				arg = tostring(arg)
+				local match = arg:match("<col=(.+)>") or arg:match("<color=(.+)")
+				local where, ends = arg:find("<col=.+>")
+				if not where and match then
+					where, ends = arg:find("<color=.+>")
+				end
+				if match then
+					local r,g,b = match:match("(%d+),(%d+),(%d+)")
+					out[#out + 1] = Color(r or 0, g or 0, b or 0)
+					lastCol = out[#out]
+				end
+
+				out[#out + 1] = arg:sub((ends or 0) + 1, #arg)
 			end
 
+			return ""
+		end )
+
+		if lastcol ~= txColor then
+			checkcol(out, txColor)
+			lastCol = txColor
 		end
 
-		for k,v in pairs(strs) do
 
-			net.Start("ChatAddText")
-				net.WriteTable(v)
-			net.Send(plys[k] or receipts or player.GetAll())
-		end
+		out[#out + 1] = str2:sub(lastend+1, #str)
 
+		strs[key] = out
+
+		plys[key] = {}
+		plys[key][1] = ply
 	end
+end
+
+function cmdfuncs:_DoReport(...)
+	local repargs = {...}
+
+	local receipts
+	local recName = self.ReportRecName
+
+	if recName then
+		receipts = CUM.Receipts[recName]
+		if not receipts then
+			CUM.Log("Invalid name for recepients in report func! (" .. recName .. ")\n"
+				.. debug.traceback())
+		end
+	else
+		receipts = player.GetAll()
+	end
+
+	receipts[#receipts + 1] = NULL -- console
+
+	local strs = {}
+	local plys = {}
+
+	for _, ply in pairs(receipts) do
+		local str, custtbl = self.ReportFunc(self, ply, ...)
+
+		if not str or not isstring(str) then continue end
+
+		if custtbl then table.Merge(repargs, custtbl) end
+
+		local key = str .. table.ToString(repargs)
+
+		local tbl = {}
+
+		if strs[key] then
+			tbl = strs[key]
+			plys[key][#plys[key] + 1] = ply
+		else
+			CUM.ParseOutput(str, tbl, repargs, strs, plys, key, ply)
+		end
+
+		if ply == NULL then
+			MsgC(unpack(tbl))
+			MsgC("\n")
+		end
+	end
+
+	for k,v in pairs(strs) do
+		net.Start("ChatAddText")
+			net.WriteTable(v)
+		net.Send(plys[k] or receipts or player.GetAll())
+	end
+end
+
+function cmdfuncs:SetReportFunc(func, recname)
+	self.ReportFunc = func
+	self.ReportRecName = recname
+	self.reportfunc = function(...) self._DoReport(...) end -- autorefresh
 
 	return self
 end
@@ -366,6 +406,7 @@ function CUM.AddCommand(str, func)
 	cmd.name = (isstring(str) and str) or str[1]
 	cmd.func = func
 	cmd.Args = {}
+	cmd.Permissions = {}
 
 	setmetatable(cmd, cmdmeta)
 
@@ -395,10 +436,10 @@ local prefix = "^[%./]"
 
 local argsep = "[%s,]"
 
-local arg = "([.%S]+)[%s]*"
-
+local argPtrn = "([.%S]+)[%s]*"
 local quotarg = '[^\\](.+)"'
 local quotes = '["\']'
+
 function CUM.ParseArgs(str)
 	local args = {}
 
@@ -440,7 +481,7 @@ function CUM.ParseArgs(str)
 			str = str:gsub(argsep .. [[*"]] .. string.PatternSafe(s) .. [["]], "")
 		end
 
-		for s in string.gmatch(str, arg) do
+		for s in string.gmatch(str, argPtrn) do
 			local match = s:match(quotarg) or s:match(quotes)
 
 			if match then str:gsub(match, "") continue end
@@ -463,7 +504,7 @@ function CUM.ParseArgs(str)
 		return args
 	end
 
-	for s in string.gmatch(str, arg) do
+	for s in string.gmatch(str, argPtrn) do
 		args[#args+1] = s
 	end
 
@@ -495,169 +536,36 @@ function CUM.SendError(ply, str)
 	ply:ChatAddText(Color(250, 150, 20), str)
 end
 
-hook.Add("PlayerSay", "CUM.Commands", function(ply, str)
+function CUM.HasPermissions(ply, to)
+	local ug = ply:GetUserGroup()
+	if not ug then return false end
 
-	if not ply:IsAdmin() then return end
+	local perms = istable(to) and to or {to}
 
-	if str:match(prefix) then
-		local cmd = str:match(prefix .. "(%w+)")
-		local cmdtbl = CUM.cmds[cmd]
-
-		if not cmdtbl then return end
-
-		if cmdtbl.Executing then cmdtbl.Runner = false cmdtbl.Executing = false cmdtbl.ExecArgs = {} end
-
-		local args = {}
-
-		local argstr = str:gsub(prefix .. "(%w+)%s-", "")
-
-
-		args = CUM.ParseArgs(argstr)
-
-		local err = false
-		local full = args[#args]
-
-		args[#args] = nil
-
-		local needsfull = false
-
-		cmdtbl.Runner = ply
-		CUM._Runner = ply
-
-		cmdtbl.Executing = true
-		cmdtbl.ExecArgs = {}
-		cmdtbl.ReportArgs = {}
-
-		local RETURN = cmdtbl.Silent and "" or nil
-
-		if not cmdtbl.HideCaller then cmdtbl.ReportArgs[0] = ply end
-		local opts = 0
-
-		for k,v in ipairs(cmdtbl.Args) do --preparse optional args & shift optional to required
-
-			local arg = args[k]
-
-			if v.opt then opts = opts + 1 end
-
-			if not arg and not v.opt then
-				if args[k-1] and cmdtbl.Args[k-1].opt then
-					arg = args[k-1]
-					args[k-1] = nil
-					cmdtbl.ExecArgs[k-1] = nil
-					cmdtbl.ReportArgs[k-1] = nil
-				else
-					local err = CUM.MissingArgFormat(cmdtbl, k)
-					CUM.SendError(ply, err)
-
-					return RETURN
-				end
-			end
-
-			cmdtbl.ExecArgs[k] = arg
-		end
-
-		local add = 0
-
-
-
-		for k,v in ipairs(cmdtbl.Args) do --fill up and parse execargs
-			local arg = cmdtbl.ExecArgs[k]
-
-			if v.full then
-				needsfull = k
-			end
-
-			if v.parse then
-
-				local ret, errstr = v.parse(arg, unpack(cmdtbl.ExecArgs))
-
-				if ret=="err" and isstring(errstr) then
-					CUM.SendError(ply, errstr)
-					err = errstr
-					break
-				end
-
-				if istable(ret) then
-					for _,v in pairs(ret) do
-
-						if v=="err" and isstring(errstr) then
-							CUM.SendError(ply, errstr)
-							err = errstr
-							return RETURN
-						end
-
-						cmdtbl.ExecArgs[k + add] = v
-						add = add + 1
-					end
-					add = add - 1
-				else
-					cmdtbl.ExecArgs[k + add] = ret
-				end
-			end
-
-		end
-
-		if err then return RETURN end
-
-
-
-		if needsfull then
-			table.insert(cmdtbl.ExecArgs, needsfull, full)
-		end
-
-		local caller = cmdtbl.RequiresCaller
-
-		if caller then
-			table.insert(cmdtbl.ExecArgs, 1, ply)
-		end
-
-		local ok, err = pcall(cmdtbl.func, ply, unpack(cmdtbl.ExecArgs))
-
-		if not ok then
-			CUM.Log("Error! %s", err)
-			return
-		end
-
-		if cmdtbl.reportfunc and err ~= false then
-
-			table.Merge(cmdtbl.ReportArgs, cmdtbl.ExecArgs)
-			table.insert(cmdtbl.ReportArgs, 1, ply)
-
-			local ok, err = pcall(cmdtbl.reportfunc, cmdtbl, unpack(cmdtbl.ReportArgs))
-
-			if not ok then
-				print("[CUM] Report Error! :", err)
-			end
-		end
-
-		cmdtbl.Runner = nil
-		CUM._Runner = nil
-
-		cmdtbl.Executing = false
-		cmdtbl.ExecArgs = {}
-		return RETURN
+	for k,v in ipairs(perms) do
+		return CAMI.UsergroupInherits(ug, v)
 	end
 
-end)
+	return BaseWars.IsDev(ply)
+end
 
-concommand.Add("CUM", function(ply, _, argt, argstr)
-	local cmd = argt[1]
+function CUM.Run(ply, cmd, argstr)
+
+	argstr = argstr or ""
+
 	local cmdtbl = CUM.cmds[cmd]
-
 	if not cmdtbl then return end
+
+	if IsValid(ply) and not CUM.HasPermissions(ply, cmdtbl.Permissions) then
+		CUM.SendError(ply, "no permission")
+		return
+	end
 
 	if cmdtbl.Executing then
 		cmdtbl.Runner = false
-		CUM._Runner = nil
-
 		cmdtbl.Executing = false
-		mdtbl.ExecArgs = {}
+		cmdtbl.ExecArgs = {}
 	end
-
-	local argstr = table.Copy(argt)
-	table.remove(argstr, 1)
-	local argstr = table.concat(argstr, " ")
-
 
 	local args = CUM.ParseArgs(argstr)
 
@@ -674,54 +582,78 @@ concommand.Add("CUM", function(ply, _, argt, argstr)
 	cmdtbl.Executing = true
 	cmdtbl.ExecArgs = {}
 	cmdtbl.ReportArgs = {}
-	if not cmdtbl.HideCaller then cmdtbl.ReportArgs[0] = ply end
+
+	local RETURN = cmdtbl.Silent and "" or nil
+
+	--[[if not cmdtbl.HideCaller then
+		cmdtbl.ReportArgs[0] = ply
+	end]]
+
 	local opts = 0
 
 	for k,v in ipairs(cmdtbl.Args) do --preparse optional args & shift optional to required
-
 		local arg = args[k]
 
 		if v.opt then opts = opts + 1 end
 
+		-- required arg missing
 		if not arg and not v.opt then
-			if args[k-1] and cmdtbl.Args[k-1].opt then
-				arg = args[k-1]
-				args[k-1] = nil
-				cmdtbl.ExecArgs[k-1] = nil
-				cmdtbl.ReportArgs[k-1] = nil
+			-- take last optional arg and make it the new required arg
+			if args[k - 1] and cmdtbl.Args[k-1].opt then
+				arg = args[k - 1]
+				args[k - 1] = nil
+				cmdtbl.ExecArgs[k - 1] = nil
+				cmdtbl.ReportArgs[k - 1] = nil
 			else
 				local err = CUM.MissingArgFormat(cmdtbl, k)
 				CUM.SendError(ply, err)
-				return
+
+				return RETURN
 			end
 		end
 
 		cmdtbl.ExecArgs[k] = arg
 	end
 
-	for k,v in ipairs(cmdtbl.Args) do --fill up and parse execargs
+	local add = 0
 
+	for k,v in ipairs(cmdtbl.Args) do --fill up and parse execargs
 		local arg = cmdtbl.ExecArgs[k]
+
 		if v.full then
 			needsfull = k
 		end
 
 		if v.parse then
-			local ret, errstr = v.parse(arg)
+			local ret, errstr = v.parse(arg, unpack(cmdtbl.ExecArgs))
 
 			if ret=="err" and isstring(errstr) then
 				CUM.SendError(ply, errstr)
 				err = errstr
+				break
 			end
 
-			cmdtbl.ExecArgs[k] = ret
+			if istable(ret) then
+				for _,v in pairs(ret) do
+
+					if v=="err" and isstring(errstr) then
+						CUM.SendError(ply, errstr)
+						err = errstr
+						return RETURN
+					end
+
+					cmdtbl.ExecArgs[k + add] = v
+					add = add + 1
+				end
+				add = add - 1
+			else
+				cmdtbl.ExecArgs[k + add] = ret
+			end
 		end
 
 	end
 
-	if err then return end
-
-
+	if err then return RETURN end
 
 	if needsfull then
 		table.insert(cmdtbl.ExecArgs, needsfull, full)
@@ -733,26 +665,51 @@ concommand.Add("CUM", function(ply, _, argt, argstr)
 		table.insert(cmdtbl.ExecArgs, 1, ply)
 	end
 
-		local ok, err = pcall(cmdtbl.func, unpack(cmdtbl.ExecArgs))
+	local ok, err = pcall(cmdtbl.func, ply, unpack(cmdtbl.ExecArgs))
+
+	if not ok then
+		CUM.Log("Error! %s", err)
+		return
+	end
+
+	if cmdtbl.reportfunc and err ~= false then
+
+		table.Merge(cmdtbl.ReportArgs, cmdtbl.ExecArgs)
+		table.insert(cmdtbl.ReportArgs, 1, ply)
+
+		if not IsValid(cmdtbl.ReportArgs[0]) then
+			cmdtbl.ReportArgs[0] = CUM.InvalidCallerName
+		end
+
+		local ok, err = pcall(cmdtbl.reportfunc, cmdtbl, unpack(cmdtbl.ReportArgs))
 
 		if not ok then
-			print("[CUM] Error! :", err)
+			print("[CUM] Report Error! :", err)
 		end
+	end
 
-		if cmdtbl.reportfunc then
-
-			table.Merge(cmdtbl.ReportArgs, cmdtbl.ExecArgs)
-			table.insert(cmdtbl.ReportArgs, 1, ply)
-
-			local ok, err = pcall(cmdtbl.reportfunc, cmdtbl, unpack(cmdtbl.ReportArgs))
-
-			if not ok then
-				print("[CUM] Report Error! :", err)
-			end
-		end
 	cmdtbl.Runner = nil
 	CUM._Runner = nil
+
 	cmdtbl.Executing = false
 	cmdtbl.ExecArgs = {}
+	return RETURN
+end
 
+hook.Add("PlayerSay", "CUM.Commands", function(ply, str)
+	if str:match(prefix) then
+		local cmd = str:match(prefix .. "(%w+)")
+		local argstr = str:gsub(prefix .. "(%w+)%s-", "")
+
+		local ret = CUM.Run(ply, cmd, argstr)
+		if ret then return ret end
+	end
+end)
+
+concommand.Add("CUM", function(ply, _, argt, argstr)
+	if not argt[1] then return end
+
+	argstr = argstr:sub(#argt[1] + 2):match("%s*(.+)")
+
+	CUM.Run(ply, argt[1], argstr)
 end)

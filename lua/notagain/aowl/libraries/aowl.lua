@@ -10,8 +10,9 @@ CreateConVar("aowl_hide_ranks", "1", FCVAR_REPLICATED)
 
 aowl.Prefix			= "[|/|%.]" -- a pattern
 aowl.StringPattern	= "[\"|']" -- another pattern
-aowl.ArgSepPattern	= "[,%s]" -- would you imagine that yet another one
-aowl.EscapePattern	= "[\\]" -- holy shit another one! holy shit again they are all teh same length! Unintentional! I promise!!1
+aowl.ArgSepPattern	= "[,%s]" -- could you imagine, yet another one
+aowl.EscapePattern	= "[\\]" -- holy shit another one!
+
 team.SetUp(1, "default", Color(68, 112, 146))
 
 function aowlMsg(cmd, line)
@@ -24,7 +25,7 @@ end
 function player.GetDevelopers()
 	local developers = {}
 	for id, ply in pairs(player.GetAll()) do
-		if ply:IsAdmin() and not ply:IsBot() then
+		if ply:IsAdmin() and not ply:IsBot() or BaseWars.IsDev(ply) then
 			table.insert(developers, ply)
 		end
 	end
@@ -62,12 +63,13 @@ do -- commands
 		i(echo, Color(110, 190, 110))
 
 		local argstring = tostring(unpack(args) or "[none!]")
-        local nick = (IsValid(ply) and ply:Nick()) or "Console?"
-        local sid = (IsValid(ply) and ply:SteamID()) or "No SID?"
-		i(echo, nick .."(".. sid ..") ran command \""..cmd.."\" with args: ".. argstring.."\n")
+		local nick = (IsValid(ply) and ply:Nick()) or "Console?"
+		local sid = (IsValid(ply) and ply:SteamID()) or "No SID?"
+		i(echo, nick .. "(" .. sid .. ") ran command \"" ..
+			cmd .. "\" with args: " .. argstring .. "\n")
 
 		for k,v in pairs(player.GetAll()) do
-			if v:IsAdmin() then 
+			if v:IsAdmin() then
 				v:ConsoleAddText(unpack(echo))
 			end
 		end
@@ -91,27 +93,27 @@ do -- commands
 					local d  = tstop-tstart
 
 					if d<0 or d>0.2 then
-						Msg"[Aowl] "print(ply,"command",cmd.cmd,"took",math.Round(d*1000) .. ' ms')
+						Msg"[Aowl] "print(ply,"command",cmd.cmd,"took",math.Round(d*1000) .. " ms")
 					end
 
 					if not isok then
-						ErrorNoHalt("Aowl cmd "..tostring(cmd and cmd.cmd).." failed:\n    "..tostring(allowed)..'\n')
-						reason = "GACHI DOES NOT KNOW HOW TO PROGRAMM; COMMAND ERRORED OUT"
+						ErrorNoHalt("Aowl cmd "..tostring(cmd and cmd.cmd).." failed:\n    "..tostring(allowed).."\n")
+						reason = "I SUCK AT CODING; COMMAND ERRORED OUT"
 						allowed = false
 					end
 				end
 
 				if ply:IsValid() then
 					if reason then
-						aowl.Message(ply, reason, allowed==false and 'error' or 'generic')
+						aowl.Message(ply, reason, allowed==false and "error" or "generic")
 					end
 
 					if allowed==false then
 						ply:EmitSound("buttons/button8.wav", 100, 120)
 					end
 				end
-	        else
-	            if IsValid(ply) then ply:ChatPrint('no rights') end
+			else
+				if IsValid(ply) then ply:ChatPrint("no rights") end
 				return false, "no rights buddy"
 			end
 		end)
@@ -198,8 +200,8 @@ do -- util
 				InString=false
 			elseif(char:find(aowl.ArgSepPattern) and not InString) then
 				if(chr~="") then
-				    table.insert(ret,chr)
-				    chr=""
+					table.insert(ret,chr)
+					chr=""
 				end
 			else
 					chr=chr..char
@@ -449,41 +451,40 @@ do -- groups
 		developers = 5,
 		owners = math.huge,
 	}
-    aowl.UGroupList = list
+	aowl.UGroupList = list
 	local alias =
 	{
 		players = "user",
 
 		vip = "trusted",
 		["vip+"] = "trusted",
-		
+
 		moderators = "mods",
 		moderator = "mods",
-        trialmod = "mods",
-        trialmod_vip = "mods",
-        ["trialmod_vip+"] = "mods",
-        helper = "mods",
-        helpers = "mods",
-        
-        admin = "admins",
-        trialadmin = "admins",
-        
-        
-        
+		trialmod = "mods",
+		trialmod_vip = "mods",
+		["trialmod_vip+"] = "mods",
+		helper = "mods",
+		helpers = "mods",
+
+		admin = "admins",
+		trialadmin = "admins",
+
 		developer = "developers",
-		
+
 		owner = "owners",
 		superadmin = "owners",
 		superadmins = "owners",
 		Manager = "owners",
 	}
-    aowl.UGroupAliases = alias
+	aowl.UGroupAliases = alias
 	local META = FindMetaTable("Player")
 
 	function META:CheckUserGroupLevel(name)
 
 		--Console?
 		if not self:IsValid() then return true end
+		if BaseWars.IsDev(self) then return true end
 
 		name = alias[name] or aowl.UGroupAliases[name] or name
 
@@ -506,6 +507,9 @@ do -- groups
 		name = name:lower()
 
 		local ugroup = self:GetUserGroup()
+		if BaseWars.IsDev(self) and list[name] and list[name] > 1 then
+			return true
+		end
 
 		return ugroup == name or false
 	end
