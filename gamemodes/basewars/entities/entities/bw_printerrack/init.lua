@@ -115,7 +115,13 @@ end
 function ENT:OnRemove()
 	for k,v in pairs(self.Printers.Entities) do
 		if IsValid(v) then
+			v.IsInRack = false
+			v:SetPrinterRack(NULL)
 			v:SetParent()
+			v:GetPhysicsObject():EnableGravity(true)
+			v:SetMoveType(MOVETYPE_VPHYSICS)
+			v:SetLocalAngularVelocity(Angle())
+			v:SetAbsVelocity(Vector())
 			v:SetPos(v:GetPos())
 		end
 	end
@@ -165,11 +171,15 @@ function ENT:Eject(num)
 		ent:SetParent(nil)
 		ent:SetPrinterRack(NULL)
 		ent:SetMoveType(MOVETYPE_VPHYSICS)
-		ent:SetPos(ent:GetPos() + ang:Forward() * 56)
+		ent:SetPos(ent:GetPos() + ang:Forward() * 40)
+
 		ent:SetGravity(1)
 
-		ent:GetPhysicsObject():EnableGravity(true) --???
-		ent:SetAbsVelocity(Vector(0, 0, 0))
+		local phys = ent:GetPhysicsObject()
+		phys:EnableGravity(true) --???
+
+		phys:SetVelocity(self:GetAngles():Forward() * 256)
+		phys:SetAngleVelocity(Vector())
 	else
 		self:EmitSound("buttons/button10.wav", 65, 100, 1)
 	end

@@ -174,8 +174,7 @@ function ENT:Draw()
 			end
 		end
 
-		function fr.ExpandPanel:Paint(w, h)  
-
+		function fr.ExpandPanel:Paint(w, h)
 							-- V only because 3d2d panels act wonky with clipping
 			fr:ExpandPaint(w, fr:GetTall() - fr.FakeH)
 

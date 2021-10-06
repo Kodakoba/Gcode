@@ -447,7 +447,7 @@ fbuttonMatrices = {}
 local function popMatrix(self, w, h)
 	local scale = self.MxScale
 
-	if scale ~= 1 then
+	if scale ~= 1 and self.ActiveMatrix then
 		cam.PopModelMatrix()
 		self.ActiveMatrix = nil
 		mx:Reset()
@@ -472,7 +472,6 @@ end
 
 
 function button:PaintOver(w, h)
-
 	if self.Dim then
 		draw.RoundedBox(self.RBRadius, 0, 0, w, h, DIM)
 	end
@@ -480,6 +479,9 @@ function button:PaintOver(w, h)
 	popMatrix(self, w, h)
 end
 
+function button:OnRemove()
+	popMatrix(self, w, h)
+end
 
 function button:Paint(w, h)
 	local scale = self.MxScale
@@ -497,6 +499,7 @@ function button:Paint(w, h)
 			mx:SetScale(sharedScaleVec)
 		mx:Translate(-sharedTranslVec)
 		draw.EnableFilters(true)
+
 		cam.PushModelMatrix(mx, true)
 
 		self.ActiveMatrix = mx
@@ -507,6 +510,10 @@ function button:Paint(w, h)
 	self:PrePaint(w,h)
 	self:Draw(w, h)
 	self:PostPaint(w,h)
+
+	if not self:IsValid() then
+		popMatrix(self, w, h) -- yes this can happen
+	end
 end
 
 vgui.Register("FButton", button, "DButton")
@@ -521,7 +528,7 @@ hook.Add("PostRender", "UnleakMatrices", function()
 		for k,v in pairs(fbuttonMatrices) do
 			if not k:IsValid() then
 				cam.PopModelMatrix()
-				draw.DisableFilters(true, true)
+				draw.DisableFilters(true)
 
 				amt = amt - 1
 				num = num + 1
@@ -535,7 +542,7 @@ hook.Add("PostRender", "UnleakMatrices", function()
 
 		for i=1, amt do
 			cam.PopModelMatrix()
-			draw.DisableFilters(true, true)
+			draw.DisableFilters(true)
 		end
 
 		fbuttonLeakingMatrices = 0

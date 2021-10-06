@@ -664,7 +664,8 @@ function draw.DisableFilters(min, mag)
 	end
 
 	if minstate == 0 and magstate == 0 then
-		error("retard both are off")
+		ErrorNoHalt("both filters are off")
+		return
 	end
 
 	local omin, omag = min, mag
