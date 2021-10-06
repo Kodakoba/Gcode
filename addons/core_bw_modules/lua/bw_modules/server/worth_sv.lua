@@ -58,9 +58,12 @@ function wth.PayOut(ent, atk, full)
 
 	if not had then return 0 end
 
-	atk = GetPlayerInfo(atk)
+	atk = CanGetPInfo(atk) and GetPlayerInfo(atk) or
+		IsValid(atk) and atk:BW_GetOwner()
+
 	local own = ent:BW_GetOwner()
-	local val = price * (not full and not ret and BaseWars.Config.DestroyReturn or 1)
+	local val = price * (not full and BaseWars.Config.DestroyReturn or 1)
+
 	local Name = ent.PrintName or ent:GetClass()
 
 	wth.Set(ent, nil, true)
