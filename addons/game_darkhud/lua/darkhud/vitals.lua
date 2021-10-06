@@ -76,7 +76,7 @@ function DarkHUD.CreateVitals()
 	local f = DarkHUD.Vitals
 	if not IsValid(f) then log("Failed to create vitals frame?") return false end --?
 	f:SetPaintedManually(true)
-	f.HeaderSize = 18
+	f.HeaderSize = 24
 
 	local hs = f.HeaderSize
 
@@ -105,7 +105,7 @@ function DarkHUD.CreateVitals()
 		end
 	end
 
-	f.Economy = vgui.Create("InvisFrame", f)
+	--[[f.Economy = vgui.Create("InvisFrame", f)
 	local ecn = f.Economy
 
 	-- ecn:SetSize(f:GetWide(), f:GetTall() - hs - 12 - 64*scale)
@@ -114,7 +114,7 @@ function DarkHUD.CreateVitals()
 	ecn:MoveToBefore(vls)   --draw economy behind vitals so when you press C the EXP box doesn't show
 							--it does some alpha trickery to look better
 	ecn:SetAlpha(0)
-
+	]]
 
 	local av = vgui.Create("AvatarImage", f)
 	f.Avatar = av
@@ -134,15 +134,21 @@ function DarkHUD.CreateVitals()
 		self:SetPos(dh.PaddingX, ScrH() - fh - dh.PaddingY)
 		self:CacheShadow(2, 8, 1)
 
-		local vlsH = math.max(barH, draw.GetFontHeight("DarkHUD_VitalsNumber")) * 2 + barPad
-		vls:SetSize(fw, vlsH)
-		vls:SetPos(0, fh - vls:GetTall())
-
-		ecn:SetSize(fw, fh - hs - 12 - 64*scale)
-		ecn:SetPos(0, hs + 12 + 64*scale)
+		--ecn:SetSize(fw, fh - hs - 12 - 64*scale)
+		--ecn:SetPos(0, hs + 12 + 64*scale)
 
 		av:SetSize(64 * scale, 64 * scale)
 		av:SetPos(16, hs + 8)
+
+		local moneyY = av.Y + av:GetTall() / 2 + 6 + 36 * scale
+
+		local vlsH = f:GetTall() - moneyY
+		--math.max(barH, draw.GetFontHeight("DarkHUD_VitalsNumber")) * 2 + barPad
+
+		vls:SetSize(fw, vlsH)
+		vls:SetPos(0, fh - vls:GetTall())
+
+		barPad = math.floor(16 * scale)
 	end
 
 	f:ResizeElements()
@@ -388,8 +394,14 @@ function DarkHUD.CreateVitals()
 	vls.ARFrac = 0
 
 	local gray = Colors.LightGray:Copy()
+
 	local hpCol = Color(240, 70, 70)
+	local hpBorderCol = Color(150, 30, 30)
+
 	local arCol = Color(40, 120, 255)
+	local arBorderCol = Color(30, 50, 225)
+
+	local borderCol = Color(35, 35, 35)
 
 	function vls:Paint(w, h)
 		local x, y = 12, barPad
@@ -405,7 +417,7 @@ function DarkHUD.CreateVitals()
 		local hpfr, arfr = self.HPFrac, self.ARFrac
 
 
-		local rndrad = barH/2
+		local rndrad = barH / 2
 
 		if rndrad > 8 and rndrad < 11 then  --16 is perfect because gmod corners are 8x8
 			rndrad = 8						--any more and they looked scuffed
@@ -420,49 +432,49 @@ function DarkHUD.CreateVitals()
 		surface.SetFont(font)
 		local rightPad = surface.GetTextSize("999")
 
-		local barX = w * 0.07
-		local barW = w - barX * 2 - rightPad
+		local barX = math.floor(w * 0.07)
+		local barW = math.ceil(w - barX * 2 - rightPad)
 
 		local barY = math.ceil(h / 2) - barsH / 2
 
-		--[[
-		surface.SetFont(font)
-		local hpW, hpH = math.max(surface.GetTextSize(hpText), barX)
-		local arW, arH = math.max(surface.GetTextSize(arText), barX)
-		]]
-
-		--surface.DrawOutlinedRect(avx, barY, w - avx*2 - 48, barsH)
-		local sx, sy = self:LocalToScreen(avx, barY)
+		local sx, sy = self:LocalToScreen(barX, barY)
 
 		--[[
 			Health
 		]]
 
-			local round = (barW * hpfr > barH and math.Round(math.Clamp(barW*hpfr - rndrad, 0, rndrad)))
+			local round = barW * hpfr > barH and math.Round(
+					math.Clamp(barW * hpfr - rndrad, 0, rndrad)
+				)
 
+			draw.RoundedBox(rndrad, barX - 1, barY - 1, barW + 2, barH + 2, borderCol)
 			draw.RoundedBox(rndrad, barX, barY, barW, barH, gray)
 
 			if not round then
 				--draw.RoundedBox(8, avx, avy, hpw, 16, Color(240, 70, 70))
 				if barW * hpfr < barH then
-					render.SetScissorRect(sx, sy - 2, sx + (barW * hpfr), sy + barH + 2, true)
-						draw.RoundedBoxEx(rndrad, barX, barY, barH, barH, hpCol, true, false, true, false)
+					render.SetScissorRect(sx, sy - 2, sx + math.floor(barW * hpfr), sy + barH + 2, true)
+						draw.RoundedBoxEx(rndrad, barX, barY, barH, barH, hpCol, true, true, true, true)
 					render.SetScissorRect(0, 0, 0, 0, false)
 				else
 
-					draw.RoundedBox(rndrad, barX, barY, barW*hpfr, barH, hpCol)
-
+					draw.RoundedBox(rndrad, barX, barY - 1,
+						math.ceil(barW * hpfr), barH + 2, hpBorderCol)
+					draw.RoundedBox(rndrad, barX, barY, math.ceil(barW * hpfr), barH, hpCol)
 				end
 
 			elseif round then
 
+				DarkHUD.RoundedBoxCorneredSize(rndrad, barX, barY - 1,
+					math.ceil(barW * hpfr), barH + 2, hpBorderCol, rndrad, round, rndrad, round)
 				DarkHUD.RoundedBoxCorneredSize(rndrad, barX, barY,
-					barW * hpfr, barH, hpCol, rndrad, round, rndrad, round)
-
+					math.ceil(barW * hpfr), barH, hpCol, rndrad, round, rndrad, round)
+				
 			end
 
+
 			draw.SimpleText(hpText, font,
-				barX + barW + 4, barY + barH/2 - 1, color_white, 0, 1)
+				barX + barW + 6, barY + barH/2 - 1, color_white, 0, 1)
 
 
 		--[[
@@ -470,8 +482,9 @@ function DarkHUD.CreateVitals()
 		]]
 
 			barY = barY + barH + barPad
-			local round = (barW*arfr > 16 and math.Round(math.Clamp(barW*arfr - rndrad, 0, rndrad)))
+			round = (barW * arfr > 16 and math.Round(math.Clamp(barW * arfr - rndrad, 0, rndrad)))
 
+			draw.RoundedBox(rndrad, barX - 1, barY - 1, barW + 2, barH + 2, borderCol)
 			draw.RoundedBox(rndrad, barX, barY, barW, barH, gray)
 
 			if not round then
@@ -487,20 +500,22 @@ function DarkHUD.CreateVitals()
 
 			elseif round then
 
+				DarkHUD.RoundedBoxCorneredSize(rndrad, barX, barY - 1,
+					math.ceil(barW * arfr), barH + 2, arBorderCol, rndrad, round, rndrad, round)
 				DarkHUD.RoundedBoxCorneredSize(rndrad, barX, barY,
-					barW * arfr, barH, arCol, rndrad, round, rndrad, round)
+					math.ceil(barW * arfr), barH, arCol, rndrad, round, rndrad, round)
 
 			end
 
 			draw.SimpleText(arText, font,
-				barX + barW + 4, barY + barH/2 - 1, color_white, 0, 1)
+				barX + barW + 6, barY + barH/2 - 1, color_white, 0, 1)
 
 			DarkHUD:Emit("VitalsBarsPainted", w, h)
 	end
 
-	function ecn:Paint(w,h)
+	--[[function ecn:Paint(w,h)
 		DarkHUD:Emit("VitalsEconomyPainted", w, h)
-	end
+	end]]
 
 end
 
