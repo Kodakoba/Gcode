@@ -39,7 +39,7 @@ end
 
 local a = 0
 local ba = 0
-local exp = Vector(2, 2, 2)
+local exp = Vector(2, 2, 0)
 local drawDist = 2048
 function ENT:Draw()		--shhhh sneaky workaround
 	local pos = self:GetPos()
@@ -50,6 +50,9 @@ function ENT:Draw()		--shhhh sneaky workaround
 
 	local bmin = min - pos
 	local bmax = max - pos
+
+	bmin.z = -32768
+	bmax.z = 32768
 
 	local rbmin, rbmax = self:GetRenderBounds()
 
@@ -62,16 +65,24 @@ function ENT:Draw()		--shhhh sneaky workaround
 	render.SetColorMaterial()
 
 	render.DrawBox(pos, Angle(0,0,0), bmin, bmax, self.BoxCol)	--render outwards
+	bmin:Sub(exp)
+	bmax:Sub(exp)
 	render.DrawBox(pos, Angle(0,0,0), bmax, bmin, self.BoxCol)	--render inwards
-	local desCol = Color(5, 5, 5, ba*2)
 
-	if mepos:WithinAABox(min, max) then ba = math.min(L(ba, 30, 15), 30) desCol = Color(25,225,25, ba) self.BoxCol = LC(self.BoxCol, desCol) return end 
+	local desCol = Color(5, 5, 5, ba * 2)
+
+	if mepos:WithinAABox(min, max) then
+		ba = math.min(L(ba, 20, 15), 20)
+		desCol = Color(25, 225, 25, ba)
+		self.BoxCol = LC(self.BoxCol, desCol)
+		return
+	end
 
 	self.BoxCol = LC(self.BoxCol, desCol)
 
 	local vec, dir, frac = 	util.IntersectRayWithOBB(mepos, LocalPlayer():EyeAngles():Forward()*drawDist, pos, Angle(0,0,0), bmin, bmax )
-		
-	if vec then 
+
+	if vec then
 		ba = L(ba, 60, 15)
 		local ang = dir:Angle()
 
@@ -81,7 +92,7 @@ function ENT:Draw()		--shhhh sneaky workaround
 		--ang:RotateAroundAxis(ang:Right(),90)
 		cam.Start3D2D(vec, ang, 0.1)
 			local dist = frac * 2048
-			 if dist < 512 and dist > 256 then 
+			 if dist < 512 and dist > 256 then
 			 	a=math.max(frac*50, L(a, 255, 15))
 			 else
 			 	a=math.min(frac*1000, L(a, 0, 25))
@@ -91,7 +102,7 @@ function ENT:Draw()		--shhhh sneaky workaround
 			draw.SimpleText("SAFEZONE","A128", 0, 0, ColorAlpha(color_white, a),1,1)
 		cam.End3D2D()
 
-	 else 
+	 else
 
 	 	ba = L(ba, 0, 2)
 
