@@ -60,7 +60,7 @@ aowl.AddCommand("nextbot",function(pl,cmd,name)
 	aowl.CallCommand(me, "bring", x, {x})
 end,"developers")
 
-aowl.AddCommand({"hp", "health"}, function(ply, line, amnt, target)
+--[[aowl.AddCommand({"hp", "health"}, function(ply, line, amnt, target)
 	target = target and easylua.FindEntity(target) or nil
 
 	if not IsValid(target) or not target:IsPlayer() then
@@ -68,7 +68,7 @@ aowl.AddCommand({"hp", "health"}, function(ply, line, amnt, target)
 	end
 
 	target:SetHealth(tonumber(amnt) or target:GetMaxHealth())
-end, "mods")
+end, "mods")]]
 
 
 aowl.AddCommand({"title", "settitle"}, function(ply, line, target, title, rarted)

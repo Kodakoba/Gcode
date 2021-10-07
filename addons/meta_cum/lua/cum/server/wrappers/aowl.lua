@@ -14,7 +14,6 @@ aowl.Prefix			= "[|/|%.]" -- a pattern
 aowl.StringPattern	= "[\"|']" -- another pattern
 aowl.ArgSepPattern	= "[,%s]" -- would you imagine that yet another one
 aowl.EscapePattern	= "[\\]" -- holy shit another one! holy shit again they are all teh same length! Unintentional! I promise!!1
-team.SetUp(1, "default", Color(68, 112, 146))
 
 function aowlMsg(cmd, line)
 	if hook.Run("AowlMessage", cmd, line) ~= false then

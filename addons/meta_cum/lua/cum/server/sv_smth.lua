@@ -383,8 +383,7 @@ function cmdfuncs:SetHiddenCaller(bool)
 end
 
 function cmdfuncs:SetAdminLog(bool)
-
-	bool = (bool==nil and true) or bool
+	bool = (bool == nil and true) or bool
 	self.OnlyAdminsSee = bool
 	return self
 end
@@ -393,6 +392,7 @@ function cmdfuncs:SetDescription(str)
 	self.Description = str
 	return self
 end
+
 function CUM.AddCommand(str, func)
 	local cat = "Uncategorized"
 
@@ -406,7 +406,7 @@ function CUM.AddCommand(str, func)
 	cmd.name = (isstring(str) and str) or str[1]
 	cmd.func = func
 	cmd.Args = {}
-	cmd.Permissions = {}
+	cmd.Permissions = {"superadmin"}
 
 	setmetatable(cmd, cmdmeta)
 
