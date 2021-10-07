@@ -9,15 +9,14 @@ att.SortOrder = 30
 att.AutoStats = true
 att.Slot = "go_ump_mag"
 
-att.Mult_Range = 1.15
-att.Mult_Penetration = 1.15
-att.Mult_Recoil = 0.85
-att.Mult_SightTime = 0.95
-att.Mult_RPM = 1.25
+att.Mult_Range = 1.1
+att.Mult_Penetration = 0.8
+att.Mult_Recoil = 0.9
+att.Mult_RPM = 1.15
 att.Mult_AccuracyMOA = 1.25
 att.Override_ClipSize = 30
-att.Mult_Damage = 0.9
-att.Mult_DamageMin = 0.9
+att.Mult_Damage = 0.75
+att.Mult_DamageMin = 0.8
 att.Mult_ShootPitch = 1.25
 
 -- ump45_9mm

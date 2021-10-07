@@ -41,8 +41,8 @@ SWEP.Primary.ClipSize = 36 -- DefaultClip is automatically set.
 SWEP.ExtendedClipSize = 62
 SWEP.ReducedClipSize = 15
 
-SWEP.Recoil = 0.45
-SWEP.RecoilSide = 0.4
+SWEP.Recoil = 0.55
+SWEP.RecoilSide = 0.3
 SWEP.RecoilRise = 0.75
 
 SWEP.Delay = 60 / 700 -- 60 / RPM.

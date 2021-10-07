@@ -35,9 +35,9 @@ SWEP.Primary.ClipSize = 30 -- DefaultClip is automatically set.
 
 SWEP.PhysBulletMuzzleVelocity = 900
 
-SWEP.Recoil = 0.290
-SWEP.RecoilSide = 0.255
-SWEP.RecoilRise = 0.1
+SWEP.Recoil = 0.4
+SWEP.RecoilSide = 0.25
+SWEP.RecoilRise = 0.2
 SWEP.RecoilPunch = 2.5
 
 SWEP.Delay = 60 / 700 -- 60 / RPM.
@@ -57,7 +57,7 @@ SWEP.Firemodes = {
 SWEP.NPCWeaponType = "weapon_ar2"
 SWEP.NPCWeight = 100
 
-SWEP.AccuracyMOA = 2 -- accuracy in Minutes of Angle. There are 60 MOA in a degree.
+SWEP.AccuracyMOA = 3 -- accuracy in Minutes of Angle. There are 60 MOA in a degree.
 SWEP.HipDispersion = 650 -- inaccuracy added by hip firing.
 SWEP.MoveDispersion = 100
 

@@ -31,8 +31,8 @@ SWEP.WorldModel = "models/weapons/w_rif_famas.mdl"
 SWEP.ViewModelFOV = 65
 
 SWEP.Damage = 30
-SWEP.DamageMin = 20
-SWEP.RangeMin = 1500 * 0.025  -- GAME UNITS * 0.025 = METRES
+SWEP.DamageMin = 24
+SWEP.RangeMin = 500 * 0.025  -- GAME UNITS * 0.025 = METRES
 SWEP.Range = 2000 * 0.025  -- GAME UNITS * 0.025 = METRES
 SWEP.Penetration = 7
 SWEP.DamageType = DMG_BULLET
@@ -45,11 +45,11 @@ SWEP.ExtendedClipSize = 45
 SWEP.ReducedClipSize = 15
 
 SWEP.VisualRecoilMult = 0
-SWEP.Recoil = 0.45
-SWEP.RecoilSide = 0.45
+SWEP.Recoil = 0.3
+SWEP.RecoilSide = 0.2
 SWEP.RecoilRise = 0
 
-SWEP.Delay = 0.065 -- 60 / RPM.
+SWEP.Delay = 60 / 900 -- 60 / RPM.
 SWEP.Num = 1 -- number of shots per trigger pull.
 SWEP.Firemodes = {
     {
@@ -66,7 +66,7 @@ SWEP.Firemodes = {
 SWEP.NPCWeaponType = {"weapon_ar2", "weapon_smg1"}
 SWEP.NPCWeight = 100
 
-SWEP.AccuracyMOA = 5 -- accuracy in Minutes of Angle. There are 60 MOA in a degree.
+SWEP.AccuracyMOA = 4 -- accuracy in Minutes of Angle. There are 60 MOA in a degree.
 SWEP.HipDispersion = 600 -- inaccuracy added by hip firing.
 SWEP.MoveDispersion = 300
 

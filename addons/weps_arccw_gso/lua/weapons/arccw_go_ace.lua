@@ -23,7 +23,7 @@ SWEP.ViewModelFOV = 60
 SWEP.DefaultBodygroups = "00000000000"
 
 SWEP.Damage = 24
-SWEP.DamageMin = 19 -- damage done at maximum range
+SWEP.DamageMin = 18 -- damage done at maximum range
 SWEP.Range = 100 -- in METRES
 SWEP.Penetration = 10
 SWEP.DamageType = DMG_BULLET
@@ -37,12 +37,12 @@ SWEP.RecoilPunch = 2.5
 
 SWEP.PhysBulletMuzzleVelocity = 800
 
-SWEP.Recoil = 0.55
-SWEP.RecoilSide = 0.155
+SWEP.Recoil = 0.4
+SWEP.RecoilSide = 0.125
 SWEP.RecoilRise = 0.2
 SWEP.RecoilPunch = 2.5
 
-SWEP.Delay = 60 / 800 -- 60 / RPM.
+SWEP.Delay = 60 / 700 -- 60 / RPM.
 SWEP.Num = 1 -- number of shots per trigger pull.
 SWEP.Firemodes = {
     {
@@ -59,7 +59,7 @@ SWEP.Firemodes = {
 SWEP.NPCWeaponType = "weapon_ar2"
 SWEP.NPCWeight = 100
 
-SWEP.AccuracyMOA = 8 -- accuracy in Minutes of Angle. There are 60 MOA in a degree.
+SWEP.AccuracyMOA = 7 -- accuracy in Minutes of Angle. There are 60 MOA in a degree.
 SWEP.HipDispersion = 300 -- inaccuracy added by hip firing.
 SWEP.MoveDispersion = 120
 

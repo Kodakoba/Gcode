@@ -425,19 +425,22 @@ SetType("[ACW] SMGs")
 SetType("[ACW] Assault Rifles")
 
 	SetTier(1)
-		ReuseLoadout("arccw_go_ar15", "AR15", 100 * k)
-		ReuseLoadout("arccw_go_ace", "ACE 22", 			350*k)
+		--ReuseLoadout("arccw_go_ar15", "AR15", 100 * k)
+		ReuseLoadout("arccw_go_galil_ar", "Galil", 		150*k)
+		ReuseLoadout("arccw_go_ace", "ACE 22", 			500*k)
+
 	SetTier(2)
-		ReuseLoadout("arccw_go_galil_ar", "Galil", 		600*k)
 		ReuseLoadout("arccw_fml_fas_g36c", "G36", 		1.5*m, nil)
 		ReuseLoadout("arccw_fml_fas_ak47", "AK-47", 	5*m, "models/weapons/arccw/fml/fas1/w_ak47.mdl")
 		ReuseLoadout("arccw_fml_fas_famas", "FAMAS", 	12.5*m, "models/weapons/arccw/fml/fas1/w_famas.mdl")
 		ReuseLoadout("arccw_fml_fas_g3a3", "G3A3", 		20*m, "models/weapons/arccw/fml/fas1/w_g3a3.mdl")
+		ReuseLoadout("arccw_go_aug", "AUG", 			35*m)
 
 	SetTier(3)
-		ReuseLoadout("arccw_fml_fas_m14", "M14", 40*m, "models/weapons/arccw/fml/fas1/w_m14.mdl")
-		ReuseLoadout("arccw_mw2_f2000", "F2000", 75*m)
-		ReuseLoadout("arccw_fml_fas_sg550", "SG550", 125*m, "models/weapons/arccw/fml/fas1/w_sg550.mdl")
+		ReuseLoadout("arccw_fml_fas_m14", "M14", 60*m, "models/weapons/arccw/fml/fas1/w_m14.mdl")
+		ReuseLoadout("arccw_mw2_f2000", "F2000", 100*m)
+		ReuseLoadout("arccw_go_sg556", 	"SG556", 	150*m)
+		ReuseLoadout("arccw_fml_fas_sg550", "SG550", 275*m, "models/weapons/arccw/fml/fas1/w_sg550.mdl")
 
 
 SetType("[CW] Assault Rifles")
