@@ -303,6 +303,20 @@ end
 local PlayersCol = Color(125, 125, 125, 255)
 team.SetUp(1, "No Faction", PlayersCol)
 
+local mults = {
+	[HITGROUP_LEFTARM] = 4, [HITGROUP_RIGHTARM] = 4, -- 100% to anywhere on the body
+	[HITGROUP_LEFTLEG] = 3, [HITGROUP_RIGHTLEG] = 3, -- 75% to the legs
+}
+
+function GM:ScalePlayerDamage(ply, hg, dmg)
+	local ret = self.BaseClass.ScalePlayerDamage and self.BaseClass.ScalePlayerDamage(self, ply, hg, dmg)
+	if ret then return ret end
+
+	if mults[hg] then
+		dmg:ScaleDamage(mults[hg])
+	end
+end
+
 function GM:PlayerNoClip(ply)
 
 	local Admin = ply:IsAdmin() or ply:IsSuperAdmin()
