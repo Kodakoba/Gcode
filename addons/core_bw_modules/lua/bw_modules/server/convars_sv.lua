@@ -15,7 +15,7 @@ end
 
 function fuckyou()
 	if jit.os == "Linux" then
-		RunConsoleCommand("hostname", "lodestar | dev alpha")
+		RunConsoleCommand("hostname", "lodestar - alpha | Inventory | ArcCW")
 	end
 
 	if not GSLT_Set then
