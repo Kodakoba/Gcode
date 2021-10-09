@@ -272,7 +272,7 @@ BaseWars.Commands.AddCommand({"dw", "dropwep"}, function(ply)
 
 	local Wep = ply:GetActiveWeapon()
 
-	if IsValid(Wep) then
+	if IsValid(Wep) and not Wep.DisallowDrop then
 
 		local Model = Wep:GetModel()
 		local Class = Wep:GetClass()

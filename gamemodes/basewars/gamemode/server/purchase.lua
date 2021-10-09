@@ -1,3 +1,4 @@
+if CLIENT then return end
 if not muldim then include("lib_it_up/classes/multidim.lua") end
 
 BaseWars.SpawnList = BaseWars.SpawnList or {}
@@ -20,6 +21,24 @@ function BaseWars.GetPurchased(what, typ)
 		return ret[typ]
 	end
 end
+
+function BaseWars.RemovePurchased(ent, ply)
+	local pin = GetPlayerInfo(ply or ent.BWOwner)
+	if not pin then return false end
+
+	local sid = pin:SteamID64()
+
+	pur:RemoveSeqValue(ent, sid, "_All")
+	pur:RemoveSeqValue(ent, sid, ent:GetClass())
+	pur:Set(nil, sid, ent:GetClass(), ent)
+end
+
+hook.NHAdd("EntityRemoved", "UntrackPurchased", function(ent)
+	local ow = ent.BWOwner
+	if not ow then return end
+
+	BaseWars.RemovePurchased(ent, ow)
+end)
 
 local function decrLimit(ent)
 	if not ent._incrLimit then return end
@@ -99,18 +118,6 @@ local function postSpawn(ply, class, ent, info)
 	ent.BWOwner = ply
 	ent.Bought = true
 end
-
-hook.NHAdd("EntityRemoved", "UntrackPurchased", function(ent)
-	print("ent removed", ent)
-	local ow = ent:BW_GetOwner()
-	if not ow then return end
-
-	local sid = ow:SteamID64()
-
-	pur:RemoveSeqValue(ent, sid, "_All")
-	pur:RemoveSeqValue(ent, sid, ent:GetClass())
-	pur:Set(nil, sid, ent:GetClass(), ent)
-end)
 
 function BWSpawn(ply, cat, catID)
 	catID = tonumber(catID)
@@ -239,6 +246,11 @@ function BWSpawn(ply, cat, catID)
 
 	if gun then
 		local existing_weapons = BaseWars.GetPurchased(me, "bw_weapon")
+
+		if #existing_weapons >= 5 and IsValid(existing_weapons[1]) then
+			local rem = existing_weapons[1]
+			rem:Remove() -- this will delete the weapon from the purchased list
+		end
 
 		local newEnt = ents.Create("bw_weapon")
 			newEnt.WeaponClass = class
