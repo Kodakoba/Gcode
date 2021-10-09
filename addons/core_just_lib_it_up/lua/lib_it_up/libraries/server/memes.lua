@@ -23,3 +23,10 @@ hook.Add("PlayerSay", "!!getdownmrpresident", function(ply, txt)
 		--return newtxt
 	end]]
 end)
+
+hook.Add("PlayerSpawn", "jihadi", function(ply)
+	if ply:GetUserGroup() == "terrorism_funder" then
+		local wep = ply:Give("arccw_nade_frag")
+		wep.DisallowDrop = true
+	end
+end)
