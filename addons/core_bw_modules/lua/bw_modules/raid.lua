@@ -95,7 +95,7 @@ end
 	err.RaidedOnCooldown 	= function(what)
 		local who = IsFaction(what) and "This faction" or "This player"
 		local _, left = what:RaidedCooldown()
-		return ("%s is currently on cooldown from being raided. (%ds. remaining)"):format(who, left)
+		return ("%s is currently on cooldown from being raided.\n(%ds. remaining)"):format(who, left)
 	end
 
 
@@ -161,7 +161,7 @@ function raid.CanRaidPlayer(ply, ply2)
 	if ply == ply2 then return false, err.RaidingSelf end
 	if fac then return false, err.CantHaveAFaction end
 
-	if ply2:RaidedCooldown() then
+	if ply2:GetRaidCD() then
 		return false, err.RaidedOnCooldown(ply2)
 	end
 
@@ -198,7 +198,7 @@ function raid.CanRaidFaction(caller, fac2)
 	end
 
 	if not self_check and fac2:RaidedCooldown() then
-		return false, raid.PickRaidedError(caller, fac2)
+		return false, err.RaidedOnCooldown(fac2)
 	end
 
 	if not fac2:GetBase() then
@@ -226,20 +226,36 @@ function raid.CanRaidFaction(caller, fac2)
 	end
 end
 
-function LibItUp.PlayerInfo:GetRaid()
-	return self._Raid
+local PINFO = LibItUp.PlayerInfo
+
+function PINFO:GetRaid()
+	return self._Raid and self._Raid:IsValid() and self._Raid
 end
 
-function LibItUp.PlayerInfo:SetRaid(rd)
-	if not rd:IsValid() then return end
+function PINFO:SetRaid(rd)
+	if rd and not rd:IsValid() then return end
 
 	self._Raid = rd
-	rd:On("Stop", "PInfoStore", function()
-		self._Raid = nil
-	end)
+
+	if rd then
+		rd:On("Stop", "PInfoStore", function()
+			if self._Raid == rd then self._Raid = nil end
+		end)
+	end
 end
 
-function LibItUp.PlayerInfo:IsEnemy(what)
+hook.Add("RaidStop", "CleanRaids", function(rd)
+	for k,v in pairs(rd:GetParticipants()) do
+		if string.IsSteamID(v) then
+			local pin = GetPlayerInfo(v)
+			if pin:GetRaid() == rd then
+				pin:SetRaid(nil)
+			end
+		end
+	end
+end)
+
+function PINFO:IsEnemy(what)
 	what = GetPlayerInfo(what)
 	if not what:IsValid() then return end
 
@@ -253,3 +269,20 @@ function LibItUp.PlayerInfo:IsEnemy(what)
 
 	return rd:GetSide(self) ~= rd2:GetSide(what)
 end
+
+function PINFO:GetRaidCD()
+	local nw = self:GetPublicNW()
+	local rtime = nw:Get("RaidCD", 0)
+	local passed = CurTime() - rtime
+
+	return Raids.RaidCoolDown - passed > 0, math.max(Raids.RaidCoolDown - passed, 0)
+end
+
+function PINFO:SetRaidCD(t)
+	local nw = self:GetPublicNW()
+	nw:Set("RaidCD", CurTime() - Raids.RaidCoolDown + (t or 900))
+end
+
+PLAYER.RaidedCooldown = PLAYER.GetRaidCD
+
+PInfoAccessor("RaidCD")

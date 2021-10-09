@@ -125,7 +125,7 @@ end
 
 BaseWars.UTIL.PayOut = wth.PayOut
 
-function wth.RefundAll(ply)
+function wth.RefundAll(ply, incomplete)
 	print("RefundAll", ply)
 	if not ply then
 		print('//FULL SERVER REFUND IN PROGRESS//')
@@ -142,7 +142,7 @@ function wth.RefundAll(ply)
 		if ply and owPin ~= pin then continue end
 		if not wth.Get(ent) then print("no price", ent) continue end
 
-		wth.PayOut(ent, owPin, true)
+		wth.PayOut(ent, owPin, not incomplete)
 		ent:Remove()
 	end
 end

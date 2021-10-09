@@ -360,9 +360,6 @@ function GM:InitPostEntity()
 	for k, v in next, ents.FindByClass("*door*") do
 		v:Fire("unlock")
 	end
-
-	BaseWars.UTIL.WriteCrashRollback(true)
-
 end
 
 function GM:PlayerSpawn(ply)

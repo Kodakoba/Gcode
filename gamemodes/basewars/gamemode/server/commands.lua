@@ -260,7 +260,7 @@ BaseWars.Commands.AddCommand({"sellall"}, function(ply, line, who, amount)
 		if not IsPlayer(ply) then return end -- left?
 		if ply:InRaid() then ply:ChatAddText(Color(50, 150, 250), "Your /sellall command was cancelled because you were raided.") return end
 
-		BaseWars.Worth.RefundAll(ply)
+		BaseWars.Worth.RefundAll(ply, true)
 	end)
 
 	ChatAddText(Color(230, 80, 80), ply:Nick() .. "'s entities will be sold in 15 seconds!")

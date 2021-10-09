@@ -97,6 +97,19 @@ hook.Add("FactionDisbanded", "PlayerInfoFill", function(fac)
 	end
 end)
 
+function facmeta:RaidedCooldown()
+	local has, max = false, 0
+	for k,v in ipairs(self:GetMembersInfo()) do
+		local vh, vm = v:GetRaidCD()
+		if vh then
+			has = true
+			max = math.max(max, vm)
+		end
+	end
+
+	return has, max
+end
+
 function facmeta:GetBase()
 	local base
 

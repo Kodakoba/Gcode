@@ -1,4 +1,5 @@
 local bw = BaseWars.Bases
+setfenv(1, _G)
 
 -- If an entity touches multiple bases at once, then, first of all, it's your fault,
 -- and second, the oldest entered base will be considered as the `current` one.

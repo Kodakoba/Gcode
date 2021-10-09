@@ -56,16 +56,6 @@ ChainAccessor(facmeta, "own", "Owner")
 ChainAccessor(facmeta, "ownInfo", "LeaderInfo")
 ChainAccessor(facmeta, "ownInfo", "OwnerInfo")
 
-function facmeta:RaidedCooldown()
-	local cd = self.RaidCooldown
-
-	if cd and CurTime() - cd < Raids.FactionCooldown then
-		return true, Raids.FactionCooldown - (CurTime() - cd)
-	end
-
-	return false
-end
-
 function facmeta:Update(now)
 	--self.PublicNW:Set("Members", self.memvals)
 	self.PublicNW:Set("Leader", self.ownInfo)

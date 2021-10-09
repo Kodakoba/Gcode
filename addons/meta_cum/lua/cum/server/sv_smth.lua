@@ -98,6 +98,8 @@ local boolaliases = {
 	["b"] = false
 }
 function CUM.ParseBool(str)
+	if not str then return -1 end
+
 	if boolaliases[str:lower()] ~= nil then
 		return boolaliases[str:lower()]
 	end
@@ -127,7 +129,7 @@ local function SortArgs(cmd)
 end
 
 function cmdfuncs:AddPlayerArg(opt, def, desc, forceguess)
-	local opt = opt or false
+	opt = opt or false
 	if isstring(def) then desc = def def = nil end
 
 	self.Args[#self.Args + 1] = {type = "Player", opt = opt, nicetype = "Player", parse = function(s, ...)
@@ -169,7 +171,7 @@ function cmdfuncs:SetPerms(perms)
 end
 
 function cmdfuncs:AddStringArg(opt, desc)
-	local opt = opt or false
+	opt = opt or false
 
 	self.Args[#self.Args + 1] = {type = "string", opt = opt, nicetype = "Text", desc = desc}
 	SortArgs(self)
@@ -178,7 +180,7 @@ end
 
 function cmdfuncs:AddNumberArg(opt, def, desc)
 	if isnumber(opt) then def = opt opt = true end
-	local opt = opt or false
+	opt = opt or false
 
 	self.Args[#self.Args + 1] = {type = "number", opt = opt, nicetype = "Number", parse = function(s, ...)
 		return tonumber(s) or tonumber(eval(def, ...)) or 0
@@ -189,7 +191,7 @@ function cmdfuncs:AddNumberArg(opt, def, desc)
 end
 
 function cmdfuncs:AddBoolArg(opt, def, desc)
-	local opt = opt or false
+	opt = opt or false
 
 	self.Args[#self.Args + 1] = {type = "boolean", opt = opt, nicetype = "Boolean (true/false)", parse = function(s, ...) return CUM.ParseBool(s) or eval(def, ...) end, desc = desc}
 	SortArgs(self)

@@ -178,7 +178,14 @@ if SERVER then
 		if ret == "" or ret == false then return end
 		if isstring(ret) then data = ret end
 
-		local filter = player.GetHumans()
+		local filter
+
+
+		if mode == CHATMODE_TEAM then
+			filter = team.GetPlayers(ply:Team())
+		else
+			filter = player.GetHumans()
+		end
 
 		local cdata = util.Compress(data)
 		if not cdata then

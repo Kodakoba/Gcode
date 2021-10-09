@@ -42,7 +42,7 @@ end
 
 if not mysqloo.OnConnect then include("mysql.lua") end
 
-local pr = mysqloo.UseLiveDB():Then(function(self, db)
+mysqloo.UseLiveDB():Then(function(self, db)
 	tododb = db
 	prepareQueries()
 end)
@@ -118,8 +118,14 @@ function todo.Print()
 			end
 		end)
 
+		local done = false
 		MsgC(Colors.Sky, "\n-=== To-do list: ===-", "\n")
 		for k,v in ipairs(t) do
+			if v.done and not done then
+				done = true
+				MsgC(Colors.Sky, "\n-=== Completed: ===-", "\n")
+			end
+
 			MsgC(Colors.Sky, "#" .. v.uid .. ": ", color_white, v.str, v.col, " -- ", (v.done and "Solved") or "In progress", color_white, "\n")
 		end
 	end)

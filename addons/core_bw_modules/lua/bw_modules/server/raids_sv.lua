@@ -208,6 +208,17 @@ function raidmeta:Stop()
 	hook.Run("RaidStop", self)
 	self:Emit("Stop")
 
+	local parts = self:GetParticipants()
+
+	for k,v in pairs(parts) do
+		if string.IsSteamID(k) and self:IsRaided(k) then
+			local pin = GetPlayerInfo(k)
+			if pin then
+				pin:SetRaidCD()
+			end
+		end
+	end
+
 	self._Valid = false
 
 	-- remove everything that mentions this raid in raid.Participants
@@ -231,22 +242,16 @@ function raidmeta:Stop()
 	replyEveryone(true, ns)
 end
 
-function PLAYER:PutOnRaidedCooldown(sec)
-	raid.Cooldowns[self:SteamID64()] = CurTime() + (RaidCoolDown or sec)
-	self:SetNWFloat("RaidCD", CurTime() + (RaidCoolDown or sec))
-end
+PLAYER.PutOnRaidedCooldown = PLAYER.SetRaidCD
 
-function PLAYER:PutOffRaidedCooldown(sec)
-	raid.Cooldowns[self:SteamID64()] = nil
-	self:SetNWFloat("RaidCD", 0)
+function PLAYER:PutOffRaidedCooldown()
+	self:GetPInfo():SetRaidCD(0)
 end
 
 hook.NHAdd("PlayerInitialSpawn", "BeginCooldown", function(ply)
+	local onCD = ply:GetRaidCD()
 
-	local onCD, left = ply:RaidedCooldown()
-	if onCD then -- since it uses sid64, we can safely use this
-		ply:SetNWFloat("RaidCD", CurTime() + left)
-	else
+	if not onCD then
 		-- put them on CD until they fully load in
 		local putOff = false
 
@@ -257,7 +262,7 @@ hook.NHAdd("PlayerInitialSpawn", "BeginCooldown", function(ply)
 			end
 		end)
 
-		ply:PutOnRaidedCooldown(120)	--i give you 120 seconds to load in bud
+		ply:PutOnRaidedCooldown(120)	-- i give you 120 seconds to load in bud
 
 		ply:Timer("JoinRaidProtection", 120, function()
 			if not putOff then
@@ -267,18 +272,6 @@ hook.NHAdd("PlayerInitialSpawn", "BeginCooldown", function(ply)
 		end)
 	end
 end)
-
-function PLAYER:RaidedCooldown()
-	local oncd = false
-
-	local curCD = raid.Cooldowns[self:SteamID64()]
-
-	if curCD and CurTime() - curCD > 0 then
-		oncd = true
-	end
-
-	return oncd, oncd and CurTime() - curCD
-end
 
 function PLAYER:GetRaid()
 	return raid.Participants[self]
@@ -312,7 +305,6 @@ end
 
 
 function raid.Stop(obj) -- obj = player, sid64 or faction
-
 	local raidObj = IsRaid(obj) and obj or raid.IsParticipant(obj)
 	if not raidObj then return end
 
@@ -464,7 +456,7 @@ net.Receive("Raid", function(_, ply)
 
 	elseif mode == 2 then
 		local facID = net.ReadUInt(24)
-		print("hnnng")
+
 		local fac2 = Factions.GetFaction(facID)
 
 		if not check(raid.CanGenerallyRaid(ply, false)) then return end

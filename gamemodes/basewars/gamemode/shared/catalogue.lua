@@ -369,7 +369,7 @@ SetType("[ACW] Pistols")
 
 	SetTier(1)
 		ReuseLoadout("arccw_go_m9", 	"M9", 		25 * k)
-		ReuseLoadout("arccw_go_usp", 	"USP", 		75 * k)
+		ReuseLoadout("arccw_go_usp", 	"USP", 		75 * k, "models/weapons/w_pist_usp.mdl")
 		ReuseLoadout("arccw_go_p250", 	"P250", 	200 * k)		
 
 	SetTier(2)

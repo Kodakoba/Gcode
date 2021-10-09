@@ -448,6 +448,18 @@ function GetAllPlayerInfos()
 	return table.Copy(LibItUp.AllPlayerInfos)
 end
 
+function PInfoAccessor(k)
+	PLAYER["Get" .. k] = function(self)
+		local pin = self:GetPInfo()
+		return pin["Get" .. k](pin)
+	end
+
+	PLAYER["Set" .. k] = function(self, v)
+		local pin = self:GetPInfo()
+		return pin["Set" .. k](pin, v)
+	end
+end
+
 hook.Add("NetworkableAttemptCreate", "PlayerInfo", function(nwID)
 	if nwID:match("PI:(%d+)") then
 		local sid64 = nwID:match("PI:(%d+)")

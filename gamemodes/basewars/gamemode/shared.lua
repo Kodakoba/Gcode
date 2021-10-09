@@ -166,50 +166,6 @@ local colorRed 		= Color(255, 0, 0)
 local colorBlue 	= Color(0, 0, 255)
 local colorWhite 	= Color(255, 255, 255)
 
-
-
-function BaseWars.UTIL.WriteCrashRollback(recover)
-
-	--[[	if recover then
-
-			if file.Exists("server_crashed.dat", "DATA") then
-
-				print("Server crash detected, converting data rollbacks into refund files!")
-
-			else
-
-				return
-
-			end
-
-			local Files = file.Find("basewars_crashrollback/*_save.txt", "DATA")
-
-			for k, v in next, Files do
-
-				local FileName = v:gsub("_save.txt", "")
-				local FileData = file.Read("basewars_crashrollback/" .. v, "DATA")
-
-				file.Write("basewars_crashrollback/" .. FileName .. "_load.txt", FileData)
-
-			end
-
-		return end
-
-	local RefundTable = BaseWars.UTIL.RefundAll(nil, true)
-
-	for k, v in next, RefundTable do
-
-		if not file.IsDir("basewars_crashrollback", "DATA") then file.CreateDir("basewars_crashrollback") end
-
-		file.Write("basewars_crashrollback/" .. tostring(k) .. "_save.txt", v)
-
-	end
-
-	file.Write("server_crashed.dat", "")
-	]]
-	
-end
-
 function BaseWars.UTIL.RefundFromCrash(ply)
 
 	--[[

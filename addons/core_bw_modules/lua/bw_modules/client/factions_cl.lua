@@ -121,16 +121,6 @@ function facmeta:GetID()
 	return self.id
 end
 
-function facmeta:RaidedCooldown()
-	local cd = self.PublicNW:Get("RaidCooldown")
-
-	if cd and CurTime() - cd < Raids.FactionCooldown then
-		return true, Raids.FactionCooldown - (CurTime() - cd)
-	end
-
-	return false
-end
-
 function facmeta:_HookNW(nw)
 	nw:On("NetworkedVarChanged", "TrackMembers", function(_, key, old, new)
 		if key == "Leader" then

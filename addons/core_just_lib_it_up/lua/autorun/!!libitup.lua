@@ -77,13 +77,16 @@ local realmExclusive = {
 libTbl.Included = {} -- not auto-refresh friendly on purpose; allows reloading everything
 
 function libTbl.SetIncluded(who)
+	local src = who
 	if not who then
 		local path = debug.getinfo(2).source
+		src = path
 		who = path:match("/?([^/]+/[^/]+%.lua)$") -- matches highest folder + file
 	end
 
 	if not who then
-		error("Failed to resolve path")
+		ErrorNoHaltf("Failed to resolve path `%s`.", src)
+		return
 	end
 
 	libTbl.Included[who] = true

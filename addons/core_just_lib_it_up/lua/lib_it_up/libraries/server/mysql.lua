@@ -151,8 +151,9 @@ local onLiveConnect = {}
 function mysqloo.UseLiveDB()
 	local pr = Promise()
 
-	if liveDB then
+	if mysqloo.LiveDatabase and mysqloo.LiveDatabase:status() == 0 then
 		if mysqloo.__liveConnected then
+			print("resolve LiveDatabase")
 			pr:Resolve(mysqloo.LiveDatabase)
 		else
 			onLiveConnect[#onLiveConnect + 1] = pr
@@ -162,7 +163,10 @@ function mysqloo.UseLiveDB()
 	end
 
 	if is_dedi then
-		mysqloo.OnConnect(pr:Resolver(), rsDB)
+		mysqloo.OnConnect(function()
+			pr:Resolve(mysqloo.GlobalDatabase)
+		end)
+
 		return pr
 	end
 
@@ -173,6 +177,7 @@ function mysqloo.UseLiveDB()
 		hook.Run("OnLiveMySQLReady", db)
 
 		for k,v in ipairs(onLiveConnect) do
+			print("resolve completeLoad")
 			v:Resolve(db)
 		end
 	end
