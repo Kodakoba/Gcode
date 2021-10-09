@@ -1,6 +1,25 @@
 if not muldim then include("lib_it_up/classes/multidim.lua") end
 
 BaseWars.SpawnList = BaseWars.SpawnList or {}
+BaseWars.Purchased = BaseWars.Purchased or muldim:new()
+local pur = BaseWars.Purchased
+
+function BaseWars.GetPurchased(what, typ)
+	local pin = GetPlayerInfo(what)
+	if not pin then return false end
+
+	local ret = BaseWars.Purchased[pin:SteamID64()]
+	if not ret then return {} end
+	if IsEntity(typ) then typ = typ:GetClass() end
+
+	if not typ then
+		return ret
+	elseif typ:lower() == "all" then
+		return ret._All
+	else
+		return ret[typ]
+	end
+end
 
 local function decrLimit(ent)
 	if not ent._incrLimit then return end
@@ -51,19 +70,15 @@ hook.NHAdd("EntityOwnershipChanged", "BW_Limits", function(ply, ent, oldID)
 end)
 
 BaseWars.Generators = BaseWars.Generators or muldim:new()
-local gens = BaseWars.Generators
 
 local function LimitDeduct(ent, class, ply)
 	local pinfo = GetPlayerInfo(ply)
 
-	ent:CallOnRemove("LimitDeduct", function(ent, sid)
-		decrLimit(ent)
-	end, sid)
+	ent:CallOnRemove("LimitDeduct", function(self)
+		decrLimit(self)
+	end)
 
 	incrLimit(ent, pinfo)
-
-	ent.BWOwner = ply
-	ent.Bought = true
 end
 
 local function postSpawn(ply, class, ent, info)
@@ -74,7 +89,28 @@ local function postSpawn(ply, class, ent, info)
 	if info.Price and info.Price > 0 then
 		ply:SetMoney(ply:GetMoney() - info.Price)
 	end
+
+	local pin = GetPlayerInfo(ply)
+
+	pur:Insert(ent, pin:SteamID64(), "_All")
+	pur:Insert(ent, pin:SteamID64(), ent:GetClass())
+	pur:Set(true, pin:SteamID64(), ent:GetClass(), ent)
+
+	ent.BWOwner = ply
+	ent.Bought = true
 end
+
+hook.NHAdd("EntityRemoved", "UntrackPurchased", function(ent)
+	print("ent removed", ent)
+	local ow = ent:BW_GetOwner()
+	if not ow then return end
+
+	local sid = ow:SteamID64()
+
+	pur:RemoveSeqValue(ent, sid, "_All")
+	pur:RemoveSeqValue(ent, sid, ent:GetClass())
+	pur:Set(nil, sid, ent:GetClass(), ent)
+end)
 
 function BWSpawn(ply, cat, catID)
 	catID = tonumber(catID)
@@ -202,6 +238,7 @@ function BWSpawn(ply, cat, catID)
 	end
 
 	if gun then
+		local existing_weapons = BaseWars.GetPurchased(me, "bw_weapon")
 
 		local newEnt = ents.Create("bw_weapon")
 			newEnt.WeaponClass = class
@@ -258,7 +295,7 @@ function BWSpawn(ply, cat, catID)
 end
 
 
-concommand.Add("basewars_spawn",function(ply,_,args)
+concommand.Add("basewars_spawn", function(ply,_,args)
 	if not IsValid(ply) then return end
 			    -- cat   | itemID (catID)
 	BWSpawn(ply, args[1], args[2])

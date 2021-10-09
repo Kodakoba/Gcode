@@ -158,8 +158,8 @@ local function ReuseLoadout(...)
 end
 
 local function AddPrinters(typ, class, name, price, mdl, lim)
-	local t = AddItem("Printers", typ, class, name, price, mdl or "models/grp/printers/printer.mdl", lim)
-	t.Limit = 1
+	local t = AddItem("Printers", typ, class, name, price, mdl or "models/grp/printers/printer.mdl")
+	t.Limit = lim or 1
 
 	local tbl = scripted_ents.GetStored(class)
 	if not tbl then return t end
@@ -261,7 +261,7 @@ SetType("Misc.")
 -- Printers - Misc.--
 
 	--ReusePrinters("bw_printercap", "Capacity Kit", k * 1000, "models/props_junk/cardboard_box004a.mdl")
-	ReusePrinters("bw_printerrack", "Printer Rack", k * 100, "models/grp/rack/rack.mdl")
+	ReusePrinters("bw_printerrack", "Printer Rack", k * 100, "models/grp/rack/rack.mdl", 2)
 	--ReusePrinters("bw_printercap2", "Heavy Capacity Kit", m * 125, "models/props_junk/cardboard_box004a.mdl")
 
 

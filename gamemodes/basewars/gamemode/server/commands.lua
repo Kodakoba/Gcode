@@ -242,7 +242,8 @@ BaseWars.Commands.AddCommand({"sell", "destroy", "remove"}, function(ply)
 	local trace = ply:GetEyeTrace()
 
 	local ent = trace.Entity
-	if not BaseWars.Worth.Get(ent) then return false end
+	local wth, has = BaseWars.Worth.Get(ent)
+	if not has then return false end
 
 	local own = IsValid(ent) and ent:BW_GetOwner()
 	if own ~= ply:GetPInfo() then return false end

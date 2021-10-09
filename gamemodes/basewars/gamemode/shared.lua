@@ -303,10 +303,17 @@ local function BlockInteraction(ply, ent, ret)
 		local Classes = BaseWars.Config.PhysgunBlockClasses
 		if Classes[ent:GetClass()] then return false end
 
-		local Owner = ent.CPPIGetOwner and ent:CPPIGetOwner()
+		local Owner, uid
+		if ent.CPPIGetOwner then
+			Owner, uid = ent:CPPIGetOwner()
+		end
 
 		if IsPlayer(ply) and ply:InRaid() then return false end
 		if IsPlayer(Owner) and Owner:InRaid() then return false end
+		if not IsPlayer(Owner) and uid == CPPI_NOTIMPLEMENTED then
+			-- world owner
+			return false
+		end
 
 	else
 
@@ -349,7 +356,6 @@ function GM:CanPlayerUnfreeze(ply, ent, phys)
 end
 
 function GM:CanTool(ply, tr, tool)
-
 	local Ret = self.BaseClass:CanTool(ply, tr, tool)
 
 	if BaseWars.Config.BlockedTools[tool] then return IsAdmin(ply, ent, Ret) end
@@ -358,7 +364,6 @@ function GM:CanTool(ply, tr, tool)
 	end
 
 	return BlockInteraction(ply, tr.Entity, Ret)
-
 end
 
 function GM:CanDrive()

@@ -31,7 +31,7 @@ end
 
 function ENT:ThinkFunc()
 	local diff = CurTime() - self.LastThink
-	if diff < math.max(CurTime() - self:GetNextFinish(), 0.5) then
+	if diff < math.min(CurTime() - self:GetNextFinish(), 0.5) then
 		return
 	end
 

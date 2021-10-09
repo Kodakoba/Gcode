@@ -153,7 +153,6 @@ function mysqloo.UseLiveDB()
 
 	if mysqloo.LiveDatabase and mysqloo.LiveDatabase:status() == 0 then
 		if mysqloo.__liveConnected then
-			print("resolve LiveDatabase")
 			pr:Resolve(mysqloo.LiveDatabase)
 		else
 			onLiveConnect[#onLiveConnect + 1] = pr

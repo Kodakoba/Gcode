@@ -13,7 +13,7 @@ discord = discord or {}
 --if discord.Enabled wasn't set, gets set to true
 --otherwise, keeps value
 
-discord.Enabled = (discord.Enabled == nil and true) or discord.Enabled
+discord.Enabled = (discord.Enabled == nil and jit.os:find("Windows")) or discord.Enabled
 
 dissocket = dissocket or BromSock()
 
