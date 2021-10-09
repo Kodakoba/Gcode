@@ -157,17 +157,17 @@ if SERVER then
 
 			self.BlownUp = true
 
-			BaseWars.UTIL.PayOut(self, Attacker)
+			xpcall(BaseWars.UTIL.PayOut, GenerateErrorer("EntBase Payout"), self, Attacker)
 
 			if dmginfo:IsExplosionDamage() then
-
 				self:Explode(false)
-
-			return end
+				return
+			end
 
 			self:Explode()
 
-		return end
+			return
+		end
 
 		if dmginfo:GetDamage() < 1 then return end
 
