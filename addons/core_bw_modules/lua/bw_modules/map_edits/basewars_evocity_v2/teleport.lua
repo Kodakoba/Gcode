@@ -68,7 +68,6 @@ local function changePos(ent)
 
 	ent:SetPos(pos[1])
 	ent:SetAngles(pos[2])
-	print("changed pos", ent)
 end
 
 
