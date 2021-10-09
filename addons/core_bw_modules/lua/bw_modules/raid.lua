@@ -257,7 +257,7 @@ end)
 
 function PINFO:IsEnemy(what)
 	what = GetPlayerInfo(what)
-	if not what:IsValid() then return end
+	if not what or not what:IsValid() then return end
 
 	local rd = self:GetRaid()
 	if not rd then return false end

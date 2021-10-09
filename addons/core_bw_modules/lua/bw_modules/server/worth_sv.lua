@@ -92,7 +92,7 @@ function wth.PayOut(ent, atk, full)
 		return 0
 	end
 
-	local inRaid = atk:IsEnemy(own)
+	local inRaid = own and atk:IsEnemy(own)
 	local Members = atk:GetFaction() and atk:GetFaction():GetMembers()
 	local Involved = inRaid and (Members and #Members) or 1
 

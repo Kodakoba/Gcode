@@ -180,7 +180,6 @@ if SERVER then
 
 		local filter
 
-
 		if mode == CHATMODE_TEAM then
 			filter = team.GetPlayers(ply:Team())
 		else

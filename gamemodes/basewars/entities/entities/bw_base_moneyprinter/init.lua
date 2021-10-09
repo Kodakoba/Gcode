@@ -109,7 +109,7 @@ end
 
 function ENT:PlayerTakeMoney(ply, suppress)
 	local owInfo = self:BW_GetOwner()
-	if owInfo:GetPlayer() ~= ply then return end
+	if not owInfo or owInfo:GetPlayer() ~= ply then return end
 
 	local money = self.Money
 
