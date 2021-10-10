@@ -61,7 +61,7 @@ hook.Add("EntityActuallyRemoved", "RollbackTracker", function(ent)
 	local pin = ent:BW_GetOwner()
 
 	if pin then
-		rb.PlayerWorth[pin] = math.max(rb.PlayerWorth[pin] - (rb.SavedWorth[ent] or 0) , 0)
+		rb.PlayerWorth[pin] = math.max( (rb.PlayerWorth[pin] or 0) - (rb.SavedWorth[ent] or 0) , 0)
 		pin:SetBWData("Worth", rb.PlayerWorth[pin])
 	end
 
@@ -79,11 +79,14 @@ hook.Add("BW_DataSyncWorth", "RollbackSync", function(pin, wth)
 	q:start()
 end)
 
-hook.Add("BW_LoadPlayerData", "RollbackLoad", function(ply, ...)
+function rb.LoadPlayer(ply)
 	local pin = GetPlayerInfoGuarantee(ply)
 
-	local fmt = "SELECT `money` FROM `bw_rollback` WHERE puid = %s"
-	fmt = fmt:format(pin:SteamID64())
+	local fmt = "SELECT `money` FROM `bw_rollback` WHERE puid = %s;" ..
+		"UPDATE `bw_rollback` SET `money` = %s WHERE puid = %s"
+
+	local wth = rb.PlayerWorth[pin] or 0
+	fmt = fmt:format(pin:SteamID64(), wth, pin:SteamID64())
 
 	local q = db:query(fmt)
 	q.onError = mysqloo.QueryError
@@ -91,23 +94,28 @@ hook.Add("BW_LoadPlayerData", "RollbackLoad", function(ply, ...)
 		if not data[1] then return end
 
 		local mon = data[1].money
-		local wth = rb.PlayerWorth[pin] or 0
+
 		-- getting rollback from SQL when there's worth in memory
 		-- should, like, never happen; good to handle it nonetheless i think
 		local to_add = mon - wth
 
 		if to_add > 0 then
 			pin:AddMoney(to_add)
-			pin:SetBWData("Worth", wth)
+			pin:SetBWData("Worth", wth) -- this will cause BW_DataSyncWorth to be called
+			rb.PlayerWorth[pin] = wth
 
 			ply:OnFullyLoaded(function()
 				local tcol = Color(50, 180, 110)
 				local mcol = Color(60, 220, 60)
+
 				ply:ChatAddText(tcol, "You were refunded ",
 					mcol, string.Comma(to_add) .. "$ ",
 					tcol, "for unsold entities since last time.")
 			end)
 		end
 	end
+
 	q:start()
-end)
+end
+
+hook.Add("BW_LoadPlayerData", "RollbackLoad", rb.LoadPlayer)
