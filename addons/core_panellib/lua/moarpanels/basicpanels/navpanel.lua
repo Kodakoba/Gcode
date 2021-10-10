@@ -48,7 +48,7 @@ function NavbarChoice:Init()
 	end)
 
 	self.Icon = Icon(questionMark)
-	self.IconSize = self:GetTall() * 0.6
+	self.DefaultIconSize = 0.7
 
 	self.DescriptionFont = "OSL16"
 	self.DescriptionColor = Color(170, 170, 170)
@@ -64,9 +64,9 @@ function NavbarChoice:Init()
 end
 
 function NavbarChoice:OnSizeChanged(nw, nh)
-	self.IconSize = self:GetTall() * 0.6
 	if self.Description then
-		self.WrappedDescription = self.Description:WordWrap2(self:GetWide() - 16 - self.IconSize, self.DescriptionFont)
+		local icsz = self.Icon.Size or self.IconSize or self.DefaultIconSize * self:GetTall()
+		self.WrappedDescription = self.Description:WordWrap2(self:GetWide() - 16 - icsz, self.DescriptionFont)
 		local _, newlines = self.WrappedDescription:gsub("[^%c]+", "")
 		self.DescripitionNewlines = newlines
 	end
@@ -89,7 +89,7 @@ end
 function NavbarChoice:SetIcon(url, name, h)
 	local ic = Icon(url, name)
 	self.Icon = ic
-
+	self.Icon:SetFilter(true)
 	self.Icon.Aspect = h
 
 	return ic
@@ -99,8 +99,9 @@ AccessorFunc(NavbarChoice, "Name", "Name")
 
 
 function NavbarChoice:SetDescription(desc)
+	local icsz = self.Icon.Size or self.IconSize or self.DefaultIconSize * self:GetTall()
 	self.Description = desc
-	self.WrappedDescription = desc:WordWrap2(self:GetWide() - self.IconSize - 4 - 16, self.DescriptionFont)
+	self.WrappedDescription = desc:WordWrap2(self:GetWide() - icsz - 4 - 16, self.DescriptionFont)
 end
 
 function NavbarChoice:ActiveMask(w, h, frac)
@@ -151,15 +152,18 @@ function NavbarChoice:Draw(w, h)
 
 	local frac = self:GetExpFrac(nav.ExpandFrac, 1.3, 1.2)
 
-	local size = self.Icon.Size or self.IconSize
+	local size = self.Icon.Size or self.IconSize or math.floor(self.DefaultIconSize * h / 2) * 2
 	local aspect = self.Icon.Aspect or 1
 
-	local iw, ih = size, aspect * size
+	local iw, ih = math.Ratio(aspect, size, size)
+
 	--  when expanded becomes 8,		when expanded, becomes 8 (padding from left edge)
 	--  otherwise centers				otherwise, becomes the left edge of visible area (area that's not clipped by parent)
 	ix = Lerp(frac, nav.RetractedSize/2 - iw/2, 8) + Lerp(frac, nav:GetWide() - nav.RetractedSize, 0)
 
+
 	self.Icon:Paint(ix, h/2 - ih/2, iw, ih)
+	--surface.DrawOutlinedRect(ix, h / 2 - ih / 2, iw, ih)
 
 	local frac = self:GetExpFrac(nav.ExpandFrac, 1.8, 1.5) 	--different frac; more eased so text goes to the right faster than the icon
 															--(and goes left slower)
@@ -168,7 +172,7 @@ function NavbarChoice:Draw(w, h)
 	local area = w - iconArea --available area
 
 	surface.SetFont(self.Font or "BS22")
-	local tW = surface.GetTextSize(self.Name)
+	--local tW = surface.GetTextSize(self.Name)
 
 	tx = ix + size + Lerp(frac, w - ix - size - 4, 0) + 4	-- left alignment for text
 

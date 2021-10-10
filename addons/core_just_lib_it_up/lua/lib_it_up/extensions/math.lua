@@ -52,6 +52,16 @@ function math.Sort(...)
 	return unpack(temp)
 end
 
+function math.Ratio(ratio, w, h)
+	if ratio < 1 then
+		-- ratio < 1 = align by height
+		return ratio * w, h
+	else
+		-- ratio >= 1 = align by width, decrease height
+		return w, ratio * h
+	end
+end
+
 -- reverse math.clamp basically lol
 -- if a number is not within [min; max], returns it
 

@@ -185,11 +185,9 @@ function Icon:Paint(x, y, w, h, rot)
 	surface.SetDrawColor(col.r, col.g, col.b, col.a)
 
 	if self.Filter then
-		render.PushFilterMag(TEXFILTER.ANISOTROPIC)
-		render.PushFilterMin(TEXFILTER.ANISOTROPIC)
+		draw.EnableFilters()
 			local ok, err = pcall(self.PaintIcon, self, x, y, w, h, rot)
-		render.PopFilterMag()
-		render.PopFilterMin()
+		draw.DisableFilters()
 
 		if not ok then
 			error(err)

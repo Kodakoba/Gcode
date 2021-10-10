@@ -24,3 +24,33 @@ function cam.Start3D( pos, ang, fov, x, y, w, h, znear, zfar )
 
 	return cam.Start( tab )
 end
+
+_realScr = _realScr or {}
+_realScrFs = _realScrFs or {ScrW, ScrH}
+_curScr = _curScr or {}
+
+function cam.SetFakeRes(w, h)
+	if not w then
+		ScrW = _realScrFs[1]
+		ScrH = _realScrFs[2]
+
+		_curScr = {}
+		return
+	end
+
+	if not _realScr[1] then
+		_realScr = {ScrW(), ScrH()}
+	end
+
+	ScrW = function() return w end
+	ScrH = function() return w end
+
+	_curScr = {w, h}
+end
+
+hook.Add("HUDPaint", "DrawFakeScrW", function()
+	if not _curScr[1] then return end
+	surface.SetDrawColor(Colors.Red)
+	surface.DrawOutlinedRect(--_realScr[1] / 2 - _curScr[1] / 2, _realScr[2] / 2 - _curScr[2] / 2,
+		0, 0, _curScr[1], _curScr[2])
+end)

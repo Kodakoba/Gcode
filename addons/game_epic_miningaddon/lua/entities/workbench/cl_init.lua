@@ -29,7 +29,7 @@ function ENT:OpenMenu()
 
 	local fits = ScrW() >= 1200 and 6 or 4
 	local sz = 	(ScrW() < 1200 and ScrW() > 800 and 80)  or		-- 800 - 1200 = 80x80 (with 4 slots per row)
-				(ScrW() >= 1200 and ScrW() < 1900 and 64) or	-- 1200 - 1900 = 64x64 (cause 1200+ fits 6 slots)
+				(ScrW() >= 1200 and ScrW() < 1900 and 64) or	-- 1200 - 1900 = 64x64
 				(ScrW() >= 1900 and 80)							-- 1900+ = 80x80 with 6 slots
 
 	local inv = Inventory.Panels.CreateInventory(LocalPlayer().Inventory.Backpack, nil, {
@@ -37,6 +37,8 @@ function ENT:OpenMenu()
 		FitsItems = fits,
 	})
 
+	local wbFrameSize = ScrW() < 1200 and 450 or
+						ScrW() < 1900 and 550 or 660
 	--inv:SetTall(350)
 	inv:CenterVertical()
 
@@ -66,7 +68,7 @@ function ENT:OpenMenu()
 		return false
 	end
 
-	main:SetSize(ScrW() < 1200 and 450 or 500, inv:GetTall())
+	main:SetSize(wbFrameSize, inv:GetTall())
 	main:MakePopup()
 
 	main:SetPos( ScrW() / 2 - (main:GetWide() + 8 + inv:GetWide()) / 2,

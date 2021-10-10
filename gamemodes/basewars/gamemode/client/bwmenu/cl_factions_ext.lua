@@ -815,7 +815,7 @@ end
 local function onCreateTab(f, tab)
 	local ic = tab:SetIcon("https://i.imgur.com/JzTfIuf.png", "faction_64.png", 55 / 64) --the pic is 64x51
 	tab:SetDescription("Team up with other players")
-	ic.Size = tab.IconSize * 1.1
+	--ic.Size = tab.DefaultIconSize * 1.1
 end
 
 tab[1] = onOpen

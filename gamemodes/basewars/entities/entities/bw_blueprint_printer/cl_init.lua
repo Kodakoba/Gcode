@@ -53,10 +53,6 @@ function ENT:CLInit()
 
 end
 
-local onRow = 2
-
-local slotPadX, slotPadY = 8, 8
-local slotSize = 64
 
 function ENT:SlotCreated(slot)
 	slot:On("Drop", "NoDrop", function(slot, slot2, item)
@@ -94,19 +90,31 @@ function ENT:GenerateWithdrawMenu(menu, old)
 	local pnl = vgui.Create("Panel", menu)
 	menu:PositionPanel(pnl)
 
+	local infoW = math.max(125, menu:GetWide() * 0.3)
+	local pW = pnl:GetWide() - infoW
+
+	local scale = ScrW() < 1600 and 0 or 1
+
+	local slotPadX, slotPadY = 4 + (4 * scale), 4 + 4 * scale
+	local slotSize = 64 * (1 + scale * 0.25)
+
+	local onRow = math.floor( (pW - slotPadX * 2) / (slotSize + slotPadX) )
 	local rows = math.ceil(self.TotalSlots / onRow)
 
 	local fullH = rows *  (slotSize + slotPadY) - slotPadY
 	local fullW = onRow * (slotSize + slotPadX) - slotPadX
 
-	local infoW = 110
-	local pW = pnl:GetWide() - infoW
+	print(onRow, rows, slotSize, pW)	
 
+	
 	for i=1, self.TotalSlots do
+		local onThisRow = i > math.floor(self.TotalSlots / onRow) * onRow and self.TotalSlots % onRow or onRow
+		local thisW = onThisRow * (slotSize + slotPadX) - slotPadX
+
 		local row = math.floor((i - 1) / onRow) 	-- starts @ 0
 		local col = (i-1) % onRow					-- starts @ 0
 
-		local x = pW / 2 - fullW / 2 + (slotSize + slotPadX) * col
+		local x = pW / 2 - thisW / 2 + (slotSize + slotPadX) * col
 		local y = pnl:GetTall() / 2 - fullH / 2 + (slotSize + slotPadY) * row
 		local slot = vgui.Create("ItemFrame", pnl)
 
@@ -173,18 +181,27 @@ local menu
 function ENT:OpenMenu()
 	if IsValid(menu) then return end
 
+	
+
 	local inv = Inventory.Panels.CreateInventory(LocalPlayer().Inventory.Backpack, nil, {
-		SlotSize = 64,
-		SlotPadding = 4
+		SlotSize = sz,
+		FitsItems = fits,
 	})
+
+	local frSize = ScrW() < 1200 and 350 or
+					ScrW() < 1900 and 450 or 500
+
+	local inv = Inventory.Panels.CreateInventory(LocalPlayer().Inventory.Backpack, nil, Inventory.Panels.PickSettings())
 
 	--inv:SetTall(350)
 	inv:CenterVertical()
 
+	
+
 	menu = vgui.Create("NavFrame")
 	menu:SetRetractedSize(40)
 	menu:SetExpandedSize(160)
-	menu:SetSize(320, inv:GetTall())
+	menu:SetSize(frSize, inv:GetTall())
 	menu.Shadow = {}
 	menu:CenterVertical()
 	menu:PopIn()
