@@ -40,6 +40,17 @@ hook.NHAdd("EntityRemoved", "UntrackPurchased", function(ent)
 	BaseWars.RemovePurchased(ent, ow)
 end)
 
+hook.NHAdd("PlayerInfoDestroy", "PurchasedRefund", function(pin)
+	local sid = pin:SteamID64()
+	local stuff = BaseWars.GetPurchased(sid, "all")
+
+	for k,v in ipairs(stuff) do
+		if v:IsValid() then
+			v:Remove()
+		end
+	end
+end)
+
 local function decrLimit(ent)
 	if not ent._incrLimit then return end
 
