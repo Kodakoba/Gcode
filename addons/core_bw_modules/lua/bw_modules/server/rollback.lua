@@ -30,7 +30,7 @@ hook.Add("EntityOwnershipChanged", "RollbackTracker", function(ply, ent, old)
 	if old then
 		local opi = GetPlayerInfo(old)
 		local prevOwWorth = rb.PlayerWorth[opi] or 0
-		rb.PlayerWorth[opi] = prevOwWorth - BaseWars.Worth.Get(ent)
+		rb.PlayerWorth[opi] = math.max(prevOwWorth - BaseWars.Worth.Get(ent), 0)
 	end
 
 	local ow = GetPlayerInfo(ply)
@@ -50,7 +50,7 @@ hook.Add("EntityWorthChanged", "RollbackTracker", function(ent)
 	local prevWorth = rb.SavedWorth[ent] or 0
 
 	rb.SavedWorth[ent] = BaseWars.Worth.Get(ent)
-	rb.PlayerWorth[pin] = prevOwWorth - prevWorth + rb.SavedWorth[ent]
+	rb.PlayerWorth[pin] = math.max(prevOwWorth - prevWorth + rb.SavedWorth[ent], 0)
 	pin:SetBWData("Worth", rb.PlayerWorth[pin])
 end)
 
@@ -61,7 +61,7 @@ hook.Add("EntityActuallyRemoved", "RollbackTracker", function(ent)
 	local pin = ent:BW_GetOwner()
 
 	if pin then
-		rb.PlayerWorth[pin] = rb.PlayerWorth[pin] - (rb.SavedWorth[ent] or 0)
+		rb.PlayerWorth[pin] = math.max(rb.PlayerWorth[pin] - (rb.SavedWorth[ent] or 0) , 0)
 		pin:SetBWData("Worth", rb.PlayerWorth[pin])
 	end
 
