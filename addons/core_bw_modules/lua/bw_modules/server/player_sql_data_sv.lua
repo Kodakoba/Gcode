@@ -59,6 +59,7 @@ hook.Add("PlayerAuthed", "BW_SQLDataFetch", LoadData)
 -- hook.NHAdd("PlayerDisconnected", "BW_SQLDataSave", SaveData)
 hook.NHAdd("PlayerInitialSpawn", "BW_SQLDataFetch_Bots", function(ply)
 	-- special hook for bots since they don't auth
+	if not ply:IsBot() then return end
 	LoadData(ply)
 end)
 
