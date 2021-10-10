@@ -70,6 +70,7 @@ end)
 
 
 hook.Add("BW_DataSyncWorth", "RollbackSync", function(pin, wth)
+	wth = math.max(wth, 0)
 	local fmt = "REPLACE INTO `bw_rollback`(puid, `money`) VALUES (%s, %s)"
 	fmt = fmt:format(pin:SteamID64(), wth)
 
@@ -98,6 +99,14 @@ hook.Add("BW_LoadPlayerData", "RollbackLoad", function(ply, ...)
 		if to_add > 0 then
 			pin:AddMoney(to_add)
 			pin:SetBWData("Worth", wth)
+
+			ply:OnFullyLoaded(function()
+				local tcol = Color(50, 180, 110)
+				local mcol = Color(60, 220, 60)
+				ply:ChatAddText(tcol, "You were refunded ",
+					mcol, string.Comma(to_add) .. "$ ",
+					tcol, "for unsold entities since last time.")
+			end)
 		end
 	end
 	q:start()
