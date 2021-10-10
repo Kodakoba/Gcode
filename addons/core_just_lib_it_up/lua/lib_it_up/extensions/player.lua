@@ -133,10 +133,12 @@ function PLAYER:Retry()
 end
 
 if SERVER then
+	if not LibItUp.MulDim then include("lib_it_up/classes/multidim.lua") end
+
 	util.AddNetworkString("FullLoad")
 
 	FullyLoaded = FullyLoaded or {}
-	FullyLoadedCallbacks = FullyLoadedCallbacks or muldim:new()
+	FullyLoadedCallbacks = FullyLoadedCallbacks or LibItUp.MulDim:new()
 
 	-- wait for either the client's net message or source's Move hook
 
