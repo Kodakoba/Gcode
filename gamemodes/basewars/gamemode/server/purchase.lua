@@ -23,7 +23,7 @@ function BaseWars.GetPurchased(what, typ)
 end
 
 function BaseWars.RemovePurchased(ent, ply)
-	local pin = GetPlayerInfo(ply or ent.BWOwner)
+	local pin = GetPlayerInfoMaybe(ply or ent.BWOwner) or ent:BW_GetOwner()
 	if not pin then return false end
 
 	local sid = pin:SteamID64()

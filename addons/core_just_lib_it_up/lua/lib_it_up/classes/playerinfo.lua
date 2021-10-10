@@ -428,6 +428,14 @@ function GetPlayerInfo(what, is_sid64)
 	return PI:get(what, is_sid64)
 end
 
+function GetPlayerInfoMaybe(what, is_sid64)
+	if not CanGetPInfo(what) then
+		return false
+	end
+
+	return PI:get(what, is_sid64)
+end
+
 function GetPlayerInfoGuarantee(what, is_sid64)
 	local pinfo = GetPlayerInfo(what, is_sid64)
 	if not pinfo then errorf("Failed to obtain PlayerInfo using `%s` (%s)", what, type(what)) return end
