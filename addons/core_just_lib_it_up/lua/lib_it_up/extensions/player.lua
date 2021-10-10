@@ -136,6 +136,7 @@ if SERVER then
 	util.AddNetworkString("FullLoad")
 
 	FullyLoaded = FullyLoaded or {}
+	FullyLoadedCallbacks = FullyLoadedCallbacks or muldim:new()
 
 	-- wait for either the client's net message or source's Move hook
 
@@ -143,7 +144,13 @@ if SERVER then
 		if FullyLoaded[ply] then return end
 
 		FullyLoaded[ply] = true
-		hook.Run("PlayerFullyLoaded", ply)
+		hook.NHRun("PlayerFullyLoaded", ply)
+
+		if FullyLoadedCallbacks:Get(ply) then
+			for k,v in ipairs(FullyLoadedCallbacks:Get(ply)) do
+				xpcall(v[1], GenerateErrorer("PlayerFullyLoaded_Callbacks"), unpack(v, 2))
+			end
+		end
 	end)
 
 	hook.Add("PlayerInitialSpawn", "PlayerFullyLoaded", function(ply)
@@ -155,6 +162,12 @@ if SERVER then
 
 				FullyLoaded[ply] = true
 				hook.NHRun("PlayerFullyLoaded", ply)
+
+				if FullyLoadedCallbacks:Get(ply) then
+					for k,v in ipairs(FullyLoadedCallbacks:Get(ply)) do
+						xpcall(v[1], GenerateErrorer("PlayerFullyLoaded_Callbacks"), unpack(v, 2))
+					end
+				end
 			end
 
 			local should_remove = mv_ply == ply and not cmd:IsForced()
@@ -163,6 +176,15 @@ if SERVER then
 		end)
 
 	end)
+
+	function PLAYER:IsFullyLoaded()
+		return FullyLoaded[self]
+	end
+
+	function PLAYER:OnFullyLoaded(cb, ...)
+		if self:IsFullyLoaded() then cb(...) end
+		FullyLoadedCallbacks:Insert({cb, ...}, self)
+	end
 
 else
 
