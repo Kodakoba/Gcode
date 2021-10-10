@@ -244,8 +244,15 @@ function PI:_Destroy()
 	PIT.Invalid[self:GetSteamID64()] = self
 	PIT.Invalid[self:GetSteamID()] = self
 	PIT.Invalid[self:GetPlayer(true)] = self
+end
 
-	print(self:Nick() .. "'s PlayerInfo was destroyed.")
+function PI:RequestDestroy()
+	-- should only be used for debug purposes!
+	if LibItUp.PlayerInfoTables.Absent[self] then
+		LibItUp.PlayerInfoTables.Absent[self] = CurTime() - PI.CleanupIn
+	else
+		ErrorNoHalt("Can't destroy a PInfo of a player still on!\n")
+	end
 end
 
 function PI:_OnReconnect()
