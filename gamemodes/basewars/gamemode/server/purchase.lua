@@ -256,7 +256,7 @@ function BWSpawn(ply, cat, catID)
 	end
 
 	if gun then
-		local existing_weapons = BaseWars.GetPurchased(me, "bw_weapon")
+		local existing_weapons = BaseWars.GetPurchased(ply, "bw_weapon")
 
 		if #existing_weapons >= 5 and IsValid(existing_weapons[1]) then
 			local rem = existing_weapons[1]
