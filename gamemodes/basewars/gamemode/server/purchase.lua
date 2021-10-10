@@ -258,7 +258,7 @@ function BWSpawn(ply, cat, catID)
 	if gun then
 		local existing_weapons = BaseWars.GetPurchased(ply, "bw_weapon")
 
-		if #existing_weapons >= 5 and IsValid(existing_weapons[1]) then
+		if existing_weapons and #existing_weapons >= 5 and IsValid(existing_weapons[1]) then
 			local rem = existing_weapons[1]
 			rem:Remove() -- this will delete the weapon from the purchased list
 		end
