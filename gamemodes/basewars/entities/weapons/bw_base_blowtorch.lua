@@ -115,6 +115,11 @@ function SWEP:PrimaryAttack()
 
 	local owner = tr.Entity:BW_GetOwner()
 
+	local dmg = DamageInfo()
+	dmg:SetDamage(self.TorchDamage)
+	dmg:SetAttacker(ply)
+	dmg:SetInflictor(self)
+
 	if not canZap(self, tr.Entity, dmg) then
 		return
 	end
@@ -126,11 +131,6 @@ function SWEP:PrimaryAttack()
 	self:EmitSound(snd)
 
 	if CLIENT then return end
-
-	local dmg = DamageInfo()
-	dmg:SetDamage(self.TorchDamage)
-	dmg:SetAttacker(ply)
-	dmg:SetInflictor(self)
 
 	local trent = tr.Entity
 	local trents = {ply, trent}
