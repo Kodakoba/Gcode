@@ -28,9 +28,9 @@ SWEP.ViewModel = "models/weapons/arccw/fml/fas1/c_m870.mdl"
 SWEP.WorldModel = "models/weapons/arccw/fml/fas1/w_m870.mdl"
 SWEP.ViewModelFOV = 70
 
-SWEP.Damage = 13
-SWEP.DamageMin = 0 -- damage done at maximum range
-SWEP.Range = 55 -- in METRES
+SWEP.Damage = 14
+SWEP.DamageMin = 3 -- damage done at maximum range
+SWEP.Range = 35 -- in METRES
 SWEP.Penetration = 1
 SWEP.DamageType = DMG_BUCKSHOT
 SWEP.ShootEntity = nil -- entity to fire, if any
@@ -46,7 +46,7 @@ SWEP.Primary.ClipSize = 6 -- DefaultClip is automatically set.
 SWEP.ExtendedClipSize = 8
 SWEP.ReducedClipSize = 4
 
-SWEP.Recoil = 5
+SWEP.Recoil = 7
 SWEP.RecoilSide = 1
 SWEP.MaxRecoilBlowback = 0.8
 

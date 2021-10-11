@@ -22,10 +22,10 @@ SWEP.ViewModelFOV = 60
 
 SWEP.DefaultBodygroups = "000000000000"
 
-SWEP.Damage = 14
-SWEP.DamageMin = 6 -- damage done at maximum range
+SWEP.Damage = 12
+SWEP.DamageMin = 2 -- damage done at maximum range
 SWEP.Num = 8
-SWEP.Range = 60 -- in METRES
+SWEP.Range = 20 -- in METRES
 SWEP.Penetration = 1
 SWEP.DamageType = DMG_BUCKSHOT
 SWEP.ShootEntity = nil -- entity to fire, if any
@@ -34,9 +34,8 @@ SWEP.Primary.ClipSize = 4 -- DefaultClip is automatically set.
 
 SWEP.PhysBulletMuzzleVelocity = 350
 
-SWEP.Recoil = 4
+SWEP.Recoil = 5
 SWEP.RecoilSide = 2
-SWEP.RecoilRise = 0.1
 SWEP.RecoilPunch = 2.5
 
 SWEP.ManualAction = true
@@ -230,7 +229,7 @@ SWEP.Attachments = {
     {
         PrintName = "Muzzle",
         DefaultAttName = "Standard Muzzle",
-        Slot = "muzzle",
+        Slot = "muzzle_shotgun",
         Bone = "v_weapon.NOVA_PARENT",
         Offset = {
             vpos = Vector(0, -1.7, 28),
