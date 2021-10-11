@@ -392,9 +392,8 @@ SetType("[ACW] Shotguns")
 
 	SetTier(1)
 		ReuseLoadout("arccw_db", "Sawn-off", 75 * k, "models/weapons/arccw/w_sawnoff.mdl")
-		ReuseLoadout("arccw_go_nova", "Nova", 400 * k, nil)
-		ReuseLoadout("arccw_dmi_r870_sg_elite", "Remington M870", 550 * k, nil)
-
+		ReuseLoadout("arccw_dmi_r870_sg_elite", "Remington M870", 400 * k, nil)
+		ReuseLoadout("arccw_go_nova", "Nova", 3 * m, nil)
 
 SetType("[CW] SMGs")
 	SetTier(1)

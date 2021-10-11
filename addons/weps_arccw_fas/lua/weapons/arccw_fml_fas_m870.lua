@@ -28,9 +28,10 @@ SWEP.ViewModel = "models/weapons/arccw/fml/fas1/c_m870.mdl"
 SWEP.WorldModel = "models/weapons/arccw/fml/fas1/w_m870.mdl"
 SWEP.ViewModelFOV = 70
 
-SWEP.Damage = 14
-SWEP.DamageMin = 3 -- damage done at maximum range
-SWEP.Range = 35 -- in METRES
+SWEP.Damage = 12
+SWEP.DamageMin = 2 -- damage done at maximum range
+SWEP.Range = 14 -- in METRES
+SWEP.RangeMin = 4 -- in METRES
 SWEP.Penetration = 1
 SWEP.DamageType = DMG_BUCKSHOT
 SWEP.ShootEntity = nil -- entity to fire, if any
