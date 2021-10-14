@@ -26,19 +26,19 @@ SWEP.Category 				= "Masterbrian123's SWEPs"
 SWEP.DrawAmmo 				= false
 SWEP.Base 					= "weapon_base"
 
-SWEP.HealAmount 			= 2
-SWEP.PlayerHealMult 		= 5	--players get 5x more heals than props 
+SWEP.HealAmount 			= 5
+SWEP.PlayerHealMult 		= 2
 
 
 SWEP.Primary.Damage     	= 0
 SWEP.Primary.ClipSize 		= -1
 SWEP.Primary.Ammo 			= "none"
 SWEP.Primary.DefaultClip	= -1
-SWEP.Primary.Spread 		= 0.25
+SWEP.Primary.Spread 		= 0
 SWEP.Primary.NumberofShots 	= 1
 SWEP.Primary.Automatic 		= true
-SWEP.Primary.Recoil 		= 0.01
-SWEP.Primary.Delay 			= 0.15
+SWEP.Primary.Recoil 		= 0.05
+SWEP.Primary.Delay 			= 0.1
 SWEP.Primary.Force 			= 1
 
 SWEP.Secondary.ClipSize 	= -1
@@ -48,75 +48,98 @@ SWEP.Secondary.Ammo 		= "none"
 
 SWEP.Range					= 2^16
 
+SWEP.MachineRepairSounds = {
+	["buttons/lever1.wav"] = 140,
+	["buttons/lever4.wav"] = 165,
+	["buttons/lever7.wav"] = 120,
+	["buttons/lever8.wav"] = 170,
+	["buttons/button4.wav"] = 150,
+	["buttons/button22.wav"] = 120,
+}
+
+SWEP.MachineRepairDone = {
+	["buttons/blip2.wav"] = 115,
+	["buttons/button14.wav"] = 120,
+}
+
+SWEP.SoundFrequency = 0.3
+
 function SWEP:Initialize()
-
-    self:SetHoldType(self.HoldType)
-
+	self:SetHoldType(self.HoldType)
 end
 
-function GenBullet(self)
-	local bullet = {}
-	bullet.Num = self.Primary.NumberofShots
-	bullet.Src = self.Owner:GetShootPos()
-	bullet.Dir = self.Owner:GetAimVector()
-	bullet.Spread = self.Primary.Spread
-	bullet.Tracer = 1
-	bullet.TracerName = "ToolTracer"
-	bullet.Force = self.Primary.Force
-	bullet.Damage = self.Primary.Damage
-	bullet.AmmoType = self.Primary.Ammo
-
-	return bullet
+function SWEP:SetupDataTables()
+	self:NetworkVar("Float", 0, "LastSound")
 end
 
+local SuppressHostEvents = SuppressHostEvents or function() end
 
 function SWEP:PrimaryAttack()
-
 	self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
 
 	if not IsFirstTimePredicted() then return end
 	--if self.Owner:InRaid() then return end
 
+	local ow = self:GetOwner()
+
 	local tr = util.TraceLine({
-		start = self.Owner:GetShootPos(),
-		endpos = self.Owner:GetShootPos() + self.Owner:GetAimVector() * self.Range,
-		filter = self.Owner
+		start = ow:GetShootPos(),
+		endpos = ow:GetShootPos() + ow:GetAimVector() * self.Range,
+		filter = ow
 	})
 
 	local ent = tr.Entity
 
-	if not IsValid(ent) then return end 
+	if not IsValid(ent) then return end
 
 	local maxHP = ent:GetMaxHealth()
-	if maxHP <= 0 then return end 
+	if maxHP <= 0 then return end
 
 	if ent:Health() >= ent:GetMaxHealth() then return end
 
-	local bullet = GenBullet(self)
+	local ef = EffectData()
+	ef:SetOrigin( tr.HitPos )
+	ef:SetStart( self:GetOwner():GetShootPos() )
+	ef:SetAttachment( 1 )
+	ef:SetEntity(self)
 
-	if ent:GetClass()=="prop_physics" or ent.IsBaseWars then
+	util.Effect( "ToolTracer", ef )
+	util.Effect( "inflator_magic", ef )
 
-		self.Owner:FireBullets(bullet)
+	if ent.IsBaseWars then
+		local pool
+		local level, vol = 60, 0.6
+		local max = ent:GetMaxHealth()
 
-		if SERVER then
+		local repairDone = math.min(ent:Health() + self.HealAmount, max) == max
+		if repairDone then
+			pool = self.MachineRepairDone
+			level, vol = 90, 1.7
+		elseif CurTime() - self.SoundFrequency >= self:GetLastSound() then
+			pool = self.MachineRepairSounds
+		end
 
+		if pool then
+			self:SetLastSound(CurTime())
+			SuppressHostEvents(self:GetOwner())
+				local pitch, snd = table.Random(pool)
+				self:EmitSound(snd, level, pitch, vol, CHAN_AUTO)
+			SuppressHostEvents()
+		end
+	end
+
+	if SERVER then
+		if ent:GetClass() == "prop_physics" or ent.IsBaseWars then
 			ent:SetHealth(math.min(ent:GetMaxHealth(), ent:Health() + self.HealAmount))
 
-			local color = ent:Health() / ent:GetMaxHealth()*255
-            ent:SetColor(Color(color,color,color))
+			if not ent.IsBaseWars then
+				local color = ent:Health() / ent:GetMaxHealth() * 255
+				ent:SetColor(Color(color, color, color))
+			end
 
-		end
-
-	elseif IsPlayer(ent) then
-
-		self.Owner:FireBullets(bullet)
-
-		if SERVER then
-
+		elseif IsPlayer(ent) then
 			ent:SetHealth(math.min(ent:GetMaxHealth(), ent:Health() + self.HealAmount * self.PlayerHealMult))
-
 		end
-
 	end
 
 
