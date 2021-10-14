@@ -13,7 +13,7 @@ discord = discord or {}
 --if discord.Enabled wasn't set, gets set to true
 --otherwise, keeps value
 
-discord.Enabled = (discord.Enabled == nil and jit.os:find("Windows")) or discord.Enabled
+discord.Enabled = (discord.Enabled == nil and true--[[jit.os:find("Windows")]]) or discord.Enabled
 
 dissocket = dissocket or BromSock()
 
@@ -192,7 +192,7 @@ end)
 
 
 function discord.GetChannels(mode, cb)
-	local q = "SELECT whook_url FROM `botto`.`relays` WHERE json_search(`modes`, 'one', '%s') IS NOT NULL"
+	local q = "SELECT whook_url FROM `relays` WHERE json_search(`modes`, 'one', '%s') IS NOT NULL"
 	q = q:format(db:escape(mode))
 
 	local q = db:query(q)
