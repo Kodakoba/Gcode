@@ -34,11 +34,14 @@ local useTime = 0
 
 function ENT:Draw()
 	self:DrawModel()
+
 	if halo.RenderedEntity() == self then
 		render.CullMode(1)
 			self:DrawModel()
 		render.CullMode(0)
+		return
 	end
+
 	local lp = LocalPlayer()
 	local myBaseID = self:GetBaseID()
 	if not myBaseID then print(self, "has no fuckin base ID?") return end
