@@ -96,7 +96,7 @@ function SWEP:PrimaryAttack()
 	if maxHP <= 0 then return end
 
 	if ent:Health() >= ent:GetMaxHealth() then return end
-
+	--
 	local ef = EffectData()
 	ef:SetOrigin( tr.HitPos )
 	ef:SetStart( self:GetOwner():GetShootPos() )
