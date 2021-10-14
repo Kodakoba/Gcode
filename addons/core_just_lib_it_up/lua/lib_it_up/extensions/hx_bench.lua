@@ -42,8 +42,8 @@ function benchmark.Init(Name)
 
 	return setmetatable(
 		{
-			Where	= Info.short_src..":"..Info.currentline,
-			Name	= Name or "Bench @ "..os.time(),
+			Where	= Info.short_src .. ":" .. Info.currentline,
+			Name	= Name or "Bench @ " .. os.time(),
 			BenchedFrames = 0,
 
 			_Start	= 0,
@@ -54,16 +54,18 @@ function benchmark.Init(Name)
 	)
 end
 
+local ST = SysTime
+
 function benchmark:Open()
 	if self._Start != 0 then Error("This bench is already started, Close it first!") end
-	self._Start = SysTime()
+	self._Start = ST()
 	return self
 end
 
 function benchmark:Close()
 	if self._Start == 0 then Error("Can't close what you didn't open!") end
 
-	self._Dur = self._Dur + (SysTime() - self._Start)
+	self._Dur = self._Dur + (ST() - self._Start)
 
 	self._Start = 0
 
@@ -78,7 +80,26 @@ function benchmark:Reset()
 	return self
 end
 
+function benchmark:Do(f, ...)
+	local st = ST()
+	local a, b, c, d = f(...)
+	local et = ST()
 
+	self._Dur = self._Dur + (et - st)
+	self:print()
+	return a, b, c, d
+end
+
+function benchmark:DoTimes(i, f, ...)
+	local st = ST()
+	for t = 1, i do
+		f(...)
+	end
+	local et = ST()
+
+	self._Dur = self._Dur + (et - st)
+	return self
+end
 
 function benchmark:Read()
 	return self._Dur
@@ -94,7 +115,7 @@ function benchmark:__tostring(...)
 	str = str:format(self.Name, ms)
 
 	if self.Frames then
-		local st = SysTime()
+		local st = ST()
 		str = str .. (" (avg. across %d calls: %.3fms, time since last print: %.3fms)"):format(self.Frames, ms / self.Frames, InMS(st - self._LastPrint))
 	end
 
@@ -112,14 +133,15 @@ function benchmark:print()
 			print(self:__tostring())
 			self.BenchedFrames = 0
 			self:Reset()
-			self._LastPrint = SysTime()
+			self._LastPrint = ST()
 		end
 
 	else
 		print(self:__tostring())
+		self:Reset()
 	end
 
-
+	return self
 end
 
 benchmark.p = benchmark.print
