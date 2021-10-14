@@ -220,7 +220,7 @@ function discord.Send(mode, name, txt)
 	local function callback(urls)
 
 		http.Post("https://vaati.net/Gachi/shit.php", {
-			name = name or "GachiRP",
+			name = name or "lodestar/generic",
 			api = "disrelay",
 			p = txt,
 			json = "y",
@@ -246,7 +246,7 @@ function discord.SendEmbed(mode, name, t, cb, fail)
 
 	local function callback(urls)
 		http.Post("https://vaati.net/Gachi/shit.php", {
-			name = name or "GachiRP",
+			name = name or "lodestar/generic",
 			api = "disrelay",
 			json = "y",
 			chan = util.TableToJSON(urls),

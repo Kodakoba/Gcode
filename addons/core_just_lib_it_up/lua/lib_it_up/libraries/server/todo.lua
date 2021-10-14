@@ -54,9 +54,9 @@ function todo.Add(str)
 
 	MySQLEmitter(todo.prepared.ins, true):Then(function()
 		local em = Embed()
-		em:SetText("```\n" .. str .. "```"):SetTitle("Todo added"):SetColor(200, 200, 50)
+		em:SetText("```\n" .. str .. "```"):SetTitle("To-do added"):SetColor(200, 200, 50)
 
-		discord.SendEmbed("todo", "GachiRP", em)
+		discord.SendEmbed("todo", "To-do Tracker", em)
 	end):Catch()
 
 end
@@ -76,7 +76,7 @@ function todo.Solve(...)
 			local em = Embed()
 			em:SetText("```\n" .. dat[1].str .. "```\nSolved!"):SetTitle("Todo solved!"):SetColor(90, 210, 90)
 
-			discord.SendEmbed("todo", "GachiRP", em)
+			discord.SendEmbed("todo", "To-do Tracker", em)
 			MsgC(Colors.Sky, "[Todo]: ", color_white, "'", dat[1].str, "':", Colors.Money, " Solved!\n")
 		end):Catch()
 	end
@@ -95,6 +95,8 @@ function todo.Remove(...)
 		end
 	end
 end
+
+todo.Delete = todo.Remove
 
 function todo.Print()
 	local res = todo.Get()
@@ -147,6 +149,5 @@ function todo.Addendum(id, s2)
 	local em = Embed()
 	em:SetText("```\n" .. str .. "```"):SetTitle("Todo addendum:"):SetColor(200, 200, 70)
 
-	discord.SendEmbed("todo", "GachiRP", em)
-
+	discord.SendEmbed("todo", "To-do Tracker", em)
 end
