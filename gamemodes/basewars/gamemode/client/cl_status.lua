@@ -21,5 +21,5 @@ net.Receive("StartConnect", function()
 
 	chat.AddText(Color(250, 250, 40), "[Connect] ", Color(230, 230, 230), txt)
 	MsgC(Color(250, 250, 40), "[Connect] ", Color(230, 230, 230), txt, Color(100, 220, 100), "	" ..sid .. "\n")
-
+	surface.PlaySound("garrysmod/content_downloaded.wav")
 end)
