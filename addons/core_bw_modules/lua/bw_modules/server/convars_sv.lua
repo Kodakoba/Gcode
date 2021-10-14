@@ -31,3 +31,6 @@ end
 timer.Create("fuckyou", 30, 0, fuckyou)
 hook.Add("InitPostEntity", "fuckoff_crydent", fuckyou)
 fuckyou()
+
+ArcCW.DoorBustEnabled = true
+ArcCW.DoorBustTime = 180
