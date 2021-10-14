@@ -15,7 +15,9 @@ BaseWars.Menu.Tabs["Factions"] = tab
 --[[------------------------------]]
 
 local function removePanel(pnl, hide)
-	pnl.__selMove = pnl:MoveBy(16, 0, 0.2, 0, 1.4)
+	if not IsValid(pnl.__selMove) then
+		pnl.__selMove = pnl:MoveBy(16, 0, 0.2, 0, 1.4)
+	end
 
 	if hide then
 		pnl:PopOutHide()
@@ -813,9 +815,10 @@ local function onClose(navpnl, tabbtn, prevPnl, newTab)
 end
 
 local function onCreateTab(f, tab)
-	local ic = tab:SetIcon("https://i.imgur.com/JzTfIuf.png", "faction_64.png", 55 / 64) --the pic is 64x51
+	local ic = tab:SetIcon("https://i.imgur.com/JzTfIuf.png", "faction_64.png", 55 / 64)
 	tab:SetDescription("Team up with other players")
-	--ic.Size = tab.DefaultIconSize * 1.1
+	ic:SetPreserveRatio(true)
+	tab.DefaultIconSize = tab.DefaultIconSize * 1.1
 end
 
 tab[1] = onOpen
