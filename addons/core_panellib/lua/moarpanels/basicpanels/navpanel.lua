@@ -39,10 +39,6 @@ hook.Add("OnScreenSizeChanged", "garry_die", function()
 end)
 
 function NavbarChoice:Init()
-	self:SetText("")
-	self:SetTall(64)
-	self.TextColor = color_white:Copy()
-
 	questionMark = questionMark or draw.RenderOntoMaterial("questionMark", 48, 48, function(w, h)
 		draw.SimpleText("?", "MRB72", w/2, h/2, color_white, 1, 1)
 	end)
@@ -61,11 +57,18 @@ function NavbarChoice:Init()
 	self.GradDistance = 250
 
 	self.ActiveFrac = 0
+
+	self:SetText("")
+	self:SetTall(64)
+	self.TextColor = color_white:Copy()
 end
 
 function NavbarChoice:OnSizeChanged(nw, nh)
+	local sz = self:GetTall() * self.DefaultIconSize
+	self.Icon:SetSize(sz, sz)
+
 	if self.Description then
-		local icsz = self.Icon.Size or self.IconSize or self.DefaultIconSize * self:GetTall()
+		local icsz = self.Icon:GetSize()
 		self.WrappedDescription = self.Description:WordWrap2(self:GetWide() - 16 - icsz, self.DescriptionFont)
 		local _, newlines = self.WrappedDescription:gsub("[^%c]+", "")
 		self.DescripitionNewlines = newlines
@@ -92,6 +95,8 @@ function NavbarChoice:SetIcon(url, name, h)
 	self.Icon:SetFilter(true)
 	self.Icon.Aspect = h
 
+	local sz = self:GetTall() * self.DefaultIconSize
+	self.Icon:SetSize(sz, sz)
 	return ic
 end
 
@@ -101,7 +106,7 @@ AccessorFunc(NavbarChoice, "Name", "Name")
 function NavbarChoice:SetDescription(desc)
 	local icsz = self.Icon.Size or self.IconSize or self.DefaultIconSize * self:GetTall()
 	self.Description = desc
-	self.WrappedDescription = desc:WordWrap2(self:GetWide() - icsz - 4 - 16, self.DescriptionFont)
+	self.WrappedDescription = desc:WordWrap2(self:GetWide() - icsz - 8 - 20, self.DescriptionFont)
 end
 
 function NavbarChoice:ActiveMask(w, h, frac)
@@ -152,29 +157,30 @@ function NavbarChoice:Draw(w, h)
 
 	local frac = self:GetExpFrac(nav.ExpandFrac, 1.3, 1.2)
 
-	local size = self.Icon.Size or self.IconSize or math.floor(self.DefaultIconSize * h / 2) * 2
-	local aspect = self.Icon.Aspect or 1
+	local iw, ih = self.Icon:GetSize()
+	local size = iw
 
-	local iw, ih = math.Ratio(aspect, size, size)
+	--  when expanded becomes 8 + icsz,						when expanded, becomes 8 (padding from left edge)
+	--  otherwise centers									otherwise, becomes the left edge of visible area (area that's not clipped by parent)
+	ix = Lerp(frac, nav.RetractedSize / 2, 8 + iw / 2) + Lerp(frac, nav:GetWide() - nav.RetractedSize, 0)
 
-	--  when expanded becomes 8,		when expanded, becomes 8 (padding from left edge)
-	--  otherwise centers				otherwise, becomes the left edge of visible area (area that's not clipped by parent)
-	ix = Lerp(frac, nav.RetractedSize/2 - iw/2, 8) + Lerp(frac, nav:GetWide() - nav.RetractedSize, 0)
+	local limW = iw < ih and iw
+	local limH = ih <= iw and ih
 
-
-	self.Icon:Paint(ix, h/2 - ih/2, iw, ih)
+	self.Icon:SetAlignment(5)
+	self.Icon:Paint(ix, h/2, limW, limH)
 	--surface.DrawOutlinedRect(ix, h / 2 - ih / 2, iw, ih)
 
 	local frac = self:GetExpFrac(nav.ExpandFrac, 1.8, 1.5) 	--different frac; more eased so text goes to the right faster than the icon
 															--(and goes left slower)
 
-	local iconArea = ix + size
+	local iconArea = ix + size / 2
 	local area = w - iconArea --available area
 
 	surface.SetFont(self.Font or "BS22")
 	--local tW = surface.GetTextSize(self.Name)
 
-	tx = ix + size + Lerp(frac, w - ix - size - 4, 0) + 4	-- left alignment for text
+	tx = iconArea + Lerp(frac, w - ix - size - 4, 0) + 8	-- left alignment for text
 
 	local becomeVisibleAt = 0.5
 	self.TextColor.a = 255 * (nav.ExpandFrac - becomeVisibleAt) * 1/becomeVisibleAt 		--mmmmmm yes cancer maths
@@ -189,7 +195,8 @@ function NavbarChoice:Draw(w, h)
 
 		local height = self.DescripitionNewlines * self.DescriptionFontHeight
 		local space = self:GetTall() - 24
-		local ty = 24 + space/2 - height/2 - self.DescriptionFontShiftUpwards
+		local ty = --[[24 + space/2 - height/2 - self.DescriptionFontShiftUpwards]]
+					h / 2 - self.DescriptionFontHeight / 2
 		--surface.SetDrawColor(Colors.Red)
 		--surface.DrawOutlinedRect(descx, ty, w - descx, height)
 
@@ -211,8 +218,8 @@ function NavbarChoice:Draw(w, h)
 		for _, dat in ipairs(txs) do
 			local tw = dat[1]
 			local s = dat[2]
-			
-			local tx = iconArea + area/2 - tw/2
+
+			local tx = iconArea + 20
 
 			surface.SetTextPos(tx + maxW * (1 - frac), ty + i * self.DescriptionFontHeight)
 			surface.DrawText(s)

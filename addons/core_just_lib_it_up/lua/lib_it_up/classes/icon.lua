@@ -64,24 +64,33 @@ function Icon:SetSize(w, h)
 end
 
 function Icon:GetSize()
-	return self.W, self.H
+	local w, h = self.W, self.H
+
+	if self:GetPreserveRatio() then
+		w, h = self:_WHPreseveRatio(w, h)
+	end
+
+	return w, h
 end
 
 function Icon:GetWide()
-	return self.W
+	return (self:GetSize())
 end
 
 function Icon:GetTall()
-	return self.H
+	local _, h = self:GetSize()
+	return h
 end
 
 ChainAccessor(Icon, "_Autosize", "Autosize")
 ChainAccessor(Icon, "_Autosize", "AutoResize")
 ChainAccessor(Icon, "_Autosize", "AutoSize")
 
+ChainAccessor(Icon, "_Align", "Align")
+ChainAccessor(Icon, "_Align", "Alignment")
 ChainAccessor(Icon, "_PreserveRatio", "PreserveRatio")
 
-function Icon:PaintIcon(x, y, w, h, rot)
+function Icon:PaintIcon(x, y, w, h, rot, xA, yA)
 
 	if not self.Material then
 		local mat = surface.DrawMaterial(self.URL, self.Name, x, y, w, h, rot)
@@ -97,10 +106,17 @@ function Icon:PaintIcon(x, y, w, h, rot)
 	else
 		surface.SetMaterial(self.Material)
 
+		x = x - w * xA
+		y = y - h * yA
+
 		if rot then
 			surface.DrawTexturedRectRotated(x, y, w, h, rot)
 		else
 			surface.DrawTexturedRect(x, y, w, h)
+		end
+
+		if self:GetDebug() then
+			surface.DrawOutlinedRect(x, y, w, h)
 		end
 
 		if self:GetAutosize() and not self._SizeInitialized then
@@ -131,17 +147,23 @@ function Icon:_WHPreseveRatio(w, h)
 	local info = draw.GetMaterialInfo(mat)
 	if info then
 		local mw, mh = info.w, info.h
-		local scale = 1
+		local sc = 1
+
 		if w and not h then
-			scale = w / mw
+			sc = w / mw
 		elseif h and not w then
-			scale = h / mh
+			sc = h / mh
 		else
-			local min = math.min(w, h)
-			scale = min / (min == w and mw or mh)
+			if mw >= mh then
+				-- align by width
+				return w, h * (mw / mh)
+			else
+				-- align by height
+				return w * (mw / mh), h
+			end
 		end
 
-		return mw * scale, mh * scale
+		return mw * sc, mh * sc
 	end
 end
 
@@ -152,6 +174,14 @@ function Icon:RatioSize(w, h)
 
 	local nw, nh = self:_WHPreseveRatio(w, h)
 	return nw, nh
+end
+
+local xAligns = {}
+local yAligns = {}
+
+for i=0, 8 do
+	xAligns[i + 1] = (i * 0.5) % 1.5
+	yAligns[i + 1] = math.floor(i / 3) * 0.5
 end
 
 function Icon:Paint(x, y, w, h, rot)
@@ -170,6 +200,12 @@ function Icon:Paint(x, y, w, h, rot)
 	w = w or self.W
 	h = h or self.H
 
+	local xA, yA = 0, 0
+	local alNum = self:GetAlignment()
+
+	if alNum then
+		xA, yA = xAligns[alNum], yAligns[alNum]
+	end
 
 	if not w and not h then
 		error("Width and Height not given!")
@@ -186,18 +222,14 @@ function Icon:Paint(x, y, w, h, rot)
 
 	if self.Filter then
 		draw.EnableFilters()
-			local ok, err = pcall(self.PaintIcon, self, x, y, w, h, rot)
+			local ok, err = pcall(self.PaintIcon, self, x, y, w, h, rot, xA, yA)
 		draw.DisableFilters()
 
 		if not ok then
 			error(err)
 		end
 	else
-		self:PaintIcon(x, y, w, h, rot)
-	end
-
-	if self:GetDebug() then
-		surface.DrawOutlinedRect(x, y, w, h)
+		self:PaintIcon(x, y, w, h, rot, xA, yA)
 	end
 
 	return w, h
