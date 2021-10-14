@@ -78,9 +78,9 @@ function SWEP:PrimaryAttack()
 	self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
 
 	if not IsFirstTimePredicted() then return end
-	--if self.Owner:InRaid() then return end
 
 	local ow = self:GetOwner()
+	if ow:InRaid() then return end
 
 	local tr = util.TraceLine({
 		start = ow:GetShootPos(),
@@ -96,7 +96,7 @@ function SWEP:PrimaryAttack()
 	if maxHP <= 0 then return end
 
 	if ent:Health() >= ent:GetMaxHealth() then return end
-	--
+
 	local ef = EffectData()
 	ef:SetOrigin( tr.HitPos )
 	ef:SetStart( self:GetOwner():GetShootPos() )
