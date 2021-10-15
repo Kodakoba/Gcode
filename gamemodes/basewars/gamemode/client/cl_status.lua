@@ -6,7 +6,7 @@ gameevent.Listen( "player_disconnect" )
 
 hook.Add( "player_disconnect", "Cya", function( data )
 	local name = data.name
-	local reason = data.reason
+	local reason = data.reason and data.reason:gsub("[\r\n]*$", "")
 
 	local txt = "Player " .. name .. " has left the server. (" .. reason .. ")"
 

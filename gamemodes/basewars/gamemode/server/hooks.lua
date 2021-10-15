@@ -55,7 +55,7 @@ end
 gameevent.Listen( "player_disconnect" )
 hook.NHAdd("player_disconnect", "TrackLeave", function( data )
 	local name = data.name
-	local reason = data.reason
+	local reason = data.reason and data.reason:gsub("[\r\n]*$", "")
 	local sid = util.SteamIDTo64(data.networkid)
 
 	local passed = getJoinTime(sid)
