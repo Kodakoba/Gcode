@@ -1,3 +1,27 @@
+BaseWars.TimeMarkers = {}
+
+local function dumpMarker()
+	local fmt = "--======= %s  | %s | =======--"
+	local date = os.date("%d %b, %T")
+
+	fmt = fmt:format(date, os.time())
+
+	MsgC(Color(200, 200, 200), fmt, "\n")
+end
+
+local freq = 10 * 60
+local st = SysTime()
+local lastPrint = st - (st % freq)
+
+timer.Remove("TimerMarkerDump")
+
+local function doMarkerLogic()
+	st = SysTime()
+	if st - lastPrint < freq then return end
+	lastPrint = st
+	dumpMarker()
+end
+
 BaseWars.RestartWarnings = {
 	60, 30, 15, 5, 2, 0
 }
@@ -17,6 +41,8 @@ local ct = CurTime()
 
 hook.Add("Think", "CountDownWarn", function()
 	ct = CurTime()
+	doMarkerLogic()
+
 	local left_seconds = BaseWars.RestartTime - ct
 	local left_minutes = math.floor(left_seconds / 60)
 
@@ -35,6 +61,8 @@ hook.Add("Think", "CountDownWarn", function()
 		ChatAddText(Color(255, 70, 255),
 			"[SERVER] ", color_white,
 			"Automatic server restart " .. when)
+
+		MsgC( ("--===== Automatic server restart %s =====--\n"):format(when) )
 
 		if next_warn <= 5 then
 			ChatAddText(Color(150, 150, 150), append)
