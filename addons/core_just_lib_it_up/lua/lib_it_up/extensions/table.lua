@@ -37,8 +37,19 @@ function table.ReplaceValue(t, what, with, seq)
 	end
 end
 
+function table.RemapValues(t, to, seq)
+	local iter = seq and ipairs or pairs
+	for k,v in iter(t) do
+		if to[v] ~= nil then
+			t[k] = to[v]
+		end
+	end
+
+	return t
+end
+
 function table.IsEmpty(t)
-	return (next(t) == nil)
+	return next(t) == nil
 end
 
 --[[
