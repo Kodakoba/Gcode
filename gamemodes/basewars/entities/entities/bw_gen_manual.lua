@@ -87,7 +87,9 @@ function ENT:GenerateOptions(qm, pnl)
 		surface.DrawRect(0, 0, w, h)
 
 		local grid = ent:GetPowerGrid()
-		if grid then
+		local base = LocalPlayer():GetBase()
+
+		if base and grid and base:GetPowerGrid() == grid then
 			draw.SimpleText(("Power: %d/%d"):format(grid:GetPower(), grid:GetCapacity()),
 				"OSB24", w/2, h/2, pwcol, 1, 1)
 		else
