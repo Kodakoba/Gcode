@@ -107,7 +107,6 @@ net.Receive("Raid", function()
 	--2 = start fac vs fac
 	--3 = end
 	--4 = err
-	print("received raid cl,", mode)
 
 	if mode == 1 then
 		-- ply on ply
@@ -227,7 +226,6 @@ function CreateRaidButton(id, v)
 	if not Valid() then CreateRaidFrame(true):SetAlpha(0) end
 
 	if Valid() and not Raids.Frame.Raids[id] and Raids.Frame.scr then
-		print('created button')
 		local f = vgui.Create("FButton", Raids.Frame.scr )
 		f:Dock(TOP)
 		f:DockMargin(16, 8, 16, 8)
@@ -367,3 +365,22 @@ function Raids.CanBlowtorch(ply, ent, wep)
 		return hook.Run("BW_CanBlowtorchRaidless", ply, ent, wep)
 	end
 end
+
+local function alert(rded)
+	system.FlashWindow()
+	if rded then
+		surface.PlaySound("npc/attack_helicopter/aheli_damaged_alarm1.wav")
+	else
+		surface.PlaySound("mvm/mvm_warning.wav")
+	end
+end
+
+hook.Add("RaidStart", "NotifySound", function(rd, rder, rded, fac)
+	-- npc/attack_helicopter/aheli_damaged_alarm1.wav
+	-- NPC_AttackHelicopter.BadlyDamagedAlert
+	if rd:IsRaider(LocalPlayer()) then
+		alert(false)
+	elseif rd:IsRaided(LocalPlayer()) then
+		alert(true)
+	end
+end)

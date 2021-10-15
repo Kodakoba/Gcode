@@ -123,7 +123,9 @@ function raidmeta:Initialize(rder, rded, when, id, vsfac)
 
 	raid.OngoingRaids[id] = self
 
-	if self:IsParticipant(LocalPlayer()) then raid.MyRaid = self end
+	if self:IsParticipant(LocalPlayer()) then
+		raid.MyRaid = self
+	end
 
-	hook.Run("RaidStart", rder, rded, vsfac)
+	hook.Run("RaidStart", self, rder, rded, vsfac)
 end
