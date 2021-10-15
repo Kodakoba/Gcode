@@ -5,13 +5,13 @@ local BWAddons = {
     "160250458", --wire
     "922947756", --synths
 
-    "296828130", --bw evocity
-    "1590239460", -- tits v2
+    game.GetMap() == "rp_downtown_tits_v2" and "1590239460" or -- tits
+    game.GetMap():match("evocity") and "296828130", --bw evocity
 
-    "506283460", --csgo kneivs
+    -- "506283460", --csgo kneivs
     "546392647", --media players
-    "284266415",
-    "2447979470", -- stormcocks 2
+    -- "284266415",
+    -- "2447979470", -- stormcocks 2
 
     "2131057232", -- arccw base(d on what)
     -- 2179387416, -- arccw arknights charms because aerach
@@ -20,7 +20,7 @@ local BWAddons = {
     "2175261690", -- arccw fa:s 1
     "2131161276", -- arccw m9k "extras"
     "2257255110", -- arccw GO
-    "2393318131", -- arccw fa:s 2
+    -- "2393318131", -- arccw fa:s 2
     "2306829669", -- arccw home defense
     "2427171109", -- gso unlamifier
 
