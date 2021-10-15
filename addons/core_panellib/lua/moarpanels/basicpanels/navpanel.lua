@@ -68,7 +68,7 @@ function NavbarChoice:OnSizeChanged(nw, nh)
 	self.Icon:SetSize(sz, sz)
 
 	if self.Description then
-		local icsz = self.Icon:GetSize()
+		local icsz = self.Icon:GetSize() or sz
 		self.WrappedDescription = self.Description:WordWrap2(self:GetWide() - 16 - icsz, self.DescriptionFont)
 		local _, newlines = self.WrappedDescription:gsub("[^%c]+", "")
 		self.DescripitionNewlines = newlines
@@ -158,6 +158,8 @@ function NavbarChoice:Draw(w, h)
 	local frac = self:GetExpFrac(nav.ExpandFrac, 1.3, 1.2)
 
 	local iw, ih = self.Icon:GetSize()
+	iw = iw or self:GetTall() * self.DefaultIconSize
+	ih = ih or self:GetTall() * self.DefaultIconSize
 	local size = iw
 
 	--  when expanded becomes 8 + icsz,						when expanded, becomes 8 (padding from left edge)
