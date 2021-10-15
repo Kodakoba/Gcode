@@ -67,7 +67,8 @@ function Icon:GetSize()
 	local w, h = self.W, self.H
 
 	if self:GetPreserveRatio() then
-		w, h = self:_WHPreseveRatio(w, h)
+		local nw, nh = self:_WHPreseveRatio(w, h)
+		w, h = nw or w, nh or h
 	end
 
 	return w, h
