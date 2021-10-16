@@ -15,7 +15,9 @@ end
 
 function fuckyou()
 	if jit.os == "Linux" then
-		RunConsoleCommand("hostname", "lodestar - alpha | Inventory | ArcCW")
+		RunConsoleCommand("hostname",
+			Settings.Get("Hostname", "lodestar - alpha | titleless...?")
+			)
 	end
 
 	if not GSLT_Set then
