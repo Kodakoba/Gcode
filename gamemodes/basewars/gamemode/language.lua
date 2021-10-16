@@ -1,11 +1,8 @@
 AddCSLuaFile()
 
 local CURRENCY = "$" --"£"
-
 Language = Language or {}
 
-Language.Currency = CURRENCY
-Language.CURRENCY = CURRENCY
 Language.Price = function(str)
 	if isnumber(str) then
 		return CURRENCY .. BaseWars.NumberFormat(str)
@@ -17,11 +14,7 @@ end
 Language.eval = function(self, key, ...)
 	local val = Language[key]
 	if val then
-		if isstring(val) then
-			return val:format(...), true
-		else
-			return val(...), true
-		end
+		return val(...), true
 	end
 
 	return ("[Invalid language: %s]"):format(key), false
@@ -33,18 +26,33 @@ end
 Language.__call = Language.eval
 
 
+local Strings = {}
 
-Language.NoPower 		= "No power!"
-Language.NoCharges 		= "No charges!"
-Language.NoHealth 		= "Low health!"
-Language.NoPrinters 	= "Target does not have enough printers!"
 
-Language.PayOutOwner 	= "You got " .. Language.Currency .. "%s for the destruction of your %s"
-Language.PayOut 		= "You got " .. Language.Currency .. "%s for destroying a %s!"
+Strings.Currency = CURRENCY
+Strings.CURRENCY = CURRENCY
 
-Language.You 			= "You"
+Strings.NoPower 		= "No power!"
+Strings.NoCharges 		= "No charges!"
+Strings.NoHealth 		= "Low health!"
+Strings.NoPrinters 	= "Target does not have enough printers!"
 
-Language.Level 			= function(str)
+Strings.PayOutOwner 	= function(s, c)
+	if isnumber(s) then s = BaseWars.NumberFormat(s) end
+	return string.format("You got %s%s for the destruction of your %s",
+		Strings.Currency, s, c or "Something")
+end
+
+Strings.PayOut 		= function(s, c)
+	if isnumber(s) then s = BaseWars.NumberFormat(s) end
+	return string.format("You got %s%s for destroying a %s!",
+		Strings.Currency, s, c or "Something")
+end
+
+
+Strings.You 			= "You"
+
+Strings.Level 			= function(str)
 	if str then
 		return ("Level %d"):format(str)
 	else
@@ -52,58 +60,73 @@ Language.Level 			= function(str)
 	end
 end
 
-Language.WelcomeBackCrash 	= "Welcome back!"
-Language.Refunded			= "You were refunded %s after a crash."
+Strings.WelcomeBackCrash 	= "Welcome back!"
+Strings.Refunded			= function(s)
+	if isnumber(s) then s = BaseWars.NumberFormat(s) end
+	return ("You were refunded %s%s after a crash."):format(CURRENCY, s)
+end
 
-Language.RaidStart 			= "%s has started a raid against %s!"
+Strings.RaidStart 			= "%s has started a raid against %s!"
 
-Language.Health 			= "Health: %s/%s"
-Language.Power 				= "Power: %s/%s"
+Strings.Health 			= "Health: %s/%s"
+Strings.Power 				= "Power: %s/%s"
 
-Language.SpawnMenuConf 		= "Confirm Purchase"
-Language.SpawnMenuBuyConfirm = "Are you sure you want to purchase %s for " .. Language.Currency .. "%s?"
+Strings.SpawnMenuConf 		= "Confirm Purchase"
+Strings.SpawnMenuBuyConfirm = "Are you sure you want to purchase %s for " .. Strings.Currency .. "%s?"
 
-Language.Yes = "Yes"
-Language.No = "No"
+Strings.Yes = "Yes"
+Strings.No = "No"
 
-Language.Tip = "Tip!"
-Language.PrinterUpgradeTip = "Type /upg or /upgrade while looking at\n" ..
+Strings.Tip = "Tip!"
+Strings.PrinterUpgradeTip = "Type /upg or /upgrade while looking at\n" ..
 	"something to upgrade it.\n" ..
 	"You can specify how many levels " ..
 	"you want to upgrade something by.\nTry it now!"
 
-Language.PrinterUpgradeTipFont = "OS28"
+Strings.PrinterUpgradeTipFont = "OS28"
 
-Language.ChargesCounter = "Charges: %s"
-Language.NextCharge = "next charge in %.1fs."
-Language.StimsLevel = "stims are only generated at level 2+"
+Strings.ChargesCounter = "Charges: %s"
+Strings.NextCharge = "next charge in %.1fs."
+Strings.StimsLevel = "stims are only generated at level 2+"
 
-Language.BPNextPrint = "Next print in:"
-Language.BPNextPrintTime = "%.1fs."
-Language.BPNextPrintNextTime = "LV%d.: %.1fs."
+Strings.BPNextPrint = "Next print in:"
+Strings.BPNextPrintTime = "%.1fs."
+Strings.BPNextPrintNextTime = "LV%d.: %.1fs."
 
 
-Language.Inv_StatSpread    = "Spread"
-Language.Inv_StatHipSpread = "Hip Spread"
-Language.Inv_StatMoveSpread  = "Moving Spread"
-Language.Inv_StatDamage      = "Damage"
-Language.Inv_StatRPM         = "RPM"
-Language.Inv_StatRange       = "Range"
-Language.Inv_StatReloadTime  = "Reload Time"
-Language.Inv_StatMagSize     = "Mag Size"
-Language.Inv_StatRecoil      = "Recoil"
-Language.Inv_StatHandling    = "Sight Time"
-Language.Inv_StatMoveSpeed   = "Movement Speed"
-Language.Inv_StatDrawTime    = "Draw Time"
+Strings.Inv_StatSpread    = "Spread"
+Strings.Inv_StatHipSpread = "Hip Spread"
+Strings.Inv_StatMoveSpread  = "Moving Spread"
+Strings.Inv_StatDamage      = "Damage"
+Strings.Inv_StatRPM         = "RPM"
+Strings.Inv_StatRange       = "Range"
+Strings.Inv_StatReloadTime  = "Reload Time"
+Strings.Inv_StatMagSize     = "Mag Size"
+Strings.Inv_StatRecoil      = "Recoil"
+Strings.Inv_StatHandling    = "Sight Time"
+Strings.Inv_StatMoveSpeed   = "Movement Speed"
+Strings.Inv_StatDrawTime    = "Draw Time"
 
 
 setmetatable(Language, Language)
 
 LocalString = Object:callable()
+LocalString.All = LocalString.All or {}
 
 function LocalString:Initialize(str, id)
+	self._IsLang = true
 	self.Str = str
 	self.ID = id
+
+	local crc = tonumber(util.CRC(id))
+	local old = LocalString.All[crc]
+	if old and old.ID ~= id then
+		errorNHf("LocalString hash collision: hash %d, IDs: %s & %s",
+			crc, id, old.ID)
+	end
+
+	LocalString.All[crc] = self
+	self.NumID = crc
 	self.IsString = isstring(str)
 end
 
@@ -117,18 +140,30 @@ function LocalString:__call(...)
 	return self.Str(...)
 end
 
-function LocalString:Write()
-	net.WriteUInt(self.ID, 8)
+function LocalString.__concat(a, b)
+	return tostring(a) .. tostring(b)
 end
 
-function net.ReadLocalString(lang)
-	if not lang then error("ReadLocalString requires a language table!") return end
-	local id = net.ReadUInt(8)
-	return lang[id]
+function LocalString:Write()
+	net.WriteUInt(self.NumID, 32)
+end
+
+function net.ReadLocalString()
+	local id = net.ReadUInt(32)
+	return LocalString.All[id]
+end
+
+function IsLanguage(what)
+	return istable(what) and what._IsLang
+end
+IsLocalString = IsLanguage
+
+for k,v in pairs(Strings) do
+	Language[k] = LocalString(v, k)
 end
 
 --[[
 	Raids.
 ]]
 
-BaseWars.LANG = Language 
+BaseWars.LANG = Language

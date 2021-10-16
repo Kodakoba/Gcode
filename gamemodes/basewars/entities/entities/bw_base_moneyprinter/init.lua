@@ -77,7 +77,7 @@ function ENT:RequestUpgrade(ply, try, total)
 	local ow = self:BW_GetOwner()
 
 	if GetPlayerInfo(ply) ~= ow then
-		ply:Notify("You can't upgrade others' printers!", BASEWARS_NOTIFICATION_ERROR)
+		ply:ChatNotify({BASEWARS_NOTIFICATION_ERROR, "You can't upgrade others' printers!"})
 		return false
 	end
 
@@ -86,12 +86,12 @@ function ENT:RequestUpgrade(ply, try, total)
 	local calcM = self:GetUpgradeValue() * lvl
 
 	if plyM < calcM then
-		ply:Notify(BaseWars.LANG.UpgradeNoMoney, BASEWARS_NOTIFICATION_ERROR)
+		ply:ChatNotify({BASEWARS_NOTIFICATION_ERROR, BaseWars.LANG.UpgradeNoMoney})
 		return false
 	end
 
 	if lvl >= self.MaxLevel then
-		ply:Notify(BaseWars.LANG.UpgradeMaxLevel, BASEWARS_NOTIFICATION_ERROR)
+		ply:ChatNotify({BASEWARS_NOTIFICATION_ERROR, BaseWars.LANG.UpgradeMaxLevel})
 		return false
 	end
 
@@ -116,7 +116,9 @@ function ENT:PlayerTakeMoney(ply, suppress)
 	local can, msg = hook.Run("BaseWars_PlayerCanEmptyPrinter", ply, self, money)
 
 	if can == false then
-			if msg then ply:Notify(msg, BASEWARS_NOTIFICATION_ERROR) end
+		if msg then
+			ply:ChatNotify({BASEWARS_NOTIFICATION_ERROR, msg})
+		end
 		return
 	end
 

@@ -1,136 +1,121 @@
 MODULE.Name 	= "Notify"
 MODULE.Author 	= "Q2F2 & Ghosty"
-MODULE.Realm	= 2
 
-local tag = "BaseWars.Notify"
 BaseWars.Notify = {}
 local MODULE = BaseWars.Notify
 
-function MODULE.__INIT()
 
-	surface.CreateFont(tag, {
-		font = "Roboto",
-		size = 16,
-		weight = 800,
-		antialias = true
-	})
-
+if SERVER then
+	util.AddNetworkString("BWNotify")
 end
 
-local HUDNote_c = 0
-local HUDNote_i = 1
-local HUDNotesm = {}
+NOTIFY_CONSOLE = 0
+NOTIFY_CHAT = 1
+NOTIFY_POPUP = 2
 
-local HUDNotesx = {}
-local HUDNotesy = {}
+local actions = {
+	[NOTIFY_CONSOLE] = function(_, ...)
+		MsgC(color_white, ...)
+		MsgC("\n")
+	end,
 
-local Alpha = 1000
+	[NOTIFY_CHAT] = function(_, ...)
+		chat.AddText(...)
+	end,
 
-function MODULE.Add(str, col)
+	[NOTIFY_POPUP] = function(typ, str, ...)
+		notification.AddTimed(str, typ, 5)
+		MsgC(str)
+	end
+}
 
-	Alpha = BaseWars.Config.Notifications.OpenTime * 100
+function MODULE._Add(not_typ, arg, str, ...)
+	if not CLIENT then
+		net.Start("BWNotify")
+			net.WriteUInt(not_typ, 4)
+			if not_typ == NOTIFY_POPUP then net.WriteUInt(arg, 4) end
 
-	local tab = {}
+			if IsLocalString(str) then
+				net.WriteUInt(0, 4)
+				str:Write()
 
-	tab.text 	= str
-	tab.col		= col
-	tab.col.a 	= Alpha
+				net.WriteUInt(select("#", ...), 8)
+				for k,v in ipairs({...}) do
+					Networkable.WriteEncoder(v)
+				end
 
-	tab.x		= 20
-	tab.y		= 0
+			elseif isstring(str) then
+				net.WriteUInt(1, 4)
+				
+				net.WriteCompressedString(str)
 
-	surface.SetFont("R18")
-	tab.w, tab.h = surface.GetTextSize(str)
+			elseif istable(str) then
+				net.WriteUInt(2, 4)
+				net.WriteUInt(#str, 8)
+				for k,v in ipairs(str) do
+					Networkable.WriteEncoder(v)
+				end
+			end
 
-	HUDNotesm[#HUDNotesm+1] = tab
-
-	HUDNotesx[#HUDNotesm+1] = -30
-
-	HUDNote_c = HUDNote_c + 1
-	HUDNote_i = HUDNote_i + 1
-
-end
-
-local Shadow = Color(0, 0, 0, 150)
-
-function MODULE.DrawMessage(self, k, v, i)
-
-	if Alpha <= 0 then
-
+		-- sending is up to you
 		return
-
 	end
 
-	local x = v.x
-	HUDNotesx[i] = L(HUDNotesx[i] or 20, x)
-	local x = HUDNotesx[i]
-	local y = v.y
-	local w = v.w
-	local h = v.h
-	w = w + 16
-	h = h + ((i - 1) * v.h) + (BaseWars.PSAText and 10 or 0)
-	y = y + h
-	v.cury = y
-	y = v.cury
-	surface.SetFont("R18")
-
-	surface.SetTextColor(Shadow.r, Shadow.g, Shadow.b, math.min(Alpha, Shadow.a))
-	surface.SetTextPos(x + 1, y + 1)
-	surface.DrawText(v.text)
-
-	surface.SetTextColor(v.col.r, v.col.g, v.col.b, Alpha)
-	surface.SetTextPos(x, y)
-	surface.DrawText(v.text)
-
+	actions[not_typ] (arg, str, ...)
 end
 
-function MODULE.GetHeight()
-
-	local Lines = BaseWars.Config.Notifications.LinesAmount
-
-	surface.SetFont("R18")
-	local w, h = surface.GetTextSize("aAbBcCdDeEfFgGhHiIjJkKlLmMoOpP")
-
-	return h * Lines
-
+function MODULE.LogNotify(str, ...)
+	MODULE._Add(NOTIFY_CONSOLE, nil, str, ...)
 end
 
-function MODULE.Paint()
-	do return end
-
-	local w, h = BaseWars.Config.Notifications.Width, MODULE.GetHeight()
-
-	local col = BaseWars.Config.Notifications.BackColor
-
-	surface.SetDrawColor(col.r, col.g, col.b, math.min(Alpha, col.a))
-	surface.DrawRect(10, (BaseWars.PSAText and 20 or 10), w + 12, h + 12)
-
-	if not HUDNotesm then
-
-		return
-
-	end
-
-	while #HUDNotesm > BaseWars.Config.Notifications.LinesAmount do
-
-		table.remove(HUDNotesm, 1)
-		HUDNotesx[#HUDNotesm] = -30
-	end
-
-	local i = 0
-
-	for k, v in next, HUDNotesm do
-
-		i = i + 1
-		MODULE:DrawMessage(k, v, i)
-
-	end
-
-	if Alpha > 0 then
-
-		Alpha = Alpha - 1
-
-	end
-
+function MODULE.ChatNotify(...)
+	MODULE._Add(NOTIFY_CHAT, nil, ...)
 end
-hook.Add("HUDPaint", tag .. ".Paint", (MODULE.Paint))
+
+function MODULE.PopupNotify(typ, str, ...)
+	assert(isnumber(typ), "1st arg should be notif type")
+	MODULE._Add(NOTIFY_POPUP, typ, str, ...)
+end
+
+if CLIENT then
+	net.Receive("BWNotify", function(len)
+		print("length is", len / 8)
+		local notif_typ = net.ReadUInt(4)
+
+		local popup_typ
+		if notif_typ == NOTIFY_POPUP then popup_typ = net.ReadUInt(4) end
+
+		local data_typ = net.ReadUInt(4)
+
+		if data_typ == 0 then
+			-- received local string
+			local fmt = net.ReadLocalString()
+			local argSz = net.ReadUInt(8)
+			local args = {}
+
+			for i=1, argSz do
+				args[i] = Networkable.ReadByDecoder()
+			end
+
+			MODULE._Add(notif_typ, popup_typ, fmt(unpack(args)))
+
+		elseif data_typ == 1 then
+			-- received string
+			local str = net.ReadCompressedString()
+			print("read str:", str)
+			MODULE._Add(notif_typ, nil, str)
+
+		elseif data_typ == 2 then
+			-- received table
+			local argSz = net.ReadUInt(8)
+			print("received table", argSz)
+			local args = {}
+
+			for i=1, argSz do
+				args[i] = Networkable.ReadByDecoder()
+			end
+
+			MODULE._Add(notif_typ, nil, unpack(args))
+		end
+	end)
+end

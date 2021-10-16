@@ -39,10 +39,8 @@ local function Pay(ply, amt, name, own)
 	ply = pin:GetPlayer()
 
 	if ply then
-		ply:Notify(
-			string.format(own and Language.PayOutOwner or Language.PayOut,
-				BaseWars.NumberFormat(amt),
-				name or "...something?"), BASEWARS_NOTIFICATION_GENRL)
+		ply:PopupNotify(NOTIFY_UNDO, own and Language.PayOutOwner or Language.PayOut,
+				amt, name or "...something?")
 	end
 
 	pin:GiveMoney(amt)

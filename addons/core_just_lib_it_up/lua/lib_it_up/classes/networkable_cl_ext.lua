@@ -113,6 +113,21 @@ local function ReadChange(obj)
 	return decoded_key, decoded_val
 end
 
+function Networkable.ReadByDecoder(encid)
+	if not encid then
+		encid = net.ReadUInt(encoderIDLength)
+	end
+
+	local dec = decoderByID[encid]
+
+	if not dec then
+		errorf("Failed to read key decoder ID properly (@ %d)", encid)
+		return
+	end
+
+	return dec[2](dec[3])
+end
+
 net.Receive("NetworkableSync", function(len)
 	local lBytes = len / 8
 

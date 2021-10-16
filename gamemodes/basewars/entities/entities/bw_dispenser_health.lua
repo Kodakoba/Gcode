@@ -96,7 +96,7 @@ function ENT:RequestUpgrade(ply)
 	local ow = self:BW_GetOwner()
 
 	if GetPlayerInfo(ply) ~= ow then
-		ply:Notify("You can't upgrade others' entities!", BASEWARS_NOTIFICATION_ERROR)
+		ply:ChatNotify({BASEWARS_NOTIFICATION_ERROR, "You can't upgrade others' entities!"})
 		return false
 	end
 
@@ -104,14 +104,12 @@ function ENT:RequestUpgrade(ply)
 	local calcM = self:GetUpgradeCost()
 
 	if not calcM then
-		ply:Notify(BaseWars.LANG.UpgradeMaxLevel, BASEWARS_NOTIFICATION_ERROR)
+		ply:ChatNotify({BASEWARS_NOTIFICATION_ERROR, BaseWars.LANG.UpgradeMaxLevel})
 		return false
 	end
 
-	print("next upgrade cost", calcM)
-
 	if plyM < calcM then
-		ply:Notify(BaseWars.LANG.UpgradeNoMoney, BASEWARS_NOTIFICATION_ERROR)
+		ply:ChatNotify({BASEWARS_NOTIFICATION_ERROR, BaseWars.LANG.UpgradeNoMoney})
 		return false
 	end
 

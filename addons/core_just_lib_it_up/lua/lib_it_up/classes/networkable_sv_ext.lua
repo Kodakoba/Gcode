@@ -107,8 +107,8 @@ local encoders = {
 
 	["table"] = {3, function(t, _, key)
 		--if t.Networkable_Encoder then return t:Networkable_Encoder() end
-		local vonned = _vONCache[key] or von.serialize(t)
-		_vONCache[key] = nil
+		local vonned = (key and _vONCache[key]) or von.serialize(t)
+		if key then _vONCache[key] = nil end
 
 		net.WriteUInt(#vonned, 16)
 		net.WriteData(vonned, #vonned)
@@ -139,7 +139,6 @@ local function determineEncoder(typ, val)
 					return net.WriteUInt, 8, 16 -- ushort
 				end
 			elseif val < 0 then
-				realPrint("using int", val)
 				return net.WriteInt, 9, 32		-- int
 			end
 		else
@@ -148,6 +147,9 @@ local function determineEncoder(typ, val)
 	end
 
 	if typ == "player" or typ == "weapon" then typ = "entity" end
+	if typ == "table" and IsColor(typ) then
+		return net.WriteColor, 6
+	end
 
 	local enc = encoders[typ]
 	if not enc then errorf("Failed to find Encoder function for type %s! Value is %s", typ, val) return end
@@ -155,6 +157,16 @@ local function determineEncoder(typ, val)
 	return enc[2], enc[1], enc[3]
 end
 
+function nw.GetEncoder(val)
+	return determineEncoder(type(val), val)
+end
+
+function nw.WriteEncoder(val)
+	local enc, id, arg = determineEncoder(type(val), val)
+	net.WriteUInt(id, encoderIDLength)
+
+	return enc(val, arg)
+end
 
 --[[
 	server-only methods used in shared

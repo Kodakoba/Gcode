@@ -96,16 +96,44 @@ local function RoundedBoxCorneredSize(bordersize, x, y, w, h, color, btl, btr, b
 		return
 	end
 
+	btl = btl or 0
+	btr = btr or 0
+	bbl = bbl or 0
+	bbr = bbr or 0
+
 	x = math.floor( x )
 	y = math.floor( y )
 	w = math.floor( w )
 	h = math.floor( h )
 	bordersize = math.min( math.floor( bordersize ), math.floor( w / 2 ) )
 
+	local bordH = math.min(btl + bbl, btr + bbr)
+	
+
 	-- Draw as much of the rect as we can without textures
-	surface.DrawRect( x + bordersize, y, w - bordersize * 2, h )
-	surface.DrawRect( x, y + bordersize, bordersize, h - bordersize * 2 )
-	surface.DrawRect( x + w - bordersize, y + bordersize, bordersize, h - bordersize * 2 )
+
+	local rx, ry = x + math.max(btl, bbl), y + math.max(btl, btr)
+	local rw, rh = w - (rx - x) - math.max(btr, bbr), h - (ry - y) - math.max(bbl, bbr)
+
+	surface.DrawRect(rx, ry, rw, rh)
+
+	local TbordH = math.max(btl, btr)
+	local BbordH = math.max(bbl, bbr)
+
+	-- vertical fill ( |_| )
+
+	local LbordW = math.max(btl, bbl)
+	local RbordW = math.max(btr, bbr)
+
+	surface.DrawRect( x, y + btl, rx, h - bbl - btl ) -- draw left
+	surface.DrawRect( w - RbordW, y + TbordH, RbordW, h - BbordH - TbordH ) -- draw right
+
+	-- goroz fill
+
+	surface.DrawRect(x + btl, y, w - btl - btr, TbordH)
+	surface.DrawRect(x + bbl, y + h - BbordH, w - bbl - bbr, BbordH)
+
+	--surface.DrawRect( x, y + btr, RbordW, h - (y + btr) - bbr ) -- draw right
 
 	local tex = tex_corner8
 	if ( bordersize > 8 ) then tex = tex_corner16 end
@@ -113,28 +141,21 @@ local function RoundedBoxCorneredSize(bordersize, x, y, w, h, color, btl, btr, b
 
 	surface.SetTexture( tex )
 
-	if btl and btl > 0 then
+	if btl > 0 then
 		surface.DrawTexturedRectUV( x, y, btl, btl, 0, 0, 1, 1 )
-	else
-		surface.DrawRect( x, y, bordersize, bordersize )
 	end
 
-	if btr and btr > 0 then
-		surface.DrawTexturedRectUV( x + w - bordersize, y, btr, btr, 1, 0, 0, 1 )
-	else
-		surface.DrawRect( x + w - bordersize, y, bordersize, bordersize )
+	if btr > 0 then
+		surface.DrawTexturedRectUV( x + w - btr, y, btr, btr, 1, 0, 0, 1 )
 	end
 
-	if bbl and bbl > 0 then
+
+	if bbl > 0 then
 		surface.DrawTexturedRectUV( x, y + h - bbl, bbl, bbl, 0, 1, 1, 0 )
-	else
-		surface.DrawRect( x, y + h - bordersize, bordersize, bordersize )
 	end
 
-	if bbr and bbr > 0 then
-		surface.DrawTexturedRectUV( x + w - bordersize, y + h - bbr, bbr, bbr, 1, 1, 0, 0 )
-	else
-		surface.DrawRect( x + w - bordersize, y + h - bordersize, bordersize, bordersize )
+	if bbr > 0 then
+		surface.DrawTexturedRectUV( x + w - bbr, y + h - bbr, bbr, bbr, 1, 1, 0, 0 )
 	end
 end
 

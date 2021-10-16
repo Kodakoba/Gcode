@@ -31,31 +31,34 @@ function MODULE.HandleNetMessage(len, ply)
 
 end
 
-net.Receive(tag, (MODULE.HandleNetMessage))
+net.Receive(tag, MODULE.HandleNetMessage)
 
-function MODULE.Notification(ply, text, col)
-
-	if SERVER then
-
-		net.Start(tag)
-			net.WriteUInt(0, 1)
-			net.WriteString(text)
-			net.WriteColor(col)
-		if ply then net.Send(ply) else net.Broadcast() end
-
-		MsgC(Color(240, 50, 50), "[BW] ", Color(255, 255, 255), ply, " -> ", Color(220, 220, 220), text, "\n")
-
-		return
-
+function MODULE.Notification(ply, ...)
+	if isstring(select(1, ...)) and IsColor(select(2, ...)) then
+		BaseWars.Notify.ChatNotify({select(2, ...), select(1, ...)})
+		net.Send(ply)
+	else
+		BaseWars.Notify.ChatNotify(...)
+		net.Send(ply)
 	end
-
-	MsgC(col, text, "\n")
-	BaseWars.Notify.Add(text, col)
-
 end
-local notification = (MODULE.Notification)
+
+local notification = MODULE.Notification
 Notify = notification
 PLAYER.Notify = notification
+PLAYER.ChatNotify = notification
+
+function PLAYER:LogNotify(...)
+	BaseWars.Notify.LogNotify(...)
+	net.Send(ply)
+end
+
+function MODULE.PopupNotification(ply, typ, text, ...)
+	BaseWars.Notify.PopupNotify(isnumber(typ) and typ or NOTIFY_GENERIC, text, ...)
+	net.Send(ply)
+end
+
+PLAYER.PopupNotify = MODULE.PopupNotification
 
 function MODULE.NotificationAll(text, col)
 
