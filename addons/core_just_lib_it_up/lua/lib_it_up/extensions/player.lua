@@ -262,7 +262,7 @@ function util.QuickTrace( origin, dir, filter )
 	return util.TraceLine( TRACE )
 end
 
-function PLAYER:GetEyeTrace()
+function PLAYER:GetEyeTrace(tt)
 	local t = self:GetTable()
 
 	if ( CLIENT ) then

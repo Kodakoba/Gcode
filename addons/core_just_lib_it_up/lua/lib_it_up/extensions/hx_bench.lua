@@ -34,7 +34,7 @@ LibItUp.SetIncluded()
 		use this instead of plain printing it if you're using `times` arg
 ]]
 
-benchmark = {}
+benchmark = benchmark or {}
 benchmark.__index = benchmark
 
 function benchmark.Init(Name)
@@ -124,20 +124,24 @@ end
 
 
 
-function benchmark:print()
+function benchmark:print(append)
 
 	if self.Frames then
 		self.BenchedFrames = self.BenchedFrames + 1
 
 		if self.BenchedFrames >= self.Frames then
-			print(self:__tostring())
+			local s = self:__tostring()
+			if append then print(s, append) else print(s) end
+
 			self.BenchedFrames = 0
 			self:Reset()
 			self._LastPrint = ST()
 		end
 
 	else
-		print(self:__tostring())
+		local s = self:__tostring()
+		if append then print(s, append) else print(s) end
+
 		self:Reset()
 	end
 
