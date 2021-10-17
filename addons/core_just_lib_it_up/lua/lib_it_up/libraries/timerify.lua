@@ -31,7 +31,7 @@ function META:Timer(name, sec, reps, func, ...)
 	end
 	
 	timer.Create(id, sec or 0, reps or 1, function()
-		if not self:IsValid() then print("invalid smhhh", reps) return end
+		if not self:IsValid() then return end
 		func(self, unpack(args))
 	end)
 
