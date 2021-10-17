@@ -84,6 +84,12 @@ local function ColorModHSV(col, h, s, v)
 	return col
 end
 
+local function ColorMulHSV(col, h, s, v)
+	local ch, cs, cv = col:ToHSV()
+	col.r, col.g, col.b = HSVToColorRGB(ch * h, cs * s, cv * v)
+	return col
+end
+
 local function ColorChangeHSV(col, h, s, v)
 	local ch, cs, cv = col:ToHSV()
 
@@ -92,6 +98,7 @@ local function ColorChangeHSV(col, h, s, v)
 end
 
 if CLIENT then
+	draw.ColorMulHSV = ColorMulHSV
 	draw.ColorModHSV = ColorModHSV
 	draw.ColorChangeHSV = ColorChangeHSV
 end
@@ -121,6 +128,10 @@ end
 
 function COLOR:ModHSV(h, s, v)
 	return ColorChangeHSV(self, h, s, v)
+end
+
+function COLOR:MulHSV(h, s, v)
+	return ColorMulHSV(self, h, s, v)
 end
 
 COLOR.HSVMod = COLOR.ModHSV
