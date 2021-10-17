@@ -80,7 +80,6 @@ end
 
 if CLIENT then
 	net.Receive("BWNotify", function(len)
-		print("length is", len / 8)
 		local notif_typ = net.ReadUInt(4)
 
 		local popup_typ
@@ -103,13 +102,11 @@ if CLIENT then
 		elseif data_typ == 1 then
 			-- received string
 			local str = net.ReadCompressedString()
-			print("read str:", str)
 			MODULE._Add(notif_typ, nil, str)
 
 		elseif data_typ == 2 then
 			-- received table
 			local argSz = net.ReadUInt(8)
-			print("received table", argSz)
 			local args = {}
 
 			for i=1, argSz do

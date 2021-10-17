@@ -933,17 +933,4 @@ hook.Add("HUDDrawTargetID", "NoTargetID", function()
 	if enabled:GetInt() ~= 0 then return false end
 end)
 
-local reported = true
-
-hook.Add("Think", ":crab:YOU____ARE GONE:crab:", function()
-
-	if reported~=system.HasFocus() then 
-		net.Start("AFKFocus")
-		net.WriteBool(system.HasFocus())
-		net.SendToServer()
-		reported = system.HasFocus()
-	end
-
-end)
-
 PlayerTitles.Emotes = EmoteShortcuts
