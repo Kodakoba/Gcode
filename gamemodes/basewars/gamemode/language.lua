@@ -13,8 +13,10 @@ end
 
 Language.eval = function(self, key, ...)
 	local val = Language[key]
-	if val then
+	if not isstring(val) then
 		return val(...), true
+	else
+		return val, true
 	end
 
 	return ("[Invalid language: %s]"):format(key), false

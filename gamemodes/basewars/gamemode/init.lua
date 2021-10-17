@@ -5,9 +5,7 @@ include("include.lua")
 local AuthTbl = {}
 
 function GM:NetworkIDValidated(name, steamid)
-
 	AuthTbl[steamid] = name
-
 end
 
 function GM:PlayerInitialSpawn(ply)
@@ -16,23 +14,18 @@ function GM:PlayerInitialSpawn(ply)
 
 	BaseWars.UTIL.RefundFromCrash(ply)
 
-	local f = function()
+	--[[local f = function()
 
 		if not AuthTbl[ply:SteamID()] then
-
 			ply:ChatPrint(Language("FailedToAuth"))
-
 			ply.UnAuthed = true
-
 		else
-
 			AuthTbl[ply:SteamID()] = nil
-
 		end
 
 	end
 
-	timer.Simple(0, f)
+	timer.Simple(0, f)]]
 
 	for k, v in next, ents.GetAll() do
 
