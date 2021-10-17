@@ -157,14 +157,6 @@ function BWSpawn(ply, cat, catID)
 	if vip and not IsGroup(ply, "vip") then ply:EmitSound("buttons/button10.wav") return end
 	if trust and not IsGroup(ply, "trusted") then ply:EmitSound("buttons/button10.wav") return end
 
-	local level = i.Level
-	if gun and (not level or level < BaseWars.Config.LevelSettings.BuyWeapons) then level = BaseWars.Config.LevelSettings.BuyWeapons end
-
-	--[[if level and not ply:HasLevel(level) then
-		ply:EmitSound("buttons/button10.wav")
-		return
-	end]]
-
 	local tr
 
 	if class then

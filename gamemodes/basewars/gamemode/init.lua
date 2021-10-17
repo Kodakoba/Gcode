@@ -370,7 +370,7 @@ function GM:PlayerSpawn(ply)
 	local Spawn = ply.SpawnPoint
 
 	if IsValid(Spawn) and (not Spawn.IsPowered or Spawn:IsPowered()) then
-		local Pos = Spawn:GetPos() + BaseWars.Config.Ents.SpawnPoint.Offset
+		local Pos = Spawn:GetPos() + Vector(0, 0, 16)
 		local ang = Spawn.SpawnAngle
 		ang[1] = 0
 		ang[3] = 0

@@ -65,7 +65,7 @@ PLAYER.ClearAFK = MODULE.ClearAFK
 
 function MODULE.IsAFK(ply)
 
-	return (CurTime() - ply:GetNW2Int("AFK")) > BaseWars.Config.AFK.Time
+	return (CurTime() - ply:GetNW2Int("AFK")) > BaseWars.Config.AFKTime
 
 end
 PLAYER.IsAFK = MODULE.IsAFK
