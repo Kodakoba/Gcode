@@ -47,8 +47,10 @@ net.Receive("OpenDiscord", function()
 			f:SetInput(false)
 		end)
 
-		local dh = vgui.Create("DHTML")
+		local dh = vgui.Create("DHTML", f)
 			dh:SetSize(1, 1)
 			dh:OpenURL(BaseWars.Config.DiscordLink)
+
+
 	end
 end)
