@@ -107,6 +107,8 @@ Strings.Inv_StatHandling    = "Sight Time"
 Strings.Inv_StatMoveSpeed   = "Movement Speed"
 Strings.Inv_StatDrawTime    = "Draw Time"
 
+Strings.UpgradeNoMoney		= "You don't have enough money!"
+Strings.SpawnMenuMoney		= "You don't have enough money to buy this!"
 
 setmetatable(Language, Language)
 

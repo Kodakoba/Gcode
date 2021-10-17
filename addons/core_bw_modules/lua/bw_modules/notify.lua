@@ -53,6 +53,7 @@ function MODULE._Add(not_typ, arg, str, ...)
 				net.WriteUInt(2, 4)
 				net.WriteUInt(#str, 8)
 				for k,v in ipairs(str) do
+					if IsLocalString(v) then v = v() end
 					Networkable.WriteEncoder(v)
 				end
 			end

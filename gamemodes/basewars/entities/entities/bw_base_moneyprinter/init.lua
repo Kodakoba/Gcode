@@ -86,12 +86,12 @@ function ENT:RequestUpgrade(ply, try, total)
 	local calcM = self:GetUpgradeValue() * lvl
 
 	if plyM < calcM then
-		ply:ChatNotify({BASEWARS_NOTIFICATION_ERROR, BaseWars.LANG.UpgradeNoMoney})
+		ply:ChatNotify({BASEWARS_NOTIFICATION_ERROR, Language.UpgradeNoMoney()})
 		return false
 	end
 
 	if lvl >= self.MaxLevel then
-		ply:ChatNotify({BASEWARS_NOTIFICATION_ERROR, BaseWars.LANG.UpgradeMaxLevel})
+		ply:ChatNotify({BASEWARS_NOTIFICATION_ERROR, Language.UpgradeMaxLevel()})
 		return false
 	end
 

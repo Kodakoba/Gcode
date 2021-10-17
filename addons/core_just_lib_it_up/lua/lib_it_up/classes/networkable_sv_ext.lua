@@ -147,7 +147,7 @@ local function determineEncoder(typ, val)
 	end
 
 	if typ == "player" or typ == "weapon" then typ = "entity" end
-	if typ == "table" and IsColor(typ) then
+	if typ == "table" and IsColor(val) then
 		return net.WriteColor, 6
 	end
 
