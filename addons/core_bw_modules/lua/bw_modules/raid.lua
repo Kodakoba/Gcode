@@ -23,7 +23,7 @@ local err = raid.Errors
 local id = 0
 
 local function makeErr(s)
-	err[id] = LocalString(s, id)
+	err[id] = LocalString(s, "raid_errs:" .. id)
 
 	id = id + 1
 
@@ -148,8 +148,9 @@ function raid.CanGenerallyRaid(ply, nonfac)
 		return false, nonfac and err.CantHaveAFaction() or err.NeedAFaction()
 	end
 
-	if not GetPlayerInfoGuarantee(ply):GetBase() then
-		return false, err.YouNeedBase()
+	local pin = GetPlayerInfoGuarantee(ply)
+	if not pin:GetBase() then
+		return false, pin:GetPlayer() == LocalPlayer() and err.YouNeedBase() or err.TheyNeedBase()
 	end
 
 	return true
@@ -273,14 +274,14 @@ end
 function PINFO:GetRaidCD()
 	local nw = self:GetPublicNW()
 	local rtime = nw:Get("RaidCD", 0)
-	local passed = CurTime() - rtime
+	local left = rtime - CurTime()
 
-	return Raids.RaidCoolDown - passed > 0, math.max(Raids.RaidCoolDown - passed, 0)
+	return left > 0, math.max(left, 0)
 end
 
 function PINFO:SetRaidCD(t)
 	local nw = self:GetPublicNW()
-	nw:Set("RaidCD", CurTime() - Raids.RaidCoolDown + (t or 900))
+	nw:Set("RaidCD", CurTime() + Raids.RaidCoolDown - (t or Raids.RaidCoolDown))
 end
 
 PLAYER.RaidedCooldown = PLAYER.GetRaidCD

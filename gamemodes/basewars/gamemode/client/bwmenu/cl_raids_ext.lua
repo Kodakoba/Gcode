@@ -291,7 +291,7 @@ local function createFactionlessOption(pnl, scr, num, ply)
 		local tW, tH = draw.SimpleText(nm, BaseWars.Menu.Fonts.MediumSmall, av.X + av:GetWide() + 6, av.Y, color_white, 0, 5)
 
 		if ply == LocalPlayer() then
-			draw.SimpleText("  (" .. Language.You:lower() .. "!)", BaseWars.Menu.Fonts.Small,
+			draw.SimpleText("  (" .. Language.You():lower() .. "!)", BaseWars.Menu.Fonts.Small,
 				av.X + av:GetWide() + 6 + tW, av.Y + tH * 0.875, Colors.LightGray, 0, 4)
 			return
 		end

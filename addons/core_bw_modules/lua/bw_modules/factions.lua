@@ -49,7 +49,7 @@ local err = Factions.Errors
 local err_id = 0
 
 local function makeErr(s)
-	err[err_id] = LocalString(s, err_id)
+	err[err_id] = LocalString(s, "fac_err:" .. err_id)
 
 	err_id = err_id + 1
 

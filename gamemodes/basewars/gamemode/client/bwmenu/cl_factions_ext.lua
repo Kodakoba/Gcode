@@ -157,7 +157,7 @@ local function createOwnFactionActions(f, fac, canv)
 		local an, new = self:To("Y", canv.Main:GetTall() + 4, 0.3, 0, 0.3)
 		if new then
 			an:Then(function()
-				self:Remove()
+				self:Hide()
 			end)
 		end
 	end
@@ -260,9 +260,11 @@ function createFactionActions(f, fac, canv)
 			local an, new = self:To("Y", where, 0.2, delayed and 0.5 or 0, 2)
 			te.Disappearing = true
 
-			return an:Then(function()
+			an:Then(function(s)
 				self:Remove()
 			end)
+
+			return an
 		end
 
 		local join = vgui.Create("DButton", canv.Main)
@@ -324,7 +326,7 @@ function createFactionActions(f, fac, canv)
 			canv.JoinBtn = nil
 			self:PopOut(0.3)
 			self:To("Y", canv.Main:GetTall() + 4, 0.3, 0, 3):Then(function()
-				self:Remove()
+				self:Hide()
 			end)
 
 			self.Removing = true
@@ -338,19 +340,26 @@ function createFactionActions(f, fac, canv)
 
 			Factions.RequestJoin(fac, te:GetValue()):Then(function()
 				arrRemove = true
+
 				te:LerpColor(te.TextColor, Color(30, 170, 30), 0.1, 0, 0.2)
 				te:LerpColor(te.PHTextColor, Color(60, 160, 60), 0.1, 0, 0.2)
 				te:LerpColor(te.HTextColor, Color(70, 160, 70), 0.1, 0, 0.2)
 				te:LerpColor(te.BGColor, Color(40, 75, 40), 0.1, 0, 0.2)
+
 				local where = te.Y + te:GetTall() + 12
+
 				te:Disappear(true):Then(function()
 					createOwnFactionActions(f, fac, canv)
+
 					local prev = canv.LeaveBtn.Y
+					canv.LeaveBtn:Show()
 					canv.LeaveBtn.Y = where
 					canv.LeaveBtn:To("Y", prev, 0.3, 0, 0.3)
 				end)
-				join:Remove()
-			end, function(err)
+
+				join:SetInput(false)
+				self:Disappear()
+			end, function(_, err)
 
 				local bad_pw = err == Factions.Errors.BadPassword
 
@@ -395,18 +404,22 @@ function createFactionActions(f, fac, canv)
 
 			local dur = math.max(LocalPlayer():Ping() / 1000, 0.1)
 
-			arrAnim = anim:MemberLerp(t, "ArrX", join:GetWide() - 4, dur, 0, 3):Then(function()
-				if not arrResetNow then
-					arrResume = coroutine.Resumer()
-					coroutine.yield()
-				end
+			arrAnim = anim:MemberLerp(t, "ArrX", join:GetWide() - 4, dur, 0, 3)
 
-				if arrRemove then join:Remove() return end
-				t.ArrX = -arrSize - 4
-				anim:MemberLerp(t, "ArrX", 0, 0.25, 0, 0.3)
+			if arrAnim then
+				arrAnim:Then(function()
+					if not arrResetNow then
+						arrResume = coroutine.Resumer()
+						coroutine.yield()
+					end
 
-				self.Clicked = false
-			end)
+					if arrRemove then join:Remove() return end
+					t.ArrX = -arrSize - 4
+					anim:MemberLerp(t, "ArrX", 0, 0.25, 0, 0.3)
+
+					self.Clicked = false
+				end)
+			end
 
 			self.Clicked = true
 		end
@@ -444,7 +457,7 @@ function createFactionActions(f, fac, canv)
 			local anim, new = self:To("Y", canv.Main:GetTall() + 4, 0.3, 0, 0.3)
 			if new then
 				anim:Then(function()
-					self:Remove()
+					self:Hide()
 				end)
 			end
 
@@ -459,6 +472,7 @@ function createFactionActions(f, fac, canv)
 				self:Disappear()
 				createOwnFactionActions(f, fac, canv)
 				local prev = canv.LeaveBtn.Y
+				canv.LeaveBtn:Show()
 				canv.LeaveBtn.Y = where
 				canv.LeaveBtn:To("Y", prev, 0.3, 0.2, 0.3)
 			end, function(err)

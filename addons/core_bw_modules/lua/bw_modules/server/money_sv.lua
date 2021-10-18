@@ -99,7 +99,7 @@ function FUNCS:LoadMoney(dat, write)
 		money = BaseWars.Config.StartMoney
 
 		MODULE.Log("Reset money for \"%s\" (%s) to starting money (%s)",
-			self:Nick(), self:SteamID64(), Language.Price(money))
+			self:Nick(), self:SteamID64(), Language("Price", money))
 	end
 
 	self:InitBWData("money", money)

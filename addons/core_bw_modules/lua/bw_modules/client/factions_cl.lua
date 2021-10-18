@@ -8,24 +8,25 @@ Factions.FactionIDs = Factions.FactionIDs or {}
 local Promises = {}
 
 local function promise()
-	local prom
-	prom = Promise()
-	prom:Then(function()
+	local retProm = Promise() -- promise to return
+	local funcProm = Promise() -- functional prom
+
+	funcProm:Then(function()
 		local ok = net.ReadBool()
 		local whyNot = not ok and net.ReadLocalString(Factions.Errors)
 
 		if not ok then
-			prom:Reject(whyNot)
+			retProm:Reject(whyNot)
 		else
-			prom:Resolve(ok)
+			retProm:Resolve(ok)
 		end
 	end)
 
 	local uid = uniq.Seq("Faction promises", 8)
-	print("Promise", prom, uid)
-	Promises[uid] = prom
 
-	return prom, uid
+	Promises[uid] = funcProm
+
+	return retProm, uid
 end
 
 function facmeta:Initialize(id, name, col, haspw)

@@ -160,6 +160,7 @@ end
 function IsLanguage(what)
 	return istable(what) and what._IsLang
 end
+
 IsLocalString = IsLanguage
 
 for k,v in pairs(Strings) do
