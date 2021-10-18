@@ -52,6 +52,10 @@ function math.Sort(...)
 	return unpack(temp)
 end
 
+function math.Sign(n)
+	return n >= 0 and 1 or -1
+end
+
 function math.Ratio(ratio, w, h)
 	if ratio < 1 then
 		-- ratio < 1 = align by height

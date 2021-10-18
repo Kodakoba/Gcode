@@ -687,6 +687,24 @@ function Ease(num, how) --garry easing
 	return Frac
 end
 
+local two3 = 2 / 3
+
+function ReverseEase(num, how) --garry easing
+	num = math.Clamp(num, 0, 1)
+	local Frac = 0
+
+	if ( how < 0 ) then
+		errorNHf("NYI")
+		return num
+	elseif ( how > 0 and how < 1 ) then
+		Frac = 1 - ( ( 1 - num ) ^ how )
+	else --how > 1 = ease in
+		Frac = num ^ (1 / how)
+	end
+
+	return Frac
+end
+
 local function AnimationsThink()
 
 	local systime = SysTime()
