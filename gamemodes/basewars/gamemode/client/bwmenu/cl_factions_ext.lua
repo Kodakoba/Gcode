@@ -154,7 +154,8 @@ local function createOwnFactionActions(f, fac, canv)
 	end
 
 	function leave:Disappear()
-		local an, new = self:To("Y", canv.Main:GetTall() + 4, 0.3, 0, 0.3)
+		plyList:RemoveListeners("Hovered", leave)
+		local an, new = self:To("Y", canv.Main:GetTall() + 8, 0.3, 0, 0.3)
 		if new then
 			an:Then(function()
 				self:Hide()
@@ -323,6 +324,8 @@ function createFactionActions(f, fac, canv)
 		end
 
 		function join:Disappear()
+			plyList:RemoveListeners("Hovered", self)
+
 			canv.JoinBtn = nil
 			self:PopOut(0.3)
 			self:To("Y", canv.Main:GetTall() + 4, 0.3, 0, 3):Then(function()
@@ -346,14 +349,12 @@ function createFactionActions(f, fac, canv)
 				te:LerpColor(te.HTextColor, Color(70, 160, 70), 0.1, 0, 0.2)
 				te:LerpColor(te.BGColor, Color(40, 75, 40), 0.1, 0, 0.2)
 
-				local where = te.Y + te:GetTall() + 12
-
 				te:Disappear(true):Then(function()
 					createOwnFactionActions(f, fac, canv)
 
 					local prev = canv.LeaveBtn.Y
 					canv.LeaveBtn:Show()
-					canv.LeaveBtn.Y = where
+					canv.LeaveBtn.Y = plyList.FoldedY + 8
 					canv.LeaveBtn:To("Y", prev, 0.3, 0, 0.3)
 				end)
 
@@ -426,8 +427,8 @@ function createFactionActions(f, fac, canv)
 	else
 		local join = vgui.Create("FButton", canv.Main)
 		canv:AddElement("Exclusive", join)
-		join:SetSize(96, 36)
-		join:SetPos(canv.Main:GetWide() / 2 - join:GetWide() / 2, canv.Main:GetTall() - 52)
+		join:SetSize(128, 36)
+		join:SetPos(canv.Main:GetWide() / 2 - join:GetWide() / 2, plyList.FoldedY - join:GetTall() - 8)
 		join:SetLabel("Join")
 		canv.JoinBtn = join
 
@@ -453,6 +454,8 @@ function createFactionActions(f, fac, canv)
 		end
 
 		function join:Disappear()
+			plyList:RemoveListeners("Hovered", self)
+
 			canv.JoinBtn = nil
 			local anim, new = self:To("Y", canv.Main:GetTall() + 4, 0.3, 0, 0.3)
 			if new then
@@ -473,7 +476,7 @@ function createFactionActions(f, fac, canv)
 				createOwnFactionActions(f, fac, canv)
 				local prev = canv.LeaveBtn.Y
 				canv.LeaveBtn:Show()
-				canv.LeaveBtn.Y = where
+				canv.LeaveBtn.Y = plyList.FoldedY + 8
 				canv.LeaveBtn:To("Y", prev, 0.3, 0.2, 0.3)
 			end, function(err)
 				chat.AddText(Color(180, 90, 90), "Something went wrong!\n", tostring(err))
