@@ -214,7 +214,7 @@ net.Receive("BW.Upgrade", function(len, ply)
 	Upgrade(ply, lvs, ent)
 end)
 
-BaseWars.Commands.AddCommand({"max"}, function(ply)
+BaseWars.Commands.AddCommand({"max", "maxupg", "maxupgrade"}, function(ply)
 	Upgrade(ply, "max")
 end, false)
 
