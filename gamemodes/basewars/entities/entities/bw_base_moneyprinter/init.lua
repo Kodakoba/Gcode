@@ -54,13 +54,23 @@ function ENT:Overclock(lv, mult)
 	return true
 end
 
+function ENT:Upgrade_HasMoney(ply)
+	local lvl = self.Level
+	local plyM = ply:GetMoney()
+	local calcM = self:GetUpgradeValue() * lvl
+
+	return plyM >= calcM
+end
+
 function ENT:DoUpgrade(final)
 	local lvl = self:GetLevel()
 	local calcM = self:GetUpgradeValue() * lvl
 	BaseWars.Worth.Add(self, calcM)
 	self.Level = self.Level + 1
 
-	if final then
+	local has = self:Upgrade_HasMoney(ply)
+
+	if final or not has then
 		self:EmitSound("replay/rendercomplete.wav")
 		self:SetLevel(self.Level)
 		local amt = BaseWars.Printers.GetPrintRate(self)
@@ -81,11 +91,9 @@ function ENT:RequestUpgrade(ply, try, total)
 		return false
 	end
 
-	local lvl = self.Level
-	local plyM = ply:GetMoney()
-	local calcM = self:GetUpgradeValue() * lvl
+	local has = self:Upgrade_HasMoney(ply)
 
-	if plyM < calcM then
+	if not has then
 		ply:ChatNotify({BASEWARS_NOTIFICATION_ERROR, Language.UpgradeNoMoney()})
 		return false
 	end
