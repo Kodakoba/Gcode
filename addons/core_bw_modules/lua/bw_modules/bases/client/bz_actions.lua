@@ -46,6 +46,8 @@ function act.ShowUnclaimedActions(wheel, core, base)
 
 		exam:SetDescriptionColor(Color(150, 150, 150))
 			:SetTitleColor(Color(150, 150, 150))
+
+	return claim
 end
 
 function act.ShowClaimedActions(wheel, core, base)
@@ -54,10 +56,10 @@ end
 
 function act.GenerateWheel(wheel, core, base)
 	if base:IsOwner(LocalPlayer()) then
-		act.ShowOwnActions(wheel, core, base)
+		return act.ShowOwnActions(wheel, core, base)
 	elseif not base:GetClaimed() then
-		act.ShowUnclaimedActions(wheel, core, base)
+		return act.ShowUnclaimedActions(wheel, core, base)
 	else
-		act.ShowClaimedActions(wheel, core, base)
+		return act.ShowClaimedActions(wheel, core, base)
 	end
 end

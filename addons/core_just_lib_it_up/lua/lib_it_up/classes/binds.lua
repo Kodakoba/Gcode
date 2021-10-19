@@ -52,6 +52,10 @@ local function readData()
 	end
 
 	local bindData = util.JSONToTable(table.concat(json))
+
+	for k,v in pairs(bindData or {}) do
+		Binds.Data[k] = Binds.BindData(unpack(v))
+	end
 end
 
 Binds.WriteData = writeData
@@ -93,6 +97,8 @@ function bindData:Initialize(k, m)
 	self[2] = m
 end
 
+readData()
+
 local function cleanID(t, id)
 	for i=#t, 1, -1 do
 		if t[i].ID == id then
@@ -109,7 +115,7 @@ function Bind:Initialize(id)
 	self.ID = id
 
 	-- if an existing object for this ID already exists, just give that
-	if Binds.Objects[id] then return Binds.Objects[id] end 
+	if Binds.Objects[id] then return Binds.Objects[id] end
 	Binds.Objects[id] = self
 
 	-- if we have data for that bindID (preferred key/method), set those automatically
@@ -258,8 +264,9 @@ function Bind:_Fire(down, ply)
 
 		self:SetActive(down)
 		self:Emit(down and "Activate" or "Deactivate", ply)
-		
+
 	elseif self.Method == BINDS_TOGGLE and down then
+
 		local newState = not self.__State
 		self:SetActive(newState)
 		self:Emit(newState and "Activate" or "Deactivate", ply)
@@ -396,10 +403,13 @@ local function onUnhold(ply, _, _, str)
 
 	local bnd = checkBindHoldable(str)
 	if not bnd then return end
-	
+
 	bnd:_Fire(false, ply)
 end
 
 
 concommand.Add("+" .. cmdPrefix .. "bind", onHold, autoCompleter(BINDS_HOLD))
 concommand.Add("-" .. cmdPrefix .. "bind", onUnhold, autoCompleter(BINDS_HOLD))
+
+if not Timerify then include("lib_it_up/libraries/timerify.lua") end
+Timerify(Bind)

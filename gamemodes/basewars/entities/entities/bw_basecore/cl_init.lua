@@ -12,7 +12,14 @@ local function makeWheel(ent)
 
 	local base = ent:GetBase()
 
-	BaseWars.Bases.Actions.GenerateWheel(wh, ent, base)
+	local defOpt = BaseWars.Bases.Actions.GenerateWheel(wh, ent, base)
+
+	wh:Show()
+
+	if defOpt then
+		wh:PointOnOption(defOpt)
+	end
+
 	return wh
 end
 
@@ -65,8 +72,7 @@ function ENT:Draw()
 	end
 
 	if self.Using == useTime and not wheel and using then
-		local wh = makeWheel(self)
-		wh:Show()
+		makeWheel(self)
 	end
 end
 

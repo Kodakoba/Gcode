@@ -184,7 +184,7 @@ function wheel:_BoundCursor(wheel)
 
 			self.Angle = math.deg( -math.atan2(nmy, nmx) + math.pi / 2 )
 			if self.Angle > 0 then
-				self.Angle = 90 + (270 - self.Angle)
+				self.Angle = 360 - self.Angle
 			end
 			self.Angle = math.abs(self.Angle)
 			self.SelectionFrac = self.Angle / 360
@@ -197,7 +197,7 @@ function wheel:_BoundCursor(wheel)
 			cur[1], cur[2] = ox - ocx, oy - ocy
 			self.Angle = math.deg( -math.atan2(ocy, ocx) + math.pi / 2 )
 			if self.Angle > 0 then
-				self.Angle = 90 + (270 - self.Angle)
+				self.Angle = 360 - self.Angle
 			end
 			self.Angle = math.abs(self.Angle)
 			self.SelectionFrac = self.Angle / 360
@@ -205,6 +205,30 @@ function wheel:_BoundCursor(wheel)
 
 		self.OptionPercentage = math.min( (len - wheelInnerRadius) / (wheelOuterRadius - wheelInnerRadius), 1 )
 	end
+end
+
+function wheel:PointOnOption(opt)
+	local oAng = 360 / #self.Options
+
+	if self._CurHovered and self._CurHovered ~= opt then
+		self._CurHovered:_Unhover()
+	end
+
+	self._CurHovered = opt
+
+	local num = opt:GetOptionNumber()
+	local pnl = self.Panel
+
+	pnl.OptionPercentage = 1
+	pnl.Angle = 270 - ((num + 0.5) * oAng)
+
+	pnl.SelectionFrac = pnl.Angle / 360
+
+	local origin = pnl.MouseOrigin
+	local ox, oy = origin[1], origin[2]
+
+	local dirX, dirY = math.cos(math.rad(pnl.Angle)), math.sin(math.rad(pnl.Angle))
+	gui.SetMousePos(ox + dirX * wheelOuterRadius, oy + dirY * wheelOuterRadius)
 end
 
 local function isSelected(fr, bottom, upper, sel)
@@ -352,25 +376,25 @@ function wheel:Show()
 
 	local incirc = pnl.InnerCircle
 		incirc:SetSegments(50)
-		incirc:SetRadius(8)
-		incirc:To("Radius", optionInnerRadius, wheelAppearTime + 0.1, 0, 0.2)
+		incirc:SetRadius(optionInnerRadius - 32)
+		incirc:To("Radius", optionInnerRadius, wheelAppearTime, 0.1, 0.2)
 
 	for i=1, #options do
 		local opt = options[i]
 		opt:_Setup(i, segAng)
 	end
 
+	self._Shown = true
 end
 
 function wheel:Hide(delay)
-	local anim, new = self:To("Frac", 0, wheelDisappearTime, 0, 0.3)
+	self:To("Frac", 0, wheelDisappearTime, 0, 4)
 
 	if self.Panel then
-
 		self.Panel:AlphaTo(0, wheelDisappearTime, delay or 0, function(anim, pnl)
 			pnl:Remove()
 			if pnl == self.Panel then self.Panel = nil end
-		end, 1.4)
+		end, 2)
 
 		self.Panel:SetMouseInputEnabled(false)
 		self.Panel:SetKeyBoardInputEnabled(false)
@@ -504,7 +528,7 @@ function InteractWheelOption:_Select()
 
 	self._InnerCircle = LibItUp.Circle()
 
-	local dur, ease = 0.2, 0.3
+	local dur, ease = 0.4, 0.3
 
 	local incirc = self._InnerCircle
 		incirc:SetSegments(50)
@@ -513,7 +537,7 @@ function InteractWheelOption:_Select()
 			dur, 0, ease)
 
 	self.Circle:MemberLerp(self, "SelectedFrac", 1, dur, 0, ease)
-	self.Circle:MemberLerp(self, "HoveredFrac", 0, 0.1, 0, 0.2)
+	self.Circle:MemberLerp(self, "HoveredFrac", 0, 0.2, 0.1, 5)
 
 	self:Emit("Select")
 end
@@ -644,7 +668,7 @@ function InteractWheelOption:_Paint(x, y, w, h, prevMatrix, innerCircle)
 	local far = math.sin(math.pi / 4)
 	local off = (far - close) * rdiff / 2
 
-	local sqr = math.Round(far * rdiff + close * rdiff)
+	local sqr = math.Round(far * rdiff + close * rdiff) * 0.8
 
 	local flip = 1
 
@@ -724,11 +748,15 @@ function InteractWheelOption:_Paint(x, y, w, h, prevMatrix, innerCircle)
 	end
 
 	local fr = self.HoveredFrac
+
 	if fr == 0 then
-		if prevAlpha then surface.SetAlphaMultiplier(prevAlpha) end
+		if prevAlpha then
+			surface.SetAlphaMultiplier(prevAlpha)
+		end
 		return
 	end
 
+	
 	--[[
 		Calculate total infobox height so we can center it
 			1. Get the icon's height, if present
@@ -770,7 +798,7 @@ function InteractWheelOption:_Paint(x, y, w, h, prevMatrix, innerCircle)
 	]]
 
 	local amult = surface.GetAlphaMultiplier()
-	surface.SetAlphaMultiplier(fr ^ 0.3 * amult)
+	surface.SetAlphaMultiplier(fr * amult)
 
 	-- Translation depends on hoverfrac: the closer to 1, the less this translation is
 
@@ -784,7 +812,7 @@ function InteractWheelOption:_Paint(x, y, w, h, prevMatrix, innerCircle)
 	local mtrx = self.Matrix
 		mtrx:Reset()
 		mtrx:TranslateNumber(trX, trY)
-		local scale = 0.3 + (fr ^ 0.7) * 0.7
+		local scale = (fr ^ 0.7) * 1
 		mtrx:SetScaleNumber(scale, scale)
 		mtrx:TranslateNumber(-trX, -trY)
 
@@ -795,7 +823,7 @@ function InteractWheelOption:_Paint(x, y, w, h, prevMatrix, innerCircle)
 	-- Disable the inner-circle stencil
 	render.SetStencilEnable(false)
 
-	cam.PushModelMatrix(mtrx, true)
+	cam.PushModelMatrix(mtrx)
 
 		local cy = y - infoH / 2 - (ic and ic:GetTall() / 2 or 0)
 
@@ -859,6 +887,11 @@ function InteractWheelOption:Remove()
 end
 
 function wheel:AddOption(name, desc, icon, cb)
+	if self._Shown then
+		error("Can't add option after showing!")
+		return
+	end
+
 	local option = InteractWheelOption:new(name, desc, icon, cb)
 		option:SetWheel(self)
 		option:SetOptionNumber(#self.Options + 1)

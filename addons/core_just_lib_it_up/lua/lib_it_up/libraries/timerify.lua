@@ -29,9 +29,9 @@ function META:Timer(name, sec, reps, func, ...)
 	if reps == 0 then
 		ErrorNoHalt("created a 0 rep timer:" .. debug.traceback())
 	end
-	
+
 	timer.Create(id, sec or 0, reps or 1, function()
-		if not self:IsValid() then return end
+		if self.IsValid and not self:IsValid() then return end
 		func(self, unpack(args))
 	end)
 
@@ -51,4 +51,9 @@ local metas = {
 for k,v in pairs(metas) do
 	v.Timer = META.Timer
 	v.RemoveTimer = META.RemoveTimer
+end
+
+function Timerify(what)
+	what.Timer = META.Timer
+	what.RemoveTimer = META.RemoveTimer
 end
