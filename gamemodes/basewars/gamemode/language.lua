@@ -111,6 +111,7 @@ Strings.Inv_StatDrawTime    = "Draw Time"
 
 Strings.UpgradeNoMoney		= "You don't have enough money!"
 Strings.SpawnMenuMoney		= "You don't have enough money to buy this!"
+Strings.EntLimitReached		= "You reached the limit for %s (max. %s)!"
 
 setmetatable(Language, Language)
 

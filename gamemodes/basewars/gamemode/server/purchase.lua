@@ -197,7 +197,7 @@ function BWSpawn(ply, cat, catID)
 		local amt = plyLimit[class]
 
 		if amt and lim <= amt then
-			ply:Notify(string.format(Language.EntLimitReached, item, amt), BASEWARS_NOTIFICATION_ERROR)
+			ply:Notify(Language.EntLimitReached(item, amt), BASEWARS_NOTIFICATION_ERROR)
 			return
 		end
 
