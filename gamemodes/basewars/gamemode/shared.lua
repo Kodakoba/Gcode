@@ -294,6 +294,37 @@ function GM:PlayerNoClip(ply)
 
 end
 
+local function BlockInteraction(ply, ent, ret)
+
+	if ent then
+
+		if not IsValid(ent) then return true end
+
+		local Classes = BaseWars.Config.PhysgunBlockClasses
+		if Classes[ent:GetClass()] then return BaseWars.IsDev(ply, ent, ret) end
+
+		local Owner, uid
+		if ent.CPPIGetOwner then
+			Owner, uid = ent:CPPIGetOwner()
+		end
+
+		if IsPlayer(ply) and ply:InRaid() then return BaseWars.IsDev(ply, ent, ret) end
+		if IsPlayer(Owner) and Owner:InRaid() then return BaseWars.IsDev(ply, ent, ret) end
+		if not IsPlayer(Owner) and uid == CPPI_NOTIMPLEMENTED then
+			-- world owner
+			return ply:IsAdmin(ply, ent, ret)
+		end
+
+	else
+		if ply:InRaid() then
+			return BaseWars.IsDev(ply, ent, ret)
+		end
+	end
+
+	return ret == nil or ret
+
+end
+
 local function IsDev(ply, ent, ret)
 	if BlockInteraction(ply, ent, ret) == false then return false end
 
@@ -305,39 +336,6 @@ local function IsAdmin(ply, ent, ret)
 
 	return ply:IsAdmin()
 end
-
-local function BlockInteraction(ply, ent, ret)
-
-	if ent then
-
-		if not IsValid(ent) then return true end
-
-		local Classes = BaseWars.Config.PhysgunBlockClasses
-		if Classes[ent:GetClass()] then return IsDev(ply, ent, ret) end
-
-		local Owner, uid
-		if ent.CPPIGetOwner then
-			Owner, uid = ent:CPPIGetOwner()
-		end
-
-		if IsPlayer(ply) and ply:InRaid() then return IsDev(ply, ent, ret) end
-		if IsPlayer(Owner) and Owner:InRaid() then return IsDev(ply, ent, ret) end
-		if not IsPlayer(Owner) and uid == CPPI_NOTIMPLEMENTED then
-			-- world owner
-			return IsAdmin(ply, ent, ret)
-		end
-
-	else
-		if ply:InRaid() then
-			return IsDev(ply, ent, ret)
-		end
-	end
-
-	return ret == nil or ret
-
-end
-
-
 
 function GM:PhysgunPickup(ply, ent)
 	local Ret = self.BaseClass:PhysgunPickup(ply, ent)
