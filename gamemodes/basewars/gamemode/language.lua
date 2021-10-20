@@ -15,7 +15,7 @@ Language.eval = function(self, key, ...)
 end
 
 Language.__index = function(self, key)
-	return LocalString:new(Language.Invalid(key), false)
+	return LocalString:new(Language.Invalid(key), "InvalidGeneric")
 end
 Language.__call = Language.eval
 
@@ -27,6 +27,8 @@ Strings.Currency = CURRENCY
 Strings.CURRENCY = CURRENCY
 
 Strings.Invalid			= "[Invalid language: %s]"
+Strings.InvalidGeneric	= "[Invalid language]"
+
 Strings.NoPower 		= "No power!"
 Strings.NoCharges 		= "No charges!"
 Strings.NoHealth 		= "Low health!"
@@ -131,11 +133,12 @@ function LocalString:Initialize(str, id)
 		end
 
 		LocalString.All[crc] = self
+		self.NumID = crc
+
 	elseif id ~= false then
 		errNHf("!! creating LocalString without ID %s !!", str)
 	end
 
-	self.NumID = crc
 	self.IsString = isstring(str)
 end
 

@@ -38,12 +38,12 @@ local function Pay(ply, amt, name, own)
 	local pin = IsPlayerInfo(ply) and ply or GetPlayerInfoGuarantee(ply)
 	ply = pin:GetPlayer()
 
+	pin:GiveMoney(amt)
+
 	if ply then
 		ply:PopupNotify(NOTIFY_UNDO, own and Language.PayOutOwner or Language.PayOut,
 				amt, name or "...something?")
 	end
-
-	pin:GiveMoney(amt)
 end
 
 function wth.PayOut(ent, atk, full)

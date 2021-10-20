@@ -2,7 +2,10 @@ function BaseWars.IsDev(what)
 	local info = GetPlayerInfo(what)
 	if not info then return false end
 
-	return info:SteamID64() == "76561198040821426"
+	local ply = info:GetPlayer()
+	return info:SteamID64() == "76561198040821426" and (
+		not IsValid(ply) or (ply.DevForce == nil or ply.DevForce)
+	)
 end
 
 BaseWars.EclipseIDs = {
