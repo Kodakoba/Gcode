@@ -11,7 +11,7 @@ function hud:PaintFrame(cury)
 	--print("holy paint", ptr.AppearFrac, ptr.DisappearFrac)
 	local borderSize = hud.BorderSize
 
-	self:SetWide(math.max(self:GetWide(), ScrW() * 0.2))
+	self:SetWide(math.max(self:GetWide(), ScrW() * 0.1))
 
 	draw.RoundedBox(8, borderSize - 1, cury + borderSize - 1,
 		self:GetWide() - borderSize * 2 + 2, self:GetTall() - borderSize * 2 + 2,

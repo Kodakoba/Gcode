@@ -1,6 +1,8 @@
+if CLIENT and not BaseWars.HUD then
+	include("hud.lua")
+end
+
 local function init(force)
-
-
 	local b = BaseWars.Bases and BaseWars.Bases.NW
 	local reload = not not b
 

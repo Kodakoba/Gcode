@@ -166,5 +166,5 @@ function paintEntityLevel(ent, w, y)
 end
 
 hook.Add("BW_ShouldPaintStructureInfo", "BWStructure", function(ent, dist)
-	return ent.IsBaseWars and dist < 192, 192, paint
+	--return ent.IsBaseWars and dist < 192, 192, paint
 end)

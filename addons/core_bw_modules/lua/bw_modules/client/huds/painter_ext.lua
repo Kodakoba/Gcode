@@ -1,12 +1,11 @@
-local bw = BaseWars.Bases
-local nw = bw.NW
-local hud = bw.HUD
 
-hud.ActivePainters = hud.ActivePainters or {} 	-- [seqid] = painter
-hud.BaseToPaint = hud.BaseToPaint or {}		-- [baseid] = painter
+local hud = BaseWars.HUD
 
+hud.Anims = hud.Anims or Animatable("painter_anims")
 hud.Painter = hud.Painter or Emitter:extend()
-hud.PaintOps = hud.PaintOps or {}
+hud.RegisteredPainters = hud.RegisteredPainters or muldim:new()
+
+hud.MaxY = 0
 
 local ptr = hud.Painter
 
@@ -28,28 +27,30 @@ hook.Add("OnScreenSizeChanged", "Painters", function()
 end)
 
 function ptr:Initialize(base)
-	assert(bw.IsBase(base))
-
 	self._PaintIter = {} -- seq table
 	self._Paints = {}	 -- [{tbl, name}] = prio
-	self._Base = base
 
 	self.AppearFrac = 0
 	self.DisappearFrac = 0
 
+	self.AppearTime = 0.3
+	self.AppearDelay = 0
+	self.AppearEase = 0.3
+
+	self.DisappearTime = 0.2
+	self.DisappearDelay = 0
+	self.DisappearEase = 2.8
+
 	self:SetSize(64, 64)
 
-	hud.BaseToPaint[base] = self
+	hook.Run("BW_PainterCreate", self)
+end
 
-	table.insert(hud.ActivePainters, self)
-	hook.Run("BW_BasePainterCreate", self)
-
-	for k,v in pairs(hud.PaintOps) do
+function ptr:FillPainters(tbl)
+	for k,v in pairs(tbl) do
 		self:AddPaint(v[2], k, v[1])
 	end
 end
-
-ChainAccessor(ptr, "_Base", "Base")
 
 function ptr:AddPaint(prio, name, tbl)
 	if (not tbl or not tbl[name]) and not ptr[name] then
@@ -87,12 +88,7 @@ function ptr:SizeTo(w, h, time, del, ease)
 end
 
 function ptr:Delete()
-	table.RemoveByValue(hud.ActivePainters, self)
-	local base = self:GetBase()
-
-	if hud.BaseToPaint[base] == self then
-		hud.BaseToPaint[base] = nil
-	end
+	-- for override
 end
 
 function ptr:Appear()
@@ -106,8 +102,10 @@ function ptr:Appear()
 
 	local an = hud.Anims
 
-	local anim, new = an:MemberLerp(self, "AppearFrac", 1, 0.3, 0, 0.3)
-	an:MemberLerp(self, "DisappearFrac", 0, 0.3, 0, 0.3)
+	local anim, new = an:MemberLerp(self, "AppearFrac", 1,
+		self.AppearTime, self.AppearDelay, self.AppearEase)
+	an:MemberLerp(self, "DisappearFrac", 0,
+		self.AppearTime, self.AppearDelay, self.AppearEase)
 
 	timer.Remove("PainterInvalidate" .. ("%p"):format(self))
 end
@@ -117,14 +115,16 @@ function ptr:Disappear()
 	self.Disappearing = true
 
 	local an = hud.Anims
-	local anim, new = an:MemberLerp(self, "DisappearFrac", 1, 0.2, 0, 2.8)
+	local anim, new = an:MemberLerp(self, "DisappearFrac", 1,
+		self.DisappearTime, self.DisappearDelay, self.DisappearEase)
+
 	if new then
 		anim:Then(function()
 			self.AppearFrac = 0
 			self.DisappearFrac = 1
 			self.Disappeared = true
 
-			timer.Create("PainterInvalidate" .. ("%p"):format(self), 3, 0, function()
+			timer.Create("PainterInvalidate" .. ("%p"):format(self), 2, 1, function()
 				self:Delete()
 			end)
 		end)
@@ -132,29 +132,24 @@ function ptr:Disappear()
 	-- disappear doesnt stop appear frac
 end
 
-local mx = Matrix()
 
-function ptr:_GenMatrix()
+ptr.Matrix = Matrix()
+local mx = ptr.Matrix
+
+function ptr:_GenMatrix(mx)
 	local infr, outfr = self.AppearFrac, self.DisappearFrac
-
-	local cx = Lerp(infr, self.AppearFromX, self.AppearToX)
-	local cy = Lerp(infr, self.AppearFromY - self:GetTall(), self.AppearToY)
-
-	cx = Lerp(outfr, cx, self.DisappearToX - self:GetWide())
-	cy = Lerp(outfr, cy, self.DisappearToY)
-
-	mx:Identity()
-	mx:TranslateNumber(cx, cy)
+	-- for override
 end
 
-local errer = GenerateErrorer("BasePainter")
+local errer = GenerateErrorer("Painter")
 
 function ptr:Paint()
-	if self.DisappearFrac == 1 then return end
+	if self.DisappearFrac == 1 then return 0 end
 
 	local cury = 0
 
-	self:_GenMatrix()
+	mx:Reset()
+	self:_GenMatrix(mx)
 
 	cam.PushModelMatrix(mx, true)
 		for _, dat in ipairs(self._PaintIter) do
@@ -166,6 +161,12 @@ function ptr:Paint()
 	cam.PopModelMatrix()
 
 	self:SizeTo(-1, cury, 0.3, 0, 0.3)
+
+	return (cury + mx:GetField(2, 4)) * Ease(1 - self.DisappearFrac, 0.3)
+end
+
+function ptr:GetFrac()
+	return self.AppearFrac - self.DisappearFrac
 end
 
 function ptr:_RebuildIter()
@@ -183,53 +184,8 @@ function ptr:_RebuildIter()
 	end
 end
 
-
-function hud.CreateBasePainter(base)
-	return ptr:new(base)
-end
-
-function hud.GetBasePainter(base)
-	if not hud.BaseToPaint[base] then
-		hud.CreateBasePainter(base)
-	end
-
-	return hud.BaseToPaint[base]
-end
-
-function hud.AddPaintOp(prio, name, tbl)
-	if (not tbl or not tbl[name]) and not ptr[name] then
-		errorf("ptr:AddPaint() : tbl.%s and ptr.%s didn't exist.", name, name)
-		return
-	end
-
-	for k,v in pairs(hud.BaseToPaint) do
-		v:AddPaint(prio, name, tbl)
-	end
-
-	hud.PaintOps[name] = {tbl, prio}
-end
-
-function hud.RestartPainters()
-	table.Empty(hud.ActivePainters)
-	table.Empty(hud.BaseToPaint)
-end
-
-function hud.DoPainters(base, zone)
-	local ptr = base and hud.GetBasePainter(base)
-
-	if base then
-		ptr:Appear()
-	end
-
-	for i=#hud.ActivePainters, 1, -1 do
-		local ptr = hud.ActivePainters[i]
-		if ptr:GetBase() ~= base then
-			ptr:Disappear()
-		end
-		ptr:Paint()
+function hud.AddPainter(ptr, prio)
+	if not hud.RegisteredPainters:Get(prio, ptr) then
+		hud.RegisteredPainters:Set(true, ptr, prio)
 	end
 end
-
-FInc.FromHere("*.lua", _CL, false, FInc.RealmResolver():SetDefault(true))
-
-hud.RestartPainters()
