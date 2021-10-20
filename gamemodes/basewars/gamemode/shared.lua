@@ -313,23 +313,24 @@ local function BlockInteraction(ply, ent, ret)
 		if not IsValid(ent) then return true end
 
 		local Classes = BaseWars.Config.PhysgunBlockClasses
-		if Classes[ent:GetClass()] then return IsDev(ply, ent, ret) end
+		if Classes[ent:GetClass()] then return BaseWars.IsDev(ply, ent, ret) end
 
 		local Owner, uid
 		if ent.CPPIGetOwner then
 			Owner, uid = ent:CPPIGetOwner()
 		end
 
-		if IsPlayer(ply) and ply:InRaid() then return IsDev(ply, ent, ret) end
-		if IsPlayer(Owner) and Owner:InRaid() then return IsDev(ply, ent, ret) end
+		if IsPlayer(ply) and ply:InRaid() then return BaseWars.IsDev(ply, ent, ret) end
+		if IsPlayer(Owner) and Owner:InRaid() then return BaseWars.IsDev(ply, ent, ret) end
 		if not IsPlayer(Owner) and uid == CPPI_NOTIMPLEMENTED then
 			-- world owner
-			return IsAdmin(ply, ent, ret)
+
+			return ply:IsAdmin(ply, ent, ret)
 		end
 
 	else
 		if ply:InRaid() then
-			return IsDev(ply, ent, ret)
+			return BaseWars.IsDev(ply, ent, ret)
 		end
 	end
 
