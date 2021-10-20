@@ -101,7 +101,6 @@ end
 
 if CLIENT then
 	net.Receive("BWNotify", function(len)
-		print("received notification net:", len / 8)
 		local notif_typ = net.ReadUInt(4)
 
 		local popup_typ
