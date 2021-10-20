@@ -8,7 +8,6 @@ function ENT:Init()
 	self.Money = 0
 
 	self:SetHealth(self.PresetMaxHealth or 100)
-	self:SetTrigger(true)
 
 	self.Printers = Networkable(("PrinterRack:%d"):format(self:EntIndex())):Bond(self)
 	self.Printers.Entities = {}
@@ -91,8 +90,9 @@ function ENT:AddPrinter(slot, ent)
 end
 
 function ENT:Touch(ent)
-
-	if not ent.IsPrinter or ent.IsInRack or ent:BW_GetOwner() ~= self:BW_GetOwner() then return end
+	if not ent.IsPrinter or ent.IsInRack or ent:BW_GetOwner() ~= self:BW_GetOwner() then
+		return
+	end
 
 	local printers = self.Printers.Entities
 	if table.Count(printers) >= max then return end
@@ -118,7 +118,12 @@ function ENT:OnRemove()
 			v.IsInRack = false
 			v:SetPrinterRack(NULL)
 			v:SetParent()
-			v:GetPhysicsObject():EnableGravity(true)
+			local phys = v:GetPhysicsObject()
+
+			if IsValid(phys) then
+				phys:EnableGravity(true)
+			end
+
 			v:SetMoveType(MOVETYPE_VPHYSICS)
 			v:SetLocalAngularVelocity(Angle())
 			v:SetAbsVelocity(Vector())
