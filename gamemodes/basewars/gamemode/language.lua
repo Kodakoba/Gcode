@@ -15,7 +15,7 @@ Language.eval = function(self, key, ...)
 end
 
 Language.__index = function(self, key)
-	return ("[Invalid language: %s]"):format(key)
+	return LocalString:new(Language.Invalid(key), false)
 end
 Language.__call = Language.eval
 
@@ -26,6 +26,7 @@ local Strings = {}
 Strings.Currency = CURRENCY
 Strings.CURRENCY = CURRENCY
 
+Strings.Invalid			= "[Invalid language: %s]"
 Strings.NoPower 		= "No power!"
 Strings.NoCharges 		= "No charges!"
 Strings.NoHealth 		= "Low health!"
@@ -121,14 +122,19 @@ function LocalString:Initialize(str, id)
 	self.Str = str
 	self.ID = id
 
-	local crc = tonumber(util.CRC(id))
-	local old = LocalString.All[crc]
-	if old and old.ID ~= id then
-		errorNHf("LocalString hash collision: hash %d, IDs: %s & %s",
-			crc, id, old.ID)
+	if id then
+		local crc = tonumber(util.CRC(id))
+		local old = LocalString.All[crc]
+		if old and old.ID ~= id then
+			errorNHf("LocalString hash collision: hash %d, IDs: %s & %s",
+				crc, id, old.ID)
+		end
+
+		LocalString.All[crc] = self
+	elseif id ~= false then
+		errNHf("!! creating LocalString without ID %s !!", str)
 	end
 
-	LocalString.All[crc] = self
 	self.NumID = crc
 	self.IsString = isstring(str)
 end
