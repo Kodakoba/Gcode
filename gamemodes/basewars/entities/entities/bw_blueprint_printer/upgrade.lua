@@ -77,7 +77,7 @@ function ENT:RequestUpgrade(ply, cur, total)
 	local calcM = self:GetUpgradeCost()
 
 	if not calcM then
-		ply:Notify(BaseWars.LANG.UpgradeMaxLevel, BASEWARS_NOTIFICATION_ERROR)
+		ply:Notify(Language.UpgradeMaxLevel(#self.LevelsData), BASEWARS_NOTIFICATION_ERROR)
 		return false
 	end
 

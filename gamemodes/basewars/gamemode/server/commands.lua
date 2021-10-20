@@ -219,11 +219,11 @@ BaseWars.Commands.AddCommand({"max", "maxupg", "maxupgrade"}, function(ply)
 end, false)
 
 BaseWars.Commands.AddCommand({"tell", "msg"}, function(ply, line, who)
-	if not who then return false, "Fuck" end
+	if not who then return false, "Specify a player!" end
 
 	local Targ = easylua.FindEntity(who, true)
 
-	if not IsPlayer(Targ) then return false, "Fuck" end
+	if not IsPlayer(Targ) then return false, ("No player `%s` found!"):format(who) end
 
 	local Msg = line:sub(#who + 1):Trim()
 	Targ:ChatPrint(ply:Nick() .. " -> " .. Msg)

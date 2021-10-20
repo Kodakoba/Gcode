@@ -3,14 +3,6 @@ AddCSLuaFile()
 local CURRENCY = "$" --"£"
 Language = Language or {}
 
-Language.Price = function(str)
-	if isnumber(str) then
-		return CURRENCY .. BaseWars.NumberFormat(str)
-	else
-		return CURRENCY .. str
-	end
-end
-
 Language.eval = function(self, key, ...)
 	local val = Language[key]
 	if not isstring(val) then
@@ -68,7 +60,13 @@ Strings.Refunded			= function(s)
 	return ("You were refunded %s%s after a crash."):format(CURRENCY, s)
 end
 
-Strings.RaidStart 			= "%s has started a raid against %s!"
+Strings.Price = function(str)
+	if isnumber(str) then
+		return CURRENCY .. BaseWars.NumberFormat(str)
+	else
+		return CURRENCY .. (str or "???")
+	end
+end
 
 Strings.Health 			= "Health: %s/%s"
 Strings.Power 				= "Power: %s/%s"
