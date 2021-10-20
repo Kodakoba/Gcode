@@ -294,6 +294,18 @@ function GM:PlayerNoClip(ply)
 
 end
 
+local function IsDev(ply, ent, ret)
+	if BlockInteraction(ply, ent, ret) == false then return false end
+
+	return BaseWars.IsDev(ply)
+end
+
+local function IsAdmin(ply, ent, ret)
+	if BlockInteraction(ply, ent, ret) == false then return false end
+
+	return ply:IsAdmin()
+end
+
 local function BlockInteraction(ply, ent, ret)
 
 	if ent then
@@ -312,51 +324,45 @@ local function BlockInteraction(ply, ent, ret)
 		if IsPlayer(Owner) and Owner:InRaid() then return IsDev(ply, ent, ret) end
 		if not IsPlayer(Owner) and uid == CPPI_NOTIMPLEMENTED then
 			-- world owner
-			return IsDev(ply, ent, ret)
+			return IsAdmin(ply, ent, ret)
 		end
 
 	else
-		if ply:InRaid() then return IsDev(ply, ent, ret) end
+		if ply:InRaid() then
+			return IsDev(ply, ent, ret)
+		end
 	end
 
 	return ret == nil or ret
 
 end
 
-local function IsDev(ply, ent, ret)
-	if BlockInteraction(ply, ent, ret) == false then return false end
 
-	return BaseWars.IsDev(ply)
-end
-
-local function IsAdmin(ply, ent, ret)
-	if BlockInteraction(ply, ent, ret) == false then return false end
-
-	return ply:IsAdmin()
-end
 
 function GM:PhysgunPickup(ply, ent)
-
 	local Ret = self.BaseClass:PhysgunPickup(ply, ent)
 
-	if ent:IsVehicle() then return IsAdmin(ply, ent, Ret) end
+	if ent:IsVehicle() then
+		return IsAdmin(ply, ent, Ret)
+	end
 
 	return BlockInteraction(ply, ent, Ret)
 
 end
 
 function GM:CanPlayerUnfreeze(ply, ent, phys)
-
 	local Ret = self.BaseClass:CanPlayerUnfreeze(ply, ent, phys)
 
 	return BlockInteraction(ply, ent, Ret)
-
 end
 
 function GM:CanTool(ply, tr, tool)
 	local Ret = self.BaseClass:CanTool(ply, tr, tool)
 
-	if BaseWars.Config.BlockedTools[tool] then return IsAdmin(ply, ent, Ret) end
+	if BaseWars.Config.BlockedTools[tool] then
+		return IsAdmin(ply, ent, Ret)
+	end
+
 	if IsValid(tr.Entity) and tr.Entity.IsBaseWars then
 		return IsDev(ply, tr.Entity, Ret)
 	end
