@@ -263,8 +263,13 @@ function BWSpawn(ply, cat, catID)
 			newEnt:Spawn()
 			newEnt:Activate()
 
+		if i.Callback then
+			i.Callback(newEnt)
+		end
+
 		postSpawn(ply, class, newEnt, i)
 		hook.Run("BaseWars_PlayerBuyGun", ply, newEnt) -- Player, Gun entity
+
 		return
 	end
 
@@ -302,6 +307,10 @@ function BWSpawn(ply, cat, catID)
 
 	if i.ShouldFreeze and IsValid(phys) then
 		phys:EnableMotion(false)
+	end
+
+	if i.Callback then
+		i.Callback(newEnt)
 	end
 
 	postSpawn(ply, class, newEnt, i)
