@@ -37,7 +37,46 @@ function ENT:Initialize()
 	self:Activate()
 
 	self:SetUseType(SIMPLE_USE)
+
+	local despawnTime = 20
+	local blips = 3
+
+	self:Timer("DisappearWarn", despawnTime - blips - 1, 1, function()
+		self:EmitSound("npc/roller/mine/rmine_tossed1.wav", 70, 120, 1)
+
+		self:Timer("Disappear", blips + 1, 1, function()
+			local pos = self:LocalToWorld(self:OBBCenter())
+
+			print("disappear timer, playing and yeeting", pos)
+
+			sound.Play("weapons/arccw/ricochet0" .. math.random(1, 5) .. ".wav",
+				pos, 70, math.random(90, 110), 1)
+			sound.Play("weapons/arccw/malfunction.wav",
+				pos, 70, math.random(90, 110), 1)
+
+			local ef = EffectData()
+			ef:SetOrigin(pos)
+			ef:SetStart(pos)
+			ef:SetScale(0.3)
+			ef:SetMagnitude(0.5)
+			ef:SetEntity(self)
+
+			util.Effect( "inflator_magic", ef )
+
+			self:SetNoDraw(true)
+			self:SetNotSolid(false)
+			self.Gone = true
+
+			util.Effect( "entity_remove", ef )
+
+			self:Timer("DoRemove", 0.5, 1, function()
+				self:Remove()
+			end)
+		end)
+	end)
 end
+
+
 local kt = {
 	"bowie",
 	"karambit",
@@ -52,6 +91,7 @@ local kt = {
 	"daggers"
 }
 function ENT:Use(act, call, usetype, value)
+	if self.Gone then return end
 	if not IsValid(act) or not IsValid(call) or act ~= call or not act:IsPlayer() then return end
 
 	local Class = self.WeaponClass
