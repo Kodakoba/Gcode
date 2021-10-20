@@ -5,8 +5,8 @@ BackupWeaponKeys = {}
 BaseWars.Config = {
 	DiscordLink = "https://discord.gg/TCVwCAZqGW",
 
-	AFKTime = 90,
-	AFKConserveTime = 180, -- FPS gets limited after this time
+	AFKTime = 60,
+	AFKConserveTime = 90, -- FPS gets limited after this time
 
 	SpawnWeps = {
 		"weapon_physcannon",
