@@ -58,8 +58,9 @@ function ENT:Upgrade_HasMoney(ply)
 	local lvl = self.Level
 	local plyM = ply:GetMoney()
 	local calcM = self:GetUpgradeValue() * lvl
+	local hasNext = self:GetUpgradeValue() * (lvl + 1)
 
-	return plyM >= calcM
+	return plyM >= calcM and calcM, plyM >= calcM + hasNext
 end
 
 function ENT:DoUpgrade(final)
@@ -68,9 +69,7 @@ function ENT:DoUpgrade(final)
 	BaseWars.Worth.Add(self, calcM)
 	self.Level = self.Level + 1
 
-	local has = self:Upgrade_HasMoney(ply)
-
-	if final or not has then
+	if final then
 		self:EmitSound("replay/rendercomplete.wav")
 		self:SetLevel(self.Level)
 		local amt = BaseWars.Printers.GetPrintRate(self)
@@ -91,21 +90,23 @@ function ENT:RequestUpgrade(ply, try, total)
 		return false
 	end
 
-	local has = self:Upgrade_HasMoney(ply)
+	local has, hasNext = self:Upgrade_HasMoney(ply)
+
+	if self.Level >= self.MaxLevel then
+		ply:ChatNotify({BASEWARS_NOTIFICATION_ERROR, Language.UpgradeMaxLevel(self.MaxLevel)})
+		return false
+	end
 
 	if not has then
-		ply:ChatNotify({BASEWARS_NOTIFICATION_ERROR, Language.UpgradeNoMoney()})
+		if try == 1 then
+			ply:ChatNotify({BASEWARS_NOTIFICATION_ERROR, Language.UpgradeNoMoney()})
+		end
 		return false
 	end
 
-	if lvl >= self.MaxLevel then
-		ply:ChatNotify({BASEWARS_NOTIFICATION_ERROR, Language.UpgradeMaxLevel()})
-		return false
-	end
+	ply:TakeMoney(has)
 
-	ply:TakeMoney(calcM)
-
-	self:DoUpgrade(try == total)
+	self:DoUpgrade( (try == total) or not hasNext )
 end
 
 function ENT:NetworkVars()
