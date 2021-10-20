@@ -32,6 +32,8 @@ ENT.LevelsData = {
 	},
 }
 
+ENT.MaxLevel = 5
+
 function ENT:GetUpgradeCost(lv)
 	local dat = self.LevelsData[ lv or (self:GetLevel() + 1) ]
 	if not dat then return end
