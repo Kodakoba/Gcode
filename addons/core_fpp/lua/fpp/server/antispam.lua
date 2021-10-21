@@ -74,8 +74,10 @@ function FPP.AntiSpam.CreateEntity(ply, ent, IsDuplicate)
         if not IsDuplicate then
             ply.FPPAntiSpamLastBigProp = CurTime()
         end
-        FPP.AntiSpam.GhostFreeze(ent, phys)
-        FPP.Notify(ply, "Your prop is ghosted because it is too big. Interract with it to unghost it.", true)
+        ent:Remove()
+        FPP.Notify(ply, "Your prop was removed because it is too big.", true)
+        --FPP.AntiSpam.GhostFreeze(ent, phys)
+        --FPP.Notify(ply, "Your prop is ghosted because it is too big. Interract with it to unghost it.", true)
         return
     end
 

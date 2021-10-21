@@ -300,14 +300,24 @@ SetType(nil)
 
 -- Misc.--
 
-		AddRecreational("Misc.", "synthesizer_accordion", "Synthesizer - Accordion", k * 350, "models/tnf/synth.mdl")
-		AddRecreational("Misc.", "synthesizer_organ", "Synthesizer - Organ", k * 350, "models/tnf/synth.mdl")
-		AddRecreational("Misc.", "synthesizer_violin", "Synthesizer - Violin", k * 350, "models/tnf/synth.mdl")
-		AddRecreational("Misc.", "synthesizer_electric_guitar", "Synthesizer - Electric Guitar", k * 350, "models/tnf/synth.mdl")
-		AddRecreational("Misc.", "synthesizer_piano", "Synthesizer - Piano", k * 350, "models/tnf/synth.mdl")
-		AddRecreational("Misc.", "synthesizer_sax", "Synthesizer - Saxophone", k * 350, "models/tnf/synth.mdl")
-		AddRecreational("Misc.", "synthesizer_harp", "Synthesizer - Harp", k * 350, "models/tnf/synth.mdl")
-		AddRecreational("Misc.", "synthesizer_guitar", "Synthesizer - Guitar", k * 350, "models/tnf/synth.mdl")
+		AddRecreational("Synthesizers", "synthesizer_accordion", "Synthesizer - Accordion", k * 350, "models/tnf/synth.mdl")
+		AddRecreational("Synthesizers", "synthesizer_organ", "Synthesizer - Organ", k * 350, "models/tnf/synth.mdl")
+		AddRecreational("Synthesizers", "synthesizer_violin", "Synthesizer - Violin", k * 350, "models/tnf/synth.mdl")
+		AddRecreational("Synthesizers", "synthesizer_electric_guitar", "Synthesizer - Electric Guitar", k * 350, "models/tnf/synth.mdl")
+		AddRecreational("Synthesizers", "synthesizer_piano", "Synthesizer - Piano", k * 350, "models/tnf/synth.mdl")
+		AddRecreational("Synthesizers", "synthesizer_sax", "Synthesizer - Saxophone", k * 350, "models/tnf/synth.mdl")
+		AddRecreational("Synthesizers", "synthesizer_harp", "Synthesizer - Harp", k * 350, "models/tnf/synth.mdl")
+		AddRecreational("Synthesizers", "synthesizer_guitar", "Synthesizer - Guitar", k * 350, "models/tnf/synth.mdl")
+
+		local tv = AddRecreational("Media Players", "mediaplayer_tv", "Small TV", m * 25,
+			"models/props_phx/rt_screen.mdl")
+
+		tv.Callback = function(ent)
+			ent:SetModel("models/props_phx/rt_screen.mdl")
+		end
+
+		AddRecreational("Media Players", "mediaplayer_tv", "Big TV", m * 500, "models/gmod_tower/suitetv_large.mdl")
+
 
 SetType("Consumables")
 	ReuseEntities("bw_repairkit", "Repair Kit", k * 2.5, "models/Items/car_battery01.mdl")

@@ -19,7 +19,7 @@ ENT.MaxCharges = 150
 ENT.ChargePerSecond = 5
 
 ENT.IsHealthDispenser = true
-ENT.MaxLevel = 5
+ENT.MaxLevel = 4
 
 ENT.LevelsData = {
 	[1] = {

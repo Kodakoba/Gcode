@@ -324,7 +324,6 @@ local function BlockInteraction(ply, ent, ret)
 		if IsPlayer(Owner) and Owner:InRaid() then return BaseWars.IsDev(ply, ent, ret) end
 		if not IsPlayer(Owner) and uid == CPPI_NOTIMPLEMENTED then
 			-- world owner
-
 			return ply:IsAdmin(ply, ent, ret)
 		end
 

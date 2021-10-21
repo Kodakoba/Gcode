@@ -236,7 +236,7 @@ end
 function facmeta:CleanMember(ply)
 	if not self:IsMember(ply) then return end
 
-	table.RemoveByValue(self:GetMembers(), ply)
+	self:GetMembersInfo()
 	self.members[ply] = nil
 end
 
@@ -259,10 +259,16 @@ function facmeta:RemovePlayer(ply)
 	self:_RemoveFromMembers(pin)
 
 	if ply then
-		ply:SetTeam(1)
+		ply:SetTeam(Factions.FactionlessTeamID)
 	end
 
-	if #self:GetMembersInfo() == 0 then
+	--[[if #self:GetMembersInfo() == 0 then
+		self:Remove()
+		return
+	end]]
+
+	-- no online people present; disband
+	if #self:GetMembers() == 0 then
 		self:Remove()
 		return
 	end
@@ -287,7 +293,7 @@ function facmeta:Remove()
 	end
 
 	for k, pinfo in ipairs(self.meminfovals) do
-		pinfo._Faction = nil
+		pinfo:SetFaction(nil)
 	end
 
 	hook.NHRun("FactionDisbanded", self)
