@@ -46,12 +46,9 @@ function SWEP:DrawWeaponSelection(x, y, w, h, t, a)
 end
 
 local function Lockable(ply, ent)
-
-    local Eyes = ply:EyePos()
-	local Class = ent:GetClass()
-	
-    return IsValid(ent) and Eyes:Distance(ent:GetPos()) < 65 and Class:find("door")
-
+    return IsValid(ent) and
+    	ply:EyePos():Distance(ent:GetPos()) < 65 and
+    	ent:GetClass():find("door")
 end
 
 function SWEP:PrimaryAttack()
