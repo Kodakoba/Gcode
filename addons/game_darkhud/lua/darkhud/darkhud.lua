@@ -98,18 +98,17 @@ local function RoundedBoxCorneredSize(bordersize, x, y, w, h, color, btl, btr, b
 		return
 	end
 
-	btl = btl or 0
-	btr = btr or 0
-	bbl = bbl or 0
-	bbr = bbr or 0
-
 	x = math.floor( x )
 	y = math.floor( y )
 	w = math.floor( w )
 	h = math.floor( h )
-	bordersize = math.min( math.floor( bordersize ), math.floor( w / 2 ) )
 
-	local bordH = math.min(btl + bbl, btr + bbr)
+	btl = math.min(btl or 0, w)
+	bbl = math.min(bbl or 0, w)
+	btr = math.min(btr or 0, w - btl)
+	bbr = math.min(bbr or 0, w - bbl)
+
+	bordersize = math.min( math.floor( bordersize ), math.floor( w / 2 ) )
 
 	-- Draw as much of the rect as we can without textures
 
@@ -126,24 +125,12 @@ local function RoundedBoxCorneredSize(bordersize, x, y, w, h, color, btl, btr, b
 	local LbordW = math.max(btl, bbl)
 	local RbordW = math.max(btr, bbr)
 
-
 	if h - bbl - btl > 0 then
-		surface.DrawRect( x, y + btl, w - rx, h - bbl - btl ) -- draw left
+		surface.DrawRect( x, y + btl, rx - x, h - bbl - btl ) -- draw left
 	end
 
-	if h - btr - bbr > 0 and w - RbordW > LbordW then
-		surface.DrawRect( x + w - RbordW, y + btr,
-			RbordW, h - bbr - btr ) -- draw right
-	end
-
-	if bbr == 6 then
-		White()
-		surface.DrawRect( x + w - RbordW, y + TbordH,
-			RbordW, h - btr - bbr )
-
-		print(x + w - RbordW, y + btr,
-			RbordW, h - bbr - btr, btr, bbr, h)
-		surface.SetDrawColor( color.r, color.g, color.b, color.a )
+	if h - btr - bbr > 0 and RbordW > 0 then
+		surface.DrawRect( x + w - RbordW, y + btr, RbordW, h - btr - bbr )
 	end
 
 	-- goroz fill
@@ -151,11 +138,18 @@ local function RoundedBoxCorneredSize(bordersize, x, y, w, h, color, btl, btr, b
 	surface.DrawRect(x + btl, y, w - btl - btr, TbordH)
 	surface.DrawRect(x + bbl, y + h - BbordH, w - bbl - bbr, BbordH)
 
-	--surface.DrawRect( x, y + btr, RbordW, h - (y + btr) - bbr ) -- draw right
+	surface.DrawRect( x, y + btr, RbordW, h - (y + btr) - bbr ) -- draw right
 
 	local tex = tex_corner8
 	if ( bordersize > 8 ) then tex = tex_corner16 end
 	if ( bordersize > 16 ) then tex = tex_corner32 end
+
+	local en = false
+
+	if math.min(btl, btr, bbl, bbr) < 8 then
+		draw.EnableFilters()
+		en = true
+	end
 
 	surface.SetTexture( tex )
 
@@ -175,32 +169,45 @@ local function RoundedBoxCorneredSize(bordersize, x, y, w, h, color, btl, btr, b
 	if bbr > 0 then
 		surface.DrawTexturedRectUV( x + w - bbr, y + h - bbr, bbr, bbr, 1, 1, 0, 0 )
 	end
+
+	if en then
+		draw.DisableFilters()
+	end
 end
 
 DarkHUD.RoundedBoxCorneredSize = RoundedBoxCorneredSize
 
-function DarkHUD.PaintBar(rad, x, y, w, h, frac, col_empty, col_border, col_main)
-	local should = math.floor(w * frac / 2)
+function DarkHUD.PaintBar(rad, x, y, w, h,
+	frac, col_empty, col_border, col_main, allow_stencils)
+
+	frac = math.min(frac, 1)
+
 	x = math.ceil(x)
 	local bw = math.ceil(w * frac)
 
-	draw.RoundedBox(rad, x, y, w, h, col_empty or Colors.Gray)
-
-	print("painting bar", x, h)
-	if bw - 2 > rad then
-		DarkHUD.RoundedBoxCorneredSize(rad,
-			x + 1, y, bw - 2, h,
-			col_border or color_white,
-			rad, should, rad, should)
-	else
-		y = y - 1
-		h = h + 2
+	if frac ~= 1 then
+		draw.RoundedBox(rad, x, y, w, h, col_empty or Colors.Gray)
 	end
+
+	if allow_stencils ~= false and bw < rad * 2 then
+		surface.SetDrawColor(255, 255, 255)
+		draw.BeginMask(surface.DrawRect, x, y, bw, h)
+		draw.DrawOp()
+		bw = rad * 2
+	end
+
+
+	DarkHUD.RoundedBoxCorneredSize(rad,
+		x , y, bw - 1, h,
+		col_border or color_white,
+		rad, rad, rad, rad)
 
 	DarkHUD.RoundedBoxCorneredSize(rad,
 		x, y + 1, bw, h - 2,
 		col_main or Colors.Golden,
-		rad, should, rad, should)
+		rad, rad, rad, rad)
+
+	draw.DisableMask()
 end
 
 hook.Add("OnScreenSizeChanged", "DarkHUD_Scale", DarkHUD.ReScale)
