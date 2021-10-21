@@ -147,20 +147,35 @@ function ptr:Paint()
 	if self.DisappearFrac == 1 then return 0 end
 
 	local cury = 0
+	local sizey = 0
 
 	mx:Reset()
 	self:_GenMatrix(mx)
 
+	--White()
+	--surface.DrawLine(0, cury, 1000, cury)
+
 	cam.PushModelMatrix(mx, true)
 		for _, dat in ipairs(self._PaintIter) do
-			local ok, ret = xpcall(dat[2][dat[1]], errer, self, cury)
-			if isnumber(ret) then
-				cury = cury + ret
+			--White()
+			--surface.DrawLine(0, cury, 1000, cury)
+			local ok, yCur, yTo = xpcall(dat[2][dat[1]], errer, self, cury)
+			if isnumber(yCur) then
+				cury = cury + yCur
+				if isnumber(yTo) then
+					sizey = sizey + yTo
+				else
+					sizey = sizey + yCur
+				end
 			end
 		end
+
+		--White()
+		--surface.DrawLine(0, cury, 1000, cury)
+
 	cam.PopModelMatrix()
 
-	self:SizeTo(-1, cury, 0.3, 0, 0.3)
+	self:SizeTo(-1, sizey, 0.3, 0, 0.3)
 
 	return (cury + mx:GetField(2, 4)) * Ease(1 - self.DisappearFrac, 0.3)
 end

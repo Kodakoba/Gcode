@@ -85,8 +85,9 @@ local tex_corner16	= surface.GetTextureID( "gui/corner16" )
 local tex_corner32	= surface.GetTextureID( "gui/corner32" )
 
 local surface = surface
+local corners = draw.AlphatestedCorners
 
-local function RoundedBoxCorneredSize(bordersize, x, y, w, h, color, btl, btr, bbl, bbr)
+local function RoundedBoxCorneredSize(bordersize, x, y, w, h, color, btl, btr, bbl, bbr, stencil)
 	-- the difference is that this has configurable radiuses per-corner
 
 	if w <= 0 or h <= 0 then return end
@@ -140,9 +141,18 @@ local function RoundedBoxCorneredSize(bordersize, x, y, w, h, color, btl, btr, b
 
 	surface.DrawRect( x, y + btr, RbordW, h - (y + btr) - bbr ) -- draw right
 
-	local tex = tex_corner8
-	if ( bordersize > 8 ) then tex = tex_corner16 end
-	if ( bordersize > 16 ) then tex = tex_corner32 end
+	local tex
+	local fn = surface.SetTexture
+	if stencil then
+		fn = surface.SetMaterial
+		tex = corners.tex_corner8
+		if ( bordersize > 8 ) then tex = corners.tex_corner16 end
+		if ( bordersize > 16 ) then tex = corners.tex_corner32 end
+	else
+		tex = tex_corner8
+		if ( bordersize > 8 ) then tex = tex_corner16 end
+		if ( bordersize > 16 ) then tex = tex_corner32 end
+	end
 
 	local en = false
 
@@ -151,7 +161,7 @@ local function RoundedBoxCorneredSize(bordersize, x, y, w, h, color, btl, btr, b
 		en = true
 	end
 
-	surface.SetTexture( tex )
+	fn( tex )
 
 	if btl > 0 then
 		surface.DrawTexturedRectUV( x, y, btl, btl, 0, 0, 1, 1 )
@@ -178,34 +188,62 @@ end
 DarkHUD.RoundedBoxCorneredSize = RoundedBoxCorneredSize
 
 function DarkHUD.PaintBar(rad, x, y, w, h,
-	frac, col_empty, col_border, col_main, allow_stencils)
+	frac, col_empty, col_border, col_main, textData, allow_stencils)
 
 	frac = math.min(frac, 1)
 
 	x = math.ceil(x)
 	local bw = math.ceil(w * frac)
 
-	if frac ~= 1 then
+	if frac ~= 1 and col_empty then
 		draw.RoundedBox(rad, x, y, w, h, col_empty or Colors.Gray)
 	end
 
-	if allow_stencils ~= false and bw < rad * 2 then
-		surface.SetDrawColor(255, 255, 255)
-		draw.BeginMask(surface.DrawRect, x, y, bw, h)
-		draw.DrawOp()
-		bw = rad * 2
+	local stencil = false
+
+	if allow_stencils ~= false then
+		if bw < rad * 2 then
+			surface.SetDrawColor(255, 255, 255)
+			draw.BeginMask(surface.DrawRect, x, y, bw, h)
+			draw.DrawOp()
+
+			bw = rad * 2
+			stencil = true
+		elseif istable(textData) then
+			draw.BeginMask()
+			draw.SetMaskDraw(true)
+			stencil = true
+		end
 	end
 
 
 	DarkHUD.RoundedBoxCorneredSize(rad,
 		x , y, bw - 1, h,
 		col_border or color_white,
-		rad, rad, rad, rad)
+		rad, rad, rad, rad, stencil)
 
 	DarkHUD.RoundedBoxCorneredSize(rad,
 		x, y + 1, bw, h - 2,
 		col_main or Colors.Golden,
-		rad, rad, rad, rad)
+		rad, rad, rad, rad, stencil)
+
+	if istable(textData) then
+
+		local fill = textData.Filled or color_white
+		local unfill = textData.Unfilled or color_black
+		local text = textData.Text or "??"
+
+		local tx, ty = math.floor(x + w / 2), math.floor(y + h / 2)
+
+		draw.DrawOp(1)
+
+		draw.SimpleText(text, textData.Font or "OS20", tx, ty,
+			unfill, 1, 1)
+
+		draw.DrawOp(0)
+
+		draw.SimpleText2(text, nil, tx, ty, fill, 1, 1)
+	end
 
 	draw.DisableMask()
 end

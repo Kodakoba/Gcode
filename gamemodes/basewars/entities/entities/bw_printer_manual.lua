@@ -68,7 +68,7 @@ local lines
 local curTipY = 0
 
 function ENT:Init()
-	self:SetUpgradeCost(100)
+	self:SetUpgradeValue(100)
 	self.BreakingDown = 0
 end
 
@@ -126,7 +126,9 @@ function ENT:Draw()
     local lp = LocalPlayer()
 
     if self:ShouldDrawDisplay() and not BaseWars.EverUpgraded() and
-    	lp:GetMoney() > self:GetUpgradeCost() and self:BW_GetOwner() == lp:GetPInfo() then
+    	lp:GetMoney() > self:GetUpgradeCost() and
+    	self:BW_GetOwner() == lp:GetPInfo() then
+
     	anim:To("a", 1, 0.3, 0, 0.2)
     else
     	anim:To("a", 0, 0.3, 0, 0.2)

@@ -349,11 +349,15 @@ local corners = {
 	tex_corner512	= "gui/corner512"
 }
 
+draw.AlphatestedCorners = corners
+
 for name, mat in pairs(corners) do
-	corners[name] = CreateMaterial("alphatest_" .. mat:gsub("gui/", ""), "UnlitGeneric", {
+	corners[name] = CreateMaterial("alt_" .. mat:gsub("gui/", ""), "UnlitGeneric", {
 	    ["$basetexture"] = mat,
 	    ["$alphatest"] = 1,
-	    ["$alphatestreference"] = 0.5,
+	    ["$alphatestreference"] = 0.1,
+	    ["$vertexalpha"] = 1,
+	    ["$vertexcolor"] = 1
 	})
 end
 
