@@ -73,11 +73,24 @@ end
 
 hook.Add("PostDrawTranslucentRenderables", "StructureInfoToScreen", updateToscreen)
 
+local b = bench("bw_hud", 600)
+
 local function DrawStructureInfo()
+	--b:Open()
 
 	local me = LocalPlayer()
+	local ep = me:EyePos()
 
-	local trace = me:GetEyeTrace()
+	local trace = util.TraceHull({
+		start = ep,
+		endpos = ep + (me:GetAimVector() * 32768),
+		maxs = vector_origin,
+		mins = vector_origin,
+		filter = {me}
+	})
+
+	--b:Close():print()
+
 	local ent = trace.Entity:IsValid() and trace.Entity
 
 	local valid = not not ent -- and ent.IsBaseWars

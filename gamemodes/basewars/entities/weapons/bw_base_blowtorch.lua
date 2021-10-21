@@ -106,21 +106,29 @@ function SWEP:PrimaryAttack()
 	local ply = self:GetOwner()
 	if not IsPlayer(ply) then return end
 
-	local tr = ply:GetEyeTrace()
+	-- bruh!!!!
+	local tr = util.TraceHull({
+		start = ply:EyePos(),
+		endpos = ply:EyePos() + (ply:GetAimVector() * self.Range),
+		maxs = vector_origin,
+		mins = vector_origin,
+		filter = {ply}
+	})
 
+	local trent = tr.Entity
 
-	if not IsProp(tr.Entity) or tr.Fraction * 32768 > self.Range then
+	if not IsProp(trent) then
 		return
 	end
 
-	local owner = tr.Entity:BW_GetOwner()
+	local owner = trent:BW_GetOwner()
 
 	local dmg = DamageInfo()
 	dmg:SetDamage(self.TorchDamage)
 	dmg:SetAttacker(ply)
 	dmg:SetInflictor(self)
 
-	if not canZap(self, tr.Entity, dmg) then
+	if not canZap(self, trent, dmg) then
 		return
 	end
 
@@ -132,7 +140,6 @@ function SWEP:PrimaryAttack()
 
 	if CLIENT then return end
 
-	local trent = tr.Entity
 	local trents = {ply, trent}
 
 	self:Zap()
@@ -229,7 +236,15 @@ local function paint(ent, curent, baseAnim, firstFrame)
 	if not curBlowtorch then return end
 
 	anim = anim or Animatable("blowtorchhud")
-	local tr = LocalPlayer():GetEyeTrace()
+	local ply = LocalPlayer()
+	local tr = util.TraceHull({
+		start = ply:EyePos(),
+		endpos = ply:EyePos() + (ply:GetAimVector() * self.Range),
+		maxs = vector_origin,
+		mins = vector_origin,
+		filter = {ply}
+	})
+
 	--stripes = (not MoarPanelsMats["stripes"]:IsError() and MoarPanelsMats["stripes"]) or errmat -- :/
 
 	local ow = isZappable(self, ent)
@@ -316,7 +331,17 @@ local function framePos(ent, trace, ep)
 	-- holding primary fire caches a predicted/compensated trace i think
 	-- this fucks up the hud and makes it all jittery
 	-- so we fire a new trace instead of using the cached :GetEyeTrace
-	local tr = util.TraceLine(util.GetPlayerTrace(LocalPlayer()))
+
+	local ply = LocalPlayer()
+
+	local tr = util.TraceHull({
+		start = ply:EyePos(),
+		endpos = ply:EyePos() + (ply:GetAimVector() * 192),
+		maxs = vector_origin,
+		mins = vector_origin,
+		filter = {ply}
+	})
+
 	return tr.HitPos + Vector(0, 0, 8)
 end
 
