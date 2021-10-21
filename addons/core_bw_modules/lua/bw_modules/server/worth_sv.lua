@@ -64,7 +64,7 @@ function wth.PayOut(ent, atk, full)
 
 	local Name = ent.PrintName or ent:GetClass()
 
-	wth.Set(ent, nil, true)
+	wth.Set(ent, nil)
 
 	if ent.GetLevel then
 		Name = Language("Level", ent:GetLevel()) .. " " .. Name
