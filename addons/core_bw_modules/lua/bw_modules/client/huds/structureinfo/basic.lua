@@ -27,17 +27,18 @@ local hpCol = Color(240, 70, 70)
 local hpBorderCol = Color(150, 30, 30)
 
 function sin:PaintName(cury)
-	local ent = self:GetEntity()
+	local ent = self:GetEntity():IsValid() and self:GetEntity()
 	local w, h = self:GetSize()
 
+	self._EntName = ent and (ent.PrintName or ent:GetClass()) or self._EntName
 	local offy = cury
-	local tw, th = draw.SimpleText(ent.PrintName or ent:GetClass(), "OSB24",
+	local tw, th = draw.SimpleText(self._EntName, "OSB24",
 		self:GetWide() / 2, cury, color_white, 1, 5)
 
 	offy = offy + th + 4
 
 	-- health
-	local hpFr = math.min(ent:Health() / ent:GetMaxHealth(), 1)
+	local hpFr = ent and math.min(ent:Health() / ent:GetMaxHealth(), 1) or self.HPFrac
 	self.HPFrac = self.HPFrac or hpFr
 	anim:MemberLerp(self, "HPFrac", hpFr, 0.3, 0, 0.3)
 	hpFr = self.HPFrac
