@@ -338,6 +338,7 @@ local banned = {
 }
 
 local function NoGunsFuckYou(ply, class, what)
+	if not ply:IsAdmin() then return false end
 
 	local mon = ply:GetMoney()
 	local price = 5e6
@@ -345,7 +346,7 @@ local function NoGunsFuckYou(ply, class, what)
 		price = BaseWars.Catalogue[class].Price
 	end
 
-	if ply:IsAdmin() and mon < price and
+	if mon < price and
 		not BaseWars.IsRetarded(ply) then
 		ply:Notify(Language.UseSpawnMenu, BASEWARS_NOTIFICATION_ERROR)
 		return false
