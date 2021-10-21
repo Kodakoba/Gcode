@@ -82,14 +82,18 @@ function facmeta:_AddToMembers(what)
 end
 
 function facmeta:_RemoveFromMembers(what)
-	local pinfo, ply = GetPlayerInfoGuarantee(what)
+	local pinfo = GetPlayerInfoGuarantee(what)
+	local ply = pinfo:GetPlayer(true)
 
-	if ply and Factions.Players[ply] == self then Factions.Players[ply] = nil end
+	if ply and Factions.Players[ply] == self then
+		Factions.Players[ply] = nil
+	end
 
 	local had = self.meminfo[pinfo]
 
-	table.RemoveByValue(self.memvals, ply)
-	table.RemoveByValue(self.meminfovals, pinfo)
+	table.RemoveByValue(self:GetMembers(), ply)
+	table.RemoveByValue(self:GetMembersInfo(), pinfo)
+
 	if ply then self.members[ply] = nil end
 	self.meminfo[pinfo] = nil
 	pinfo._Faction = nil
@@ -288,6 +292,11 @@ function facmeta:Remove()
 	Factions.FactionIDs[self.id] = nil
 
 	for k,v in ipairs(self.memvals) do
+		if not IsValid(v) then
+			errNHf("still not fixed - invalid player %s in faction %s", v, self)
+			continue
+		end
+
 		v:SetTeam(Factions.FactionlessTeamID)
 		Factions.Players[v] = nil
 	end
