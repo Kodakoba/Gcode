@@ -327,7 +327,7 @@ end)
 
 
 local function Disallow_Spawning(ply, ...)
-	if not ply:IsAdmin()  then
+	if not ply:IsAdmin() then
 		ply:Notify(Language.UseSpawnMenu, BASEWARS_NOTIFICATION_ERROR)
 		return false
 	end
@@ -345,7 +345,8 @@ local function NoGunsFuckYou(ply, class, what)
 		price = BaseWars.Catalogue[class].Price
 	end
 
-	if mon < price and not BaseWars.IsRetarded(ply) then
+	if ply:IsAdmin() and mon < price and
+		not BaseWars.IsRetarded(ply) then
 		ply:Notify(Language.UseSpawnMenu, BASEWARS_NOTIFICATION_ERROR)
 		return false
 	end
