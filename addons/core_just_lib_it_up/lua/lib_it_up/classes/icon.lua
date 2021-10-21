@@ -157,7 +157,7 @@ function Icon:_WHPreseveRatio(w, h)
 		else
 			if mw >= mh then
 				-- align by width
-				return w, h * (mw / mh)
+				return w, h * (mh / mw)
 			else
 				-- align by height
 				return w * (mw / mh), h
