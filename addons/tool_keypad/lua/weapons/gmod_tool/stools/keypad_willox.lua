@@ -68,7 +68,7 @@ function TOOL:SetupKeypad(ent, pass)
 end
 
 function TOOL:RightClick(tr)
-	if not IsValid(tr.Entity) or not tr.Entity:GetClass():lower() == "keypad" then return false end
+	if not IsValid(tr.Entity) or tr.Entity:GetClass():lower() ~= "keypad" then return false end
 
 	if CLIENT  then return true end
 
