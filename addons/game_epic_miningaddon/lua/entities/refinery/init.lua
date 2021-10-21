@@ -30,6 +30,10 @@ function ENT:Init()
 
 	self.Queue = {}
 	self._LastThink = CurTime()
+
+	if not self:IsPowered() then
+		self:OnUnpower()
+	end
 end
 
 util.AddNetworkString("OreRefinery")
@@ -64,6 +68,8 @@ function ENT:TimeItem(slot)
 end
 
 function ENT:OnPower()
+	if not self.Status:Get("DepowerTime") then return end -- already powered
+
 	for k,v in pairs(self.OreInput:GetSlots()) do
 		self:TimeItem(k)
 	end
@@ -72,6 +78,8 @@ function ENT:OnPower()
 end
 
 function ENT:OnUnpower()
+	if self.Status:Get("DepowerTime") then return end -- already unpowered
+
 	self.Status:Set("DepowerTime", CurTime())
 
 	for k,v in pairs(self.OreInput:GetSlots()) do
