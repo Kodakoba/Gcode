@@ -52,11 +52,9 @@ function GM:GetGameDescription()
 end
 
 function GM:ShutDown()
-
 	BaseWars.UTIL.SafeShutDown()
-
+	BaseWars.PlayerData.SyncBWIntoSQL()
 	self.BaseClass:ShutDown()
-
 end
 
 function GM:OnEntityCreated(ent)
