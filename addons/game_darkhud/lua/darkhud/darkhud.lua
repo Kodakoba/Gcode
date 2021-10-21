@@ -89,6 +89,8 @@ local surface = surface
 local function RoundedBoxCorneredSize(bordersize, x, y, w, h, color, btl, btr, bbl, bbr)
 	-- the difference is that this has configurable radiuses per-corner
 
+	if w <= 0 or h <= 0 then return end
+
 	surface.SetDrawColor( color.r, color.g, color.b, color.a )
 
 	if ( bordersize <= 0 ) then
@@ -108,7 +110,6 @@ local function RoundedBoxCorneredSize(bordersize, x, y, w, h, color, btl, btr, b
 	bordersize = math.min( math.floor( bordersize ), math.floor( w / 2 ) )
 
 	local bordH = math.min(btl + bbl, btr + bbr)
-	
 
 	-- Draw as much of the rect as we can without textures
 
@@ -125,8 +126,25 @@ local function RoundedBoxCorneredSize(bordersize, x, y, w, h, color, btl, btr, b
 	local LbordW = math.max(btl, bbl)
 	local RbordW = math.max(btr, bbr)
 
-	surface.DrawRect( x, y + btl, rx, h - bbl - btl ) -- draw left
-	surface.DrawRect( w - RbordW, y + TbordH, RbordW, h - BbordH - TbordH ) -- draw right
+
+	if h - bbl - btl > 0 then
+		surface.DrawRect( x, y + btl, w - rx, h - bbl - btl ) -- draw left
+	end
+
+	if h - btr - bbr > 0 and w - RbordW > LbordW then
+		surface.DrawRect( x + w - RbordW, y + btr,
+			RbordW, h - bbr - btr ) -- draw right
+	end
+
+	if bbr == 6 then
+		White()
+		surface.DrawRect( x + w - RbordW, y + TbordH,
+			RbordW, h - btr - bbr )
+
+		print(x + w - RbordW, y + btr,
+			RbordW, h - bbr - btr, btr, bbr, h)
+		surface.SetDrawColor( color.r, color.g, color.b, color.a )
+	end
 
 	-- goroz fill
 
@@ -160,6 +178,30 @@ local function RoundedBoxCorneredSize(bordersize, x, y, w, h, color, btl, btr, b
 end
 
 DarkHUD.RoundedBoxCorneredSize = RoundedBoxCorneredSize
+
+function DarkHUD.PaintBar(rad, x, y, w, h, frac, col_empty, col_border, col_main)
+	local should = math.floor(w * frac / 2)
+	x = math.ceil(x)
+	local bw = math.ceil(w * frac)
+
+	draw.RoundedBox(rad, x, y, w, h, col_empty or Colors.Gray)
+
+	print("painting bar", x, h)
+	if bw - 2 > rad then
+		DarkHUD.RoundedBoxCorneredSize(rad,
+			x + 1, y, bw - 2, h,
+			col_border or color_white,
+			rad, should, rad, should)
+	else
+		y = y - 1
+		h = h + 2
+	end
+
+	DarkHUD.RoundedBoxCorneredSize(rad,
+		x, y + 1, bw, h - 2,
+		col_main or Colors.Golden,
+		rad, should, rad, should)
+end
 
 hook.Add("OnScreenSizeChanged", "DarkHUD_Scale", DarkHUD.ReScale)
 

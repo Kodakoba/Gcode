@@ -23,7 +23,8 @@ function sin:PaintFrame(cury)
 end
 
 local HPBG = Color(75, 75, 75)
-local HPFG = Color(200, 75, 75)
+local hpCol = Color(240, 70, 70)
+local hpBorderCol = Color(150, 30, 30)
 
 function sin:PaintName(cury)
 	local ent = self:GetEntity()
@@ -41,8 +42,13 @@ function sin:PaintName(cury)
 	anim:MemberLerp(self, "HPFrac", hpFr, 0.3, 0, 0.3)
 	hpFr = self.HPFrac
 
-	draw.RoundedBox(6, 8, offy, w - 16, 14, HPBG)
-	draw.RoundedBox(6, 8, offy, (w - 16) * hpFr, 14, HPFG)
+	local rounding = 8
+	local barX = 8
+	local barW = w - (barX * 2)
+	local barH = 16
+
+	DarkHUD.PaintBar(rounding, barX, offy, barW, barH, hpFr,
+		HPBG, hpBorderCol, hpCol)
 
 	local tx = Language("Health", EntHP, EntMaxHP)
 
