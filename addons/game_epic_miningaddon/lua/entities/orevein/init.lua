@@ -1,7 +1,8 @@
+--easylua.StartEntity("orevein")
+
 AddCSLuaFile("cl_init.lua")
 AddCSLuaFile("shared.lua")
 include("shared.lua")
-
 
 ENT.Model = "models/props/cs_militia/militiarock0%s.mdl"
 
@@ -448,3 +449,5 @@ if CurTime() > 60 then
 else
 	hook.Add("InventoryReady", "SpawnOres", loadOres)
 end
+
+--easylua.EndEntity("orevein")

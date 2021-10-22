@@ -297,6 +297,12 @@ function BWSpawn(ply, cat, catID)
 	newEnt:Spawn()
 	newEnt:Activate()
 
+	if not newEnt.IsBaseWars and newEnt:GetMaxHealth() == 0 then
+		newEnt:SetMaxHealth(100)
+		newEnt:SetHealth(100)
+		newEnt.CanBlowtorch = true
+	end
+
 	newEnt:DropToFloor()
 
 	if newEnt.BW_PostBuy then

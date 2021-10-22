@@ -56,7 +56,10 @@ SWEP.TorchDamage = 20
 SWEP.IsBlowTorch = true
 
 local function IsProp(ent)
-	return (IsValid(ent) and ent.GetClass and ent:GetClass() == "prop_physics") or false
+	return IsValid(ent) and (
+		(ent.GetClass and ent:GetClass() == "prop_physics") or
+		(ent.CanBlowtorch and true) or false
+	)
 end
 
 function SWEP:Deploy()
