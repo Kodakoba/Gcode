@@ -46,6 +46,10 @@ hook.NHAdd("PlayerInfoDestroy", "PurchasedRefund", function(pin)
 
 	for k,v in ipairs(stuff) do
 		if v:IsValid() then
+			local wth, has = BaseWars.Worth.Get(v)
+			if has then
+				BaseWars.Worth.Set(v, wth * BaseWars.Config.DestroyReturn)
+			end
 			v:Remove()
 		end
 	end
