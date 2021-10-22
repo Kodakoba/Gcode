@@ -43,10 +43,10 @@ function ENT:RemoveOre(slot)
 	self.OreInput[slot]:Delete()
 end
 
-function ENT:TimeItem(slot)
+function ENT:TimeItem(slot, when)
 	local itm = self.OreInput:GetSlots()[slot]
 
-	local itmStart = itm.StartedRefining or CurTime()
+	local itmStart = itm.StartedRefining or when or CurTime()
 
 	if self:IsPowered() then
 		-- we're powered; status value means start of refining
@@ -112,7 +112,7 @@ function ENT:Think()
 	local prs = {}
 
 	for name, amt in pairs(fin_amt) do
-		local pr, what = self.OreOutput:NewItem(name, function() self:SendInfo() end, nil, {Amount = amt})
+		local pr, what = self.OreOutput:NewItem(name, nil, nil, {Amount = amt})
 
 		if pr then
 			table.insert(prs, pr)
@@ -162,7 +162,7 @@ function ENT:QueueRefine(ply, inv, item, slot, bulk)
 				if not IsValid(self) then return end
 
 				for k,v in ipairs(prs) do
-					self:TimeItem(v.slot)
+					self:TimeItem(i)
 				end
 			end)
 			prs[#prs + 1] = pr
