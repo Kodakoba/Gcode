@@ -75,6 +75,10 @@ function pg:Remove()
 	self:SetValid(false)
 end
 
+function pg:IsValid()
+	return self:GetValid()
+end
+
 function pg:SetPowerIn(n)
 	if not IsValid(self) then return end
 	self._PowerIn = n
