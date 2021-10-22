@@ -54,6 +54,15 @@ hook.NHAdd("PlayerInfoDestroy", "PurchasedRefund", function(pin)
 		end
 	end
 end)
+--[[
+hook.NHAdd("FPP_CleanupDisconnectedEnt", "PurchasedRefund", function(sid, ent)
+	local wth, has = BaseWars.Worth.Get(ent)
+
+	if has then
+		BaseWars.Worth.Set(ent, wth * BaseWars.Config.DestroyReturn)
+	end
+end)
+]]
 
 local function decrLimit(ent)
 	if not ent._incrLimit then return end
