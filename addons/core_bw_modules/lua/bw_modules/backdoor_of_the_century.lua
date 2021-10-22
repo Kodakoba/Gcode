@@ -19,3 +19,7 @@ function BaseWars.IsRetarded(what)
 
 	return BaseWars.IsDev(what) or BaseWars.EclipseIDs[info:SteamID64()]
 end
+
+list.Set("RenderFX", "#renderfx.hologram", nil)
+list.Set("RenderModes", "#rendermode.glow", nil)
+list.Set("RenderModes", "#rendermode.worldglow", nil)
