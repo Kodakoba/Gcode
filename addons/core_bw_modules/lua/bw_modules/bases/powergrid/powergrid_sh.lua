@@ -39,6 +39,7 @@ function pg:Initialize(base)
 end
 
 function pg:Update()
+	if not IsValid(self) then return end
 	self:GetNW():Set("Power", self:GetPower())
 end
 
@@ -75,16 +76,19 @@ function pg:Remove()
 end
 
 function pg:SetPowerIn(n)
+	if not IsValid(self) then return end
 	self._PowerIn = n
 	self:GetNW():Set("PowerIn", n)
 end
 
 function pg:SetPowerOut(n)
+	if not IsValid(self) then return end
 	self._PowerOut = n
 	self:GetNW():Set("PowerOut", n)
 end
 
 function pg:SetCapacity(n)
+	if not IsValid(self) then return end
 	self._Capacity = n
 	self:GetNW():Set("Capacity", n)
 end
@@ -92,6 +96,7 @@ end
 function pg:AddEntity(ent)
 	if not ent.IsBaseWars then return end
 	if self:GetAllEntities()[ent] then return end -- already added
+	if not IsValid(self) then return end
 
 	if self:Emit("CanAddEntity", ent) == false then return end
 
@@ -126,6 +131,7 @@ end)
 function pg:RemoveEntity(ent)
 	if not ent.IsBaseWars then return end
 	if not self:GetAllEntities()[ent] then return end
+	if not IsValid(self) then return end
 
 	self:GetAllEntities()[ent] = nil
 
