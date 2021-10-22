@@ -158,6 +158,13 @@ function ENT:QueueRefine(ply, inv, item, slot, bulk)
 			if not ok then print("couldn't add input item to #" .. i) continue end
 
 			pr.slot = i
+			pr:Then(function()
+				if not IsValid(self) then return end
+
+				for k,v in ipairs(prs) do
+					self:TimeItem(v.slot)
+				end
+			end)
 			prs[#prs + 1] = pr
 
 			ins = ins + 1
@@ -167,10 +174,6 @@ function ENT:QueueRefine(ply, inv, item, slot, bulk)
 
 		Promise.OnAll(prs):Then(function()
 			if not IsValid(self) then return end
-
-			for k,v in ipairs(prs) do
-				self:TimeItem(v.slot)
-			end
 
 			local plys = Filter(ents.FindInPVS(self), true):Filter(IsPlayer)
 			Inventory.Networking.NetworkInventory(plys, self.OreInput)
