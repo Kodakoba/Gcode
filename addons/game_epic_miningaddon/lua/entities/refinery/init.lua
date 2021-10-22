@@ -78,6 +78,7 @@ function ENT:OnPower()
 end
 
 function ENT:OnUnpower()
+	if not IsValid(self.Status) or not IsValid(self) then return end -- yes this can happen apparently
 	if self.Status:Get("DepowerTime") then return end -- already unpowered
 
 	self.Status:Set("DepowerTime", CurTime())
