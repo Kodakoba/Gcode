@@ -257,6 +257,8 @@ if CLIENT then
 	return
 end
 
+local cringe = FindMetaTable("Color")
+
 local function fadeActivate(self)
 	if self.fadeActive then return end
 	
@@ -264,7 +266,7 @@ local function fadeActivate(self)
 	self.fadeMaterial = self:GetMaterial()
 	self.fadeDoorMaterial = self.fadeDoorMaterial or "sprites/heatwave"
 	self.fadeRenderMode = self:GetRenderMode()
-	self.fadeColor = self:GetColor()
+	self.fadeColor = setmetatable(self:GetColor(), cringe)
 
 	local col = self.fadeColor:Copy()
 	col.a = 130
