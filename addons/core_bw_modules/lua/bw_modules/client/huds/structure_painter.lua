@@ -116,6 +116,12 @@ function sin.DoPainters(ent)
 		local ptr = sin.ActivePainters[i]
 
 		if ptr:GetEntity() ~= ent then
+			if not ent then
+				ptr.DisappearDelay = 0.2
+			else
+				ptr.DisappearDelay = 0
+			end
+
 			ptr:Disappear()
 		else
 			active = ptr -- active gets drawn on top of everyone

@@ -101,8 +101,11 @@ Strings.PrinterUpgradeTip = "Type /upg or /upgrade while looking at\n" ..
 
 Strings.PrinterUpgradeTipFont = "OS28"
 
-Strings.ChargesCounter = "Charges: %s"
-Strings.NextCharge = "next charge in %.1fs."
+Strings.ChargesCounter = function(s)
+	return ("%s %s%s"):format(s, "stim", s == 1 and "" or "s")
+end
+
+Strings.StimCostTip = "each stim costs 75 charge"
 Strings.StimsLevel = "stims are only generated at level 2+"
 
 Strings.BPNextPrint = "Next print in:"

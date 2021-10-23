@@ -36,8 +36,6 @@ function ENT:SetupDataTables()
 
 	self:NetworkVar("Bool", 0, "Powered")
 	self:NetworkVar("Float", 0, "RebootTime")
-
-	self:NetworkVar("Int", 0, "GridID")
 end
 
 if SERVER then

@@ -1,7 +1,7 @@
 
 AddCSLuaFile()
 
-ENT.Base = "bw_base_electronics"
+ENT.Base = "bw_base_dispenser"
 ENT.Type = "anim"
 
 ENT.PrintName = "Health Dispenser"
@@ -15,112 +15,43 @@ ENT.EmitUnusableBeeps = false
 ENT.StimRegenTime = math.huge
 ENT.MaxStims = 5
 
-ENT.MaxCharges = 150
-ENT.ChargePerSecond = 5
-
 ENT.IsHealthDispenser = true
 ENT.MaxLevel = 4
 
-ENT.LevelsData = {
+ENT.StimDrains = 75
+
+ENT.Levels = {
 	[1] = {
-		Stim = math.huge,
 		Cost = 0,
+		HealRate = 5,
+		ChargeRate = 1,
+		MaxCharge = 65, -- not enough to create a stim
 	},
 
 	[2] = {
-		Stim = 60,
 		Cost = 125000,
+		HealRate = 10,
+		ChargeRate = 1.5,
+		MaxCharge = 100,
 	},
 
 	[3] = {
-		Stim = 30,
 		Cost = 750000,
+		HealRate = 15,
+		ChargeRate = 2,
+		MaxCharge = 150,
 	},
 
 	[4] = {
-		Stim = 15,
 		Cost = 5e6,
+		HealRate = 15,
+		ChargeRate = 3,
+		MaxCharge = 300,
 	},
 }
 
-function ENT:Init()
-	self:SetModel(self.Model)
-	self:SetHealth(500)
-
-	self:SetUseType(CONTINUOUS_USE)
-
-	self.NextStim = CurTime() + self.StimRegenTime
-end
-
-function ENT:GetUpgradeCost()
-	local dat = self.LevelsData[self:GetLevel() + 1]
-	if not dat then return end
-
-	return dat.Cost
-end
-
-function ENT:DerivedDataTables()
-	self:NetworkVar("Int", 1, "Charges")
-	self:NetworkVar("Int", 2, "Stims")
-	self:NetworkVar("Int", 3, "Level")
-	self:SetCharges(0)
-	self:SetStims(0)
-	self:SetLevel(1)
-
-	self:NetworkVar("Float", 1, "NWNextStim")
-
-	if SERVER then
-		self:SetNextStim(CurTime() + self.StimRegenTime)
-	end
-
-	self.NextCharge = CurTime()
-
-	self:NetworkVar("Bool", 1, "Halted")
-end
-
-function ENT:DoUpgrade()
-	local calcM = self:GetUpgradeCost()
-	BaseWars.Worth.Add(self, calcM)
-	self.Level = self.Level + 1
-	self:SetLevel(self.Level)
-
-	self.StimRegenTime = self.LevelsData[self.Level].Stim
-
-	self:EmitSound("replay/rendercomplete.wav")
-	self:SetNextStim(math.min(CurTime() + self.StimRegenTime, self:GetNextStim()))
-end
-
-function ENT:RequestUpgrade(ply)
-	if not ply then return end
-
-	local ow = self:BW_GetOwner()
-
-	if GetPlayerInfo(ply) ~= ow then
-		ply:ChatNotify({BASEWARS_NOTIFICATION_ERROR, "You can't upgrade others' entities!"})
-		return false
-	end
-
-	local plyM = ply:GetMoney()
-	local calcM = self:GetUpgradeCost()
-
-	if not calcM then
-		ply:ChatNotify({BASEWARS_NOTIFICATION_ERROR,
-			Language.UpgradeMaxLevel(#self.LevelsData)})
-		return false
-	end
-
-	if plyM < calcM then
-		ply:ChatNotify({BASEWARS_NOTIFICATION_ERROR, BaseWars.LANG.UpgradeNoMoney})
-		return false
-	end
-
-	ply:TakeMoney(calcM)
-
-	self:DoUpgrade()
-end
-
-function ENT:GetNextStim()
-	return self:GetNWNextStim()
+function ENT:GetStims()
+	return math.floor(self:GetCharge() / self.StimDrains)
 end
 
 local blk = Color(0, 0, 0, 0)
@@ -226,23 +157,26 @@ function ENT:OpenShit(qm, self, pnl)
 
 		if self.ShouldMouse then
 			DisableClipping(true)
-				local chargeStr = ent:GetStims() .. "/" .. ent.MaxStims
+				local ch = ent:GetCharge()
+				local stims = ent:GetStims()
+				local chargeStr = stims .. " stim" .. (stims > 1 and "s" or "")
 				local col = lazy.Get("StimCntCol") or lazy.Set("StimCntCol", color_white:Copy())
 				col.a = math.min(canv.MouseFrac, canv.PowerFrac + 0.05 + math.random() * 0.02) * 255
 
-				draw.SimpleText(Language("ChargesCounter", chargeStr), "BSSB36", give_stim.X + give_stim:GetWide() / 2,
+				local _, cntH = draw.SimpleText(Language("ChargesCounter", stims),
+					"BSSB36", give_stim.X + give_stim:GetWide() / 2,
 					give_stim.Y - 4, col, 1, 4)
 
-				local col = lazy.Get("NextStimCntCol") or lazy.Set("NextStimCntCol", color_white:Copy())
+				col = lazy.Get("NextStimCntCol") or lazy.Set("NextStimCntCol", color_white:Copy())
 				col.a = math.min(canv.MouseFrac, canv.PowerFrac) * 65
 
-				local nextCharge = math.max(ent:GetNextStim() - CurTime(), 0)
-				if nextCharge ~= math.huge then
-					draw.SimpleText(Language("NextCharge", nextCharge), "BS24", give_stim.X + give_stim:GetWide() / 2,
-						give_stim.Y - 4 - 32, col, 1, 4)
-				else
+				local _, cntH2 = draw.SimpleText(Language("StimCostTip", ent.StimDrains),
+					"BS20", give_stim.X + give_stim:GetWide() / 2,
+					give_stim.Y - 4 - cntH, col, 1, 4)
+
+				if ent:GetLevelData().MaxCharge < ent.StimDrains then
 					draw.SimpleText(Language("StimsLevel"), "BS24", give_stim.X + give_stim:GetWide() / 2,
-						give_stim.Y - 4 - 32, col, 1, 4)
+						give_stim.Y - 4 - cntH - cntH2, col, 1, 4)
 				end
 
 			DisableClipping(false)
@@ -359,13 +293,17 @@ function ENT:CheckUsable()
 end
 
 function ENT:PaintStructureInfo(w, y)
-	draw.SimpleText(self:GetStims() .. " stims", "OS24", w / 2, y, color_white, 1, 5)
-	return 24
+	local add = self.BaseClass.PaintStructureInfo(self, w, y)
+	y = y + add
+
+	local tw, th = draw.SimpleText(self:GetStims() .. " stims", "BSB20",
+		w / 2, y, color_white, 1, 5)
+	return add + th
 end
 
 if SERVER then
 
-	function ENT:Think()
+	--[[function ENT:Think()
 		local t = self:GetTable()
 
 		if not self:IsPowered() then
@@ -389,29 +327,19 @@ if SERVER then
 					self:Halt()
 				end
 			end
-
-			if ct > t.NextCharge then
-				if self:GetCharges() < t.MaxCharges then
-					self:SetCharges(self:GetCharges() + 1)
-				end
-
-				t.NextCharge = t.NextCharge + (1 / t.ChargePerSecond)
-			end
 		end
-	end
+	end]]
 
-	function ENT:UseFunc(ply)
-
-		if not IsPlayer(ply) then return end
-
-		self.Time = CurTime()
-
+	function ENT:Dispense(ply, dat)
 		local hp = ply:Health()
-		if hp >= ply:GetMaxHealth() then return end
+		local max = ply:GetMaxHealth()
+		if hp >= max then return true end
+		if self:GetCharge() <= 5 then return false end
 
-		ply:SetHealth(math.min(hp + 10, math.max(ply:Health(), ply:GetMaxHealth())))
-		self:EmitSound(self.Sound, 100, 60)
+		local toHeal = math.min(self:GetCharge(), dat.HealRate, max - hp)
+		self:TakeCharge(toHeal)
 
+		ply:SetHealth(hp + toHeal)
 	end
 
 	function ENT:Halt(b)
@@ -419,22 +347,20 @@ if SERVER then
 		self:SetHalted(self.Halted)
 	end
 
-	function ENT:SetNextStim(when)
+	--[[function ENT:SetNextStim(when)
 		when = when or CurTime() + self.StimRegenTime
 		self.NextStim = when
 		self:SetNWNextStim(when)
-	end
+	end]]
 
 	function ENT:TakeStim(ply)
 		local ok = ply:AddStims()
 		if ok == false then return end
 
-		self:SetStims(self:GetStims() - 1)
-
-		if self.Halted and self:GetStims() >= self.MaxStims then
-			self:SetNextStim()
+		--[[if self.Halted and self:GetStims() >= self.MaxStims then
+			--self:SetNextStim()
 			self:Halt(false)
-		end
+		end]]
 	end
 
 	util.AddNetworkString("HealthDispenser")
@@ -444,8 +370,10 @@ if SERVER then
 
 		if not IsValid(ent) or not ent.IsHealthDispenser then return end
 		if ply:GetPos():Distance(ent:GetPos()) > 256 then return end
+
+		if ply:GetStims() >= ply:GetMaxStims() then return end
 		if not ent:IsPowered() then return end
-		if ent:GetStims() < 1 then return end
+		if not ent:TakeCharge(ent.StimDrains) then return end
 
 		ent:TakeStim(ply)
 	end)

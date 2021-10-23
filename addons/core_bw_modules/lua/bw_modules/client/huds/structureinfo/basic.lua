@@ -16,7 +16,6 @@ frShad:CacheShadow(4, 6, 4)
 function sin:PaintFrame(cury)
 	local hd = 28 * DarkHUD.Scale
 
-
 	cam.PushModelMatrix(self.Matrix) -- why
 	self:SetWide(math.max(self:GetWide(), ScrW() * 0.15))
 
