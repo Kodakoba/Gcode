@@ -266,15 +266,15 @@ local function fadeActivate(self)
 	self.fadeMaterial = self:GetMaterial()
 	self.fadeDoorMaterial = self.fadeDoorMaterial or "sprites/heatwave"
 	self.fadeRenderMode = self:GetRenderMode()
-	self.fadeColor = setmetatable(self:GetColor(), cringe)
+	--self.fadeColor = setmetatable(self:GetColor(), cringe)
 
-	local col = self.fadeColor:Copy()
-	col.a = 130
+	--[[local col = self.fadeColor:Copy()
+	col.a = 130]]
 
 	self:SetMaterial(self.fadeDoorMaterial)
 	self:DrawShadow(false)
 	self:SetRenderMode(RENDERMODE_TRANSALPHA)
-	self:SetColor(col)
+	--self:SetColor(col)
 
 	if self.fadeCanDisableMotion then self:SetNotSolid(true) else self:SetCollisionGroup(COLLISION_GROUP_WORLD) end
 	local phys = self:GetPhysicsObject()
@@ -302,7 +302,7 @@ local function fadeDeactivate(self)
 	if self:GetMaterial() == self.fadeDoorMaterial and self.fadeMaterial then self:SetMaterial(self.fadeMaterial) end
 	self:SetRenderMode(self.fadeRenderMode)
 	self:DrawShadow(true)
-	self:SetColor(self.fadeColor)
+	--self:SetColor(self.fadeColor)
 
 	if self.fadeCanDisableMotion then self:SetNotSolid(false) else self:SetCollisionGroup(COLLISION_GROUP_NONE) end
 	local phys = self:GetPhysicsObject()
