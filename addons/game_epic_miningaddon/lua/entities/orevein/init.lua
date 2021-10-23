@@ -114,7 +114,7 @@ end
 
 function ENT:RespawnIn(time)
 	time = time or OreRespawnTime
-	timer.Create( ("OreSpawn"):format(time), time, 1, function()
+	timer.Simple(time, function()
 		OresRespawn(1)
 	end)
 end
