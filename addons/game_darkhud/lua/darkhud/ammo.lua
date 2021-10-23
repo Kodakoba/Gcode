@@ -117,7 +117,7 @@ function DarkHUD.CreateAmmo()
 	f:SetPos(ScrW() - f:GetWide() - dh.PaddingX, ScrH() - f:GetTall() - dh.PaddingY)
 	f.HeaderSize = scale * 32
 	f:SetPaintedManually(true)
-	f:CacheShadow(2, 8, 2)
+	f:CacheShadow(4, 8, 2)
 
 	local rad = f.RBRadius or 8
 	local fX, fY = f:GetPos()

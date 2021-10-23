@@ -15,10 +15,15 @@ function sin:PaintPower(cury)
 	local pwFr = self.NoPWFrac or noPwTo
 	self.NoPWFrac = pwFr
 
-	anim:MemberLerp(self, "NoPWFrac", noPwTo, 0.3, 0, 0.3)
+
+	if ent then
+		anim:MemberLerp(self, "NoPWFrac", noPwTo, 0.3, 0, 0.3)
+	end
+
 	pwFr = self.NoPWFrac or pwFr
 
-	local offy = cury
+	local offy = cury - draw.GetFontHeight("OSB20") * 0.15
+
 	local szTo = 0
 
 	if pwFr > 0 then
@@ -32,8 +37,8 @@ function sin:PaintPower(cury)
 		local _, th = draw.SimpleText("No power!", "OSB20",
 			w / 2, offy, col, 1, 5)
 
-		offy = offy + th * pwFr + 4 * pwFr
-		szTo = th * noPwTo + 4 * noPwTo
+		offy = offy + math.ceil(th * pwFr * 0.875)
+		szTo = th * noPwTo
 
 		draw.DisableMask()
 	end

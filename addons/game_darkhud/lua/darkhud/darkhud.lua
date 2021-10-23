@@ -187,12 +187,17 @@ end
 
 DarkHUD.RoundedBoxCorneredSize = RoundedBoxCorneredSize
 
+
 function DarkHUD.PaintBar(rad, x, y, w, h,
 	frac, col_empty, col_border, col_main, textData, allow_stencils)
 
 	frac = math.min(frac, 1)
 
 	x = math.ceil(x)
+	y = math.ceil(y)
+	w = math.ceil(w)
+	h = math.ceil(h)
+
 	local bw = math.ceil(w * frac)
 
 	if frac ~= 1 and col_empty then

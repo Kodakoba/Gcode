@@ -5,21 +5,34 @@ local frCol = Color(25, 25, 25)
 local bgCol = Color(15, 15, 15, 220)
 local anim = sin.Anims
 
-function sin:PaintFrame(cury)
-	local hd = 18
 
-	BSHADOWS.BeginShadow()
+local frShad = BSHADOWS.GenerateCache("BW_StructureFrame", 512, 256)
+frShad:SetGenerator(function(self, w, h)
+	draw.RoundedBox(8, 0, 0, w, h, color_white)
+end)
+
+frShad:CacheShadow(4, 6, 4)
+
+function sin:PaintFrame(cury)
+	local hd = 28 * DarkHUD.Scale
+
+
 	cam.PushModelMatrix(self.Matrix) -- why
 	self:SetWide(math.max(self:GetWide(), ScrW() * 0.15))
+
+	surface.SetDrawColor(255, 255, 255)
+
+	DisableClipping(true)
+		frShad:Paint(0, cury, self:GetWide(), self:GetTall())
+	DisableClipping(false)
 
 	draw.RoundedBoxEx(8, 0, cury, self:GetWide(), hd, Colors.FrameHeader, true, true)
 	draw.RoundedBoxEx(8, 0, cury + hd, self:GetWide(), self:GetTall() - hd, Colors.FrameBody,
 		false, false, true, true)
 
-	BSHADOWS.EndShadow(2, 1, 1)
 	cam.PopModelMatrix(self.Matrix)
 
-	return hd + 2
+	return hd
 end
 
 local HPBG = Color(75, 75, 75)
@@ -34,6 +47,8 @@ local txt = {
 }
 
 function sin:PaintName(cury)
+	local scale = DarkHUD.Scale
+
 	local ent = self:GetEntity():IsValid() and self:GetEntity()
 	local w, h = self:GetSize()
 
@@ -41,10 +56,13 @@ function sin:PaintName(cury)
 
 	local offy = cury
 
-	local tw, th = draw.SimpleText(self._EntName, "OSB24",
+	local font, sz = Fonts.PickFont("OSB", self._EntName, w * 0.8,
+		DarkHUD.Scale * 40, nil, 24)
+
+	local tw, th = draw.SimpleText(self._EntName, font,
 		self:GetWide() / 2, cury, color_white, 1, 5)
 
-	offy = offy + th + 4
+	offy = math.floor(offy + th + 2 * scale)
 
 	-- health
 	local hpFr = ent and math.min(ent:Health() / ent:GetMaxHealth(), 1) or self.HPFrac
@@ -64,17 +82,22 @@ function sin:PaintName(cury)
 	local rounding = 8
 	local barX = 8
 	local barW = w - (barX * 2)
-	local barH = 16
+
+	local barH = math.ceil(28 * scale)
 
 	local tx = Language("Health",
 		math.floor(self.HP), math.floor(self.MaxHP))
+
+	font, sz = Fonts.PickFont("OSB", self._EntName, barW * 0.8,
+		barH, nil, 18)
+	txt.Font = font
 
 	txt.Text = tx
 
 	DarkHUD.PaintBar(rounding, barX, offy, barW, barH, hpFr,
 		HPBG, hpBorderCol, hpCol, txt)
 
-	offy = offy + barH + 4
+	offy = offy + barH + 8 * scale
 
 	self:SizeTo(math.max(self:GetWide(), tw), -1, 0.3, 0, 0.3)
 	return offy - cury

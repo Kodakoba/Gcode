@@ -61,9 +61,10 @@ Strings.Level 			= function(str, s2)
 	end
 end
 
+
 Strings.UpgCost = function(pr)
 	if pr then
-		return "Upgrade cost: " .. Strings.Price(pr)
+		return "Next level: " .. Strings.Price(pr)
 	else
 		return "Upgrade cost"
 	end

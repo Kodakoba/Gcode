@@ -34,16 +34,16 @@ function ptr:_GenMatrix(mx)
 
 	local fr = infr - outfr
 
-	local ang = 22 - fr * 22
+	local ang = -22 + fr * 22
 
-	local xOff = 0
+	local xOff = ScrW() - self:GetWide()
 	local yAnimOff = 8
 
-	local y = -yAnimOff + fr * yAnimOff + BaseWars.Bases.HUD.MaxY
+	local y = -yAnimOff + fr * yAnimOff --+ BaseWars.Bases.HUD.MaxY
 		+ self.AppearToY
 	y = math.floor(y)
 
-	mx:TranslateNumber(math.floor(xOff + self.AppearToX * fr), y)
+	mx:TranslateNumber(math.floor(xOff - self.AppearToX * (infr + outfr)), y)
 
 	mx:RotateNumber(0, ang)
 	--self.TranslateY = cy
@@ -91,15 +91,15 @@ function sin.DoPainters(ent)
 	local ptr = ent and sin.GetPainter(ent)
 
 	if ptr then
-		if #sin.ActivePainters > 1 then
+		--if #sin.ActivePainters > 1 then
 			ptr.AppearDelay = 0.1
-		end
+		--end
 
 		ptr:Appear()
 
-		if #sin.ActivePainters > 1 then
+		--[[if #sin.ActivePainters > 1 then
 			ptr.AppearDelay = 0
-		end
+		end]]
 	end
 
 	sin.MaxY = 0
@@ -107,6 +107,10 @@ function sin.DoPainters(ent)
 	local pre = surface.GetAlphaMultiplier()
 
 	local active
+
+
+	-- both filters required for smooth rotation, idk whats up
+	draw.EnableFilters(true, true)
 
 	for i=#sin.ActivePainters, 1, -1 do
 		local ptr = sin.ActivePainters[i]
@@ -119,23 +123,28 @@ function sin.DoPainters(ent)
 		end
 
 		surface.SetAlphaMultiplier(ptr:GetFrac())
-		ptr:Paint()
+		xpcall(ptr.Paint, GenerateErrorer("StructurePainter"), ptr)
 	end
 
 	if active then
 		surface.SetAlphaMultiplier(ptr:GetFrac())
-		active:Paint()
+		xpcall(active.Paint, GenerateErrorer("StructurePainter"), active)
 	end
 
+	draw.DisableFilters(true, true)
 	surface.SetAlphaMultiplier(pre)
 end
 
 hook.Add("HUDPaint", "PaintBWStructure", function()
 	local trace = LocalPlayer():GetEyeTrace()
-	local ent = trace.Fraction * 32768 and
-		trace.Entity:IsValid() and trace.Entity.IsBaseWars and
-			trace.Entity
 
+	-- distance & validity check
+	local ent = trace.Fraction * 32768 < 192 and
+		trace.Entity:IsValid() and trace.Entity
+
+	-- custom checks
+	ent = ent and ent.IsBaseWars and
+		not ent.NoHUD and ent
 
 	sin.DoPainters(ent)
 end)

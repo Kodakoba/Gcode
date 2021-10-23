@@ -5,6 +5,8 @@ local anim = sin.Anims
 local col = Color(100, 80, 80)
 
 function sin:PaintLevel(cury)
+	local scale = DarkHUD.Scale
+
 	local ent = self:GetEntity():IsValid() and self:GetEntity()
 	local w, h = self:GetSize()
 
@@ -36,6 +38,36 @@ function sin:PaintLevel(cury)
 
 		offy = offy + th
 	end
+
+	local lvText = Language("Level", self.EntLevel, self.EntMaxLevel)
+	local lvFont = Fonts.PickFont("BSB", lvText, w,
+		DarkHUD.Scale * 32, nil, "16")
+
+	local pad = 6
+
+	local lvW, lvH = draw.SimpleText(lvText, lvFont,
+		pad, offy, color_white, 0, 5)
+
+	if self.EntUpgCost then
+		local str = Language("UpgCost", self.EntUpgCost)
+
+		-- whats upfont
+		local upFont = Fonts.PickFont("BS", str, w,
+			scale * 28, nil, 16)
+
+		local tw = surface.GetTextSizeQuick(str, upFont)
+		local maxW = math.max(lvW + tw + pad * 2 + scale * 16, w)
+
+		self:SetWide(math.max(self:GetWide(), maxW))
+		local _, th = draw.SimpleText(str,
+			upFont, maxW - tw - pad, offy + lvH / 2, color_white, 0, 1)
+
+		lvH = math.max(lvH, th)
+		lvW = lvW + tw + pad
+	end
+
+	offy = offy + lvH
+	self:SetWide(math.max(self:GetWide(), lvW))
 
 	return offy - cury
 end

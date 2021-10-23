@@ -124,7 +124,7 @@ function ptr:Disappear()
 			self.DisappearFrac = 1
 			self.Disappeared = true
 
-			timer.Create("PainterInvalidate" .. ("%p"):format(self), 2, 1, function()
+			timer.Create("PainterInvalidate" .. ("%p"):format(self), 1, 1, function()
 				self:Delete()
 			end)
 		end)

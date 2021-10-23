@@ -4,8 +4,8 @@ local function hookDarkHUD()
 
 	circCol = Colors.DarkGray:Copy()
 
-	local fontName = "Open Sans Bold"
-	local scale = math.max(DarkHUD.Scale, 1)
+	local fontName = "BreezeSans Bold"
+	local scale = math.max(DarkHUD.Scale * 1.2, 1)
 
 	surface.CreateFont("DarkHUD_Stims", {
 		font = fontName,
@@ -37,8 +37,9 @@ local function hookDarkHUD()
 	handle.cached = false
 
 	dh:On("Rescale", "StimRescale", function(_, new)
-		scale = math.max(new, 1)
+		scale = math.max(new * 1.2, 1)
 		size = 48 * scale
+
 		circSize = math.floor(20 * scale)
 		new = math.max(new, 1) -- 1 is max scale
 
@@ -121,10 +122,21 @@ local function hookDarkHUD()
 				surface.SetDrawColor(circCol:Unpack())
 				draw.MaterialCircle(gsX + circSize / 2, gsY + size - circSize / 2, circSize)
 
-				local tX = math.floor(gsX + circSize / 2)
-				local tY = math.floor(gsY + size - circSize / 2 - (18 * scale) * (0.5))
+				local tX = gsX + circSize / 2
+				local tY = gsY + size - circSize / 2
 
-				draw.SimpleText(LocalPlayer():GetStims(), "DarkHUD_Stims", tX, tY, color_white, 1)
+				surface.SetFont("DarkHUD_Stims")
+				local tx = tostring(LocalPlayer():GetStims())
+				local tw, th = surface.GetTextSize(tx)
+				tX = math.ceil(tX - tw / 2)
+				tY = math.ceil(tY - th / 2)
+				surface.SetTextPos(tX, tY)
+				surface.SetTextColor(255, 255, 255)
+				surface.DrawText(tx)
+
+				--[[local tw, th = draw.SimpleText(LocalPlayer():GetStims(), "DarkHUD_Stims",
+					tX, tY, color_white, 1, 1)]]
+
 
 				if pnl.StimpakCDFrac > 0 then
 					local tx = ("%.1f"):format(math.max(timeLeft, 0))
