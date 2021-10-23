@@ -1,5 +1,5 @@
 AddCSLuaFile()
-ENT.Base = "bw_base_electronics"
+ENT.Base = "bw_base_upgradable"
 
 ENT.Model = "models/grp/printers/printer.mdl"
 ENT.Skin = 0
@@ -41,14 +41,17 @@ function ENT:DerivedDataTables()
 	self:SetMultiplier(1)
 
 	self:MakeFloat("PrintAmount")
-
-	self:MakeFloat("UpgradeValue")
-	self.GetUpgradeCost = self.GetUpgradeValue --oops
-	self.SetUpgradeCost = self.SetUpgradeValue
+	self:MakeFloat("BoughtPrice")
 
 	self:NetworkVar("Entity", 1, "PrinterRack") --ew
 
 	slot = 2
+end
+
+function ENT:GetUpgradeCost(lv)
+	lv = lv or self:GetLevel()
+	local cost = self:GetBoughtPrice() or 1000
+	return cost * lv
 end
 
 local mults = {

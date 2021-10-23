@@ -1,46 +1,67 @@
 AddCSLuaFile()
 
-ENT.Base 				= "bw_base_electronics"
-ENT.Type 				= "anim"
+ENT.Base = "bw_base_dispenser"
+ENT.Type = "anim"
 
-ENT.PrintName 			= "Ammo Dispenser"
-ENT.Author 				= "Q2F2"
+ENT.PrintName = "Ammo Dispenser"
+ENT.Model = "models/props_lab/reciever_cart.mdl"
 
-ENT.Model 				= "models/props_lab/reciever_cart.mdl"
-ENT.Sound				= Sound("HL1/fvox/blip.wav")
+ENT.Levels = {
+	{
+		Cost = 0,
+		DispenseMult = 1,
+		CapacityMult = 2, -- mags in reserve
+	}, {
+		Cost = 125e3,
+		DispenseMult = 2,
+		CapacityMult = 3,
+	}, {
+		Cost = 2.5e6,
+		DispenseMult = 3,
+		CapacityMult = 4,
+	}, {
+		Cost = 15e6,
+		DispenseMult = 5,
+		CapacityMult = 5,
+	}, {
+		Cost = 50e6,
+		DispenseMult = 8,
+		CapacityMult = 6,
+	}, {
+		Cost = 200e6,
+		DispenseMult = 15,
+		CapacityMult = 8,
+	}
+}
 
-ENT.ConnectPoint = Vector (-12.923860549927, 4.9223861694336, 7.6732382774353)
-
-ENT.UseSpline = false 
-
-function ENT:Init()
-
-	self:SetModel(self.Model)
-	self:SetHealth(500)
-	
-	self:SetUseType(CONTINUOUS_USE)
-	
-end
 
 function ENT:CheckUsable()
-
 	if self.Time and self.Time + 0.5 > CurTime() then return false end
-	
 end
 
-function ENT:UseFunc(ply)
-	
-	if not IsPlayer(ply) then return end
-	
-	self.Time = CurTime()
-	
+local capMults = {
+	["12 Gauge"] = 2,
+	["Buckshot"] = 2,
+	["BuckshotHL1"] = 2, -- ???
+	[".338 Lapua"] = 0.75
+}
+
+function ENT:Dispense(ply, dat)
 	local gun = ply:GetActiveWeapon()
 	if not IsValid(gun) then return end
-	
+
 	local ammo = gun:GetPrimaryAmmoType()
 	if not ammo then return end
-	
-	ply:GiveAmmo(math.min(15, gun:GetMaxClip1()), ammo)
-	self:EmitSound(self.Sound, 100, 60)
-	
+
+	local ammoName = game.GetAmmoName(ammo)
+	local capMult = capMults[ammoName] or 1
+
+	local clip = gun:GetMaxClip1()
+	local toGive = math.min(10, math.ceil(clip / 3)) * dat.DispenseMult
+
+	local max = clip * dat.CapacityMult * capMult
+	local has = ply:GetAmmoCount(ammo)
+	toGive = math.min(max - has, toGive)
+
+	ply:GiveAmmo(toGive, ammo)
 end

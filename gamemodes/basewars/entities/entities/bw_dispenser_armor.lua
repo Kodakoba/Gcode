@@ -1,41 +1,38 @@
 AddCSLuaFile()
 
-ENT.Base 				= "bw_base_electronics"
-ENT.Type 				= "anim"
+ENT.Base = "bw_base_dispenser"
+ENT.Type = "anim"
 
-ENT.PrintName 			= "Armor Dispenser"
-ENT.Author 				= "Q2F2"
+ENT.PrintName = "Armor Dispenser"
 
-ENT.Model 				= "models/props_combine/suit_charger001.mdl"
-ENT.Sound				= Sound("HL1/fvox/blip.wav")
+ENT.Model = "models/props_combine/suit_charger001.mdl"
 
-function ENT:Init()
+ENT.Levels = {
+	{
+		Cost = 0,
+		DispenseAmt = 5,
+		MaxArmor = 50,
+	}, {
+		Cost = 500e3,
+		DispenseAmt = 10,
+		MaxArmor = 75,
+	}, {
+		Cost = 10e6,
+		DispenseAmt = 15,
+		MaxArmor = 100,
+	}, {
+		Cost = 50e6,
+		DispenseAmt = 20,
+		MaxArmor = 150,
+	},
+}
 
-	self:SetModel(self.Model)
-	self:SetHealth(500)
-	
-	self:SetUseType(CONTINUOUS_USE)
-	
-end
 
-function ENT:CheckUsable()
+function ENT:Dispense(ply, dat)
+	if not IsPlayer(ply) then return false end
 
-	if self.Time and self.Time + 0.5 > CurTime() then return false end
-	
-end
+	local ar = ply:Armor()
+	if ar >= dat.MaxArmor then return false end
 
-function ENT:UseFunc(ply)
-	
-	if not IsPlayer(ply) then return end
-	
-	self.Time = CurTime()
-	
-	local Armor = ply:Armor()
-	if Armor >= 100 then return end
-	
-	ply:SetArmor(Armor + 10)
-	self:EmitSound(self.Sound, 100, 60)
-	
-	if ply:Armor() > 100 then ply:SetArmor(100) end
-	
+	ply:SetArmor(math.min(ar + dat.DispenseAmt, dat.MaxArmor))
 end

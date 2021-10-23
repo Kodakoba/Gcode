@@ -35,10 +35,6 @@ function ENT:Initialize()
 	baseclass.Get("bw_base_electronics").Initialize(self)
 end
 
-function ENT:NetworkMods()
-	local m = self.Mods
-	self:SetMods(util.TableToJSON(m))
-end
 
 function ENT:Overclock(lv, mult)
 	if not self.Overclockable or self.Overclocker then return false end
@@ -49,64 +45,17 @@ function ENT:Overclock(lv, mult)
 
 	BaseWars.Printers.MasterTable[self].mult = self.Multiplier
 
-	self.Mods["o"] = lv
-	self:NetworkMods()
 	return true
 end
 
-function ENT:Upgrade_HasMoney(ply)
-	local lvl = self.Level
-	local plyM = ply:GetMoney()
-	local calcM = self:GetUpgradeValue() * lvl
-	local hasNext = self:GetUpgradeValue() * (lvl + 1)
+function ENT:OnFinalUpgrade()
+	self:EmitSound("replay/rendercomplete.wav")
 
-	return plyM >= calcM and calcM, plyM >= calcM + hasNext
-end
-
-function ENT:DoUpgrade(final)
-	local lvl = self:GetLevel()
-	local calcM = self:GetUpgradeValue() * lvl
-	BaseWars.Worth.Add(self, calcM)
-	self.Level = self.Level + 1
-
-	if final then
-		self:EmitSound("replay/rendercomplete.wav")
-		self:SetLevel(self.Level)
-		local amt = BaseWars.Printers.GetPrintRate(self)
-		if amt then
-			self:SetPrintAmount(amt)
-		end
+	self.Level = self:GetLevel()
+	local amt = BaseWars.Printers.GetPrintRate(self)
+	if amt then
+		self:SetPrintAmount(amt)
 	end
-
-end
-
-function ENT:RequestUpgrade(ply, try, total)
-	if not ply then return end
-
-	local ow = self:BW_GetOwner()
-
-	if GetPlayerInfo(ply) ~= ow then
-		ply:ChatNotify({BASEWARS_NOTIFICATION_ERROR, "You can't upgrade others' printers!"})
-		return false
-	end
-
-	local has, hasNext = self:Upgrade_HasMoney(ply)
-
-	if self.Level >= self.MaxLevel then
-		ply:ChatNotify({BASEWARS_NOTIFICATION_ERROR, Language.UpgradeMaxLevel(self.MaxLevel)})
-		return false
-	end
-
-	if not has then
-		if try == 1 then
-			ply:ChatNotify({BASEWARS_NOTIFICATION_ERROR, Language.UpgradeNoMoney()})
-		end
-		return false
-	end
-
-	ply:TakeMoney(has)
-
-	self:DoUpgrade( (try == total) or not hasNext )
 end
 
 function ENT:NetworkVars()

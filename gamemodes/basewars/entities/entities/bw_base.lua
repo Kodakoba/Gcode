@@ -11,7 +11,6 @@ ENT.PresetMaxHealth = 100
 ENT.IsBaseWars = true
 
 ENT.Level = 1
-ENT.MaxLevel = 1
 
 function ENT:Init()
 

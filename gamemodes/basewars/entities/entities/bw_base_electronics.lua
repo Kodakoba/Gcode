@@ -38,27 +38,9 @@ function ENT:SetupDataTables()
 	self:NetworkVar("Float", 0, "RebootTime")
 
 	self:NetworkVar("Int", 0, "GridID")
-
-	self:NetworkVar("Entity", 0, "Line")
-
-	if CLIENT then
-		self:On("DTChanged", "GridID", function(self, name, old, new)
-			if name ~= "GridID" then return end
-			self:OnChangeGridID(new)
-		end)
-	end
-
-end
-
-
-
-function ENT:Disconnect()
-	self:GetGrid():RemoveConsumer(self)
-	PowerGrid:new( (self:CPPIGetOwner()) ):AddConsumer(self)
 end
 
 if SERVER then
-
 	function ENT:Think()
 		local me = self:GetTable()
 

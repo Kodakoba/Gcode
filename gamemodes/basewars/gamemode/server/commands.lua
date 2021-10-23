@@ -187,7 +187,8 @@ local function Upgrade(ply, amt, ent)
 	ent = ent or trace.Entity
 	if not Upgradable(ply, ent) then return false end
 
-	local canTimes = ent.MaxLevel - ent.Level
+	local canTimes = ent.CanUpgradeTimes and ent:CanUpgradeTimes() or
+		ent.MaxLevel - (ent.GetLevel and ent:GetLevel() or ent.Level or ent.MaxLevel)
 
 	if amt == "max" then
 		amt = canTimes

@@ -12,6 +12,7 @@ SWEP.UseHands = true
 
 SWEP.IsDash = true
 SWEP.Primary.Automatic = false
+SWEP.Primary.Ammo = ""
 
 local dashDur = 0.3
 SWEP.DashTime = dashDur
