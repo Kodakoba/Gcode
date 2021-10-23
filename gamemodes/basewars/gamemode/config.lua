@@ -8,6 +8,10 @@ BaseWars.Config = {
 	AFKTime = 60,
 	AFKConserveTime = 90, -- FPS gets limited after this time
 
+	RespawnTime = 5, -- base respawn time
+	RespawnRaider = 15,
+	RespawnRaided = 10,
+
 	SpawnWeps = {
 		"weapon_physcannon",
 		"hands",

@@ -58,3 +58,21 @@ if SERVER then
 	end
 
 end
+
+
+hook.Add("PlayerDeath", "RespawnTime", function(ply, by, atk)
+	local side = ply:GetSide()
+
+	local cfg = BaseWars.Config
+	local base = cfg.RespawnTime -- base respawn time
+
+	local sideCd = {cfg.RespawnRaider, cfg.RespawnRaided}
+
+	if side then
+		-- raider = 1, raided = 2
+		local delay = sideCd[side] or base
+		ply:SetRespawnTime(delay)
+	else
+		ply:SetRespawnTime(base)
+	end
+end)

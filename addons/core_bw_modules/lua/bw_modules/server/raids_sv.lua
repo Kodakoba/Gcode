@@ -505,16 +505,6 @@ hook.Add("Think", "RaidsThink", function()
 	end
 end)
 
-hook.Add("PlayerDeath", "RaidsDeath", function(ply, by, atk)
-	local side = ply:GetSide()
-
-	if side then
-		local delay = side * 5 + 5	--raided get (2*5) + 5 = 15s
-		ply:SetRespawnTime(delay)
-	end
-end)
-
-
 hook.Remove("PlayerSpawn", "RaidsSpawn")
 hook.Remove("PlayerDeathThink", "RaidsDeath")
 
