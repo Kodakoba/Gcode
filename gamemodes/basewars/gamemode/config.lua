@@ -12,6 +12,8 @@ BaseWars.Config = {
 	RespawnRaider = 15,
 	RespawnRaided = 10,
 
+	ReFadeDelay = 0.75,
+
 	SpawnWeps = {
 		"weapon_physcannon",
 		"hands",

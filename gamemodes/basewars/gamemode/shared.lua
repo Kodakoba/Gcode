@@ -148,7 +148,10 @@ function BaseWars.AddToSpawn(t)
 	t.Model = t.Model or "models/Humans/Group01/Male_Cheaple.mdl"
 	t.ShouldFreeze = (t.Gun and false) or (t.ShouldFreeze == nil and true) or t.ShouldFreeze
 	t.Name = t.Name or "???"
-	if not t.ClassName then error("look i'd put up with your shit like not setting limits or price but NOT CLASS NAME???") return end
+	if not t.ClassName then
+		error("look i'd put up with your shit like not setting limits or price but NOT CLASS NAME???")
+		return
+	end
 
 	return t
 
