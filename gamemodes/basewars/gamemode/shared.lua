@@ -286,18 +286,6 @@ function GM:PlayerNoClip(ply)
 
 end
 
-local function IsDev(ply, ent, ret)
-	if BlockInteraction(ply, ent, ret) == false then return false end
-
-	return BaseWars.IsDev(ply)
-end
-
-local function IsAdmin(ply, ent, ret)
-	if BlockInteraction(ply, ent, ret) == false then return false end
-
-	return ply:IsAdmin()
-end
-
 local function BlockInteraction(ply, ent, ret)
 
 	if ent then
@@ -329,7 +317,17 @@ local function BlockInteraction(ply, ent, ret)
 
 end
 
+local function IsDev(ply, ent, ret)
+	if BlockInteraction(ply, ent, ret) == false then return false end
 
+	return BaseWars.IsDev(ply)
+end
+
+local function IsAdmin(ply, ent, ret)
+	if BlockInteraction(ply, ent, ret) == false then return false end
+
+	return ply:IsAdmin()
+end
 
 function GM:PhysgunPickup(ply, ent)
 	local Ret = self.BaseClass:PhysgunPickup(ply, ent)
