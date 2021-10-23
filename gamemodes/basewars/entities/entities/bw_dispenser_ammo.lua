@@ -13,42 +13,42 @@ ENT.Levels = {
 		MaxCharge = 3,
 
 		--DispenseMult = 1,
-		CapacityMult = 2, -- mags in reserve
+		CapacityMult = 4, -- mags in reserve
 	}, {
 		Cost = 125e3,
 		ChargeRate = 0.5 / 20,
 		MaxCharge = 5,
 
 		--DispenseMult = 2,
-		CapacityMult = 3,
+		CapacityMult = 6,
 	}, {
 		Cost = 2.5e6,
 		ChargeRate = 0.5 / 15,
 		MaxCharge = 8,
 
 		--DispenseMult = 3,
-		CapacityMult = 4,
+		CapacityMult = 8,
 	}, {
 		Cost = 15e6,
 		ChargeRate = 0.5 / 10,
 		MaxCharge = 12,
 
 		--DispenseMult = 5,
-		CapacityMult = 5,
+		CapacityMult = 12,
 	}, {
 		Cost = 50e6,
 		ChargeRate = 0.5 / 5,
 		MaxCharge = 16,
 
 		--DispenseMult = 8,
-		CapacityMult = 6,
+		CapacityMult = 16,
 	}, {
 		Cost = 200e6,
 		ChargeRate = 0.5 / 5,
 		MaxCharge = 20,
 
 		--DispenseMult = 15,
-		CapacityMult = 8,
+		CapacityMult = 999,
 	}
 }
 
