@@ -21,7 +21,7 @@ ENT.Levels = {
 		DispenseAmt = 15,
 		MaxArmor = 100,
 	}, {
-		Cost = 50e6,
+		Cost = 150e6,
 		DispenseAmt = 20,
 		MaxArmor = 150,
 	},
