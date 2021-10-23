@@ -97,7 +97,7 @@ function sin:PaintName(cury)
 	DarkHUD.PaintBar(rounding, barX, offy, barW, barH, hpFr,
 		HPBG, hpBorderCol, hpCol, txt)
 
-	offy = offy + barH + 8 * scale
+	offy = offy + barH
 
 	self:SizeTo(math.max(self:GetWide(), tw), -1, 0.3, 0, 0.3)
 	return offy - cury

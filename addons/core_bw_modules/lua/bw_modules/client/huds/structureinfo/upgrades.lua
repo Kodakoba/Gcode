@@ -23,21 +23,7 @@ function sin:PaintLevel(cury)
 
 	if not self.EntLevel then return end
 
-	local offy = cury
-
-	local _, th = draw.SimpleText(
-		Language("Level", self.EntLevel, self.EntMaxLevel),
-		"OS20", w / 2, offy, color_white, 1, 5)
-
-	offy = offy + th
-
-	if self.EntUpgCost then
-		local _, th = draw.SimpleText(
-			Language("UpgCost", self.EntUpgCost),
-			"OS20", w / 2, offy, color_white, 1, 5)
-
-		offy = offy + th
-	end
+	local offy = cury + 4 * scale
 
 	local lvText = Language("Level", self.EntLevel, self.EntMaxLevel)
 	local lvFont = Fonts.PickFont("BSB", lvText, w,

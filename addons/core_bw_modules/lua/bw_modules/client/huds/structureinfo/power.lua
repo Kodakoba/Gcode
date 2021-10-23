@@ -22,7 +22,7 @@ function sin:PaintPower(cury)
 
 	pwFr = self.NoPWFrac or pwFr
 
-	local offy = cury - draw.GetFontHeight("OSB20") * 0.15
+	local offy = cury
 
 	local szTo = 0
 
@@ -37,7 +37,7 @@ function sin:PaintPower(cury)
 		local _, th = draw.SimpleText("No power!", "OSB20",
 			w / 2, offy, col, 1, 5)
 
-		offy = offy + math.ceil(th * pwFr * 0.875)
+		offy = offy + math.ceil(th * pwFr)
 		szTo = th * noPwTo
 
 		draw.DisableMask()
