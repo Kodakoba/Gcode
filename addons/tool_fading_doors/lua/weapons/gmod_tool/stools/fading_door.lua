@@ -11,33 +11,37 @@ TOOL.ClientConVar["closesound"] = "0"
 
 list.Add("FDoorMaterials", "sprites/heatwave")
 list.Add("FDoorMaterials", "models/wireframe")
-list.Add("FDoorMaterials", "debug/env_cubemap_model")
-list.Add("FDoorMaterials", "models/shadertest/shader3")
-list.Add("FDoorMaterials", "models/shadertest/shader4")
-list.Add("FDoorMaterials", "models/shadertest/shader5")
-list.Add("FDoorMaterials", "models/shiny")
-list.Add("FDoorMaterials", "models/debug/debugwhite")
-list.Add("FDoorMaterials", "Models/effects/comball_sphere")
-list.Add("FDoorMaterials", "Models/effects/comball_tape")
-list.Add("FDoorMaterials", "Models/effects/splodearc_sheet")
-list.Add("FDoorMaterials", "Models/effects/vol_light001")
-list.Add("FDoorMaterials", "models/props_combine/stasisshield_sheet")
+-- list.Add("FDoorMaterials", "debug/env_cubemap_model")
+-- list.Add("FDoorMaterials", "models/shadertest/shader3")
+-- list.Add("FDoorMaterials", "models/shadertest/shader4")
+-- list.Add("FDoorMaterials", "models/shadertest/shader5")
+-- list.Add("FDoorMaterials", "models/shiny")
+-- list.Add("FDoorMaterials", "models/debug/debugwhite")
+-- list.Add("FDoorMaterials", "Models/effects/comball_sphere")
+-- list.Add("FDoorMaterials", "Models/effects/comball_tape")
+-- list.Add("FDoorMaterials", "Models/effects/splodearc_sheet")
+-- list.Add("FDoorMaterials", "Models/effects/vol_light001")
+-- list.Add("FDoorMaterials", "models/props_combine/stasisshield_sheet")
 list.Add("FDoorMaterials", "models/props_combine/portalball001_sheet")
-list.Add("FDoorMaterials", "models/props_combine/com_shield001a")
-list.Add("FDoorMaterials", "models/props_c17/frostedglass_01a")
-list.Add("FDoorMaterials", "models/props_lab/Tank_Glass001")
-list.Add("FDoorMaterials", "models/props_combine/tprings_globe")
-list.Add("FDoorMaterials", "models/rendertarget")
-list.Add("FDoorMaterials", "models/screenspace")
-list.Add("FDoorMaterials", "brick/brick_model")
-list.Add("FDoorMaterials", "models/props_pipes/GutterMetal01a")
+list.Add("FDoorMaterials", "models/props_lab/cornerunit_cloud")
+list.Add("FDoorMaterials", "models/props_combine/tpballglow")
+list.Add("FDoorMaterials", "models/props_combine/stasisfield_beam")
+
+-- list.Add("FDoorMaterials", "models/props_combine/com_shield001a")
+-- list.Add("FDoorMaterials", "models/props_c17/frostedglass_01a")
+-- list.Add("FDoorMaterials", "models/props_lab/Tank_Glass001")
+-- list.Add("FDoorMaterials", "models/props_combine/tprings_globe")
+-- list.Add("FDoorMaterials", "models/rendertarget")
+-- list.Add("FDoorMaterials", "models/screenspace")
+-- list.Add("FDoorMaterials", "brick/brick_model")
+--[[list.Add("FDoorMaterials", "models/props_pipes/GutterMetal01a")
 list.Add("FDoorMaterials", "models/props_pipes/Pipesystem01a_skin3")
 list.Add("FDoorMaterials", "models/props_wasteland/wood_fence01a")
 list.Add("FDoorMaterials", "models/props_foliage/tree_deciduous_01a_trunk")
 list.Add("FDoorMaterials", "models/props_c17/FurnitureFabric003a")
 list.Add("FDoorMaterials", "models/props_c17/FurnitureMetal001a")
 list.Add("FDoorMaterials", "models/props_c17/paper01")
-list.Add("FDoorMaterials", "models/flesh")
+list.Add("FDoorMaterials", "models/flesh")]]
 
 if SERVER then
 	util.AddNetworkString("DrawFadeDoor")
@@ -259,8 +263,17 @@ local function fadeActivate(self)
 	self.fadeActive = true
 	self.fadeMaterial = self:GetMaterial()
 	self.fadeDoorMaterial = self.fadeDoorMaterial or "sprites/heatwave"
+	self.fadeRenderMode = self:GetRenderMode()
+	self.fadeColor = self:GetColor()
+
+	local col = self.fadeColor:Copy()
+	col.a = 130
+
 	self:SetMaterial(self.fadeDoorMaterial)
 	self:DrawShadow(false)
+	self:SetRenderMode(RENDERMODE_TRANSALPHA)
+	self:SetColor(col)
+
 	if self.fadeCanDisableMotion then self:SetNotSolid(true) else self:SetCollisionGroup(COLLISION_GROUP_WORLD) end
 	local phys = self:GetPhysicsObject()
 	if IsValid(phys) then
@@ -285,7 +298,10 @@ end
 local function fadeDeactivate(self)
 	self.fadeActive = false
 	if self:GetMaterial() == self.fadeDoorMaterial and self.fadeMaterial then self:SetMaterial(self.fadeMaterial) end
+	self:SetRenderMode(self.fadeRenderMode)
 	self:DrawShadow(true)
+	self:SetColor(self.fadeColor)
+
 	if self.fadeCanDisableMotion then self:SetNotSolid(false) else self:SetCollisionGroup(COLLISION_GROUP_NONE) end
 	local phys = self:GetPhysicsObject()
 	if IsValid(phys) then
