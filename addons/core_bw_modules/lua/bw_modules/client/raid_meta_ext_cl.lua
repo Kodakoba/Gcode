@@ -46,7 +46,7 @@ function raidmeta:IsParticipant(obj)
 end
 
 function raidmeta:IsRaider(obj)
-	if IsPlayer(obj) or isstring(obj) then
+	if self.Participants[obj] then
 		return self.Participants[obj] == 1
 	end
 
@@ -54,7 +54,7 @@ function raidmeta:IsRaider(obj)
 end
 
 function raidmeta:IsRaided(obj)
-	if IsPlayer(obj) or isstring(obj) then
+	if self.Participants[obj] then
 		return self.Participants[obj] == 2
 	end
 

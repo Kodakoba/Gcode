@@ -128,7 +128,7 @@ end
 
 -- returns true if `obj` is on the Raider side in this Raid
 function raidmeta:IsRaider(obj)
-	if IsPlayer(obj) or isstring(obj) then
+	if self.Participants[obj] then
 		return self.Participants[obj] == 1
 	end
 
@@ -137,7 +137,7 @@ end
 
 -- returns true if `obj` is on the Raided side in this Raid
 function raidmeta:IsRaided(obj)
-	if IsPlayer(obj) or isstring(obj) or IsPlayerInfo(obj) then
+	if self.Participants[obj] then
 		return self.Participants[obj] == 2
 	end
 
@@ -189,10 +189,8 @@ function raidmeta:Initialize(rder, rded, fac)
 	self:AddParticipant(rder, 1)
 	self:AddParticipant(rded, 2)
 
-	if fac then
-		hook.Run("RaidStart", rder, rded, fac ~= nil)
-	end
 
+	hook.Run("RaidStart", self, rder, rded, fac ~= nil)
 end
 
 function IsRaid(obj)
