@@ -124,7 +124,7 @@ function pg:AddEntity(ent)
 	end
 end
 
-hook.Add("EntityActuallyRemoved", "PowerGrid_Clear", function(ent)
+hook.NHAdd("EntityActuallyRemoved", "PowerGrid_Clear", function(ent)
 	if bw.EntityToPowerGrid[ent] then
 		local pg = bw.EntityToPowerGrid[ent]
 		pg:RemoveEntity(ent)
