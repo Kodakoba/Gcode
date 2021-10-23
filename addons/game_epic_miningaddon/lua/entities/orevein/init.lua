@@ -112,9 +112,13 @@ function ENT:RespawnElsewhere()
 	self:Remove()  -- then respawn
 end
 
+OresAwaitingRespawn = OresAwaitingRespawn or 0
+
 function ENT:RespawnIn(time)
+	OresAwaitingRespawn = OresAwaitingRespawn + 1
 	time = time or OreRespawnTime
 	timer.Simple(time, function()
+		OresAwaitingRespawn = OresAwaitingRespawn - 1
 		OresRespawn(1)
 	end)
 end
@@ -421,7 +425,9 @@ function OresRespawn(amt)
 		if not e:IsValid() then table.remove(ActiveOres, i) end
 	end
 
-	amt = amt or 4 - #ActiveOres
+	local maxOres = math.max(3, player.GetCount() / 3)
+
+	amt = amt or maxOres - #ActiveOres - OresAwaitingRespawn
 	if amt <= 0 then return end
 
 	if not Inventory.OresPositions then
