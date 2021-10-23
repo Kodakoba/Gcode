@@ -20,6 +20,14 @@ function BaseWars.IsRetarded(what)
 	return BaseWars.IsDev(what) or BaseWars.EclipseIDs[info:SteamID64()]
 end
 
-list.Set("RenderFX", "#renderfx.hologram", nil)
-list.Set("RenderModes", "#rendermode.glow", nil)
-list.Set("RenderModes", "#rendermode.worldglow", nil)
+local function I_HATE_ONEWAYS() -- :antichrist:
+	list.Set("RenderFX", "#renderfx.hologram", nil)
+	list.Set("RenderModes", "#rendermode.glow", nil)
+	list.Set("RenderModes", "#rendermode.worldglow", nil)
+end
+
+I_HATE_ONEWAYS()
+
+timer.Create("I_HATE_ONEWAYS", 2, 50, function()
+	I_HATE_ONEWAYS()
+end)
