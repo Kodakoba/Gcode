@@ -201,11 +201,14 @@ end
 
 local function AddRecreational(typ, class, name, price, mdl, lim)
 	local t = AddItem("Recreational", typ, class, name, price, mdl, lim)
+	t.Limit = 2
 	return t
 end
 
 local function AddEntities(typ, class, name, price, mdl, lim)
 	local t = AddItem("Entities", typ, class, name, price, mdl, lim)
+	t.Limit = lim or 3
+
 	return t
 end
 
@@ -320,7 +323,7 @@ SetType(nil)
 
 
 SetType("Consumables")
-	ReuseEntities("bw_repairkit", "Repair Kit", k * 2.5, "models/Items/car_battery01.mdl")
+	ReuseEntities("bw_repairkit", "Repair Kit", k * 2.5, "models/Items/car_battery01.mdl", 3)
 
 SetType("Generators")
 	SetTier(1)
@@ -355,9 +358,9 @@ SetType("Dispensers")
 
 	SetTier(1)
 		--ReuseEntities("bw_vendingmachine", "Vending Machine", k * 20, "models/props_interiors/VendingMachineSoda01a.mdl")
-		ReuseEntities("bw_dispenser_health", "Health Dispenser", k * 25, "models/props_combine/health_charger001.mdl")
-		ReuseEntities("bw_dispenser_ammo", "Ammo Dispenser", k * 25, "models/props_lab/reciever_cart.mdl")
-		ReuseEntities("bw_dispenser_armor", "Armor Dispenser", k * 75, "models/props_combine/suit_charger001.mdl")
+		ReuseEntities("bw_dispenser_health", "Health Dispenser", k * 25, "models/props_combine/health_charger001.mdl", 1)
+		ReuseEntities("bw_dispenser_ammo", "Ammo Dispenser", k * 25, "models/props_lab/reciever_cart.mdl", 1)
+		ReuseEntities("bw_dispenser_armor", "Armor Dispenser", k * 75, "models/props_combine/suit_charger001.mdl", 1)
 
 	SetTier(2)
 		--ReuseEntities("bw_dispenser_armor2", "Armor Dispenser T2", m * 15, "models/props_combine/suit_charger001.mdl")
@@ -380,7 +383,7 @@ SetType("[ACW] Pistols")
 	SetTier(1)
 		ReuseLoadout("arccw_go_m9", 	"M9", 		25 * k)
 		ReuseLoadout("arccw_go_usp", 	"USP", 		75 * k, "models/weapons/w_pist_usp.mdl")
-		ReuseLoadout("arccw_go_p250", 	"P250", 	200 * k)		
+		ReuseLoadout("arccw_go_p250", 	"P250", 	200 * k)
 
 	SetTier(2)
 		ReuseLoadout("arccw_go_tec9", 	"Tec-9", 	750 * k)
