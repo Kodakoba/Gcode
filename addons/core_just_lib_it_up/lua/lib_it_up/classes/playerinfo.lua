@@ -126,7 +126,8 @@ end
 -- TODO: game event for nick change
 
 ChainAccessor(PI, "_Nick", "Nick")
-ChainAccessor(PI, "_Name", "Name")
+ChainAccessor(PI, "_Nick", "Name")
+
 PI.Name = PI.GetNick
 PI.Nick = PI.GetNick
 
@@ -521,5 +522,12 @@ timer.Create("PlayerInfoCleanup", 1, 0, function()
 			LibItUp.PlayerInfoTables.Absent[pin] = nil
 			pin:_Destroy()
 		end
+	end
+end)
+
+timer.Create("NameUpdate", 5, 0, function()
+	for ply, pin in pairs(LibItUp.PlayerInfoTables.Player) do
+		if not IsValid(ply) then continue end
+		pin:SetNick(ply:Nick())
 	end
 end)
