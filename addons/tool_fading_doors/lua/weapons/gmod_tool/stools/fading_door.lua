@@ -538,7 +538,11 @@ local function dooEet(pl, Ent, stuff)
 	Ent.fadeReversed = stuff.reversed
 	Ent.fadeKey = stuff.key
 	Ent.fadeCanDisableMotion = stuff.CanDisableMotion
-	Ent.fadeDoorMaterial = stuff.DoorMaterial
+
+	local mat = stuff.DoorMaterial
+	if not list.Contains("FDoorMaterials", mat) then mat = nil end
+
+	Ent.fadeDoorMaterial = mat
 	Ent.fadeDoorOpenSound = stuff.DoorOpenSound
 	Ent.fadeDoorLoopSound = stuff.DoorLoopSound
 	Ent.fadeDoorCloseSound = stuff.DoorCloseSound
