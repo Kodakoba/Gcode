@@ -4,7 +4,7 @@ LibItUp.SetIncluded()
 LibItUp.PlayerInfo = LibItUp.PlayerInfo or LibItUp.Emitter:callable()
 local PI = LibItUp.PlayerInfo
 PI.IsPlayerInfo = true
-PI.CleanupIn = 300 -- being absent for 15min = playerinfo is cleaned up
+PI.CleanupIn = 300 -- being absent for 5min = playerinfo is cleaned up
 
 LibItUp.PlayerInfoTables = LibItUp.PlayerInfoTables or {
 	-- [info] = PI
@@ -142,7 +142,7 @@ function PI:__tostring()
 end
 
 -- mark "invalid" if youre ok with getting invalid PInfo
-function PI:get(id, is_sid64, invalid)
+function PI:get(id, is_sid64, invalid, nocreate)
 	if IsPlayerInfo(id) then return id end
 
 	if is_sid64 and not id:IsMaybeSteamID64() then
@@ -204,6 +204,7 @@ function PI:get(id, is_sid64, invalid)
 		end
 	end
 
+	if nocreate then return false, false end
 	return PI:new(id, is_sid64), true
 end
 
@@ -448,6 +449,17 @@ function GetPlayerInfoGuarantee(what, is_sid64)
 	if not pinfo then errorf("Failed to obtain PlayerInfo using `%s` (%s)", what, type(what)) return end
 
 	return pinfo, pinfo:GetPlayer()
+end
+
+function GetPlayerInfoIfExists(what, is_sid64)
+	if not CanGetPInfo(what) then
+		errorf("bad arg #1 to GetPlayerInfo" ..
+			"(expected string [id], player or playerinfo, got %s (%s))", type(what),
+			type(what) == "Player" and (what:IsValid() and "valid" or "invalid") or "not player")
+		return
+	end
+
+	return PI:get(what, is_sid64, false, true)
 end
 
 function PIToPlayer(what)

@@ -614,9 +614,13 @@ function FPP.PlayerDisconnect(ply)
                 return
             end
         end
+
+        hook.NHRun("FPP_CleanupDisconnected", SteamID)
+
         for _, v in ipairs(ents.GetAll()) do
             if v.FPPOwnerID ~= SteamID or v:GetPersistent() then continue end
-            v:Remove()
+            hook.NHRun("FPP_CleanupDisconnectedEnt", SteamID, v)
+            if IsValid(v) then v:Remove() end
         end
         FPP.DisconnectedPlayers[SteamID] = nil -- Player out of the Disconnect table
     end)

@@ -202,19 +202,8 @@ function BaseWars.UTIL.ClearRollbackFile(ply)
 end
 
 function BaseWars.UTIL.SafeShutDown()
-
 	BaseWars.UTIL.RefundAll()
-
-	local Files = file.Find("basewars_crashrollback/*_save.txt", "DATA")
-
-	for k, v in next, Files do
-
-		file.Delete("basewars_crashrollback/" .. v)
-
-	end
-
-	file.Delete("server_crashed.dat")
-
+	BaseWars.PlayerData.SyncBWIntoSQL()
 end
 
 function BaseWars.UTIL.FreezeAll()

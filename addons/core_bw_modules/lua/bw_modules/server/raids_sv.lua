@@ -552,7 +552,7 @@ function raid.CanDealDamage(ply, ent, infl, dmg)
 		if rd and rd2 and -- in raid?
 			rd == rd2 and rd:IsRaider(ply) and rd:IsRaided(ow) then
 			if not ent.IsBaseWars then
-				dmg:ScaleDamage(0.25)
+				dmg:ScaleDamage(0.40)
 			end
 
 			local can = hook.Run("BW_CanDealRaidDamage", ply, ent, infl, dmg) ~= false

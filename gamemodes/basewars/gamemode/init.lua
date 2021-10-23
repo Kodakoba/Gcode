@@ -52,11 +52,9 @@ function GM:GetGameDescription()
 end
 
 function GM:ShutDown()
-
 	BaseWars.UTIL.SafeShutDown()
-
+	BaseWars.PlayerData.SyncBWIntoSQL()
 	self.BaseClass:ShutDown()
-
 end
 
 function GM:OnEntityCreated(ent)
@@ -66,8 +64,8 @@ function GM:OnEntityCreated(ent)
 		self.BaseClass:OnEntityCreated(ent)
 
 		local Class = IsValid(ent) and ent:GetClass()
-		if Class == "prop_physics" and ent:Health() == 0 then
 
+		if Class == "prop_physics" and ent:Health() == 0 then
 			local HP = (IsValid(ent:GetPhysicsObject()) and ent:GetPhysicsObject():GetMass() or 50) * BaseWars.Config.UniversalPropConstant
 			HP = math.Clamp(HP, 0, 1000)
 
@@ -79,12 +77,15 @@ function GM:OnEntityCreated(ent)
 			ent:SetNW2Int("MaxHealth", ent.MaxHealth)
 
 			ent:SetMaxHealth(ent.MaxHealth)
-				timer.Create("prop"..ent:EntIndex(),1,0,function() if !(ent:IsValid()) then return end ent:SetNW2Int("MaxHealth",ent.MaxHealth) end)
 
-				function ent:OnRemove()
-					timer.Remove("prop"..self:EntIndex())
-				end
+			timer.Create("prop"..ent:EntIndex(), 1, 5, function()
+				if not ent:IsValid() then return end
+				ent:SetNW2Int("MaxHealth", ent.MaxHealth)
+			end)
 
+			function ent:OnRemove()
+				timer.Remove("prop" .. self:EntIndex())
+			end
 		end
 
 	end

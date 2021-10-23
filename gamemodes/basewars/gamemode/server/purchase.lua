@@ -46,10 +46,23 @@ hook.NHAdd("PlayerInfoDestroy", "PurchasedRefund", function(pin)
 
 	for k,v in ipairs(stuff) do
 		if v:IsValid() then
+			local wth, has = BaseWars.Worth.Get(v)
+			if has then
+				BaseWars.Worth.Set(v, wth * BaseWars.Config.DestroyReturn)
+			end
 			v:Remove()
 		end
 	end
 end)
+--[[
+hook.NHAdd("FPP_CleanupDisconnectedEnt", "PurchasedRefund", function(sid, ent)
+	local wth, has = BaseWars.Worth.Get(ent)
+
+	if has then
+		BaseWars.Worth.Set(ent, wth * BaseWars.Config.DestroyReturn)
+	end
+end)
+]]
 
 local function decrLimit(ent)
 	if not ent._incrLimit then return end
@@ -297,6 +310,12 @@ function BWSpawn(ply, cat, catID)
 	newEnt:Spawn()
 	newEnt:Activate()
 
+	if not newEnt.IsBaseWars and newEnt:GetMaxHealth() == 0 then
+		newEnt:SetMaxHealth(100)
+		newEnt:SetHealth(100)
+		newEnt.CanBlowtorch = true
+	end
+
 	newEnt:DropToFloor()
 
 	if newEnt.BW_PostBuy then
@@ -327,7 +346,7 @@ end)
 
 
 local function Disallow_Spawning(ply, ...)
-	if not ply:IsAdmin()  then
+	if not ply:IsAdmin() then
 		ply:Notify(Language.UseSpawnMenu, BASEWARS_NOTIFICATION_ERROR)
 		return false
 	end
@@ -338,6 +357,7 @@ local banned = {
 }
 
 local function NoGunsFuckYou(ply, class, what)
+	if not ply:IsAdmin() then return false end
 
 	local mon = ply:GetMoney()
 	local price = 5e6
@@ -345,7 +365,8 @@ local function NoGunsFuckYou(ply, class, what)
 		price = BaseWars.Catalogue[class].Price
 	end
 
-	if mon < price and not BaseWars.IsRetarded(ply) then
+	if mon < price and
+		not BaseWars.IsRetarded(ply) then
 		ply:Notify(Language.UseSpawnMenu, BASEWARS_NOTIFICATION_ERROR)
 		return false
 	end

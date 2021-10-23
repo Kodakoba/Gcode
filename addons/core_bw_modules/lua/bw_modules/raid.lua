@@ -281,7 +281,7 @@ end
 
 function PINFO:SetRaidCD(t)
 	local nw = self:GetPublicNW()
-	nw:Set("RaidCD", CurTime() + Raids.RaidCoolDown - (t or Raids.RaidCoolDown))
+	nw:Set("RaidCD", CurTime() + Raids.RaidCoolDown - (t and Raids.RaidCoolDown - t or 0))
 end
 
 function PLAYER:GetRaidCD()

@@ -104,6 +104,9 @@ function rb.LoadPlayer(ply)
 			pin:SetBWData("Worth", wth) -- this will cause BW_DataSyncWorth to be called
 			rb.PlayerWorth[pin] = wth
 
+			MsgC("refunding player " .. pin:Name() .. " (" .. pin:SteamID() .. ")" ..
+				" money for crash: " .. BaseWars.NumberFormat(to_add) .. "(" .. to_add .. ")\n")
+
 			ply:OnFullyLoaded(function()
 				local tcol = Color(50, 180, 110)
 				local mcol = Color(60, 220, 60)
