@@ -202,12 +202,17 @@ function bw.Base:IsOwner(what)
 	end
 end
 
+function bw.Zone:RescanEnts()
+	if not IsValid(self:GetBrush()) then return end
+	self:GetBrush():ForceScanEnts()
+end
+
+bw.Zone.ForceScanEnts = bw.Zone.RescanEnts
+
 ChainAccessor(bw.Zone, "Brush", "Brush")
 
 hook.Add("BWBasesLoaded", "BrushRescan", function()
 	for k,v in pairs(bw.Zones) do
-		if v:GetBrush() then
-			v:GetBrush():ForceScanEnts()
-		end
+		v:RescanEnts()
 	end
 end)
