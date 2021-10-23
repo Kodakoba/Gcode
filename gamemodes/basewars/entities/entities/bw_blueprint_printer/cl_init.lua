@@ -2,9 +2,8 @@ include("shared.lua")
 AddCSLuaFile("shared.lua")
 
 hdl.DownloadFile("https://i.imgur.com/SpRAhWY.jpg", "crafting/bp_line.jpg", function(fn)
-	print("creating mat", fn)
 	local mat = Material(fn, "noclamp")
-	print("created:", mat:GetTexture("$basetexture"), mat:IsError(), file.Exists(fn, "GAME"))
+
 	_MAT = mat
 
 	if not BlueprinterMat then
@@ -257,7 +256,6 @@ net.Receive("BlueprintPrinter", function()
 end)
 
 function ENT:ReadLevel(key, old, new)
-	print("ReadLevel", key, old, new)
 	if key == "Level" then
 		self:DoUpgrade(new)
 	end
