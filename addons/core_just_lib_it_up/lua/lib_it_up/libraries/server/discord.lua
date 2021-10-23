@@ -215,6 +215,7 @@ function discord.GetChannels(mode, cb)
 
 	q:start()
 end
+
 function discord.Send(mode, name, txt)
 
 	local function callback(urls)
@@ -230,7 +231,24 @@ function discord.Send(mode, name, txt)
 	end
 
 	discord.GetChannels(mode, callback)
+end
 
+function discord.SendUnescaped(mode, name, txt)
+
+	local function callback(urls)
+
+		http.Post("https://vaati.net/Gachi/shit.php", {
+			name = name or "lodestar/generic",
+			api = "disrelay",
+			p = txt,
+			json = "y",
+			chan = util.TableToJSON(urls),
+			noescape = "y",
+		})
+
+	end
+
+	discord.GetChannels(mode, callback)
 end
 
 BlankFunc = function(...) end
