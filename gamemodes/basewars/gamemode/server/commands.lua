@@ -308,6 +308,7 @@ BaseWars.Commands.AddCommand({"dw", "dropwep"}, function(ply)
 			Ent:SetPos(SpawnPos)
 			Ent:SetAngles(SpawnAng)
 			Ent.Backup = bkup
+			Ent.Dropped = true
 		Ent:Spawn()
 		Ent:Activate()
 

@@ -129,8 +129,10 @@ function ENT:Use(act, call, usetype, value)
 			table.Merge(Wep:GetTable(), self.Backup)
 		end
 
-		local Clip = Wep.Primary and Wep.Primary.DefaultClip
-		ply:GiveAmmo((Clip and Clip * 3) or 30, Wep:GetPrimaryAmmoType())
+		if not self.Dropped then
+			local Clip = Wep.Primary and Wep.Primary.DefaultClip
+			ply:GiveAmmo((Clip and Clip * 3) or 30, Wep:GetPrimaryAmmoType())
+		end
 
 		hook.Run("BW_WeaponPickedUp", self, Wep, ply)
 	end
