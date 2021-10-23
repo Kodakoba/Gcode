@@ -52,6 +52,16 @@ function math.Sort(...)
 	return unpack(temp)
 end
 
+local funcs = { math.ceil, math.floor, math.Round }
+
+function math.Multiple(num, of, up, down)
+	up = up and 1 or 0
+	down = down and 2 or 0
+	local k = math.max(up + down, 1)
+
+	return funcs[k](num / of) * of
+end
+
 function math.Sign(n)
 	return n >= 0 and 1 or -1
 end
