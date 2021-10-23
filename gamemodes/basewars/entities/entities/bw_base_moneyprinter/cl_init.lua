@@ -72,48 +72,7 @@ end
 local cache = WeakTable("kv") --bruh...
 
 function ENT:DrawUpgradeCost(y, w, h)
-	local costMoney = self:GetUpgradeCost() or 0
-	local lv = self:GetLevel()
 
-	local cost
-	local what
-
-	if lv < self.MaxLevel then
-		cost = Language("Price", BaseWars.NumberFormat(costMoney))
-		what = "Upgrade cost:"
-	else
-		what = "Max. level!"
-	end
-
-	local costW, whatW = cost and cache[cost] or 0, cache[what]
-
-	local upW, upH = 0, (cost and 64 * 0.875 or 0) + 48
-
-	if cost and not costW then
-		setFont("BSSB64")
-		costW = getTextSize(cost)
-		cache[cost] = costW
-	end
-
-	if not whatW then
-		setFont("BS48")
-		whatW = getTextSize(what)
-		cache[what] = whatW
-	end
-
-	upW = math.max(costW, whatW) + 24
-
-	local upX, upY = w/2 - upW/2, y
-
-	setDrawColor(black:Unpack())
-	rect(upX, upY, upW, upH)
-
-	--draw.RoundedBox(16, upX, upY, upW, upH, black)
-
-	local _, th = simpleText(what, "BS48", upX + upW / 2, upY, white, 1)
-	if cost then
-		simpleText(cost, "BSSB64", upX + upW / 2, upY + (th * 0.875), white, 1)
-	end
 end
 
 function ENT:DrawMoneyBar(pos, ang, scale, _, _, me, pwd)
@@ -155,7 +114,7 @@ function ENT:DrawMoneyBar(pos, ang, scale, _, _, me, pwd)
 end
 
 local blk = Color(0, 0, 0, 250)
-
+local critDmgCol = Color(170, 40, 40)
 function ENT:DrawMisc(pos, ang, scale, w, h, me, pwd)
 
 	local nameW, nameH = w * 0.75, h * 0.2
@@ -170,13 +129,17 @@ function ENT:DrawMisc(pos, ang, scale, w, h, me, pwd)
 		simpleText("Lv. " .. me.dt.Level, nil, w/2, nameY + nameH, color_white, 1, 4)
 
 		if self:Health() / self:GetMaxHealth() < 0.25 then
-			local sin = math.abs(math.sin(CurTime()*2))
-			local col = Color(170 + sin*75, 40 + sin*40, 40 + sin*40) -- todo: creating color every frame
+			local sin = 1 - (CurTime() * 1.5) % 1
+			critDmgCol:Set(170 + sin*75, 40 + sin*40, 40 + sin*40)
 
-			local x, y = nameX + nameW/2 - 180, nameY + nameH + 40
+			local x = nameX + (nameW / 2) - 180
+			local y = nameY + nameH + 40
+			local tx = "Critical damage!"
+			local font = "BSB72"
 
-			rect(x, y, 360, 80)
-			simpleText("Critical damage!", "MRB72", w/2, y + 40, col, 1, 1)
+			local tw = surface.GetTextSizeQuick(tx, font)
+			rect(w / 2 - tw / 2 - 8, y, tw + 16, 80)
+			simpleText(tx, font, w/2, y + 40, critDmgCol, 1, 1)
 		end
 	end
 end
@@ -357,16 +320,26 @@ function ENT:Draw()
 
 end
 
+local col = Color(255, 255, 255)
+
 function ENT:PaintStructureInfo(w, y)
+	local sc = DarkHUD.Scale
 	local Cp = self.dt.Capacity
 	local money = self:GetNWMoney()
 	local cur = Language("Price", money)
 	local cap = Language("Price", Cp)
 
 	local txt = cur .. " / " .. cap
-	local font = Fonts.PickFont("OSB", txt, w - 16, 24, 24)
+	local font = Fonts.PickFont("OSB", txt, w - 16, sc * 48, 24)
 
-	local tw, th = draw.SimpleText2(txt, font or "OSB24", w/2, y, color_white, 1, 5)
+	if money >= Cp then
+		local fr = 1 - (CurTime() * 1) % 1
+		draw.LerpColor(fr, col, Colors.Warning, color_white)
+	else
+		col:Set(color_white)
+	end
+
+	local tw, th = draw.SimpleText2(txt, font or "OSB24", w/2, y, col, 1, 5)
 
 	return th
 end

@@ -1,11 +1,10 @@
 if SERVER then
-	FInc.FromHere("client/huds/*.lua", _CL, false, print)
+	FInc.FromHere("client/huds/*", _CL)
 	return
 end
 
 local MODULE = BaseWars.HUD or {}
 BaseWars.HUD = MODULE
-
 
 local draw = draw
 
@@ -20,28 +19,8 @@ local lastpos = Vector()
 local lastToScreen = {x = 0, y = 0, visible = false}
 local lastent
 
-
-local function AlphaColors(a, ...)
-	local cols = {...}
-
-	for k,v in ipairs(cols) do
-		v.a = a
-	end
-end
-
-
 local vm = Matrix()
-local anims
-
-local function make()
-	anims = Animatable("bw_basssehud")
-end
-
-if not Animatable then
-	hook.Add("LibbedItUp", "BaseWarsHUD", make)
-else
-	make()
-end
+local anims = Animatable("bw_basssehud")
 
 local minDist = 64
 local defaultMaxDist = 200
@@ -76,8 +55,6 @@ hook.Add("PostDrawTranslucentRenderables", "StructureInfoToScreen", updateToscre
 local b = bench("bw_hud", 600)
 
 local function DrawStructureInfo()
-	--b:Open()
-
 	local me = LocalPlayer()
 	local ep = me:EyePos()
 
@@ -314,4 +291,8 @@ end
 
 hook.Add("HUDPaint", "StructureInfoPaint", PaintStuff)
 
+print("!! including painter_ext !!")
+include("client/huds/painter_ext.lua")
 FInc.FromHere("client/huds/*.lua", _CL, false, print)
+
+hook.Run("BW_HUDLoaded")

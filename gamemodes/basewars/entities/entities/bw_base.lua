@@ -36,6 +36,10 @@ function ENT:ForceUpdate()
 	self.TransmitTime = CurTime()
 end
 
+function ENT:GetMaxLevel()
+	return self.MaxLevel
+end
+
 function ENT:UpdateTransmitState()
 	if not self.TransmitTime or CurTime() - self.TransmitTime < 0.5 then
 		self.TransmitTime = self.TransmitTime or CurTime()

@@ -49,11 +49,24 @@ end
 
 Strings.You 			= "You"
 
-Strings.Level 			= function(str)
+Strings.Level 			= function(str, s2)
 	if str then
-		return ("Level %d"):format(str)
+		if s2 then
+			return ("Level %d/%d"):format(str, s2)
+		else
+			return ("Level %d"):format(str)
+		end
 	else
 		return "Level"
+	end
+end
+
+
+Strings.UpgCost = function(pr)
+	if pr then
+		return "Next level: " .. Strings.Price(pr)
+	else
+		return "Upgrade cost"
 	end
 end
 

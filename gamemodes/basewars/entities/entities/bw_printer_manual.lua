@@ -126,7 +126,9 @@ function ENT:Draw()
     local lp = LocalPlayer()
 
     if self:ShouldDrawDisplay() and not BaseWars.EverUpgraded() and
-    	lp:GetMoney() > self:GetUpgradeCost() and self:BW_GetOwner() == lp:GetPInfo() then
+    	lp:GetMoney() > self:GetUpgradeCost() and
+    	self:BW_GetOwner() == lp:GetPInfo() then
+
     	anim:To("a", 1, 0.3, 0, 0.2)
     else
     	anim:To("a", 0, 0.3, 0, 0.2)

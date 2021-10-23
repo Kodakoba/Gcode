@@ -85,9 +85,12 @@ local tex_corner16	= surface.GetTextureID( "gui/corner16" )
 local tex_corner32	= surface.GetTextureID( "gui/corner32" )
 
 local surface = surface
+local corners = draw.AlphatestedCorners
 
-local function RoundedBoxCorneredSize(bordersize, x, y, w, h, color, btl, btr, bbl, bbr)
+local function RoundedBoxCorneredSize(bordersize, x, y, w, h, color, btl, btr, bbl, bbr, stencil)
 	-- the difference is that this has configurable radiuses per-corner
+
+	if w <= 0 or h <= 0 then return end
 
 	surface.SetDrawColor( color.r, color.g, color.b, color.a )
 
@@ -96,19 +99,17 @@ local function RoundedBoxCorneredSize(bordersize, x, y, w, h, color, btl, btr, b
 		return
 	end
 
-	btl = btl or 0
-	btr = btr or 0
-	bbl = bbl or 0
-	bbr = bbr or 0
-
 	x = math.floor( x )
 	y = math.floor( y )
 	w = math.floor( w )
 	h = math.floor( h )
-	bordersize = math.min( math.floor( bordersize ), math.floor( w / 2 ) )
 
-	local bordH = math.min(btl + bbl, btr + bbr)
-	
+	btl = math.min(btl or 0, w)
+	bbl = math.min(bbl or 0, w)
+	btr = math.min(btr or 0, w - btl)
+	bbr = math.min(bbr or 0, w - bbl)
+
+	bordersize = math.min( math.floor( bordersize ), math.floor( w / 2 ) )
 
 	-- Draw as much of the rect as we can without textures
 
@@ -125,21 +126,42 @@ local function RoundedBoxCorneredSize(bordersize, x, y, w, h, color, btl, btr, b
 	local LbordW = math.max(btl, bbl)
 	local RbordW = math.max(btr, bbr)
 
-	surface.DrawRect( x, y + btl, rx, h - bbl - btl ) -- draw left
-	surface.DrawRect( w - RbordW, y + TbordH, RbordW, h - BbordH - TbordH ) -- draw right
+	if h - bbl - btl > 0 then
+		surface.DrawRect( x, y + btl, rx - x, h - bbl - btl ) -- draw left
+	end
+
+	if h - btr - bbr > 0 and RbordW > 0 then
+		surface.DrawRect( x + w - RbordW, y + btr, RbordW, h - btr - bbr )
+	end
 
 	-- goroz fill
 
 	surface.DrawRect(x + btl, y, w - btl - btr, TbordH)
 	surface.DrawRect(x + bbl, y + h - BbordH, w - bbl - bbr, BbordH)
 
-	--surface.DrawRect( x, y + btr, RbordW, h - (y + btr) - bbr ) -- draw right
+	surface.DrawRect( x, y + btr, RbordW, h - (y + btr) - bbr ) -- draw right
 
-	local tex = tex_corner8
-	if ( bordersize > 8 ) then tex = tex_corner16 end
-	if ( bordersize > 16 ) then tex = tex_corner32 end
+	local tex
+	local fn = surface.SetTexture
+	if stencil then
+		fn = surface.SetMaterial
+		tex = corners.tex_corner8
+		if ( bordersize > 8 ) then tex = corners.tex_corner16 end
+		if ( bordersize > 16 ) then tex = corners.tex_corner32 end
+	else
+		tex = tex_corner8
+		if ( bordersize > 8 ) then tex = tex_corner16 end
+		if ( bordersize > 16 ) then tex = tex_corner32 end
+	end
 
-	surface.SetTexture( tex )
+	local en = false
+
+	if math.min(btl, btr, bbl, bbr) < 8 then
+		draw.EnableFilters()
+		en = true
+	end
+
+	fn( tex )
 
 	if btl > 0 then
 		surface.DrawTexturedRectUV( x, y, btl, btl, 0, 0, 1, 1 )
@@ -157,9 +179,79 @@ local function RoundedBoxCorneredSize(bordersize, x, y, w, h, color, btl, btr, b
 	if bbr > 0 then
 		surface.DrawTexturedRectUV( x + w - bbr, y + h - bbr, bbr, bbr, 1, 1, 0, 0 )
 	end
+
+	if en then
+		draw.DisableFilters()
+	end
 end
 
 DarkHUD.RoundedBoxCorneredSize = RoundedBoxCorneredSize
+
+
+function DarkHUD.PaintBar(rad, x, y, w, h,
+	frac, col_empty, col_border, col_main, textData, allow_stencils)
+
+	frac = math.min(frac, 1)
+
+	x = math.ceil(x)
+	y = math.ceil(y)
+	w = math.ceil(w)
+	h = math.ceil(h)
+
+	local bw = math.ceil(w * frac)
+
+	if frac ~= 1 and col_empty then
+		draw.RoundedBox(rad, x, y, w, h, col_empty or Colors.Gray)
+	end
+
+	local stencil = false
+
+	if allow_stencils ~= false then
+		if bw < rad * 2 then
+			surface.SetDrawColor(255, 255, 255)
+			draw.BeginMask(surface.DrawRect, x, y, bw, h)
+			draw.DrawOp()
+
+			bw = rad * 2
+			stencil = true
+		elseif istable(textData) then
+			draw.BeginMask()
+			draw.SetMaskDraw(true)
+			stencil = true
+		end
+	end
+
+
+	DarkHUD.RoundedBoxCorneredSize(rad,
+		x , y, bw - 1, h,
+		col_border or color_white,
+		rad, rad, rad, rad, stencil)
+
+	DarkHUD.RoundedBoxCorneredSize(rad,
+		x, y + 1, bw, h - 2,
+		col_main or Colors.Golden,
+		rad, rad, rad, rad, stencil)
+
+	if istable(textData) then
+
+		local fill = textData.Filled or color_white
+		local unfill = textData.Unfilled or color_black
+		local text = textData.Text or "??"
+
+		local tx, ty = math.floor(x + w / 2), math.floor(y + h / 2)
+
+		draw.DrawOp(1)
+
+		draw.SimpleText(text, textData.Font or "OS20", tx, ty,
+			unfill, 1, 1)
+
+		draw.DrawOp(0)
+
+		draw.SimpleText2(text, nil, tx, ty, fill, 1, 1)
+	end
+
+	draw.DisableMask()
+end
 
 hook.Add("OnScreenSizeChanged", "DarkHUD_Scale", DarkHUD.ReScale)
 

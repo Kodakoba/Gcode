@@ -41,6 +41,7 @@ function ENT:DerivedDataTables()
 	self:SetMultiplier(1)
 
 	self:MakeFloat("PrintAmount")
+
 	self:MakeFloat("BoughtPrice")
 
 	self:NetworkVar("Entity", 1, "PrinterRack") --ew
@@ -61,5 +62,5 @@ local mults = {
 }
 
 function OverclockGetMult(var)
-    return mults[var] or 1
+	return mults[var] or 1
 end
