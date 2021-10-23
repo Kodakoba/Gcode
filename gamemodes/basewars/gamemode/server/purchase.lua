@@ -300,8 +300,9 @@ function BWSpawn(ply, cat, catID)
 	newEnt.DoNotDuplicate = true
 
 	BaseWars.Worth.Set(newEnt, price)
-	if newEnt.SetUpgradeCost then newEnt:SetUpgradeCost(price) end
+	if newEnt.SetBoughtPrice then newEnt:SetBoughtPrice(price) end
 
+	newEnt.BoughtCost = price
 	newEnt:CPPISetOwner(ply)
 
 	newEnt:SetPos(SpawnPos)

@@ -68,7 +68,7 @@ local lines
 local curTipY = 0
 
 function ENT:Init()
-	self:SetUpgradeCost(100)
+	self:SetBoughtPrice(100)
 	self.BreakingDown = 0
 end
 

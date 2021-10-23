@@ -74,7 +74,7 @@ local cache = WeakTable("kv") --bruh...
 function ENT:DrawUpgradeCost(y, w, h)
 	local costMoney = self:GetUpgradeCost() or 0
 	local lv = self:GetLevel()
-	costMoney = costMoney * lv
+
 	local cost
 	local what
 
