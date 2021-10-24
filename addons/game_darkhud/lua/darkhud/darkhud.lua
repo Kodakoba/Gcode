@@ -75,7 +75,7 @@ function DarkHUD.ReScale(first)
 	dh.PaddingY = 16 + scale * 24
 
 	DarkHUD:Emit("Rescale", scale)
-
+	hook.Run("DarkHUD_Rescaled", scale)
 end
 
 DarkHUD.ReScale(true)
