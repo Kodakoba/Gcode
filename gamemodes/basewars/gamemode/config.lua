@@ -14,6 +14,8 @@ BaseWars.Config = {
 
 	ReFadeDelay = 0.75,
 
+	Raid_BulletPropDamage = 0.4,
+
 	SpawnWeps = {
 		"weapon_physcannon",
 		"hands",

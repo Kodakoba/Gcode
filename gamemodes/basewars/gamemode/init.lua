@@ -65,27 +65,28 @@ function GM:OnEntityCreated(ent)
 
 		local Class = IsValid(ent) and ent:GetClass()
 
-		if Class == "prop_physics" and ent:Health() == 0 then
+		if --[[Class == "prop_physics" and]]
+			ent:Health() == 0 and ent:GetMaxHealth() == 0 then
 			local HP = (IsValid(ent:GetPhysicsObject()) and ent:GetPhysicsObject():GetMass() or 50) * BaseWars.Config.UniversalPropConstant
-			HP = math.Clamp(HP, 0, 1000)
+			HP = math.Clamp(HP, 0, Class == "prop_physics" and 1000 or 50)
 
 			ent:SetHealth(HP)
 
 			ent.MaxHealth = math.Round(HP)
-			ent.DestructableProp = true
+			ent.DestructableProp = Class == "prop_physics"
 
-			ent:SetNW2Int("MaxHealth", ent.MaxHealth)
+			--ent:SetNW2Int("MaxHealth", ent.MaxHealth)
 
 			ent:SetMaxHealth(ent.MaxHealth)
 
-			timer.Create("prop"..ent:EntIndex(), 1, 5, function()
+			--[[timer.Create("prop"..ent:EntIndex(), 1, 5, function()
 				if not ent:IsValid() then return end
 				ent:SetNW2Int("MaxHealth", ent.MaxHealth)
 			end)
 
 			function ent:OnRemove()
 				timer.Remove("prop" .. self:EntIndex())
-			end
+			end]]
 		end
 
 	end
