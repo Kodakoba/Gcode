@@ -81,7 +81,6 @@ end
 function sin.GetPainter(ent)
 	if not sin.EntToPtr[ent] then
 		sin.CreatePainter(ent)
-		print("created new painter")
 	end
 
 	return sin.EntToPtr[ent]

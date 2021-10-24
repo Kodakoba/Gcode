@@ -1,12 +1,10 @@
 local hud = BaseWars.HUD
 local sin = hud.StructureInfo
 
-local frCol = Color(25, 25, 25)
-local bgCol = Color(15, 15, 15, 220)
 local anim = sin.Anims
 
 
-local frShad = BSHADOWS.GenerateCache("BW_StructureFrame", 512, 256)
+local frShad = BSHADOWS.GenerateCache("BW_StructureFrame", math.floor(256 * 5 / 3), 256)
 frShad:SetGenerator(function(self, w, h)
 	draw.RoundedBox(8, 0, 0, w, h, color_white)
 end)
