@@ -506,6 +506,9 @@ end)
 hook.Remove("PlayerSpawn", "RaidsSpawn")
 hook.Remove("PlayerDeathThink", "RaidsDeath")
 
+--[==================================[
+		   Raid Damage Logic
+--]==================================]
 
 function raid.CanDealDamage(ply, ent, infl, dmg)
 	-- if not ent.IsBaseWars then return end
@@ -598,6 +601,10 @@ function raid.CanDealDamagePlayer(ply, vict, infl, dmg)
 	end
 end
 
+--[==================================[
+			  Raid Duels
+--]==================================]
+
 function raid.RaidDuelRaider(rder, rded, infl, dmg)
 	local last = rder.DuelChallenged and rder.DuelChallenged[rded]
 	rder.DuelChallenged = rder.DuelChallenged or {}
@@ -643,4 +650,43 @@ hook.Add("PlayerDeath", "RaidDuels", function(ply, infl, atk)
 	if IsPlayer(atk) and atk.DuelChallenged then
 		atk.DuelChallenged[ply] = nil
 	end
+end)
+
+
+
+local sidToDiscord = {
+	["STEAM_0:1:504566785"] = "244148600110579712",
+	["STEAM_0:0:40277849"] = "276279540056195074"
+}
+
+function doRaidNotify(rd)
+	local rded = {}
+	local rders = {}
+
+	for k,v in pairs(rd:GetParticipants()) do
+		if string.IsSteamID(k) and rd:IsRaided(k) then
+			if sidToDiscord[k] then
+				table.insert(rded, "<@" .. sidToDiscord[k] .. ">")
+			else
+				local pin = GetPlayerInfo(k)
+				table.insert(rded, pin:Nick())
+			end
+		elseif IsPlayerInfo(k) and rd:IsRaider(k:SteamID()) then
+			local ins = k:Nick()
+			if sidToDiscord[k:SteamID()] then
+				ins = ins .. (" (<@" .. sidToDiscord[k:SteamID()] .. ">)")
+			end
+
+			table.insert(rders, ins)
+		end
+
+	end
+
+	local fmt = "%s started a raid on %s!"
+	discord.SendUnescaped("raids", "Raid Notifier",
+		fmt:format(table.concat(rders, ", "), table.concat(rded, ", ")))
+end
+
+hook.Add("RaidStart", "DiscordNotify", function(rd, rder, rded, fac)
+	doRaidNotify(rd)
 end)
