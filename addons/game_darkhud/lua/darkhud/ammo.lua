@@ -198,9 +198,10 @@ function DarkHUD.CreateAmmo()
 				wep:On("FiredBullet", self, f.OnFire, f)
 			end
 
+			self.Gone = false
+
 			if self.Y ~= fY and self.Recoil == 0 then
 				local anim, new = self:To("Y", fY, 0.4, 0, 0.3)
-				self.Gone = false
 				if new then anim:On("Think", function() self.WasGone = false end) end
 			else
 				f:ShakeLogic()
