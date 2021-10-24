@@ -9,6 +9,7 @@ ENT.Sound = Sound("HL1/fvox/blip.wav")
 ENT.Sound = Sound("HL1/fvox/blip.wav")
 
 ENT.Model = "models/props_c17/FurnitureToilet001a.mdl"
+ENT.MaxHealth = 250
 
 ENT.Levels = {
 	{

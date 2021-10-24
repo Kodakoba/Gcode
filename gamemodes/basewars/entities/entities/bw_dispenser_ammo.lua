@@ -5,6 +5,7 @@ ENT.Type = "anim"
 
 ENT.PrintName = "Ammo Dispenser"
 ENT.Model = "models/props_lab/reciever_cart.mdl"
+ENT.MaxHealth = 500
 
 ENT.Levels = {
 	{
