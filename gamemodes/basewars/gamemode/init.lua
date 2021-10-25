@@ -58,14 +58,13 @@ function GM:ShutDown()
 end
 
 function GM:OnEntityCreated(ent)
+	self.BaseClass:OnEntityCreated(ent)
 
 	local f = function()
 
-		self.BaseClass:OnEntityCreated(ent)
-
 		local Class = IsValid(ent) and ent:GetClass()
 
-		if --[[Class == "prop_physics" and]]
+		if Class and --[[Class == "prop_physics" and]]
 			ent:Health() == 0 and ent:GetMaxHealth() == 0 then
 			local HP = (IsValid(ent:GetPhysicsObject()) and ent:GetPhysicsObject():GetMass() or 50) * BaseWars.Config.UniversalPropConstant
 			HP = math.Clamp(HP, 0, Class == "prop_physics" and 1000 or 50)
