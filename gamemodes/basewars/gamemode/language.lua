@@ -1,6 +1,18 @@
 AddCSLuaFile()
 
-local CURRENCY = "$" --"£"
+local KROMER = GetGlobalBool("KROMER")
+if SERVER then
+	SetGlobalBool("KROMER", math.random() < 0.03)
+elseif not KROMER then
+	timer.Create("cringe network race", 1, 10, function()
+		if GetGlobalBool("KROMER") then
+			include("language.lua")
+			timer.Remove("cringe network race")
+		end
+	end)
+end
+
+local CURRENCY = KROMER and "KR" or "$" --"£"
 Language = Language or {}
 
 Language.eval = function(self, key, ...)
@@ -71,24 +83,49 @@ Strings.UpgCost = function(pr)
 end
 
 Strings.WelcomeBackCrash 	= "Welcome back!"
-Strings.Refunded			= function(s)
-	if isnumber(s) then s = BaseWars.NumberFormat(s) end
-	return ("You were refunded %s%s after a crash."):format(CURRENCY, s)
+
+local KROMER = GetGlobalBool("KROMER")
+if SERVER then
+	SetGlobalBool("KROMER", math.random() < 0.03)
+elseif not KROMER then
+	timer.Create("cringe network race", 1, 10, function()
+		if GetGlobalBool("KROMER") then
+			include("language.lua")
+			timer.Remove("cringe network race")
+		end
+	end)
 end
 
-Strings.Price = function(str)
-	if isnumber(str) then
-		return CURRENCY .. BaseWars.NumberFormat(str)
-	else
-		return CURRENCY .. (str or "???")
+if KROMER then
+	Strings.Refunded			= function(s)
+		if isnumber(s) then s = BaseWars.NumberFormat(s) end
+		return ("YOU WERE REFUNDED %s [[KR0MER]] AFTER [[Server Burning Down]]."):format(CURRENCY)
+	end
+	
+	Strings.Price = function(str)
+		if isnumber(str) then
+			return BaseWars.NumberFormat(str) .. " [[KROMER]]"
+		else
+			return (str or "???") .. " [[KROMER]]"
+		end
+	end
+else
+	Strings.Refunded			= function(s)
+		if isnumber(s) then s = BaseWars.NumberFormat(s) end
+		return ("You were refunded %s%s after a crash."):format(CURRENCY, s)
+	end
+	
+	Strings.Price = function(str)
+		if isnumber(str) then
+			return CURRENCY .. BaseWars.NumberFormat(str)
+		else
+			return CURRENCY .. (str or "???")
+		end
 	end
 end
 
 Strings.Health 			= "Health: %s/%s"
 Strings.Power 				= "Power: %s/%s"
-
-Strings.SpawnMenuConf 		= "Confirm Purchase"
-Strings.SpawnMenuBuyConfirm = "Are you sure you want to purchase %s for " .. Strings.Currency .. "%s?"
 
 Strings.Yes = "Yes"
 Strings.No = "No"
@@ -126,9 +163,16 @@ Strings.Inv_StatHandling    = "Sight Time"
 Strings.Inv_StatMoveSpeed   = "Movement Speed"
 Strings.Inv_StatDrawTime    = "Draw Time"
 
+Strings.SpawnMenuConf 		= "Confirm Purchase"
 Strings.UpgradeNoMoney		= "You don't have enough money!"
 Strings.SpawnMenuMoney		= "You don't have enough money to buy this!"
 Strings.EntLimitReached		= "You reached the limit for %s (max. %s)!"
+Strings.SpawnMenuBuyConfirm = "Are you sure you want to purchase %s for " .. Strings.Currency .. "%s?"
+
+if KROMER then
+	Strings.UpgradeNoMoney		= "YOU [NoPossess] ENOUGH KR0<MER!"
+	Strings.SpawnMenuMoney		= "YOU [NoPossess] KR0M+3r TO BUY [Goods]!"
+end
 
 setmetatable(Language, Language)
 
