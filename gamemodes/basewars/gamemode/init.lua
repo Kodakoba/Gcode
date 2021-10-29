@@ -63,31 +63,22 @@ function GM:OnEntityCreated(ent)
 	local f = function()
 
 		local Class = IsValid(ent) and ent:GetClass()
+		if not Class then return end
 
-		if Class and --[[Class == "prop_physics" and]]
-			ent:Health() == 0 and ent:GetMaxHealth() == 0 then
-			local HP = (IsValid(ent:GetPhysicsObject()) and ent:GetPhysicsObject():GetMass() or 50) * BaseWars.Config.UniversalPropConstant
-			HP = math.Clamp(HP, 0, Class == "prop_physics" and 1000 or 50)
+		local should = Class == "prop_physics"
+		should = should or ent:Health() == 0 and ent:GetMaxHealth() == 0
 
-			ent:SetHealth(HP)
+		if not should then return end
 
-			ent.MaxHealth = math.Round(HP)
-			ent.DestructableProp = Class == "prop_physics"
+		local HP = (IsValid(ent:GetPhysicsObject()) and ent:GetPhysicsObject():GetMass() or 50) * BaseWars.Config.UniversalPropConstant
+		HP = math.Clamp(HP, 0, Class == "prop_physics" and 1000 or 50)
 
-			--ent:SetNW2Int("MaxHealth", ent.MaxHealth)
+		ent:SetHealth(HP)
 
-			ent:SetMaxHealth(ent.MaxHealth)
+		ent.MaxHealth = math.Round(HP)
+		ent.DestructableProp = Class == "prop_physics"
 
-			--[[timer.Create("prop"..ent:EntIndex(), 1, 5, function()
-				if not ent:IsValid() then return end
-				ent:SetNW2Int("MaxHealth", ent.MaxHealth)
-			end)
-
-			function ent:OnRemove()
-				timer.Remove("prop" .. self:EntIndex())
-			end]]
-		end
-
+		ent:SetMaxHealth(ent.MaxHealth)
 	end
 
 	timer.Simple(0, f)

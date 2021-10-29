@@ -72,6 +72,41 @@ function SWEP:SetupDataTables()
 	self:NetworkVar("Float", 0, "LastSound")
 end
 
+local function IsHealable(ent)
+	if not IsValid(ent) then return false end
+	if IsPlayer(ent) then return true end
+	if not BaseWars.ShouldUseHealth(ent) then return false end
+
+	-- world can go fuck itself
+	local ow = ent:BW_GetOwner()
+	if not ow then return false end
+
+	-- not a world prop or an owned entity; can blowtorch
+	return ow
+end
+
+local function TempUnhealable(ent)
+	if CurTime() - ent:GetNWFloat("LastDamage", 0) < 3 then
+		return true
+	end
+end
+
+function SWEP:Deny()
+	self:EmitSound("weapons/physcannon/physcannon_dryfire.wav",
+		45, math.random(100, 103), 0.6)
+end
+
+SWEP.DenySounds = {}
+for i=1, 5 do
+	SWEP.DenySounds[i] = ("npc/scanner/combat_scan%d.wav"):format(i)
+end
+
+function SWEP:TempDeny()
+	self:EmitSound(self.DenySounds[math.random(#self.DenySounds)],
+		40, 140, 0.6)
+end
+
+
 local SuppressHostEvents = SuppressHostEvents or function() end
 
 function SWEP:PrimaryAttack()
@@ -90,7 +125,17 @@ function SWEP:PrimaryAttack()
 
 	local ent = tr.Entity
 
-	if not IsValid(ent) then return end
+	if not IsHealable(ent) then
+		self:Deny()
+		self:SetNextPrimaryFire(CurTime() + 0.5)
+		return
+	end
+
+	if TempUnhealable(ent) then
+		self:TempDeny()
+		self:SetNextPrimaryFire(CurTime() + 0.75)
+		return
+	end
 
 	local maxHP = ent:GetMaxHealth()
 	if maxHP <= 0 then return end
@@ -105,6 +150,15 @@ function SWEP:PrimaryAttack()
 
 	util.Effect( "ToolTracer", ef )
 	util.Effect( "inflator_magic", ef )
+
+	if IsPlayer(ent) then
+		if SERVER then
+			ent:SetHealth(math.min(ent:GetMaxHealth(), ent:Health() + self.HealAmount * self.PlayerHealMult))
+		end
+
+		return
+	end
+
 
 	if ent.IsBaseWars then
 		local pool
@@ -128,19 +182,14 @@ function SWEP:PrimaryAttack()
 		end
 	end
 
+
 	if SERVER then
-		if ent:GetClass() == "prop_physics" or ent.IsBaseWars then
-			ent:SetHealth(math.min(ent:GetMaxHealth(), ent:Health() + self.HealAmount))
+		ent:SetHealth(math.min(ent:GetMaxHealth(), ent:Health() + self.HealAmount))
 
-			if not ent.IsBaseWars then
-				local color = ent:Health() / ent:GetMaxHealth() * 255
-				ent:SetColor(Color(color, color, color))
-			end
-
-		elseif IsPlayer(ent) then
-			ent:SetHealth(math.min(ent:GetMaxHealth(), ent:Health() + self.HealAmount * self.PlayerHealMult))
+		if not ent.IsBaseWars then
+			local color = ent:Health() / ent:GetMaxHealth() * 255
+			ent:SetColor(Color(color, color, color))
 		end
 	end
-
 
 end

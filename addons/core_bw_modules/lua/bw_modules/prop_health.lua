@@ -42,7 +42,14 @@ function BaseWars.DealDamage(ent, dmg)
 		ent:SetHealth(hp - dmg)
 
 		local fr = (hp - dmg) / ent:GetMaxHealth()
+		ent:SetNWFloat("LastDamage", CurTime())
 	else
 		-- ??
 	end
+end
+
+function BaseWars.ShouldUseHealth(ent)
+	return ent.IsMediaPlayerEntity
+		or ent:GetClass() == "prop_physics"
+		or ent.IsBaseWars -- more to be added
 end
