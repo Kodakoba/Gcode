@@ -90,6 +90,7 @@ local function SetHP(prop, hp)
 	end
 
 	prop:SetHealth(hp)
+	prop:SetNWFloat("LastDamage", CurTime()) -- ew nwvars
 end
 
 function SWEP:Zap()
@@ -106,6 +107,7 @@ local function isZappable(self, ent)
 end
 
 local function canZap(self, ent, dmg)
+
 	if not IsProp(ent) and not IsOwned(ent) then return false end
 
 	return BaseWars.Raid.CanBlowtorch(self:GetOwner(), ent, self, dmg)
@@ -125,7 +127,7 @@ function SWEP:PrimaryAttack()
 	})
 
 	local trent = tr.Entity
-	local ow = isZappable(trent)
+	local ow = isZappable(self, trent)
 
 	if not ow then
 		return
@@ -348,11 +350,13 @@ end
 --hook.Add("BW_PaintStructureInfo", "Blowtorch", paint)
 
 hook.Add("BW_ShouldPaintStructureInfo", "Blowtorch", function(ent, dist)
-	local class_ok = ent.IsBaseWars or IsProp(ent)
 	local wep = LocalPlayer():GetActiveWeapon()
 	local wep_ok = wep.IsBlowTorch
 
-	if not class_ok or not wep_ok or dist > 192 then return end
+	if not wep_ok or dist > 192 then return end
+
+	local class_ok = isZappable(wep, ent)
+	if not class_ok then return end
 
 	curBlowtorch = wep
 
