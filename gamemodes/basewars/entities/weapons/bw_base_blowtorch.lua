@@ -56,7 +56,15 @@ SWEP.TorchDamage = 20
 SWEP.IsBlowTorch = true
 
 local function IsProp(ent)
-	return (IsValid(ent) and ent.GetClass and ent:GetClass() == "prop_physics") or false
+	return IsValid(ent) and (
+		(ent.GetClass and ent:GetClass() == "prop_physics") or
+		(ent.CanBlowtorch and true) or false
+	)
+end
+
+local function IsOwned(ent)
+	return IsValid(ent) and ent:BW_GetOwner() and
+		(not ent.IsBasewars or ent.CanBlowtorch)
 end
 
 function SWEP:Deploy()
@@ -90,14 +98,15 @@ function SWEP:Zap()
 end
 
 local function isZappable(self, ent)
-	if not IsProp(ent) then return false end
+	-- world non-prop
+	if not IsProp(ent) and not IsOwned(ent) then return false end
 
-	local ow = ent:BW_GetOwner()
-	return ow
+	-- either a world prop or an owned entity; can blowtorch
+	return ent:BW_GetOwner()
 end
 
 local function canZap(self, ent, dmg)
-	if not IsProp(ent) then return false end
+	if not IsProp(ent) and not IsOwned(ent) then return false end
 
 	return BaseWars.Raid.CanBlowtorch(self:GetOwner(), ent, self, dmg)
 end
@@ -106,21 +115,28 @@ function SWEP:PrimaryAttack()
 	local ply = self:GetOwner()
 	if not IsPlayer(ply) then return end
 
-	local tr = ply:GetEyeTrace()
+	-- bruh!!!!
+	local tr = util.TraceHull({
+		start = ply:EyePos(),
+		endpos = ply:EyePos() + (ply:GetAimVector() * self.Range),
+		maxs = vector_origin,
+		mins = vector_origin,
+		filter = {ply}
+	})
 
+	local trent = tr.Entity
+	local ow = isZappable(trent)
 
-	if not IsProp(tr.Entity) or tr.Fraction * 32768 > self.Range then
+	if not ow then
 		return
 	end
-
-	local owner = tr.Entity:BW_GetOwner()
 
 	local dmg = DamageInfo()
 	dmg:SetDamage(self.TorchDamage)
 	dmg:SetAttacker(ply)
 	dmg:SetInflictor(self)
 
-	if not canZap(self, tr.Entity, dmg) then
+	if not canZap(self, trent, dmg) then
 		return
 	end
 
@@ -132,7 +148,6 @@ function SWEP:PrimaryAttack()
 
 	if CLIENT then return end
 
-	local trent = tr.Entity
 	local trents = {ply, trent}
 
 	self:Zap()
@@ -152,15 +167,15 @@ function SWEP:PrimaryAttack()
 
 	table.remove(trents, 1)
 	dmg = dmg:GetDamage()
+
 	for k,v in ipairs(trents) do
 		local hp = GetHP(v)
 		hp = hp - dmg
 
-		SetHP(v, hp)
-
 		local frac = hp / GetMaxHP(v)
+		v:SetColor( Color(255 * frac, 255 * frac, 255 * frac, v:GetColor().a) )
 
-		v:SetColor( Color(255*frac, 255*frac, 255*frac) )
+		SetHP(v, hp)
 	end
 end
 
@@ -169,14 +184,7 @@ function SWEP:SecondaryAttack()
 end
 
 
-
-
 if not CLIENT then return end
-
-
-
-
-local displayDist = 256 / 32768
 
 local lastent 		-- last valid ent we looked at
 local x, y = 0, 0 	-- last valid pos of the ent
@@ -186,7 +194,6 @@ local strX, strY = 0, 0 --stripes
 local hpfrac = 0
 
 local anim
-local trents = {}
 
 function SWEP:FillData(tr, ent, ow)
 	local prev = lastent
@@ -229,7 +236,15 @@ local function paint(ent, curent, baseAnim, firstFrame)
 	if not curBlowtorch then return end
 
 	anim = anim or Animatable("blowtorchhud")
-	local tr = LocalPlayer():GetEyeTrace()
+	local ply = LocalPlayer()
+	local tr = util.TraceHull({
+		start = ply:EyePos(),
+		endpos = ply:EyePos() + (ply:GetAimVector() * self.Range),
+		maxs = vector_origin,
+		mins = vector_origin,
+		filter = {ply}
+	})
+
 	--stripes = (not MoarPanelsMats["stripes"]:IsError() and MoarPanelsMats["stripes"]) or errmat -- :/
 
 	local ow = isZappable(self, ent)
@@ -316,7 +331,17 @@ local function framePos(ent, trace, ep)
 	-- holding primary fire caches a predicted/compensated trace i think
 	-- this fucks up the hud and makes it all jittery
 	-- so we fire a new trace instead of using the cached :GetEyeTrace
-	local tr = util.TraceLine(util.GetPlayerTrace(LocalPlayer()))
+
+	local ply = LocalPlayer()
+
+	local tr = util.TraceHull({
+		start = ply:EyePos(),
+		endpos = ply:EyePos() + (ply:GetAimVector() * 192),
+		maxs = vector_origin,
+		mins = vector_origin,
+		filter = {ply}
+	})
+
 	return tr.HitPos + Vector(0, 0, 8)
 end
 

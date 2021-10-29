@@ -352,13 +352,15 @@ function GM:ScoreboardShow()
 	local frs = {}
 	local scr
 
-	local saveme = vgui.Create("FButton", sb)
-	saveme:Dock(BOTTOM)
-	saveme:SetTall(50)
-	saveme.Label = "SAVE ME (debug)"
+	if GetConVar("developer"):GetInt() > 0 then
+		local saveme = vgui.Create("FButton", sb)
+		saveme:Dock(BOTTOM)
+		saveme:SetTall(50)
+		saveme.Label = "SAVE ME (debug)"
 
-	function saveme:DoClick()
-		sb:SetSize(60, 40)
+		function saveme:DoClick()
+			sb:SetSize(60, 40)
+		end
 	end
 
 	local function NewPlayerFrame(ply, col)

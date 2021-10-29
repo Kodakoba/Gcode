@@ -37,7 +37,46 @@ function ENT:Initialize()
 	self:Activate()
 
 	self:SetUseType(SIMPLE_USE)
+
+	local despawnTime = 20
+	local blips = 3
+
+	self:Timer("DisappearWarn", despawnTime - blips - 1, 1, function()
+		self:EmitSound("npc/roller/mine/rmine_tossed1.wav", 70, 120, 1)
+
+		self:Timer("Disappear", blips + 1, 1, function()
+			local pos = self:LocalToWorld(self:OBBCenter())
+
+			print("disappear timer, playing and yeeting", pos)
+
+			sound.Play("weapons/arccw/ricochet0" .. math.random(1, 5) .. ".wav",
+				pos, 70, math.random(90, 110), 1)
+			sound.Play("weapons/arccw/malfunction.wav",
+				pos, 70, math.random(90, 110), 1)
+
+			local ef = EffectData()
+			ef:SetOrigin(pos)
+			ef:SetStart(pos)
+			ef:SetScale(0.3)
+			ef:SetMagnitude(0.5)
+			ef:SetEntity(self)
+
+			util.Effect( "inflator_magic", ef )
+
+			self:SetNoDraw(true)
+			self:SetNotSolid(false)
+			self.Gone = true
+
+			util.Effect( "entity_remove", ef )
+
+			self:Timer("DoRemove", 0.5, 1, function()
+				self:Remove()
+			end)
+		end)
+	end)
 end
+
+
 local kt = {
 	"bowie",
 	"karambit",
@@ -52,6 +91,7 @@ local kt = {
 	"daggers"
 }
 function ENT:Use(act, call, usetype, value)
+	if self.Gone then return end
 	if not IsValid(act) or not IsValid(call) or act ~= call or not act:IsPlayer() then return end
 
 	local Class = self.WeaponClass
@@ -59,32 +99,39 @@ function ENT:Use(act, call, usetype, value)
 	local ply = act
 
 	if Class == "csgo_default_knife" then
-		if IsGroup(ply, "vip") then
 
+		if IsGroup(ply, "vip") then
 			local ktype = "default"
 
 			if ply.KnifeType then
-
 				for k,v in pairs(kt) do
-					if v==ply.KnifeType then ktype = v break end
+					if v == ply.KnifeType then ktype = v break end
 				end
-				ply:Give("csgo_"..ktype)
+				ply:Give("csgo_" .. ktype)
 				self:Remove()
 				return
 			end
-
-
 		end
+
 	end
 
 	if IsValid(Wep) then
 		local Clip = Wep.Primary and Wep.Primary.DefaultClip
-
-		ply:GiveAmmo(Clip or 30, Wep:GetPrimaryAmmoType())
+		ply:GiveAmmo((Clip and Clip * 2) or 30, Wep:GetPrimaryAmmoType())
 	else
 		Wep = ply:Give(Class)
+		if not IsValid(Wep) then
+			errNHf("Failed to give weapon class `%s` - invalid.", Wep)
+			return
+		end
+
 		if self.Backup then
 			table.Merge(Wep:GetTable(), self.Backup)
+		end
+
+		if not self.Dropped then
+			local Clip = Wep.Primary and Wep.Primary.DefaultClip
+			ply:GiveAmmo((Clip and Clip * 3) or 30, Wep:GetPrimaryAmmoType())
 		end
 
 		hook.Run("BW_WeaponPickedUp", self, Wep, ply)

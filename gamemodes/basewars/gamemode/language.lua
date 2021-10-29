@@ -1,15 +1,19 @@
 AddCSLuaFile()
 
-local CURRENCY = "$" --"£"
-Language = Language or {}
-
-Language.Price = function(str)
-	if isnumber(str) then
-		return CURRENCY .. BaseWars.NumberFormat(str)
-	else
-		return CURRENCY .. str
-	end
+local KROMER = GetGlobalBool("KROMER")
+if SERVER then
+	SetGlobalBool("KROMER", math.random() < 0.03)
+elseif not KROMER then
+	timer.Create("cringe network race", 1, 10, function()
+		if GetGlobalBool("KROMER") then
+			include("language.lua")
+			timer.Remove("cringe network race")
+		end
+	end)
 end
+
+local CURRENCY = KROMER and "KR" or "$" --"£"
+Language = Language or {}
 
 Language.eval = function(self, key, ...)
 	local val = Language[key]
@@ -23,7 +27,7 @@ Language.eval = function(self, key, ...)
 end
 
 Language.__index = function(self, key)
-	return ("[Invalid language: %s]"):format(key)
+	return LocalString:new(Language.Invalid(key), "InvalidGeneric")
 end
 Language.__call = Language.eval
 
@@ -33,6 +37,9 @@ local Strings = {}
 
 Strings.Currency = CURRENCY
 Strings.CURRENCY = CURRENCY
+
+Strings.Invalid			= "[Invalid language: %s]"
+Strings.InvalidGeneric	= "[Invalid language]"
 
 Strings.NoPower 		= "No power!"
 Strings.NoCharges 		= "No charges!"
@@ -54,27 +61,71 @@ end
 
 Strings.You 			= "You"
 
-Strings.Level 			= function(str)
+Strings.Level 			= function(str, s2)
 	if str then
-		return ("Level %d"):format(str)
+		if s2 then
+			return ("Level %d/%d"):format(str, s2)
+		else
+			return ("Level %d"):format(str)
+		end
 	else
 		return "Level"
 	end
 end
 
-Strings.WelcomeBackCrash 	= "Welcome back!"
-Strings.Refunded			= function(s)
-	if isnumber(s) then s = BaseWars.NumberFormat(s) end
-	return ("You were refunded %s%s after a crash."):format(CURRENCY, s)
+
+Strings.UpgCost = function(pr)
+	if pr then
+		return "Next level: " .. Strings.Price(pr)
+	else
+		return "Upgrade cost"
+	end
 end
 
-Strings.RaidStart 			= "%s has started a raid against %s!"
+Strings.WelcomeBackCrash 	= "Welcome back!"
+
+local KROMER = GetGlobalBool("KROMER")
+if SERVER then
+	SetGlobalBool("KROMER", math.random() < 0.03)
+elseif not KROMER then
+	timer.Create("cringe network race", 1, 10, function()
+		if GetGlobalBool("KROMER") then
+			include("language.lua")
+			timer.Remove("cringe network race")
+		end
+	end)
+end
+
+if KROMER then
+	Strings.Refunded			= function(s)
+		if isnumber(s) then s = BaseWars.NumberFormat(s) end
+		return ("YOU WERE REFUNDED %s [[KR0MER]] AFTER [[Server Burning Down]]."):format(CURRENCY)
+	end
+	
+	Strings.Price = function(str)
+		if isnumber(str) then
+			return BaseWars.NumberFormat(str) .. " [[KROMER]]"
+		else
+			return (str or "???") .. " [[KROMER]]"
+		end
+	end
+else
+	Strings.Refunded			= function(s)
+		if isnumber(s) then s = BaseWars.NumberFormat(s) end
+		return ("You were refunded %s%s after a crash."):format(CURRENCY, s)
+	end
+	
+	Strings.Price = function(str)
+		if isnumber(str) then
+			return CURRENCY .. BaseWars.NumberFormat(str)
+		else
+			return CURRENCY .. (str or "???")
+		end
+	end
+end
 
 Strings.Health 			= "Health: %s/%s"
 Strings.Power 				= "Power: %s/%s"
-
-Strings.SpawnMenuConf 		= "Confirm Purchase"
-Strings.SpawnMenuBuyConfirm = "Are you sure you want to purchase %s for " .. Strings.Currency .. "%s?"
 
 Strings.Yes = "Yes"
 Strings.No = "No"
@@ -87,8 +138,11 @@ Strings.PrinterUpgradeTip = "Type /upg or /upgrade while looking at\n" ..
 
 Strings.PrinterUpgradeTipFont = "OS28"
 
-Strings.ChargesCounter = "Charges: %s"
-Strings.NextCharge = "next charge in %.1fs."
+Strings.ChargesCounter = function(s)
+	return ("%s %s%s"):format(s, "stim", s == 1 and "" or "s")
+end
+
+Strings.StimCostTip = "each stim costs 75 charge"
 Strings.StimsLevel = "stims are only generated at level 2+"
 
 Strings.BPNextPrint = "Next print in:"
@@ -109,8 +163,16 @@ Strings.Inv_StatHandling    = "Sight Time"
 Strings.Inv_StatMoveSpeed   = "Movement Speed"
 Strings.Inv_StatDrawTime    = "Draw Time"
 
+Strings.SpawnMenuConf 		= "Confirm Purchase"
 Strings.UpgradeNoMoney		= "You don't have enough money!"
 Strings.SpawnMenuMoney		= "You don't have enough money to buy this!"
+Strings.EntLimitReached		= "You reached the limit for %s (max. %s)!"
+Strings.SpawnMenuBuyConfirm = "Are you sure you want to purchase %s for " .. Strings.Currency .. "%s?"
+
+if KROMER then
+	Strings.UpgradeNoMoney		= "YOU [NoPossess] ENOUGH KR0<MER!"
+	Strings.SpawnMenuMoney		= "YOU [NoPossess] KR0M+3r TO BUY [Goods]!"
+end
 
 setmetatable(Language, Language)
 
@@ -122,15 +184,21 @@ function LocalString:Initialize(str, id)
 	self.Str = str
 	self.ID = id
 
-	local crc = tonumber(util.CRC(id))
-	local old = LocalString.All[crc]
-	if old and old.ID ~= id then
-		errorNHf("LocalString hash collision: hash %d, IDs: %s & %s",
-			crc, id, old.ID)
+	if id then
+		local crc = tonumber(util.CRC(id))
+		local old = LocalString.All[crc]
+		if old and old.ID ~= id then
+			errorNHf("LocalString hash collision: hash %d, IDs: %s & %s",
+				crc, id, old.ID)
+		end
+
+		LocalString.All[crc] = self
+		self.NumID = crc
+
+	elseif id ~= false then
+		errNHf("!! creating LocalString without ID %s !!", str)
 	end
 
-	LocalString.All[crc] = self
-	self.NumID = crc
 	self.IsString = isstring(str)
 end
 

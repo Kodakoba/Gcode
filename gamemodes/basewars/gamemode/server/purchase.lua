@@ -46,10 +46,23 @@ hook.NHAdd("PlayerInfoDestroy", "PurchasedRefund", function(pin)
 
 	for k,v in ipairs(stuff) do
 		if v:IsValid() then
+			local wth, has = BaseWars.Worth.Get(v)
+			if has then
+				BaseWars.Worth.Set(v, wth * BaseWars.Config.DestroyReturn)
+			end
 			v:Remove()
 		end
 	end
 end)
+--[[
+hook.NHAdd("FPP_CleanupDisconnectedEnt", "PurchasedRefund", function(sid, ent)
+	local wth, has = BaseWars.Worth.Get(ent)
+
+	if has then
+		BaseWars.Worth.Set(ent, wth * BaseWars.Config.DestroyReturn)
+	end
+end)
+]]
 
 local function decrLimit(ent)
 	if not ent._incrLimit then return end
@@ -197,7 +210,7 @@ function BWSpawn(ply, cat, catID)
 		local amt = plyLimit[class]
 
 		if amt and lim <= amt then
-			ply:Notify(string.format(Language.EntLimitReached, item, amt), BASEWARS_NOTIFICATION_ERROR)
+			ply:Notify(Language.EntLimitReached(item, amt), BASEWARS_NOTIFICATION_ERROR)
 			return
 		end
 
@@ -263,8 +276,13 @@ function BWSpawn(ply, cat, catID)
 			newEnt:Spawn()
 			newEnt:Activate()
 
+		if i.Callback then
+			i.Callback(newEnt)
+		end
+
 		postSpawn(ply, class, newEnt, i)
 		hook.Run("BaseWars_PlayerBuyGun", ply, newEnt) -- Player, Gun entity
+
 		return
 	end
 
@@ -282,8 +300,9 @@ function BWSpawn(ply, cat, catID)
 	newEnt.DoNotDuplicate = true
 
 	BaseWars.Worth.Set(newEnt, price)
-	if newEnt.SetUpgradeCost then newEnt:SetUpgradeCost(price) end
+	if newEnt.SetBoughtPrice then newEnt:SetBoughtPrice(price) end
 
+	newEnt.BoughtCost = price
 	newEnt:CPPISetOwner(ply)
 
 	newEnt:SetPos(SpawnPos)
@@ -291,6 +310,12 @@ function BWSpawn(ply, cat, catID)
 
 	newEnt:Spawn()
 	newEnt:Activate()
+
+	if not newEnt.IsBaseWars and newEnt:GetMaxHealth() == 0 then
+		newEnt:SetMaxHealth(100)
+		newEnt:SetHealth(100)
+		newEnt.CanBlowtorch = true
+	end
 
 	newEnt:DropToFloor()
 
@@ -302,6 +327,10 @@ function BWSpawn(ply, cat, catID)
 
 	if i.ShouldFreeze and IsValid(phys) then
 		phys:EnableMotion(false)
+	end
+
+	if i.Callback then
+		i.Callback(newEnt)
 	end
 
 	postSpawn(ply, class, newEnt, i)
@@ -318,7 +347,7 @@ end)
 
 
 local function Disallow_Spawning(ply, ...)
-	if not ply:IsAdmin()  then
+	if not ply:IsAdmin() then
 		ply:Notify(Language.UseSpawnMenu, BASEWARS_NOTIFICATION_ERROR)
 		return false
 	end
@@ -329,6 +358,7 @@ local banned = {
 }
 
 local function NoGunsFuckYou(ply, class, what)
+	if not ply:IsAdmin() then return false end
 
 	local mon = ply:GetMoney()
 	local price = 5e6
@@ -336,7 +366,8 @@ local function NoGunsFuckYou(ply, class, what)
 		price = BaseWars.Catalogue[class].Price
 	end
 
-	if mon < price and not BaseWars.IsRetarded(ply) then
+	if mon < price and
+		not BaseWars.IsRetarded(ply) then
 		ply:Notify(Language.UseSpawnMenu, BASEWARS_NOTIFICATION_ERROR)
 		return false
 	end

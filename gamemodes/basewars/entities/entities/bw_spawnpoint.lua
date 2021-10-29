@@ -6,7 +6,7 @@ ENT.Model = "models/props_trainstation/trainstation_clock001.mdl"
 
 ENT.PowerRequired = 15
 ENT.PowerCapacity = 5000
-
+ENT.MaxHealth = 200
 ENT.AlwaysRaidable = true
 
 if SERVER then
@@ -58,3 +58,21 @@ if SERVER then
 	end
 
 end
+
+
+hook.Add("PlayerDeath", "RespawnTime", function(ply, by, atk)
+	local side = ply:GetSide()
+
+	local cfg = BaseWars.Config
+	local base = cfg.RespawnTime -- base respawn time
+
+	local sideCd = {cfg.RespawnRaider, cfg.RespawnRaided}
+
+	if side then
+		-- raider = 1, raided = 2
+		local delay = sideCd[side] or base
+		ply:SetRespawnTime(delay)
+	else
+		ply:SetRespawnTime(base)
+	end
+end)

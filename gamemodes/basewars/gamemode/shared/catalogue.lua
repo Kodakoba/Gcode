@@ -201,11 +201,14 @@ end
 
 local function AddRecreational(typ, class, name, price, mdl, lim)
 	local t = AddItem("Recreational", typ, class, name, price, mdl, lim)
+	t.Limit = 2
 	return t
 end
 
 local function AddEntities(typ, class, name, price, mdl, lim)
 	local t = AddItem("Entities", typ, class, name, price, mdl, lim)
+	t.Limit = lim or 3
+
 	return t
 end
 
@@ -300,17 +303,27 @@ SetType(nil)
 
 -- Misc.--
 
-		AddRecreational("Misc.", "synthesizer_accordion", "Synthesizer - Accordion", k * 350, "models/tnf/synth.mdl")
-		AddRecreational("Misc.", "synthesizer_organ", "Synthesizer - Organ", k * 350, "models/tnf/synth.mdl")
-		AddRecreational("Misc.", "synthesizer_violin", "Synthesizer - Violin", k * 350, "models/tnf/synth.mdl")
-		AddRecreational("Misc.", "synthesizer_electric_guitar", "Synthesizer - Electric Guitar", k * 350, "models/tnf/synth.mdl")
-		AddRecreational("Misc.", "synthesizer_piano", "Synthesizer - Piano", k * 350, "models/tnf/synth.mdl")
-		AddRecreational("Misc.", "synthesizer_sax", "Synthesizer - Saxophone", k * 350, "models/tnf/synth.mdl")
-		AddRecreational("Misc.", "synthesizer_harp", "Synthesizer - Harp", k * 350, "models/tnf/synth.mdl")
-		AddRecreational("Misc.", "synthesizer_guitar", "Synthesizer - Guitar", k * 350, "models/tnf/synth.mdl")
+		AddRecreational("Synthesizers", "synthesizer_accordion", "Synthesizer - Accordion", k * 350, "models/tnf/synth.mdl")
+		AddRecreational("Synthesizers", "synthesizer_organ", "Synthesizer - Organ", k * 350, "models/tnf/synth.mdl")
+		AddRecreational("Synthesizers", "synthesizer_violin", "Synthesizer - Violin", k * 350, "models/tnf/synth.mdl")
+		AddRecreational("Synthesizers", "synthesizer_electric_guitar", "Synthesizer - Electric Guitar", k * 350, "models/tnf/synth.mdl")
+		AddRecreational("Synthesizers", "synthesizer_piano", "Synthesizer - Piano", k * 350, "models/tnf/synth.mdl")
+		AddRecreational("Synthesizers", "synthesizer_sax", "Synthesizer - Saxophone", k * 350, "models/tnf/synth.mdl")
+		AddRecreational("Synthesizers", "synthesizer_harp", "Synthesizer - Harp", k * 350, "models/tnf/synth.mdl")
+		AddRecreational("Synthesizers", "synthesizer_guitar", "Synthesizer - Guitar", k * 350, "models/tnf/synth.mdl")
+
+		local tv = AddRecreational("Media Players", "mediaplayer_tv", "Small TV", m * 25,
+			"models/props_phx/rt_screen.mdl")
+
+		tv.Callback = function(ent)
+			ent:SetModel("models/props_phx/rt_screen.mdl")
+		end
+
+		AddRecreational("Media Players", "mediaplayer_tv", "Big TV", m * 500, "models/gmod_tower/suitetv_large.mdl")
+
 
 SetType("Consumables")
-	ReuseEntities("bw_repairkit", "Repair Kit", k * 2.5, "models/Items/car_battery01.mdl")
+	ReuseEntities("bw_repairkit", "Repair Kit", k * 2.5, "models/Items/car_battery01.mdl", 3)
 
 SetType("Generators")
 	SetTier(1)
@@ -345,9 +358,9 @@ SetType("Dispensers")
 
 	SetTier(1)
 		--ReuseEntities("bw_vendingmachine", "Vending Machine", k * 20, "models/props_interiors/VendingMachineSoda01a.mdl")
-		ReuseEntities("bw_dispenser_health", "Health Dispenser", k * 25, "models/props_combine/health_charger001.mdl")
-		ReuseEntities("bw_dispenser_ammo", "Ammo Dispenser", k * 25, "models/props_lab/reciever_cart.mdl")
-		ReuseEntities("bw_dispenser_armor", "Armor Dispenser", k * 75, "models/props_combine/suit_charger001.mdl")
+		ReuseEntities("bw_dispenser_health", "Health Dispenser", k * 25, "models/props_combine/health_charger001.mdl", 1)
+		ReuseEntities("bw_dispenser_ammo", "Ammo Dispenser", k * 25, "models/props_lab/reciever_cart.mdl", 1)
+		ReuseEntities("bw_dispenser_armor", "Armor Dispenser", k * 75, "models/props_combine/suit_charger001.mdl", 1)
 
 	SetTier(2)
 		--ReuseEntities("bw_dispenser_armor2", "Armor Dispenser T2", m * 15, "models/props_combine/suit_charger001.mdl")
@@ -370,7 +383,7 @@ SetType("[ACW] Pistols")
 	SetTier(1)
 		ReuseLoadout("arccw_go_m9", 	"M9", 		25 * k)
 		ReuseLoadout("arccw_go_usp", 	"USP", 		75 * k, "models/weapons/w_pist_usp.mdl")
-		ReuseLoadout("arccw_go_p250", 	"P250", 	200 * k)		
+		ReuseLoadout("arccw_go_p250", 	"P250", 	200 * k)
 
 	SetTier(2)
 		ReuseLoadout("arccw_go_tec9", 	"Tec-9", 	750 * k)

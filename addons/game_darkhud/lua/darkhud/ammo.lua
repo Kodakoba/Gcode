@@ -117,7 +117,7 @@ function DarkHUD.CreateAmmo()
 	f:SetPos(ScrW() - f:GetWide() - dh.PaddingX, ScrH() - f:GetTall() - dh.PaddingY)
 	f.HeaderSize = scale * 32
 	f:SetPaintedManually(true)
-	f:CacheShadow(2, 8, 2)
+	f:CacheShadow(4, 8, 2)
 
 	local rad = f.RBRadius or 8
 	local fX, fY = f:GetPos()
@@ -198,9 +198,10 @@ function DarkHUD.CreateAmmo()
 				wep:On("FiredBullet", self, f.OnFire, f)
 			end
 
+			self.Gone = false
+
 			if self.Y ~= fY and self.Recoil == 0 then
 				local anim, new = self:To("Y", fY, 0.4, 0, 0.3)
-				self.Gone = false
 				if new then anim:On("Think", function() self.WasGone = false end) end
 			else
 				f:ShakeLogic()

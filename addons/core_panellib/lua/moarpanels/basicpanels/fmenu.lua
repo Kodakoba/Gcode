@@ -47,12 +47,17 @@ function FM:Init()
 
 	RegisterDermaMenuForClose( self )
 	self:CreateDescription()
+
 end
 
 function FMO:Init()
 	self.Color = Color(40, 40, 40)
 	self.drawColor = Color(40, 40, 40)
 	self.HovMult = 1.3
+	self.CloseOnSelect = true
+
+	self:SetDoubleClickingEnabled(false)
+
 	if self:GetParent().WOverride then
 		local _, sy = self:GetSize()
 		self:SetSize(self:GetParent().WOverride, sy)
@@ -90,6 +95,19 @@ function FMO:PreTextPaint(w, h)
 end
 
 function FMO:PostPaint(w, h)
+end
+
+function FMO:OnSelect()
+	return self.CloseOnSelect
+end
+
+function FMO:OnMouseReleased(mcode)
+	DButton.OnMouseReleased(self, mcode)
+
+	if (self.m_MenuClicking and mcode == MOUSE_LEFT and self:OnSelect()) then
+		self.m_MenuClicking = false
+		CloseDermaMenus()
+	end
 end
 
 function FMO:Paint(w,h)

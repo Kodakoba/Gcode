@@ -140,10 +140,12 @@ function draw.DeMask(demask, ...) --requires mask to be started
 	if demask then demask(...) end
 end
 
-function draw.DrawOp()
+function draw.DrawOp(val)
 	render.SetStencilCompareFunction( STENCIL_NOTEQUAL )
 	render.SetStencilFailOperation( STENCIL_KEEP )
-	render.SetStencilReferenceValue( 0 )
+	render.SetStencilPassOperation( STENCIL_KEEP )
+
+	render.SetStencilReferenceValue( val or 0 )
 end
 
 function draw.FinishMask()

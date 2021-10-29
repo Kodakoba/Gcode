@@ -82,14 +82,18 @@ function facmeta:_AddToMembers(what)
 end
 
 function facmeta:_RemoveFromMembers(what)
-	local pinfo, ply = GetPlayerInfoGuarantee(what)
+	local pinfo = GetPlayerInfoGuarantee(what)
+	local ply = pinfo:GetPlayer(true)
 
-	if ply and Factions.Players[ply] == self then Factions.Players[ply] = nil end
+	if ply and Factions.Players[ply] == self then
+		Factions.Players[ply] = nil
+	end
 
 	local had = self.meminfo[pinfo]
 
-	table.RemoveByValue(self.memvals, ply)
-	table.RemoveByValue(self.meminfovals, pinfo)
+	table.RemoveByValue(self:GetMembers(), ply)
+	table.RemoveByValue(self:GetMembersInfo(), pinfo)
+
 	if ply then self.members[ply] = nil end
 	self.meminfo[pinfo] = nil
 	pinfo._Faction = nil
@@ -236,7 +240,7 @@ end
 function facmeta:CleanMember(ply)
 	if not self:IsMember(ply) then return end
 
-	table.RemoveByValue(self:GetMembers(), ply)
+	self:GetMembersInfo()
 	self.members[ply] = nil
 end
 
@@ -259,10 +263,16 @@ function facmeta:RemovePlayer(ply)
 	self:_RemoveFromMembers(pin)
 
 	if ply then
-		ply:SetTeam(1)
+		ply:SetTeam(Factions.FactionlessTeamID)
 	end
 
-	if #self:GetMembersInfo() == 0 then
+	--[[if #self:GetMembersInfo() == 0 then
+		self:Remove()
+		return
+	end]]
+
+	-- no online people present; disband
+	if #self:GetMembers() == 0 then
 		self:Remove()
 		return
 	end
@@ -282,12 +292,17 @@ function facmeta:Remove()
 	Factions.FactionIDs[self.id] = nil
 
 	for k,v in ipairs(self.memvals) do
+		if not IsValid(v) then
+			errNHf("still not fixed - invalid player %s in faction %s", v, self)
+			continue
+		end
+
 		v:SetTeam(Factions.FactionlessTeamID)
 		Factions.Players[v] = nil
 	end
 
 	for k, pinfo in ipairs(self.meminfovals) do
-		pinfo._Faction = nil
+		pinfo:SetFaction(nil)
 	end
 
 	hook.NHRun("FactionDisbanded", self)

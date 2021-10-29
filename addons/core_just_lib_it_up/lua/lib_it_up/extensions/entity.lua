@@ -47,6 +47,12 @@ function ENTITY:__index( key )
 
 end
 
+ENTITY._oldSetTable = ENTITY._oldSetTable or ENTITY.SetTable
+function ENTITY:SetTable(t)
+	lookupCache[self] = t
+	ENTITY._oldSetTable(self, t)
+end
+
 function ENTITY:Subscribe(ply, dist, onunsub, addtwice)
 
 	if CLIENT then

@@ -281,9 +281,13 @@ end
 
 function PINFO:SetRaidCD(t)
 	local nw = self:GetPublicNW()
-	nw:Set("RaidCD", CurTime() + Raids.RaidCoolDown - (t or Raids.RaidCoolDown))
+	nw:Set("RaidCD", CurTime() + Raids.RaidCoolDown - (t and Raids.RaidCoolDown - t or 0))
 end
 
-PLAYER.RaidedCooldown = PLAYER.GetRaidCD
+function PLAYER:GetRaidCD()
+	local pin = GetPlayerInfo(self)
+	return pin:GetRaidCD()
+end
 
 PInfoAccessor("RaidCD")
+PLAYER.RaidedCooldown = PLAYER.GetRaidCD

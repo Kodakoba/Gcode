@@ -58,12 +58,12 @@ function ENT:DoBlueprintCraft(ply, bp)
 	print("cool enough of every item")
 
 	for id, amt in pairs(recipe) do
-		--local ok = Inventory.TakeItems(invs, id, amt)
-		--if not ok then return end
+		local ok = Inventory.TakeItems(invs, id, amt)
+		if not ok then error("!!!! TOOK ITEMS BUT FAILED TO TAKE OTHERS !!!!") return end
 	end
 
 	local pr = bp:CreateResult(ply)
-	--bp:Delete()
+	bp:Delete()
 
 	pr:Then(function()
 		print("result created!!! requesting update!")

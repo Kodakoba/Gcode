@@ -1,7 +1,8 @@
+--easylua.StartEntity("orevein")
+
 AddCSLuaFile("cl_init.lua")
 AddCSLuaFile("shared.lua")
 include("shared.lua")
-
 
 ENT.Model = "models/props/cs_militia/militiarock0%s.mdl"
 
@@ -111,6 +112,17 @@ function ENT:RespawnElsewhere()
 	self:Remove()  -- then respawn
 end
 
+OresAwaitingRespawn = OresAwaitingRespawn or 0
+
+function ENT:RespawnIn(time)
+	OresAwaitingRespawn = OresAwaitingRespawn + 1
+	time = time or OreRespawnTime
+	timer.Simple(time, function()
+		OresAwaitingRespawn = OresAwaitingRespawn - 1
+		OresRespawn(1)
+	end)
+end
+
 function ENT:Think()
 	local timeTillDespawn = OreRespawnTime - (CurTime() - self.LastActivity)
 
@@ -161,7 +173,9 @@ function ENT:GenerateOres(tries)
 		printf("GenerateOres: try #%d !!!!!!", tries)
 	end
 	if tries >= 50 then
+		self:RespawnIn(10)
 		self:Remove()
+
 		error("This is getting ridiculous.")
 	end
 
@@ -311,6 +325,7 @@ function ENT:MineOut(orename, ply)
 	self.LastActivity = CurTime()
 
 	if table.Count(self.Ores) == 0 then
+		self:RespawnIn()
 		self:Remove()
 	end
 end
@@ -410,7 +425,9 @@ function OresRespawn(amt)
 		if not e:IsValid() then table.remove(ActiveOres, i) end
 	end
 
-	amt = amt or 4 - #ActiveOres
+	local maxOres = math.max(3, player.GetCount() / 3)
+
+	amt = amt or maxOres - #ActiveOres - OresAwaitingRespawn
 	if amt <= 0 then return end
 
 	if not Inventory.OresPositions then
@@ -438,3 +455,5 @@ if CurTime() > 60 then
 else
 	hook.Add("InventoryReady", "SpawnOres", loadOres)
 end
+
+--easylua.EndEntity("orevein")

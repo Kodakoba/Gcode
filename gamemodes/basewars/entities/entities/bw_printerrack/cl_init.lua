@@ -248,7 +248,7 @@ function ENT:Draw()
 				lc.a = L(lc.a, 255, 30, true)
 			end
 
-			local cost = BaseWars.NumberFormat(ent:GetUpgradeValue() * ent:GetLevel())
+			local cost = BaseWars.NumberFormat(ent:GetUpgradeCost())
 			draw.SimpleText("$" .. cost, "OS36", 18 + 32 + 8, h/2, ColorAlpha(color_white, 255 - lc.a), 0, 1)
 		end
 

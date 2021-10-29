@@ -19,14 +19,15 @@ hdl.downloading = hdl.downloading or {}
 local downloading = hdl.downloading
 local function Download(url, name, func, fail, pr)
 	local timed_out = false
+	local done = false
 
 	http.Fetch(url, function(body)
-
 		if timed_out then return end
 
 		file.Write(name, body)
 
 		downloading[name] = nil
+		done = true
 
 		func("data/" .. name, body)
 		pr:Resolve("data/" .. name, body)
@@ -39,10 +40,11 @@ local function Download(url, name, func, fail, pr)
 		local ok = sql.Query(q)
 		if ok == false then ErrorNoHalt("Failed HDL query! " .. q .. ", " .. sql.LastError()) end
 
-	end,
-	function(a)
-
+	end, function(a)
 		if timed_out then return end
+
+		downloading[name] = nil
+		done = true
 
 		if fail then
 			fail(a)
@@ -50,11 +52,10 @@ local function Download(url, name, func, fail, pr)
 		else
 			print("Failed to download!\n 	", a)
 		end
-		downloading[name] = nil
 	end)
 
 	timer.Simple(25, function()
-		if downloading[name] then
+		if not done then
 			downloading[name] = nil
 			if fail then
 				fail("Timed out")

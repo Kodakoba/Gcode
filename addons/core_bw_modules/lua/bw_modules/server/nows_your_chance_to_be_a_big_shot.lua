@@ -2,7 +2,8 @@ local adverts = {
 	{900, "discord",
 		Color(140, 165, 195), "Join our ",
 		Color(40, 150, 205), "Discord!   ",
-		Color(70, 220, 110), "https://discord.gg/TCVwCAZqGW"
+		Color(70, 220, 110), "https://discord.gg/TCVwCAZqGW",
+		Color(150, 150, 150), " (or type /discord)"
 	}
 }
 

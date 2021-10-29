@@ -8,6 +8,7 @@ ENT.Model = "models/props/de_prodigy/wall_console1.mdl"
 ENT.Skin = 0
 ENT.IsBaseCore = true
 ENT.CanTakeDamage = false
+ENT.NoHUD = true
 
 function ENT:DerivedDataTables()
 	self:NetworkVar("Int", 0, "BaseID")

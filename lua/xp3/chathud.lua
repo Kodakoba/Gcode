@@ -40,18 +40,55 @@ chathud.Items = chathud.Items or {}
 
 chathud.x = 0.84 * 64
 
-
-
 local ChatHUDYPos = ScrH() - (0.84 * 200) - (0.84 * 140)
 chathud.y = ChatHUDYPos
 
-hook.Add("OnScreenSizeChanged", "ChatHUD", function()
-	ChatHUDYPos = ScrH() - (0.84 * 200) - (0.84 * 140)
-	chathud.y = ChatHUDYPos
-end)
-
 chathud.W = 600
 chathud.NameLeeway = chathud.W * 0.2
+
+surface.CreateFont("CH_Text", {
+	font = "Roboto",
+	size = 22,
+	weight = 400,
+})
+
+surface.CreateFont("CH_TextShadow", {
+	font = "Roboto",
+	size = 22,
+	weight = 400,
+	blursize = 2,
+})
+
+local function rescale()
+	local vs = DarkHUD and DarkHUD.Vitals
+	if not IsValid(vs) then return end
+
+	chathud.y = math.min(vs.Y - DarkHUD.Scale * 48,
+		ScrH() - (0.84 * 200) - (0.84 * 140))
+
+	chathud.W = 750 * DarkHUD.Scale
+	chathud.NameLeeway = chathud.W * 0.2
+
+	surface.CreateFont("CH_Text", {
+		font = "Roboto",
+		size = math.max(22, math.Multiple(26 * DarkHUD.Scale, 4, true, true)),
+		weight = 400,
+	})
+
+	surface.CreateFont("CH_TextShadow", {
+		font = "Roboto",
+		size = math.max(22, math.Multiple(26 * DarkHUD.Scale, 4, true, true)),
+		weight = 400,
+		blursize = 2,
+	})
+end
+
+hook.Add("DarkHUD_CreatedVitals", "ChatHUD", rescale)
+hook.Add("DarkHUD_Rescaled", "ChatHUD", rescale)
+
+rescale()
+
+
 
 local blacklist = {
 	["0"] = true,
@@ -110,7 +147,7 @@ function chathud.CreateFFZShortcuts(update)
 
 	local function DownloadChannelInfo(chan)
 
-	 	local chan = string.lower(chan)
+		local chan = string.lower(chan)
 		local filename = "emoticon_cache/ffz_global_emotes_" .. chan .. ".dat"
 		Msg("[ChatHUD]: FFZ data for channel "..chan.." not found! Downloading... \n")
 
@@ -377,22 +414,22 @@ function ParseTags(str, special)
 
 			for arg in argsstr:gmatch(expptrn) do 	--First parse all the expression args
 
-		        local starts, ends = argsstr:find(arg, lastargpos, true)
-		        lastargpos = starts + 1
+				local starts, ends = argsstr:find(arg, lastargpos, true)
+				lastargpos = starts + 1
 
-		        local sepnum = 0
-		        local lastsep = 0
+				local sepnum = 0
+				local lastsep = 0
 
-		        local num = #args + 1
+				local num = #args + 1
 				if not chTag.args[num] then break end --more args than the tag takes: ignore eet
 
-		      --  argst[#argst + 1] = arg
+			  --  argst[#argst + 1] = arg
 
-		        argsstr = argsstr:sub(0, starts-1) .. "-" .. argsstr:sub(ends+1) --"-" allows you to ignore a var and let it be set to a default value; unless it already has a value...
-		        arg = arg:sub(2, -2) --get rid of []
+				argsstr = argsstr:sub(0, starts-1) .. "-" .. argsstr:sub(ends+1) --"-" allows you to ignore a var and let it be set to a default value; unless it already has a value...
+				arg = arg:sub(2, -2) --get rid of []
 
-		        local func, newenv = CompileExpression(arg, info, special, env)				-- like this handy expression we just compiled!
-		        env = env or newenv
+				local func, newenv = CompileExpression(arg, info, special, env)				-- like this handy expression we just compiled!
+				env = env or newenv
 
 				if isstring(func) then
 					printf("Expression error: %s", func)
@@ -400,24 +437,24 @@ function ParseTags(str, special)
 				end
 
 				args[#args + 1] = func
-		    end
+			end
 
-		    local offset = 0
-		    local i = 0
+			local offset = 0
+			local i = 0
 
-		    for arg in argsstr:gmatch(valptrn) do 	--Then parse all static args (non-expressions)
-		        i = i + 1
-		        if arg == "-" then continue end --this also increments i, basically offsetting arg by +1
-		        if not chTag.args[i] then break end
+			for arg in argsstr:gmatch(valptrn) do 	--Then parse all static args (non-expressions)
+				i = i + 1
+				if arg == "-" then continue end --this also increments i, basically offsetting arg by +1
+				if not chTag.args[i] then break end
 
-		        local typ = chTag.args[i].type
+				local typ = chTag.args[i].type
 				if not chathud.TagTypes[typ] then printf("Unknown argument type! '%s'", typ) break end
 
 				local ret = chathud.TagTypes[typ](arg)
 
 				if ret then table.insert(args, i, ret) end --if conversion to type succeeded
 
-		    end
+			end
 
 
 
@@ -555,7 +592,7 @@ function chathud:AddText(...)
 				)
 			) or "Console"
 
-			names[v], nw = string.WordWrap2(n, chathud.W, "CH_Name")
+			names[v], nw = string.WordWrap2(n, chathud.W, "CH_Text")
 			curwidth = curwidth + nw
 			merged[#merged + 1] = n
 			merged_nowrap[#merged_nowrap + 1] = n
@@ -659,32 +696,6 @@ end
 function chathud:PerformLayout()
 
 end
-
-surface.CreateFont("CH_Text", {
-	font = "Roboto",
-	size = 22,
-	weight = 400,
-})
-
-surface.CreateFont("CH_Name", {
-    font = "Titillium Web SemiBold",
-    size = 28,
-    weight = 400,
-})
-
-surface.CreateFont("CH_NameShadow", {
-    font = "Titillium Web SemiBold",
-    size = 28,
-    weight = 400,
-    blursize = 2
-})
-
-surface.CreateFont("CH_TextShadow", {
-    font = "Roboto",
-    size = 22,
-    weight = 400,
-    blursize = 2,
-})
 
 chathud.CharH = 22
 chathud.WrapStyle = 1  --1 = consider nickname, 0 = ignore nickname start from 0
@@ -868,7 +879,11 @@ function chathud:Draw()
 				mult = 120
 			end
 
-			if y < (self.y-220) then --if the message is too high up, start erasing it
+			local h = dat.HOverride or 0
+
+			if y - h < (self.y - 220) and
+				CurTime() - dat.t > chathud.FadeTime / 6 then
+				--if the message is too high up, start erasing it
 				mult = 500
 			end
 

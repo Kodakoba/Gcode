@@ -187,7 +187,8 @@ local function Upgrade(ply, amt, ent)
 	ent = ent or trace.Entity
 	if not Upgradable(ply, ent) then return false end
 
-	local canTimes = ent.MaxLevel - ent.Level
+	local canTimes = ent.CanUpgradeTimes and ent:CanUpgradeTimes() or
+		ent.MaxLevel - (ent.GetLevel and ent:GetLevel() or ent.Level or ent.MaxLevel)
 
 	if amt == "max" then
 		amt = canTimes
@@ -214,16 +215,16 @@ net.Receive("BW.Upgrade", function(len, ply)
 	Upgrade(ply, lvs, ent)
 end)
 
-BaseWars.Commands.AddCommand({"max"}, function(ply)
+BaseWars.Commands.AddCommand({"max", "maxupg", "maxupgrade"}, function(ply)
 	Upgrade(ply, "max")
 end, false)
 
 BaseWars.Commands.AddCommand({"tell", "msg"}, function(ply, line, who)
-	if not who then return false, "Fuck" end
+	if not who then return false, "Specify a player!" end
 
 	local Targ = easylua.FindEntity(who, true)
 
-	if not IsPlayer(Targ) then return false, "Fuck" end
+	if not IsPlayer(Targ) then return false, ("No player `%s` found!"):format(who) end
 
 	local Msg = line:sub(#who + 1):Trim()
 	Targ:ChatPrint(ply:Nick() .. " -> " .. Msg)
@@ -307,6 +308,7 @@ BaseWars.Commands.AddCommand({"dw", "dropwep"}, function(ply)
 			Ent:SetPos(SpawnPos)
 			Ent:SetAngles(SpawnAng)
 			Ent.Backup = bkup
+			Ent.Dropped = true
 		Ent:Spawn()
 		Ent:Activate()
 

@@ -304,10 +304,6 @@ hook.Add("Tick", "PowerGrid_Tick", function()
 		local grid = base.PowerGrid
 		if not grid then continue end
 
-		local ok, err = pcall(grid.Think, grid)
-		if not ok then
-			bw.Log("Error in %s base think: %s", base, err)
-			continue
-		end
+		xpcall(grid.Think, GenerateErrorer("PowergridThink"), grid)
 	end
 end)

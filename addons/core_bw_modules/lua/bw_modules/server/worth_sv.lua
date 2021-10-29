@@ -38,12 +38,12 @@ local function Pay(ply, amt, name, own)
 	local pin = IsPlayerInfo(ply) and ply or GetPlayerInfoGuarantee(ply)
 	ply = pin:GetPlayer()
 
+	pin:GiveMoney(amt)
+
 	if ply then
 		ply:PopupNotify(NOTIFY_UNDO, own and Language.PayOutOwner or Language.PayOut,
 				amt, name or "...something?")
 	end
-
-	pin:GiveMoney(amt)
 end
 
 function wth.PayOut(ent, atk, full)
@@ -64,7 +64,7 @@ function wth.PayOut(ent, atk, full)
 
 	local Name = ent.PrintName or ent:GetClass()
 
-	wth.Set(ent, nil, true)
+	wth.Set(ent, nil)
 
 	if ent.GetLevel then
 		Name = Language("Level", ent:GetLevel()) .. " " .. Name

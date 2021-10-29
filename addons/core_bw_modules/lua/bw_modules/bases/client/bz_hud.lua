@@ -1,15 +1,14 @@
 local bw = BaseWars.Bases
-local nw = bw.NW
-BaseWars.BaseHUD = hud
-
 bw.HUD = bw.HUD or Emitter()
 local hud = bw.HUD
 
-hud.Anims = hud.Anims or Animatable("bases")
+print("!! bz_hud included !!")
 
-include("hud/painter_ext.lua")
+include("hud/base_painter_ext.lua")
 
 hook.Add("HUDPaint", "basePainter", function()
+	if not hud.DoPainters then return end
+
 	local lp = LocalPlayer()
 	local base, zone = lp:BW_GetBase(), lp:BW_GetZone()
 	hud.DoPainters(base, zone)

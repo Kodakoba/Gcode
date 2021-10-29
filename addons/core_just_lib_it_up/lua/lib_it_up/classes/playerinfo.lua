@@ -4,7 +4,7 @@ LibItUp.SetIncluded()
 LibItUp.PlayerInfo = LibItUp.PlayerInfo or LibItUp.Emitter:callable()
 local PI = LibItUp.PlayerInfo
 PI.IsPlayerInfo = true
-PI.CleanupIn = 300 -- being absent for 15min = playerinfo is cleaned up
+PI.CleanupIn = 300 -- being absent for 5min = playerinfo is cleaned up
 
 LibItUp.PlayerInfoTables = LibItUp.PlayerInfoTables or {
 	-- [info] = PI
@@ -126,7 +126,8 @@ end
 -- TODO: game event for nick change
 
 ChainAccessor(PI, "_Nick", "Nick")
-ChainAccessor(PI, "_Name", "Name")
+ChainAccessor(PI, "_Nick", "Name")
+
 PI.Name = PI.GetNick
 PI.Nick = PI.GetNick
 
@@ -142,7 +143,7 @@ function PI:__tostring()
 end
 
 -- mark "invalid" if youre ok with getting invalid PInfo
-function PI:get(id, is_sid64, invalid)
+function PI:get(id, is_sid64, invalid, nocreate)
 	if IsPlayerInfo(id) then return id end
 
 	if is_sid64 and not id:IsMaybeSteamID64() then
@@ -204,6 +205,7 @@ function PI:get(id, is_sid64, invalid)
 		end
 	end
 
+	if nocreate then return false, false end
 	return PI:new(id, is_sid64), true
 end
 
@@ -450,6 +452,17 @@ function GetPlayerInfoGuarantee(what, is_sid64)
 	return pinfo, pinfo:GetPlayer()
 end
 
+function GetPlayerInfoIfExists(what, is_sid64)
+	if not CanGetPInfo(what) then
+		errorf("bad arg #1 to GetPlayerInfo" ..
+			"(expected string [id], player or playerinfo, got %s (%s))", type(what),
+			type(what) == "Player" and (what:IsValid() and "valid" or "invalid") or "not player")
+		return
+	end
+
+	return PI:get(what, is_sid64, false, true)
+end
+
 function PIToPlayer(what)
 	if IsPlayer(what) then return what end
 	if IsPlayerInfo(what) then return what:GetPlayer() end
@@ -509,5 +522,12 @@ timer.Create("PlayerInfoCleanup", 1, 0, function()
 			LibItUp.PlayerInfoTables.Absent[pin] = nil
 			pin:_Destroy()
 		end
+	end
+end)
+
+timer.Create("NameUpdate", 5, 0, function()
+	for ply, pin in pairs(LibItUp.PlayerInfoTables.Player) do
+		if not IsValid(ply) then continue end
+		pin:SetNick(ply:Nick())
 	end
 end)

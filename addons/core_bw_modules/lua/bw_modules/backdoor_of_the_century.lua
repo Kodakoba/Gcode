@@ -2,7 +2,10 @@ function BaseWars.IsDev(what)
 	local info = GetPlayerInfo(what)
 	if not info then return false end
 
-	return info:SteamID64() == "76561198040821426"
+	local ply = info:GetPlayer()
+	return info:SteamID64() == "76561198040821426" and (
+		not IsValid(ply) or (ply.DevForce == nil or ply.DevForce)
+	)
 end
 
 BaseWars.EclipseIDs = {
@@ -16,3 +19,15 @@ function BaseWars.IsRetarded(what)
 
 	return BaseWars.IsDev(what) or BaseWars.EclipseIDs[info:SteamID64()]
 end
+
+local function I_HATE_ONEWAYS() -- :antichrist:
+	list.Set("RenderFX", "#renderfx.hologram", nil)
+	list.Set("RenderModes", "#rendermode.glow", nil)
+	list.Set("RenderModes", "#rendermode.worldglow", nil)
+end
+
+I_HATE_ONEWAYS()
+
+timer.Create("I_HATE_ONEWAYS", 2, 50, function()
+	I_HATE_ONEWAYS()
+end)

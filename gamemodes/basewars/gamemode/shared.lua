@@ -148,14 +148,17 @@ function BaseWars.AddToSpawn(t)
 	t.Model = t.Model or "models/Humans/Group01/Male_Cheaple.mdl"
 	t.ShouldFreeze = (t.Gun and false) or (t.ShouldFreeze == nil and true) or t.ShouldFreeze
 	t.Name = t.Name or "???"
-	if not t.ClassName then error("look i'd put up with your shit like not setting limits or price but NOT CLASS NAME???") return end
+	if not t.ClassName then
+		error("look i'd put up with your shit like not setting limits or price but NOT CLASS NAME???")
+		return
+	end
 
 	return t
 
 end
 
 BASEWARS_NOTIFICATION_ADMIN = color_white
-BASEWARS_NOTIFICATION_ERROR = Color(255, 0, 0, 255)
+BASEWARS_NOTIFICATION_ERROR = Color(225, 100, 100, 255)
 BASEWARS_NOTIFICATION_MONEY = Color(0, 255, 0, 255)
 BASEWARS_NOTIFICATION_RAID 	= Color(255, 255, 0, 255)
 BASEWARS_NOTIFICATION_GENRL = Color(255, 0, 255, 255)
@@ -202,19 +205,8 @@ function BaseWars.UTIL.ClearRollbackFile(ply)
 end
 
 function BaseWars.UTIL.SafeShutDown()
-
 	BaseWars.UTIL.RefundAll()
-
-	local Files = file.Find("basewars_crashrollback/*_save.txt", "DATA")
-
-	for k, v in next, Files do
-
-		file.Delete("basewars_crashrollback/" .. v)
-
-	end
-
-	file.Delete("server_crashed.dat")
-
+	BaseWars.PlayerData.SyncBWIntoSQL()
 end
 
 function BaseWars.UTIL.FreezeAll()
@@ -301,24 +293,24 @@ local function BlockInteraction(ply, ent, ret)
 		if not IsValid(ent) then return true end
 
 		local Classes = BaseWars.Config.PhysgunBlockClasses
-		if Classes[ent:GetClass()] then return false end
+		if Classes[ent:GetClass()] then return BaseWars.IsDev(ply, ent, ret) end
 
 		local Owner, uid
 		if ent.CPPIGetOwner then
 			Owner, uid = ent:CPPIGetOwner()
 		end
 
-		if IsPlayer(ply) and ply:InRaid() then return false end
-		if IsPlayer(Owner) and Owner:InRaid() then return false end
+		if IsPlayer(ply) and ply:InRaid() then return BaseWars.IsDev(ply, ent, ret) end
+		if IsPlayer(Owner) and Owner:InRaid() then return BaseWars.IsDev(ply, ent, ret) end
 		if not IsPlayer(Owner) and uid == CPPI_NOTIMPLEMENTED then
 			-- world owner
-			return false
+			return ply:IsAdmin(ply, ent, ret)
 		end
 
 	else
-
-		if ply:InRaid() then return false end
-
+		if ply:InRaid() then
+			return BaseWars.IsDev(ply, ent, ret)
+		end
 	end
 
 	return ret == nil or ret
@@ -338,27 +330,29 @@ local function IsAdmin(ply, ent, ret)
 end
 
 function GM:PhysgunPickup(ply, ent)
-
 	local Ret = self.BaseClass:PhysgunPickup(ply, ent)
 
-	if ent:IsVehicle() then return IsAdmin(ply, ent, Ret) end
+	if ent:IsVehicle() then
+		return IsAdmin(ply, ent, Ret)
+	end
 
 	return BlockInteraction(ply, ent, Ret)
 
 end
 
 function GM:CanPlayerUnfreeze(ply, ent, phys)
-
 	local Ret = self.BaseClass:CanPlayerUnfreeze(ply, ent, phys)
 
 	return BlockInteraction(ply, ent, Ret)
-
 end
 
 function GM:CanTool(ply, tr, tool)
 	local Ret = self.BaseClass:CanTool(ply, tr, tool)
 
-	if BaseWars.Config.BlockedTools[tool] then return IsAdmin(ply, ent, Ret) end
+	if BaseWars.Config.BlockedTools[tool] then
+		return IsAdmin(ply, ent, Ret)
+	end
+
 	if IsValid(tr.Entity) and tr.Entity.IsBaseWars then
 		return IsDev(ply, tr.Entity, Ret)
 	end

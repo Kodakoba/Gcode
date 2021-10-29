@@ -315,7 +315,7 @@ chathud.TagTable = {
 			self.mtrx:Translate(Vector(buffer.x, buffer.y + (buffer.h * 0.5)))
 				self.mtrx:Scale(Vector(args[1], args[2]))
 			self.mtrx:Translate(-Vector(buffer.x, buffer.y + (buffer.h * 0.5)))
-			
+
 			cam.PushModelMatrix(self.mtrx, buffer.multmatrix or true)
 
 		end,
@@ -332,7 +332,7 @@ chathud.TagTable = {
 
 
 
-chathud.TagTable["se"] = {
+--[[chathud.TagTable["se"] = {
 	args = {
 		[1] = {type = "string", default = "error"},
 		[2] = {type = "number", min = 8, max = 128, default = 40},
@@ -351,7 +351,7 @@ chathud.TagTable["se"] = {
 		buffer.curh = math.max(buffer.curh, size)
 		buffer.x = buffer.x + size
 	end,
-}
+}]]
 
 chathud.TagTable["text"] = {
 	args = {
@@ -540,7 +540,7 @@ chathud.TagTable["item"] = {
 	end,
 }
 
-chathud.TagTable["te"] = {
+--[[chathud.TagTable["te"] = {
 	args = {
 		[1] = {type = "string", default = "error"},
 		[2] = {type = "number", min = 8, max = 128, default = 48},
@@ -558,7 +558,7 @@ chathud.TagTable["te"] = {
 		buffer.h = math.max(buffer.h, size)
 		buffer.x = buffer.x + size
 	end,
-}
+}]]
 
 chathud.TagTypes = {
 	["number"] = tonumber,

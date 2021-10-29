@@ -82,7 +82,7 @@ function ENT:CreateInputSlot(slot)
 		local it = self.Item
 		local base = it:GetBase()
 		local refTime = base:GetSmeltTime()
-		local start = ent.Status:Get(self:GetSlot(), 0)
+		local start = ent.Status:Get(self:GetSlot(), CurTime())
 
 		if ent.Status:Get("DepowerTime") then
 			fr = start
@@ -322,12 +322,35 @@ function ENT:OpenMenu()
 		SlotSize = 64
 	})
 
+	local ent = self
+
 	--inv:SetTall(350)
 	inv:CenterVertical()
 
 	for k,v in pairs(inv:GetSlots()) do
 		v:On("DragStart", "Refinery", function(...) self:OnInventorySlotPickup(...) end)
 		v:On("DragStop", "Refinery", function(...) self:OnInventorySlotDrop(...) end)
+		v:On("Click", "Refinery", function(self, slot, itm)
+			if not itm or not itm:GetBase() or not itm:GetBase().IsOre then return end
+
+			if input.IsControlDown() then
+				if input.IsShiftDown() then
+					ent:QueueOre(nil, itm, true)
+					return
+				end
+
+				local found
+
+				for i=1, ent.OreInput.MaxItems do
+					if not ent.OreInput:GetItemInSlot(i) then found = i break end
+				end
+
+				if found then
+					ent:QueueOre(found, itm)
+				end
+			end
+
+		end)
 	end
 
 	local ref = vgui.Create("NavFrame")

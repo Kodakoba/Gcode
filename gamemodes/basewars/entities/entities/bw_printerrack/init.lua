@@ -8,7 +8,6 @@ function ENT:Init()
 	self.Money = 0
 
 	self:SetHealth(self.PresetMaxHealth or 100)
-	self:SetTrigger(true)
 
 	self.Printers = Networkable(("PrinterRack:%d"):format(self:EntIndex())):Bond(self)
 	self.Printers.Entities = {}
@@ -32,30 +31,11 @@ local pos = {}
 
 
 for i=1, 8 do
-	local off = (i>=5 and i*5.9 + 13) or i*5.9
+	local off = i * 5.9 + (i >= 5 and 13 or 0)
 
 	pos[#pos + 1] = Vector(3, -0.5, 8 + off)
 end
 
-local function ParsePrintersOut(str)
-	local t = string.Explode(" ", str)
-	return t
-end
-
-local function ParsePrintersIn(tbl)
-	local t = {}
-
-	for i=1, max do
-
-		local ent = tbl[i]
-		local id = (IsValid(ent) and ent:EntIndex()) or "0"
-		t[#t+1] = id
-
-	end
-
-	local str = table.concat(t, " ")
-	return str
-end
 
 function ENT:NetworkPrinters()
 
@@ -91,8 +71,9 @@ function ENT:AddPrinter(slot, ent)
 end
 
 function ENT:Touch(ent)
-
-	if not ent.IsPrinter or ent.IsInRack or ent:BW_GetOwner() ~= self:BW_GetOwner() then return end
+	if not ent.IsPrinter or ent.IsInRack or ent:BW_GetOwner() ~= self:BW_GetOwner() then
+		return
+	end
 
 	local printers = self.Printers.Entities
 	if table.Count(printers) >= max then return end
@@ -113,17 +94,36 @@ function ENT:ThinkFunc()
 end
 
 function ENT:OnRemove()
+	local zones = {}
+
 	for k,v in pairs(self.Printers.Entities) do
 		if IsValid(v) then
 			v.IsInRack = false
 			v:SetPrinterRack(NULL)
 			v:SetParent()
-			v:GetPhysicsObject():EnableGravity(true)
+			local phys = v:GetPhysicsObject()
+
+			if IsValid(phys) then
+				phys:EnableGravity(true)
+			end
+
 			v:SetMoveType(MOVETYPE_VPHYSICS)
 			v:SetLocalAngularVelocity(Angle())
 			v:SetAbsVelocity(Vector())
 			v:SetPos(v:GetPos())
+
+			print(v:BW_GetZone())
+			if v:BW_GetZone() then
+				zones[v:BW_GetZone()] = true
+			end
 		end
+	end
+
+	for k,v in pairs(zones) do
+		-- ewww
+		timer.Simple(engine.TickInterval() * 4, function()
+			k:RescanEnts()
+		end)
 	end
 end
 
@@ -180,6 +180,10 @@ function ENT:Eject(num)
 
 		phys:SetVelocity(self:GetAngles():Forward() * 256)
 		phys:SetAngleVelocity(Vector())
+
+		if self:BW_GetZone() then
+			self:BW_GetZone():RescanEnts()
+		end
 	else
 		self:EmitSound("buttons/button10.wav", 65, 100, 1)
 	end

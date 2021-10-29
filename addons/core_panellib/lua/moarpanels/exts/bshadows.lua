@@ -83,7 +83,7 @@ end
 
 BSHADOWS.RTs = BSHADOWS.RTs or {}
 
-local spreadSize = 16
+local spreadSize = 32
 
 function handle:Initialize(name, rt, mat, w, h)
 	self.Name, self.RT, self.Mat = name, rt, mat

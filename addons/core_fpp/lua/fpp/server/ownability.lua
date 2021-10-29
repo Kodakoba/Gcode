@@ -208,8 +208,8 @@ local function recalculateCanTouch(players, entities)
         local changed = {}
 
         for _, ent in pairs(entities) do
-            local hasChanged = FPP.calculateCanTouch(ply, ent)
-            if hasChanged then table.insert(changed, ent) end
+            local ok, hasChanged = pcall(FPP.calculateCanTouch, ply, ent)
+            if ok and hasChanged then table.insert(changed, ent) end
         end
 
         FPP.plySendTouchData(ply, changed)
@@ -342,7 +342,10 @@ local function onEntitiesCreated(ents)
         if blockedEnts[ent:GetClass()] then continue end
 
         for _, ply in ipairs(player.GetAll()) do
-            FPP.calculateCanTouch(ply, ent)
+            local ok, err = pcall(FPP.calculateCanTouch, ply, ent)
+            if not ok then
+                errNHf("onEntitiesCreated from FPP: calculateCanTouch error: %s", err)
+            end
         end
         table.insert(send, ent)
     end

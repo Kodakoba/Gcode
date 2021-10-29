@@ -337,7 +337,7 @@ function SWEP:getEffectiveRange()
 	EffectiveRange = EffectiveRange * 39.37 -- convert meters to units
 
 	local DamageFallOff = (100 - (self.CaseLength - self.BulletDiameter)) / 200
-	local PenStr = (self.BulletDiameter * 0.5 + self.CaseLength * 0.35) * (self.PenAdd and self.PenAdd or 1)
+	local PenStr = (self.BulletDiameter * 0.5 + self.CaseLength * 0.35) * (self.PenAdd and self.PenAdd or 1) / 2
 	local PenetrativeRange = EffectiveRange * 0.5
 	
 	return EffectiveRange, DamageFallOff, PenStr, PenetrativeRange

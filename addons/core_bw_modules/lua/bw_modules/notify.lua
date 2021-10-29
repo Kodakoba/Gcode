@@ -29,6 +29,27 @@ local actions = {
 	end
 }
 
+function MODULE._WriteLang(lang, ...)
+	lang:Write()
+
+	net.WriteUInt(select("#", ...), 8)
+	for k,v in ipairs({...}) do
+		Networkable.WriteEncoder(v)
+	end
+end
+
+function MODULE._ReadLang()
+	local fmt = net.ReadLocalString()
+	local argSz = net.ReadUInt(8)
+	local args = {}
+
+	for i=1, argSz do
+		args[i] = Networkable.ReadByDecoder()
+	end
+
+	return fmt, args
+end
+
 function MODULE._Add(not_typ, arg, str, ...)
 	if not CLIENT then
 		net.Start("BWNotify")
@@ -37,23 +58,23 @@ function MODULE._Add(not_typ, arg, str, ...)
 
 			if IsLocalString(str) then
 				net.WriteUInt(0, 4)
-				str:Write()
-
-				net.WriteUInt(select("#", ...), 8)
-				for k,v in ipairs({...}) do
-					Networkable.WriteEncoder(v)
-				end
+				MODULE._WriteLang(str, ...)
 
 			elseif isstring(str) then
 				net.WriteUInt(1, 4)
-				
 				net.WriteCompressedString(str)
 
 			elseif istable(str) then
 				net.WriteUInt(2, 4)
 				net.WriteUInt(#str, 8)
 				for k,v in ipairs(str) do
-					if IsLocalString(v) then v = v() end
+					if IsLocalString(v) then
+						net.WriteBool(true)
+						MODULE._WriteLang(v, unpack(str, k + 1))
+						break
+					end
+
+					net.WriteBool(false)
 					Networkable.WriteEncoder(v)
 				end
 			end
@@ -89,13 +110,7 @@ if CLIENT then
 
 		if data_typ == 0 then
 			-- received local string
-			local fmt = net.ReadLocalString()
-			local argSz = net.ReadUInt(8)
-			local args = {}
-
-			for i=1, argSz do
-				args[i] = Networkable.ReadByDecoder()
-			end
+			local fmt, args = MODULE._ReadLang()
 
 			MODULE._Add(notif_typ, popup_typ, fmt(unpack(args)))
 
@@ -110,6 +125,13 @@ if CLIENT then
 			local args = {}
 
 			for i=1, argSz do
+				local is_lang = net.ReadBool()
+				if is_lang then
+					local lang, langargs = MODULE._ReadLang()
+					args[i] = lang(unpack(langargs))
+					break
+				end
+
 				args[i] = Networkable.ReadByDecoder()
 			end
 

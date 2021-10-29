@@ -11,7 +11,6 @@ ENT.PresetMaxHealth = 100
 ENT.IsBaseWars = true
 
 ENT.Level = 1
-ENT.MaxLevel = 1
 
 function ENT:Init()
 
@@ -35,6 +34,10 @@ end
 
 function ENT:ForceUpdate()
 	self.TransmitTime = CurTime()
+end
+
+function ENT:GetMaxLevel()
+	return self.MaxLevel
 end
 
 function ENT:UpdateTransmitState()
