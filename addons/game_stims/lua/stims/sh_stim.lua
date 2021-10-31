@@ -1,14 +1,21 @@
 --wah
 
 Stims = Stims or {}
-Stims.Bind = Stims.Bind or Bind("stim")
-	:SetDefaultKey(KEY_G)
-	:SetDefaultMethod(BINDS_HOLD)
-
-Stims.Bind:CreateConcommand()
 
 Stims.Active = {}	   						-- stores [ply] = { activeStimStats }
 Stims.PlayerStims = Stims.PlayerStims or {} -- stores [ply] = { stimStats }
+Stims.ActionName = "Stim"
+Stims.OffhandTable = Stims.OffhandTable or {
+	Use = function() Stims.UseStim() end
+}
+
+if CLIENT then
+	Offhand.Register(Stims.ActionName, Stims.OffhandTable)
+
+	LibItUp.OnLoaded("darkhud.lua", function()
+		include("stims/cl_stim_darkhud_ext.lua")
+	end)
+end
 
 local blank_tbl = {}
 
