@@ -227,11 +227,11 @@ function DarkHUD.CreateAmmo()
 	end
 
 	function f:PrePaint(w, h)
-		self.NoDraw = self.Gone
+		self.NoDraw = not DarkHUD.SettingFrame:GetValue() or self.Gone
 	end
 
 	function f:PostPaint(w, h)
-		self.NoDraw = self.Gone
+		self.NoDraw = not DarkHUD.SettingFrame:GetValue() or self.Gone
 
 		if self.Gone then
 			goto emit
