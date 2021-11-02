@@ -58,7 +58,9 @@ local function doRender(_, f)
 
 	local max = ScrH() * 0.15
 
-	local vel = WorldToLocal(LocalPlayer():GetVelocity(), angle_zero,
+	local me = LocalPlayer()
+	local realVel = me:InVehicle() and me:GetVehicle():GetVelocity() or me:GetVelocity()
+	local vel = WorldToLocal(realVel, angle_zero,
 		vector_origin, flat)
 
 	local len = vel:Length()

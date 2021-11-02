@@ -553,11 +553,11 @@ function Titles.Draw(ply)
         
 		surface.DrawText(pln)
 
-		if afk[sid] then 
-			
+		--if afk[sid]]then 
+		if ply:GetNW2Bool("IsAFK") then
 			local afktxt = "AFK for " 
 			local tabbed = ( ply:GetNW2Bool("AFKFocused", true) and "") or " (tabbed out)"
-			local timetxt = string.NiceTime(CurTime() - ply:GetNW2Int("AFK", 0)) .. tabbed .. "..."
+			local timetxt = string.NiceTime(CurTime() - ply:GetNW2Float("AFK", 0)) .. tabbed .. "..."
 			surface.SetFont("Status")
 			local statuss = surface.GetTextSize(afktxt) + surface.GetTextSize(timetxt)
 			local timex = surface.GetTextSize(afktxt)
