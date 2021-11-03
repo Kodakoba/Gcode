@@ -176,8 +176,20 @@ end
 -- etc.). Override this for custom behavior.
 --
 function MEDIAPLAYER:IsPlayerPrivileged( ply )
-	return ply == self:GetOwner() or ply:IsAdmin() or
-		hook.Run( "MediaPlayerIsPlayerPrivileged", self, ply )
+	if not self:GetEntity() then return end
+
+	local ow = self:GetEntity():BW_GetOwner()
+	if not ow then return true end
+
+	local pin = GetPlayerInfo(ply)
+	if not pin then print("no pin") return end
+
+	local fac = pin:GetFaction()
+	if fac and fac:IsMember(ply) then return true end
+
+	if ow == pin then return true end
+
+	return (not not hook.Run( "MediaPlayerIsPlayerPrivileged", self, ply ))
 end
 
 ---

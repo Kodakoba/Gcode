@@ -20,8 +20,22 @@ local function IsMediaPlayer( self, ent, ply )
 end
 
 local function IsPrivilegedMediaPlayer( self, ent, ply )
-	return IsMediaPlayer( self, ent, ply ) and
-		( ply:IsAdmin() or ent:GetOwner() == ply )
+	if not IsMediaPlayer( self, ent, ply ) then print("not MediaPlayer") return end
+
+	--if ply:IsAdmin() then return true end
+
+	local ow = ent:BW_GetOwner()
+	if not ow then return true end
+
+	local pin = GetPlayerInfo(ply)
+	if not pin then print("no pin") return end
+
+	local fac = pin:GetFaction()
+	if fac and fac:IsMember(ply) then return true end
+
+	if ow == pin then return true end
+
+	return false
 end
 
 local function HasMedia( mp )
