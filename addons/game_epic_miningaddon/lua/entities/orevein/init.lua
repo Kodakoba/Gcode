@@ -185,6 +185,8 @@ function ENT:GenerateOres(tries)
 	local ranlen = 0
 
 	for name, item in pairs(Inventory.Mineables) do
+		if item:GetCanGenerate() == false then continue end
+	
 		local min, max = item:GetMinRarity(), item:GetMaxRarity()
 		local rar = self.Rarity --rrarr
 		if rar < min or rar > max then continue end --nyope
