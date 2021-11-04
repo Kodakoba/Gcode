@@ -28,7 +28,7 @@ SWEP.ViewModel = "models/weapons/arccw/dm1973/c_dmi_r870sg_elite.mdl"
 SWEP.WorldModel = "models/weapons/arccw/dm1973/w_dmi_r870sg_elite.mdl"
 SWEP.ViewModelFOV = 70
 
-SWEP.Damage = 13
+SWEP.Damage = 15
 SWEP.DamageMin = 0 -- damage done at maximum range
 SWEP.Range = 55 -- in METRES
 SWEP.Penetration = 1
@@ -54,7 +54,7 @@ SWEP.ShotgunReload = true
 SWEP.ManualAction = true
 
 SWEP.Delay = 60 / 300 -- 60 / RPM.
-SWEP.Num = 12 -- number of shots per trigger pull.
+SWEP.Num = 10 -- number of shots per trigger pull.
 SWEP.RunawayBurst = false
 SWEP.Firemodes = {
     {
@@ -69,7 +69,7 @@ SWEP.Firemodes = {
 SWEP.NPCWeaponType = "weapon_shotgun"
 SWEP.NPCWeight = 200
 
-SWEP.AccuracyMOA = 70 -- accuracy in Minutes of Angle. There are 60 MOA in a degree.
+SWEP.AccuracyMOA = 60 -- accuracy in Minutes of Angle. There are 60 MOA in a degree.
 SWEP.HipDispersion = 220 -- inaccuracy added by hip firing.
 SWEP.MoveDispersion = 200
 

@@ -22,11 +22,11 @@ SWEP.ViewModelFOV = 60
 
 SWEP.DefaultBodygroups = "000000000000"
 
-SWEP.Damage = 17
+SWEP.Damage = 12
 SWEP.DamageMin = 5 -- damage done at maximum range
-SWEP.Num = 10
+SWEP.Num = 14
 SWEP.Range = 20 -- in METRES
-SWEP.RangeMin = 6
+SWEP.RangeMin = 0
 SWEP.Penetration = 1
 SWEP.DamageType = DMG_BUCKSHOT
 SWEP.ShootEntity = nil -- entity to fire, if any
@@ -41,7 +41,7 @@ SWEP.RecoilPunch = 2.5
 
 SWEP.ManualAction = true
 SWEP.ShotgunReload = true
-SWEP.Delay = 60 / 300 -- 60 / RPM.
+SWEP.Delay = 60 / 180 -- 60 / RPM.
 SWEP.Firemodes = {
     {
         Mode = 1,
@@ -55,7 +55,7 @@ SWEP.Firemodes = {
 SWEP.NPCWeaponType = "weapon_shotgun"
 SWEP.NPCWeight = 100
 
-SWEP.AccuracyMOA = 55 -- accuracy in Minutes of Angle. There are 60 MOA in a degree.
+SWEP.AccuracyMOA = 70 -- accuracy in Minutes of Angle. There are 60 MOA in a degree.
 SWEP.HipDispersion = 180 -- inaccuracy added by hip firing.
 SWEP.MoveDispersion = 120
 
@@ -310,6 +310,7 @@ SWEP.Animations = {
         Source = "cycle",
         ShellEjectAt = 0.25,
         TPAnim = ACT_HL2MP_GESTURE_RANGE_ATTACK_SHOTGUN,
+        Time = 0.85
     },
     ["sgreload_start"] = {
         Source = "start_reload",

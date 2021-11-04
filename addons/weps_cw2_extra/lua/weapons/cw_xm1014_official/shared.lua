@@ -194,11 +194,11 @@ SWEP.FireSound = "CW_M4SUPER90_FIRE"
 SWEP.FireSoundSuppressed = "CW_DEAGLE_FIRE_SUPPRESSED"
 SWEP.Recoil = 2.5
 
-SWEP.HipSpread = 0.05
-SWEP.AimSpread = 0.008
+SWEP.HipSpread = 0.1
+SWEP.AimSpread = 0.02
 SWEP.VelocitySensitivity = 1.9
 SWEP.MaxSpreadInc = 0.06
-SWEP.ClumpSpread = 0.017
+SWEP.ClumpSpread = 0.024
 SWEP.SpreadPerShot = 0.013
 SWEP.SpreadCooldown = 0.3
 SWEP.Shots = 12

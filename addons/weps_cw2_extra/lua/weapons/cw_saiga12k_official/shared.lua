@@ -201,16 +201,16 @@ SWEP.Primary.Ammo			= "12 Gauge"
 
 SWEP.Chamberable = true
 
-SWEP.FireDelay = 0.17
+SWEP.FireDelay = 0.26
 SWEP.FireSound = "CW_SAIGA12K_FIRE"
 SWEP.FireSoundSuppressed = "CW_DEAGLE_FIRE_SUPPRESSED"
 SWEP.Recoil = 2.5
 
-SWEP.HipSpread = 0.048
-SWEP.AimSpread = 0.008
+SWEP.HipSpread = 0.06
+SWEP.AimSpread = 0.012
 SWEP.VelocitySensitivity = 1.75
 SWEP.MaxSpreadInc = 0.06
-SWEP.ClumpSpread = 0.0185
+SWEP.ClumpSpread = 0.026
 SWEP.SpreadPerShot = 0.015
 SWEP.SpreadCooldown = 0.3
 SWEP.Shots = 12
