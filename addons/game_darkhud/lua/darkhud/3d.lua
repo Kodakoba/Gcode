@@ -65,21 +65,20 @@ local function doRender(_, f)
 
 	local len = vel:Length()
 	vel:Normalize()
-	vel:Mul(math.min(len, 500) * 0.005)
+	vel:Mul(math.min(len, 800) * 0.004)
 
 	local vx = vel.x
 	vel.x = vel.y
 	vel.y = vel.z
 
 	--diff_vec:Sub(prevVel)
-	prevVel:Set(vel)
-	diff_vec:Add(prevVel)
+
+	diff_vec:Add(vel)
 
 	diff_vec[1] = diff_vec[1] + diff[2]
 	diff_vec[2] = diff_vec[2] - diff[1]
 
-
-	diff_vec = LerpVector(FrameTime() * 15, diff_vec, vector_origin)
+	diff_vec = LerpVector(FrameTime() * 10, diff_vec, vector_origin)
 
 	x, y = diff_vec:Unpack()
 
