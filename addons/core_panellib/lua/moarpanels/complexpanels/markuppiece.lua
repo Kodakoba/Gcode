@@ -61,11 +61,14 @@ function PANEL:RecacheBounds()
 
 	par = par:GetParent()
 	while par and par:IsValid() do
+		if par.IsCloud then self.IgnoreVisibility = true return end -- fuck you
+
 		local par_miny = select(2, par:LocalToScreen(0, 0))
 		local par_maxy = par_miny + par:GetTall()
 
 		miny = math.max(miny, par_miny)
 		maxy = math.min(maxy, par_maxy)
+
 		par = par:GetParent()
 	end
 
@@ -81,7 +84,7 @@ function PANEL:IsTextVisible(text)
 
 	local ty = text.y
 
-	if ty > self._Bounds[2] or ty < self._Bounds[1] then return false end
+	if ty > self._Bounds[2] or ty + text.h < self._Bounds[1] then return false end
 	return true
 end
 
@@ -144,6 +147,7 @@ function PANEL:Recalculate()
 			end
 
 			local curX, curY = buf.x, buf.y
+			--print("calc:", v.text, curX, ownWide)
 			local wrapped, tw, th, times = self:CalculateTextSize(v)
 
 			local t = table.Copy(v)
@@ -264,7 +268,7 @@ function PANEL:RewrapWidth(to)
 	end
 
 	self:SetWide(maxW)
-	print("rewrap: setting wide", maxW)
+	self:InvalidateLayout()
 	return maxW
 end
 
@@ -421,8 +425,11 @@ function PANEL:SetFont(font)
 end
 
 
-function PANEL:PaintText(dat, buf)
+function PANEL:PaintText(dat, buf, col)
 	surface.SetTextPos(dat.x, dat.y)
+	if col then
+		surface.SetTextColor(col)
+	end
 
 	if #self.ExecutePerChar > 0 then
 
@@ -439,6 +446,10 @@ function PANEL:PaintText(dat, buf)
 
 	else
 		surface.DrawText(dat.text)
+	end
+
+	if col then
+		surface.SetTextColor(buf:GetTextColor():Unpack())
 	end
 
 end
@@ -463,7 +474,8 @@ function PANEL:_PaintTextElement(w, h, buf, el)
 		if not self:IsTextVisible(seg) then continue end
 		--surface.SetDrawColor(color_white)
 		--surface.DrawOutlinedRect(v.x, v.y, v.w, v.h)
-		self:PaintText(seg, buf)
+		self:PaintText(seg, buf, el.color)
+
 		if seg.selStart then
 			surface.SetDrawColor(Colors.Red)
 			local sx = seg.x

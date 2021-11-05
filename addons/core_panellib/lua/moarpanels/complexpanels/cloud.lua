@@ -67,6 +67,8 @@ function Cloud:Init()
 
 	self.Font = "OS24"
 	self.DescFont = "OSL18"
+	self.IsCloud = true
+
 	self:SetSize(2,2)
 	self:SetPos(2,2)
 
