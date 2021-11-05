@@ -35,7 +35,7 @@ end
 ]]
 
 function eachNewline(s) --meant to be used as 'for s in eachNewline(tx) do...'
-	local ps = 1
+	local ps = 0
 	local st, e
 	local i = 0
 
@@ -243,6 +243,7 @@ local function WrapWord(word, curwid, fullwid, widtbl, line, first)
 	local wrapped = false --did word wrap?
 
 	if curwid + tw > fullwid then --have to wrap
+
 		local should_hyphenate = false
 						  		-- if both parts of the word would have three or more letters, we hyphenate
 
@@ -257,8 +258,7 @@ local function WrapWord(word, curwid, fullwid, widtbl, line, first)
 		end
 
 		if not should_hyphenate then
-
-			ret = ret .. (first and "" or "\n") .. word
+			ret = ret .. (first and "\n" or "\n") .. word
 			curwid = tw
 			wrapped = 1
 			line = line + 1
