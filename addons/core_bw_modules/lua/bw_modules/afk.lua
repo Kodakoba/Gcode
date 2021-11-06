@@ -58,11 +58,12 @@ if CLIENT then
 	hook.Add("CreateMove", "AFKClear", cmdclear)
 	hook.Add("Tick", "AFKClear", tickclear)
 	hook.Add("StartChat", "AFKClear", clear)
+	hook.Add("VGUIMousePressed", "AFKClear", clear)
 
 	local reported = true
 
 	timer.Create(":crab:YOU____ARE GONE:crab:", 1, 0, function()
-		if reported ~= system.HasFocus() then 
+		if reported ~= system.HasFocus() then
 			AFK.SendFocus(system.HasFocus())
 			reported = system.HasFocus()
 		end

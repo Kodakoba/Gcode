@@ -150,6 +150,5 @@ end)
 
 
 hook.Add("AFKExit", "AFK_FPS", function()
-	print("exited, unlimiting fps")
 	AFK.UnlimitFPS()
 end)
