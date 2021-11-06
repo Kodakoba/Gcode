@@ -115,6 +115,36 @@ function ENTITY:GetSubscribers()
 	return t
 end
 
+function ENTITY:DoCooldown(key, t)
+	t = t or 1
+	self.__cds = self.__cds or {}
+	local c = self.__cds
+	if not c[key] or CurTime() - c[key] > 0 then
+		c[key] = CurTime() + t
+		return true
+	end
+
+	return false
+end
+
+function ENTITY:SetCooldown(key, t)
+	t = t or 1
+	self.__cds = self.__cds or {}
+	local c = self.__cds
+	c[key] = CurTime() + t
+end
+
+function ENTITY:OnCooldown(key)
+	self.__cds = self.__cds or {}
+	local c = self.__cds
+
+	if not c[key] or CurTime() - c[key] > 0 then
+		return true
+	end
+
+	return false
+end
+
 function ENTITY:GetSubscribersKeys()
 
 	local my_subs = ent_subs[self]

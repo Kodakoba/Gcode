@@ -240,7 +240,9 @@ function ENT:SendInfo()
 end
 
 function ENT:Use(ply)
-	Inventory.Networking.NetworkInventory(ply, self.Inventory)
+	if not self:DoCooldown(ply, 1) then return end
+
+	Inventory.Networking.NetworkInventory(ply, self.Inventory, INV_NETWORK_FULLUPDATE)
 	net.Start("OreRefinery")
 		net.WriteEntity(self)
 		net.WriteUInt(0, 4)
