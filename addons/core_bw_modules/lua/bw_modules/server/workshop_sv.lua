@@ -13,6 +13,9 @@ local BWAddons = {
     -- "284266415",
     -- "2447979470", -- stormcocks 2
 
+    "1796166180", -- particles content
+    "1804934154", -- particles - hit
+
     "2131057232", -- arccw base(d on what)
     -- 2179387416, -- arccw arknights charms because aerach
     "2131058270", -- arccw cs+
