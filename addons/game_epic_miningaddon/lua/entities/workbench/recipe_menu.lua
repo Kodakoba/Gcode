@@ -22,5 +22,7 @@ function ENT:CraftThingsMenu(open, main)
 		b.Label = "test" .. i
 	end
 
+	dicon:InvalidateLayout(true)
+
 	return dicon
 end

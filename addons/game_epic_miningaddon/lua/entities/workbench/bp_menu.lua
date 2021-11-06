@@ -64,10 +64,14 @@ local function diffTable(self, cur, master)
 	end
 
 	for k,v in ipairs(gone) do
-		self:MemberLerp(v, 5, 1, 0.3, 0, 0.3):Then(function()
-			table.RemoveByValue(master, v)
-			if self.RemoveDisplay then self:RemoveDisplay(v) end
-		end)
+
+		local an = self:MemberLerp(v, 5, 1, 0.3, 0, 0.3)
+		if an then
+			an:Then(function()
+				table.RemoveByValue(master, v)
+				if self.RemoveDisplay then self:RemoveDisplay(v) end
+			end)
+		end
 	end
 
 	local y = 0
@@ -79,7 +83,9 @@ local function diffTable(self, cur, master)
 	end
 end
 
-function ENT:FillReqsPanel(reqs, dropper)
+function ENT:FillReqsPanel(reqs, itm)
+
+	local reqDTs = {}
 
 	function reqs:GenerateDisplay(reqID, reqAmt)
 		local dt = DeltaText():SetFont(dtFont)
@@ -92,102 +98,82 @@ function ENT:FillReqsPanel(reqs, dropper)
 		dt.pfillerid = dt.piece:AddFragment(": ")
 		dt.pamtid, dt.pamt = dt.piece:AddFragment("x" .. tostring(reqAmt))
 		dt.itemAmt = reqAmt
+		dt.iid = reqID
 
 		dt.pamt.Color = dt.pamt.Color:Copy()
 
 		dt.AlignY = 0
 		dt:CycleNext()
+		self:MemberLerp(dt, "inFr", 1, 0.3, 0, 0.3)
 
 		return dt
 	end
 
-	local all_reqs = {
-		-- {id, dt, amt, appearFrac, goneFrac, y}
-	}
-
-	local lastreqs
-
-	function reqs:DiffReqs(cur)
-		if lastreqs == cur then return end
-		lastreqs = cur
-
-		diffTable(self, cur, all_reqs)
+	local itReqs = itm:GetRecipe()
+	print(table.Count(itReqs))
+	for k,v in pairs(itReqs) do
+		print("genmerated display", k, v)
+		reqDTs[#reqDTs + 1] = reqs:GenerateDisplay(k, v)
 	end
 
 	local iutil = Inventory.Util
 	local invs = iutil.GetUsableInventories(LocalPlayer())
 
-	function reqs:PaintReqs(w, h, itm)
+	function reqs:PaintReqs(w, h)
 		local reqs = itm:GetRecipe()
 
 		local line_h = draw.GetFontHeight(dtFont)
 		local total_h = 0
 
-		for k,v in ipairs(all_reqs) do
-			local here = v[4] or 0
-			local gone = v[5] or 0
-			total_h = total_h + line_h * (here - gone)
+		for k,v in ipairs(reqDTs) do
+			local here = v.inFr or 0
+			total_h = total_h + line_h * here
 		end
 
 		local y = h / 2 - total_h / 2
 
-		self:DiffReqs(reqs)
+		for k,v in ipairs(reqDTs) do
+			local dt = v
+			print("painting", dt, dt.itemAmt)
+			local here = v.inFr or 0
 
-		for k,v in ipairs(all_reqs) do
-			local dt = v[2]
-			local here = v[4] or 0
-			local gone = v[5] or 0
-
-			if dt.itemAmt < v[3] then
-				dt.piece:SetChangeDirection(false, 18)
-			elseif dt.itemAmt > v[3] then
-				dt.piece:SetChangeDirection(true, 18)
-			end
-
-			dt.itemAmt = v[3]
-			local id, frg = dt.piece:ReplaceText(dt.pamtid, "x" .. tostring(v[3]), nil, nil, {Length = 0.3, Delay = k * 0.05})
-			dt.piece.Alpha = (here - gone) * 255
-
-			dt.pamt = frg or dt.pamt
-
-			if frg then
-				frg.Color = frg.Color:Copy()
-			end
+			dt.piece.Alpha = here * 255
 
 			local amt = 0
 			for _, inv in ipairs(invs) do
-				amt = amt + iutil.GetItemCount(inv, v[1])
+				amt = amt + iutil.GetItemCount(inv, v.iid)
 			end
 
-			local enough = amt >= v[3]
+			local enough = amt >= v.itemAmt
 
 			self:LerpColor(dt.pamt.Color, enough and color_white or Colors.Red, 0.3, 0, 0.3)
 
 			dt:Paint(8, y)
-			y = y + line_h * (here - gone)
+			y = y + line_h * here
 		end
 	end
 
 	function reqs:Paint(w, h)
-		if dropper.Blueprint then
-			self:PaintReqs(w, h, dropper.Blueprint)
-		end
-
 		DisableClipping(true)
 			surface.SetDrawColor(100, 100, 100)
 			surface.DrawLine(w + 1, h * 0.2, w + 1, h * 0.8)
 		DisableClipping(false)
+
+		self:PaintReqs(w, h)
 	end
 end
 
 
-function ENT:FillModsPanel(mods, dropper)
+function ENT:FillModsPanel(mods, bp)
+	local itm = bp
 
 	function mods:GenerateDisplay(modName, tier)
-		local itm = dropper.Blueprint
 		local mup = vgui.Create("MarkupText", mods)
-		mup:SetWide(mods:GetWide() - 8)
-		mup:CenterHorizontal()
+		mup:SetWide(mods:GetWide())
+		mup:Dock(TOP)
+
+		--mup:CenterHorizontal()
+		mup.nm = modName
 		--mup:Debug()
 
 		local mod = Inventory.Modifiers.Get(modName)
@@ -196,56 +182,87 @@ function ENT:FillModsPanel(mods, dropper)
 		return mup
 	end
 
-	function mods:RemoveDisplay(dat)
-		local mup = dat[2]
-		mup:Remove()
-	end
-
-	local all_mods = {
-		-- {name, mup, tier, appearFrac, goneFrac}
-	}
-
-	local lastmods
-
-	function mods:DiffMods(cur)
-		if lastmods == cur then return end
-		lastmods = cur
-
-		diffTable(self, cur, all_mods)
-	end
-
-	function mods:PaintMods(w, h, itm)
-		local mods = itm:GetModifiers()
-		self:DiffMods(mods)
-
+	--[[function mods:PaintMods(w, h, itm)
 		local y = 4
 
-		for k,v in ipairs(all_mods) do
+		for k,v in ipairs(mods) do
 			local mup = v[2]
 			local here = v[4] or 0
 			local gone = v[5] or 0
 
+			mup:SetWide(self:GetWide())
 			mup:SetAlpha( (here - gone) * 255 )
-			mup:SetPos(32 * (1 - here), y)
+			mup:SetPos(0, y)
 			y = y + (mup:GetTall() + 4) * (here - gone)
 		end
 
-
 		self:SetTall(y)
 		self:GetParent():SetTall(y) -- WTF
-	end
+	end]]
 
 	function mods:Paint(w, h)
-		if dropper.Blueprint then
-			local sx, sy = self:LocalToScreen(0, 0)
-			render.PushScissorRect(sx, sy, sx + w, sy + h)
-			self:PaintMods(w, h, dropper.Blueprint)
-		end
+		local sx, sy = self:LocalToScreen(0, 0)
+		render.PushScissorRect(sx, sy, sx + w, sy + h)
+		--self:PaintMods(w, h, bp)
 	end
 
 	function mods:PaintOver()
 		render.PopScissorRect()
 	end
+
+	for k,v in pairs(bp:GetModifiers()) do
+		mods:GenerateDisplay(k, v)
+	end
+end
+
+function ENT:CreateBlueprintInfo(bp, info, old)
+	if old then
+		local hide = info:HideAutoCanvas("BlueprintInfo:" .. old:GetUID())
+		if hide then
+			print("hide called")
+			hide:Dock(NODOCK)
+			hide:MoveBy(32, 0, 0.2, 0, 2.7)
+		end
+	end
+
+	local cv, new = info:GetAutoCanvas("BlueprintInfo:" .. bp:GetUID(), "InvisPanel")
+	if not new then
+		cv:Dock(NODOCK)
+		cv:PopInShow(0.2, 0.1)
+		cv:MoveBy(-32, 0, 0.5, 0.1, 0.3):Then(function()
+			cv:Dock(FILL)
+		end)
+		return
+	end
+
+	cv:Dock(FILL)
+	cv:InvalidateParent(true)
+	cv:Dock(NODOCK)
+
+	cv:PopIn(0.3)
+	cv.X = 32
+	cv:MoveBy(-32, 0, 0.5, 0, 0.3)
+
+	local reqs = vgui.Create("InvisPanel", cv, "Reqs canvas")
+	reqs:Dock(LEFT)
+
+	local modScr = vgui.Create("FScrollPanel", cv, "Mods scroller")
+	modScr:Dock(RIGHT)
+	modScr.NoDraw = true
+	modScr.X = reqs:GetWide() + 3
+
+	local mods = vgui.Create("InvisPanel", modScr, "Mods canvas")
+	mods:Dock(FILL)
+
+	function cv:PerformLayout()
+		reqs:SetSize(cv:GetWide() * 0.4 - 2, cv:GetTall())
+		modScr:SetSize(cv:GetWide() - reqs:GetWide() - 3, cv:GetTall())
+		mods:SetSize(modScr:GetWide(), modScr:GetTall())
+	end
+
+	--cv:PerformLayout()
+	self:FillReqsPanel(reqs, bp)
+	self:FillModsPanel(mods, bp)
 end
 
 function ENT:CraftFromBlueprintMenu(open, main)
@@ -451,7 +468,16 @@ function ENT:CraftFromBlueprintMenu(open, main)
 	btnCanv:Hide()
 	btnCanv:DockMargin(0, 4, 0, 4)
 
+	info:Think()
+
+	local name = vgui.Create("InvisPanel", info, "Name canvas")
+	name:Dock(TOP)
+	name:DockMargin(0, 4, 0, 4)
+	self:FillNamePanel(name, dropper)
+	info.NamePnl = name
+
 	function dropper:DropBlueprint(itm)
+		local old = self.Blueprint
 		if self.Blueprint == itm then return end
 		CurItem = itm
 
@@ -460,8 +486,7 @@ function ENT:CraftFromBlueprintMenu(open, main)
 
 		self:MemberLerp(dfs[itm], 1, 1, 0.4, 0, 0.2)
 
-		if self.Blueprint then
-			local old = self.Blueprint
+		if old then
 			self:MemberLerp(dfs[old], 4, 1, 0.3, 0, 0.3):Then(function()
 				dfs[old] = nil
 			end)
@@ -471,7 +496,15 @@ function ENT:CraftFromBlueprintMenu(open, main)
 
 		local toW, toH = canvas:GetWide() * 0.6, canvas:GetTall() * 0.4
 		self:SizeTo(toW, toH, 0.3, 0, 0.3)
-		self:MoveTo(canvas:GetWide() / 2 - toW / 2, self.Y, 0.3, 0, 0.3)
+		local an = self:MoveTo(canvas:GetWide() / 2 - toW / 2, self.Y, 0.3, 0, 0.3)
+
+		if an and not old then
+			an:Then(function()
+				ent:CreateBlueprintInfo(itm, info, old)
+			end)
+		else
+			ent:CreateBlueprintInfo(itm, info, old)
+		end
 
 		if not btnCanv:IsVisible() then
 			btnCanv:Show()
@@ -480,34 +513,12 @@ function ENT:CraftFromBlueprintMenu(open, main)
 		end
 	end
 
-	info:Think()
-
-	local name = vgui.Create("InvisPanel", info, "Name canvas")
-	name:Dock(TOP)
-	name:DockMargin(0, 4, 0, 4)
-	self:FillNamePanel(name, dropper)
-
-	local reqs = vgui.Create("InvisPanel", info, "Reqs canvas")
-	reqs:SetSize(info:GetWide() * 0.4 - 2, info:GetTall())
-	reqs:Dock(LEFT)
-	self:FillReqsPanel(reqs, dropper)
-
-	local modScr = vgui.Create("FScrollPanel", info, "Mods scroller")
-	modScr:Dock(RIGHT)
-	modScr:SetSize(info:GetWide() - reqs:GetWide() - 3, info:GetTall())
-	modScr.NoDraw = true
-	modScr.X = reqs:GetWide() + 3
-
-		local mods = vgui.Create("InvisPanel", modScr, "Mods canvas")
-		mods:SetSize(modScr:GetWide(), modScr:GetTall())
-		mods:Dock(FILL)
-		self:FillModsPanel(mods, dropper)
-
 
 	local doeet = vgui.Create("FButton", btnCanv)
 	doeet:SetSize(info:GetWide() * 0.4)
 	doeet.Label = "Create!"
 	doeet:SetColor(Colors.Sky)
+	info.Btn = doeet
 	function btnCanv:PerformLayout()
 		doeet:SetTall(self:GetTall() - 4)
 		doeet:Center()
