@@ -843,13 +843,13 @@ function META:ShowAutoCanvas(name, class, duration, delay)
 	return cs[name], false
 end
 
-function META:HideAutoCanvas(name, class, duration, delay)
-	if not name then print("no name ritard") return end
+function META:HideAutoCanvas(name, duration, delay)
+	if not name then errorNHf("no name ritard") return false end
 
 	self.__Canvases = self.__Canvases or {}
 	local cs = self.__Canvases
 
-	if not cs[name] or not cs[name]:IsValid() then print("not valid", name) return end
+	if not cs[name] or not cs[name]:IsValid() then print("not valid", name) return false end
 
 	if isbool(insta) then
 		cs[name]:SetAlpha(0)

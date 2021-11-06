@@ -246,6 +246,10 @@ function buf:SetFont(font)
 	return self
 end
 
+function buf:GetTextHeight()
+	return self.TempHeight or self.TextHeight
+end
+
 function buf:GetFont()
 	return self.Font
 end
@@ -253,6 +257,7 @@ end
 ChainAccessor(buf, "TextHeight", "TextHeight")
 
 function buf:Reset()
+	self.LastY = self.y + self:GetTextHeight()
 	self:SetPos(0, 0)
 	self:Emit("Reset")
 end
@@ -275,14 +280,18 @@ end
 function buf:AllocateSpace(w, h)
 	if self.x + w > self.width then
 		self.x = 0
-		self.y = self.y + h/2
+		self:Newline(1, math.max(h / 2, self:GetTextHeight()))
 	end
+
+	self.TempHeight = math.max(h, self:GetTextHeight())
 end
 
-function buf:Newline(times)
+function buf:Newline(times, h)
 	times = times or 1
-	local y = times * self:GetTextHeight()
+	local y = times * (h or self:GetTextHeight())
+	self.TempHeight = nil
 	self:Offset(0, y)
+	self:Emit("Newline", y)
 	return y
 end
 
@@ -507,6 +516,7 @@ emote:SetDraw(function(tag, buf, args)
 	buf:AllocateSpace(args[2], args[3])
 
 	surface.SetDrawColor(255, 255, 255)
+
 	local x, y = buf:GetPos()
 	emote:Paint(x, y, args[2], args[3])
 end)

@@ -30,8 +30,10 @@ function SL:Init()
 	scr:Dock(FILL)
 
 	local ic = vgui.Create("FIconLayout")
+	ic.NoDrawBG = true
 	scr:Add(ic)
 
+	self.Scroll = scr
 	self.IconLayout = ic
 
 	ic:On("ShiftPanel", function(_, pnl, x, y)
@@ -139,7 +141,8 @@ function SL:Resort()
 end
 
 function SL:Paint(w, h)
-	draw.RoundedBox(8, 0, 0, w, h, self:GetColor())
+	surface.SetDrawColor(self:GetColor():Unpack())
+	surface.DrawRect(0, 0, w, self.Scroll.Y)
 end
 
 function SL:IsHighlighted()

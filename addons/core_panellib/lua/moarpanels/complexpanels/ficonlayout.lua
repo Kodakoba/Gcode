@@ -25,9 +25,10 @@ function FIC:Init()
 
 	self.CurRow = 1
 
+	self.NoDrawBG = false
+
 	self.Color = Color(40, 40, 40)
 	self.drawColor = self.Color:Copy()
-
 end
 
 ChainAccessor(FIC, "MarginX", "MarginX")
@@ -51,6 +52,7 @@ function FIC:SetColor(col, g, b, a)
 end
 
 function FIC:Paint(w, h)
+	if self.NoDraw or self.NoDrawBG then return end
 	draw.RoundedBox(8, 0, 0, w, h, self.Color)
 end
 

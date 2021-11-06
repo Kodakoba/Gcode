@@ -10,7 +10,7 @@ BSHADOWS = (not updating and BSHADOWS) or {}
 
 local handle = BSHADOWS.Handle or Emitter:extend()
 BSHADOWS.Handle = handle
-BSHADOWS.Handles = BSHADOWS.Handles or WeakTable("v")
+BSHADOWS.Handles = BSHADOWS.Handles or {} -- or WeakTable("v")
 
 local render = render
 
@@ -58,6 +58,10 @@ local function resize()
 	if BSHADOWS.ShadowMaterialGrayscale then BSHADOWS.ShadowMaterialGrayscale:SetTexture("$basetexture", BSHADOWS.RenderTarget2) end
 	if BSHADOWS.ShadowMaterialColorscale then BSHADOWS.ShadowMaterialColorscale:SetTexture("$basetexture", BSHADOWS.RenderTarget2) end
 
+	BSHADOWS.InvalidateCache()
+end
+
+function BSHADOWS.InvalidateCache()
 	for k,v in pairs(BSHADOWS.Handles) do
 		v._NeedRegen = true
 	end
@@ -99,19 +103,25 @@ function handle:SetGenerator(fn)
 end
 
 
-function handle:Paint(x, y, w, h)
+function handle:Paint(x, y, w, h, col)
 	if self._NeedRegen and self._LastArgs then
 		self:CacheShadow(unpack(self._LastArgs))
 		self._NeedRegen = nil
 	end
 
-	surface.SetDrawColor(255, 255, 255)
+	if not col then
+		surface.SetDrawColor(255, 255, 255)
+	end
 	surface.SetMaterial(self.Mat)
 
 	local ratW, ratH = w / self.W, h / self.H
+	local ox = x - spreadSize * ratW
+	local oy = y - spreadSize * ratH
 
-	surface.DrawTexturedRect(x - spreadSize * ratW, y - spreadSize * ratH,
-		w + spreadSize * 2 * ratW, h + spreadSize * 2 * ratH)
+	local sw = (self.W + spreadSize * 2) * ratW
+	local sh = (self.H + spreadSize * 2) * ratH
+
+	surface.DrawTexturedRect(ox, oy, sw, sh)
 end
 
 local err = GenerateErrorer("BShadows")
@@ -125,19 +135,29 @@ function handle:CacheShadow(int, spr, blur, color, color2)
 	self._LastArgs = {int, spr, blur, color, color2}
 
 	self:_Begin()
-	print("CacheShadow called")
-		xpcall(self._Generator, err, self, self.W, self.H)
-	self:_End(int, spr, blur, color, color2)
+		local ok, ret = xpcall(self._Generator, err, self, self.W, self.H)
+	self:_End(ret, int, spr, blur, color, color2)
 end
+
+local amult
 
 function handle:_Begin()
 	BSHADOWS.UseRT(self.RT)
 	BSHADOWS.BeginShadow()
+	amult = surface.GetAlphaMultiplier()
+	surface.SetAlphaMultiplier(1)
 end
 
-function handle:_End(intensity, spread, blur, color, color2)
+function handle:_End(ret, intensity, spread, blur, color, color2)
+	if ret == false then
+		self._NeedRegen = ret
+	end
+
 	BSHADOWS.CacheShadow(intensity, spread, blur,
 		255, 0, 0, color, color2)
+
+	surface.SetAlphaMultiplier(amult or 1)
+	amult = nil
 end
 
 function handle:Offset(x, y)
@@ -271,8 +291,6 @@ BSHADOWS.CacheShadow = function(intensity, spread, blur, opacity, direction, dis
 		shmat:Recompute()
 	end
 
-	local mat = BSHADOWS.ShadowMaterial
-	mat:SetTexture("$basetexture", CurRT)
 	shmat:SetFloat("$alpha", opacity / 255)
 
 	render.SetMaterial(shmat)

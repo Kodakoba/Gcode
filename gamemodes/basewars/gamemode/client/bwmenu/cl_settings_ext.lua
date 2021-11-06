@@ -137,6 +137,8 @@ local function onOpen(navpnl, tabbtn, prevPnl)
 		end
 	end)
 
+	pnl:InvalidateLayout(true)
+
 	return pnl, true
 end
 

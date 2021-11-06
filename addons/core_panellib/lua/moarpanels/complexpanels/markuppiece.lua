@@ -29,6 +29,7 @@ function PANEL:Init()
 
 	self.Selectable = true
 	self.Color = color_white:Copy()
+	self.IgnoreVisibility = true
 
 	self:SetName("Markup Piece")
 end
@@ -55,6 +56,8 @@ function PANEL:SetSelectable(b)
 end
 
 function PANEL:RecacheBounds()
+	if self.IgnoreVisibility then return end
+
 	local par = self:GetParent()
 	local miny = select(2, par:LocalToScreen(0, 0))
 	local maxy = miny + par:GetTall()
@@ -72,10 +75,26 @@ function PANEL:RecacheBounds()
 		par = par:GetParent()
 	end
 
+	self._LastRecache = SysTime()
+
 	local _, lminy = self:ScreenToLocal(0, miny)
 	local _, lmaxy = self:ScreenToLocal(0, maxy)
 
 	self._Bounds = {lminy, lmaxy}
+end
+
+function PANEL:RecacheBounds_Often(timed)
+	--[[if timed and (not self._LastRecache or SysTime() - self._LastRecache > 0.2) then
+		self:RecacheBounds()
+	end]]
+
+	local x, y = self:GetPos()
+
+	if self._BoundLastX ~= x or self._BoundLastY ~= y then
+		self._BoundLastX = x
+		self._BoundLastY = y
+		self:RecacheBounds()
+	end
 end
 
 function PANEL:IsTextVisible(text)
@@ -84,7 +103,11 @@ function PANEL:IsTextVisible(text)
 
 	local ty = text.y
 
-	if ty > self._Bounds[2] or ty + text.h < self._Bounds[1] then return false end
+	if ty > self._Bounds[2] or ty + text.h < self._Bounds[1] then
+		--self:RecacheBounds_Often(true)
+		return false
+	end
+
 	return true
 end
 
@@ -119,6 +142,9 @@ function PANEL:Recalculate()
 
 	local maxH = 0 --self:GetTall() - 1
 	local buf = self.Buffer
+
+	--maxH = buf.y + buf:GetTextHeight()
+
 	buf:Reset()
 
 	local res = self:Emit("ShouldRecalculateHeight", buf)
@@ -126,7 +152,7 @@ function PANEL:Recalculate()
 
 	surface.SetFont(self.Font)
 	local ownWide = self:GetWide()
-
+	buf.width = ownWide
 	local curLineWidth = 0
 	local curLine = 1
 	local align = self:GetAlignment()
@@ -498,6 +524,8 @@ function PANEL:_PaintTextElement(w, h, buf, el)
 end
 
 function PANEL:Paint(w, h)
+	self:RecacheBounds_Often()
+
 	draw.EnableFilters()
 
 	local sx, sy = self:LocalToScreen(0, 0)

@@ -372,7 +372,7 @@ function Cloud:Paint()
 			local v = doneText[k]
 
 			if ispanel(v) then
-				if not v.NoCloudFit and v:GetWide() ~= cw then
+				if not v.NoCloudFit and v:GetWide() ~= cw - v.X * 2 then
 					v:SetWide(cw - v.X * 2)
 				end
 				local scrX, scrY = self:LocalToScreen(X, offy)
