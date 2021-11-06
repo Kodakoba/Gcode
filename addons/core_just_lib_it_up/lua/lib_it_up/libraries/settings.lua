@@ -36,8 +36,10 @@ function stg:SetValue(v)
 		v = self:Cast(v, typ)
 	end
 
+	local old = self:GetValue()
 	cookie.Set("Setting:" .. self:GetID(), (v ~= nil and tostring(v)) or nil)
 	self._Value = v
+	self:Emit("Change", old, v)
 	return self
 end
 
