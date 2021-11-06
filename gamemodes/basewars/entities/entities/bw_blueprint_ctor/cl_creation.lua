@@ -4,8 +4,8 @@ Colors.Blue = Color(60, 140, 200)
 
 local bpmat = Material("__error")
 
-local prerenders = {}
-local t3c1, t3c2 = Color(0, 12, 5), Color(0, 0.3, 0.35)
+local caches = {}
+local t3c1, t3c2 = Color(4, 12, 8), Color(0.3, 2, 1)
 local t4c1, t4c2 = Color(12, 4, 0), Color(12, 4, 0)
 
 local BlueprintPaints = {
@@ -15,10 +15,8 @@ local BlueprintPaints = {
 	]]
 
 	[1] = function(self, w, h)
-		
 			surface.SetDrawColor(Colors.DarkWhite)
 			surface.DrawMaterial("https://i.imgur.com/zhejG17.png", "bp128.png", w/2 - 36, h/2 - 36, 72, 72)
-
 	end,
 
 	--[[
@@ -26,19 +24,26 @@ local BlueprintPaints = {
 	]]
 
 	[2] = function(self, w, h)
-		local x, y = self:LocalToScreen(0, 0)
+		local x, y = math.floor(w * 0.1), math.floor(h * 0.1)
+		local dw, dh = math.ceil(w - x * 2), math.ceil(h - y * 2)
+		local id = 2
 
-		BSHADOWS.BeginShadow()
-
-		self:ApplyMatrix()
-			surface.SetDrawColor(color_white)
+		if caches[id] then
+			surface.SetDrawColor(255, 255, 255)
+			caches[id]:Paint(x, y, dw, dh, true)
 			surface.SetMaterial(bpmat)
-			surface.DrawTexturedRect(x + w/2 - 38, y + h/2 - 38, 76, 76)
-		self:PopMatrix()
+			surface.DrawTexturedRect(x, y, dw, dh)
+		else
+			local hand = BSHADOWS.GenerateCache("bp_tier" .. id, w, h)
+			hand:SetGenerator(function(hand, w, h)
+				surface.SetDrawColor(255, 255, 255)
+				surface.SetMaterial(bpmat)
+				surface.DrawTexturedRect(0, 0, w, h)
+			end)
 
-		BSHADOWS.EndShadow(1, 0.6, 2, 125, 60, 2, nil, Colors.DarkGray, Colors.DarkGray)
-
-
+			caches[id] = hand
+			hand:CacheShadow(1, 6, 8, Colors.DarkGray, Colors.DarkGray)
+		end
 	end,
 
 	--[[
@@ -46,24 +51,27 @@ local BlueprintPaints = {
 	]]
 
 	[3] = function(self, w, h)
-		local x, y = self:LocalToScreen(0, 0)
+		local x, y = math.floor(w * 0.1), math.floor(h * 0.1)
+		local dw, dh = math.ceil(w - x * 2), math.ceil(h - y * 2)
+		local id = 3
 
-		local shine = math.sin(CurTime() * 1)
-		local shinecol = math.cos(CurTime() * 0.6)
-
-		t3c1.g = 9 + shine * 2
-		t3c1.b = 3 + shine * 0.7
-
-		t3c2.g = 4 + shinecol * 0.7
-		t3c2.b = 2 + shinecol * 1
-
-		BSHADOWS.BeginShadow()
-		self:ApplyMatrix()
-			surface.SetDrawColor(color_white)
+		if caches[id] then
+			surface.SetDrawColor(255, 255, 255, 110)
+			caches[id]:Paint(x, y, dw, dh, true)
 			surface.SetMaterial(bpmat)
-			surface.DrawTexturedRect(x + w/2 - 40, y + h/2 - 40, 80, 80)
-		self:PopMatrix()
-		BSHADOWS.EndShadow(1, 2 + shine * 0.2, 1, 255, 60, 2, nil, t3c1, t3c2)
+			surface.SetDrawColor(255, 255, 255)
+			surface.DrawTexturedRect(x, y, dw, dh)
+		else
+			local hand = BSHADOWS.GenerateCache("bp_tier" .. id, w, h)
+			hand:SetGenerator(function(hand, w, h)
+				surface.SetDrawColor(255, 255, 255)
+				surface.SetMaterial(bpmat)
+				surface.DrawTexturedRect(0, 0, w, h)
+			end)
+
+			caches[id] = hand
+			hand:CacheShadow(3, {14, 8}, 8, t3c1, t3c2)
+		end
 	end,
 
 	--[[
@@ -71,23 +79,26 @@ local BlueprintPaints = {
 	]]
 
 	[4] = function(self, w, h)
-		local x, y = self:LocalToScreen(0, 0)
+		local x, y = math.floor(w * 0.1), math.floor(h * 0.1)
+		local dw, dh = math.ceil(w - x * 2), math.ceil(h - y * 2)
+		local id = 4
 
-		local shine = math.sin(CurTime() * 0.8)
-		local shinecol = math.cos(CurTime() * 0.5)
-		t4c1.r = 12 + 5 * shine
-		t4c1.g = 4 + shine * 2
-
-		t4c1.r = 7 + shinecol * 1
-		t4c2.g = 3 + shinecol * 0.5
-
-		BSHADOWS.BeginShadow()
-		self:ApplyMatrix()
-			surface.SetDrawColor(color_white)
+		if caches[id] then
+			surface.SetDrawColor(255, 255, 255)
+			caches[id]:Paint(x, y, dw, dh, true)
 			surface.SetMaterial(bpmat)
-			surface.DrawTexturedRect(x + w/2 - 40, y + h/2 - 40, 80, 80)
-		self:PopMatrix()
-		BSHADOWS.EndShadow(2, 2 + shine * 0.5, 2, 205, 60, 2, nil, t4c1, t4c2)
+			surface.DrawTexturedRect(x, y, dw, dh)
+		else
+			local hand = BSHADOWS.GenerateCache("bp_tier" .. id, w, h)
+			hand:SetGenerator(function(hand, w, h)
+				surface.SetDrawColor(255, 255, 255)
+				surface.SetMaterial(bpmat)
+				surface.DrawTexturedRect(0, 0, w, h)
+			end)
+
+			caches[id] = hand
+			hand:CacheShadow(3, {18, 12}, 8, t4c1, t4c2)
+		end
 	end,
 
 	--[[
@@ -117,6 +128,8 @@ local mats = {	-- "random" will be rendered from an RT as soon as the menu opens
 }
 
 function ENT:CreateCreationCanvas(menu, inv) -- hm
+	caches = {}
+
 	local ent = self
 	local canv = vgui.Create("InvisPanel", menu)
 	canv:SetSize(menu:GetWide(), menu:GetTall() - menu.HeaderSize)
@@ -227,7 +240,7 @@ function ENT:CreateCreationCanvas(menu, inv) -- hm
 		local tier = icons:Add("FButton")
 
 		tier:SetSize(96, 120 - 16)
-		if i > 1 then
+		if not Inventory.Blueprints.GetCost(i) then
 			tier:SetEnabled(false)
 			tier:SetAlpha(60)
 		end

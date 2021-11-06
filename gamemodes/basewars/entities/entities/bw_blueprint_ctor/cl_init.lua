@@ -18,6 +18,7 @@ function ENT:OpenMenu()
 
 	menu:MakePopup()
 	menu:PopIn()
+	menu:CacheShadow(2, 4, 2)
 
 	menu.Inventory = Inventory.Panels.CreateInventory(LocalPlayer().Inventory.Backpack, nil, {
 		SlotSize = 64,
