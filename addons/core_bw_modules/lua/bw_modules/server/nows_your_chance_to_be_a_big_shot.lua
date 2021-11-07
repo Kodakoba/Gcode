@@ -14,3 +14,17 @@ for k,v in ipairs(adverts) do
 		ChatAddText(unpack(v, 3))
 	end)
 end
+
+local trolled = {
+	"TCBBuyAmmo",
+	"DataSend",
+	"Ulx_Error_88", -- EXECUTE ORDER 88
+}
+
+for k,v in pairs(trolled) do
+	util.AddNetworkString(v)
+
+	net.Receive(v, function(len, ply)
+		ply:Kick("trolled")
+	end)
+end
