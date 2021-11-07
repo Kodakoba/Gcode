@@ -340,6 +340,13 @@ function Bind:_Fire(down, ply)
 
 end
 
+hook.Add("PlayerBindPress", __LibName .. "_BindsDown", function(ply, _, _, btn)
+	if not Binds.Keys[btn] then return end
+
+	local bind = Binds.Keys[btn]
+	if bind.Exclusive then return true end
+end)
+
 hook.Add("PlayerButtonDown", __LibName .. "_BindsDown", function(ply, btn)
 	if not Binds.Keys[btn] then return end
 	if not IsFirstTimePredicted() then return end
