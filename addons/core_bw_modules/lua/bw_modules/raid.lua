@@ -150,7 +150,8 @@ function raid.CanGenerallyRaid(ply, nonfac)
 
 	local pin = GetPlayerInfoGuarantee(ply)
 	if not pin:GetBase() then
-		return false, pin:GetPlayer() == LocalPlayer() and err.YouNeedBase() or err.TheyNeedBase()
+		return false, pin:GetPlayer() == ply and
+			err.YouNeedBase() or err.TheyNeedBase()
 	end
 
 	return true
