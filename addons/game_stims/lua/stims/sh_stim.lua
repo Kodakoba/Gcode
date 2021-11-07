@@ -63,7 +63,7 @@ function PLAYER:AddStims(num, ignore)
 	if not num then num = 1 end
 
 	local add = ignore and num or math.min(self:GetMaxStims() - self:GetStims(), num)
-	self:SetNW2Int("Stimpaks", self:GetStims() + num)
+	self:SetNW2Int("Stimpaks", self:GetStims() + add)
 	return true
 end
 

@@ -7,7 +7,7 @@ ENT.Model = "models/props_trainstation/trainstation_clock001.mdl"
 ENT.PowerRequired = 15
 ENT.PowerCapacity = 5000
 ENT.MaxHealth = 200
-ENT.AlwaysRaidable = true
+-- ENT.AlwaysRaidable = true
 
 if SERVER then
 

@@ -66,5 +66,11 @@ aowl.AddCommand("bringprint", function(call, line, target, class)
 
 end, "mods")
 
-aowl.AddCommand("abortion", function(ply) local baby = ents.Create( "prop_physics" ) baby:SetModel("models/props_c17/doll01.mdl") baby:SetPos(ply:GetEyeTrace().HitPos) baby:Spawn() return false, "abortion failed, you didnt inject ejectdick.dll when she clamped your dickangles" end)
+aowl.AddCommand("abortion", function(ply)
+	local baby = ents.Create( "prop_physics" )
+	baby:SetModel("models/props_c17/doll01.mdl")
+	baby:SetPos(ply:GetEyeTrace().HitPos)
+	baby:Spawn()
+	return false, "abortion failed, you didnt inject ejectdick.dll when she clamped your dickangles"
+end, "admin")
 
