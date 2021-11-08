@@ -38,11 +38,11 @@ local function doRender(_, f)
 	render.PopRenderTarget()
 	render.OverrideAlphaWriteEnable(false, true)
 
-	local forward = ScrW() * (1.05 + side * .3)
+	local forward = ScrW() * (1.05 + side * .18)
 	local right   = ScrW()
 	local up      = ScrH()
 
-	local yaw = -5 - 15 * dir
+	local yaw = -5 - 10 * dir
 	local ea = EyeAngles()
 	local ep = EyePos()
 
@@ -126,10 +126,10 @@ local function doRender(_, f)
 
 	mx:Reset()
 
+	mx:Translate(diff_vecease)
 	mx:TranslateNumber(ScrW() * side, ScrH() / 2)
 	mx:Rotate(diff_use)
 	mx:TranslateNumber(-ScrW() * side, -ScrH() / 2)
-	mx:Translate(diff_vecease)
 
 	local ang_c = ea * 1 -- copies
 	ang_c:RotateAroundAxis(ang_c:Forward(), 90)
@@ -146,6 +146,7 @@ local function doRender(_, f)
 	surface.SetMaterial(mat)
 	surface.SetDrawColor(255, 255, 255)
 	surface.DrawTexturedRect(0, 0, ScrW(), ScrH())
+	--surface.DrawOutlinedRect(0, 0, ScrW(), ScrH())
 
 	cam.PopModelMatrix()
 	cam.End3D()

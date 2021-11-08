@@ -27,7 +27,6 @@ local BWAddons = {
     "2306829669", -- arccw home defense
     "2427171109", -- gso unlamifier
 
-    --2360831320, -- "oranche standard issue" basically an arccw pack (update: it sucks)
     "2409364730", -- gunsmith offensive extras
 
     "2155366756", -- vmanip
@@ -40,14 +39,6 @@ local BWAddons = {
     "349050451", -- cw2 base
     "657241323", -- ins2
     "358608166", -- cw2 unofficial
-
-    --[[
-    -- fas
-    "180507408", -- base
-    "181656972", -- rifles
-    "201027715", -- unoff. rifles
-    "183140076", -- shotguns
-    ]]
 }
 
 
