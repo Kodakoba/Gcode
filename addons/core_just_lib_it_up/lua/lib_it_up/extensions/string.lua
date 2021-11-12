@@ -361,6 +361,25 @@ function string.WordWrap2(txt, wid, font, dat)
 	WrapData = nil
 end
 
+string.WrapCache = Object:callable()
+local wc = string.WrapCache
+
+function wc:Initialize()
+	self.tx = {}
+end
+
+function wc:Wrap(txt, wid, font, dat)
+	local c = self.tx[txt]
+	if c and c[1] == wid and c[2] == font then
+		return c[3], c[4]
+	else
+		local newTxt, width = string.WordWrap2(txt, wid, font, dat)
+		self.tx[txt] = {wid, font, newTxt, width}
+
+		return newTxt, width
+	end
+end
+
 local trim = function(s, ptrn) -- non-patternsafe trimming
 	return string.match( s, "^" .. ptrn .. "*(.-)" .. ptrn .. "*$" )
 end
