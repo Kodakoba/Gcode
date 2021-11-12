@@ -130,7 +130,6 @@ hook.Add("OnPlayerHitGround", "RechargeDash", function(ply, water, floater, spee
 
 	dash:RechargeLogic(ply)
 	local nxt = dash:GetDashCooldown()
-
 end)
 
 local OverrideDashEnd
@@ -161,7 +160,7 @@ function SWEP:CheckMoves(owner, mv, dir)
 			filter = owner,
 			mins = Vector( -16, -16, -4 ),
 			maxs = Vector( 16, 16, 4 ),
-			mask = MASK_SOLID
+			mask = bit.bor(MASK_SOLID, MASK_WATER)
 		})
 
 		if tr.Hit then
@@ -216,7 +215,7 @@ function SWEP:CheckMoves(owner, mv, dir)
 			filter = owner,
 			mins = Vector( -24, -24, -4 ),
 			maxs = Vector( 24, 24, 8 ),
-			mask = MASK_SOLID
+			mask = bit.bor(MASK_SOLID, MASK_WATER)
 		})
 
 		if tr.Hit then
