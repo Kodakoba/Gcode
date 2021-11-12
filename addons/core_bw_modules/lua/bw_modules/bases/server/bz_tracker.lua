@@ -117,7 +117,7 @@ end
 		bw.BasePresence[ent] = nil
 
 		if base:IsValid() then
-			base:EntityExit(ent)
+			base:EntityExit(ent, ent._ForceBaseRemove)
 		end
 	end
 
@@ -276,10 +276,10 @@ bw:On("DeleteBase", "Tracker", function(self, delbase)
 	end
 end)
 
-hook.Add("EntityRemoved", "UntrackBases", function(ent)
+hook.Add("EntityActuallyRemoved", "UntrackBases", function(ent)
+	ent._ForceBaseRemove = true
 	local zones = bw.ZonePresence[ent]
 	if zones then
-		--print("EntityRemoved @", ent)
 		removeZones(ent)
 	end
 end)
