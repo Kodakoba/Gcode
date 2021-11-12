@@ -50,6 +50,7 @@ function bw.Base.PubNetworkedChanged(self, changes)
 	else
 		--print("base now unclaimed; also unclaiming", self:Get("ClaimedBy"))
 		base:SetClaimed(false)
+		base:Emit("Unclaim")
 		hook.Run("BaseUnclaimed", base)
 	end
 end

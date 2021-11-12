@@ -25,7 +25,10 @@ function LibItUp.PlayerInfo:GetBase(no_owner_check)
 	if not base or not base:IsValid() then return false end
 
 	if not no_owner_check and not base:IsOwner(self) then
-		errorf("Something went wrong: %s has base set as %s, but player doesn't own it.", self, base)
+		if SERVER then
+			errorf("Something went wrong: %s has base set as %s, but player doesn't own it.", self, base)
+		end
+		-- clientside data races can happen, so its fine
 		return false
 	end
 
