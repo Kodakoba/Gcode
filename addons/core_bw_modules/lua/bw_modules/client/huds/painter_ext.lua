@@ -48,18 +48,22 @@ end
 
 function ptr:FillPainters(tbl)
 	for k,v in pairs(tbl) do
-		self:AddPaint(v[2], k, v[1])
+		self:AddPaint(v[2], k, v[1], true)
 	end
+
+	self:_RebuildIter()
 end
 
-function ptr:AddPaint(prio, name, tbl)
-	if (not tbl or not tbl[name]) and not ptr[name] then
-		errorf("ptr:AddPaint() : tbl.%s and ptr.%s didn't exist.", name, name)
+function ptr:AddPaint(prio, name, tbl, noRebuild)
+	if (not tbl or not tbl[name]) and not self[name] then
+		errorf("ptr:AddPaint() : tbl.%s and self.%s didn't exist.", name, name)
 		return
 	end
 
 	self._Paints[name] = {tbl or self, prio}
-	self:_RebuildIter()
+	if not noRebuild then
+		self:_RebuildIter()
+	end
 end
 
 function ptr:SetSize(w, h)
@@ -98,6 +102,7 @@ function ptr:Appear()
 		self.DisappearFrac = 0
 		self.AppearFrac = 0
 		self.Disappeared = false
+		self:Emit("Appear")
 	end
 
 	local an = hud.Anims
@@ -107,12 +112,17 @@ function ptr:Appear()
 	an:MemberLerp(self, "DisappearFrac", 0,
 		self.AppearTime, self.AppearDelay, self.AppearEase)
 
+	if new then
+		self:Emit("Appear")
+	end
+	
 	timer.Remove("PainterInvalidate" .. ("%p"):format(self))
 end
 
 function ptr:Disappear()
 	if self.Disappeared or self.Disappearing then return end
 	self.Disappearing = true
+	self:Emit("Disappear")
 
 	local an = hud.Anims
 	local anim, new = an:MemberLerp(self, "DisappearFrac", 1,
@@ -143,10 +153,10 @@ end
 
 local errer = GenerateErrorer("Painter")
 
-function ptr:Paint()
+function ptr:Paint(y)
 	if self.DisappearFrac == 1 then return 0 end
 
-	local cury = 0
+	local cury = y or 0
 	local sizey = 0
 
 	mx:Reset()
@@ -197,6 +207,34 @@ function ptr:_RebuildIter()
 	for k,v in ipairs(cpy) do
 		self._PaintIter[k] = {v[1], v[2][1]}
 	end
+end
+
+local frShad = BSHADOWS.GenerateCache("BW_StructureFrame", math.floor(256 * 5 / 3), 256)
+frShad:SetGenerator(function(self, w, h)
+	draw.RoundedBox(8, 0, 0, w, h, color_white)
+end)
+
+frShad:CacheShadow(4, 6, 4)
+
+function ptr:PaintFrame(cury)
+	local hd = self.HeaderSize or 28 * (DarkHUD.Scale ^ 0.5)
+
+	cam.PushModelMatrix(self.Matrix) -- why
+	self:SetWide(math.max(self:GetWide(), ScrW() * 0.15))
+
+	surface.SetDrawColor(255, 255, 255)
+
+	DisableClipping(true)
+		frShad:Paint(0, cury, self:GetWide(), self:GetTall())
+	DisableClipping(false)
+
+	draw.RoundedBoxEx(8, 0, cury, self:GetWide(), hd, Colors.FrameHeader, true, true)
+	draw.RoundedBoxEx(8, 0, cury + hd, self:GetWide(), self:GetTall() - hd, Colors.FrameBody,
+		false, false, true, true)
+
+	cam.PopModelMatrix(self.Matrix)
+
+	return hd
 end
 
 function hud.AddPainter(ptr, prio)
