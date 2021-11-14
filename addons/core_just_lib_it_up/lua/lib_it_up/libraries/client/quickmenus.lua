@@ -106,6 +106,7 @@ function qobj:StartOpen()
 	if self.progress > 0 and self.wasopened and IsValid(openedQM) then
 		if anim then
 			anim:On("End", 1, function()
+				if not IsValid(openedQM) then return end
 				self:Emit("Reopen")
 				self:__OnReopen()
 			end)
@@ -115,7 +116,10 @@ function qobj:StartOpen()
 	end
 
 	if new then
-		anim:On("End", 1, function() self:__OnOpen() end)
+		anim:On("End", 1, function()
+			if not IsValid(openedQM) then return end -- yes, this can happen
+			self:__OnOpen()
+		end)
 	end
 end
 
@@ -124,19 +128,14 @@ function qobj:StopProgress()
 end
 
 function qobj:Close()
-
-	--[[self:Emit("Close")
-	self:__OnClose()]]
-
-	--self:Emit("FullClose")
-	--self:__OnFullClose()
-	--self:StopProgress()
-
 	self.Opening = false
 	self.Closing = true
 	self:StartClose()
 
-	if openedQM and openedQM:IsValid() then openedQM:Remove() print("requested QM removal", debug.traceback()) end
+	if openedQM and openedQM:IsValid() then
+		openedQM:Remove()
+	end
+
 	openedQM = CreateQuickMenu()
 end
 
