@@ -105,6 +105,12 @@ function ptr:CompletePoint(id, b)
 				break
 			end
 		end
+
+		if not tut.CurrentStep then
+			-- finished
+			cookie.Set("BW_TutorialComplete", "1")
+			tut.CurrentStep = "Complete"
+		end
 	end
 end
 
