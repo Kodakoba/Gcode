@@ -6,7 +6,7 @@ ENT.PowerCapacity = 10000
 
 ENT.Capacity 		= 6e9
 ENT.PrintInterval 	= 1
-ENT.PrintAmount		= 4.2e6
+ENT.PrintAmount		= 5.6e6
 
 ENT.PrintName = "Radiant Printer"
 
