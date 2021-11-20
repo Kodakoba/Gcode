@@ -671,7 +671,7 @@ function doRaidNotify(rd)
 				table.insert(rded, "<@" .. sidToDiscord[k] .. ">")
 			else
 				local pin = GetPlayerInfo(k)
-				table.insert(rded, pin:Nick():gsub("@", "\\@"))
+				table.insert(rded, (pin:Nick():gsub("@", "\\@")))
 			end
 		elseif IsPlayerInfo(k) and rd:IsRaider(k:SteamID()) then
 			local ins = k:Nick():gsub("@", "\\@")
