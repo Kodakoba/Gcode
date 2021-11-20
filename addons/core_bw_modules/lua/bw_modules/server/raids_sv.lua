@@ -190,7 +190,7 @@ function raidmeta:Initialize(rder, rded, fac)
 	self:AddParticipant(rded, 2)
 
 
-	hook.Run("RaidStart", self, rder, rded, fac ~= nil)
+	hook.NHRun("RaidStart", self, rder, rded, fac ~= nil)
 end
 
 function IsRaid(obj)
@@ -689,6 +689,6 @@ function doRaidNotify(rd)
 		fmt:format(table.concat(rders, ", "), table.concat(rded, ", ")))
 end
 
-hook.Add("RaidStart", "DiscordNotify", function(rd, rder, rded, fac)
+hook.NHAdd("RaidStart", "DiscordNotify", function(rd, rder, rded, fac)
 	doRaidNotify(rd)
 end)
