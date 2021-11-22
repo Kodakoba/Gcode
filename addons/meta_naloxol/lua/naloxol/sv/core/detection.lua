@@ -1,3 +1,4 @@
+
 local nx = NX
 nx.Detections = nx.Detections or {}
 nx.Detection = nx.Detection or Emitter:extend()
@@ -46,7 +47,9 @@ end
 NX.PlayerList = NX.PlayerList or {}
 
 function NX.ShouldIgnore(ply)
-	return not NX.PlayerList[ply]
+	return not NX.PlayerList[ply] or
+		ply:IsTimingOut() or
+		ply:IsBot()
 end
 
 hook.Add("PlayerFullyLoaded", "NX_Ready", function(ply)

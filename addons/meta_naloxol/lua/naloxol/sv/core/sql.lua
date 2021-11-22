@@ -34,7 +34,7 @@ function NX.GetInfractions(what)
 		return
 	end
 
-	local sid = GetPlayerInfoGuarantee(what):SteamID64()
+	local sid = string.IsMaybeSteamID64(what) and what or GetPlayerInfoGuarantee(what):SteamID64()
 	local sel = nsql.PreparedQueries.select
 
 	local pr = Promise()
