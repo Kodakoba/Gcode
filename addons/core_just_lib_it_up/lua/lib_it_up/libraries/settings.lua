@@ -14,7 +14,7 @@ end
 function stg:Initialize(id)
 	Settings.Settings[id] = self
 	self:SetID(id)
-	self:SetValue(Settings._GetStored(id))
+	self:SetValue(Settings.GetStored(id))
 end
 
 local alias = {
@@ -107,6 +107,7 @@ local function changeByMethod(cv, val)
 	end
 end
 
+
 function stg:SetConVar(v)
 	self._Convar = v
 	local cvar_obj
@@ -129,7 +130,7 @@ ChainAccessor(stg, "_Convar", "ConVar", true)
 ChainAccessor(stg, "_Convar", "Convar", true)
 
 
-function Settings._GetStored(k, v)
+function Settings.GetStored(k, v)
 	local val = cookie.GetString("Setting:" .. k, v)
 
 	if val == "false" or val == "true" then
@@ -138,6 +139,14 @@ function Settings._GetStored(k, v)
 		val = tonumber(val)
 	end
 
+	return (val == nil and v) or val
+end
+
+function Settings.Get(k, v)
+	local obj = Settings.GetObject(k)
+	if not obj then errorNHf("No such setting: %s", k) return false end
+
+	local val = obj:GetValue()
 	return (val == nil and v) or val
 end
 
