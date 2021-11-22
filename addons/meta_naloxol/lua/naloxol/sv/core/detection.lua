@@ -86,16 +86,16 @@ local lg = Logger("Naloxol", Color(200, 40, 180))
 hook.Add("NX_Detection", "Notify", function(pin, det, dat)
 
 	local datStr = ""
-	if istable(dat) then
-		datStr = "\nExtra data: \n"
-		local first = true
-		for k,v in pairs(dat) do
-			datStr =  datStr .. (not first and "\n" or "") ..
-				("	%s: 	%s"):format(k, v)
-			first = false
+	if dat then
+		datStr = "\nExtra data: "
+		if istable(dat) then
+
+			for k,v in pairs(dat) do
+				datStr =  datStr .. ("\n	%s: 	%s"):format(k, v)
+			end
+		elseif dat then
+			datStr = datStr .. tostring(dat)
 		end
-	elseif dat then
-		datStr = tostring(dat)
 	end
 
 	lg("%q [%s] was detected for: %s%s", pin:GetName(), pin:SteamID64(), det:GetName(),
