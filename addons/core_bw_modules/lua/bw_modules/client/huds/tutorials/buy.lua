@@ -46,7 +46,7 @@ ptr:On("Appear", "TryTrack", function()
 	for k,ent in ipairs(ents.FindByClass("*bw_*")) do
 		tryTrack(ent)
 	end
-	print("LE SOLAR HAS APPEARED")
+
 	BaseWars.SpawnMenu.Highlight["bw_gen_solar"] = true
 end)
 
