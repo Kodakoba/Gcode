@@ -26,12 +26,6 @@ function BaseWars.PlayerData.Load(ply)
 		db:query( qries.get_data_query:format(sid64) ), true
 	):Then(function(_, _, dat)
 		local write = {}
-		local pin = GetPlayerInfoGuarantee(sid64)
-		pin._bwSyncedData = pin._bwSyncedData or {}
-
-		for k,v in pairs(dat) do
-			pin._bwSyncedData[k] = v
-		end
 
 		hook.NHRun("BW_LoadPlayerData", ply, dat[1] or {}, write)
 		hook.NHRun("BW_LoadedPlayerData", ply)
@@ -49,6 +43,7 @@ hook.NHAdd("PlayerInitialSpawn", "BW_SQLDataFetch_Bots", function(ply)
 	BaseWars.PlayerData.Load(ply)
 end)
 
+
 local toSet = {}
 
 local function queueChange(pin)
@@ -58,7 +53,7 @@ end
 
 pd.QueueChange = queueChange
 
-local autoSync = {"money", "xp", "level", "playtime"}
+local autoSync = {"money", "xp", "level"}
 autoSync = table.KeysToValues(autoSync)
 
 function pd.SyncBWIntoSQL()
@@ -70,8 +65,8 @@ function pd.SyncBWIntoSQL()
 
 		for name, val in pairs(bwd) do
 			if not autoSync[name] then
-				local ok, doSync = hook.NHRun("BW_DataSync" .. name, pi, val)
-				if ok and not doSync then continue end
+				hook.NHRun("BW_DataSync" .. name, pi, val)
+				continue
 			end
 
 			if pi._bwSyncedData[name] == val then continue end
@@ -81,14 +76,11 @@ function pd.SyncBWIntoSQL()
 			val = isnumber(val) and val or db:escape(val)
 
 			-- mfw
-			--[[local second_arg = rep and name or val
+			local second_arg = rep and name or val
 			local third_arg = rep and val or sid
 			local fourth_arg = rep and sid or nil
 
 			local qry = qTpl:format(name, second_arg, third_arg, fourth_arg, fucking_end_me)
-			]]
-
-			local qry = qTpl:format(name, val, sid)
 
 			MySQLQuery(db:query(qry), true)
 				:Catch(mysqloo.CatchError)
@@ -100,45 +92,11 @@ function pd.SyncBWIntoSQL()
 
 end
 
-local function doQry(qTpl, rep, sid, name, val)
-	assert(string.IsMaybeSteamID64(sid))
-
-	if not autoSync[name] then
-		local ok, doSync = hook.NHRun("BW_DataSync" .. name, nil, val)
-		if ok and not doSync then return end
-	end
-
-	name = db:escape(name)
-	val = isnumber(val) and val or db:escape(val)
-
-	local second_arg = rep and name or val
-	local third_arg = rep and val or sid
-	local fourth_arg = rep and sid or nil
-
-	local qry = qTpl:format(name, second_arg, third_arg, fourth_arg, fucking_end_me)
-
-	print("qry: ran", qry)
-	MySQLQuery(db:query(qry), true)
-		:Catch(mysqloo.CatchError)
-end
-
-function BaseWars.PlayerData.SetOffline(sid, name, val)
-	doQry(qries.set_column_query, false, sid, name, val)
-end
-
-function BaseWars.PlayerData.AddOffline(sid, name, val)
-	doQry(qries.add_column_query, true, sid, name, val)
-end
-
-function BaseWars.PlayerData.SubOffline(sid, name, val)
-	doQry(qries.sub_column_query, true, sid, name, val)
-end
-
 timer.Create("BW_SQLSync", 0.5, 0, function()
 	pd.SyncBWIntoSQL()
 end)
 
-local function setter()
+local function setter(q, rep)
 	-- rep = the column name needs to be repeated
 	return function(self, name, val)
 		local pi = GetPlayerInfo(self)
@@ -154,15 +112,8 @@ local function setter()
 end
 
 PLAYER.SetBWData = setter(qries.set_column_query)
-
-function PLAYER:AddBWData(name, val)
-	return self:SetBWData(name, self:GetBWData(name) + val)
-end
-
-function PLAYER:SubBWData(name, val)
-	return self:SetBWData(name, self:GetBWData(name) - val)
-end
-
+PLAYER.AddBWData = setter(qries.add_column_query, true)
+PLAYER.SubBWData = setter(qries.sub_column_query, true)
 PLAYER.GetBWData = function(self, key)
 	local pi = GetPlayerInfo(self)
 	return pi._bwData[key]
@@ -196,7 +147,7 @@ local function onDB(masterdb)
 
 	ALTER TABLE `bw_plyData`
 	CHANGE COLUMN `money` `money` BIGINT UNSIGNED NOT NULL DEFAULT ]] .. BaseWars.Config.StartMoney .. [[,
-	CHANGE COLUMN `lvl` `lvl` INT UNSIGNED NOT NULL DEFAULT '1';
+	CHANGE COLUMN `lvl` `lvl` INT UNSIGNED NOT NULL DEFAULT '1' ;
 	]])
 
 	MySQLQuery(q, true)
