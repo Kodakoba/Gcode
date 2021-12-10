@@ -90,6 +90,7 @@ local function socketReceive(sock, str)
 	local name = str:sub(1, nameLen)
 	local msg = str:sub(nameLen + 1)
 
+	--
 	ChatAddText(Color(70, 110, 220), "[Discord] ", col, name, Color(230, 230, 230), ": " .. msg)
 	-- MsgC(Color(70, 110, 220), "[Discord] ", col, name, Color(230, 230, 230), ": " .. msg .. "\n")
 end
