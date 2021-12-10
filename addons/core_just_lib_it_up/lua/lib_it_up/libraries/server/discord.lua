@@ -47,7 +47,7 @@ local function socketConnect(_, sock)
 	end
 end
 
-local function socketFailConnect(sock, err)
+local function socketFailConnect(_, sock, err)
 	msg = "Unable to connect to Discord relay @ %s.\n	Error: %s"
 	msg = msg:format(sock.url, err)
 
