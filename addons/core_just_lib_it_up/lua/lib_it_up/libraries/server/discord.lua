@@ -91,7 +91,7 @@ local function socketReceive(sock, str)
 	local msg = str:sub(nameLen + 1)
 
 	ChatAddText(Color(70, 110, 220), "[Discord] ", col, name, Color(230, 230, 230), ": " .. msg)
-	MsgC(Color(70, 110, 220), "[Discord] ", col, name, Color(230, 230, 230), ": " .. msg .. "\n")
+	-- MsgC(Color(70, 110, 220), "[Discord] ", col, name, Color(230, 230, 230), ": " .. msg .. "\n")
 end
 
 function DiscordReconnect()
