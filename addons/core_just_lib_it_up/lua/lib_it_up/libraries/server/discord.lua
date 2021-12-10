@@ -39,7 +39,7 @@ end)
 local silence = false
 
 local function socketConnect(_, sock)
-	msg = "Connected to Discord relay @ %s!\n"
+	local msg = "Connected to Discord relay @ %s!\n"
 	msg = msg:format(sock.url)
 
 	if not silence then
@@ -48,7 +48,7 @@ local function socketConnect(_, sock)
 end
 
 local function socketFailConnect(_, sock, err)
-	msg = "Unable to connect to Discord relay @ %s.\n	Error: %s"
+	local msg = "Unable to connect to Discord relay @ %s.\n	Error: %s"
 	msg = msg:format(sock.url, err)
 
 	if not silence then
@@ -90,7 +90,6 @@ local function socketReceive(sock, str)
 	local name = str:sub(1, nameLen)
 	local msg = str:sub(nameLen + 1)
 
-	--
 	ChatAddText(Color(70, 110, 220), "[Discord] ", col, name, Color(230, 230, 230), ": " .. msg)
 	-- MsgC(Color(70, 110, 220), "[Discord] ", col, name, Color(230, 230, 230), ": " .. msg .. "\n")
 end
