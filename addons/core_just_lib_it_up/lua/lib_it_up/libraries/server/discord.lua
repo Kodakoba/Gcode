@@ -36,7 +36,6 @@ hook.Add("PostGamemodeLoaded", "inventory_log", function()
 	discord.Log = log
 end)
 
-local socket = dissocket
 local silence = false
 
 local function socketConnect(_, sock)
@@ -93,8 +92,6 @@ local function socketReceive(sock, str)
 
 	ChatAddText(Color(70, 110, 220), "[Discord] ", col, name, Color(230, 230, 230), ": " .. msg)
 	MsgC(Color(70, 110, 220), "[Discord] ", col, name, Color(230, 230, 230), ": " .. msg .. "\n")
-
-	socket:ReceiveUntil("\r\n")
 end
 
 function DiscordReconnect()
