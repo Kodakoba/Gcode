@@ -115,7 +115,7 @@ local function SetCat(t)
 	curCat = t
 end
 
-local function AddItem(cat, typ, class, name, price, mdl)
+local function AddItem(cat, typ, class, name, price, mdl, lim)
 	local t = {}
 
 	local ent = scripted_ents.GetStored(class)
@@ -143,6 +143,7 @@ local function AddItem(cat, typ, class, name, price, mdl)
 	t.Category = cat
 	t.CatID = #cat_t.Items
 	t.SubcatID = #subcat_t.Items
+	t.Limit = lim
 
 	BaseWars.Catalogue[class] = t
 
