@@ -39,6 +39,7 @@ end
 
 function ENT:Initialize()
 	-- scripted_ents.GetStored(base).t.Initialize(self)
+	self:BaseRecurseCall("Initialize")
 
 	if SERVER then
 		self:SetUseType(CONTINUOUS_USE)
