@@ -2,7 +2,6 @@
 BaseWars.Rollback = BaseWars.Rollback or {}
 local rb = BaseWars.Rollback
 
-rb.PlayerWorth = rb.PlayerWorth or {}
 rb.SavedWorth = rb.SavedWorth or {}
 
 local db

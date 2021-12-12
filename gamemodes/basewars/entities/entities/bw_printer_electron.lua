@@ -4,7 +4,7 @@ ENT.Base = "bw_base_moneyprinter"
 
 ENT.Skin = 0
 
-ENT.PowerRequired = 825
+ENT.PowerRequired = 1450
 ENT.PowerCapacity = 10000
 
 ENT.Capacity 		= 5.5e9

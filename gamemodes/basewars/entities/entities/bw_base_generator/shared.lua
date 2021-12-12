@@ -44,7 +44,7 @@ end
 function ENT:GetUpgradeCost(lv)
 	lv = lv or self:GetLevel()
 	local cost = self:GetBoughtPrice() or 1000
-	return cost * lv
+	return cost * (2 ^ lv)
 end
 
 function ENT:IsPowered()
