@@ -29,6 +29,16 @@ function ENT:SetupDataTables()
 
 	self:NetworkVar("Int", 1, "Level")
 	self:SetLevel(1)
+	if CLIENT then
+		self:NetworkVarNotify("Level", function(self, key, old, new)
+			self:Timer("rubatfixWHEN", 0, 1, self.OnFinalUpgrade)
+		end)
+	end
+
+	self:NetworkVar("Float", 1, "BoughtPrice")
+	if SERVER and self.BoughtCost then
+		self:SetBoughtPrice(self.BoughtCost)
+	end
 end
 
 function ENT:GetUpgradeCost(curLv)
