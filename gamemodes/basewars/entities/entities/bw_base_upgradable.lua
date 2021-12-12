@@ -32,7 +32,10 @@ function ENT:SetupDataTables()
 	if CLIENT then
 		self:NetworkVarNotify("Level", function(self, key, old, new)
 			if old == new or new == 1 then return end
-			self:Timer("rubatfixWHEN", 0, 1, self.OnFinalUpgrade)
+			self:Timer("rubatfixWHEN", 0, 1, function()
+				if self:GetLevel() == 1 then return end
+				self:OnFinalUpgrade()
+			end)
 		end)
 	end
 
