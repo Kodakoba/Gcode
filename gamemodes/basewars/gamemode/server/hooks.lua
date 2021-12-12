@@ -32,12 +32,13 @@ hook.NHAdd("EntityRemoved", "BW_GenLimit", function(ent)
 	pin._Gens = pin._Gens - 1
 end)
 
-hook.Add("BaseWars_PlayerCanBuyEntity", "Gennies", function(ply, ent)
 
+Basewars.GeneratorsAllowed = 4
+
+hook.Add("BaseWars_PlayerCanBuyEntity", "Gennies", function(ply, ent)
 	if scripted_ents.IsBasedOn(ent, "bw_base_generator") then
 		local gens = GetPlayerInfo(ply)._Gens
-		if gens and gens >= 3 then
-			--ply:Notify("The generator limiting hook was temporarily disabled. Reactivate when going public.", Color(100, 200, 100))
+		if gens and gens >= Basewars.GeneratorsAllowed then
 			return false, "You can't have more than 3 generators active!"
 		end
 	end
