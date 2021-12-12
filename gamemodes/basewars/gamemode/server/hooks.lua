@@ -39,7 +39,7 @@ hook.Add("BaseWars_PlayerCanBuyEntity", "Gennies", function(ply, ent)
 	if scripted_ents.IsBasedOn(ent, "bw_base_generator") then
 		local gens = GetPlayerInfo(ply)._Gens
 		if gens and gens >= Basewars.GeneratorsAllowed then
-			return false, "You can't have more than 3 generators active!"
+			return false, "You can't have more than " .. Basewars.GeneratorsAllowed .. " generators active!"
 		end
 	end
 end)
