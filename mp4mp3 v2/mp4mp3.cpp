@@ -9,10 +9,6 @@ using namespace ffmpegcpp;
 char* currentFile;
 char* oldFile;
 
-void init()
-{
-    //some initialization functions
-}
 
 void videoH()
 {
@@ -60,7 +56,6 @@ int main(int argc, char* argv[]) //means it should accept arguments of file name
         } 
     } 
    
-    init();
     videoH();
     return 0;
 }
