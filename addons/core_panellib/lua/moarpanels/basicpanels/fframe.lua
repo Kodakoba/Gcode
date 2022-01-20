@@ -181,10 +181,10 @@ function PANEL.DrawHeaderPanel(self, w, h, x, y)
 		BSHADOWS.BeginShadow()
 		if not x then x, y = self:LocalToScreen(0, 0) end
 	elseif self.ShadowHandler then
-		DisableClipping(true)
+		local prev = DisableClipping(true)
 			surface.SetDrawColor(255, 255, 255, 255)
 			self.ShadowHandler:Paint(0, 0, w, h)
-		DisableClipping(false)
+		if not prev then DisableClipping(false) end
 	end
 
 	x = x or 0
@@ -231,12 +231,12 @@ function PANEL.DrawHeaderPanel(self, w, h, x, y)
 
 		sw, sh = sw - 2, sh - 2
 
-		surface.DisableClipping(true)
+		local prev = DisableClipping(true)
 		surface.SetDrawColor(Colors.LighterGray)
 
 		surface.DrawMaterial("https://i.imgur.com/v87KhLv.png", "draglines.png", nx + newx, ny + newy, sw - 2, sh - 2, rot)
 
-		surface.DisableClipping(false)
+		if not prev then DisableClipping(false) end
 	end
 
 	if self.Shadow and not self.ShadowHandler then
@@ -489,7 +489,7 @@ end
 
 function PANEL:Paint(w, h)
 	self:PrePaint(w, h)
-	if not self.NoDraw then self:DrawHeaderPanel(w, h) end
+		if not self.NoDraw then self:DrawHeaderPanel(w, h) end
 	self:PostPaint(w, h)
 end
 

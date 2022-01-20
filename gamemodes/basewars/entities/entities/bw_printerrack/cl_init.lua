@@ -1,7 +1,8 @@
 --easylua.StartEntity("bw_printerrack")
 AddCSLuaFile()
-include("shared.lua")
+--include("shared.lua")
 
+local ENT = scripted_ents.GetStored("bw_printerrack")
 
 function ENT:CLInit()
 
@@ -67,14 +68,16 @@ local function CreateFrame(ent)
 		end --bruh
 	end)
 
+	local pre
+
 	function f:PrePaint(w, h)
-		DisableClipping(true)
+		pre = DisableClipping(true)
 		draw.EnableFilters()
 	end
 
 	function f:PaintOver(w, h)
 		draw.DisableFilters()
-		DisableClipping(false)
+		if not pre then DisableClipping(false) end
 	end
 
 	function f:PostPaint(w,h)
