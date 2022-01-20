@@ -381,6 +381,8 @@ local function onEntTakeDamage(target, dmginfo)
 			local dmgAmount = dmginfo:GetDamage()
 			local dmgType   = dmginfo:GetDamageType()
 			
+			if dmgAmount <= 1 then return end
+
 			-- Get damage position.
 			local pos = nil
 			if dmginfo:IsBulletDamage() then
