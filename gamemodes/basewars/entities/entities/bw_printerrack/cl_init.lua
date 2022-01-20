@@ -1,8 +1,7 @@
 --easylua.StartEntity("bw_printerrack")
 AddCSLuaFile()
---include("shared.lua")
+include("shared.lua")
 
-local ENT = scripted_ents.GetStored("bw_printerrack")
 
 function ENT:CLInit()
 
