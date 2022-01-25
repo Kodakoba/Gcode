@@ -386,6 +386,7 @@ hook.Add("FinishMove", "Dash", function(ply, mv, cmd)
 end)
 
 local trails = {}
+local dashDur = 0.3
 
 local st = 0
 local two = math.pi/2
@@ -396,6 +397,24 @@ trail:SetFloat("$refractamount", 0.05)
 
 trail:SetFloat("$alpha", 1)
 
+local v1, v2 = Vector(), Vector()
+
+local function collin(v3)
+	local x1, y1, z1 = v1:Unpack()
+	local x2, y2, z2 = v2:Unpack()
+	local x3, y3, z3 = v3:Unpack()
+
+	local a = math.sqrt((x2 - x1)^2 + (y2 - y1) ^ 2 + (z2 - z1)^2)
+	local b = math.sqrt((x3 - x1)^2 + (y3 - y1) ^ 2 + (z3 - z1)^2)
+	local c = math.sqrt((x3 - x2)^2 + (y3 - y2) ^ 2 + (z3 - z2)^2)
+
+	if a + b > c and a + c > b and b + c > a then
+		return false
+	end
+
+	return true
+end
+
 hook.Add("PostPlayerDraw", "Dash", function(ply)
 	local t = trails[ply]
 	local dash = ply:GetActiveWeapon()
@@ -405,12 +424,10 @@ hook.Add("PostPlayerDraw", "Dash", function(ply)
 	local dt = DashTable[ply]
 
 	if dt then
-
 		if not dt.wep:IsValid() or CurTime() - dt.t > dashDur then
 			DashTable[ply] = nil
 			dt = nil
 		end
-
 	end
 
 	if ( dash:GetPostDash() or dash:GetPostSuperMove() ) or dt then
@@ -427,13 +444,27 @@ hook.Add("PostPlayerDraw", "Dash", function(ply)
 		cent:Mul(1.5)
 		pos:Add(cent)
 
-		t[#t + 1] = {pos, CurTime(), wid}
+		local prev = t[#t]
+		local pprev = t[#t - 1]
+
+		if pprev then
+			v1:Set(pos) v1:Sub(pprev[1])
+			v2:Set(pos) v2:Sub(prev[1])
+
+			if collin and CurTime() - prev[2] < 0.05 then
+				prev[1]:Set(pos)
+			else
+				t[#t + 1] = {pos, CurTime(), wid}
+			end
+		else
+			t[#t + 1] = {pos, CurTime(), wid}
+		end
+
 	elseif t then
 		if #t == 0 or CurTime() - t[#t][2] > 1 then trails[ply] = nil return end
 	end
 
 	if not t then return end
-
 
 	render.StartBeam(#t)
 
@@ -443,13 +474,12 @@ hook.Add("PostPlayerDraw", "Dash", function(ply)
 			local one = Lerp(time, two, fin)
 			local two = Lerp((time - 0.3)*2, fin, two)
 
-
 			local sin = math.sin(two)
 			local wid = math.abs(1 - sin) * t[i][3]
 
 			render.SetMaterial(trail)
 
-			render.AddBeam(t[i][1], wid, 1/i, Color(255, 255, 255))
+			render.AddBeam(t[i][1], wid, 1/i, color_white)
 		end
 
 	render.EndBeam()
@@ -459,7 +489,6 @@ hook.Add("PostPlayerDraw", "Dash", function(ply)
 			table.remove(t, i)
 		end
 	end
-
 end)
 
 function SWEP:Holster(wep)
