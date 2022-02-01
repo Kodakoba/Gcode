@@ -96,8 +96,9 @@ local function DownloadFolder(str, mask)
 end
 
 timer.Simple(0, function()
+	local fn = _oldAddWorkshop or resource.AddWorkshop
 	for i=1, #BWAddons do
-		resource.AddWorkshop(tostring(BWAddons[i]))
+		fn(tostring(BWAddons[i]))
 	end
 
 	DownloadFolder("materials/vgui/prestige")
