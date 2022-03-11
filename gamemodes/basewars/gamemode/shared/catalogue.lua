@@ -481,7 +481,7 @@ SetType("[CW] Pistols")
 		ReuseLoadout("cw_m1911", 		"M1911", 		10 * k)
 		ReuseLoadout("cw_p99", 			"P99", 			25 * k)
 		ReuseLoadout("cw_mr96", 		"MR96", 		75 * k)
-		ReuseLoadout("cw_ragingbull", 	"Raging Bull",	200 * k)
+		-- ReuseLoadout("cw_ragingbull", 	"Raging Bull",	200 * k)
 		ReuseLoadout("cw_deagle", 		"Deagle", 		350 * k)
 
 SetType("[ACW] Pistols")
