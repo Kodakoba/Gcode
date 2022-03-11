@@ -26,6 +26,7 @@
 !materials/grp/**/*
 !models/grp/**/*
 !**/grp/**/*
+**/grp/_**/*
 
 # supercomputers from csgo (different folder cuz screwup)
 !materials/models/props/**/*
