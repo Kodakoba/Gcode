@@ -253,6 +253,11 @@ function netstack:Send(netname, where)
 		net.Send(where)
 	end
 end
+
+function netstack:Write()
+	return net.WriteNetStack(self)
+end
+
 netstack.__tostring = function(self)
 	local head = "NetStack: %d ops:"
 	head = head:format(#self.Ops)
@@ -301,6 +306,6 @@ function netstack:print()
 end
 
 function IsNetStack(what)
-	return what and what.IsNetStack
+	return istable(what) and what.IsNetStack
 end
 IsNetstack = IsNetStack

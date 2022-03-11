@@ -19,8 +19,22 @@ EntitySubscribers.Entities = ent_subs					-- this is used for adding/removing su
 local BlankFunc = function() end
 
 
-local lookupCache = setmetatable({}, {__mode = "k"})
+local lookupCache = setmetatable({}, {__mode = "kv"})
 EntTableLookup = lookupCache
+
+hook.Add("EntityActuallyRemoved", "cleanupShit", function(e)
+	timer.Simple(10, function()
+		EntTableLookup[e] = nil
+	end)
+end)
+
+timer.Create("cleanup_invalid_ents_lkup", 10, 0, function()
+	for k,v in pairs(EntTableLookup) do
+		if not k:IsValid() then
+			EntTableLookup[k] = nil
+		end
+	end
+end)
 
 local ENTITY = FindMetaTable("Entity")
 local WEAPON = FindMetaTable("Weapon")
@@ -185,9 +199,11 @@ function ENTITY:BaseRecurseCall(methodName, ...)
 	local base = scripted_ents.GetStored(self.Base).t
 	local lastBaseName = self.Base
 
+	local a, b, c, d, e, f
+
 	while base do
 		if base[methodName] then
-			base[methodName] (self, ...)
+			a, b, c, d, e, f = base[methodName] (self, ...)
 		end
 		if not base.Base or base.Base == lastBaseName then break end
 		lastBaseName = base.Base
@@ -195,6 +211,7 @@ function ENTITY:BaseRecurseCall(methodName, ...)
 	end
 
 	self._recursing[methodName] = nil
+	return a, b, c, d, e, f
 end
 
 function ENTITY:GetSubscribersKeys()
@@ -211,6 +228,16 @@ end
 
 function PLAYER:IsSubscribed(ent)
 	return ent:IsSubscribed(self)
+end
+
+function PLAYER:GetSubscribedTo()
+	local ret = {}
+	for k,v in pairs(subs[self] or {}) do
+		if not v[1]:IsValid() then continue end
+		ret[#ret + 1] = v[1]
+	end
+
+	return ret
 end
 
 hook.Add("FinishMove", "EntitySubscriptions", function(pl, mv)

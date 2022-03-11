@@ -49,7 +49,8 @@ NX.PlayerList = NX.PlayerList or {}
 function NX.ShouldIgnore(ply)
 	return not NX.PlayerList[ply] or
 		ply:IsTimingOut() or
-		ply:IsBot()
+		ply:IsBot() or
+		ply.NX_Ignore
 end
 
 hook.Add("PlayerFullyLoaded", "NX_Ready", function(ply)
@@ -65,8 +66,8 @@ end
 function dtc:Detect(ply, addData)
 	local cd = self:GetCooldown()
 
-	if not cd:Put(ply, 3) then
-		self:Timer(("%p"):format(ply), 3, 1, function()
+	if not cd:Put(ply, self.DefaultCooldown) then
+		self:Timer(("%p"):format(ply), self.DefaultCooldown, 1, function()
 			self:Detect(ply, addData)
 		end)
 		return

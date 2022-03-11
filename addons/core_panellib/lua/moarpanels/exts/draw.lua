@@ -51,16 +51,16 @@ _ = cout128:IsError() and hdl.DownloadFile("https://i.imgur.com/mLZEMpW.png", "c
 _ = cout64:IsError() and hdl.DownloadFile("https://i.imgur.com/kY0Isiz.png", "circle_outline64.png", function(fn) cout64 = Material(fn, "mips") end)
 
 
-local function LerpColor(frac, col, dest, src)
+local function LerpColor(frac, into, to, from)
 
-	col.r = Lerp(frac, src.r, dest.r)
-	col.g = Lerp(frac, src.g, dest.g)
-	col.b = Lerp(frac, src.b, dest.b)
+	into.r = UnboundedLerp(frac, from.r, to.r)
+	into.g = UnboundedLerp(frac, from.g, to.g)
+	into.b = UnboundedLerp(frac, from.b, to.b)
 
-	local sA, c1A, c2A = src.a, col.a, dest.a
+	local sA, c1A, c2A = from.a, into.a, to.a
 
 	if sA ~= c2A or c1A ~= c2A then
-		col.a = Lerp(frac, sA, c2A)
+		into.a = UnboundedLerp(frac, sA, c2A)
 	end
 
 end
@@ -78,6 +78,18 @@ local sizes = {}
 function surface.GetTextSizeQuick(tx, font)
 	surface_SetFont(font)
 	return surface_GetTextSize(tx)
+end
+
+function draw.GetFontHeights(...)
+	local ret = {}
+	local sum = 0
+	for k,v in ipairs({...}) do
+		local h = draw.GetFontHeight(v)
+		sum = sum + h
+		ret[k] = h
+	end
+
+	return sum, unpack(ret)
 end
 
 function surface.CharSizes(tx, font, unicode)
@@ -352,10 +364,10 @@ local corners = {
 draw.AlphatestedCorners = corners
 
 for name, mat in pairs(corners) do
-	corners[name] = CreateMaterial("alt_" .. mat:gsub("gui/", ""), "UnlitGeneric", {
+	corners[name] = CreateMaterial("alt05_" .. mat:gsub("gui/", ""), "UnlitGeneric", {
 	    ["$basetexture"] = mat,
 	    ["$alphatest"] = 1,
-	    ["$alphatestreference"] = 0.1,
+	    ["$alphatestreference"] = 0.5,
 	    ["$vertexalpha"] = 1,
 	    ["$vertexcolor"] = 1
 	})
@@ -417,7 +429,19 @@ function draw.RoundedStencilBox(bordersize, x, y, w, h, col, tl, tr, bl, br)
 	else
 		surface_DrawRect( x + w - bordersize, y + h - bordersize, bordersize, bordersize )
 	end
+end
 
+local stack = { }
+
+function surface.PushAlphaMult(n)
+	stack[#stack + 1] = surface.GetAlphaMultiplier()
+	surface.SetAlphaMultiplier(n)
+	return stack[#stack]
+end
+
+function surface.PopAlphaMult()
+	local a = table.remove(stack)
+	surface.SetAlphaMultiplier(a)
 end
 
 --mostly useful for stencils
@@ -591,9 +615,9 @@ local shitCircle = CreateMaterial("_crapcircle", "UnlitGeneric", {
 function draw.SetMaterialCircle(rad)
 	local mat
 
-	if rad < 64 then
+	if rad <= 64 then
 		mat = draw.GetMaterial("https://i.imgur.com/MMHZw92.png", "small-circle.png", "smooth ignorez")
-	elseif rad < 256 then
+	elseif rad <= 256 then
 		mat = draw.GetMaterial("https://i.imgur.com/XAWPA15.png", "medium-circle.png", "smooth ignorez")
 	else
 		mat = draw.GetMaterial("https://i.imgur.com/6SdL8ff.png", "big-circle.png", "smooth ignorez")
@@ -607,9 +631,9 @@ function draw.SetMaterialCircle(rad)
 end
 
 function draw.DrawMaterialCircle(x, y, rad)	--i hate it but its the only way to make an antialiased circle on clients with no antialiasing set
-	if rad < 64 then
+	if rad <= 64 then
 		surface.DrawMaterial("https://i.imgur.com/MMHZw92.png", "small-circle.png", x - rad/2, y - rad/2, rad, rad)
-	elseif rad < 256 then
+	elseif rad <= 256 then
 		surface.DrawMaterial("https://i.imgur.com/XAWPA15.png", "medium-circle.png", x - rad/2, y - rad/2, rad, rad)
 	else
 		surface.DrawMaterial("https://i.imgur.com/6SdL8ff.png", "big-circle.png", x - rad/2, y - rad/2, rad, rad)
@@ -682,6 +706,8 @@ function draw.DisableFilters(min, mag)
 end
 
 hook.Add("PostRender", "ResetFilters", function()
+	table.Empty(stack)
+
 	local min, mag
 
 	if minstate > 0 then
@@ -715,7 +741,7 @@ function surface.DrawNewlined(tx, x, y, first_x, first_y)
 
 end
 
-function draw.SimpleText2( text, font, x, y, colour, xalign, yalign )
+function draw.SimpleText2( text, font, x, y, colour, xalign, yalign, addTw, addAl )
 
 	text	= tostring( text )
 	x		= x			or 0
@@ -741,6 +767,8 @@ function draw.SimpleText2( text, font, x, y, colour, xalign, yalign )
 		elseif ( yalign == TEXT_ALIGN_BOTTOM ) then
 			y = y - h
 		end
+
+		x = x - (addTw or 0) * (addAl or xalign) / 2
 	end
 
 	surface_SetTextPos(x, y)
@@ -784,3 +812,81 @@ function draw.OnOffSlider(fr, x, y, w, h)
 	surface.SetDrawColor(knobcur)
 	draw.DrawMaterialCircle(kx, y + math.ceil(h / 2), knob)
 end
+
+local rbow_mat
+local rbow_mat_v
+
+local fn = "rainbow_gen.png"
+local fnver = "rainbow_gen_v.png"
+
+if not file.Exists(fn, "DATA") or not file.Exists(fnver, "DATA") then
+	local width, height = 512, 64
+	local outRT = GetRenderTarget(
+			"rainbow_gen" .. width .. "x" .. height,
+			width, height)
+
+	local outVerRT = GetRenderTarget(
+		"rainbow_genvert" .. width .. "x" .. height,
+		height, width)
+
+
+	-- horizontal
+	render.PushRenderTarget(outRT)
+	cam.Start2D()
+	render.Clear(0, 0, 0, 0, true)
+
+	render.OverrideAlphaWriteEnable(true, true)
+
+	for i=0, width - 1 do
+		surface.SetDrawColor(HSVToRGB(360 / width * i, 0.65, 1))
+		surface.DrawRect(i, 0, 1, 9999)
+	end
+
+	file.Write(fn, render.Capture({
+		format = "png",
+		x = 0, y = 0,
+		w = width, h = height,
+	}))
+
+	render.PopRenderTarget()
+	cam.End2D()
+
+	local t = width
+	width = height
+	height = t
+
+
+	-- vertical
+	render.PushRenderTarget(outVerRT)
+	cam.Start2D()
+	render.Clear(0, 0, 0, 0, true)
+
+	for i=0, height - 1 do
+		surface.SetDrawColor(HSVToRGB(360 / height * i, 0.65, 1))
+		surface.DrawRect(0, i, 9999, 1)
+	end
+
+	file.Write(fnver, render.Capture({
+		format = "png",
+		x = 0, y = 0,
+		w = width, h = height,
+	}))
+
+	render.PopRenderTarget()
+
+	render.OverrideAlphaWriteEnable(false, true)
+	cam.End2D()
+end
+
+rbow_mat = Material("data/" .. fn, "noclamp")
+rbow_mat_v = Material("data/" .. fnver, "noclamp")
+
+function draw.GetRainbowGradient(ver)
+	return ver and rbow_mat_v or rbow_mat
+end
+draw.GetRainbowGrad = draw.GetRainbowGradient
+
+function draw.SetRainbowGradient(ver)
+	surface.SetMaterial(draw.GetRainbowGradient(ver))
+end
+draw.SetRainbowGrad = draw.SetRainbowGradient

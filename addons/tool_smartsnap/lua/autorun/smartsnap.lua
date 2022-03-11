@@ -1,3 +1,5 @@
+do return end
+
 --[[
 
 
@@ -494,6 +496,7 @@ if CLIENT then
         end
 
         --ErrorNoHalt(collectgarbage("count"))
+
         if GetConVarNumber("snap_gcboost") ~= 0 then
             collectgarbage("step", GetConVarNumber("snap_gcstrength"))
         end

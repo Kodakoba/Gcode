@@ -147,7 +147,7 @@ local function createOwnFactionActions(f, fac, canv)
 		local cOff = w * fr - w/2
 		local barSX = sx + w * fr - cOff * (1 - scale)
 
-		render.SetScissorRect(sx, sy, barSX, sy + h, true)
+		render.SetScissorRect(sx, sy + self:GetRaise(), barSX, sy + h, true)
 			draw.RoundedBox(self.RBRadius, 0, 0, w, h, leavingProgressRed)
 		render.SetScissorRect(0, 0, 0, 0, false)
 
@@ -313,7 +313,8 @@ function createFactionActions(f, fac, canv)
 			surface.SetDrawColor(col:Unpack())
 			local x = t.ArrX
 
-			surface.DrawMaterial("https://i.imgur.com/jFHSu7s.png", "arr_right.png", 4 + x, 4, arrSize, arrSize)
+			surface.DrawMaterial("https://i.imgur.com/jFHSu7s.png", "arr_right.png",
+				4 + x, 4, arrSize, arrSize)
 
 			if not self.Clicked then
 				if self:IsHovered() then
@@ -360,6 +361,8 @@ function createFactionActions(f, fac, canv)
 				te:LerpColor(te.HTextColor, Color(70, 160, 70), 0.1, 0, 0.2)
 				te:LerpColor(te.BGColor, Color(40, 75, 40), 0.1, 0, 0.2)
 
+				sfx.Success()
+
 				te:Disappear(true):Then(function()
 					createOwnFactionActions(f, fac, canv)
 
@@ -372,8 +375,8 @@ function createFactionActions(f, fac, canv)
 				join:SetInput(false)
 				self:Disappear()
 			end, function(_, err)
-
 				local bad_pw = err == Factions.Errors.BadPassword
+				sfx.Fail()
 
 				if bad_pw then
 					arrResetNow = true
@@ -556,8 +559,8 @@ local function createNewFaction(f)
 		surface.SetDrawColor(bgCol)
 		surface.DrawRect(0, 0, w, h)
 
-		surface.SetDrawColor(gradCol)
-		self:DrawGradientBorder(w, h, 3, 3)
+		surface.SetDrawColor(0, 0, 0)
+		self:DrawGradientBorder(w, h, 3, 3, true, false, false, false)
 
 		-- drawing faction name
 		local tx = name:GetValue()
@@ -669,16 +672,20 @@ local function createNewFaction(f)
 	doEet:Dock(BOTTOM)
 	doEet:SetTall(pnl:GetTall() * 0.075)
 	doEet:DockMargin(pnl:GetWide() * 0.2, 0, pnl:GetWide() * 0.2, pnl:GetTall() * 0.02)
+	doEet.UseSFX = true
 
 	local good = Color(70, 180, 80)
 	local bad = Colors.Button:Copy()
+	doEet:SetColor(good)
 
 	function doEet:Think()
-		if err then
+		self:SetEnabled(not err)
+
+		--[[if err then
 			self:SetColor(bad)
 		else
 			self:SetColor(good)
-		end
+		end]]
 	end
 
 	function doEet:DoClick()
@@ -748,6 +755,7 @@ local function createNewFactionButton(pnl, scr, noanim)
 	newFac.Font = fonts.MediumSmall
 	newFac.HovMult = 1.1
 	newFac.DisabledColor = Color(85, 85, 85)
+	newFac.UseSFX = true
 
 	pnl:AddElement("Exclusive", newFac)
 

@@ -107,29 +107,21 @@ local function changeByMethod(cv, val)
 	end
 end
 
-function stg:SyncConvar()
-	local cvar = GetConVar(self:GetConVar())
-	if not cvar then errorNHf("Missing setting convar: %s", self:GetConVar()) return end
-
-	local changer = changeByMethod
-	if not cvar:IsFlagSet(FCVAR_LUA_CLIENT) and not cvar:IsFlagSet(FCVAR_LUA_SERVER) then
-		changer = changeByRun
-	end
-
-	changer(cvar, self:GetValue())
-end
 
 function stg:SetConVar(v)
 	self._Convar = v
-	self:On("Change", "CvarUpdate", self.SyncConvar)
+	local cvar_obj
+	self:On("Change", "CvarUpdate", function()
+		cvar_obj = cvar_obj or GetConVar(v)
+		if not cvar_obj then errorNHf("Missing setting convar: %s", v:GetConVar()) return end
 
-	local cvar_obj = GetConVar(v)
+		local changer = changeByMethod
+		if not cvar_obj:IsFlagSet(FCVAR_LUA_CLIENT) and not cvar_obj:IsFlagSet(FCVAR_LUA_SERVER) then
+			changer = changeByRun
+		end
 
-	if cvar_obj then
-		self:SyncConvar()
-	else
-		timer.Simple(0, function() self:SyncConvar() end)
-	end
+		changer(cvar_obj, self:GetValue())
+	end)
 
 	return self
 end

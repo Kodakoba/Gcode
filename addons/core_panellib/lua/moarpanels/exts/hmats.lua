@@ -1,4 +1,3 @@
--- no not the nsfw fucking mats
 local customMats = {}
 
 MoarPanelsMats._ReloadAll = function()
@@ -16,7 +15,7 @@ end
 
 -- callback: 1st arg is material, 2nd arg is boolean: was the material loaded from cache?
 								-- (aka it was already loaded; if its a first load it's false)
-local function GetOrDownload(url, name, flags, cb)
+local function GetOrDownload(url, name, flags, cb, errFn)
 	if url == "-" or name == "-" then return false end
 	if not name then ErrorNoHalt("GetOrDownload: No name!\n") return end
 
@@ -36,7 +35,7 @@ local function GetOrDownload(url, name, flags, cb)
 
 		if file.Exists("hdl/" .. name, "DATA") then 		--mat existed on disk: load it in
 
-			local cmat = Material("data/hdl/" .. name, flags or "smooth ignorez")
+			local cmat = Material("data/hdl/" .. name, flags and tostring(flags) or "smooth ignorez")
 
 			mat.mat = cmat
 
@@ -74,7 +73,11 @@ local function GetOrDownload(url, name, flags, cb)
 				mat.mat = Material("materials/icon16/cancel.png")
 				mat.failed = url
 				mat.downloading = false
-				errorf("Failed to download! URL: %s\n Error: %s", url, err)
+				if errFn then
+					errFn(url, err)
+				else
+					errorf("Failed to download! URL: %s\n Error: %s", url, err)
+				end
 			end)
 
 		end
@@ -92,4 +95,15 @@ draw.GetMaterial = GetOrDownload
 
 function draw.GetMaterialInfo(mat)
 	return MatsBack[mat] or MoarPanelsMats[mat]
+end
+
+function draw.PromiseMaterial(url, name, flags)
+	local dat = draw.GetMaterialInfo(mat)
+	if dat and dat.pr then return dat.pr end
+
+	local pr = Promise()
+	dat = draw.GetMaterial(url, name, flags, pr:Resolver(), pr:Rejector())
+	dat.pr = pr
+
+	return pr
 end

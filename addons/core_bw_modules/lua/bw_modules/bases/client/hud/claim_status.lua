@@ -2,8 +2,6 @@ local bw = BaseWars.Bases
 local nw = bw.NW
 local hud = bw.HUD
 
-local titleFont = "MR36"
-
 local flag = Icons.Flag128:Copy()
 flag:SetPreserveRatio(true)
 flag:SetFilter(true)
@@ -23,7 +21,7 @@ function hud:GetClaimDT()
 	dt._piece = piece
 	dt:CycleNext()
 
-	piece:SetFont("MR20")
+	piece:SetFont("EX20")
 	piece:SetColor(Color(150, 150, 150))
 
 	-- `Owned by: ` or `Not owned!`
@@ -79,6 +77,14 @@ function hud:PaintOwner(cury)
 	dt:Paint(x, cury + fh / 2)
 
 
+	local w = dt:GetWide()
+
+	local wantW = hud.NameX + 12 + fw + w + 4 * 2
+
+	if self:GetWide() < wantW then
+		self:SetWide(wantW)
+	end
+
 	--[[local w = dt:GetWide()
 
 	local wantW = tw + w + tx * 2 + 4
@@ -87,7 +93,7 @@ function hud:PaintOwner(cury)
 		self:SetWide(wantW)
 	end]]
 
-	return math.max(fh, dt._piece:GetFontHeight()) + 8
+	return math.max(fh, dt._piece:GetFontHeight()) + 4
 end
 
 hud.AddPaintOp(9997, "PaintOwner", hud)

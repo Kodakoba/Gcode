@@ -2,7 +2,7 @@ AddCSLuaFile()
 
 ENT.Base = "base_gmodentity"
 ENT.Type = "anim"
-ENT.PrintName = "Base Entity"
+ENT.PrintName = "BW Base Entity"
 
 ENT.Model = "models/props_interiors/pot02a.mdl"
 ENT.Skin = 0
@@ -11,6 +11,7 @@ ENT.PresetMaxHealth = 100
 ENT.IsBaseWars = true
 
 ENT.Level = 1
+ENT.WantBlink = true
 
 function ENT:Init()
 
@@ -80,15 +81,19 @@ if SERVER then
 		self:SetModel(self.Model)
 		self:SetSkin(self.Skin)
 
-		self:PhysicsInit(SOLID_VPHYSICS)
-		self:SetSolid(SOLID_VPHYSICS)
-		self:SetMoveType(MOVETYPE_VPHYSICS)
+		if SERVER then
+			self:PhysicsInit(SOLID_VPHYSICS)
+			self:SetSolid(SOLID_VPHYSICS)
+			self:SetMoveType(MOVETYPE_VPHYSICS)
 
-		self:SetUseType(SIMPLE_USE)
-		self:AddEffects(EF_ITEM_BLINK)
+			self:SetUseType(SIMPLE_USE)
+			if self.WantBlink then
+				self:AddEffects(EF_ITEM_BLINK)
+			end
 
-		self:PhysWake()
-		self:Activate()
+			self:PhysWake()
+			self:Activate()
+		end
 
 		self:SetHealth(self.PresetMaxHealth or self.MaxHealth)
 
@@ -101,6 +106,34 @@ if SERVER then
 			if IsValid(self) then self:RemoveEFlags(EFL_FORCE_CHECK_TRANSMIT) end
 		end)
 
+		if self.SubModels then
+			for k,v in ipairs(self.SubModels) do
+				local prop = ents.Create("prop_physics")
+				prop:SetPos(self:LocalToWorld(v.Pos or Vector()))
+				prop:SetAngles(self:LocalToWorldAngles(v.Ang or Angle()))
+				prop:SetModel(v.Model or "models/Gibs/HGIBS.mdl")
+				prop:SetSkin(v.Skin or 0)
+				prop:SetParent(self)
+				if v.Material then
+					prop:SetMaterial(v.Material)
+				end
+			end
+		end
+	end
+
+	function FillSubModelData(ent)
+		local t = {}
+		for k,v in ipairs(ent:GetChildren()) do
+			t[#t + 1] = {
+				Pos = v:GetLocalPos(),
+				Ang = v:GetLocalAngles(),
+				Model = v:GetModel(),
+				Skin = (v:GetSkin() ~= 0 and v:GetSkin()) or nil,
+				Material = (v:GetMaterial() ~= 0 and v:GetMaterial()) or nil
+			}
+		end
+
+		return t
 	end
 
 	function ENT:Repair()
@@ -200,6 +233,7 @@ else
 
 	function ENT:Initialize()
 		self:CLInit()
+		self:Init()
 		self:SHInit()
 	end
 end

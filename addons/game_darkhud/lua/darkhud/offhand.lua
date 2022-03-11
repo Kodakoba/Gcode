@@ -94,6 +94,15 @@ end)
 
 local holdTip = "(hold)"
 
+dh:On("AmmoThink", "ThinkOffhand", function(_, pnl)
+	local w = math.max(48, 48 * DarkHUD.Scale)
+	local fw = pnl:GetWide()
+
+	pnl:To("OffhandX", pnl.Gone and fw - #Offhand.Binds * w or 8, 0.3, 0, 0.3)
+	pnl:To("OffhandFr", (pnl.Gone or pnl.GoingAway) and 0 or 1, 0.3, 0, 0.3)
+end)
+
+
 dh:On("AmmoPainted", "PaintOffhand", function(_, pnl, fw, h)
 
 	local x = pnl.OffhandX or 8
@@ -108,10 +117,7 @@ dh:On("AmmoPainted", "PaintOffhand", function(_, pnl, fw, h)
 		handle.rendered = true
 	end
 
-	pnl:To("OffhandX", pnl.Gone and fw - #Offhand.Binds * w or 8, 0.3, 0, 0.3)
-	pnl:To("OffhandFr", (pnl.Gone or pnl.GoingAway) and 0 or 1, 0.3, 0, 0.3)
-
-	DisableClipping(true)
+	local clip = DisableClipping(true)
 
 	-- counteract the shaking a bit
 	-- unshaken is used in painting icons and keys, not rects
@@ -143,7 +149,8 @@ dh:On("AmmoPainted", "PaintOffhand", function(_, pnl, fw, h)
 
 		local ok, add
 
-		if not tbl or not tbl.Paint then
+		if not tbl or not tbl.Paint or
+			(tbl.ShouldPaint and tbl:ShouldPaint() == false) then
 			paintNothing(pnl, ux, uy, w)
 			add = w
 			goto postpaint
@@ -201,5 +208,5 @@ dh:On("AmmoPainted", "PaintOffhand", function(_, pnl, fw, h)
 
 		x = x + (add or w) + pad
 	end
-	DisableClipping(false)
+	DisableClipping(clip)
 end)

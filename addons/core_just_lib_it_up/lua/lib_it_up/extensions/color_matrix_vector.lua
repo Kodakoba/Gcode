@@ -3,6 +3,7 @@ LibItUp.SetIncluded()
 local COLOR = FindMetaTable("Color")
 local MATRIX = FindMetaTable("VMatrix")
 local VECTOR = FindMetaTable("Vector")
+local ANGLE = FindMetaTable("Angle")
 
 Colors = Colors or {}
 
@@ -80,6 +81,8 @@ local function HSVToColorRGB(hue, saturation, value)
 	return rets[hue_sector + 1] (value, p, q, t)
 end
 
+HSVToRGB = HSVToColorRGB
+
 local function ColorModHSV(col, h, s, v)
 	col.r, col.g, col.b = HSVToColorRGB(h, s, v)
 	return col
@@ -136,6 +139,19 @@ function COLOR:MulHSV(h, s, v)
 end
 
 COLOR.HSVMod = COLOR.ModHSV
+
+function COLOR:SetDraw()
+	surface.SetDrawColor(self.r, self.g, self.b, self.a or 255)
+end
+
+function COLOR:SetText()
+	surface.SetTextColor(self.r, self.g, self.b, self.a or 255)
+end
+
+function COLOR:Lerp(fr, from, to)
+	draw.LerpColor(fr, self, to, from)
+end
+
 function IsMaterial(m)
 	return type(m) == "IMaterial"	--we can't really compare m.MetaName because m might not even be a table
 end
@@ -164,4 +180,83 @@ for i=1, #mtrx_methods, 2 do
 		typ:SetUnpacked(x or 0, y or 0, z or 0)
 		MATRIX[fn] (self, typ)
 	end
+end
+
+local cos, sin, rad = math.cos, math.sin, math.rad
+
+function ANGLE:ToForward(inVec)
+	local p, y = self:Unpack()
+	p, y = rad(p), rad(y)
+
+	local sy, cy = sin(y), cos(y)
+	local sp, cp = sin(p), cos(p)
+
+	inVec:SetUnpacked(
+		cy * cp,
+		sy * cp,
+		-sp
+	)
+
+	return inVec
+end
+
+function ANGLE:ToRight(inVec)
+	local p, y, r = self:Unpack()
+	p, y, r = rad(p), rad(y), rad(r)
+
+	local sy, cy = sin(y), cos(y)
+	local sp, cp = sin(p), cos(p)
+	local sr, cr = sin(r), cos(r)
+
+	inVec:SetUnpacked(
+		-cy * sp * sr + sy * cr,
+		-sy * sp * sr - cy * cr,
+		-cp * sr
+	)
+
+	return inVec
+end
+
+function ANGLE:ToUp(inVec)
+	local p, y, r = self:Unpack()
+	p, y, r = rad(p), rad(y), rad(r)
+
+	local sy, cy = sin(y), cos(y)
+	local sp, cp = sin(p), cos(p)
+	local sr, cr = sin(r), cos(r)
+
+	inVec:SetUnpacked(
+		cr * sp * cy + sr * sy,
+		cr * sp * sy - sr * cy,
+		cp * cr
+	)
+
+	return inVec
+end
+
+local toChain = {
+	"Add", "Sub", "Mul", "Div"
+}
+
+for k,v in pairs(toChain) do
+	VECTOR["C" .. v] = function(self, ...)
+		self[v](self, ...)
+		return self
+	end
+end
+
+local lerp = Lerp
+
+function LerpSource(dlt, from, to)
+	from[1] = Lerp(dlt, from[1], to[1])
+	from[2] = Lerp(dlt, from[2], to[2])
+	from[3] = Lerp(dlt, from[3], to[3])
+end
+
+function LerpInto(dlt, from, to, into)
+	into[1] = Lerp(dlt, from[1], to[1])
+	into[2] = Lerp(dlt, from[2], to[2])
+	into[3] = Lerp(dlt, from[3], to[3])
+
+	return into
 end

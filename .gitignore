@@ -18,12 +18,14 @@
 !lua/includes/**
 !gamemodes/sandbox/**
 !gamemodes/base/**
+!gamemodes/base_once/**
+!gamemodes/sandbox_ents/**
 
 
-
-# custom models & materials
+# custom models, materials, sounds
 !materials/grp/**/*
 !models/grp/**/*
+!**/grp/**/*
 
 # supercomputers from csgo (different folder cuz screwup)
 !materials/models/props/**/*
@@ -33,6 +35,7 @@
 
 
 # ?
+_disabledaddons/**
 addons/game_inventory/**
 
 !addons/weps_arccw*/lua
@@ -40,6 +43,9 @@ addons/game_inventory/**
 
 !addons/weps_cw2_base*
 !addons/weps_arccw_mp
+
+!data/wsmount_list.dat
+!data/inventory/**/*
 
 addons/*pac3*
 addons/fas*

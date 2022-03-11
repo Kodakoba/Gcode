@@ -26,7 +26,7 @@ function fuckyou()
 	end
 
 	--RunConsoleCommand("sv_downloadurl", "https://vaati.net/Gachi/garrysmod")
-	RunConsoleCommand("sv_downloadurl", "http://fr-gra-devserver-source01.crident.net/25017be5/")
+	--RunConsoleCommand("sv_downloadurl", "http://9840cbe192b59391.daemon.panel.gg/25017be5/")
 	RunConsoleCommand("sv_loadingurl", Settings.GetStored("LoadingURL",
 		"https://vaati.net/Gachi/loading.html"))
 end
@@ -35,5 +35,7 @@ timer.Create("fuckyou", 30, 0, fuckyou)
 hook.Add("InitPostEntity", "fuckoff_crydent", fuckyou)
 fuckyou()
 
-ArcCW.DoorBustEnabled = 1
-ArcCW.DoorBustTime = 180
+if ArcCW then
+	ArcCW.DoorBustEnabled = 1
+	ArcCW.DoorBustTime = 180
+end

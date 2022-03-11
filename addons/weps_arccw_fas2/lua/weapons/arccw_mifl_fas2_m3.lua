@@ -22,8 +22,8 @@ SWEP.ViewModelFOV = 60
 
 SWEP.DefaultBodygroups = "000000000000"
 
-SWEP.Damage = 12
-SWEP.DamageMin = 5 -- damage done at maximum range
+SWEP.Damage = 15
+SWEP.DamageMin = 4 -- damage done at maximum range
 SWEP.Num = 12
 SWEP.Range = 40 -- in METRES
 SWEP.Penetration = 1
@@ -37,10 +37,9 @@ SWEP.PhysBulletMuzzleVelocity = 700
 SWEP.Recoil = 2.2
 SWEP.RecoilSide = 1.3
 SWEP.RecoilRise = 0.8
-SWEP.RecoilPunch = 2
 
 SWEP.ShotgunReload = true
-SWEP.Delay = 60 / 200 -- 60 / RPM.
+SWEP.Delay = 60 / 400 -- 60 / RPM.
 SWEP.Firemodes = {
     {
         Mode = 1,
@@ -50,20 +49,20 @@ SWEP.Firemodes = {
         Mode = 1,
         PrintName = "Pump",
 		Override_ManualAction = true,
-		Mult_Recoil = 0.5,
+		Mult_Recoil = 0.8,
 		Mult_RecoilSide = 0.4,
-		Mult_VisualRecoilMult = 2,
+		Mult_VisualRecoilMult = 0.8,
 		Mult_AccuracyMOA = 0.75,
 		Mult_HipDispersion = 0.8,
-		Mult_SightsDispersion = 0.5,
+		Mult_SightsDispersion = 0.5,	
 		Mult_MoveDispersion = 0.75,
-    },
+    },	
 }
 
 SWEP.NPCWeaponType = "weapon_shotgun"
 SWEP.NPCWeight = 170
 
-SWEP.AccuracyMOA = 45 -- accuracy in Minutes of Angle. There are 60 MOA in a degree.
+SWEP.AccuracyMOA = 30 -- accuracy in Minutes of Angle. There are 60 MOA in a degree.
 SWEP.HipDispersion = 300 -- inaccuracy added by hip firing.
 SWEP.MoveDispersion = 100
 
@@ -125,52 +124,52 @@ SWEP.BarrelLength = 24
 
 SWEP.AttachmentElements = {
     ["mifl_fas2_m3_stock_re"] = {
-        VMBodygroups = {	{ind = 4, bg = 1},	},
+        VMBodygroups = {	{ind = 4, bg = 1},	},	
     },
     ["mifl_fas2_uni_rif_nostock"] = {
-        VMBodygroups = {	{ind = 4, bg = 3},	},
-    },
+        VMBodygroups = {	{ind = 4, bg = 3},	},	
+    },	
     ["mifl_fas2_m3_stock_ex"] = {
-        VMBodygroups = {	{ind = 4, bg = 2},	},
+        VMBodygroups = {	{ind = 4, bg = 2},	},	
     },
     ["mifl_fas2_m3_tube_x"] = {
-        VMBodygroups = {	{ind = 2, bg = 1},	},
-    },
+        VMBodygroups = {	{ind = 2, bg = 1},	},	
+    },	
     ["mifl_fas2_m3_tube_xx"] = {
-        VMBodygroups = {	{ind = 2, bg = 2},	},
-    },
+        VMBodygroups = {	{ind = 2, bg = 2},	},	
+    },		
     ["mifl_fas2_ks23_barrel_l"] = {
         VMBodygroups = {	{ind = 1, bg = 2}, {ind = 3, bg = 2}	},
         AttPosMods = {
             [5] = {vpos = Vector(49, -1.15, 0),},
-        }
+        }		
     },
     ["mifl_fas2_ks23_barrel_k"] = {
         VMBodygroups = {	{ind = 1, bg = 1}, {ind = 3, bg = 1}	},
         AttPosMods = {
             [5] = {vpos = Vector(32, -1.15, 0),},
-        }
+        }		
     },
     ["mifl_fas2_ks23_barrel_sd"] = {
-        VMBodygroups = {	{ind = 1, bg = 4}, {ind = 3, bg = 4}	},
-    },
+        VMBodygroups = {	{ind = 1, bg = 4}, {ind = 3, bg = 4}	},	
+    },	
     ["mifl_fas2_m3_barrel_s"] = {
         VMBodygroups = {	{ind = 0, bg = 1}, {ind = 1, bg = 3}, {ind = 2, bg = 3}, {ind = 3, bg = 5}	},
         AttPosMods = {
             [5] = {vpos = Vector(25.5, -1.15, 0),},
-        }
-    },
+        }		
+    },	
     ["rail"] = {
         VMBodygroups = {{ind = 5, bg = 1}},
     },
     ["go_ammo_sg_slug"] = {
         VMBodygroups = {{ind = 6, bg = 1}},
-		Override_ShellModel = "models/weapons/arccw/mifl/fas2/shell/slug.mdl"
+		Override_ShellModel = "models/weapons/arccw/mifl/fas2/shell/slug.mdl"		
     },
     ["go_ammo_sg_sabot"] = {
         VMBodygroups = {{ind = 6, bg = 2}},
-		Override_ShellModel = "models/weapons/arccw/mifl/fas2/shell/flet.mdl"
-    },
+		Override_ShellModel = "models/weapons/arccw/mifl/fas2/shell/flet.mdl"			
+    },	
 }
 
 SWEP.Hook_ModifyBodygroups = function(wep, data)
@@ -221,7 +220,7 @@ SWEP.Attachments = {
         },
         InstalledEles = {"tacms"},
         ExtraSightDist = 20,
-        CorrectivePos = Vector(0.75, 0, -2)
+        CorrectivePos = Vector(0.75, 0, -2)		
     },
     {
         PrintName = "Barrel",
@@ -231,7 +230,7 @@ SWEP.Attachments = {
         Offset = {
             vpos = Vector(1,1,-0.8),
             vang = Angle(0, 0, -90),
-        },
+        },		
     },
     {
         PrintName = "Muzzle",
@@ -242,13 +241,13 @@ SWEP.Attachments = {
             vpos = Vector(40, -1.15, 0),
             vang = Angle(0, 0, -90),
         },
-        ExcludeFlags = {"mifl_fas2_ks23_barrel_sd"},
+        ExcludeFlags = {"mifl_fas2_ks23_barrel_sd"},		
     },
     {
         PrintName = "Magazine",
         Slot = "mifl_fas2_m3_mag",
         DefaultAttName = "4-Round 12-Gauge Tube",
-        ExcludeFlags = {"mifl_fas2_m3_barrel_s"},
+        ExcludeFlags = {"mifl_fas2_m3_barrel_s"},			
     },
     {
         PrintName = "Stock",
@@ -308,32 +307,32 @@ SWEP.Animations = {
     },
     ["fire"] = {
         Source = "fire1",
-        ShellEjectAt = 0.1,
+        ShellEjectAt = 0.1,		
     },
     ["fire_empty"] = {
         Source = "fire_last",
-        ShellEjectAt = 0.1,
-    },
+        ShellEjectAt = 0.1,		
+    },	
     ["fire_pump"] = {
         Source = "fire1",
-    },
+    },	
     ["fire_iron_pump"] = {
         Source = "fire1_scoped",
-    },
+    },		
     ["fire_iron"] = {
         Source = "fire1_scoped",
-        ShellEjectAt = 0.1,
+        ShellEjectAt = 0.1,			
     },
     ["fire_iron_empty"] = {
         Source = "fire_last_iron",
-        ShellEjectAt = 0.1,
-    },
+        ShellEjectAt = 0.1,			
+    },	
     ["cycle"] = {
         Source = "pump",
-		Time = 1,
+		Time = 0.8,
         ShellEjectAt = 0.1,
         TPAnim = ACT_HL2MP_GESTURE_RANGE_ATTACK_SHOTGUN,
-        MinProgress = 0.7,
+        MinProgress = 0.5,		
     },
     ["sgreload_start"] = {
         Source = "reload_start",
@@ -344,22 +343,22 @@ SWEP.Animations = {
         TPAnim = ACT_HL2MP_GESTURE_RELOAD_SHOTGUN,
     },
     ["sgreload_insert"] = {
-        Source = "reload_load1",
+        Source = "reload_load1",   
         TPAnim = ACT_HL2MP_GESTURE_RELOAD_SHOTGUN,
         TPAnimStartTime = 0.3,
     },
     ["sgreload_insert1"] = {
-        Source = "reload_load1",
+        Source = "reload_load1",     
         TPAnim = ACT_HL2MP_GESTURE_RELOAD_SHOTGUN,
         TPAnimStartTime = 0.3,
     },
     ["sgreload_insert2"] = {
-        Source = "reload_load2",
+        Source = "reload_load2",     
         TPAnim = ACT_HL2MP_GESTURE_RELOAD_SHOTGUN,
         TPAnimStartTime = 0.3,
     },
     ["sgreload_insert3"] = {
-        Source = "reload_load3",
+        Source = "reload_load3",    
         TPAnim = ACT_HL2MP_GESTURE_RELOAD_SHOTGUN,
         TPAnimStartTime = 0.3,
     },

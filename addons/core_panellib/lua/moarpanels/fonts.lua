@@ -1,5 +1,5 @@
 setfenv(1, _G)
-Fonts = Fonts or {}
+Fonts = {}
 
 --[[
 	TODO: delete fonts that you don't use
@@ -11,9 +11,6 @@ local families = {
 	["Roboto"] = "R",
 	["Roboto Light"] = "RL",
 
-	["Titillium Web"] = "TW",
-	["Titillium Web SemiBold"] = "TWB",
-
 	["Open Sans"] = "OS",
 	["Open Sans SemiBold"] = "OSB",
 	["Open Sans Light"] = "OSL",
@@ -21,10 +18,10 @@ local families = {
 	["Arial"] = "A",
 	["Helvetica"] = "HL",
 
-	["Exo Regular"] = "EX",
-	["Exo SemiBold"] = "EXSB",
-	["Exo Bold"] = "EXB",
-	["Exo Medium"] = "EXM",
+	["Exo 2 Regular"] = "EX",
+	["Exo 2 SemiBold"] = "EXSB",
+	["Exo 2 Bold"] = "EXB",
+	["Exo 2 Medium"] = "EXM",
 
 	["Montserrat"] = "MR",
 	["Montserrat Medium"] = "MRM",
@@ -40,12 +37,12 @@ local families = {
 
 	["DejaVu Sans"] = "DV",
 
-	["Sydnie"] = "SYD"
+	["Remington Noiseless"] = "WEIRD",
 }
 
 FontFamilies = families
 
-local sizes = {12, 14, 16, 18, 20, 22, 24, 28, 32, 36, 44, 48, 56, 64, 72, 96, 128}
+local sizes = {12, 14, 16, 18, 20, 22, 24, 28, 32, 36, 40, 44, 48, 56, 64, 72, 96, 128}
 
 for k,v in pairs(families) do
 

@@ -54,8 +54,9 @@ local decoders = {
 	["ushort"] = {8, net.ReadUInt, 16},
 
 	["int"] = {9, net.ReadInt, 32},
-	["float"] = {10, net.ReadDouble, 32},
-	["nil"] = {11, BlankFunc}
+	["double"] = {10, net.ReadDouble},
+	["nil"] = {11, BlankFunc},
+	["float"] = {12, net.ReadFloat},
 }
 
 local decoderByID = {}
@@ -102,7 +103,13 @@ local function ReadChange(obj)
 		if customValue ~= nil or setNil then return decoded_key, customValue end
 	end
 
-	local v_encID = net.ReadUInt(encoderIDLength)
+	local v_encID
+
+	if not obj or not obj.__AliasesTypes[decoded_key] then
+		v_encID = net.ReadUInt(encoderIDLength)
+	else
+		v_encID = obj.__AliasesTypes[decoded_key]
+	end
 
 	local v_dec = decoderByID[v_encID]
 	if not v_dec then errorf("Failed to read value decoder ID from %s properly (@ %d)", obj or "NWLess", v_encID) return end
@@ -219,6 +226,7 @@ net.Receive("NetworkableSync", function(len)
 			changes[k] = {obj.Networked[k], v}
 			obj.Networked[k] = v
 			obj:Emit("NetworkedVarChanged", k, changes[k][1], v) -- key, old, new
+			hook.Run("NetworkableVarChanged", obj, k, changes[k][1], v)
 		else
 
 			idData:Set(v, NumberToID(num_id), k)
@@ -229,6 +237,7 @@ net.Receive("NetworkableSync", function(len)
 
 	if obj then
 		obj:Emit("NetworkedChanged", changes)
+		hook.Run("NetworkableChanged", obj, changes)
 	end
 end)
 

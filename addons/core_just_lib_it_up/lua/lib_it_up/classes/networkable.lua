@@ -70,6 +70,23 @@ nw.Profiling.CleanTime = 900
 nw.FakeNil = nw.FakeNil or newproxy() --lul
 local fakeNil = nw.FakeNil
 
+local decoders = {
+	"String",	"Entity",	"Vector",	"Table",	"Boolean",
+	"Angle",	"Color",	"UInt",		"UShort",	"Int",
+	"Double",	"Nil",		"Float",
+}
+
+nw.Types = {}
+nw.TypesBack = {}
+for k,v in ipairs(decoders) do
+	nw.Types[v] = k - 1
+end
+
+nw.Types.Bool = nw.Types.Boolean
+
+for k,v in pairs(nw.Types) do nw.TypesBack[v] = k end
+nw.TypesBack[nw.Types.Bool] = "Boolean"
+
 -- { [CurTime] = { [nameID] = amt_bytes, ... }
 
 timer.Create("NetworkableCleanProfiler", nw.Profiling.CleanTime, 0, function()
@@ -143,9 +160,11 @@ end
 
 function nw:Initialize(id, ...)
 	self.Networked = {}
-
+	
+	self.__LastNetworked = {}
 	self.__Aliases = {}			-- [name] = alias
 	self.__AliasesBack = {}		-- [alias] = name
+	self.__AliasesTypes = {}	-- [name] = type
 
 	self.__LastSerialized = {} -- purely for networked tables
 	self.__Aware = muldim:new()
@@ -248,6 +267,7 @@ function nw:SetTable(k, v)
 end
 
 function nw:Set(k, v)
+	assert(k ~= nil, "key is nil")
 	-- if you're using a table or an object as `v`, it's assumed you have a custom encoder for it
 	-- if you don't, well, expect issues...
 	self:_ValidateNW(k, v)
@@ -280,13 +300,20 @@ function nw:GetNumID()
 end
 nw.GetNumberID = nw.GetNumID
 
-function nw:Alias(k, k2)
+function nw:Alias(k, k2, typ)
 	if self.__Aliases[k] then
 		self.__AliasesBack[k2] = nil
 	end
 
 	self.__Aliases[k] = k2
 	self.__AliasesBack[k2] = k
+
+	if typ and not Networkable.Types[typ] then
+		errorNHf("unknown alias type: %s", typ)
+		return
+	end
+
+	self.__AliasesTypes[k] = typ and Networkable.Types[typ]
 end
 
 function nw:GetNetworked() --shrug

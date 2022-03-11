@@ -7,6 +7,7 @@ FIconLayout
 local FIC = {}
 
 function FIC:Init()
+	self.UseDockProperties = false
 
 	self.PadX = 4 -- distance between the bounds and the insides
 	self.PadY = 8
@@ -16,7 +17,6 @@ function FIC:Init()
 
 	self.MarginX = 4 -- distance between panels inside
 	self.MarginY = 8
-	self.AutoMargin = false
 
 	self.IncompleteCenter = true
 
@@ -39,21 +39,6 @@ ChainAccessor(FIC, "MarginY", "SpaceY")
 
 function FIC:SetBorder(n)
 	self.PadX, self.PadY = n, n
-end
-
-function FIC:SetColor(col, g, b, a)
-	if IsColor(col) then self.Color = col return end
-
-	local c = self.Color
-	c.r = col or 70
-	c.g = g or 70
-	c.b = b or 70
-	c.a = a or 255
-end
-
-function FIC:Paint(w, h)
-	if self.NoDraw or self.NoDrawBG then return end
-	draw.RoundedBox(8, 0, 0, w, h, self.Color)
 end
 
 function FIC:ShiftPanel(pnl, x, y)
@@ -94,8 +79,13 @@ function FIC:_CreateRow(n)
 end
 
 function FIC:UpdateSize(w, h)
-	local curX = self.PadX
-	local curY = self.PadY
+	local l, t, r, b = self:GetDockPadding()
+
+	local padX = self.UseDockProperties and l or self.PadX
+	local padY = self.UseDockProperties and t or self.PadY
+
+	local curX = padX
+	local curY = padY
 
 	local panels = self.ToLayout or self.Panels
 
@@ -110,11 +100,11 @@ function FIC:UpdateSize(w, h)
 
 		local vW, vH = v:GetSize()
 
-		if curX > w - self.PadX - vW then
+		if curX > w - padX - vW then
 			row.Full = true
 			self:OnRowShift(row, curX, w)
 
-			curX = self.PadX
+			curX = padX
 			curY = curY + row.MaxH + self.MarginY
 
 			self.CurRow = self.CurRow + 1
@@ -141,7 +131,7 @@ function FIC:UpdateSize(w, h)
 			self:OnRowShift(lastRow, curX, w)
 		else
 			local preRow = self.Rows[curRow - 1]
-			local x = (preRow and preRow.PadX) or self.PadX
+			local x = (preRow and preRow.PadX) or padX
 
 			for _, pnl in ipairs(lastRow) do
 				local y = lastRow.Positions[pnl][2]
@@ -156,7 +146,8 @@ function FIC:UpdateSize(w, h)
 
 	if self.AutoResize then
 		local curH = self.ThinkingH or self:GetTall()
-		local newH = curY + (lastRow and lastRow.MaxH or 8) + self.PadY --math.max(curY + (lastRow and lastRow.MaxH or 8), curH)
+		local newH = curY + (lastRow and lastRow.MaxH or 8) +
+			(self.UseDockProperties and b or padY) --math.max(curY + (lastRow and lastRow.MaxH or 8), curH)
 
 		if newH ~= curH then
 			local ret = self:Emit("LayoutResize", newH)
@@ -197,7 +188,7 @@ function FIC:Add(name)
 	return p
 end
 
-vgui.Register("FIconLayout", FIC, "Panel")
+vgui.Register("FIconLayout", FIC, "GradPanel")
 
 
 --[[if IsValid(_Pn) then _Pn:Remove() end

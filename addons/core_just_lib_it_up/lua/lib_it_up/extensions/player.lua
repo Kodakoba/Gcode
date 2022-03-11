@@ -125,20 +125,47 @@ end
 PLAYER.GetNextRespawn = PLAYER.GetRespawnTime
 
 function IsPred()
-	return CurTime() ~= UnPredictedCurTime()
+	return CLIENT and (CurTime() ~= UnPredictedCurTime() or GetPredictionPlayer():IsValid())
 end
+
+
+
+if SERVER then
+	PredTime = CurTime
+else
+	local pt
+	function PredTime()
+		return pt or CurTime()
+	end
+
+	hook.Add("SetupMove", "predtime", function()
+		if IsFirstTimePredicted() then pt = CurTime() end
+	end)
+end
+
 
 function PLAYER:Retry()
 	self:ConCommand("retry")
 end
 
-if SERVER then
-	if not LibItUp.MulDim then include("lib_it_up/classes/multidim.lua") end
 
-	util.AddNetworkString("FullLoad")
+
+if SERVER then
+	LibItUp.IncludeIfNeeded("classes/multidim.lua")
 
 	FullyLoaded = FullyLoaded or {}
 	FullyLoadedCallbacks = FullyLoadedCallbacks or LibItUp.MulDim:new()
+
+	util.AddNetworkString("FullLoad")
+
+	function PLAYER:IsFullyLoaded()
+		return FullyLoaded[self]
+	end
+
+	function PLAYER:OnFullyLoaded(cb, ...)
+		if self:IsFullyLoaded() then cb(...) end
+		FullyLoadedCallbacks:Insert({cb, ...}, self)
+	end
 
 	-- wait for either the client's net message or source's Move hook
 
@@ -179,21 +206,39 @@ if SERVER then
 
 	end)
 
+else
+	FullyLoadedCallbacks = FullyLoadedCallbacks or {}
+	FullyLoaded = FullyLoaded or false
+
+	-- you might not even have localplayer clientside if doing during boot
+
+	function IsFullyLoaded()
+		return FullyLoaded
+	end
+
+	function OnFullyLoaded(cb, ...)
+		if IsFullyLoaded() then cb(...) end
+		table.insert(FullyLoadedCallbacks, {cb, ...})
+	end
+
 	function PLAYER:IsFullyLoaded()
-		return FullyLoaded[self]
+		return IsFullyLoaded()
 	end
 
 	function PLAYER:OnFullyLoaded(cb, ...)
-		if self:IsFullyLoaded() then cb(...) end
-		FullyLoadedCallbacks:Insert({cb, ...}, self)
+		return OnFullyLoaded(cb, ...)
 	end
-
-else
 
 	FullLoadSent = FullLoadSent or false
 	FullLoadRan = FullLoadRan or false
 
 	hook.Add("CalcView", "FullyLoaded", function()
+		FullyLoaded = true
+
+		for k,v in ipairs(FullyLoadedCallbacks) do
+			xpcall(v[1], GenerateErrorer("PlayerFullyLoaded_Callbacks"), unpack(v, 2))
+		end
+
 		if FullLoadSent then
 			hook.Remove("CalcView", "FullyLoaded")
 			return
@@ -331,3 +376,54 @@ if CLIENT then
 		end
 	end)
 end
+
+local allPlayers = player.GetAll()
+
+hook.Add("PlayerInitialSpawn", "TrackAll", function(ply)
+	table.Empty(allPlayers)
+
+	local has = false -- ??? i dont know if i need it and dont feel like testing
+	for k,v in ipairs(player.GetAll()) do
+		allPlayers[k] = v
+		has = has or v == ply
+	end
+
+	if not has then
+		table.insert(allPlayers, ply)
+	end
+end)
+
+hook.Add("PlayerDisconnected", "TrackAll", function(ply)
+	table.Empty(allPlayers)
+
+	local has = false -- ??? i dont know if i need it and dont feel like testing
+	for k,v in ipairs(player.GetAll()) do
+		allPlayers[k] = v
+		has = has or v == ply
+	end
+
+	if has then
+		table.RemoveByValue(allPlayers, ply)
+	end
+
+	ply:Emit("Disconnect")
+end)
+
+function player.GetConstAll()
+	return allPlayers
+end
+
+function PLAYER:ButtonDown(btn)
+	return (not not self._buttons[btn])
+end
+PLAYER.IsButtonDown = PLAYER.ButtonDown
+
+hook.Add("PlayerButtonDown", "TrackButtons", function(ply, btn)
+	ply._buttons = ply._buttons or {}
+	ply._buttons[btn] = true
+end)
+
+hook.Add("PlayerButtonUp", "TrackButtons", function(ply, btn)
+	ply._buttons = ply._buttons or {}
+	ply._buttons[btn] = false
+end)

@@ -1,115 +1,84 @@
---poop
+local tree = Research.Tree:new("Physical")
+tree:SetDescription("Harder, Better, Faster, Stronger")
 
-local vit = Research.SubCategories.Vitality
+local hp = Research.Perk:new("hp")
+hp:SetName("Health Up")
+hp:SetTreeName("Physical")
+hp:SetColor(Color(250, 130, 130))
 
-local PERKS = {}
+local hps = {
+	5, 10, 15, 20, 25, 25
+}
 
-local prk = Research.AddPerk({
-	Name = "Health Up",
-	ID = "healthup",
-})
+local totalHP = 100
 
-for i=1, 25 do
-	prk:AddLevel({sulfur = i, gold_bar = math.ceil(i/3)})
+local reqs = {
+	{ Items = {
+		iron_bar = 10,
+		gold_bar = 3
+	} },
+
+	{ Items = {
+		copper_bar = 15,
+		gold_bar = 5,
+		stem_cells = 2
+	} },
+
+	{ Items = {
+		gold_bar = 10,
+		stem_cells = 5
+	} },
+
+	{ Items = {
+		stem_cells = 15,
+		blood_nanobots = 3,
+		tgt_finder = 1
+	} },
+
+	{ Items = {
+		stem_cells = 30,
+		blood_nanobots = 10,
+		tgt_finder = 3
+	} },
+}
+
+for i=1, 6 do
+	local lv = hp:AddLevel(i)
+	lv:AddRequirement( reqs[i] or reqs[#reqs] )
+
+	lv:SetPos((i - 1) * 1.5, 0)
+	lv:SetIcon(CLIENT and Icons.Plus)
+
+	if i > 3 then
+		lv:AddRequirement( { Computer = 2 } )
+	end
+
+	local add = hps[i]
+	totalHP = totalHP + add
+
+	lv:SetDescription( ("Increase your maximum HP by $%d (total: *%d)"):format(
+		math.floor(add),
+		math.floor(totalHP)
+	) )
+
+	lv.TotalHP = totalHP - 100
 end
 
-table.insert(PERKS, prk)
+local cap = Research.Perk:new("cap")
+cap:SetName("Capacity Up")
+cap:SetTreeName("Physical")
+cap:SetColor( Colors.Sky:Copy():MulHSV(1, 0.6, 2) )
 
+for i=1, 3 do
+	local lv = cap:AddLevel(i)
+	lv:AddRequirement( { Items = { iron_bar = i * 5, gold_bar = i * 3 } } )
+	lv:AddRequirement( { Items = { zased = i } } )
 
-prk = Research.AddPerk({
-	Name = "Regeneration",
-	ID = "regen"
-})
-
-for i=1, 5 do 
-	prk:AddLevel({})
-end 
-
-table.insert(PERKS, prk)
-
-
-for k,v in pairs(PERKS) do 
-	vit:AddPerk(v)
+	lv:SetPos(i * 3, 1)
+	lv:SetIcon(CLIENT and Icons.Plus)
 end
 
-PERKS = {}
 
-local mob = Research.SubCategories.Mobility
-
-local prk = Research.AddPerk("Run Speed Up", "speedup")
-
-for i=1, 50 do
-	prk:AddLevel({})
-	prk:AddYield("misc", {
-
-		{
-			Description = {
-				{	
-					Text = "Run ",
-				},
-				{
-					Text = "faster!",
-					Color = Color(50, 150, 250),
-					Continuation = true
-				},
-			},
-			Icon = {
-				URL = "https://i.imgur.com/dO5eomW.png",
-				Name = "plus.png",
-			}
-		},
-
-	})
-
-	local offy = (i%18 < 9 and 95) or 15
-	local mul = offy==95 and -1 or 1
-
-	local x = 20 + math.floor(i/9)*10
-	local y = offy + (i%9)*10*mul
-
-	prk:SetPos(i, x, y)
+if SERVER then
+	include("physical_sv_ext.lua")
 end
-
-prk:SetDescription([[Congratulations! 
-The simple fact that you're sitting over there, reading this means you've made a glorious contribution to science.
-And everything is working. So far.]])
-
-mob:AddPerk(prk)
-
-prk = Research.AddPerk("Jump Up", "jumpup")
-
-for i=1, 5 do 
-	prk:AddLevel({gold_bar = i*3})
-	prk:AddYield("misc", {
-
-		{
-			Name = "Poop!",
-			Description = {
-				{	
-					Text = "Jump ",
-				},
-				{
-					Text = "higher!",
-					Color = Color(50, 150, 250),
-					Continuation = true
-				},
-			},
-			Icon = {
-				URL = "https://i.imgur.com/dO5eomW.png",
-				Name = "plus.png",
-				W = 48,
-				H = 48
-			}
-		},
-
-	})
-	prk:SetPos(i, 80, 105 - i*10)
-end 
-
-prk:SetDescription([[Hello investors, Cave Johnson here. 
-Now I know you've sunk a lot of money into the money printing devices. 
-But I'm here to tell you we're not banging rocks together over here. We know how to make a quantum space hole.
-Now, we have run into a reproducible human error problem: a lot of expensive printers getting broken due to the lack of mobility on the defenders' part. 
-But don't worry, Cave took care of it.]])
-
-mob:AddPerk(prk)

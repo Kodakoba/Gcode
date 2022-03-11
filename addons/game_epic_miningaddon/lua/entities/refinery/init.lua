@@ -127,7 +127,7 @@ function ENT:Think()
 	local prs = {}
 
 	for name, amt in pairs(fin_amt) do
-		local pr, what = self.OreOutput:NewItem(name, nil, nil, {Amount = amt})
+		local pr, what = self.OreOutput:NewItem(name, nil, {Amount = amt})
 
 		if pr then
 			table.insert(prs, pr)
@@ -217,10 +217,6 @@ function ENT:QueueRefine(ply, inv, item, slot, bulk)
 		end, GenerateErrorer("RefineryPromise"))
 
 	end
-
-	--[[self.OreInput:NewItem(item:GetItemID(), function(new)
-
-	end, slot, item:GetData(), true)]]
 end
 
 -- deposit request
@@ -228,9 +224,11 @@ net.Receive("OreRefinery", function(len, ply)
 	if not ply:Alive() then return end
 
 	local ent = net.ReadEntity()
+	if ply:Distance(ent) > 192 then return end
+
 	local self = ent
 
-	local inv = Inventory.Networking.ReadInventory()
+	local inv = Inventory.Networking.ReadInventory(ply)
 	local item = Inventory.Networking.ReadItem(inv)
 
 	if not inv.IsBackpack then print("inventory is not a backpack") return end
@@ -261,4 +259,29 @@ function ENT:Use(ply)
 		net.WriteEntity(self)
 		net.WriteUInt(0, 4)
 	net.Send(ply)
+end
+
+local function dropItms(self, inv)
+	local spos = self:GetPos() + self:OBBCenter()
+
+	for k,v in pairs(inv:GetItems()) do
+		local drop = ents.Create("dropped_item")
+
+		drop:PickDropSpot({self}, {
+			DropOrigin = spos,
+		})
+
+		inv:RemoveItem(v, true)
+
+		drop:SetCreatedTime(CurTime())
+		drop:SetItem(v)
+		drop:Spawn()
+		drop:Activate()
+		--drop:PlayDropSound(i2)
+	end
+end
+
+function ENT:OnRemove()
+	dropItms(self, self.OreInput)
+	dropItms(self, self.OreOutput)
 end

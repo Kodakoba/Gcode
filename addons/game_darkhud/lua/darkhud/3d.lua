@@ -2,15 +2,13 @@ local dh = DarkHUD
 
 local mx = Matrix()
 
-local rt, mat = draw.GetRTMat("DarkHUD_Tilt", ScrW(), ScrH(), "UnlitGeneric")
-mat:SetInt("$translucent", 1)
-mat:SetInt("$vertexalpha", 1)
-
+local rt, mat = draw.GetRTMat("DarkHUD_Tilt", ScrW(), ScrH())
 mat:Recompute()
 
 dh:On("Rescale", "Tilt", function()
-	rt, mat = draw.GetRTMat("DarkHUD_Tilt", ScrW(), ScrH(), "UnlitGeneric")
+	rt, mat = draw.GetRTMat("DarkHUD_Tilt", ScrW(), ScrH())
 end)
+local smoke = Material("sprites/ar2_muzzle1")
 
 local function pushStuff()
 	if not DarkHUD.Setting3D:GetValue() then return end
@@ -27,10 +25,11 @@ local flat = Angle()
 
 local diff_vec = Vector()
 local diff_vecease = Vector()
-local prevVel = Vector()
 
 local dir = 1
 local side = 0
+
+
 
 local function doRender(_, f)
 	if not DarkHUD.Setting3D:GetValue() then return end
@@ -136,7 +135,6 @@ local function doRender(_, f)
 	ang_c:RotateAroundAxis(ang_c:Right(), 90)
 	ang_c:RotateAroundAxis(ang_c:Right(), yaw)
 
-
 	cam.Start3D(nil, nil, 90)
 	cam.Start3D2D(pos, ang_c, 2)
 
@@ -146,11 +144,14 @@ local function doRender(_, f)
 	surface.SetMaterial(mat)
 	surface.SetDrawColor(255, 255, 255)
 	surface.DrawTexturedRect(0, 0, ScrW(), ScrH())
+
 	--surface.DrawOutlinedRect(0, 0, ScrW(), ScrH())
 
 	cam.PopModelMatrix()
-	cam.End3D()
 	cam.End3D2D()
+	cam.End3D()
+	
+
 	--draw.DisableFilters()
 end
 

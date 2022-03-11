@@ -52,6 +52,22 @@ setfenv(1, _G)
 
 ---------------------------------------------------------------------------]]
 
+local ShadowHandle
+
+
+local function getShadowHandle()
+	if ShadowHandle then return ShadowHandle end
+
+	ShadowHandle = BSHADOWS.GenerateCache("CloudShadow", 256, 256)
+	ShadowHandle:SetGenerator(function(self, w, h)
+		draw.RoundedBox(8, 0, 0, w, h, color_white)
+	end)
+
+	ShadowHandle:CacheShadow(4, 4, 4)
+
+	return ShadowHandle
+end
+
 CLOUDS = CLOUDS or {}
 
 function CLOUDS:RemoveAll()
@@ -67,6 +83,8 @@ function Cloud:Init()
 
 	self.Font = "OS24"
 	self.DescFont = "OSL18"
+	self.FontShit = 0
+
 	self.IsCloud = true
 
 	self:SetSize(2,2)
@@ -253,6 +271,8 @@ function Cloud:Paint()
 	local ch = 0
 
 	local tw, th = surface.GetTextSize(lab)
+	local Lplusratio = 1 - self.FontShit
+	th = math.floor(th * Lplusratio)
 
 	ch = self.HOverride or th
 
@@ -308,20 +328,23 @@ function Cloud:Paint()
 
 	local oldX, oldY = xoff, finY
 
+	local handle = getShadowHandle()
+
 	local am = surface.GetAlphaMultiplier()
 	surface.SetAlphaMultiplier(self:GetAlpha() / 255)
 
-	DisableClipping(true)
+	local clip = DisableClipping(true)
 
 		if self.Shadow and self.DrawShadow then
-			BSHADOWS.BeginShadow()
-			xoff, finY = self:LocalToScreen(xoff, finY)
+			--BSHADOWS.BeginShadow()
+			--xoff, finY = self:LocalToScreen(xoff, finY)
 		end
 
 		-- the box of the cloud
 		local X = xoff - cw*self.Middle
 		local Y = finY
 
+		handle:Paint(X, Y, cw, boxh)
 		draw.RoundedBox(4, X, Y, cw, boxh, self.Color)
 
 		if self.Shadow then
@@ -331,7 +354,7 @@ function Cloud:Paint()
 			local alpha = self.Shadow.alpha or self.Shadow.opacity or 255
 			local color = self.Shadow.color or nil
 
-			BSHADOWS.EndShadow(int, spr, blur, alpha, 0, 1, nil, color)
+			--BSHADOWS.EndShadow(int, spr, blur, alpha, 0, 1, nil, color)
 
 			xoff, finY = oldX, oldY
 
@@ -348,7 +371,7 @@ function Cloud:Paint()
 			labX = X + cw - 8
 		end
 
-		draw.DrawText(lab, self.Font, labX, Y + 2, self.TextColor, self.AlignLabel)
+		draw.DrawText(lab, self.Font, labX, Y + 2 - math.floor(th * self.FontShit), self.TextColor, self.AlignLabel)
 
 		local offy = finY + ch + 2
 
@@ -405,7 +428,7 @@ function Cloud:Paint()
 
 		end
 
-	DisableClipping(false)
+	DisableClipping(clip)
 	surface.SetAlphaMultiplier(am)
 
 	self:PostPaint()

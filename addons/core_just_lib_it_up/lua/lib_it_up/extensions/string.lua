@@ -42,17 +42,6 @@ end
 local cachetbl = {}
 local cachenums = {}
 
-
---[[
-function eachNewline(s) --meant to be used as 'for s in eachNewline(tx) do...'
-	local iter, line = (s:gmatch("[^|]*")), 0
-	return function()
-		line = line + 1
-		return iter(), line
-	end
-end
-]]
-
 function eachNewline(s) --meant to be used as 'for s in eachNewline(tx) do...'
 	local ps = 0
 	local st, e
@@ -66,11 +55,43 @@ function eachNewline(s) --meant to be used as 'for s in eachNewline(tx) do...'
 			local ret = s:sub(ps, st - 1)
 			ps = e + 1
 			return ret, i
-		elseif ps < #s then
+		elseif ps <= #s then
 			local ret = s:sub(ps)
-			ps = #s
+			ps = #s + 1
 			return ret, i
 		end
+	end
+end
+
+function eachMatch(s, match)
+	local ps = 0
+	local st, e
+	local i = 0
+
+	return function()
+		st, e = s:find(match, ps)
+		i = i + 1
+
+		if st then
+			local ret = s:sub(ps, st - 1)
+			ps = e + 1
+			return ret, s:sub(st, e)
+		elseif ps <= #s then
+			local ret = s:sub(ps)
+			ps = #s + 1
+			return ret --, s:sub(st, e)
+		end
+	end
+end
+
+string.Prefixes = {
+	"#", "^", "$", "@", "&", "*"
+}
+
+if CLIENT then
+	function string.GetSize(str, font)
+		if font then surface.SetFont(font) end
+		return surface.GetTextSize(str)
 	end
 end
 
@@ -253,6 +274,7 @@ local function WrapWord(word, curwid, fullwid, widtbl, line, first)
 	if word:match("^[\r\n]") then
 		curwid = 0
 		line = line + 1
+		fullwid = widtbl[line] or widtbl[#widtbl]
 	end
 
 	local wmult = WrapData and WrapData.ScaleW or 1
@@ -306,7 +328,7 @@ local function WrapWord(word, curwid, fullwid, widtbl, line, first)
 	return ret, curwid, line, wrapped
 end
 
-local nonWords = "()[].,!?;:-" -- i don't like what lua's %p matches so i'll make my own list
+local nonWords = ".,!?;:-" -- i don't like what lua's %p matches so i'll make my own list
 nonWords = nonWords:PatternSafe()
 nonWords = nonWords .. "%s%c"
 
@@ -454,6 +476,14 @@ function string.MaxFits(str, w, font)
 	end
 
 	return str
+end
+
+function string.TimeToH(time)
+	local h = math.floor(time / 3600)
+	local m = math.floor( (time - h * 60) / 60)
+	local s = math.floor(time - h * 3600 - m * 60)
+
+	return h, m, s, time % 1
 end
 
 function string.TimeParse(time) --this is broken i think

@@ -58,6 +58,7 @@ local function CreateFrame(ent)
 	f.Shadow = false
 
 	local col = vgui.Create("FButton", f)
+	col.UseSFX = true
 
 	f:On("Think", function(self)
 		if not IsValid(ent) then
@@ -67,16 +68,16 @@ local function CreateFrame(ent)
 		end --bruh
 	end)
 
-	local pre
+	local clip = false
 
 	function f:PrePaint(w, h)
-		pre = DisableClipping(true)
+		clip = DisableClipping(true)
 		draw.EnableFilters()
 	end
 
 	function f:PaintOver(w, h)
 		draw.DisableFilters()
-		if not pre then DisableClipping(false) end
+		if not clip then DisableClipping(false) end
 	end
 
 	function f:PostPaint(w,h)
@@ -100,6 +101,7 @@ local function CreateFrame(ent)
 	col:DockMargin(150, 24, 150, 24)
 	col:Dock(TOP)
 	col:SetZPos(32766)
+	col.RaiseHeight = 4
 
 	local color = Color(90, 180, 90)
 
@@ -131,13 +133,16 @@ function ENT:CreateButton(f, ent, entKey)
 
 	f.Buttons[entKey] = vgui.Create("EButton", f)
 	local fr = f.Buttons[entKey]
+	fr.UseSFX = true
+	
 	fr:SetDoubleClickingEnabled(false)
+	fr.DownSize = 0
 	--fr:SetPos(50, -100 + f.HeaderSize + 16 + 100*i)
 	local frH = scaleH[f.ScaleDown]
 
 	fr:SetSize(375, frH)
 	fr:Dock(TOP)
-	fr:DockMargin(8, 4, 8, 0)
+	fr:DockMargin(8, 8, 8, 0)
 	fr.Border = {w = 2, h = 2, col = ent.FontColor or Color(255, 0, 0)}
 	fr.ID = entKey
 
@@ -167,6 +172,8 @@ function ENT:CreateButton(f, ent, entKey)
 			self:Remove()
 			return
 		end
+
+		h = self:GetDrawableHeight()
 
 		local capFr = ent:GetMoneyFraction()
 		if capFr < self.CapFr then
@@ -233,6 +240,7 @@ function ENT:CreateButton(f, ent, entKey)
 
 	fr.Eject = vgui.Create("FButton", fr.ExpandPanel)
 	local b = fr.Eject
+	b.UseSFX = true
 
 	b:Dock(FILL)
 	b:DockMargin(400, 16, 100, 16)
@@ -244,7 +252,6 @@ function ENT:CreateButton(f, ent, entKey)
 	--b:SetPaintedManually(true)
 
 	b.DoClick = function(s)
-		print("doclick called")
 		net.Start("PrinterRack")
 			net.WriteEntity(self)
 			net.WriteUInt(0, 2) -- = eject
@@ -266,6 +273,7 @@ function ENT:CreateButton(f, ent, entKey)
 
 	fr.Upgrade = vgui.Create("FButton", fr.ExpandPanel)
 	local b2 = fr.Upgrade
+	b2.UseSFX = true
 
 	b2:SetPos(100, 16)
 	b2:SetSize(236, b:GetTall())

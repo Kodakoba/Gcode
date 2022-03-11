@@ -84,8 +84,18 @@ function ptr:CompletePoint(id, b)
 	-- if b and self.CompletedPoints[id] then return end
 	if not b and not self.CompletedPoints[id] then return end
 
+	local is_ac = tut.CurrentStep == self:GetStep()
+
+	if is_ac then
+		if b and not self.CompletedPoints[id] then
+			sfx.SetIn()
+		elseif not b and self.CompletedPoints[id] then
+			sfx.SetOut()
+		end
+	end
+
 	self.CompletedPoints[id] = b
-	if tut.CurrentStep ~= self:GetStep() then return end
+	if not is_ac then return end
 
 	local allDone = true
 
@@ -97,6 +107,7 @@ function ptr:CompletePoint(id, b)
 	end
 
 	if allDone then
+		timer.Simple(0.5, function() sfx.SetFinish() end)
 		self:SetCompleted(true)
 		self:Emit("Completed")
 		for k,v in pairs(tut.Steps) do
@@ -237,7 +248,6 @@ function ptr:PaintPoint(name, y)
 		y = y + dlines * th
 	end
 
-	print(y - preY + 4)
 	return y - preY + 4
 end
 
@@ -353,8 +363,9 @@ end)
 
 LibItUp.OnLoaded("bases.lua", function()
 	LibItUp.OnInitEntity(function()
-		FInc.FromHere("tutorials/*.lua", _CL)
+		FInc.FromHere("tutorials/*.lua", FInc.CLIENT)
 	end)
 end)
 
 include("tutorial_tab_ext.lua")
+

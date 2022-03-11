@@ -31,8 +31,9 @@ function button:Init()
 	self.HovMult = 1.2
 
 	self.Shadow = {
-		MaxSpread = 0.6,
+		MaxSpread = 0.3,
 		Intensity = 2,
+		React = true,
 
 		OnHover = true,	--should the internal shadow logic be applied when the button gets hovered?
 		HoverSpeed = 0.3,
@@ -49,6 +50,15 @@ function button:Init()
 	self.HoverColorGenerated = nil
 	self._Icon = nil
 	self.MxScale = 1
+
+	self.DownFracTime = 0.1
+
+	self.HoverFrac = 0
+	self.DownFrac = 0
+	self.DefaultRaiseHeight = 3
+	self.DownSize = 2
+
+	self.UseSFX = false
 end
 
 function button:SetIcon(url, name, w, h, col, rot)
@@ -80,6 +90,22 @@ function button:SetColor(col, g, b, a)
 	c.a = a or 255
 end
 
+function button:OnMousePressed(mb, ...)
+	if mb == MOUSE_LEFT and self.UseSFX then
+		sfx.ClickIn()
+	end
+
+	baseclass.Get("DButton").OnMousePressed(self, mb, ...)
+end
+
+function button:OnMouseReleased(mb, ...)
+	if mb == MOUSE_LEFT and self.UseSFX then
+		sfx.ClickOut()
+	end
+
+	baseclass.Get("DButton").OnMouseReleased(self, mb, ...)
+end
+
 function button:SetTextColor(col, g, b, a)
 
 	if IsColor(col) then
@@ -102,20 +128,26 @@ end
 local b = bench("wtf", 2000)
 
 function button:HoverLogic(dis, w, h)
-
 	local t = self:GetTable()
 	local shadow = t.Shadow
 
 	if self:IsDown() then
 		local min = math.max(w, h)
 		local scaleFrac = math.min(6, min * 0.12) / min -- minimum between 12% and 6px
-		self:To("MxScale", t.MxScaleDown or (1 - scaleFrac), 0.05, 0, 0.2)
-	elseif self.MxScale ~= 1 then
-		self:To("MxScale", 1, 0.1, 0, 0.3)
+		--self:To("MxScale", t.MxScaleDown or (1 - scaleFrac), 0.05, 0, 0.2)
+		local ex = self:GetTo("DownFrac")
+		if ex and ex.ToVal == 0 then
+			ex:Stop()
+			self.DownFrac = math.min(0.3, self.DownFrac)
+		end
+
+		self:To("DownFrac", 1, self.DownFracTime, 0, 0.2)
+	else --if self.MxScale ~= 1 then
+		--self:To("MxScale", 1, 0.1, 0, 0.3)
+		self:To("DownFrac", 0, self.DownFracTime, 0.05, 0.2)
 	end
 
-	if (self:IsHovered() or t.ForceHovered) and not dis then
-
+	if ( self:IsHovered() or t.Hovered or t.ForceHovered ) and not dis then
 		hov = true
 		local hm = t.HovMult
 
@@ -149,6 +181,8 @@ function button:HoverLogic(dis, w, h)
 			self:MemberLerp(shadow, "Spread", spr, shadow.HoverSpeed, 0, shadow.HoverEase)
 		end
 
+		self:To("HoverFrac", 1, 0.2, 0, 0.2)
+
 		if not self._IsHovered then
 			t._IsHovered = true
 			self:OnHover()
@@ -161,6 +195,7 @@ function button:HoverLogic(dis, w, h)
 
 		--self:LerpColor(self.drawColor, bg, 0.4, 0, 0.8)
 		LC(t.drawColor, bg)
+		self:To("HoverFrac", 0, 0.2, 0, 0.2)
 
 		if shadow.OnHover and shadow.Spread ~= 0 then
 			self:MemberLerp(shadow, "Spread", 0, shadow.UnhoverSpeed, 0, shadow.UnhoverEase)
@@ -209,30 +244,102 @@ local function dRB(rad, x, y, w, h, dc, ex)
 end
 
 -- draw the background
+local cpy = {
+	tl = false,
+	tr = false,
+}
+
+local tempCol = Color(0, 0, 0)
+
 function button:DrawButton(x, y, w, h)
+
 	local rad = self.RBRadius
 
-	local bg = self.drawColor or self.Color or RED
+	local main = self.drawColor or self.Color or RED
+	tempCol:Set(self:GetDisabled() and self.DisabledColor or self.Color)
+	tempCol:MulHSV(1, 0.8, 0.6)
+	local brd = tempCol
 
 	local rbinfo = self.RBEx
+	cpy.bl, cpy.br = rbinfo and rbinfo.bl, rbinfo and rbinfo.bl
+
 	-- bg.a = 255 - math.abs(math.sin(CurTime()) * 250)
 
 	local w2, h2 = w, h
 	local x2, y2 = x, y
 
+	local raise = self._UseRaiseHeight * self.HoverFrac
+	local dfr = self.DownFrac
+	local bSz = self.DownSize
+
 	if self.Border then
 		local bordercol = self.Border.col or self.BorderColor or RED
 		local bw, bh = self.Border.w or 2, self.Border.h or 2
-		if bw > 0 or bh > 0 then
-			dRB(rad, x, y, w, h, bordercol, rbinfo)
 
+		if bw > 0 or bh > 0 then
+			--dRB(rad, x, y, w, h, bordercol, rbinfo)
+
+			if bSz > 0 then
+				dRB(rad, x2, y2 + bSz + raise, w2, h2 - bSz - raise, brd, rbinfo)
+			end
+
+			dRB(rad, x2, y2,
+				w2, h2 - bSz * 2 - raise,
+				main, rbinfo)
+
+			White()
+
+			local am = surface.GetAlphaMultiplier()
+
+			draw.BeginMask()
+				surface.DrawRect(0, 0, w, h)
+			draw.DeMask()
+			surface.SetAlphaMultiplier(999)
+				draw.RoundedStencilBox(rad, x + bw, y + bh,
+					w - bw * 2, h - bh * 2 - bSz - raise, color_white)
+			surface.SetAlphaMultiplier(am)
+			draw.DrawOp()
+				dRB(rad, x, y,
+					w, h - raise - bSz,
+					bordercol, rbinfo)
+			draw.FinishMask()
+
+			if raise > 0 then
+				self:PopMatrix()
+			end
+
+			if raise > 0 then
+				self:ApplyMatrix()
+			end
+
+			--dRB(rad, x2, y2 + raise * dfr, w2, h2 - bSz, main, rbinfo)
 			w2, h2 = w - bw*2, h - bh*2
 			x2, y2 = x + bw, y + bh
+			return
+		end
+
+	end
+
+	if bSz > 0 then
+		if raise > 0 or dfr > 0 then
+			self:PopMatrix()
+		end
+
+			dRB(rad, x2, y2 + bSz, w2, h2 - bSz, brd, rbinfo)
+
+		if raise > 0 or dfr > 0 then
+			self:ApplyMatrix()
 		end
 	end
 
-	dRB(rad, x2, y2, w2, h2, bg, rbinfo)
+	dRB(rad, x2, y2, w2, h2 - bSz, main, rbinfo)
+end
 
+function button:GetDrawableHeight()
+	local raise = self._UseRaiseHeight * self.HoverFrac
+	local bSz = self.DownSize
+
+	return self:GetTall() - bSz -- raise
 end
 
 --draw the text on the button
@@ -251,28 +358,11 @@ function button:PaintIcon(x, y)
 
 	local col = ic.IconColor or lblCol or color_white
 	surface.SetDrawColor(col.r, col.g, col.b, col.a)
-	local xoff = (self.Label and 1) or 0.5
 
 	local iX = x
 	local iY = y
 
-
 	ic:Paint(iX, iY, iW, iH, ic._Rotation)
-
-
-	--[[
-	render.PushFilterMin(TEXFILTER.ANISOTROPIC)
-
-		if ic.IconMat then
-			surface.SetMaterial(ic.IconMat)
-			surface.DrawTexturedRect(iX, iY, iW, iH)
-		elseif ic.IconURL then
-			surface.DrawMaterial(ic.IconURL, ic.IconName, iX, iY, iW, iH, ic.IconRotation)
-		end
-
-	render.PopFilterMin()
-	]]
-
 end
 
 local AYToTextY = {
@@ -323,9 +413,9 @@ function button:Draw(w, h)
 				--blur = 1
 			end
 
-			if t.MxScale < 1 then
+			--[[if t.MxScale < 1 then
 				spr = spr * (1 / t.MxScale ^ 6)
-			end
+			end]]
 			if spr < 0.2 then
 				a = a * (spr / 0.2)
 			end
@@ -334,9 +424,14 @@ function button:Draw(w, h)
 				cam.PopModelMatrix()
 			end
 
-			BSHADOWS.EndShadow(int, spr, blur or 2, a, shadow.Dir, shadow.Distance, nil, shadow.Color, shadow.Color2)
+			local mult = shadow.React and 1 or 0
 
-
+			BSHADOWS.EndShadow(int, spr + self.DownFrac * mult * 0.6, blur or 2, a,
+				shadow.Dir or 0,
+				(shadow.Distance or 0) +
+					(self.HoverFrac > 0 and 1 or 0) * mult +
+					self.DownFrac * 2 * mult,
+				nil, shadow.Color, shadow.Color2)
 		end
 
 	end
@@ -365,6 +460,8 @@ function button:Draw(w, h)
 
 		self:PreLabelPaint(w, h)
 
+		local THIS_IS_SUCH_A_SHITTY_HACK = t.Font:match("^EX") and 0.125 * (ay / 2) or 0
+
 		if newlines > 0 then
 			surface.SetFont(t.Font)
 			surface.SetTextColor(lblCol:Unpack())
@@ -385,7 +482,7 @@ function button:Draw(w, h)
 					lY = ty - lH * (ay / 2)
 				end
 
-				surface.SetTextPos(tx - tW * (ax / 2) + (iW + iconX) / 2, lY + tH * (num - 1))
+				surface.SetTextPos(tx - tW * (ax / 2) + (iW + iconX) / 2, lY + tH * (num - 1) - tH * THIS_IS_SUCH_A_SHITTY_HACK)
 				surface.DrawText(s)
 			end
 
@@ -412,7 +509,7 @@ function button:Draw(w, h)
 			local tX = math.Round(iX + iconX + iW)
 			local tY = math.Round(ty - tH * (ay / 2))
 
-			surface.SetTextPos(tX, tY)
+			surface.SetTextPos(tX, tY - tH * THIS_IS_SUCH_A_SHITTY_HACK)
 			surface.SetTextColor(lblCol:Unpack())
 			surface.DrawText(label)
 		end
@@ -435,19 +532,19 @@ function button:PreLabelPaint(w, h)
 end
 
 function button:GetMatrixScale()
-	return self.MxScale
+	return 1 -- self.MxScale
 end
 
 fbuttonLeakingMatrices = 0	--failsafe
 fbuttonMatrices = {}
 
 local function popMatrix(self, w, h)
-	local scale = self.MxScale
+	--local scale = self.MxScale
 
-	if scale ~= 1 and self.ActiveMatrix then
+	--if (scale ~= 1 or self.HoverFrac ~= 0) and self.ActiveMatrix then
+	if self.ActiveMatrix then
 		cam.PopModelMatrix()
 		self.ActiveMatrix = nil
-		mx:Reset()
 
 		fbuttonLeakingMatrices = fbuttonLeakingMatrices - 1
 		fbuttonMatrices[self] = nil
@@ -467,6 +564,9 @@ function button:PopMatrix()
 	end
 end
 
+function button:GetRaise()
+	return math.min(0, -self._UseRaiseHeight * (self.HoverFrac - self.DownFrac))
+end
 
 function button:PaintOver(w, h)
 	if self.Dim then
@@ -481,20 +581,40 @@ function button:OnRemove()
 end
 
 function button:Paint(w, h)
-	local scale = self.MxScale
+	self._DefaultRaiseHeight = math.floor( h / 20 ) --math.min(h / 15, 3))
+	self._UseRaiseHeight = self.RaiseHeight or self._DefaultRaiseHeight
 
-	if scale ~= 1 then
+	--local scale = self.MxScale
+
+	--if scale ~= 1 or self.HoverFrac ~= 0 then
+	local raiseFrac = self.HoverFrac
+
+	if raiseFrac ~= 0 or self.DownFrac ~= 0 then
+		mx:Reset()
+
+		--[[
 		sharedScaleVec[1] = scale
 		sharedScaleVec[2] = scale
 
 		local xf, yf = self.MxScaleCenterX or w / 2, self.MxScaleCenterY or h / 2
 		local x, y = self:LocalToScreen(xf, yf)
 
-		sharedTranslVec[1], sharedTranslVec[2] = x, y
+		if scale ~= 1 then
+			sharedTranslVec[1], sharedTranslVec[2] = x, y
+
+			mx:Translate(sharedTranslVec)
+				mx:SetScale(sharedScaleVec)
+			mx:Translate(-sharedTranslVec)
+		end
+		]]
+
+		sharedTranslVec:Zero()
+		sharedTranslVec[2] = math.min(self.DownSize - 1,
+			self:GetRaise()
+		) + self.DownFrac * self.DownSize -- when held, the button should be pushed in completely
 
 		mx:Translate(sharedTranslVec)
-			mx:SetScale(sharedScaleVec)
-		mx:Translate(-sharedTranslVec)
+
 		draw.EnableFilters(true)
 
 		cam.PushModelMatrix(mx, true)
@@ -504,9 +624,11 @@ function button:Paint(w, h)
 		fbuttonLeakingMatrices = fbuttonLeakingMatrices + 1
 	end
 
-	self:PrePaint(w,h)
+	local h2 = self:GetDrawableHeight()
+
+	self:PrePaint(w, h2)
 	self:Draw(w, h)
-	self:PostPaint(w,h)
+	self:PostPaint(w, h2)
 
 	if not self:IsValid() then
 		popMatrix(self, w, h) -- yes this can happen

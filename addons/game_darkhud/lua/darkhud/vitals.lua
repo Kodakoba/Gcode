@@ -12,16 +12,17 @@ local surface = surface
 local dh = DarkHUD
 local fonts = DarkHUD.Fonts
 
-fonts.NameFont = "Open Sans Semibold"
-fonts.FactionFont = "Open Sans"
-fonts.MoneyFont = "Open Sans"
-fonts.VitalsNumberFont = "Open Sans"
+fonts.NameFont = "Exo 2 SemiBold"
+-- fonts.FactionFont = "Exo 2"
+fonts.MoneyFont = "Exo 2 Medium"
+fonts.VitalsNumberFont = "Exo 2 Bold"
 
 local st = DarkHUD.SettingFrame or Settings.Create("darkhud_drawframe", "bool")
 st:SetDefaultValue(true)
 	:SetCategory("HUD")
 
 DarkHUD.SettingFrame = st
+DarkHUD.VenomPulseInterval = 0.2
 
 local scale = DarkHUD.Scale
 
@@ -32,7 +33,7 @@ local function createFonts()
 
 	fonts.NameHeight = 40 * scale
 	fonts.FactionHeight = 16 + 12 * scale
-	fonts.MoneyHeight = 28 * scale
+	fonts.MoneyHeight = 30 * scale
 	fonts.VitalsNumberHeight = 12 + 16 * scale
 
 	surface.CreateFont("DarkHUD_Name", {
@@ -40,10 +41,10 @@ local function createFonts()
 		size = fonts.NameHeight
 	})
 
-	surface.CreateFont("DarkHUD_Faction", {
+	--[[surface.CreateFont("DarkHUD_Faction", {
 		font = fonts.FactionFont,
 		size = fonts.FactionHeight
-	})
+	})]]
 
 	surface.CreateFont("DarkHUD_Money", {
 		font = fonts.MoneyFont,
@@ -131,7 +132,7 @@ function DarkHUD.CreateVitals()
 	av:SetPaintedManually(true)
 
 	function f:ResizeElements()
-		fw, fh = scale * 500, scale * 220
+		fw, fh = scale * 500, scale * 210
 
 		recalcBarH()
 
@@ -145,7 +146,7 @@ function DarkHUD.CreateVitals()
 		av:SetSize(64 * scale, 64 * scale)
 		av:SetPos(16, hs + 8)
 
-		local moneyY = av.Y + av:GetTall() / 2 + 6 + 36 * scale
+		local moneyY = av.Y + av:GetTall() + 2
 
 		local vlsH = f:GetTall() - moneyY
 		--math.max(barH, draw.GetFontHeight("DarkHUD_VitalsNumber")) * 2 + barPad
@@ -271,7 +272,7 @@ function DarkHUD.CreateVitals()
 
 		local ct = CurTime()
 
-		DisableClipping(true)
+		local clip = DisableClipping(true)
 
 			for k = #popups.Money, 1, -1 do--k,v in ipairs(popups.Money) do
 				local v = popups.Money[k]
@@ -306,7 +307,7 @@ function DarkHUD.CreateVitals()
 				surface.DrawText(difftxt)
 
 			end
-		DisableClipping(false)
+		DisableClipping(clip)
 
 		if mf > 0 then
 
@@ -318,8 +319,9 @@ function DarkHUD.CreateVitals()
 			local boxY, boxH = -mf * 36, 32
 
 			local am = surface.GetAlphaMultiplier()
+
 			surface.SetAlphaMultiplier(surface.GetAlphaMultiplier() * mf)
-			DisableClipping(true)
+			clip = DisableClipping(true)
 				draw.RoundedBox(8, 12, boxY, mw + 8 + 24 + 6 + 8, boxH, boxcol)
 
 				surface.SetDrawColor(255, 255, 255)
@@ -328,7 +330,7 @@ function DarkHUD.CreateVitals()
 				surface.SetTextColor(popups.MoneyColor:Unpack())
 				surface.SetTextPos(12 + 8 + 24 + 6, boxY + boxH / 2 - mh / 2)
 				surface.DrawText(mtxt)
-			DisableClipping(false)
+			DisableClipping(clip)
 
 			surface.SetAlphaMultiplier(am)
 			--draw.SimpleText(mtxt, "OSB28", 48, boxY + boxH / 2, col, 0, 1)
@@ -338,11 +340,14 @@ function DarkHUD.CreateVitals()
 	local circle = LibItUp.Circle()
 	circle:SetSegments(16)
 
+	local avRnd = 8
+
 	local function Mask(av, x, y, w2, h2)
 		draw.NoTexture()
 		surface.SetDrawColor(0, 0, 0, 255)
-		circle:SetRadius(w2 / 2 + 2)
-		circle:Paint(x + w2 / 2, y + h2 / 2)
+		draw.RoundedStencilBox(avRnd, x, y, w2, h2, color_white)
+		--circle:SetRadius(w2 / 2 + 2)
+		--circle:Paint(x + w2 / 2, y + h2 / 2)
 	end
 
 	local function Paint(av)
@@ -367,22 +372,23 @@ function DarkHUD.CreateVitals()
 		local nameY = y + h2 / 2
 		local fh = draw.GetFontHeight("DarkHUD_Name")
 
-		local tw, th = draw.SimpleText(me:Nick(), "DarkHUD_Name",
-			x + w2 + 12, nameY + fh * 0.125 / 2, curTeamCol, 0, 4)
+		draw.SimpleText(me:Nick(), "DarkHUD_Name",
+			x + w2 + 12, nameY, curTeamCol, 0, 4)
 
-		local sz = 36 * scale
+		local sz = 30 * scale
 		local ic = ic2
 		if sz <= 32 then
 			ic = ic1
 		end
 
-		local moneyY = nameY + 6 - popups.BounceMoney * 6
+		local moneyY = math.floor(y + h2 - fonts.MoneyHeight + 6 - popups.BounceMoney * 6)
 
 		surface.SetDrawColor(moneyIconCol:Unpack())
 
 		ic:Paint(x + w2 + 12, moneyY, sz, sz)
 
-		moneyY = moneyY - popups.BounceMoney * 2
+		moneyY = moneyY - popups.BounceMoney * 2 - fonts.MoneyHeight * 0.125 / 2
+
 		draw.SimpleText2(Language("Price", me:GetMoney()), "DarkHUD_Money",
 			x + w2 + 12 + sz + 4, moneyY + sz/2, popups.MoneyColor, 0, 1)
 
@@ -392,9 +398,19 @@ function DarkHUD.CreateVitals()
 
 		draw.Masked(Mask, Paint, nil, nil, av, x, y, w2, h2)
 
+		local bordSz = 2
 
-		surface.SetDrawColor(curTeamCol:Unpack())
-		surface.DrawMaterial("https://i.imgur.com/VMZue2h.png", "circle_outline.png", x-3, y-3, w2+6, h2+6)
+		draw.BeginMask()
+		render.PerformFullScreenStencilOperation()
+		draw.DeMask()
+			draw.RoundedStencilBox(avRnd, x, y, w2, h2, color_white)
+		draw.DrawOp()
+			draw.RoundedBox(avRnd, x - bordSz, y - bordSz,
+				w2 + bordSz * 2, h2 + bordSz * 2, curTeamCol)
+		draw.FinishMask()
+		--[[surface.SetDrawColor(curTeamCol:Unpack())
+		surface.DrawMaterial("https://i.imgur.com/VMZue2h.png",
+			"circle_outline.png", x-3, y-3, w2+6, h2+6)]]
 
 		DarkHUD:Emit("VitalsFramePainted", w, h)
 	end
@@ -403,28 +419,68 @@ function DarkHUD.CreateVitals()
 	vls.ARFrac = 0
 
 	local gray = Colors.LightGray:Copy()
+	local grayBorder = Color(35, 35, 35)
 
 	local hpCol = Color(240, 70, 70)
 	local hpBorderCol = Color(150, 30, 30)
 
+	local venomCol = Color(180, 70, 160)
+	local venomBorderCol = Color(120, 30, 100)
+
 	local arCol = Color(40, 120, 255)
 	local arBorderCol = Color(30, 50, 225)
 
-	local borderCol = Color(35, 35, 35)
+	function vls:DrawBar(rad, x, y, w, h, col, borderCol, rightBord)
+		local round = w > h and math.Round(
+			math.Clamp(w - rad, 0, rad)
+		)
+
+		if not round then
+			local sx, sy = self:LocalToScreen(x, y)
+
+			if w < h then
+				render.SetScissorRect(sx, sy - 2,
+					sx + w, sy + h + 2, true)
+					draw.RoundedBox(rad, x, y, h, h, col)
+				render.SetScissorRect(0, 0, 0, 0, false)
+			else
+				draw.RoundedBox(rad, x, y - 1, w, h + 2, borderCol)
+				draw.RoundedBox(rad, x, y, w, h, col)
+			end
+
+		else
+			local borderRight = rightBord and 1 or 0
+
+			DarkHUD.RoundedBoxCorneredSize(rad, x, y - 1,
+				w + borderRight, h + 2, borderCol, rad, round, rad, round)
+			DarkHUD.RoundedBoxCorneredSize(rad, x, y,
+				w, h, col, rad, round, rad, round)
+		end
+	end
+
+	local warnIc = Icons.Unsafe:Copy()
+	warnIc:SetAlignment(4)
+
+	local warnGrad = Icons.RadGradient:Copy()
+	warnGrad:SetAlignment(5)
 
 	function vls:Paint(w, h)
 		local x, y = 12, barPad
 
 		--self:SetSize(f:GetWide(), f:GetTall() - hs)
 
-		local hpto = math.Clamp( me:Health() / me:GetMaxHealth(), 0, 1)
+		local venom = me:GetNWInt("Venom", 0)
+		local venomTo = math.Clamp( me:Health() / me:GetMaxHealth(), 0, 1)
+		local hpto = math.Clamp( (me:Health() - venom) / me:GetMaxHealth(), 0, 1)
+
 		local arto = math.min(me:Armor() / 100, 1)
 
 		self:To("HPFrac", hpto, 0.4, 0, 0.2)
+		self:To("VenomFrac", venomTo, 0.4, 0, 0.2)
 		self:To("ARFrac", arto, 0.4, 0, 0.2)
 
 		local hpfr, arfr = self.HPFrac, self.ARFrac
-
+		local vfr = self.VenomFrac
 
 		local rndrad = barH / 2
 
@@ -456,34 +512,36 @@ function DarkHUD.CreateVitals()
 					math.Clamp(barW * hpfr - rndrad, 0, rndrad)
 				)
 
-			draw.RoundedBox(rndrad, barX - 1, barY - 1, barW + 2, barH + 2, borderCol)
+			draw.RoundedBox(rndrad, barX - 1, barY - 1, barW + 2, barH + 2, grayBorder)
 			draw.RoundedBox(rndrad, barX, barY, barW, barH, gray)
 
-			if not round then
-				--draw.RoundedBox(8, avx, avy, hpw, 16, Color(240, 70, 70))
-				if barW * hpfr < barH then
-					render.SetScissorRect(sx, sy - 2, sx + math.floor(barW * hpfr), sy + barH + 2, true)
-						draw.RoundedBoxEx(rndrad, barX, barY, barH, barH, hpCol, true, true, true, true)
-					render.SetScissorRect(0, 0, 0, 0, false)
-				else
+			local venomW = math.min(math.ceil(barW * vfr), barW)
 
-					draw.RoundedBox(rndrad, barX, barY - 1,
-						math.ceil(barW * hpfr), barH + 2, hpBorderCol)
-					draw.RoundedBox(rndrad, barX, barY, math.ceil(barW * hpfr), barH, hpCol)
-				end
+			self:DrawBar(rndrad, barX, barY,
+				venomW, barH, venomCol, venomBorderCol, vfr > 0)
 
-			elseif round then
+			self:DrawBar(rndrad, barX, barY,
+				math.ceil(barW * hpfr), barH, hpCol, hpBorderCol, vfr > 0)
 
-				DarkHUD.RoundedBoxCorneredSize(rndrad, barX, barY - 1,
-					math.ceil(barW * hpfr), barH + 2, hpBorderCol, rndrad, round, rndrad, round)
-				DarkHUD.RoundedBoxCorneredSize(rndrad, barX, barY,
-					math.ceil(barW * hpfr), barH, hpCol, rndrad, round, rndrad, round)
-				
+			if venom >= me:Health() and me:Health() > 0 then
+				-- paint warning abt lethal venom
+				local b = DisableClipping(true)
+
+					local sz = scale * 48
+					local col = warnIc:GetColor()
+					local pi = DarkHUD.VenomPulseInterval
+					local aFr = math.Remap(CurTime() % pi, 0, pi, 1, 0)
+					col.a = aFr * 145 + 110
+
+					warnGrad:SetColor(200, 30, 30, 150 + 90 * aFr)
+					warnGrad:Paint(w + 8 + sz / 2, barY + barH / 2, sz * 6 + sz * aFr * 2, sz * 6 + sz * aFr * 2)
+					warnIc:Paint(w + 8, barY + barH / 2, sz, sz)
+
+				if not b then DisableClipping(false) end
 			end
 
-
 			draw.SimpleText(hpText, font,
-				barX + barW + 6, barY + barH/2 - 1, color_white, 0, 1)
+				barX + barW + 6, barY + barH/2 - fonts.VitalsNumberHeight * 0.125 / 2, color_white, 0, 1)
 
 
 		--[[
@@ -493,7 +551,7 @@ function DarkHUD.CreateVitals()
 			barY = barY + barH + barPad
 			round = (barW * arfr > 16 and math.Round(math.Clamp(barW * arfr - rndrad, 0, rndrad)))
 
-			draw.RoundedBox(rndrad, barX - 1, barY - 1, barW + 2, barH + 2, borderCol)
+			draw.RoundedBox(rndrad, barX - 1, barY - 1, barW + 2, barH + 2, grayBorder)
 			draw.RoundedBox(rndrad, barX, barY, barW, barH, gray)
 
 			if not round then
@@ -517,7 +575,7 @@ function DarkHUD.CreateVitals()
 			end
 
 			draw.SimpleText(arText, font,
-				barX + barW + 6, barY + barH/2 - 1, color_white, 0, 1)
+				barX + barW + 6, barY + barH/2  - fonts.VitalsNumberHeight * 0.125 / 2, color_white, 0, 1)
 
 			DarkHUD:Emit("VitalsBarsPainted", w, h)
 	end

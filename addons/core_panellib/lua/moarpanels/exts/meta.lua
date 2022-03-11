@@ -109,7 +109,7 @@ function META:Lerp(key, val, dur, del, ease, forceswap, changeDest)
 	if not self2[key] then self2[key] = self2[key] or 0 end
 	local from = self2[key]
 
-	if self2[key] == val then return false, false end
+	if self2[key] == val and not forceswap then return false, false end
 
 	if anims[key] then
 		anim = anims[key]
@@ -194,6 +194,36 @@ function META:MemberLerp(tbl, key, val, dur, del, ease, forceswap)
 	end
 
 	return anim
+end
+
+function META:HoverAnim(tHov, delHov, easeHov, tUnhov, delUnhov, easeUnhov)
+	tHov = tHov or 0.3
+	tUnhov = tUnhov or 0.3
+	delHov = delHov or 0
+	delUnhov = delUnhov or 0
+	easeHov = easeHov or 0.3
+	easeUnhov = easeUnhov or 0.3
+
+	if self:IsHovered() then
+		self:To("HovFrac", 1, tHov, delHov, easeHov)
+	else
+		self:To("HovFrac", 0, tUnhov, delUnhov, easeUnhov)
+	end
+end
+
+function META:DownAnim(tDown, delDown, easeDown, tUp, delUp, easeUp)
+	tDown = tDown or 0.3
+	tUp = tUp or 0.3
+	delDown = delDown or 0
+	delUp = delUp or 0
+	easeDown = easeDown or 0.3
+	easeUp = easeUp or 0.3
+
+	if self:IsDown() then
+		self:To("DownFrac", 1, tDown, delDown, easeDown)
+	else
+		self:To("DownFrac", 0, tUp, delUp, easeUp)
+	end
 end
 
 function META:RemoveLerp(key)
@@ -516,23 +546,36 @@ local gd = Material("vgui/gradient-d")
 local gr = Material("vgui/gradient-r")
 local gl = Material("vgui/gradient-l")
 
-function META:DrawGradientBorder(w, h, gw, gh)
+function META:DrawGradientBorder(w, h, gw, gh, left, top, right, bottom)
 	gw, gh = math.ceil(gw), math.ceil(gh)
 
-	if gh > 0 then
-		surface.SetMaterial(gu)
-		surface.DrawTexturedRect(0, 0, w, gh)
+	left = left == nil or left
+	right = right == nil or right
+	top = top == nil or top
+	bottom = bottom == nil or bottom
 
-		surface.SetMaterial(gd)
-		surface.DrawTexturedRect(0, h - gh, w, gh)
+	if gh > 0 then
+		if top then
+			surface.SetMaterial(gu)
+			surface.DrawTexturedRect(0, 0, w, gh)
+		end
+
+		if bottom then
+			surface.SetMaterial(gd)
+			surface.DrawTexturedRect(0, h - gh, w, gh)
+		end
 	end
 
 	if gw > 0 then
-		surface.SetMaterial(gr)
-		surface.DrawTexturedRect(w - gw, 0, gw, h)
+		if right then
+			surface.SetMaterial(gr)
+			surface.DrawTexturedRect(w - gw, 0, gw, h)
+		end
 
-		surface.SetMaterial(gl)
-		surface.DrawTexturedRect(0, 0, gw, h)
+		if left then
+			surface.SetMaterial(gl)
+			surface.DrawTexturedRect(0, 0, gw, h)
+		end
 	end
 end
 
@@ -780,9 +823,13 @@ function META:Bond(to)
 			end
 
 			if not IsValid(to) then
-				if IsValid(self) then self:Remove() end
+				if IsValid(self) then
+					local ok = self:Emit("BondRemove", to)
+					if IsValid(self) and ok == nil then
+						self:Remove()
+					end
+				end
 				hook.Remove("Think", name)
-				return
 			end
 		end)
 
@@ -793,6 +840,7 @@ function META:Bond(to)
 
 	--self.__HasBonded = to
 end
+META.Bind = META.Bond
 
 function META:GetAutoCanvas(name, class)
 	if not name then return end

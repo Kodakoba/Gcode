@@ -21,9 +21,6 @@ function ENT:OnUpgrade()
 end
 
 function ENT:OnFinalUpgrade()
-	if SERVER then
-		self:EmitSound("replay/rendercomplete.wav")
-	end
 end
 
 function ENT:SetupDataTables()
@@ -38,6 +35,9 @@ function ENT:SetupDataTables()
 
 			self:Timer("rubatfixWHEN", 0, 1, function()
 				if self:GetLevel() == 1 then return end
+				if new == self._LastUpgrade then return end
+
+				self._LastUpgrade = new
 				self:OnFinalUpgrade()
 			end)
 		end)
@@ -47,6 +47,8 @@ function ENT:SetupDataTables()
 	if SERVER and self.BoughtCost then
 		self:SetBoughtPrice(self.BoughtCost)
 	end
+
+	self:DerivedDataTables()
 end
 
 function ENT:GetUpgradeCost(curLv)
@@ -90,6 +92,7 @@ function ENT:DoUpgrade(final)
 	self:SetConsumptionMult_Add("LevelPower", self._PowerMult)
 
 	if final then
+		self:EmitSound("replay/rendercomplete.wav")
 		self:OnFinalUpgrade(lvl + 1)
 	end
 end

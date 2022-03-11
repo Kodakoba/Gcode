@@ -20,8 +20,13 @@ if not CLIENT then return end
 Icon = Icon or Animatable:callable()
 Icon.AutoInitialize = false
 
-function Icon:Initialize(url, name)
+local doGet = function(...) return draw.GetMaterial(...) end -- index on call
+LibItUp.IncludeIfNeeded("extensions/player.lua")
+
+function Icon:Initialize(url, name, flags, cb)
 	if not url then error("Icon.Initialize: expected IMaterial in arg #1 or URL + name, got nothing instead") return end
+	if flags then CheckArg(3, flags, isstring, "string") end
+	if cb then CheckArg(4, cb, isfunction, "function") end
 
 	local is_url = isstring(url) and url:match("^https?://")
 
@@ -34,6 +39,12 @@ function Icon:Initialize(url, name)
 		if is_url then
 			self.URL = url
 			self.Name = name
+
+			-- start downloading before we actually need it
+			if CLIENT then
+				-- wait for ISteamHTTP
+				OnFullyLoaded(doGet, url, name, flags, cb)
+			end
 		else
 			local mat = draw.GetMaterialInfo(url) or Material(url)
 
@@ -52,7 +63,27 @@ function Icon:Initialize(url, name)
 	self.__parent.Initialize(self, false)
 end
 
-ChainAccessor(Icon, "Color", "Color")
+ChainAccessor(Icon, "Color", "Color", true)
+
+function Icon:SetColor(col, g, b, a)
+	if not col then
+		self.Color = nil
+		return
+	end
+
+	if IsColor(col) then
+		self.Color:Set(col)
+		return
+	end
+
+	local c = self.Color
+	c.r = col or 70
+	c.g = g or 70
+	c.b = b or 70
+	c.a = a or 255
+end
+
+
 ChainAccessor(Icon, "Filter", "Filter")
 ChainAccessor(Icon, "_Debug", "Debug")
 
@@ -92,6 +123,8 @@ ChainAccessor(Icon, "_Align", "Alignment")
 ChainAccessor(Icon, "_PreserveRatio", "PreserveRatio")
 
 function Icon:PaintIcon(x, y, w, h, rot, xA, yA)
+	x = x - math.floor(w * xA)
+	y = y - math.floor(h * yA)
 
 	if not self.Material then
 		local mat = surface.DrawMaterial(self.URL, self.Name, x, y, w, h, rot)
@@ -106,9 +139,6 @@ function Icon:PaintIcon(x, y, w, h, rot, xA, yA)
 
 	else
 		surface.SetMaterial(self.Material)
-
-		x = x - w * xA
-		y = y - h * yA
 
 		if rot then
 			surface.DrawTexturedRectRotated(x, y, w, h, rot)
@@ -146,6 +176,7 @@ end
 function Icon:_WHPreseveRatio(w, h)
 	local mat = self:GetMaterial()
 	local info = draw.GetMaterialInfo(mat)
+
 	if info then
 		local mw, mh = info.w, info.h
 		local sc = 1
@@ -193,6 +224,10 @@ for i=0, 8 do
 	yAligns[i + 1] = math.floor(i / 3) * 0.5
 end
 
+function Icon:__tostring()
+	return ("Icon	[%s]	[%gx%g]"):format(self.Name or self.Material or "!?", self:GetWide() or -1, self:GetTall() or -1)
+end
+
 function Icon:Paint(x, y, w, h, rot)
 	self:AnimationThink()
 
@@ -206,8 +241,8 @@ function Icon:Paint(x, y, w, h, rot)
 		w, h = self:_WHPreseveRatio(w, h)
 	end
 
-	w = w or self.W
-	h = h or self.H
+	w = math.floor(w or self.W)
+	h = math.floor(h or self.H)
 
 	local xA, yA = 0, 0
 	local alNum = self:GetAlignment()
@@ -227,7 +262,9 @@ function Icon:Paint(x, y, w, h, rot)
 	end
 
 	local col = self.Color
-	surface.SetDrawColor(col.r, col.g, col.b, col.a)
+	if col then
+		surface.SetDrawColor(col.r, col.g, col.b, col.a)
+	end
 
 	if self.Filter then
 		draw.EnableFilters()
@@ -267,9 +304,13 @@ Icons.Edit = Icon("https://i.imgur.com/ZhVoxFk.png", "edit.png")
 Icons.Flag128 = Icon("https://i.imgur.com/DMgRjSC.png", "flag128.png")
 Icons.MagnifyingGlass128 = Icon("https://i.imgur.com/8NayKhl.png", "mag_glass128.png")
 Icons.Electricity = Icon("https://i.imgur.com/poRxTau.png", "electricity.png")
+Icons.Clock64 = Icon("https://i.imgur.com/KW4Pbbd.png", "clk64.png")
+Icons.Clock = Icon("https://i.imgur.com/H455Xz3.png", "clk32_3.png")
 Icons.Coins = Icon("https://i.imgur.com/vzrqPxk.png", "coins_pound64.png")
 Icons.Star = Icon("https://i.imgur.com/YYXglpb.png", "star.png")
 
 -- https://www.flaticon.com/free-icon/money_61584?term=money&page=1&position=16&page=1&position=16&related_id=61584&origin=tag
 Icons.Money64 = Icon("https://i.imgur.com/NVl7wuF.png", "moneybag_64.png")
 Icons.Money32 = Icon("https://i.imgur.com/lRpS2NE.png", "moneybag_32.png")
+Icons.Unsafe = Icon("https://i.imgur.com/Xq0xmuF.png", "unsafe.png")
+Icons.RadGradient = Icon("https://i.imgur.com/uk9gDB8.png", "radial2.png")

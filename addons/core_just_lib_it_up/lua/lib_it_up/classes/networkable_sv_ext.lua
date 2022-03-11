@@ -119,12 +119,21 @@ local encoders = {
 	["color"] = {6, net.WriteColor},
 
 	--7 to 11 are used!!!!!! do not use them!
+
+	["float"] = {12, net.WriteFloat}
 }
 
 ns:Hijack(false)
 ns = nil
 
-local function determineEncoder(typ, val)
+local function determineEncoder(typ, val, force)
+	if force then
+		local enc = encoders[force]
+		if not enc then errorf("Failed to find Encoder function for forced ID %s!", force) return end
+
+		return enc[2], enc[1], enc[3]
+	end
+
 	if val == fakeNil or val == nil then --lol
 		return BlankFunc, 11
 	end
@@ -182,11 +191,12 @@ function nw:_SVSetTable(k, v)
 
 	-- for tables, however, we can check if the data is exact
 
+	self.Networked[k] = v
 	local last_von = self.__LastSerialized[v]
 
-	local err, new_von = pcall(von.serialize, v)
+	local ok, new_von = pcall(von.serialize, v)
 
-	if err then
+	if not ok then
 		errorf("%s: Attempted to serialize a non-vON'able table! %s = %s\n%s", self, k, v, new_von)
 	else
 		if last_von == new_von then --[[ adios ]] return self end
@@ -252,6 +262,8 @@ local function WriteNWID(obj)
 end
 
 local function WriteChange(key, val, obj, ...)
+	obj.__LastNetworked[key] = val
+	local origKey = key
 	key = obj.__Aliases[key] ~= nil and obj.__Aliases[key] or key
 
 	local key_typ = type(key):lower()
@@ -260,6 +272,9 @@ local function WriteChange(key, val, obj, ...)
 	if val == fakeNil then val = nil end
 
 	local unAliased = obj.__AliasesBack[key] or key
+
+	print("WriteChange", key, val, obj)
+
 	local res = obj:Emit("WriteChange", unAliased, val, ...)
 	if res == false then printf("WriteChangeValue asked to not write key/value (%s = %s)", unAliased, val) return end
 
@@ -276,14 +291,20 @@ local function WriteChange(key, val, obj, ...)
 	-- write val encoderID and the encoded val
 	--print("WriteChange called", key, val)
 
+	op = nil
 	local res = obj:Emit("WriteChangeValue", unAliased, val, ...)
 
 	if res == false then printf("WriteChangeValue asked to not write change (%s = %s)", unAliased, val) return end
 
-	op = net.WriteUInt(v_encoderID, encoderIDLength)
+	if not obj.__AliasesTypes[origKey] then
+		op = net.WriteUInt(v_encoderID, encoderIDLength)
+	else
+		v_encoder, v_encoderID, v_additionalArg = determineEncoder(nil, nil, nw.TypesBack[obj.__AliasesTypes[origKey]]:lower())
+	end
+
 	v_encoder(val, v_additionalArg, key)
 
-	if net.ActiveNetstack then
+	if net.ActiveNetstack and op then
 		op.Description = "Changed value encoder ID"
 	end
 end
@@ -359,6 +380,7 @@ function nw:_SendNet(who, full, budget)
 		local nsCursor = 0
 
 		if self:Emit("CustomWriteChanges", changes) == nil then
+			if changes_count == 0 then net.Send({}) return end -- ?? lol
 			net.WriteUInt(changes_count, SZ.CHANGES_COUNT).IsChangesCount = true
 			nsCursor = ns:GetCursor() - 1
 
@@ -398,6 +420,7 @@ function nw:_SendNet(who, full, budget)
 		print(ns)
 		net.WriteNetStack(ns)
 		instances[nameID] = instBytes + (net.BytesWritten())
+		print("sending ", net.BytesWritten(), " bytes")
 	net.Send(who)
 
 	return ns, written, needRerun and changes
@@ -507,6 +530,9 @@ local nwAll = function()
 	timer.Adjust("NetworkableNetwork", update_freq, 0, nwAll)
 	hook.NHRun("NetworkableNetworkFrame")
 end
+
+timer.Create("NetworkableNetwork", update_freq, 0, nwAll)
+
 
 function Networkable._DoDecay()
 	local passed = CurTime() - Networkable.WrittenWhen
@@ -641,8 +667,6 @@ end
 
 Networkable.FullUpdate = Networkable.UpdateFull
 
-timer.Create("NetworkableNetwork", update_freq, 0, nwAll)
-
 hook.Add("PlayerFullyLoaded", "NetworkableUpdate", function(ply)
 	Networkable.UpdateFull(ply, _NetworkableCache)
 end)
@@ -676,6 +700,21 @@ end
 
 function nw:_ServerSet(k, v)
 	if self.Networked[k] == v and not istable(v) then --[[adios]] return end
+
+	if not istable(v) and (v ~= nil and self.__LastNetworked[k] == v) or (v == nil and self.__LastNetworked[k] == fakeNil) then
+		self.Networked[k] = v
+
+		-- last networked is what we just set;
+		-- set the var like normal but dont network it (cuz everyone already knows)
+		_NetworkableChanges:Set(nil, self.NetworkableID, k) -- clear this change
+
+		local ch = _NetworkableChanges:Get(self.NetworkableID)
+		if table.IsEmpty(ch) then -- no changes left; remove us from changes entirely
+			_NetworkableChanges:Set(nil, self.NetworkableID)
+		end
+
+		return
+	end
 
 	self.Networked[k] = v
 	if v == nil then v = fakeNil end

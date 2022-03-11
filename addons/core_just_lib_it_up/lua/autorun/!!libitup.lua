@@ -69,6 +69,7 @@ local realmExclusive = {
 	["sql_arglist.lua"] = _SV,
 	["rtpool.lua"] = _CL,
 	["networkable_sv_ext.lua"] = _NONE,
+	["binds_ext_sv.lua"] = _NONE,
 	["networkable_cl_ext.lua"] = _CL,
 	["chat.lua"] = _CL,
 	["render.lua"] = _CL,
@@ -176,16 +177,40 @@ end)
 libTbl.LoadedDeps = libTbl.LoadedDeps or {}
 libTbl.DepsCallbacks = libTbl.DepsCallbacks or {}
 
-local depsCallback = libTbl.DepsCallbacks
+libTbl.Ready = libTbl.Ready or {}
+libTbl.ReadyCallbacks = libTbl.ReadyCallbacks or {}
+
 
 function libTbl.OnLoaded(file, cb, ...)
 	if libTbl.LoadedDeps[file] then
 		cb(...)
 	else
-		local t = depsCallback[file] or {}
-		depsCallback[file] = t
+		local t = libTbl.DepsCallbacks[file] or {}
+		libTbl.DepsCallbacks[file] = t
 		t[#t + 1] = {cb, ...}
 	end
+end
+
+function libTbl.ListenReady(id, cb, ...)
+	if libTbl.Ready[id] then
+		cb(...)
+	else
+		local t = libTbl.ReadyCallbacks[id] or {}
+		libTbl.ReadyCallbacks[id] = t
+		t[#t + 1] = {cb, ...}
+	end
+end
+
+function libTbl.MarkReady(id)
+	if libTbl.ReadyCallbacks[id] then
+		for k,v in ipairs(libTbl.ReadyCallbacks[id]) do
+			v[1](unpack(v, 2))
+		end
+
+		libTbl.ReadyCallbacks[id] = nil
+	end
+
+	libTbl.LoadedDeps[id] = true
 end
 
 include(path .. "classes.lua") -- base class goes first
@@ -222,12 +247,12 @@ local function onLoad(s)
 	--printf("Loaded %s %s %.2fs. after start...", s, Realm(true, true), SysTime() - s1)
 	local fn = file.GetFile(s)
 
-	if depsCallback[fn] then
-		for k,v in ipairs(depsCallback[fn]) do
+	if libTbl.DepsCallbacks[fn] then
+		for k,v in ipairs(libTbl.DepsCallbacks[fn]) do
 			v[1](unpack(v, 2))
 		end
 
-		depsCallback[fn] = nil
+		libTbl.DepsCallbacks[fn] = nil
 	end
 
 	libTbl.LoadedDeps[fn] = true
@@ -235,7 +260,7 @@ end
 
 libTbl.MarkLoaded = onLoad
 
-local inc = FInc.RealmResolver():SetDefault(true):SetVerbose()
+local inc = FInc.RealmResolver():SetDefault(true)
 
 local function shouldInc(fn)
 	if fn:match("/cl_") or fn:match("/sh_") or fn:match("/sv_") then return false, false end
@@ -243,21 +268,21 @@ local function shouldInc(fn)
 end
 
 local path = libTbl.ExtensionsFolder:gsub("/$", "")
-	FInc.Recursive(path .. "/sh_*.lua", _SH, true, nil)
-	FInc.Recursive(path .. "/*.lua", _SH, true, shouldInc)
-	FInc.Recursive(path .. "/cl_*.lua", _CL, true, nil)
-	FInc.Recursive(path .. "/sv_*.lua", _SV, true, nil)
-	FInc.Recursive(path .. "/client/*", _CL, false, nil)
-	FInc.Recursive(path .. "/server/*", _SV, false, nil)
+	FInc.Recursive(path .. "/sh_*.lua", _SH, nil)
+	FInc.Recursive(path .. "/*.lua", _SH, shouldInc)
+	FInc.Recursive(path .. "/cl_*.lua", _CL, nil)
+	FInc.Recursive(path .. "/sv_*.lua", _SV, nil)
+	FInc.Recursive(path .. "/client/*", _CL, nil)
+	FInc.Recursive(path .. "/server/*", _SV, nil)
 
 
 path = libTbl.DependenciesFolder:gsub("/$", "")
-	FInc.Recursive(path .. "/sh_*.lua", _SH, true, nil, onLoad)
-	FInc.Recursive(path .. "/*.lua", _SH, true, shouldInc, onLoad)
-	FInc.Recursive(path .. "/cl_*.lua", _CL, true, nil, onLoad)
-	FInc.Recursive(path .. "/sv_*.lua", _SV, true, nil, onLoad)
-	FInc.Recursive(path .. "/client/*", _CL, false, nil, onLoad)
-	FInc.Recursive(path .. "/server/*", _SV, false, nil, onLoad)
+	FInc.Recursive(path .. "/sh_*.lua", _SH, nil, onLoad)
+	FInc.Recursive(path .. "/*.lua", _SH, shouldInc, onLoad)
+	FInc.Recursive(path .. "/cl_*.lua", _CL, nil, onLoad)
+	FInc.Recursive(path .. "/sv_*.lua", _SV, nil, onLoad)
+	FInc.Recursive(path .. "/client/*", _CL, nil, onLoad)
+	FInc.Recursive(path .. "/server/*", _SV, nil, onLoad)
 
 
 local deps_t2 = SysTime()

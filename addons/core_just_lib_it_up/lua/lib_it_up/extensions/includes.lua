@@ -84,7 +84,8 @@ function FInc.Including()
 	return including > 0, including
 end
 
-function FInc.Recursive(name, realm, nofold, decider, callback)	--even though with "nofold" it's not really recursive
+
+function FInc.Recursive(name, realm, decider, callback)
 	if not NeedToInclude(realm) then return end
 
 	decider = decider or BlankFunc
@@ -136,27 +137,25 @@ function FInc.Recursive(name, realm, nofold, decider, callback)	--even though wi
 
 	end
 
-	if not nofold then
-		for k,v in pairs(folders) do
+	--if not nofold then
+	for k,v in pairs(folders) do
 
-			-- path/ .. found_folder  .. /  .. wildcard_used
-			-- muhaddon/newfolder/*.lua
+		-- path/ .. found_folder  .. /  .. wildcard_used
+		-- muhaddon/newfolder/*.lua
 
-			FInc.Recursive(path .. v .. "/" .. wildcard, realm, nil, decider, callback)
-		end
+		FInc.Recursive(path .. v .. "/" .. wildcard, realm, decider, callback)
 	end
+	--end
 
 	including = including - 1
 end
 
 setmetatable(FInc, {__call = FInc.Recursive})
 
-function FInc.Coroutine(name, realm, nofold, callback)
-	error("Retired; don't use FInc.Coroutine; causes autorefresh bugs")
-end
-
 function FInc.NonRecursive(name, realm, decider, cb) --mhm
-	return FInc.Recursive(name, realm, true, decider, cb)
+	name = (name:match("%.lua$") and name) or name .. ".lua"
+
+	return FInc.Recursive(name, realm, decider, cb)
 end
 
 local svcol = Color( 70, 195, 255 )
@@ -193,7 +192,15 @@ local function Resolve(res, path)
 	local pt = file.GetPathTable(path)
 	local fn = file.GetFile(path):gsub("%.lua", "")
 
-	if fn:match("^_") then return false, false end -- _stuff don't get included
+	if not res.__Force then
+		if fn:match("^_") then return false, false end -- _stuff.lua don't get included
+
+		for k,v in ipairs(pt) do
+			if v:match("^_") then
+				return false, false
+			end
+		end
+	end
 
 	local is_sv = table.HasValue(pt, "server") or table.HasValue(pt, "sv") or false
 	local is_cl = not is_sv and (table.HasValue(pt, "client") or table.HasValue(pt, "cl")) or false
@@ -209,9 +216,9 @@ local function Resolve(res, path)
 	-- extensions get included manually; do not include them
 	-- folders can only have the full _extension name, not _ext
 
-	local is_ext = fn:match("_ext$") or fn:match("_extension$") or
-		fn:match("^ext_.+") or fn:match("^extension_.+") or
-		fn:match("_ext_") or path:match("_?extension_?")
+	local is_ext = (fn:match("_ext$") or fn:match("_extension$") or
+			fn:match("^ext_.+") or fn:match("^extension_.+") or
+			fn:match("_ext_") or path:match("_?extension_?")) and not res.__Extensions
 
 	-- if we didn't pass cl/sv/sh path check...
 	if not is_sv and not is_cl and not is_sh then
@@ -284,6 +291,20 @@ end
 
 Resolver:AliasMethod(Resolver.SetVerbose, "Verbose")
 
+function Resolver:SetExtensions(b)
+	self.__Extensions = (b == nil and true) or b
+	return self
+end
+
+Resolver:AliasMethod(Resolver.SetExtensions, "Extensions", "AllowExtensions", "Extension")
+
+function Resolver:SetForce(b)
+	self.__Force = (b == nil and true) or b
+	return self
+end
+
+Resolver:AliasMethod(Resolver.SetForce, "Forced")
+
 local default_resolver = Resolver:new()
 
 function FInc.RealmResolver(path)
@@ -295,7 +316,7 @@ function FInc.RealmResolver(path)
 	return Resolver:new()
 end
 
-function FInc.FromHere(name, realm, nofold, decider, cb)
+function FInc.FromHere(name, realm, decider, cb)
 	if not NeedToInclude(realm) then return end
 
 	local gm = engine.ActiveGamemode()
@@ -349,7 +370,7 @@ function FInc.FromHere(name, realm, nofold, decider, cb)
 		return
 	end
 
-	FInc.Recursive(path .. name, realm, nofold, decider, cb)
+	FInc.Recursive(path .. name, realm, decider, cb)
 end
 
 

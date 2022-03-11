@@ -47,11 +47,12 @@ function NavbarChoice:Init()
 	end)
 
 	self.Icon = Icon(questionMark)
+	self.Icon:SetColor(nil)
+
 	self.DefaultIconSize = 0.7
 
 	self.DescriptionFont = "OSL16"
 	self.DescriptionColor = Color(170, 170, 170)
-	self.DescriptionFontShiftUpwards = 4 --source text alignment >:(
 	self.DescriptionFontHeight = 14 --?????????????? draw.DrawText sucks because vertical spacing is fucking HUGE
 									-- 				 amd we're kinda limited on that
 
@@ -64,6 +65,8 @@ function NavbarChoice:Init()
 	self:SetText("")
 	self:SetTall(64)
 	self.TextColor = color_white:Copy()
+
+	self:SetDoubleClickingEnabled(false)
 end
 
 function NavbarChoice:OnSizeChanged(nw, nh)
@@ -71,10 +74,7 @@ function NavbarChoice:OnSizeChanged(nw, nh)
 	self.Icon:SetSize(sz, sz)
 
 	if self.Description then
-		local icsz = self.Icon:GetSize() or sz
-		self.WrappedDescription = self.Description:WordWrap2(self:GetWide() - 16 - icsz, self.DescriptionFont)
-		local _, newlines = self.WrappedDescription:gsub("[^%c]+", "")
-		self.DescripitionNewlines = newlines
+		self:_WrapDescription()
 	end
 end
 
@@ -92,6 +92,8 @@ end
 function NavbarChoice:PostPaint()
 end
 
+local def_clr = Color(255, 255, 255)
+
 function NavbarChoice:SetIcon(url, name, h)
 	local ic = Icon(url, name)
 	self.Icon = ic
@@ -100,16 +102,34 @@ function NavbarChoice:SetIcon(url, name, h)
 
 	local sz = self:GetTall() * self.DefaultIconSize
 	self.Icon:SetSize(sz, sz)
+	self.Icon:SetColor(nil)
 	return ic
 end
 
 AccessorFunc(NavbarChoice, "Name", "Name")
 
+function NavbarChoice:_GetDescriptionX()
+	local icsz = self.Icon and self.Icon:GetWide()
+		or self.IconSize
+		or self.DefaultIconSize * self:GetTall()
+
+	return icsz + 16
+end
+
+function NavbarChoice:_WrapDescription()
+	local icsz = self.Icon and self.Icon:GetWide()
+		or self.IconSize
+		or self.DefaultIconSize * self:GetTall()
+
+	self.WrappedDescription = self.Description:WordWrap2(self:GetWide() - self:_GetDescriptionX() - 4, self.DescriptionFont)
+
+	local _, newlines = self.WrappedDescription:gsub("[^%c]+", "")
+	self.DescripitionNewlines = newlines
+end
 
 function NavbarChoice:SetDescription(desc)
-	local icsz = self.Icon.Size or self.IconSize or self.DefaultIconSize * self:GetTall()
 	self.Description = desc
-	self.WrappedDescription = desc:WordWrap2(self:GetWide() - icsz - 8 - 20, self.DescriptionFont)
+	self:_WrapDescription()
 end
 
 function NavbarChoice:ActiveMask(w, h, frac)
@@ -143,8 +163,15 @@ function NavbarChoice:GetExpFrac(frac, easein, easeout)
 	return frac
 end
 
-function NavbarChoice:Draw(w, h)
+function NavbarChoice:Think()
+	self:HoverAnim(0.1, 0, 0.2)
+	self:DownAnim(0, 0, 1)
+end
 
+local colHov = Colors.Sky:Copy()
+local tempCol = Color(0, 0, 0)
+
+function NavbarChoice:Draw(w, h)
 	local nav = self.Navbar
 
 	if not self.Active then
@@ -152,6 +179,10 @@ function NavbarChoice:Draw(w, h)
 	else
 		self:To("ActiveFrac", 1, 0.4, 0, 0.3)
 	end
+
+	colHov.a = math.max(self.HovFrac * 0.3, self.DownFrac * 0.75, self.ActiveFrac) * 50
+	surface.SetDrawColor(colHov:Unpack())
+	surface.DrawRect(0, 0, w, h)
 
 	draw.Masked(self.ActiveMask, self.ActivePaint, nil, nil, self, w, h, self.ActiveFrac)
 
@@ -161,19 +192,37 @@ function NavbarChoice:Draw(w, h)
 	local frac = self:GetExpFrac(nav.ExpandFrac, 1.3, 1.2)
 
 	local iw, ih = self.Icon:GetSize()
+
+	local scale = 1 - self.DownFrac * 0.075
+
 	iw = iw or self:GetTall() * self.DefaultIconSize
 	ih = ih or self:GetTall() * self.DefaultIconSize
+
 	local size = iw
 
 	--  when expanded becomes 8 + icsz,						when expanded, becomes 8 (padding from left edge)
 	--  otherwise centers									otherwise, becomes the left edge of visible area (area that's not clipped by parent)
 	ix = Lerp(frac, nav.RetractedSize / 2, 8 + iw / 2) + Lerp(frac, nav:GetWide() - nav.RetractedSize, 0)
 
-	local limW = iw < ih and iw
-	local limH = ih <= iw and ih
+	local limW = iw * scale
+	local limH = ih <= iw and ih * scale
+	local iy = h / 2
+
+	ix = ix + self.HovFrac * 2
 
 	self.Icon:SetAlignment(5)
-	self.Icon:Paint(ix, h/2, limW, limH)
+
+	local iclr = self.Icon:GetColor()
+
+	if not iclr then
+		local fr = math.max(self.HovFrac * 0.4, self.DownFrac, self.ActiveFrac)
+		tempCol:Set(def_clr)
+		tempCol:MulHSV(1, 1, 0.6 + fr * 0.4)
+
+		surface.SetDrawColor(tempCol)
+	end
+
+	self.Icon:Paint(ix, iy, math.ceil(limW), limH and math.ceil(limH))
 	--surface.DrawOutlinedRect(ix, h / 2 - ih / 2, iw, ih)
 
 	local frac = self:GetExpFrac(nav.ExpandFrac, 1.8, 1.5) 	--different frac; more eased so text goes to the right faster than the icon
@@ -185,13 +234,13 @@ function NavbarChoice:Draw(w, h)
 	surface.SetFont(self.Font or "BS22")
 	--local tW = surface.GetTextSize(self.Name)
 
-	tx = iconArea + Lerp(frac, w - ix - size - 4, 0) + 8	-- left alignment for text
+	tx = iconArea + Lerp(frac, w - ix - size - 4, 0) + 4	-- left alignment for text
 
 	local becomeVisibleAt = 0.5
 	self.TextColor.a = 255 * (nav.ExpandFrac - becomeVisibleAt) * 1/becomeVisibleAt 		--mmmmmm yes cancer maths
 																							--(basically makes so text is invisible until (becomeVisibleAt) expanded)
 
-	draw.SimpleText2(self.Name, nil, tx, 2, self.TextColor, 0, 5)
+	local titleW, titleH = draw.SimpleText2(self.Name, nil, tx, 2, self.TextColor, 0, 5)
 
 	if self.WrappedDescription then
 		local frac = math.max((nav.ExpandFrac - 0.4) * 1/0.6, 0)
@@ -200,8 +249,7 @@ function NavbarChoice:Draw(w, h)
 
 		local height = self.DescripitionNewlines * self.DescriptionFontHeight
 		local space = self:GetTall() - 24
-		local ty = --[[24 + space/2 - height/2 - self.DescriptionFontShiftUpwards]]
-					h / 2 - self.DescriptionFontHeight / 2
+		local ty = 2 + titleH * 0.75 + 2
 		--surface.SetDrawColor(Colors.Red)
 		--surface.DrawOutlinedRect(descx, ty, w - descx, height)
 
@@ -224,8 +272,8 @@ function NavbarChoice:Draw(w, h)
 			local tw = dat[1]
 			local s = dat[2]
 
-			local tx = iconArea + 20
-
+			local tx = iconArea + 4 + 4
+			--surface.DrawOutlinedRect(tx, 0, 96, 96)
 			surface.SetTextPos(tx + maxW * (1 - frac), ty + i * self.DescriptionFontHeight)
 			surface.DrawText(s)
 			i = i + 1
@@ -274,9 +322,11 @@ local RoundingMask = function(scr, w, h)
 		color_white, true, true, false, true)
 end
 
+NavPanel.ExpandHeight = 28
+
 function Navbar:Init()
 	local showHolder = vgui.Create("InvisPanel", self)
-	showHolder:SetSize(self:GetWide(), 28)
+	showHolder:SetSize(self:GetWide(), NavPanel.ExpandHeight)
 	showHolder:Dock(TOP)
 	showHolder:SetMouseInputEnabled(true)
 
@@ -301,6 +351,10 @@ function Navbar:Init()
 	end
 
 	show.Navbar = self
+
+	function showHolder:PerformLayout()
+		show:CenterVertical()
+	end
 
 	self.ShowBtn = show
 

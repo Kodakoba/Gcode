@@ -21,7 +21,7 @@ handle:SetGenerator(function(self, w, h)
 	local ratio = w / size
 
 	surface.SetDrawColor(255, 255, 255)
-	surface.DrawMaterial("https://i.imgur.com/1aEZv3d.png", "adrenaline_shot128.png", 0, 0, w, h)
+	local mat = surface.DrawMaterial("https://i.imgur.com/1aEZv3d.png", "adrenaline_shot128.png", 0, 0, w, h)
 
 	--local circSize = circSize * 2.8
 
@@ -29,6 +29,8 @@ handle:SetGenerator(function(self, w, h)
 	local _, sy = handle:Offset(0, stimY or 0)
 
 	draw.MaterialCircle(sz / 2, h - sz / 2, sz)
+
+	return not not mat -- only return true if we have the material
 end)
 
 handle.cached = false
@@ -70,17 +72,19 @@ local stimCol = haveStimsCol:Copy()
 
 local cdBoxColor = Colors.Gray:Copy()
 
+local warnGrad = Icons.RadGradient:Copy()
+warnGrad:SetAlignment(5)
+
 Stims.OffhandTable.Paint = function(pnl, x, y, size)
 	local sX, sY = x, y
 
 	stimX, stimY = sX, sY
 
 	if not handle.cached then
-		handle:CacheShadow(4, 8, 2)
-		handle.cached = true
+		handle.cached = handle:CacheShadow(4, 8, 2)
 	end
 
-	local me = LocalPlayer()
+	local me = CachedLocalPlayer()
 
 	pnl.StimpakCDFrac = pnl.StimpakCDFrac or 0
 
@@ -96,6 +100,23 @@ Stims.OffhandTable.Paint = function(pnl, x, y, size)
 	pnl:LerpColor(stimCol, me:GetStims() > 0 and haveStimsCol or noStimsCol, 0.3, 0, 0.3)
 
 	local gsX, gsY = sX, sY
+	local cX, cY = gsX + size / 2, gsY + size / 2
+
+	local venom = me:GetNWInt("Venom", 0)
+
+	if venom >= me:Health() and me:Health() > 0 then
+		-- paint warning abt lethal venom
+		local b = DisableClipping(true)
+
+			local sz = scale * 40
+			local pi = DarkHUD.VenomPulseInterval * 2
+			local aFr = math.Remap(CurTime() % pi, 0, pi, 1, 0)
+
+			warnGrad:SetColor(200, 230, 30, 30 + 30 * aFr)
+			warnGrad:Paint(cX, cY, sz * 4 + sz * aFr * 2, sz * 4 + sz * aFr * 2)
+
+		if not b then DisableClipping(false) end
+	end
 
 	draw.EnableFilters(true, false)
 
@@ -111,7 +132,8 @@ Stims.OffhandTable.Paint = function(pnl, x, y, size)
 				gsX, gsY, size, size)
 
 			-- trapezoid mask for cooldown
-			draw.BeginMask(mask, gsX + size / 2, gsY + size / 2, size, cdFrac)
+			draw.BeginMask()
+				mask(gsX + size / 2, gsY + size / 2, size, cdFrac)
 			draw.DrawOp()
 				surface.SetDrawColor(stimCol:Unpack())
 				surface.DrawMaterial("https://i.imgur.com/1aEZv3d.png", "adrenaline_shot128.png",
@@ -125,7 +147,7 @@ Stims.OffhandTable.Paint = function(pnl, x, y, size)
 			local tY = gsY + size - circSize / 2
 
 			surface.SetFont("DarkHUD_Stims")
-			local tx = tostring(LocalPlayer():GetStims())
+			local tx = tostring(me:GetStims())
 			local tw, th = surface.GetTextSize(tx)
 			tX = math.ceil(tX - tw / 2)
 			tY = math.ceil(tY - th / 2)

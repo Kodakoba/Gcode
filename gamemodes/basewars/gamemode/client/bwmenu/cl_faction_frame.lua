@@ -56,12 +56,12 @@ function FAC:CanvasPaint(w, h)
 		surface.SetDrawColor(col:Unpack())
 		surface.DrawRect(0, 0, w, h)
 
-		surface.SetDrawColor(bordCol:Unpack())
+		surface.SetDrawColor(0, 0, 0) --bordCol:Unpack())
 
 		-- inlined DrawGradientBorder
 		local gw, gh = 3, 3
 
-		surface.SetMaterial(gu)
+		--[[surface.SetMaterial(gu)
 		surface.DrawTexturedRect(0, 0, w, gh)
 
 		if not self.NoDrawBottomGradient then
@@ -71,7 +71,7 @@ function FAC:CanvasPaint(w, h)
 
 
 		surface.SetMaterial(gr)
-		surface.DrawTexturedRect(w - gw, 0, gw, h)
+		surface.DrawTexturedRect(w - gw, 0, gw, h)]]
 
 		surface.SetMaterial(gl)
 		surface.DrawTexturedRect(0, 0, gw, h)
@@ -270,7 +270,8 @@ function FAC:CreateMemberList()
 				col = gold
 				render.SetScissorRect(pX, pY, plyList:GetWide() + pX, plyList:GetTall() + pY, true)
 					DisableClipping(true)
-						draw.RoundedBox(self.Rounding, -2, -2, w + 4, h + 4, Colors.Golden)
+						draw.RoundedBox(self.Rounding,
+							-2, -2, w + 4, h + 4, Colors.Golden)
 					DisableClipping(false)
 				render.SetScissorRect(0, 0, 0, 0, false)
 
