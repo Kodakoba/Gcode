@@ -65,6 +65,8 @@ local function sockDisconnect(sock)
 end
 
 local function socketReceive(sock, str)
+	if not discord.Enabled then return end
+
 	local r, g, b = str:match("^(%d+),(%d+),(%d+)|")
 	r, g, b = tonumber(r), tonumber(g), tonumber(b)
 
