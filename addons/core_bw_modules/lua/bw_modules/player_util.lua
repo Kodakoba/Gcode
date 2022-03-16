@@ -50,7 +50,7 @@ PLAYER.ChatNotify = notification
 
 function PLAYER:LogNotify(...)
 	BaseWars.Notify.LogNotify(...)
-	net.Send(ply)
+	net.Send(self)
 end
 
 function MODULE.PopupNotification(ply, typ, text, ...)

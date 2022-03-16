@@ -33,7 +33,7 @@ if SERVER then
 	end
 
 	for k,v in ipairs(funcs) do
-		debugoverlay[ v[1] ] = Curry(sendDbg, k)
+		debugoverlay[ v[1] ] = function(...) sendDbg(k, ...) end
 	end
 
 else
