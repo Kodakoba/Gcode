@@ -38,16 +38,14 @@ function ENT:Initialize()
 
 	self:SetUseType(SIMPLE_USE)
 
-	local despawnTime = 20
-	local blips = 3
+	local despawnTime = 60
+	local blips = 5
 
 	self:Timer("DisappearWarn", despawnTime - blips - 1, 1, function()
 		self:EmitSound("npc/roller/mine/rmine_tossed1.wav", 70, 120, 1)
 
 		self:Timer("Disappear", blips + 1, 1, function()
 			local pos = self:LocalToWorld(self:OBBCenter())
-
-			print("disappear timer, playing and yeeting", pos)
 
 			sound.Play("weapons/arccw/ricochet0" .. math.random(1, 5) .. ".wav",
 				pos, 70, math.random(90, 110), 1)
