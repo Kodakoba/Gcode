@@ -6,9 +6,9 @@ include("shared.lua")
 
 ENT.Model = "models/props/cs_militia/militiarock0%s.mdl"
 
-local OreRespawnTime = 180 	--seconds
-local OreInvisibleTime = 5 	-- has to be invisible for X to everyone to disappear
-local OreVisibleTime = 120 	-- if it's X seconds past it's time to remove it'll be removed regardless of people seeing
+OreRespawnTime = 180 	--seconds
+OreInvisibleTime = 5 	-- has to be invisible for X to everyone to disappear
+OreVisibleTime = 120 	-- if it's X seconds past it's time to remove it'll be removed regardless of people seeing
 
 local sizes = {
 	[1] = 3,
@@ -432,7 +432,7 @@ function OresRespawn(amt)
 		if not e:IsValid() then table.remove(ActiveOres, i) end
 	end
 
-	local maxOres = math.max(3, player.GetCount() / 3)
+	local maxOres = hook.Run("GetOreCount") or math.max(3, player.GetCount() / 3)
 
 	amt = amt or maxOres - #ActiveOres - OresAwaitingRespawn
 	if amt <= 0 then return end
