@@ -57,6 +57,14 @@ local function CreateFrame(ent)
 	f.ScaleDown = ScrH() < 800
 	f.Shadow = false
 
+	local holding = vgui.Create("DLabel", f)
+	holding:SetFont("EXSB48")
+	holding:DockMargin(24, 24, 24, 0)
+	holding:SetZPos(32765)
+	holding:Dock(TOP)
+	holding:SetContentAlignment(5)
+
+
 	local col = vgui.Create("FButton", f)
 	col.UseSFX = true
 
@@ -81,24 +89,33 @@ local function CreateFrame(ent)
 	end
 
 	function f:PostPaint(w,h)
-
 		draw.SimpleText("Printer Rack", "EXSB48", w/2, 24, color_white, 1, 1)
 		self.ScaleDown = ScrH() < 800
 
 		local desH = scaleH[self.ScaleDown]
+		local money = 0
 
 		for k,v in pairs(self.Buttons) do
+			money = money + (v.Money or 0)
+
 			if v:GetTall() ~= desH and v.ExpandFrac == 0 then
 				v:SetTall(desH)
 			end
 		end
 
-		col:SetTall(desH * 1.5)
+		col:SetTall(desH * 1.25)
+
+		local nt = "Holding: " .. Language("Price", money)
+		
+		if nt ~= holding:GetText() then
+			holding:SetText(nt)
+			holding:InvalidateLayout(true)
+		end
 	end
 	ent.Frame = f
 
 	col:SetSize(450, 120)
-	col:DockMargin(150, 24, 150, 24)
+	col:DockMargin(150, 24, 150, 0)
 	col:Dock(TOP)
 	col:SetZPos(32766)
 	col.RaiseHeight = 4
@@ -176,6 +193,7 @@ function ENT:CreateButton(f, ent, entKey)
 		h = self:GetDrawableHeight()
 
 		local capFr = ent:GetMoneyFraction()
+		self.Money = ent:GetMoney()
 		if capFr < self.CapFr then
 			-- only possible if withdrawn; just go to 0 and go to capFr afterwards
 			self:To("CapFr", 0, 0.4, 0, 5)

@@ -79,6 +79,9 @@ function ENT:GetMoneyFraction()
 	return self:GetNWMoney() / self:GetCapacity()
 end
 
+function ENT:GetMoney()
+	return self:GetNWMoney()
+end
 function ENT:DrawMoneyBar(pos, ang, scale, _, _, me, pwd)
 
 	if me.TTR then me.PrintAmount = self:GetNWInt("UpgradeCost", 0) / me.TTR  end
