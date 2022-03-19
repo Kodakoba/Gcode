@@ -117,6 +117,10 @@ if CLIENT then
 		elseif data_typ == 1 then
 			-- received string
 			local str = net.ReadCompressedString()
+			if str and str:sub(1, 2) ~= "\\#" then
+				str = language.GetPhrase(str)
+			end
+
 			MODULE._Add(notif_typ, nil, str)
 
 		elseif data_typ == 2 then
@@ -133,6 +137,9 @@ if CLIENT then
 				end
 
 				args[i] = Networkable.ReadByDecoder()
+				if isstring(args[i]) and args[i]:sub(1, 2) ~= "\\#" then
+					args[i] = language.GetPhrase(args[i])
+				end
 			end
 
 			MODULE._Add(notif_typ, nil, unpack(args))
