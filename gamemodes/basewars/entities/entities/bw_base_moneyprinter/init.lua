@@ -87,7 +87,13 @@ function ENT:PlayerTakeMoney(ply, suppress)
 	ply:GiveMoney(money)
 
 	if not suppress then
-		ply:EmitSound("mvm/mvm_money_pickup.wav")
+		local toofar = ply:GetPos():Distance(self:GetPos()) > 256
+
+		if toofar then
+			self:EmitSound("mvm/mvm_money_pickup.wav", 60)
+		else
+			ply:EmitSound("mvm/mvm_money_pickup.wav", 60)
+		end
 	end
 
 	hook.NHRun("BaseWars_PlayerEmptyPrinter", ply, self, money)
