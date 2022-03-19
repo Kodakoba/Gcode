@@ -26,28 +26,95 @@ function ENT:GetMoneyFraction()
 	return 1
 end
 
+ENT.JammingSounds = {
+	"weapons/arccw_fml/ar_ak47/ak47_cock1.wav",
+	"weapons/arccw_fml/ar_ak47/ak47_cock2.wav",
+	"weapons/arccw_fml/ar_g36c/g36c_handle.wav",
+	"weapons/arccw_fml/ar_g3a3/g3_boltpull.wav",
+	"weapons/arccw_fml/sub_mp5/mp5_boltback1.wav",
+	"weapons/cw_deagle/slideback.wav",
+}
+
+ENT.BreakSounds = {
+	"weapons/arccw_fml/mg_vollmer/vollmer_startertab.wav",
+
+}
+ENT.RepairingSounds = {
+	"weapons/arccw_fml/ar_m4a1/m4_check.wav",
+	"weapons/cw_makarov/magin_partial.wav",
+	"weapons/cw_mp7_official/boltback.wav",
+}
+
+ENT.RepairedSounds = {
+	"weapons/cw_mp7_official/boltrelease.wav",
+	"weapons/cw_m203/close.wav",
+}
+
+for i=1, 5 do
+	table.insert(ENT.RepairingSounds, ("weapons/cw_mp7_official/swivel%d.wav"):format(i))
+end
+
+function ENT:ExplodeUser()
+	local efd = EffectData()
+	efd:SetOrigin(self:GetPos())
+	util.Effect("Explosion", efd, nil, true)
+
+	local ply = self:BW_GetOwner():GetPlayer()
+	if IsPlayer(ply) then
+		ply:TakeDamage(
+			math.max(0, 100 - ply:GetPos():Distance(self:GetPos()) / 2), self, self)
+	end
+
+	self:Remove()
+end
+
+function ENT:CrapOut()
+	self:EmitSound("arccw_go/taser/taser_shoot.wav")
+	self:EmitSound(table.SeqRandom(self.BreakSounds), 100)
+
+	self.Broken = true
+
+	if self:BW_GetOwner():GetMoney() > 500000 and math.random() < 0.05 then
+		self:ExplodeUser()
+	end
+end
+
+function ENT:AttemptRepair()
+	if math.random() > 0.1 then
+		local snd = table.SeqRandom(self.RepairingSounds)
+		self:EmitSound(snd, 60)
+		return
+	end
+
+	print("Repaired")
+	self.NextBreak = math.random(50, 100)
+	self.BreaksIn = math.random(5, 15)
+	self:EmitSound(table.SeqRandom(self.RepairedSounds), 75)
+	self.BreakingDown = 0
+	self.Broken = false
+end
+
+
 function ENT:UseFunc(act, call)
 	if self:BW_GetOwner() ~= act:GetPInfo() then return end
+
+	if self.Broken then
+		self:AttemptRepair()
+		return
+	end
 
 	local pg = self:GetPowerGrid()
 	if not pg or not pg:TakePower(3) then return end
 
 	if self:BW_GetOwner():GetMoney() > 25000 then
 		self.BreakingDown = self.BreakingDown + 1
-		self:EmitSound("buttons/combine_button7.wav")
 
-		if self.BreakingDown >= 5 then
-			local efd = EffectData()
-			efd:SetOrigin(self:GetPos())
-			util.Effect("Explosion", efd, nil, true)
+		if self.BreakingDown > self.NextBreak then
+			self:EmitSound(table.SeqRandom(self.JammingSounds), 60)
+		end
 
-			local ply = self:BW_GetOwner():GetPlayer()
-			if IsPlayer(ply) then
-				ply:TakeDamage(
-					math.max(0, 100 - ply:GetPos():Distance(self:GetPos()) / 2), self, self)
-			end
-
-			self:Remove()
+		if self.BreakingDown >= self.BreaksIn + self.NextBreak then
+			self:CrapOut()
 			return
 		end
 	end
@@ -75,6 +142,9 @@ local curTipY = 0
 function ENT:Init()
 	self:SetBoughtPrice(100)
 	self.BreakingDown = 0
+
+	self.BreaksIn = math.random(5, 16)
+	self.NextBreak = 0
 end
 
 function ENT:PaintStructureInfo(w, y)return 0 end
@@ -116,8 +186,7 @@ function ENT:DrawTipDisplay(w, h, a)
 	draw.RoundedBox(16, contX, contY, contW, contH, blk, false, false, true, true)
 	draw.DrawText(wrappedtx, contFont, contX + 8, contY + 8, white)
 
-
-	curTipY = contY + contH
+	--curTipY = contY + contH
 end
 
 function ENT:Draw()

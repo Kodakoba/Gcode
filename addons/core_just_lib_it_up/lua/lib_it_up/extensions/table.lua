@@ -237,8 +237,11 @@ if not table.Filter then
 end
 
 function table.SeqRandom(t)
-	return t[math.random(1, #t)]
+	local k = math.random(#t)
+	return t[k], k
 end
+
+table.RandomSeq = table.SeqRandom
 
 function eval(var, ...)
 
