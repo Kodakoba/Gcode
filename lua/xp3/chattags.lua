@@ -392,14 +392,45 @@ local alphabet = "0123456789/?$%&+-#_=^£ABCDEFGHJKLMNOPQRSTUVWXYZabcdeghjmnopqr
 
 local len = #alphabet
 
-local bad = function()
-	local rand = math.random(1, len)
-	return alphabet:sub(rand, rand)
+local rands = {}
+
+for k,v in utf8.codes(alphabet) do
+	rands[k] = utf8.char(v)
 end
+
+local bad = function()
+	local rand = math.random(1, #rands)
+	return rands[rand]
+end
+
+local seed = math.random()
+local lastRoll = CurTime()
+
+local amt = 0
+local fn = 0
 
 hook.Add("ChatHUD_DrawText", "obfus", function(txt)
 	if not obfusActive then return end
+
+	if CurTime() - lastRoll > 0.05 then
+		lastRoll = CurTime()
+		seed = math.random()
+	end
+
+	if fn == FrameNumber() then
+		amt = amt + 1
+	else
+		fn = FrameNumber()
+		amt = 0
+	end
+
+	math.randomseed(seed + #txt + amt)
 	return txt:gsub("[^%s%c]", bad)
+end)
+
+hook.Add("ChatHUD_ModifyText", "obfus", function(txt, piece)
+	print("lol modifying")
+	return piece:gsub("[^%s%c]", bad)
 end)
 
 chathud.TagTable["obfus"] = {
