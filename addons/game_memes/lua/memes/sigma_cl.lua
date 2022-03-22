@@ -9,7 +9,10 @@ hook.Add("Think", "sigma", function()
 		local dat = active[i]
 		local ch, ply = dat[1], dat[2]
 
-		if not IsValid(ch) or ch:GetState() == GMOD_CHANNEL_STOPPED or not IsValid(ply) then
+		local vec = isvector(ply) and ply
+		ply = IsPlayer(ply) and ply
+
+		if not IsValid(ch) or ch:GetState() == GMOD_CHANNEL_STOPPED or (not vec and not IsValid(ply)) then
 			table.remove(active, i)
 			ch:Stop()
 			continue
@@ -17,7 +20,11 @@ hook.Add("Think", "sigma", function()
 
 		if ply == me then continue end
 
-		ch:SetPos(ply:GetPos() + ply:OBBCenter())
+		if ply then
+			ch:SetPos(ply:GetPos() + ply:OBBCenter())
+		elseif vec then
+			ch:SetPos(vec)
+		end
 	end
 end)
 
@@ -52,8 +59,17 @@ net.Receive("sigma_male", function()
 end)
 
 net.Receive("playsound", function()
-	local url, ply = net.ReadString(), net.ReadEntity()
-	shrigmaPlay(url, url:match("[^/]+$"), ply, true)
+	local url = net.ReadString()
+	local isPos = net.ReadBool()
+	local posArg
+
+	if isPos then
+		posArg = net.ReadVector()
+	else
+		posArg = net.ReadEntity()
+	end
+
+	shrigmaPlay(url, url:match("[^/]+$"), posArg, true)
 end)
 
 local tab = {

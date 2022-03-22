@@ -100,6 +100,18 @@ local function doSound(ply, url)
 	net.Broadcast()
 end
 
+function PlayURLSound(ply, url)
+	net.Start("playsound")
+		net.WriteString(url)
+		if isvector(ply) then
+			net.WriteBool(true)
+			net.WriteVector(ply)
+		else
+			net.WriteBool(false)
+			net.WriteEntity(ply)
+		end
+	net.Broadcast()
+end
 
 local f = {
 	"gachi",
