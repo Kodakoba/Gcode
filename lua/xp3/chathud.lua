@@ -343,7 +343,7 @@ function ParseTags(str, special)
 	end
 
 	for tag, argsstr in string.gmatch( str, tagptrn ) do
-		local OGargsstr = argsstr --argsstr will be changed
+		local OGargsstr = argsstr and #argsstr > 0 and argsstr --argsstr will be changed
 
 		local chTag = chathud.TagTable[tag]
 		if chTag and chTag.NoRegularUse and not special then continue end
@@ -363,7 +363,6 @@ function ParseTags(str, special)
 		--local tag, argsstr = tagcont:match(tagptrn)
 
 		if not chTag then
-
 			local isend = tag:match(tagendptrn)
 			if not isend or not chathud.TagTable[isend] then print("no such tag to end:", tag, isend) continue end
 
@@ -379,6 +378,9 @@ function ParseTags(str, special)
 
 					if prevtagwhere then
 						tags[key] = str:sub(prevtagwhere, starts+utflen(str)-2)	--if ender, put text first ender later
+						local ret = hook.Run("ChatHUD_ModifyText", str, tags[key], prevtagwhere, starts+utflen(str)-2, tag)
+						if ret then tags[key] = ret end
+	
 						key = key + 1
 					end
 
@@ -463,7 +465,6 @@ function ParseTags(str, special)
 			if lastargstr and lastargstr ~= "-" then
 				args[i+1] = lastargstr
 			end
-
 		end
 
 		local key = #tags + 1
@@ -500,6 +501,7 @@ function ParseTags(str, special)
 		prevtagwhere = starts
 
 		local tosub = "<" .. tag .. ((OGargsstr and "=" .. OGargsstr) or "") .. ">"
+
 		tosub = tosub:PatternSafe()
 		str = str:gsub(tosub, "", 1) --remove the tag we just parsed
 	end
