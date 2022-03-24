@@ -313,41 +313,59 @@ end
 hook.Add("HUDPaint", "StructureInfoPaint", PaintStuff)
 
 
-local tx = "Double yields active!"
-local fnt = Fonts.PickFont("MRM", tx, ScrW() / 3, ScreenScale(20), 72)
-local blurFont = Fonts.GenerateBlur(fnt, 4)
+local lines = {
+	{
+		"Double yields active!",
+	}, {
+		"Time left: %s"
+	}, {
+		"(this can be hidden in the F3 settings)"
+	}
+}
 
-local tx2 = "Time left: %s"
-local fnt2 = Fonts.PickFont("MRM", tx2:format("99:99:99"), ScrW() / 3, ScreenScale(14), 64)
-local blurFont2 = Fonts.GenerateBlur(fnt2, 2)
+local l1, l2, l3 = unpack(lines)
+
+l1[2] = Fonts.PickFont("MRM", l1[1], ScrW() / 3, ScreenScale(20), 72)
+l2[2] = Fonts.PickFont("MRM", l2[1]:format("99:99:99"), ScrW() / 3, ScreenScale(14), 72)
+l3[2] = Fonts.PickFont("EX", l3[1], ScrW() / 3, ScreenScale(10), 72)
+
+for k,v in ipairs(lines) do
+	v[3] = Fonts.GenerateBlur(v[2], 4 - k + 1)
+end
 
 local col = Color(0, 0, 0)
 hook.Add("HUDPaint", "DoubleYields", function()
 	local comp, time = BaseWars.SanctionComp()
 	if not comp then return end
 
-	col:SetHSV(CurTime() * 30, 0.5, 1)
+	if hook.Run("ShouldPaintComp") == false then return end
 
-	local tw, th = surface.GetTextSizeQuick(tx, fnt)
 	local y = 4
 
-	for i=1, 2 do
-		draw.SimpleText(tx, blurFont, ScrW() / 2 - tw / 2, y, color_black)
+	for k,v in ipairs(lines) do
+		k = k - 1
+		col:SetHSV(CurTime() * 30 + 10 * k, 0.5, 1 - k * 0.1)
+
+		local tx = v[1]:format(string.TimeParse(time))
+		local tw, th = surface.GetTextSizeQuick(tx, v[2])
+
+		for i=1, 2 do
+			draw.SimpleText(tx, v[3], ScrW() / 2 - tw / 2, y, color_black)
+		end
+
+		draw.SimpleText(tx, v[2], ScrW() / 2 - tw / 2, y, col)
+
+		y = y + th * 0.875
 	end
 
-	draw.SimpleText(tx, fnt, ScrW() / 2 - tw / 2, y, col)
 
-	col:SetHSV(CurTime() * 30 + 10, 0.25, 1)
-
-	y = y + th * 0.875
-
-	local tx2 = tx2:format(string.TimeParse(time))
+	--[[local tx2 = tx2:format(string.TimeParse(time))
 	local tw2, th2 = surface.GetTextSizeQuick(tx2, fnt2)
 	for i=1, 2 do
 		draw.SimpleText(tx2, blurFont2, ScrW() / 2 - tw2 / 2, y, color_black)
 	end
 
-	draw.SimpleText(tx2, fnt2, ScrW() / 2 - tw2 / 2, y, col)
+	draw.SimpleText(tx2, fnt2, ScrW() / 2 - tw2 / 2, y, col)]]
 end)
 
 include("client/huds/painter_ext.lua")
