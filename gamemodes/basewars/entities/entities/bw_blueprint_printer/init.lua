@@ -59,13 +59,15 @@ function ENT:ThinkFunc()
 
 	if not self:IsPowered() then self:SetNextFinish(self:GetNextFinish() + diff) return end
 
+	local timeMult = BaseWars.SanctionComp() and 2 or 1
+
 	if self:GetJammed() then
 		if self:IsFull() then
 			self.LastPrint = CurTime()
 			return
 		else
 			self:SetJammed(false)
-			self:SetNextFinish(self.LastPrint + self.PrintTime)
+			self:SetNextFinish(self.LastPrint + self.PrintTime / timeMult)
 		end
 	end
 
@@ -77,7 +79,7 @@ function ENT:ThinkFunc()
 		end, nil, nil, nil, true)
 
 		self.LastPrint = CurTime()
-		self:SetNextFinish(self.LastPrint + self.PrintTime)
+		self:SetNextFinish(self.LastPrint + self.PrintTime / timeMult)
 
 		self:SendInfo()
 	end
