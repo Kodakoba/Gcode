@@ -10,22 +10,12 @@ function BaseWars.Printers.Add(self, func) --you can add a func to run the funct
 	mt[self] = {rate = rate, cap = cap, mult = mult, func = func}
 end
 
-local time = os.time()
-
 function BaseWars.Printers.GetPrintRate(ent)
 	local t = mt[ent]
 	if not t then return false end
 
 	local mult = BaseWars.SanctionComp() and 2 or 1
 	return t.rate * t.mult * (ent.Level ^ 1.3) * mult
-end
-
-function BaseWars.SanctionComp()
-	if SysTime() + time < 1648400400 then -- 28.03.2022 : server was down due to sanctions
-		return true
-	end
-
-	return false
 end
 
 BaseWars.Printers.Update = BaseWars.Printers.Add

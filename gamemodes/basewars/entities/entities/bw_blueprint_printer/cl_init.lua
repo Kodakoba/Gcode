@@ -165,7 +165,8 @@ function ENT:GenerateWithdrawMenu(menu, old)
 			draw.SimpleText(tx, "MR18", w - infoW/2, h/2, color_white, 1, 1)
 
 			if can_upg then
-				draw.SimpleText(Language("BPNextPrintNextTime", ent:GetLevel() + 1, can_upg.PrintTime),
+				local mult = BaseWars.SanctionComp() and 2 or 1
+				draw.SimpleText(Language("BPNextPrintNextTime", ent:GetLevel() + 1, can_upg.PrintTime / mult),
 					"MR18", w - infoW/2, h/2 + th / 2, Colors.LighterGray, 1, 5)
 			else
 

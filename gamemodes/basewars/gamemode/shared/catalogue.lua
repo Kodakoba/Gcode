@@ -117,6 +117,10 @@ local function onAddPrinter(t)
 		cl:AddPanel(pnl)
 
 		local txt = t.RateFormat and t.RateFormat(rate) or Language("Price", rate) .. "/s."
+		if BaseWars.SanctionComp() then
+			txt = txt .. " x2"
+		end
+
 		local font = "OS20"
 		surface.SetFont(font)
 

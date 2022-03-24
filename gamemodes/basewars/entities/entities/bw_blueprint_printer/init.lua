@@ -6,9 +6,11 @@ AddCSLuaFile("cl_init.lua")
 util.AddNetworkString("BlueprintPrinter")
 
 function ENT:Init(me)
+	local timeMult = BaseWars.SanctionComp() and 2 or 1
+
 	self.LastPrint = CurTime()
 	self.LastThink = CurTime()
-	self:SetNextFinish(self.LastPrint + self.PrintTime)
+	self:SetNextFinish(self.LastPrint + self.PrintTime / timeMult)
 end
 
 function ENT:SendInfo(ply)
