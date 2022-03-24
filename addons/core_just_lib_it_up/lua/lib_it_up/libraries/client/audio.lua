@@ -64,16 +64,14 @@ function stream:RandomizeTime()
 		return
 	end
 
-	print("randomize time:", self:GetHandle())
 	if not self:GetHandle() then
 		self.RandomTime = true
-		print("bruh")
 		return
 	end
 
 	local l = self:GetLength()
 	local rand = math.random()
-	print("set to", l * rand)
+
 	self:SetTime(l * rand)
 end
 
@@ -162,7 +160,6 @@ function stream:_LoadAudio(pr)
 				local l = chan:GetLength()
 				local rand = math.random()
 				self:SetTime(l * rand)
-				print("set random time:", l * rand)
 			end
 
 			if self.WantState then
@@ -195,6 +192,8 @@ function stream:_LoadAudio(pr)
 
 	return pr
 end
+
+ChainAccessor(stream, "InstantFade", "InstantFade")
 
 function stream:Play()
 	local pr = Promise()
@@ -293,11 +292,29 @@ hook.Add("Think", "AudioStream", function()
 		end
 
 		if not ent:IsValid() then
-			for k,v in ipairs(sts) do
-				v:Stop()
+			local has_valid = false
+			for i=#sts, 1, -1 do
+				local v = sts[i]
+				if v:GetInstantFade() then
+					v:Stop()
+					table.remove(sts, i)
+				else
+					v._deathTime = v._deathTime or SysTime()
+					v._vol = v._vol or v:GetVolume()
+					local mul = math.min(1, math.Remap(SysTime() - v._deathTime, 0, 1.4, 1, 0))
+					mul = Ease(mul, 0.4)
+					v:SetVolume(v._vol * mul)
+
+					if v:GetVolume() <= 0 then
+						v:Stop()
+						table.remove(sts, i)
+					else
+						has_valid = true
+					end
+				end
 			end
 
-			audio.EntBound[ent] = nil
+			if not has_valid then audio.EntBound[ent] = nil end
 			continue
 		end
 
