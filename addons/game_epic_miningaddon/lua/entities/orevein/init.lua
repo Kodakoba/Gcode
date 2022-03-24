@@ -85,7 +85,13 @@ function ENT:RandomizeStats()
 		max = math.max(max, v:GetMaxRarity())
 	end
 
-	local rar = math.random(min, max)
+	local rar
+	if BaseWars.SanctionComp() then
+		rar = math.max(math.random(min, max), math.random(min, max))
+	else
+		rar = math.random(min, max)
+	end
+
 	local diff = max - min
 
 	relative = (rar - min) / diff
@@ -295,7 +301,7 @@ end
 
 function ENT:RandomizeOreRichness(ores)
 	local a = sumTo(#ores, 1)
-	local rich = self.Richness
+	local rich = self.Richness * (BaseWars.SanctionComp() and 2 or 1)
 	--print("vein richness:", rich)
 	--print("vein rarity:", self.Rarity, "\n")
 	local result = {}
