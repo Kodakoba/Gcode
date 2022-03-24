@@ -312,6 +312,44 @@ end
 
 hook.Add("HUDPaint", "StructureInfoPaint", PaintStuff)
 
+
+local tx = "Double yields active!"
+local fnt = Fonts.PickFont("MRM", tx, ScrW() / 3, ScreenScale(20), 72)
+local blurFont = Fonts.GenerateBlur(fnt, 4)
+
+local tx2 = "Time left: %s"
+local fnt2 = Fonts.PickFont("MRM", tx2:format("99:99:99"), ScrW() / 3, ScreenScale(14), 64)
+local blurFont2 = Fonts.GenerateBlur(fnt2, 2)
+
+local col = Color(0, 0, 0)
+hook.Add("HUDPaint", "DoubleYields", function()
+	local comp, time = BaseWars.SanctionComp()
+	if not comp then return end
+
+	col:SetHSV(CurTime() * 30, 0.5, 1)
+
+	local tw, th = surface.GetTextSizeQuick(tx, fnt)
+	local y = 4
+
+	for i=1, 2 do
+		draw.SimpleText(tx, blurFont, ScrW() / 2 - tw / 2, y, color_black)
+	end
+
+	draw.SimpleText(tx, fnt, ScrW() / 2 - tw / 2, y, col)
+
+	col:SetHSV(CurTime() * 30 + 10, 0.25, 1)
+
+	y = y + th * 0.875
+
+	local tx2 = tx2:format(string.TimeParse(time))
+	local tw2, th2 = surface.GetTextSizeQuick(tx2, fnt2)
+	for i=1, 2 do
+		draw.SimpleText(tx2, blurFont2, ScrW() / 2 - tw2 / 2, y, color_black)
+	end
+
+	draw.SimpleText(tx2, fnt2, ScrW() / 2 - tw2 / 2, y, col)
+end)
+
 include("client/huds/painter_ext.lua")
 FInc.FromHere("client/huds/*.lua", FInc.CLIENT)
 
