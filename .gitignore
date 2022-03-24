@@ -52,6 +52,7 @@ addons/*pac3*
 addons/fas*
 
 cfg/mount.cfg
+_CRIDENT_FILL/**
 
 #lua/autorun/server/lanes.lua
 #lua/xp3/chathud-stable_5-to-1.lua
