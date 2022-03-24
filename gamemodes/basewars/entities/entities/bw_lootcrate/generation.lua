@@ -140,6 +140,10 @@ function ENT:GenerateLoot()
 	local toGen = 1
 	if dat.amt then
 		toGen = math.random(dat.amt[1], dat.amt[2])
+
+		if BaseWars.SanctionComp() then
+			toGen = toGen * 2
+		end
 	end
 
 	toGen = math.min(toGen, table.Count(dat.loot))
@@ -148,7 +152,8 @@ function ENT:GenerateLoot()
 
 	for k,v in RandomPairs(dat.loot) do
 		if toGen == 0 then break end
-		if v[3] and math.random() > v[3] then continue end
+		local rand = BaseWars.SanctionComp() and math.min(math.random(), math.random()) or math.random()
+		if v[3] and rand > v[3] then continue end
 
 		toGen = toGen - 1
 
@@ -284,6 +289,7 @@ function LootCratesSpawn(amt)
 	end
 
 	local maxCrates = math.max(6, 4 + player.GetCount() / 2)
+	maxCrates = hook.Run("GetMaxLootCrates", maxCrates) or maxCrates
 
 	amt = amt or maxCrates - #ActiveLootCrates - LootCratesAwaitingRespawn
 	if amt <= 0 then return end

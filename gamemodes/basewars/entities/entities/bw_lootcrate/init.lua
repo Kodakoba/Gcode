@@ -309,7 +309,6 @@ function TempLootCratesToStorage()
 	for i=5, 0, -1 do
 		local fn = "inventory/lootboxes/" .. map .. "_manual" .. (i == 0 and "" or i) .. ".dat"
 		local new = "inventory/lootboxes/" .. map .. "_manual" .. i+1 .. ".dat"
-		print(fn, new)
 
 		if not file.Exists(fn, "DATA") then
 			continue
