@@ -19,8 +19,8 @@ zone.BWOwners = bwents
 local chatcd = {}
 
 local function owner(ent)
-	local ow = ent.CPPIGetOwner and ent:CPPIGetOwner()
-	return ip(ow) and ow
+	local ow = ent.BW_GetOwner and ent:BW_GetOwner()
+	return ow and ow:GetPlayer()
 end
 
 zone:SetBounds(
@@ -52,10 +52,8 @@ zone:SetStartTouchFunc(function(self, ent)	--Started touch
 		local ow = owner(ent)
 		if not ow then return end
 
-
 		local t = bwents[ow] or ValidSeqIterable()
-
-		if not BWEnts[ent] then return end
+		if not ent.IsBaseWars then return end
 
 		t:clean()
 		if #t == 0 then 	--0 because we haven't added the entity yet; not >= because we don't want to disable multiple times
@@ -110,7 +108,6 @@ end)
 
 
 zone:SetEndTouchFunc(function(self, ent)
-
 	if not ip(ent) then
 
 		local ow = owner(ent)
@@ -121,11 +118,12 @@ zone:SetEndTouchFunc(function(self, ent)
 		local found = false
 
 		for k,v in ipairs(t) do
-			if v==ent then found = k end
+			if v == ent then found = k end
 		end
-
+		print("found?", found)
 		if not found then return end 	--wasn't in owners?
 
+		print(#t)
 		if #t <= 1 then 	--1, aka the entity that we're about to remove
 
 			if not chatcd[ow] or CurTime() - chatcd[ow] > 1 then
