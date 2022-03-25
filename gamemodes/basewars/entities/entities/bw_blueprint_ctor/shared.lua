@@ -49,7 +49,7 @@ function ENT:SHInit()
 end
 
 function ENT:TimeForTier(t)
-	return 0 * (2 * t)
+	return 10 * t
 end
 
 local cl = {

@@ -131,9 +131,9 @@ net.Receive("BlueprintConstructor", function(_, ply)
 
 	print("full cost is", full_cost)
 
-	-- local ok = Inventory.TakeItems(ply.Inventory.Backpack, "blank_bp", full_cost)
-	-- if not ok then print("player didnt have enough bp's (" .. full_cost .. ")") return end
+	local ok = Inventory.TakeItems(ply.Inventory.Backpack, "blank_bp", full_cost)
+	if not ok then print("player didnt have enough bp's (" .. full_cost .. ")") return end
 
 	ent:QueueCreation(tier, type)
 	ply:UI(ply.Inventory.Backpack)
-end)
+end)--deltatext: return future width without interpolating (might break shit?)
