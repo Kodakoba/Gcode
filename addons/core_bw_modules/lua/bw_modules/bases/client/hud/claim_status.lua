@@ -76,7 +76,6 @@ function hud:PaintOwner(cury)
 
 	dt:Paint(x, cury + fh / 2)
 
-
 	local w = dt:GetWide()
 
 	local wantW = hud.NameX + 12 + fw + w + 4 * 2

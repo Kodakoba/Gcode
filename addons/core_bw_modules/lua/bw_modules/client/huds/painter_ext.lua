@@ -134,7 +134,7 @@ function ptr:Disappear()
 			self.DisappearFrac = 1
 			self.Disappeared = true
 
-			timer.Create("PainterInvalidate" .. ("%p"):format(self), 1, 1, function()
+			timer.Create("PainterInvalidate" .. ("%p"):format(self), 0.2, 1, function()
 				self:Delete()
 			end)
 		end)
@@ -187,7 +187,7 @@ function ptr:Paint(y)
 
 	self:SizeTo(-1, sizey, 0.3, 0, 0.3)
 
-	return (cury + mx:GetField(2, 4)) * Ease(1 - self.DisappearFrac, 0.3)
+	return (cury + mx:GetField(2, 4)) * Ease(1 - self.DisappearFrac, 1)
 end
 
 function ptr:GetFrac()

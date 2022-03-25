@@ -213,6 +213,14 @@ end
 DarkHUD.RoundedBoxCorneredSize = RoundedBoxCorneredSize
 
 
+--[[
+textData = {
+	Filled = col,
+	Unfilled = col,
+	Text = "",
+	Font = "",
+}
+]]
 function DarkHUD.PaintBar(rad, x, y, w, h,
 	frac, col_empty, col_border, col_main, textData, allow_stencils,
 	inverse)
@@ -279,12 +287,15 @@ function DarkHUD.PaintBar(rad, x, y, w, h,
 
 		draw.DrawOp(1)
 
-		draw.SimpleText(text, textData.Font or "OS20", tx, ty,
-			unfill, 1, 1)
+		surface.SetFont(textData.Font or "OS20")
+		local tw, th = surface.GetTextSize(text)
+		local fix = textData.FixUp or 0
+
+		draw.SimpleText2(text, nil, tx - tw / 2, ty - fix * th - th / 2, unfill)
 
 		draw.DrawOp(0)
 
-		draw.SimpleText2(text, nil, tx, ty, fill, 1, 1)
+		draw.SimpleText2(text, nil, tx - tw / 2, ty - fix * th - th / 2, fill)
 	end
 
 	draw.DisableMask()

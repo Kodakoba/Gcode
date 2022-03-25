@@ -84,6 +84,9 @@ function hud.DoPainters(base, zone)
 	end
 
 	hud.MaxY = 0
+	hud.CurW = 0 --hud.ActivePainters[1] and hud.ActivePainters[1].CurW or 0
+
+	local maxFr = -1
 
 	for i=#hud.ActivePainters, 1, -1 do
 		local ptr = hud.ActivePainters[i]
@@ -92,6 +95,11 @@ function hud.DoPainters(base, zone)
 		end
 		local y = ptr:Paint()
 		hud.MaxY = math.max(hud.MaxY, y)
+
+		if ptr:GetFrac() >= maxFr then
+			maxFr = ptr:GetFrac()
+			hud.CurW = hud.Anims:GetFutureMemberVal(ptr, "W") --.W
+		end
 	end
 end
 

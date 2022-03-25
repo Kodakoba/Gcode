@@ -319,6 +319,18 @@ end
 
 Animatable.LerpMember = Animatable.MemberLerp
 
+function Animatable:GetFutureVal(key)
+	if self.__Animations[key] then return self.__Animations[key].ToVal end
+	return self[key]
+end
+
+function Animatable:GetFutureMemberVal(tbl, key)
+	local as_str = hex(tbl)
+	local ankey = tostring(key) .. as_str
+	if self.__Animations[ankey] then return self.__Animations[ankey].ToVal end
+	return tbl[key]
+end
+
 --CW has its' own LerpColor which seems to work differently from this
 --src will be the source color from which the lerp starts
 local function LerpColor(frac, col1, col2, src)
