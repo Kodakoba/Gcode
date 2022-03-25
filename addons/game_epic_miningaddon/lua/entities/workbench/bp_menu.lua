@@ -318,7 +318,7 @@ function ENT:CraftFromBlueprintMenu(open, main)
 	local canvas, new = main:ShowAutoCanvas("bp", nil, 0.1, 0.2)
 	canvas.Hidden = false
 	canvas:SetZPos(0)
-	canvas:PopIn(0.1, 0.2)
+	--canvas:PopIn(0.1, 0.2)
 
 	if new then main:PositionPanel(canvas) else return end
 

@@ -57,7 +57,7 @@ function ENT:OpenMenu()
 	self.Frame = main
 	main.Inventory = inv
 	main:SetCloseable(false, true)
-	main.Navbar:Expand()
+	-- main.Navbar:Expand()
 	main:CacheShadow(2, 2, 2)
 
 	inv:SetDeleteOnClose(false)
@@ -90,8 +90,6 @@ function ENT:OpenMenu()
 
 	inv:MoveRightOf(main, 8)
 
-	local initial = true
-
 	--[[local mainTab = main:AddTab("Craft garbage", function(_, _, pnl)
 		self:CraftThingsMenu(true, main)
 		if initial then
@@ -106,10 +104,6 @@ function ENT:OpenMenu()
 
 	local bpTab = main:AddTab("Craft from blueprint", function(_, _, pnl)
 		self:CraftFromBlueprintMenu(true, main)
-		if initial then
-			main.Navbar:Retract()
-			initial = false
-		end
 	end, function()
 		self:CraftFromBlueprintMenu(false, main)
 	end)
