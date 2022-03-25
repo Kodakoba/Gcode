@@ -260,19 +260,15 @@ function pmeta:GetWide()
 			end
 
 			local tw, th = surface.GetTextSize(v.Text)
-			if tw > 10 then
-				--print(v.Text, tw, v.LerpNext, lerpnext, lerpfrom)
-			end
 
 			if v.LerpNext then --if lerpnext is active then this fragment's width will be calculated by the next fragment
 				lerpnext = Ease(v.LerpNext, v.Ease or 0.6)
 				lerpfrom = tw
 			else
-				x = x + Lerp(lerpnext, lerpfrom, tw)
+				x = x + tw --+ Lerp(lerpnext, lerpfrom, tw)
 				lerpnext = 1
 				lerpfrom = 0
 			end
-
 		end
 
 		return x
