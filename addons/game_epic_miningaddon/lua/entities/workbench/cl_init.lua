@@ -92,7 +92,7 @@ function ENT:OpenMenu()
 
 	local initial = true
 
-	local mainTab = main:AddTab("Craft garbage", function(_, _, pnl)
+	--[[local mainTab = main:AddTab("Craft garbage", function(_, _, pnl)
 		self:CraftThingsMenu(true, main)
 		if initial then
 			main.Navbar:Retract()
@@ -102,7 +102,7 @@ function ENT:OpenMenu()
 		self:CraftThingsMenu(false, main)
 	end)
 
-	mainTab:SetTall(60)
+	mainTab:SetTall(60)]]
 
 	local bpTab = main:AddTab("Craft from blueprint", function(_, _, pnl)
 		self:CraftFromBlueprintMenu(true, main)
@@ -113,6 +113,9 @@ function ENT:OpenMenu()
 	end, function()
 		self:CraftFromBlueprintMenu(false, main)
 	end)
+
+	bpTab:Select(true)
+
 	--mainTab:Select(true)
 end
 
