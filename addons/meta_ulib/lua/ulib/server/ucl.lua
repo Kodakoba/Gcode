@@ -1,10 +1,12 @@
 require("mysqloo")
 
-local DATABASE_HOST = "51.178.211.29"
+local dat = {"92.205.3.81", "lode_user", "8Q7geFIU3eYrOe2C", "i8460963_wp1"}
+
+local DATABASE_HOST = dat[1]
 local DATABASE_PORT = 3306
-local DATABASE_NAME = "s34696_main"
-local DATABASE_USERNAME = "u34696_8lGPVh7Gv6"
-local DATABASE_PASSWORD = "8Q7geFIU3eYrOe2C"
+local DATABASE_NAME = dat[4]
+local DATABASE_USERNAME = dat[2]
+local DATABASE_PASSWORD = dat[3]
 local DATABASE_TABLE = "ulib_sql"
 
 ULib.ucl.saveiterationtime = 0.25

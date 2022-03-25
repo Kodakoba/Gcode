@@ -2,7 +2,7 @@ if LibItUp then LibItUp.SetIncluded() end
 require("mysqloo")
 
 local is_dedi = jit.os == "Linux"
-local liveDBInfo = {"51.178.211.29", "u34696_8lGPVh7Gv6", "8Q7geFIU3eYrOe2C", "s34696_main"}
+local liveDBInfo = {"92.205.3.81", "lode_user", "8Q7geFIU3eYrOe2C", "i8460963_wp1"}
 
 if is_dedi then
 	__MYSQL_INFO = liveDBInfo
