@@ -22,7 +22,7 @@ PawwtizOwOneM⎝⎠╲╱╲╱⎝⎠sic = {
 			"GaCHILLmuchi",
 			"HouseMusic"
 		},
-		pOwOs = Vector(-4543.2329101563, -4843.0903320313, 250.4676361084),
+		pOwOs = Vector (2958.0424804688, 7228.3442382813, -155.67333984375),
 		maxvOwOl = 0.6,
 		fademin = 512,
 		fademax = 1024
@@ -183,11 +183,13 @@ if CLIENT then
 end
 
 local function loadPartizones()
-	FInc.Recursive("partizones/*.lua", _SH, false, function(s)
+	local root = "partizones/" .. game.GetMap() .. "/"
+
+	FInc.Recursive(root .. "*.lua", _SH, false, function(s)
 		if s:find("^cl_") or s:find("^sv_") then return false, false end
 	end)
-	FInc.Recursive("partizones/sv_*.lua", _SV)
-	FInc.Recursive("partizones/cl_*.lua", _CL)
+	FInc.Recursive(root .. "sv_*.lua", _SV)
+	FInc.Recursive(root .. "cl_*.lua", _CL)
 
 
 	for k,v in pairs(PawwtizOwOnePOwOints) do
