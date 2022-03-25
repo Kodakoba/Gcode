@@ -138,8 +138,7 @@ zone:SetEndTouchFunc(function(self, ent)
 
 		end
 
-		t[found] = nil
-		t:sequential()
+		t:remove(found)
 
 		return
 	end
