@@ -85,6 +85,7 @@ function ENT:CreateClaimCanvas(menu, inv)
 	local font = "MR32"
 	surface.SetFont(font)
 	local tw = surface.GetTextSize("99:99:99")
+	local col = Colors.Red:Copy()
 
 	function canv:Paint(w, h)
 		local sx, sy = slot:GetPos()
@@ -94,6 +95,8 @@ function ENT:CreateClaimCanvas(menu, inv)
 		local left = math.max(ent:GetBPStart() + ent:GetBPDur() - CurTime(), 0)
 		if not ent:IsPowered() then
 			left = ent:GetTimeLeft()
+			col.a = 100 + math.random() * 50
+			draw.SimpleText(Language("NoPower"), "EX28", tx, ty - draw.GetFontHeight(font), col, 1, 4)
 		end
 
 		local tm = string.FormattedTime(left, fmt)

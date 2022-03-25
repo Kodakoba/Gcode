@@ -200,7 +200,7 @@ function ENT:CreateCreationCanvas(menu, inv) -- hm
 		icons:SetSize(canv:GetWide() - icons:GetPos()*2, 120)
 		icons:SetColor(Color(0, 0, 0, 0))
 		icons.MarginX = 16
-
+		icons.NoDraw = true
 
 	function canv:Paint(w, h)
 		delta:Paint(w/2, icons.Y + icons:GetTall() + 16)
