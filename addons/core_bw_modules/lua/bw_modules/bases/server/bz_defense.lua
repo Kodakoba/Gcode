@@ -83,15 +83,17 @@ end)
 hook.Add("BW_CanDealEntityDamage", "ResidenceCheck", function(atk, ent, imfl, dmg)
 	-- stuff on the street can be shot down but only with a fraction of the damage
 
-	local cfg = BaseWars.Config
+	local cfg = BaseWars.Config.BulletProp
 
-	local time = CurTime() - ent:GetCreationTime()
-	local fr = math.TimeFraction(cfg.BulletPropDamageTime, 0, time)
+	local time = CurTime() - (ent._lastShot or ent:GetCreationTime())
+	local fr = math.min(ent._lastFr or 1, math.TimeFraction(cfg.Time, 0, time))
 
-	local recent_frac = Lerp(fr, cfg.BulletPropDamageMin, cfg.BulletPropDamageMax)
+	local recent_frac = Lerp(fr, cfg.Min, cfg.Max)
 
 	if not ent:BW_GetBase() then
 		dmg:ScaleDamage(recent_frac)
+		ent._lastShot = CurTime() - time + cfg.PauseOnShot
+		ent._lastFr = fr
 		return true
 	end
 
