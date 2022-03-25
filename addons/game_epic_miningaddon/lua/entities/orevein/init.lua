@@ -401,7 +401,7 @@ local function rollOrePos(num)
 
 	while #ret < num do
 		local key = math.random(1, #posCopy)
-		pos = posCopy[key]
+		local pos = posCopy[key]
 		if not pos then break end
 
 		for _, ent in ipairs(ActiveOres) do

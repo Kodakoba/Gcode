@@ -156,7 +156,9 @@ end
 local PLAYER = debug.getregistry().Player
 
 function PLAYER:IsTeammate(ply)
-	return (ply:Team() == 1 and ply == self) or ply:Team() == self:Team()
+	if ply:Team() == Factions.FactionlessTeamID then return ply == self end
+
+	return ply:Team() == self:Team()
 end
 
 function PLAYER:GetFaction()

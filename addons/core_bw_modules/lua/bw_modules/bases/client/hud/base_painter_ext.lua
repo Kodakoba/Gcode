@@ -96,7 +96,7 @@ function hud.DoPainters(base, zone)
 		local y = ptr:Paint()
 		hud.MaxY = math.max(hud.MaxY, y)
 
-		if ptr:GetFrac() >= maxFr then
+		if ptr:GetFrac() >= maxFr and ptr.DisappearFrac < 0.25 then
 			maxFr = ptr:GetFrac()
 			hud.CurW = hud.Anims:GetFutureMemberVal(ptr, "W") --.W
 		end

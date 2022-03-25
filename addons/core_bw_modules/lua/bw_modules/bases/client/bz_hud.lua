@@ -38,7 +38,7 @@ local minSize = surface.GetTextSizeQuick("Props: 999/999", textData.Font) + scal
 local border = Colors.Sky:Copy():MulHSV(1, 1.2, 0.9)
 
 bw.HUD:On("Paint", 1, function(_, x)
-	local y = hud.MaxY or 0
+	local y = math.max(25, hud.MaxY or 0)
 	y = y + 8
 	y = math.floor(y)
 
