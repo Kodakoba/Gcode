@@ -40,8 +40,10 @@ end
 local useTime = 0
 local isErr = not util.IsValidModel(ENT.Model)
 
-function ENT:Draw()
+function ENT:Draw(f)
 	self:DrawModel()
+	if f ~= 1 then return end
+
 	isErr = isErr and not util.IsValidModel(self:GetModel())
 
 	if halo.RenderedEntity() == self then
