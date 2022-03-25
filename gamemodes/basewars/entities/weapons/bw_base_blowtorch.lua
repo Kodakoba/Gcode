@@ -52,7 +52,6 @@ SWEP.Sounds = {
 
 SWEP.Range = 80
 SWEP.Penetrates = 3
-SWEP.TorchDamage = 20
 SWEP.IsBlowTorch = true
 
 local function IsProp(ent)
@@ -133,8 +132,9 @@ function SWEP:PrimaryAttack()
 		return
 	end
 
+	local toDeal = self.Primary.Delay * self.DamagePerSecond
 	local dmg = DamageInfo()
-	dmg:SetDamage(self.TorchDamage)
+	dmg:SetDamage(toDeal)
 	dmg:SetAttacker(ply)
 	dmg:SetInflictor(self)
 
