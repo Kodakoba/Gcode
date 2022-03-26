@@ -25,11 +25,20 @@ function ENT:Reboot()
 	self:SetRebooting(true)
 end
 
-function ENT:IsPowered()
+function ENT:IsPowered(amt)
+	if amt then
+		return self:GetPowerGrid() and self:GetPowerGrid():HasPower(amt)
+	end
+
 	return self:GetPowered()
 end
 
 ENT.GetPower = ENT.IsPowered
+
+function ENT:DrainPower(amt)
+	if not self:GetPowerGrid() then return end
+	return self:GetPowerGrid():TakePower(amt)
+end
 
 function ENT:GetBaseConsumption()
 	local ent_base = scripted_ents.GetStored(self:GetClass()).t
@@ -86,7 +95,7 @@ if SERVER then
 			me.NextSpark = CurTime() + math.random(5, 15) / 10
 		end
 
-		me.ThinkFunc(self)
+		return me.ThinkFunc(self)
 	end
 
 	function ENT:CheckUsable()

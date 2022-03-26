@@ -128,6 +128,27 @@ function ents.FindInCone(cone_origin, cone_direction, cone_radius, cone_angle)
 
 end
 
+local temp = Vector()
+
+function IsInCone(point, cone_origin, cone_dir, cone_radius, cone_angle)
+	if cone_origin:Distance(point) > cone_radius then return false end
+
+	cone_dir:Normalize()
+
+	temp:Set(point)
+	temp:Sub(cone_origin)
+	temp:Normalize()
+
+	local dot = cone_dir:Dot(temp)
+	local cos = math.cos(cone_angle)
+
+	if dot > cos then
+		return true
+	end
+
+	return false
+end
+
 --ents.FindInCone = Deprecated
 
 function BaseWars.IsXmasTime(day)
