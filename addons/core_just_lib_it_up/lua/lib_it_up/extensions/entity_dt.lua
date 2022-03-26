@@ -120,6 +120,7 @@ function ENTITY:NotifyDTVars()
 
 	net.Start("DTVarChangeNotify")
 		net.WriteEntity(self)
+		net.WriteBool(false)
 		net.WriteUInt(table.Count(queue[self]), 8)
 
 		for k,v in pairs(queue[self]) do
@@ -133,6 +134,17 @@ function ENTITY:NotifyDTVars()
 	net.Send(recip)
 
 	table.Empty(queue[self])
+end
+
+if SERVER then
+	hook.Add("EntityRemoved", "haelp", function(e)
+		if e._UsesNetDTNotify then
+			net.Start("DTVarChangeNotify")
+				net.WriteEntity(e)
+				net.WriteBool(true)
+			net.Broadcast()
+		end
+	end)
 end
 
 function ENTITY:QueueNotifyChange(ind, typ, name, old, new)
@@ -322,7 +334,8 @@ if CLIENT then
 
 			for ind, val in pairs(indvals) do
 				if not rev[typ .. ind] then
-					print("NotifyDT: didnt find datatable of type %s index %d.", typ, ind)
+					printf("NotifyDT: didnt find datatable of type %s index %d.", typ, ind)
+					printf("Ent: %s", ent)
 					continue
 				end
 
@@ -336,6 +349,12 @@ if CLIENT then
 
 	net.Receive("DTVarChangeNotify", function(len)
 		local entID = net.ReadUInt(16)
+		local death = net.ReadBool()
+		if death then
+			notifQueue[entID] = nil
+			return
+		end
+
 		local valid = true
 
 		if not Entity(entID):IsValid() then
@@ -351,6 +370,7 @@ if CLIENT then
 			local ind = net.ReadUInt(5)
 			local id = net.ReadUInt(bit.GetLen(typLen))
 			local typ = backTyps[id]
+			if not typ then error("corrupted dtnotify...?", id) return end
 
 			local val = net["Read" .. typ] (sz[typ])
 
