@@ -1,9 +1,8 @@
 AddCSLuaFile()
 
-SWEP.PrintName 				= "Healgun"
-SWEP.Author 				= "Masterbrian123"
-SWEP.Instructions 			= "Heal Objects and Players"
-SWEP.Purpose 				= "Heals"
+SWEP.PrintName 				= "Repair Gun"
+SWEP.Author 				= "grmx"
+SWEP.Instructions 			= "Repair machines and props. Does not work in raids and on recently damaged objects."
 
 SWEP.Spawnable 				= true
 SWEP.AdminSpawnable 		= false
@@ -22,7 +21,7 @@ SWEP.HoldType 				= "smg"
 SWEP.FiresUnderwater 		= true
 SWEP.Weight 				= 20
 SWEP.DrawCrosshair 			= true
-SWEP.Category 				= "Masterbrian123's SWEPs"
+SWEP.Category 				= "BaseWars"
 SWEP.DrawAmmo 				= false
 SWEP.Base 					= "weapon_base"
 
@@ -74,7 +73,7 @@ end
 
 local function IsHealable(ent)
 	if not IsValid(ent) then return false end
-	if IsPlayer(ent) then return true end
+	if IsPlayer(ent) then return false end
 	if not BaseWars.ShouldUseHealth(ent) then return false end
 
 	-- world can go fuck itself
@@ -152,13 +151,13 @@ function SWEP:PrimaryAttack()
 	util.Effect( "ToolTracer", ef )
 	util.Effect( "inflator_magic", ef )
 
-	if IsPlayer(ent) then
+	--[[if IsPlayer(ent) then
 		if SERVER then
 			ent:SetHealth(math.min(ent:GetMaxHealth(), ent:Health() + self.HealAmount * self.PlayerHealMult))
 		end
 
 		return
-	end
+	end]]
 
 
 	if ent.IsBaseWars then
