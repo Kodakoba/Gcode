@@ -65,6 +65,10 @@ end
 
 ChainAccessor(Icon, "Color", "Color", true)
 
+function Icon:AssignColor(col)
+	self.Color = col -- literally set the color by reference
+end
+
 function Icon:SetColor(col, g, b, a)
 	if not col then
 		self.Color = nil
