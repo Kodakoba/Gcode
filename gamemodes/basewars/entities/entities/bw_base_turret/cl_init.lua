@@ -32,6 +32,8 @@ local colVec = Vector()
 local boneIdx = ENT.BoneIndex
 
 function ENT:Think()
+	if not self:IsPowered() then return end
+
 	local tgt = self:GetTarget()
 	local bpos, _ = self:GetBonePosition(boneIdx)
 	local cang = self:GetAngles()

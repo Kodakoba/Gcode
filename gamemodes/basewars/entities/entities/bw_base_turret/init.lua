@@ -12,16 +12,17 @@ end
 
 local function IsTarget(ow, ply)
 	if ow:IsEnemy(ply) then return true end -- duh
+	if not ply:Alive() then return false end
 	if ply:BW_GetBase() == ow:GetBase() and not ow:IsTeammate(ply) then return true end -- trespassing
 end
 
 local function IsFriend(ow, ply)
+	if not ply:Alive() then return false end
 	if ow == ply then return true end -- duh
 	if ow:IsTeammate(ply) then return true end
 end
 
 function ENT:SpawnBullet(target, theirEyes)
-
 	self:SetNextThink(CurTime() + self.ShootingDelay)
 	self:SetNextScan(CurTime() + self.ShootingDelay)
 
@@ -46,7 +47,6 @@ function ENT:SpawnBullet(target, theirEyes)
 			self:EmitSound(snd, 60)
 		end
 	end
-	
 end
 
 local randVec = Vector()
@@ -90,14 +90,16 @@ function ENT:GetBulletInfo(target, pos)
 		--bullet.IgnoreEntity = target
 		bullet.Callback = function(e, tr, dmg)
 			--debugoverlay.Cross(tr.HitPos, 1, 1, color_white)
-			if e ~= target then
-				if not e:IsPlayer() then dmg:ScaleDamage(0) return end
+			local vic = tr.Entity
+			if vic ~= target then
+				print(vic, "isnt target", target)
+				if not vic:IsPlayer() then dmg:ScaleDamage(0) return end
 
 				local ow = self:BW_GetOwner()
 				ow = ow and ow:GetPlayer()
 				if ow and not IsTarget(ow) then
 
-					local should_neg = self:OnHitFriendly(e, tr, dmg)
+					local should_neg = self:OnHitFriendly(vic, tr, dmg)
 					if should_neg then
 						dmg:ScaleDamage(0) -- it'd be funny if turrets could friendly-fire but EHHH
 					end
@@ -106,7 +108,7 @@ function ENT:GetBulletInfo(target, pos)
 				end
 			end
 
-			self:OnHit(e, tr, dmg)
+			self:OnHit(vic, tr, dmg)
 		end
 
 	--debugoverlay.Cross(pos, 2, 1, Colors.Red, true)
@@ -278,6 +280,7 @@ function ENT:ThinkFunc()
 
 	if not self:IsPowered() then
 		self:SetState("IDLE")
+		self:SetTarget(NULL)
 		return
 	end
 
@@ -371,7 +374,6 @@ function ENT:ThinkFunc()
 	if not target and #friends > 0 then
 		friend = self:FindTargets(friends, owPly)
 		self.LastFriend = friend
-		self:SetTarget(friend or NULL)
 	end
 
 	self:FinishScan(friend)
