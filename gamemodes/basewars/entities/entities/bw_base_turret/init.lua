@@ -354,7 +354,7 @@ function ENT:ThinkFunc()
 	-- find cached friend
 	local friend = self.LastFriend
 
-	if friend then
+	if friend and friend:IsValid() then
 		self:SetState("FRIENDLY")
 		local a, bb, c, d, e = self:GetAimParams(friend)
 		local canAim = self:IsInAim(a, bb, c, d, e, self.Radius ^ 2, friend)
@@ -363,9 +363,9 @@ function ENT:ThinkFunc()
 			self:FoundFriend(friend)
 			return true -- we have friendo :):):)
 		end
-
-		friend = nil
 	end
+
+	friend = nil
 
 	-- no cached friends; find someone,,, :(
 	if not target and #friends > 0 then
