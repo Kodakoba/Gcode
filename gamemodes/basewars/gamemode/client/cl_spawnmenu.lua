@@ -92,6 +92,52 @@ function sm.MakeHeader(pnl)
 	end
 end
 
+local function makeComingSoon(par)
+	local pnl = vgui.Create("DPanel", par)
+	pnl:SetWide(par:GetWide())
+	pnl:SetTall(96)
+
+	local col = Color(0, 0, 0, 180)
+	local c2 = Color(0, 0, 0, 210)
+
+	local font, text = "BSL36", "coming soon™"
+	local tw, th = surface.GetTextSizeQuick(text, font)
+
+	function pnl:Paint(w, h)
+		draw.RoundedBoxEx(8, 0, 0, w, h, col, false, false, true, true)
+
+		local u = -(CurTime() / 16) / 4 % 1
+		local v = -(CurTime() / 24) / 4 % 1
+		local u1 = u + w / 768
+		local v1 = v + h / 512
+
+		surface.DrawUVMaterial("https://i.imgur.com/y9uYf4Y.png", "whitestripes.png",
+			0, 0, w, h, u, v, u1, v1)
+
+		c2:SetDraw()
+
+		local recEx = math.ceil(w * 0.05)
+		local x = math.ceil(w / 2 - tw / 2 - recEx)
+		surface.DrawRect(x, 0, tw + recEx * 2, h)
+
+		local gradSz = math.ceil(w * 0.15)
+		surface.SetMaterial(MoarPanelsMats.gl)
+		surface.DrawTexturedRect(x + tw + recEx * 2, 0, gradSz, h)
+
+		surface.SetMaterial(MoarPanelsMats.gr)
+		surface.DrawTexturedRect(x - gradSz, 0, gradSz, h)
+
+		draw.SimpleText(text, font, w / 2, h / 2, color_white, 1, 1)
+	end
+
+	par:On("Bruh", "aa", function()
+		-- thx docking engine
+		pnl:SetWide(par:GetWide())
+	end)
+
+	return pnl
+end
+
 local function createSubCategory(canv, cat_name, subcat_name, data)
 	local items = data.Items
 
@@ -233,6 +279,16 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 
 	pnl.Items = {}
 
+	if items[1] and items[1].Name == "soon" then
+		local child = makeComingSoon(pnl)
+		pnl:SetTall(child:GetTall() + 4 + headerSize)
+
+		pnl:On("Bruh", "par", function()
+			child.Y = headerSize - 4
+			child:SetTall(pnl:GetTall() - child.Y)
+		end)
+	end
+
 	local its = table.Copy(items)
 
 	table.sort(its, function(a, b)
@@ -296,10 +352,11 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 
 	local ply = LocalPlayer()
 
-	local ply_money, ply_level = ply:GetMoney(), ply:GetLevel()
+	local ply_money = ply:GetMoney() -- , ply_level = ply:GetMoney(), ply:GetLevel()
 	local bclass = baseclass.Get("FButton")
 	function pnl:Think()
-		ply_money, ply_level = ply:GetMoney(), ply:GetLevel()
+		--ply_money, ply_level = ply:GetMoney(), ply:GetLevel()
+		ply_money = ply:GetMoney()
 		bclass = baseclass.Get("FButton")
 	end
 
@@ -311,6 +368,8 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 
 	for _, dat in ipairs(its) do
 		local name, lv, price = dat.Name, dat.Level, dat.Price
+		if name == "soon" then continue end
+
 		local mdl = dat.Model
 		local btn = ics:Add("FButton")
 		btn:SetSize(76, 76)
@@ -509,6 +568,7 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 
 	function ics:PerformLayout(w, h)
 		perf_layout(self, w, h)
+		pnl:Emit("Bruh")
 
 		local new_h = ics:GetTall() + 4 + headerSize
 		if pnl:GetTall() ~= new_h then
@@ -610,8 +670,20 @@ local function MakeSpawnList()
 	local active
 
 	function pnl:Fill()
-		for k,v in SortedPairs(BaseWars.SpawnList) do
+		local catsArr = {}
+		for k,v in pairs(BaseWars.SpawnList) do catsArr[#catsArr + 1] = v end
+
+		table.sort(catsArr, function(a, b)
+			local ao, bo = a.Order or 0, b.Order or 0
+			if ao == bo then return a.Name < b.Name end
+
+			return ao > bo
+		end)
+
+		for k,v in ipairs(catsArr) do
 			local catName = v.Name
+			k = catName
+
 			if cats.Categories[v.Name] then
 				cats.Categories[v.Name]:Remove()
 			end
@@ -630,20 +702,21 @@ local function MakeSpawnList()
 			local ic = IsIcon(v.Icon) and v.Icon
 
 			local col = Colors.LightGray:Copy()
-			local sel_col = Color(40, 140, 230)
+			local sel_col = Color(35, 120, 220)
 
 			local unsel_X = 6
 			local sel_X = 20
 
 			local ic_tx_padding = 4
 
-			local font = "BS28"
+			local font = "EX32"
 
 			tab.IconX = unsel_X
 
 			if IsIcon(v.Icon) then
-				v.Icon:SetColor(col)
-				v.Icon:SetFilter(true)
+				ic = v.Icon:Copy()
+				ic:AssignColor(col)
+				ic:SetFilter(true)
 			end
 
 			local box_col = Colors.LightGray:Copy()
@@ -683,13 +756,13 @@ local function MakeSpawnList()
 
 				local x = math.Round(self.IconX)
 
-				if IsIcon(v.Icon) then
-					local iw, ih = v.Icon:GetSize()
-					v.Icon:Paint(x, h/2 - ih/2)
+				if IsIcon(ic) then
+					local iw, ih = ic:GetSize()
+					ic:Paint(x, h/2 - ih/2)
 					x = x + iw + ic_tx_padding
 				end
 
-				local tw, th = draw.SimpleText(v.Name, "BS28", x, h/2, col, 0, 1)
+				local tw, th = draw.SimpleText(v.Name, font, x, h/2, col, 0, 1)
 
 				self.MxScaleCenterX = tw / 2 + x
 			end
