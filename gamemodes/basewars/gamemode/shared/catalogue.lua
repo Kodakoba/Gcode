@@ -647,20 +647,22 @@ if CLIENT then
 
 end
 
+SetCat("Inventory")
+
 SetType("Refinement")
-	ReuseInventory("refinery", "Smeltery", 500 * k, "models/props/CS_militia/furnace01.mdl", 1)
-	ReuseInventory("bw_blueprint_ctor", "Blueprint Constructor", 2.5 * m,
+	ReuseCat("refinery", "Smeltery", 500 * k, "models/props/CS_militia/furnace01.mdl", 1)
+	ReuseCat("bw_blueprint_ctor", "Blueprint Constructor", 2.5 * m,
 		"models/grp/bpmachine/bpmachine.mdl", 1)
 
 SetType("Production")
-	ReuseLoadout("epicpickax", "Harvester", k * 200, "models/weapons/w_irifle.mdl")
-	ReuseInventory("bw_blueprint_printer", "Blueprint Printer", 1 * m,
+	ReuseCatWeapon("epicpickax", "Harvester", k * 200, "models/weapons/w_irifle.mdl")
+	ReuseCat("bw_blueprint_printer", "Blueprint Printer", 1 * m,
 		"models/props_lab/plotter.mdl", 1)
-	ReuseInventory("workbench", "Workbench", 2.5 * m,
+	ReuseCat("workbench", "Workbench", 2.5 * m,
 		"models/props/CS_militia/table_shed.mdl", 1)
 
 SetType("Storage")
-	ReuseInventory("bw_matter_digitizer", "Matter Digitizer", 250 * k,
+	ReuseCat("bw_matter_digitizer", "Matter Digitizer", 250 * k,
 		"models/props_combine/combine_mortar01b.mdl", 1)
 hook.Run("BW_CatalogueFilled")
 
