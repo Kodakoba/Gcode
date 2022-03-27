@@ -33,8 +33,9 @@ ENT.PresetMaxHealth = 500
 
 ENT.AlwaysRaidable = true
 ENT.ShootingOffset = Vector(9.7, 4.8, 53)
-ENT.LaserOffset = Vector(7.2, -2.4, 58.3)
+ENT.LaserOffset = Vector(-3.2, 25.3, 7.6)
 ENT.GlareOffset = Vector(-3.7, 25, 7.6)
+ENT.BoneIndex = 1
 
 ENT.CanTakeDamage = true
 ENT.NoHUD = false

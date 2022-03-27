@@ -10,8 +10,6 @@ function ENT:Init()
 	self:SetModel(self.Model)
 end
 
-local b = bench("turret_bullet", 250)
-
 local function IsTarget(ow, ply)
 	if ow:IsEnemy(ply) then return true end -- duh
 	if ply:BW_GetBase() == ow:GetBase() and not ow:IsTeammate(ply) then return true end -- trespassing
@@ -24,16 +22,14 @@ end
 
 function ENT:SpawnBullet(target, theirEyes)
 
-	self:NextThink(CurTime() + self.ShootingDelay)
+	self:SetNextThink(CurTime() + self.ShootingDelay)
 	self:SetNextScan(CurTime() + self.ShootingDelay)
 
 	if not self:DrainPower(self.Drain or 10) then return end
 
 	local Bullet = self:GetBulletInfo(target, theirEyes)
 
-	b:Open()
 	self:FireBullets(Bullet)
-	b:Close():print()
 	-- self:DrainPower(self.Drain)
 	if self.PlaySound then
 		self:PlaySound(Bullet)
@@ -119,28 +115,43 @@ function ENT:GetBulletInfo(target, pos)
 	return bullet
 end
 
-local b = bench("turret", 250)
+local b = bench("turret", math.huge)
 
 function ENT:FinishScan(friend)
 	-- finished scan; noone found
 
 	self:SetNextScan(CurTime() + (friend and self.HiFreqScanDelay or self.ScanDelay))
-	self:NextThink(self:GetNextScan())
-
-	b:Close():print()
+	self:SetNextThink(self:GetNextScan())
 
 	self:SetTarget(friend or NULL)
 
-	if self:IsState("IDLE") and not friend then return end
+	if self:IsState("IDLE") and not friend then
+		self:FoundFriend(friend)
+		return
+	end
 
 	if not friend then
 		self:SetState("IDLE")
+		self:FoundFriend(friend)
 		return
 	end
 
 	if friend and self:IsState("IDLE") then
 		self:SetState("FRIENDLY")
 	end
+
+	self:FoundFriend(friend)
+end
+
+function ENT:FoundFriend(tgt)
+	b:Close():print()
+end
+
+function ENT:FoundEnemy(tgt)
+	self:SpawnBullet(tgt, self:GetPlayerShootPoint(tgt))
+	self:SetTarget(tgt)
+	self:SetState("FIRING")
+	b:Close():print()
 end
 
 local cache -- ...really?
@@ -248,8 +259,23 @@ function ENT:GetAimParams(target)
 	return vPos, offset, fwd, rad, ang
 end
 
+ENT.CurYaw = 0
+
+function ENT:FrequentThink()
+
+end
+
+function ENT:SetNextThink(t)
+	self.NextTurretThink = t
+end
+
+ENT.NextTurretThink = 0
+
 function ENT:ThinkFunc()
-	-- if self.NextShot > CurTime() then return end
+	self:FrequentThink()
+	self:NextThink(CurTime())
+	if (self.NextTurretThink or 0) > CurTime() then return true end
+
 	if not self:IsPowered() then
 		self:SetState("IDLE")
 		return
@@ -288,13 +314,16 @@ function ENT:ThinkFunc()
 
 			if canAim then
 				-- we can still aim at them; just shoot at them and don't try to search
-				self:SpawnBullet(target, self:GetPlayerShootPoint(target))
-				self:SetTarget(target)
-				b:Close():print()
+				self:FoundEnemy(target)
 				return true
 			end
 		end
+
+		target = nil -- we're here because either we need to recache or target isn't accessible
 	end
+
+
+	self.LastTarget = nil
 
 	-- scan baddies; construct search arrays
 	local baddies, friends = {}, {}
@@ -311,16 +340,13 @@ function ENT:ThinkFunc()
 	do
 		if #baddies > 0 then
 			target, targetEyes = self:FindTargets(baddies, owPly)
-			self.LastTarget, self.LastTargetEyes = target, targetEyes
+			self.LastTarget = target
 			self.AcquiredWhen = CurTime()
 		end
 
 		-- found hostile; shoot and bail
 		if target then
-			self:SpawnBullet(target, targetEyes)
-			self:SetState("FIRING")
-			self:SetTarget(target)
-			b:Close():print()
+			self:FoundEnemy(target)
 			return true
 		end
 	end
@@ -333,17 +359,19 @@ function ENT:ThinkFunc()
 		local a, bb, c, d, e = self:GetAimParams(friend)
 		local canAim = self:IsInAim(a, bb, c, d, e, self.Radius ^ 2, friend)
 		if canAim then
-			b:Close():print()
 			self:SetTarget(friend)
-			return -- we have friendo :):):)
+			self:FoundFriend(friend)
+			return true -- we have friendo :):):)
 		end
+
+		friend = nil
 	end
 
 	-- no cached friends; find someone,,, :(
 	if not target and #friends > 0 then
 		friend = self:FindTargets(friends, owPly)
 		self.LastFriend = friend
-		self:SetTarget(friend)
+		self:SetTarget(friend or NULL)
 	end
 
 	self:FinishScan(friend)

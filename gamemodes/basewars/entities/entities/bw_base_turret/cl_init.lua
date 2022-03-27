@@ -5,8 +5,6 @@ function ENT:Initialize()
 	self.BoneAngle = Angle(0, 0, 0)
 end
 
--- ENT.BoneAngle = Angle(0, 0, 0)
-
 function ENT:Interp(to)
 	-- very lazy
 	self.BoneAngle = LerpAngle(FrameTime() * 10, self.BoneAngle, to)
@@ -31,16 +29,11 @@ local glareColors = {
 }
 
 local colVec = Vector()
+local boneIdx = ENT.BoneIndex
 
-local boneIdx = 1
-
-function ENT:Draw(f)
-	if not self:IsPowered() or halo.RenderedEntity() == self then
-		self:DrawModel()
-		return
-	end
-
+function ENT:Think()
 	local tgt = self:GetTarget()
+	local bpos, _ = self:GetBonePosition(boneIdx)
 	local cang = self:GetAngles()
 
 	local ang = self.BoneAngle or Angle()
@@ -48,11 +41,13 @@ function ENT:Draw(f)
 
 	if IsValid(tgt) and not self:IsState("IDLE") then
 		local pos = tgt:EyePos()
-		local nang = (pos - self:GetBonePosition(boneIdx)):Angle()
+		local nang = (pos - bpos):Angle()
+
 		local np = nang.y - cang.y
 
-		np = math.ApproachAngle(self.BoneAngle[1], np, FrameTime() * 480) -- linear to avoid easing on tiny diffs
-		self.BoneAngle[1] = np
+		np = math.ApproachAngle(ang[1], np, FrameTime() * 480) -- linear to avoid easing on tiny diffs
+		ang[1] = np
+		ang[3] = 0
 	else
 		angCpy:Zero()
 		angCpy.p = math.sin(CurTime() * 0.5) * math.deg(self.Angle) / 2
@@ -61,19 +56,30 @@ function ENT:Draw(f)
 	end
 
 	self:ManipulateBoneAngles(boneIdx, ang)
+end
+
+function ENT:Draw(f)
+	if not self:IsPowered() or halo.RenderedEntity() == self then
+		self:DrawModel()
+		return
+	end
+
+	local tgt = self:GetTarget()
+
+	self.BoneAngle = self.BoneAngle or Angle()
 	self:DrawModel()
 
-	offCpy:Set(self.LaserOffset)
-	angCpy:Set(ang)
-	angCpy.y = angCpy.p
-	angCpy.p = 0
-	offCpy:Rotate(angCpy)
+	local bpos, ang = self:GetBonePosition(boneIdx)
 
-	local offset = self:LocalToWorld(offCpy)
+	offCpy:Set(self.LaserOffset)
+	offCpy:Rotate(ang)
+	offCpy:Add(bpos)
+
+	local offset = offCpy
 	if IsValid(tgt) then
 		local toPos
 
-		if tgt == CachedLocalPlayer() then
+		if tgt == CachedLocalPlayer() and not CachedLocalPlayer():ShouldDrawLocalPlayer() then
 			toPos = EyePos()
 			toPos.z = toPos.z - 16
 
@@ -91,7 +97,7 @@ function ENT:Draw(f)
 			toPos:Mul( len / (len + distBack) )
 			toPos:Add(offset)
 		else
-			toPos = tgt:LocalToWorld(tgt:OBBCenter())
+			toPos = tgt:GetPos() + tgt:OBBCenter()
 		end
 
 		local dist = toPos:Distance(offset)
@@ -115,8 +121,6 @@ function ENT:Draw(f)
 
 
 	local glareSz = 16
-
-	local bpos, ang = self:GetBonePosition(boneIdx)
 
 	offCpy:Set(self.GlareOffset)
 	offCpy:Rotate(ang)
