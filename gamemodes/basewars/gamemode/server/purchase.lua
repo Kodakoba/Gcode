@@ -167,6 +167,7 @@ function BWSpawn(ply, cat, catID)
 
 	local gun = i.Gun
 
+	if class == "" or class == "soon" or item == "soon" then return end
 	if vip and not IsGroup(ply, "vip") then ply:EmitSound("buttons/button10.wav") return end
 	if trust and not IsGroup(ply, "trusted") then ply:EmitSound("buttons/button10.wav") return end
 

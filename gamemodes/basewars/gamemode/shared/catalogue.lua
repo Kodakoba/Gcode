@@ -434,16 +434,15 @@ SetCat("Defense")
 	SetType("Turrets - TESTING")
 		ReuseCat("bw_turret_ballistic", "Rifle Turret", m * 5, nil, 3)
 
-if CLIENT then
+-- todo: "soon" items increment itemID fucking up networking
 	SetType("Turrets")
 		ReuseCat("", "soon", m * 25, "models/Combine_turrets/Floor_turret.mdl")
 		ReuseCat("", "Sniper Turret", m * 50, "models/Combine_turrets/Floor_turret.mdl")
 		ReuseCat("", "Rapid Rifle Turret", m * 250, "models/Combine_turrets/Floor_turret.mdl")
 		ReuseCat("", "Rapid Sniper Turret", b * 2, "models/Combine_turrets/Floor_turret.mdl")
-end
 
 	SetType("Tools")
-		ReuseCat("weapon_health", "Repair Gun", k * 500, "models/weapons/w_physics.mdl")
+		ReuseCatWeapon("weapon_health", "Repair Gun", k * 500, "models/weapons/w_physics.mdl")
 
 SetCat("Electricity")
 	SetType("Generators")
@@ -639,13 +638,10 @@ SetCat("Raiding")
 			ReuseCatWeapon("bw_blowtorch_t4", "Blowtorch T4", m * 75, "models/weapons/w_irifle.mdl")
 			ReuseCatWeapon("bw_blowtorch_t5", "Blowtorch T5", m * 200, "models/weapons/w_irifle.mdl")
 
-if CLIENT then
 	SetType("Explosives")
 		ReuseCat("", "soon", 0, "")
 		ReuseCat("", "EMP Charge", m * 50, "models/maxofs2d/hover_classic.mdl")
 		ReuseCat("", "Breaching Charge", m * 150, "models/jaanus/wiretool/wiretool_detonator.mdl")
-
-end
 
 SetCat("Inventory")
 
