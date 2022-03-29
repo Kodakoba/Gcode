@@ -25,7 +25,7 @@ if SERVER then
 		ply:SetBWData("playtime", dat.playtime)
 	end)
 
-	hook.Add( "PlayerDisconnected", "PlayTime.Disconnect", function(ply)
+	hook.Add( "BW_SaveLeftPlayer", "PlayTime.Disconnect", function(ply)
 		-- how much time left until next increment of X seconds
 		ply:AddBWData("playtime", PlayTime.LastThink - CurTime())
 	end)

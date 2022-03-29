@@ -25,8 +25,11 @@ function BaseWars.PlayerData.Load(ply)
 	local q = MySQLQuery(
 		db:query( qries.get_data_query:format(sid64) ), true
 	):Then(function(_, _, dat)
+		if not IsValid(ply) then return end -- they left?
+
 		local write = {}
-		local pin = GetPlayerInfoGuarantee(sid64)
+		local pin = GetPlayerInfoGuarantee(sid64, true)
+		pin._bwData = pin._bwData or {}
 		pin._bwSyncedData = pin._bwSyncedData or {}
 
 		for k,v in pairs(dat) do
@@ -47,6 +50,15 @@ hook.NHAdd("PlayerInitialSpawn", "BW_SQLDataFetch_Bots", function(ply)
 	-- special hook for bots since they don't auth
 	if not ply:IsBot() then return end
 	BaseWars.PlayerData.Load(ply)
+end)
+
+hook.NHAdd("PlayerDisconnected", "BW_SQLDataSave", function(ply)
+	if not GetPlayerInfo(ply) then return end
+
+	local pin = GetPlayerInfo(ply)
+	if not pin._bwData then return end -- didn't initialize?
+
+	hook.NHRun("BW_SaveLeftPlayer", ply, pin)
 end)
 
 local toSet = {}
