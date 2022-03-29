@@ -169,17 +169,31 @@ if SERVER then
 
 	-- wait for either the client's net message or source's Move hook
 
-	net.Receive("FullLoad", function(_, ply)
-		if FullyLoaded[ply] then return end
+	local function runFullLoadHook(ply)
+		if FullyLoaded[ply] then return false end
 
+		print(ply, "running fullload hook")
 		FullyLoaded[ply] = true
-		hook.NHRun("PlayerFullyLoaded", ply)
+		--hook.NHRun("PlayerFullyLoaded", ply)
+		for k,v in pairs(hook.GetTable().PlayerFullyLoaded or {}) do
+			print("	running:", k)
+			xpcall(v, GenerateErrorer("PlayerFullyLoaded_Hook"), ply)
+		end
 
+		print(ply, "running fullload callbacks")
 		if FullyLoadedCallbacks:Get(ply) then
 			for k,v in ipairs(FullyLoadedCallbacks:Get(ply)) do
+				print("	running", debug.getinfo(v[1]).source)
 				xpcall(v[1], GenerateErrorer("PlayerFullyLoaded_Callbacks"), unpack(v, 2))
 			end
 		end
+
+		print("ran all successfully.")
+		return true
+	end
+
+	net.Receive("FullLoad", function(_, ply)
+		runFullLoadHook(ply)
 	end)
 
 	hook.Add("PlayerInitialSpawn", "PlayerFullyLoaded", function(ply)
@@ -187,16 +201,8 @@ if SERVER then
 		hook.OnceRet("SetupMove", ply, function(ply, mv_ply, mv, cmd)
 			if mv_ply ~= ply then return false end
 			if mv_ply == ply and not cmd:IsForced() then
-				if FullyLoaded[ply] then return end
-
-				FullyLoaded[ply] = true
-				hook.NHRun("PlayerFullyLoaded", ply)
-
-				if FullyLoadedCallbacks:Get(ply) then
-					for k,v in ipairs(FullyLoadedCallbacks:Get(ply)) do
-						xpcall(v[1], GenerateErrorer("PlayerFullyLoaded_Callbacks"), unpack(v, 2))
-					end
-				end
+				local a = runFullLoadHook(ply)
+				if not a then return end
 			end
 
 			local should_remove = mv_ply == ply and not cmd:IsForced()

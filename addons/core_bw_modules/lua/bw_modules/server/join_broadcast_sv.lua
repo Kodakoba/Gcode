@@ -204,7 +204,7 @@ hook.Add("PlayerFullyLoaded", "BroadcastJoin", function(ply)
 	local passed = getJoinTime(ply:SteamID64())
 	joinTimes[ply:SteamID64()] = nil
 	spawnTimes[ply:SteamID64()] = SysTime()
-
+	print("join broadcase: forming table...")
 	local dat = {
 		Colors.Sky, "[Connect] ",
 		Color(200, 200, 200), "Player ",
@@ -215,6 +215,7 @@ hook.Add("PlayerFullyLoaded", "BroadcastJoin", function(ply)
 		Color(200, 200, 200), "s.",
 		"\n"
 	}
+	print("formed, broadcasting...")
 
 	net.Start("NewPlayerBroadcast")
 		net.WriteUInt(1, 4)

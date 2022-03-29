@@ -151,7 +151,7 @@ end)
 hook.NHAdd("AnnounceJoin", "Discord", function(name, sid)
 	if not discord.Enabled then return end
 	if not discord.DB then return end
-
+	
 	discord.QueueEmbed("joinleave", "Join/Leave",
 		Embed()
 			:SetText("Player " .. name .. " has joined the server.")
