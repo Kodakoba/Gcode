@@ -179,6 +179,5 @@ hook.Add("ArcCW_FiredBullets", "NX_SAim", function(wep, bullet)
 
 	if IsPlayer(trOut.Entity) then
 		dt.WantTrack[wep:GetOwner()] = engine.TickCount()
-		print("fire")
 	end
 end)
