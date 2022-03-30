@@ -668,10 +668,10 @@ end
 Networkable.FullUpdate = Networkable.UpdateFull
 
 hook.Add("PlayerFullyLoaded", "NetworkableUpdate", function(ply)
-	local pre = Networkable.Verbose
-	Networkable.Verbose = true
+	-- local pre = Networkable.Verbose
+	-- Networkable.Verbose = true
 	xpcall(Networkable.UpdateFull, GenerateErrorer("NW:UpdateFull"), ply, _NetworkableCache)
-	Networkable.Verbose = pre
+	-- Networkable.Verbose = pre
 end)
 
 function nw:Network(full)
