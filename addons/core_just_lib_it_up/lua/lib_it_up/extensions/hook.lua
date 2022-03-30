@@ -2,6 +2,10 @@ LibItUp.SetIncluded()
 
 __HookID = __HookID or 0
 
+local function newID()
+	__HookID = __HookID + 1
+	return __HookID
+end
 -- difference between hook.Object and hook.Add(event, object) is that
 -- you are guaranteed a unique hook which won't overwrite other hooks
 -- with the same object and name (or get overwritten)
@@ -9,8 +13,10 @@ __HookID = __HookID or 0
 -- oh and also, the first arg to the callback is not the object you used for the ID
 -- so if you used a player as the ID, it won't be provided as the first arg to the callback like with hook.Add
 
+print("(( hook.lua refreshed; delete this print (testing autorefresh) ))")
+
 function hook.Object(hookname, hookobj, cb)
-	local id = "hookObject" .. __HookID
+	local id = "hookObject" .. newID()
 
 	hook.Add(hookname, id, function(...)
 		if not hookobj:IsValid() then hook.Remove(hookname, id) return end
@@ -40,8 +46,7 @@ function hook.Once(hookname, hookid, cb)
 
 	if isfunction(hookid) then
 		cb = hookid
-		hookid = "hookOnce" .. __HookID
-		__HookID = __HookID + 1
+		hookid = "hookOnce" .. newID()
 	end
 
 	local canIndex = isentity(hookid) or ispanel(hookid) or istable(hookid)
@@ -71,8 +76,7 @@ function hook.OnceRet(hookname, hookid, cb)
 
 	if isfunction(hookid) then
 		cb = hookid
-		hookid = "hookOnceRet" .. __HookID
-		__HookID = __HookID + 1
+		hookid = "hookOnceRet" .. newID()
 	end
 
 	local canIndex = isentity(hookid) or ispanel(hookid) or istable(hookid)
