@@ -36,7 +36,7 @@ zone:SetOnSpawn(function(self)
 
 		if v:GetClass() == "ambient_generic" then
 
-			--v:Remove() 	--holy based, this causes random players to become the bearers of earrape
+			--v:Remove
 			local snd = v:GetSaveTable().message
 			if snd:find("piano") then v:StopSound(snd) end
 		end
@@ -120,10 +120,8 @@ zone:SetEndTouchFunc(function(self, ent)
 		for k,v in ipairs(t) do
 			if v == ent then found = k end
 		end
-		print("found?", found)
-		if not found then return end 	--wasn't in owners?
 
-		print(#t)
+		if not found then return end 	--wasn't in owners?
 		if #t <= 1 then 	--1, aka the entity that we're about to remove
 
 			if not chatcd[ow] or CurTime() - chatcd[ow] > 1 then

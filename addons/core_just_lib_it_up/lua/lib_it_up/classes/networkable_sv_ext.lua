@@ -670,7 +670,13 @@ Networkable.FullUpdate = Networkable.UpdateFull
 hook.Add("PlayerFullyLoaded", "NetworkableUpdate", function(ply)
 	-- local pre = Networkable.Verbose
 	-- Networkable.Verbose = true
-	xpcall(Networkable.UpdateFull, GenerateErrorer("NW:UpdateFull"), ply, _NetworkableCache)
+	timer.Simple(2, function()
+		if not IsValid(ply) then return end
+
+		print("networkable: updating new dude n shit...")
+		xpcall(Networkable.UpdateFull, GenerateErrorer("NW:UpdateFull"), ply, _NetworkableCache)
+		print("updated...?")
+	end)
 	-- Networkable.Verbose = pre
 end)
 
