@@ -229,6 +229,13 @@ end
 
 local WrapData
 
+local nonWords = ".,!?;:-" -- i don't like what lua's %p matches so i'll make my own list
+nonWords = nonWords:PatternSafe()
+nonWords = nonWords .. "%s%c"
+
+local wordPattern = ("[%s]*[^%s]*[%s]*"):format(nonWords, nonWords, nonWords)
+local matchWordPattern = ("[%s]"):format(nonWords)
+
 local function WrapByLetters(txt, curwid, fullwid, wids, line)
 	local ret = ""
 
@@ -320,20 +327,14 @@ local function WrapWord(word, curwid, fullwid, widtbl, line, first)
 		curwid = curwid + tw
 	end
 
-	if ret:match("[\r\n]$") then
+	if ret:match("[\r\n][" .. nonWords .. "]$") then
 		curwid = 0
 		line = line + 1
+		wrapped = true
 	end
 
 	return ret, curwid, line, wrapped
 end
-
-local nonWords = ".,!?;:-" -- i don't like what lua's %p matches so i'll make my own list
-nonWords = nonWords:PatternSafe()
-nonWords = nonWords .. "%s%c"
-
-local wordPattern = ("[%s]*[^%s]*[%s]*"):format(nonWords, nonWords, nonWords)
-local matchWordPattern = ("[%s]"):format(nonWords)
 
 function string.WordWrap2(txt, wid, font, dat)
 	if font then surface.SetFont(font) end
@@ -351,6 +352,8 @@ function string.WordWrap2(txt, wid, font, dat)
 		local firstWord = true
 
 		for word in string.gmatch(txt, wordPattern) do
+			if #word == 0 then continue end -- WHAT THE FUCK
+
 			local r2, w2, lines, didwrap = WrapWord(word, curwid, nil, wid, line, firstWord)
 
 			ret = ret .. lastWord
@@ -361,7 +364,7 @@ function string.WordWrap2(txt, wid, font, dat)
 				ret = ret:gsub("%s*$", "")
 			elseif not didwrap then
 				if r2:match("[\r\n]") then
-					w2 = 0
+					curwid = 0
 				end
 			end
 
