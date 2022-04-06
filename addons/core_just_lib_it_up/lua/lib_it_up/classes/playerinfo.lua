@@ -4,7 +4,7 @@ LibItUp.SetIncluded()
 LibItUp.PlayerInfo = LibItUp.PlayerInfo or LibItUp.Emitter:callable()
 local PI = LibItUp.PlayerInfo
 PI.IsPlayerInfo = true
-PI.CleanupIn = 300 -- being absent for 5min = playerinfo is cleaned up
+PI.CleanupIn = 600 -- being absent for 5min = playerinfo is cleaned up
 
 LibItUp.PlayerInfoTables = LibItUp.PlayerInfoTables or {
 	-- [info] = PI
@@ -138,6 +138,8 @@ function PI.Revalidate(id)
 	PIT.Invalid[inv:GetSteamID64()] = nil
 	PIT.Invalid[inv:GetSteamID()] = nil
 	PIT.Invalid[inv:GetPlayer(true)] = nil
+
+	return inv
 end
 
 -- TODO: game event for nick change
@@ -389,45 +391,48 @@ else
 	end
 end
 
-hook.NHAdd("PlayerDisconnected", "PlayerInfoEmit", function(ply)
-	local pinfo = PIT.Player[ply]
-	if not pinfo then
-		ErrorNoHalt("!!! PLAYER INFO FOR " .. tostring(ply) .. " HASN'T BEEN FOUND TO REMOVE !!!\n")
-		ErrorNoHalt("!!! SteamID: " .. tostring(ply:SteamID()) .. ", SteamID64: " .. tostring(ply:SteamID64()) .. " !!!\n")
-		return
-	end
+if SERVER then
+	hook.NHAdd("PlayerDisconnected", "PlayerInfoEmit", function(ply)
+		local pinfo = PIT.Player[ply]
+		if not pinfo then
+			ErrorNoHalt("!!! PLAYER INFO FOR " .. tostring(ply) .. " HASN'T BEEN FOUND TO REMOVE !!!\n")
+			ErrorNoHalt("!!! SteamID: " .. tostring(ply:SteamID()) .. ", SteamID64: " .. tostring(ply:SteamID64()) .. " !!!\n")
+			return
+		end
 
-	pinfo:_OnDisconnect()
-end)
+		pinfo:_OnDisconnect()
+	end)
 
-hook.NHAdd("PlayerInitialSpawn", "PlayerInfoEmit", function(ply)
-	local sid64 = ply:SteamID64()
+	hook.NHAdd("PlayerInitialSpawn", "PlayerInfoEmit", function(ply)
+		local sid64 = ply:SteamID64()
 
-	local pinfo, new = PI:get(sid64, true)
+		local pinfo, new = PI:get(sid64, true)
+		if not pinfo then
+			ErrorNoHalt("How does this happen " .. sid64)
+			return
+		end
 
-	if not new then
-		PIT.Player[ply] = pinfo
-		pinfo:_OnReconnect()
-		pinfo:NotifyEveryone()
-	end
+		if pinfo and not new then
+			PIT.Player[ply] = pinfo
+			pinfo:_OnReconnect()
+			pinfo:NotifyEveryone()
+		end
 
-	pinfo:Emit("Connect", ply)
-end)
+		pinfo:Emit("Connect", ply)
+	end)
 
-hook.Add("PlayerAuthed", "PlayerInfoEmit", function(ply, sid)
-	PI.Revalidate(sid)
+	hook.Add("PlayerAuthed", "PlayerInfoEmit", function(ply, sid)
+		local pinfo = PI.Revalidate(sid)
+		if not pinfo then return end
 
-	local pinfo, new = PI:get(ply, false)
-
-	if not new then
 		pinfo:Emit("StartReconnect", ply)
 		pinfo._AbsentStop = CurTime()
 		pinfo._Absent = false
 		PIT.Absent[pinfo] = nil
-	end
 
-	pinfo:NotifyEveryone()
-end)
+		pinfo:NotifyEveryone()
+	end)
+end
 
 local function refill()
 	for k,v in ipairs(player.GetAll()) do
