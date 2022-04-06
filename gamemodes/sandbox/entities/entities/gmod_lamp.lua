@@ -12,9 +12,9 @@ function ENT:SetupDataTables()
 
 	self:NetworkVar( "Bool", 0, "On", { KeyName = "on", Edit = { type = "Boolean", order = 1, title = "#entedit.enabled" } } )
 	self:NetworkVar( "Bool", 1, "Toggle", { KeyName = "toggle", Edit = { type = "Boolean", order = 2, title = "#tool.lamp.toggle" } } )
-	self:NetworkVar( "Float", 0, "LightFOV", { KeyName = "fov", Edit = { type = "Float", order = 3, min = 10, max = 170, title = "#tool.lamp.fov" } } )
-	self:NetworkVar( "Float", 1, "Distance", { KeyName = "dist", Edit = { type = "Float", order = 4, min = 64, max = 2048, title = "#tool.lamp.distance" } } )
-	self:NetworkVar( "Float", 2, "Brightness", { KeyName = "bright", Edit = { type = "Float", order = 5, min = 0, max = 8, title = "#tool.lamp.brightness" } } )
+	self:NetworkVar( "Float", 0, "LightFOV", { KeyName = "fov", Edit = { type = "Float", order = 3, min = 10, max = 75, title = "#tool.lamp.fov" } } )
+	self:NetworkVar( "Float", 1, "Distance", { KeyName = "dist", Edit = { type = "Float", order = 4, min = 64, max = 1024, title = "#tool.lamp.distance" } } )
+	self:NetworkVar( "Float", 2, "Brightness", { KeyName = "bright", Edit = { type = "Float", order = 5, min = 0, max = 2, title = "#tool.lamp.brightness" } } )
 
 	if ( SERVER ) then
 		self:NetworkVarNotify( "On", self.OnUpdateLight )
