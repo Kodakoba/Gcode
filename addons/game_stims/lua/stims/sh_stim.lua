@@ -1,3 +1,4 @@
+setfenv(1, _G)
 --wah
 
 Stims = Stims or {}
@@ -128,7 +129,7 @@ function Stims.Sound(name)
 	name = tostring(name)
 	name = name:gsub("%.mp3$", "")
 
-	if not lkup[name] then errorf("no stim sound: %s", name) return end
+	--if not lkup[name] then errorf("no stim sound: %s", name) return end
 
 	return fmt:format(lkup[name] or "")
 end
