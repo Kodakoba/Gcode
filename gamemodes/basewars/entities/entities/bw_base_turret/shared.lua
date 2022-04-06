@@ -31,7 +31,7 @@ ENT.NoAmmoSound		= Sound("weapons/pistol/pistol_empty.wav")
 
 ENT.PresetMaxHealth = 500
 
-ENT.AlwaysRaidable = true
+ENT.AlwaysRaidable = false
 ENT.ShootingOffset = Vector(9.7, 4.8, 53)
 ENT.LaserOffset = Vector(-3.2, 25.3, 7.6)
 ENT.GlareOffset = Vector(-3.7, 25, 7.6)
