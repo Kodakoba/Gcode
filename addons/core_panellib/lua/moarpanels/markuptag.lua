@@ -350,7 +350,7 @@ function buf:WrapText(tx, width, font, wrapDat)
 
 		local offX = 0
 
-		if txcache[4] and txcache[4] > 0 then
+		if txcache[4] and (isbool(txcache[4]) or txcache[4] > 0) then
 			self:SetPos(tw)
 		else
 			offX = tw
