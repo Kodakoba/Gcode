@@ -6,7 +6,7 @@ include("shared.lua")
 
 ENT.Model = "models/props/cs_militia/militiarock0%s.mdl"
 
-OreRespawnTime = 180 	--seconds
+OreRespawnTime = 120 	--seconds
 OreInvisibleTime = 5 	-- has to be invisible for X to everyone to disappear
 OreVisibleTime = 120 	-- if it's X seconds past it's time to remove it'll be removed regardless of people seeing
 
@@ -462,6 +462,10 @@ local function loadOres()
 
 	Inventory.MySQL.WaitStates(OresRespawn, "itemids")
 end
+
+timer.Create("missingOresRespawn", 30, 0, function()
+	OresRespawn()
+end)
 
 if CurTime() > 60 then
 	loadOres()
