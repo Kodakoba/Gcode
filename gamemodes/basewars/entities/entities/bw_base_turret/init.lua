@@ -92,7 +92,6 @@ function ENT:GetBulletInfo(target, pos)
 			--debugoverlay.Cross(tr.HitPos, 1, 1, color_white)
 			local vic = tr.Entity
 			if vic ~= target then
-				print(vic, "isnt target", target)
 				if not vic:IsPlayer() then dmg:ScaleDamage(0) return end
 
 				local ow = self:BW_GetOwner()
