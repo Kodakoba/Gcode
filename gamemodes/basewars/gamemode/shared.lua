@@ -297,6 +297,11 @@ function GM:PlayerNoClip(ply)
 		-- Second argument doesn't work??
 		local State = ply:GetMoveType() == MOVETYPE_NOCLIP
 
+		if Admin and ply.AdminPowers == false then
+			ply:Notify("You're not in admin mode for noclip. (.admin)", Color(230, 100, 100))
+			return false
+		end
+
 		if aowl and not Admin and State and not ply.__is_being_physgunned then
 			return true
 		end
