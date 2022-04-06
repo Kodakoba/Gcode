@@ -335,7 +335,7 @@ function nw:_SendNet(who, full, budget)
 		if istable(full) then
 			changes = full
 		else
-			changes = table.Copy(self:GetNetworked())
+			changes = table.ShallowCopy(self:GetNetworked())
 		end
 	end
 
