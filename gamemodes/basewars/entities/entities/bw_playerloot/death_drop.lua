@@ -1,9 +1,9 @@
 --
 
-local disabled = true
+LootDisabled = true
 
 hook.Add("PlayerDeath", "DropItems", function(ply)
-	if disabled then return end
+	if LootDisabled then return end
 
 	local inv = Inventory.GetTemporaryInventory(ply)
 	local its = inv and inv:GetItems()
