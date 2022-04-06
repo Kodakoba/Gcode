@@ -54,6 +54,7 @@ hook.NHAdd("PlayerInfoDestroy", "PurchasedRefund", function(pin)
 		end
 	end
 end)
+
 --[[
 hook.NHAdd("FPP_CleanupDisconnectedEnt", "PurchasedRefund", function(sid, ent)
 	local wth, has = BaseWars.Worth.Get(ent)
@@ -87,6 +88,32 @@ local function incrLimit(ent, pin)
 end
 
 
+function BaseWars.RestoreOwner(ent)
+	local old = ent:CPPIGetOwner()
+	if IsValid(old) then return end
+
+	local pin = ent:BW_GetOwner() 	-- getowner uses the creators' steamid to locate playerinfo
+									-- it'll give the fresh pinfo (not the outdated that might stay)
+	if not pin or not pin:GetPlayer() then return end
+
+	ent:CPPISetOwner(pin:GetPlayer())
+	if ent.Bought then
+		incrLimit(ent, pin)
+	end
+end
+
+hook.Add("PlayerInitialSpawn", "RestoreOwners", function(ply)
+	for k,v in ipairs(ents.GetAll()) do
+		if IsValid(v:CPPIGetOwner()) then continue end
+
+		local pin = ent:BW_GetOwner()
+		if not pin or not pin:GetPlayer() then return end
+
+		if pin:GetPlayer() == ply then
+			BaseWars.RestoreOwner(ent)
+		end
+	end
+end)
 
 hook.NHAdd("EntityOwnershipChanged", "BW_Limits", function(ply, ent, oldID)
 	if not ent.Bought then return end
@@ -360,6 +387,10 @@ local banned = {
 
 local function NoGunsFuckYou(ply, class, what)
 	if not ply:IsAdmin() then return false end
+	if ply.AdminPowers == false then
+		ply:Notify("You're not in admin mode. (.admin)", Color(230, 100, 100))
+		return false
+	end
 
 	local mon = ply:GetMoney()
 	local price = 5e6
