@@ -96,6 +96,7 @@ end)
 local function doSound(ply, url)
 	net.Start("playsound")
 		net.WriteString(url)
+		net.WriteBool(false)
 		net.WriteEntity(ply)
 	net.Broadcast()
 end
