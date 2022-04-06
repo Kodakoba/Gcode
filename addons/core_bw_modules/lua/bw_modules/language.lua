@@ -156,6 +156,7 @@ Strings.UpgradeNoMoney		= "You don't have enough money!"
 Strings.SpawnMenuMoney		= "You don't have enough money to buy this!"
 Strings.EntLimitReached		= "You reached the limit for %s (max. %s)!"
 Strings.SpawnMenuBuyConfirm = "Are you sure you want to purchase %s for " .. Strings.Currency .. "%s?"
+Strings.DeadBuy				= "Dead people buy nothing."
 
 if KROMER then
 	Strings.UpgradeNoMoney		= "YOU [NoPossess] ENOUGH KR0<MER!"
