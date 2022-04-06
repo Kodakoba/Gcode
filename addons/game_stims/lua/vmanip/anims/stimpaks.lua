@@ -27,7 +27,7 @@ STIMPAK_WORK_TIME = 0.8
 STIMPAK_REMOVE_TIME = 0.4
 
 if CLIENT then
-	local mx = 0
+	local mx = "" --[[0
 
 	local files, _ = file.Find("models/grp/stims/*", "GAME")
 
@@ -35,7 +35,7 @@ if CLIENT then
 		local num = v:match("c_grp_stim(%d*)")
 
 		mx = (num ~= "" and math.max(num and tonumber(num), mx)) or ""
-	end
+	end]]
 
 	local nm = "grp/stims/c_grp_stim" .. mx .. ".mdl"
 
