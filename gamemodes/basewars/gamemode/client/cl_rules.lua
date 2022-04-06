@@ -71,6 +71,7 @@ function ulx.showMotdMenu( steamid )
 			"Don't try to crash the server.",
 			"No RDM.",
 			"No NLR.",
+			"Citizens aren't supposed to have guns.",
 			"No propblocking.",
 			"No FailRP.",
 			"Max. 3 fading doors and 6 keypads.",
