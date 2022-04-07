@@ -85,8 +85,8 @@ function SWEP:PrimaryAttack()
 		self:CLPrimaryAttack()
 	end
 
-	local p = parts[math.random(#parts)]
-	ParticleEffect(p, pos, norm:Angle())
+	--local p = parts[math.random(#parts)]
+	--ParticleEffect(p, pos, norm:Angle())
 
 	local ed = EffectData()
 	ed:SetOrigin(pos)
