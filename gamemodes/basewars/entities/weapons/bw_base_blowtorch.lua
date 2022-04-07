@@ -132,7 +132,7 @@ function SWEP:PrimaryAttack()
 		return
 	end
 
-	local toDeal = self.Primary.Delay * self.DamagePerSecond
+	local toDeal = self.Primary.Delay * self.DamagePerSecond * 2
 	local dmg = DamageInfo()
 	dmg:SetDamage(toDeal)
 	dmg:SetAttacker(ply)
