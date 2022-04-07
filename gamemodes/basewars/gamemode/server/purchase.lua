@@ -106,11 +106,11 @@ hook.Add("PlayerInitialSpawn", "RestoreOwners", function(ply)
 	for k,v in ipairs(ents.GetAll()) do
 		if IsValid(v:CPPIGetOwner()) then continue end
 
-		local pin = ent:BW_GetOwner()
+		local pin = v:BW_GetOwner()
 		if not pin or not pin:GetPlayer() then return end
 
 		if pin:GetPlayer() == ply then
-			BaseWars.RestoreOwner(ent)
+			BaseWars.RestoreOwner(v)
 		end
 	end
 end)
