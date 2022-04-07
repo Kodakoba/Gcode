@@ -102,7 +102,7 @@ function BaseWars.RestoreOwner(ent)
 	end
 end
 
-hook.Add("PlayerInitialSpawn", "RestoreOwners", function(ply)
+hook.NHAdd("PlayerInitialSpawn", "RestoreOwners", function(ply)
 	for k,v in ipairs(ents.GetAll()) do
 		if IsValid(v:CPPIGetOwner()) then continue end
 
