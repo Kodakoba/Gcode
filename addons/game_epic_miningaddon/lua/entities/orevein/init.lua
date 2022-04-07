@@ -330,7 +330,8 @@ function ENT:MineOut(orename, ply)
 		return
 	end
 
-	-- ore.amt = ore.amt - 1
+	ore.amt = ore.amt - 1
+	
 	if ore.amt <= 0 then
 		self.Ores[orename] = nil
 	end
