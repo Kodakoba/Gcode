@@ -34,8 +34,8 @@ SWEP.Primary.ClipSize = 13 -- DefaultClip is automatically set.
 
 SWEP.PhysBulletMuzzleVelocity = 200
 
-SWEP.Recoil = 0.350
-SWEP.RecoilSide = 0.350
+SWEP.Recoil = 0.9
+SWEP.RecoilSide = 1.2
 SWEP.RecoilRise = 0.1
 SWEP.RecoilPunch = 2.5
 
@@ -50,9 +50,9 @@ SWEP.Firemodes = {
 SWEP.NPCWeaponType = "weapon_pistol"
 SWEP.NPCWeight = 100
 
-SWEP.AccuracyMOA = 5 -- accuracy in Minutes of Angle. There are 60 MOA in a degree.
-SWEP.HipDispersion = 125 -- inaccuracy added by hip firing.
-SWEP.MoveDispersion = 25
+SWEP.AccuracyMOA = 11 -- accuracy in Minutes of Angle. There are 60 MOA in a degree.
+SWEP.HipDispersion = 350 -- inaccuracy added by hip firing.
+SWEP.MoveDispersion = 125
 
 SWEP.Primary.Ammo = "pistol" -- what ammo type the gun uses
 SWEP.MagID = "p250" -- the magazine pool this gun draws from

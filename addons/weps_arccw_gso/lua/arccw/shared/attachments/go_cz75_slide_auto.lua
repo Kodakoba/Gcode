@@ -11,7 +11,7 @@ att.Slot = "go_cz75_slide"
 
 att.Mult_Recoil = 0.95
 
-att.Mult_RPM = 1.5
+-- att.Mult_RPM = 1.5
 
 att.Mult_ShootPitch = 0.95
 
