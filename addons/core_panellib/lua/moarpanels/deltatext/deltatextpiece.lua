@@ -213,7 +213,7 @@ function pmeta:Appear()
 
 	self:CreateAlphaAnimation("Appear", function(fr)
 		self:AnimateAppearance(fr, a, wasDisappearing, fx, fy)
-	end, function() 
+	end, function()
 		self.Appearing = false
 	end)
 

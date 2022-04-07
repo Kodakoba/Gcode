@@ -200,7 +200,8 @@ function DeltaText:DisappearCurrentElement()
 end
 
 function DeltaText:GetSize()
-
+	errorNHf("NYI")
+	return 0, 0
 	--[[
 		TODO: make dmeta loop around all of its' active objects and
 		return the maximum width with offsets and text width calculations here
@@ -263,10 +264,14 @@ function DeltaText:GetWide()
 
 		if tp.Font ~= self.LastFont then self.LastFont = tp.Font surface.SetFont(self.Font) end
 
-		tw = tw + tp:GetWide()--(surface.GetTextSize(tp:GetText(true)))
+		tw = tw + tp:GetWide() --(surface.GetTextSize(tp:GetText(true)))
 	end
 
 	return tw
+end
+
+function DeltaText:GetTall()
+	return draw.GetFontHeight(self.Font)
 end
 
 function DeltaText:Paint(x, y)
