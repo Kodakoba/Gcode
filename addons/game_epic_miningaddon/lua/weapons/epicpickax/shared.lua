@@ -43,20 +43,28 @@ local function CheckOre(ply)
 
 	if not IsValid(tr.Entity) or not tr.Entity.IsOre or tr.Fraction > 256/32768 then return false end --geteyetrace is 32768 units
 
-	return tr.Entity
+	return tr.Entity, tr.HitPos, tr.HitNormal
 end
 
 function SWEP:Initialize()
 	self:SetHoldType( "ar2" )
 end
+
+local parts = {
+	"impact_concrete",
+	"impact_concrete_b",
+	"impact_concrete_c",
+	"impact_concrete_d",
+}
+
 function SWEP:PrimaryAttack()
 	if not IsFirstTimePredicted() then
-
 		self:SendWeaponAnim(ACT_VM_PRIMARYATTACK)
 		self.Owner:SetAnimation(PLAYER_ATTACK1)
 
 		self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
-	return end
+		return
+	end
 
 
 	self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
@@ -64,22 +72,33 @@ function SWEP:PrimaryAttack()
 	local ow = (CLIENT and LocalPlayer()) or self:GetOwner()
 	if not IsValid(ow) then return end
 
- 	local ore = CheckOre(ow)
+ 	local ore, pos, norm = CheckOre(ow)
  	if not ore then return end
 
 
 	if SERVER then
 		self:SendWeaponAnim(ACT_VM_PRIMARYATTACK)
-		self.Owner:SetAnimation(PLAYER_ATTACK1)
+		self:GetOwner():SetAnimation(PLAYER_ATTACK1)
 
 		self:SVPrimaryAttack(ow, ore)
-
 	else
-
 		self:CLPrimaryAttack()
-
 	end
 
+	local p = parts[math.random(#parts)]
+	ParticleEffect(p, pos, norm:Angle())
+
+	local ed = EffectData()
+	ed:SetOrigin(pos)
+	ed:SetNormal(norm)
+	util.Effect("oreimpact", ed)
+
+	--[[local em = ParticleEmitter(pos)
+
+	local nang = Vector(norm)
+	local dir = Vector()]]
+
+	
 end
 
 function SWEP:SecondaryAttack()

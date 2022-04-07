@@ -234,6 +234,27 @@ function ANGLE:ToUp(inVec)
 	return inVec
 end
 
+local randVec = Vector()
+
+function VECTOR:AngleSpread(radx, rady)
+	self:Normalize()
+
+	local ang = math.random() * math.pi * 2
+	local x, y = math.cos(ang), math.sin(ang)
+
+	local rad = math.sqrt(math.random())
+
+	randVec:SetUnpacked(
+		0, x * rad * radx, y * rad * rady
+	)
+
+	randVec:Rotate(self:Angle()) -- ?
+	self:Add(randVec)
+	self:Normalize()
+
+	return self
+end
+
 local toChain = {
 	"Add", "Sub", "Mul", "Div"
 }

@@ -13,9 +13,9 @@ end
 local snd = "physics/concrete/concrete_impact_%s%s.wav"
 
 function SWEP:SVPrimaryAttack(ply, ore)
-
 	local ores = ore.Ores
 	local mined = false
+
 
 	for k,v in pairs(ores) do
 		local chance = math.random()
