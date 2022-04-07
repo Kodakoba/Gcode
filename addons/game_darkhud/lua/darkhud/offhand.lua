@@ -4,7 +4,7 @@ local col = Colors.LighterGray
 
 local icon = {"https://i.imgur.com/6se0gFC.png", "none64_gray.png"}
 
-local handle = BSHADOWS.GenerateCache("DarkHUD_OffhandNothing", 64, 64)
+local handle = BSHADOWS.GenerateCache("DarkHUD_OffhandNothing", 128, 128)
 handle.rendered = false
 handle:SetGenerator(function(self, w, h)
 	surface.SetDrawColor(255, 255, 255)
@@ -118,9 +118,8 @@ dh:On("AmmoPainted", "PaintOffhand", function(_, pnl, fw, h)
 
 	local mat, has = draw.GetMaterial(icon[1], icon[2])
 
-	if has and not handle.rendered then
-		handle:CacheShadow(3, 8, 4)
-		handle.rendered = true
+	if has then
+		handle:CacheRet(3, 8, 6)
 	end
 
 	local clip = DisableClipping(true)
@@ -157,21 +156,24 @@ dh:On("AmmoPainted", "PaintOffhand", function(_, pnl, fw, h)
 
 		if not tbl or not tbl.Paint or
 			(tbl.ShouldPaint and tbl:ShouldPaint() == false) then
-			paintNothing(pnl, ux, uy, w)
 			add = w
-			goto postpaint
+
+			if tbl and tbl.PaintNothing then
+				xpcall(tbl.PaintNothing, GenerateErrorer("PaintAction_Nothing_" .. act), pnl, ux, uy, w)
+			else
+				paintNothing(pnl, ux, uy, w)
+			end
+
+		else
+			ok, add = xpcall(tbl.Paint, GenerateErrorer("PaintAction_" .. act),
+				pnl, ux, uy, w)
 		end
 
-		ok, add = xpcall(tbl.Paint, GenerateErrorer("PaintAction_" .. act),
-			pnl, ux, uy, w)
+		if not act or act:match("nothing") then act = nil end
 
-		::postpaint::
+		if pnl.OffhandFr > 0 or not act then
+			local aFr = Lerp(pnl.OffhandFr or 0, act and 0 or 0.5, 1)
 
-		--[[surface.SetDrawColor(outlineCol:Unpack())
-		surface.DrawOutlinedRect(left, top,
-			rsz, rsz)]]
-
-		if pnl.OffhandFr > 0 then
 			local txt = fmt:format(input.GetKeyName(bind.Key)):upper()
 
 			surface.SetFont("Darkhud_OffhandTipShadow")
@@ -180,10 +182,10 @@ dh:On("AmmoPainted", "PaintOffhand", function(_, pnl, fw, h)
 			local txX, txY = math.floor(uleft + rsz / 2 - txW / 2),
 				math.floor(utop - 4 - txH)
 
-			if not act or act:match("nothing") then
+			if not act then
 				local font = "Darkhud_OffhandTipSmall"
 				surface.SetFont(font .. "Shadow")
-				surface.SetTextColor(0, 0, 0, (pnl.OffhandFr or 0) * 200)
+				surface.SetTextColor(0, 0, 0, aFr * 200)
 				local tipW, tipH = surface.GetTextSize(holdTip)
 				local tipX = uleft + rsz / 2 - tipW / 2
 
@@ -193,13 +195,13 @@ dh:On("AmmoPainted", "PaintOffhand", function(_, pnl, fw, h)
 				end
 
 				surface.SetFont(font)
-				surface.SetTextColor(160, 160, 160, (pnl.OffhandFr or 0) * 200)
+				surface.SetTextColor(160, 160, 160, aFr * 200)
 				surface.SetTextPos(tipX, txY - draw.GetFontHeight(font))
 				surface.DrawText(holdTip)
 			end
 
 			surface.SetFont("Darkhud_OffhandTipShadow")
-			surface.SetTextColor(0, 0, 0, (pnl.OffhandFr or 0) * 255)
+			surface.SetTextColor(0, 0, 0, aFr * 255)
 
 			for i=1, 5 do
 				surface.SetTextPos(txX, txY)
@@ -208,7 +210,7 @@ dh:On("AmmoPainted", "PaintOffhand", function(_, pnl, fw, h)
 
 			surface.SetFont("Darkhud_OffhandTip")
 			surface.SetTextPos(txX, txY)
-			surface.SetTextColor(255, 255, 255, (pnl.OffhandFr or 0) * 255)
+			surface.SetTextColor(255, 255, 255, aFr * 255)
 			surface.DrawText(txt)
 
 			dh.OffhandY = Lerp(pnl.OffhandFr or 0, dh.OffhandY, txY - 4 - txH)
