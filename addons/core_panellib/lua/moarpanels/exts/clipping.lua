@@ -137,8 +137,12 @@ function draw.ReenableMask()
 	render.SetStencilEnable(true)
 end
 
+function draw.Mask()
+	render.SetStencilReferenceValue( 1 ) -- include
+end
+
 function draw.DeMask(demask, ...) --requires mask to be started
-	render.SetStencilReferenceValue( 0 ) --exclude
+	render.SetStencilReferenceValue( 0 ) -- exclude
 	if demask then demask(...) end
 end
 
