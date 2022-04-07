@@ -118,6 +118,8 @@ Stims.OffhandTable.Paint = function(pnl, x, y, size)
 		if not b then DisableClipping(false) end
 	end
 
+	local circSize = size * (20 / 48)
+
 	draw.EnableFilters(true, false)
 
 		-- Shadowed

@@ -102,13 +102,19 @@ dh:On("AmmoThink", "ThinkOffhand", function(_, pnl)
 	pnl:To("OffhandFr", (pnl.Gone or pnl.GoingAway) and 0 or 1, 0.3, 0, 0.3)
 end)
 
+dh.OffhandY = 0
 
 dh:On("AmmoPainted", "PaintOffhand", function(_, pnl, fw, h)
 
-	local x = pnl.OffhandX or 8
-	local w = math.max(48, 48 * DarkHUD.Scale)
+	local minW = math.max(48, 48 * DarkHUD.Scale)
+	local maxW = math.max(64, 64 * DarkHUD.Scale)
+
+	local x = Lerp(1 - pnl.OffhandFr, pnl.OffhandX or 8, pnl:ScreenToLocal(ScrW()) - (maxW + 8) * 3 - 16)
+	local w = Lerp(1 - pnl.OffhandFr, minW, maxW)
+
 	pnl.OffhandFr = pnl.OffhandFr or 0
-	local y = -w - DarkHUD.OffhandYPad - (1 - pnl.OffhandFr) * h
+	local y = -w - DarkHUD.OffhandYPad -- - (1 - pnl.OffhandFr) * h
+	dh.OffhandY = y
 
 	local mat, has = draw.GetMaterial(icon[1], icon[2])
 
@@ -204,6 +210,8 @@ dh:On("AmmoPainted", "PaintOffhand", function(_, pnl, fw, h)
 			surface.SetTextPos(txX, txY)
 			surface.SetTextColor(255, 255, 255, (pnl.OffhandFr or 0) * 255)
 			surface.DrawText(txt)
+
+			dh.OffhandY = Lerp(pnl.OffhandFr or 0, dh.OffhandY, txY - 4 - txH)
 		end
 
 		x = x + (add or w) + pad
