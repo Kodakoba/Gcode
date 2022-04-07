@@ -80,9 +80,7 @@ Stims.OffhandTable.Paint = function(pnl, x, y, size)
 
 	stimX, stimY = sX, sY
 
-	if not handle.cached then
-		handle.cached = handle:CacheShadow(4, 8, 2)
-	end
+	handle:CacheRet(4, 8, 2)
 
 	local me = CachedLocalPlayer()
 
