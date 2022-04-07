@@ -23,11 +23,14 @@ end
 local sin = function(d) return math.sin(math.rad(d)) end
 local cos = function(d) return math.cos(math.rad(d)) end
 
-function math.AARectSize(w, h, deg)
-	local nh = h * math.abs(cos(deg)) + w * math.abs(sin(deg))
-	local nw = h * math.abs(sin(deg)) + w * math.abs(cos(deg))
+function math.AARectSize(w, h, rad)
+	local nh = h * math.abs(cos(rad)) + w * math.abs(sin(rad))
+	local nw = h * math.abs(sin(rad)) + w * math.abs(cos(rad))
 
-	return nw, nh
+	local aspect = h / w
+	local scale = math.min(nw / w, nh / h, 1)
+
+	return nw * scale, nh * scale * aspect
 end
 
 function math.Length(num) --length of number in base 10, kind of works for retarded numbers (> 14 in len)
