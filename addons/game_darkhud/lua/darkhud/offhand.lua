@@ -109,12 +109,12 @@ dh:On("AmmoPainted", "PaintOffhand", function(_, pnl, fw, h)
 	local minW = math.max(48, 48 * DarkHUD.Scale)
 	local maxW = math.max(64, 64 * DarkHUD.Scale)
 
-	local x = Lerp(1 - pnl.OffhandFr, pnl.OffhandX or 8, pnl:ScreenToLocal(ScrW()) - (maxW + 8) * 3 - 16)
+	local x = Lerp(1 - pnl.OffhandFr, pnl.OffhandX or 8, fw - maxW * 3 - pad * 2)
 	local w = Lerp(1 - pnl.OffhandFr, minW, maxW)
 
 	pnl.OffhandFr = pnl.OffhandFr or 0
 	local y = -w - DarkHUD.OffhandYPad -- - (1 - pnl.OffhandFr) * h
-	dh.OffhandY = y
+	dh.OffhandY = y - 8
 
 	local mat, has = draw.GetMaterial(icon[1], icon[2])
 
@@ -126,6 +126,8 @@ dh:On("AmmoPainted", "PaintOffhand", function(_, pnl, fw, h)
 
 	-- counteract the shaking a bit
 	-- unshaken is used in painting icons and keys, not rects
+
+	local minY = dh.OffhandY
 
 	for i, bind in ipairs(Offhand.Binds) do
 		local ux = math.floor(x - pnl.ShakeX * 0.6)
@@ -182,11 +184,13 @@ dh:On("AmmoPainted", "PaintOffhand", function(_, pnl, fw, h)
 			local txX, txY = math.floor(uleft + rsz / 2 - txW / 2),
 				math.floor(utop - 4 - txH)
 
+			local tipW, tipH = 0, 0
+
 			if not act then
 				local font = "Darkhud_OffhandTipSmall"
 				surface.SetFont(font .. "Shadow")
 				surface.SetTextColor(0, 0, 0, aFr * 200)
-				local tipW, tipH = surface.GetTextSize(holdTip)
+				tipW, tipH = surface.GetTextSize(holdTip)
 				local tipX = uleft + rsz / 2 - tipW / 2
 
 				for i=1, 3 do
@@ -196,7 +200,8 @@ dh:On("AmmoPainted", "PaintOffhand", function(_, pnl, fw, h)
 
 				surface.SetFont(font)
 				surface.SetTextColor(160, 160, 160, aFr * 200)
-				surface.SetTextPos(tipX, txY - draw.GetFontHeight(font))
+				surface.SetTextPos(tipX, txY - tipH)
+
 				surface.DrawText(holdTip)
 			end
 
@@ -213,10 +218,12 @@ dh:On("AmmoPainted", "PaintOffhand", function(_, pnl, fw, h)
 			surface.SetTextColor(255, 255, 255, aFr * 255)
 			surface.DrawText(txt)
 
-			dh.OffhandY = Lerp(pnl.OffhandFr or 0, dh.OffhandY, txY - 4 - txH)
+			minY = math.min(minY, Lerp(not act and 1 or aFr, uy, txY - tipH))
 		end
 
 		x = x + (add or w) + pad
 	end
+
+	dh.OffhandY = minY
 	DisableClipping(clip)
 end)
