@@ -421,10 +421,11 @@ if SERVER then
 		pinfo:Emit("Connect", ply)
 	end)
 
-	hook.Add("PlayerAuthed", "PlayerInfoEmit", function(ply, sid)
+	hook.NHAdd("PlayerAuthed", "PlayerInfoEmit", function(ply, sid)
 		local pinfo = PI.Revalidate(sid)
 		if not pinfo then return end
 
+		pinfo:SetPlayer(ply)
 		pinfo:Emit("StartReconnect", ply)
 		pinfo._AbsentStop = CurTime()
 		pinfo._Absent = false
