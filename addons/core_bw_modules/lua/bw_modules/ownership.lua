@@ -7,7 +7,7 @@ BaseWars.Ents = BaseWars.Ents or {}
 function ENTITY:BW_GetOwner()
 	local o1, o2 = self:CPPIGetOwner()
 	if o1 == nil and o2 == nil then
-		return game.GetWorld(), true
+		return false, true
 	end
 
 	if SERVER then
