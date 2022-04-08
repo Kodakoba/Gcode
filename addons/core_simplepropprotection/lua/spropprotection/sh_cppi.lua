@@ -1,3 +1,5 @@
+do return end
+
 ------------------------------------
 --	Simple Prop Protection
 --	By Spacetech, Maintained by Donkie
