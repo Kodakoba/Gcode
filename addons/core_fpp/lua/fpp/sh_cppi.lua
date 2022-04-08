@@ -50,8 +50,6 @@ if SERVER then
 	end
 end
 
-do return end
-
 CPPI = CPPI or {}
 CPPI.CPPI_DEFER = 102112 --\102\112 = fp
 CPPI.CPPI_NOTIMPLEMENTED = 7080 --\70\80 = FP
