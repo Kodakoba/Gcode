@@ -29,16 +29,29 @@ hook.Add("CPPIAssignOwnership", "BWTrackOwner", function(ply, ent)
 end)
 
 function BaseWars.Ents.NetworkAll(ply)
+	local props = {}
+	local sids = {}
+
+	for k,v in ipairs(ents.GetAll()) do
+		if not v.FPPOwnerID then continue end
+		props[#props + 1] = v
+		sids[v.FPPOwnerID] = sids[v.FPPOwnerID] or {}
+		table.insert(sids[v.FPPOwnerID], v)
+	end
+
+
 	net.Start("BW_OwnershipChange_Mass")
 
-		local count = table.Count(SPropProtection.Props)
+		local count = table.Count(sids)
 		net.WriteUInt(count, 16)
 
-		for k,v in pairs(SPropProtection.Props) do
-			local ent = v.Ent
+		for k,v in pairs(sids) do
+			net.WriteSteamID(k)
+			net.WriteUInt(#v, 16)
 
-			net.WriteUInt(ent:EntIndex(), 16)
-			net.WriteSteamID(v.SteamID)
+			for _, ent in ipairs(v) do
+				net.WriteUInt(ent:EntIndex(), 16)
+			end
 		end
 
 	net.Send(ply)

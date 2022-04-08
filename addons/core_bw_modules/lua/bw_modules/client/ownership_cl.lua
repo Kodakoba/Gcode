@@ -41,9 +41,14 @@ net.Receive("BW_OwnershipChange", function()
 end)
 
 net.Receive("BW_OwnershipChange_Mass", function()
-	local count = net.ReadUInt(16)
-	for i=1, count do
-		local eid, sid = net.ReadUInt(16), net.ReadSteamID()
-		BaseWars.Ents.AssignOwner(eid, sid)
+	local sids = net.ReadUInt(16)
+
+	for i=1, sids do
+		local sid = net.ReadSteamID()
+		local entCnt = net.ReadUInt(16)
+		for e = 1, entCnt do
+			local eid = net.ReadUInt(16)
+			BaseWars.Ents.AssignOwner(eid, sid)
+		end
 	end
 end)
