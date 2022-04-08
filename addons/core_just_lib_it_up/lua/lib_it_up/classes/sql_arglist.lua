@@ -28,6 +28,17 @@ function al:RemoveArg(name)
 	return self
 end
 
+function al:GetArgs()
+	return self.Args
+end
+
+function al:GetArgNames()
+	local t = {}
+	for i=1, #self.Args do t[i] = self.Args[i][1] end
+
+	return t
+end
+
 function al:__tostring()
 	local ret = ""
 	for k,v in ipairs(self.Args) do
