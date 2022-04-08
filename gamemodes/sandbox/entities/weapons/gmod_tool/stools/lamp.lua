@@ -243,9 +243,9 @@ function TOOL.BuildCPanel( CPanel )
 
 	CPanel:AddControl( "Numpad", { Label = "#tool.lamp.key", Command = "lamp_key" } )
 
-	CPanel:AddControl( "Slider", { Label = "#tool.lamp.fov", Command = "lamp_fov", Type = "Float", Min = 10, Max = 170 } )
+	CPanel:AddControl( "Slider", { Label = "#tool.lamp.fov", Command = "lamp_fov", Type = "Float", Min = 10, Max = 75 } )
 	CPanel:AddControl( "Slider", { Label = "#tool.lamp.distance", Command = "lamp_distance", Min = 64, Max = 2048 } )
-	CPanel:AddControl( "Slider", { Label = "#tool.lamp.brightness", Command = "lamp_brightness", Type = "Float", Min = 0, Max = 8 } )
+	CPanel:AddControl( "Slider", { Label = "#tool.lamp.brightness", Command = "lamp_brightness", Type = "Float", Min = 0, Max = 3 } )
 
 	CPanel:AddControl( "Checkbox", { Label = "#tool.lamp.toggle", Command = "lamp_toggle" } )
 
