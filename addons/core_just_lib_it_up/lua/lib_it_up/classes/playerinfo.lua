@@ -422,7 +422,7 @@ if SERVER then
 	end)
 
 	hook.NHAdd("PlayerAuthed", "PlayerInfoEmit", function(ply, sid)
-		local pinfo = PI.Revalidate(sid)
+		--[[local pinfo = PI.Revalidate(sid)
 		if not pinfo then return end
 
 		pinfo:SetPlayer(ply)
@@ -431,7 +431,7 @@ if SERVER then
 		pinfo._Absent = false
 		PIT.Absent[pinfo] = nil
 
-		pinfo:NotifyEveryone()
+		pinfo:NotifyEveryone()]]
 	end)
 end
 
