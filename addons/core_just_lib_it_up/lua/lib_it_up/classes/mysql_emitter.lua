@@ -15,6 +15,8 @@ local function defaultSuccess(q, dat)
 	local str = "	Success! Returned %d rows;\n"
 	MsgC(verygood, "[MySQLQuery]\n", color_white, str:format(#dat), "\n")
 	PrintTable(dat or {}, 1)
+
+	return dat
 end
 
 MySQLQuery = MySQLQuery or Promise:Callable()
@@ -22,6 +24,8 @@ MySQLEmitter = MySQLQuery -- backwards compat
 
 MySQLQuery.IsMySQLEmitter = true
 MySQLQuery.IsMySQLQuery = true
+
+MySQLQuery.DefaultCatch = defaultCatch
 
 function MySQLQuery:__tostring()
 	return ("MySQLQuery: %p"):format(self)
@@ -102,9 +106,9 @@ end
 
 function MySQLQuery:Debug()
 	self:Then(function(_, ...)
-		defaultSuccess(...)
+		return defaultSuccess(...)
 	end, function(...)
-		defaultCatch(...)
+		return defaultCatch(...)
 	end)
 
 	return self
