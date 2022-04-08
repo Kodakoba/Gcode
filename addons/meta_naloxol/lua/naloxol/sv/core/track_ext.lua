@@ -54,8 +54,8 @@ local banStruct = Struct:extend({
 	name = {TYPE_STRING, "[untracked]"},
 })
 
-hook.NHAdd("PlayerAuthed", "NX_Track", function(ply, sid)
-	local sid64 = util.SteamIDTo64(sid)
+function NX.StartTrack(ply, sid)
+	local sid64 = sid and util.SteamIDTo64(sid) or ply:SteamID64()
 	local ip = ply:IPAddress()
 
 	local q = nsql.PreparedQueries.trackJoin
@@ -69,6 +69,10 @@ hook.NHAdd("PlayerAuthed", "NX_Track", function(ply, sid)
 		:Then(function(self, q)
 			ply._nxTrackerID = q:lastInsert()
 		end)
+end
+
+hook.NHAdd("PlayerAuthed", "NX_Track", function(ply, sid)
+	NX.StartTrack(ply, sid)
 end)
 
 function NX.UpdatePlayerTimes()
