@@ -30,6 +30,7 @@ end
 local function enterBase(ent, base)
 	local eid = isnumber(ent) and ent or ent:EntIndex()
 	ent = Entity(eid)
+	if not IsValid(ent) then return end -- !>>?!>
 
 	if ent:CreatedByMap() or ent:IsPlayer()
 		or not ent:BW_GetOwner() then return end
