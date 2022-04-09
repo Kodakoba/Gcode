@@ -150,6 +150,7 @@ end
 
 function COLOR:Lerp(fr, from, to)
 	draw.LerpColor(fr, self, to, from)
+	return self
 end
 
 function IsMaterial(m)

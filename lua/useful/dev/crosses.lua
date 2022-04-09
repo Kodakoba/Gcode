@@ -19,7 +19,11 @@ local funcs = {
 if SERVER then
 	util.AddNetworkString("dbg")
 
+	DisableDebugOverlay = false
+
 	local function sendDbg(id, ...)
+		if DisableDebugOverlay then return false end
+
 		net.Start("dbg")
 			net.WriteUInt(id, 4)
 			net.WriteUInt(select("#", ...), 4)
