@@ -87,7 +87,7 @@ local ENTITY = FindMetaTable("Entity")
 function ENTITY:CPPIGetOwner()
 	local Owner = FPP.entGetOwner(self)
 	if not IsValid(Owner) or not Owner:IsPlayer() then return SERVER and Owner or nil, self.FPPOwnerID end
-	return Owner, Owner:SteamID64()
+	return Owner, Owner:SteamID()
 end
 
 if SERVER then
@@ -97,13 +97,14 @@ if SERVER then
 		assert(ply == nil or IsEntity(ply), "The owner of an entity must be set to either nil, NULL or a valid entity.")
 
 		local valid = IsValid(ply) and ply:IsPlayer()				-- Why the fuck is this a thing, falco?
-		local steamId = valid and ply:SteamID64() or nil							-- V
-		local canSetOwner = hook.Run("CPPIAssignOwnership", ply, self, valid and ply:SteamID64() or ply)
+		local steamId = valid and ply:SteamID() or nil							-- V
+		local canSetOwner = hook.Run("CPPIAssignOwnership", ply, self, ply:SteamID64())
 
 		if canSetOwner == false then return false end
 		ply = canSetOwner ~= nil and canSetOwner ~= true and canSetOwner or ply
 		self.FPPOwner = ply
 		self.FPPOwnerID = steamId
+		self.FPPOwnerSID64 = valid and ply:SteamID64()
 
 		self.FPPOwnerChanged = true
 		FPP.recalculateCanTouch(player.GetAll(), {self})
