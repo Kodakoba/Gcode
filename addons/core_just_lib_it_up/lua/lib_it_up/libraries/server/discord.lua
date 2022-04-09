@@ -48,20 +48,24 @@ local function socketConnect(_, sock)
 end
 
 local function socketFailConnect(_, sock, err)
-	local msg = "Unable to connect to Discord relay @ %s.\n	Error: %s"
+	local msg = "Unable to connect to Discord relay @ %s.\n" ..
+		"	Error: %s\n" ..
+		"	Type discord_reconnect or DiscordReconnect() to attempt reconnection.\n"
+
 	msg = msg:format(sock.url, err)
 
 	if not silence then
 		MsgC(Color(250, 100, 100), msg)
 	end
+
+	sock.planned = true
 end
 
 local function sockDisconnect(sock)
 	if sock.planned then return end
 
 	MsgC(Color(250, 100, 100), "Disconnected from IRC server.\n",
-		"Type discord_reconnect or DiscordReconnect() to attempt reconnection.\n",
-		"Right now, listening for messages.\n")
+		"Type discord_reconnect or DiscordReconnect() to attempt reconnection.\n")
 end
 
 local function socketReceive(sock, str)
@@ -148,41 +152,6 @@ hook.NHAdd("PlayerSay", "Discord", function(ply, msg)
 
 end)
 
-hook.NHAdd("AnnounceJoin", "Discord", function(name, sid)
-	if not discord.Enabled then return end
-	if not discord.DB then return end
-	
-	discord.QueueEmbed("joinleave", "Join/Leave",
-		Embed()
-			:SetText("Player " .. name .. " has joined the server.")
-			:SetColor(70, 200, 70)
-		)
-end)
-
-hook.NHAdd("AnnounceConnect", "Discord", function(name, sid)
-	if not discord.Enabled then return end
-	if not discord.DB then return end
-
-	discord.QueueEmbed("joinleave", "Join/Leave",
-		Embed()
-			:SetText("Player " .. name .. " has started connecting to the server.")
-			:SetColor(230, 200, 70)
-		)
-end)
-
-hook.NHAdd("AnnounceLeave", "Discord", function(name, sid, ip, injoin)
-	if not discord.Enabled then return end
-	if not discord.DB then return end
-
-	discord.QueueEmbed("joinleave", "Join/Leave",
-		Embed()
-			:SetText("Player " .. name .. " has " ..
-				(injoin and "given up on connecting." or "left the server.")
-			)
-			:SetColor(200, 70, 70)
-		)
-end)
-
 Embed = {}
 
 EmbedMeta = {}
@@ -249,9 +218,8 @@ function discord.GetChannels(mode, cb)
 	local q = "SELECT whook_url FROM `relays` WHERE json_search(`modes`, 'one', '%s') IS NOT NULL"
 	q = q:format(db:escape(mode))
 
-	local q = db:query(q)
-
-	q.onSuccess = function(self, dat)
+	local em = MySQLQuery(db:query(q), true)
+		:Then(function(_, self, dat)
 		local urls = {}
 
 		if not dat[1] then return end --no relays listening for this mode
@@ -260,14 +228,10 @@ function discord.GetChannels(mode, cb)
 			urls[#urls + 1] = v.whook_url
 		end
 
-		cb(urls)
-	end
+		if cb then cb(urls) end
+	end)
 
-	q.onError = function(self, err, sql)
-		log("Error on attempting to get channels.\nError: %s\nSQL: %s", err, sql)
-	end
-
-	q:start()
+	return em
 end
 
 function discord.Send(mode, name, txt)
@@ -388,9 +352,15 @@ local sendQueue = muldim:new()
 
 local function flush()
 	for chan, names in pairs(sendQueue) do
+		local embeds = {}
+
 		for name, ems in pairs(names) do
-			discord.SendEmbed(chan, name, ems)
+			for _, em in ipairs(ems) do
+				embeds[#embeds + 1] = em
+			end
 		end
+
+		discord.SendEmbed(chan, name, embeds)
 	end
 
 	table.Empty(sendQueue)

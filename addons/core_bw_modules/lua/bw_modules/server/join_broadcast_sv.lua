@@ -32,7 +32,7 @@ local function getPlayTime(sid)
 	return 0, false
 end
 
-function an.AnnounceJoin(name, sid64, ip, sub)
+function an.AnnounceConnect(name, sid64, ip, sub)
 	local sid = util.SteamIDFrom64(sid64)
 
 	net.Start("NewPlayerBroadcast")
@@ -61,11 +61,11 @@ function an.OnJoin(name, sid64, ip)
 	local cd = announceCD - time
 
 	if was and cd > 0 then
-		timer.Create("announcejoin_" .. sid64, cd, 1, function()
-			an.AnnounceJoin(name, sid64, ip, cd)
+		timer.Create("announceconnect_" .. sid64, cd, 1, function()
+			an.AnnounceConnect(name, sid64, ip, cd)
 		end)
 	else
-		an.AnnounceJoin(name, sid64, ip)
+		an.AnnounceConnect(name, sid64, ip)
 	end
 end
 
@@ -104,8 +104,8 @@ function an.AnnounceLeave(name, sid64, reason)
 		net.WriteUInt(math.floor(passed), 16)
 	net.Broadcast()
 
-	hook.Run("AnnounceLeave", name, sid64, reason, true)
-	hook.Run("AnnounceAbortJoin", name, sid64, reason, true)
+	hook.Run("AnnounceLeave", name, sid64, reason, passed, true)
+	hook.Run("AnnounceAbortJoin", name, sid64, reason, passed, true)
 end
 
 function an.AnnounceLeaveGame(name, sid64, reason)
@@ -141,8 +141,8 @@ function an.AnnounceLeaveGame(name, sid64, reason)
 		net.WriteUInt(math.floor(passed), 16)
 	net.Broadcast()
 
-	hook.Run("AnnounceLeave", name, sid64, reason, false)
-	hook.Run("AnnounceLeaveGame", name, sid64, reason)
+	hook.Run("AnnounceLeave", name, sid64, reason, passed, false)
+	hook.Run("AnnounceLeaveGame", name, sid64, reason, passed)
 end
 
 function an.OnLeave(name, sid64, reason)
@@ -156,8 +156,6 @@ function an.OnLeave(name, sid64, reason)
 	-- unspawned leave; ratelimit
 	local time, was = getLeaveTime(sid64)
 	local cd = announceCD - time
-
-	print("onLeave:", time, was, sid64)
 
 	if was and cd > 0 then
 		-- on cooldown from announcing; bail
@@ -194,7 +192,7 @@ hook.NHAdd("player_disconnect", "TrackLeave", function( data )
 	local name = data.name
 	local reason = data.reason and data.reason:gsub("[\r\n]*$", "")
 	local sid64 = u2s[data.userid] or util.SteamIDTo64(data.networkid)
-	
+
 	an.OnLeave(name, sid64, reason)
 end)
 
@@ -204,7 +202,7 @@ hook.Add("PlayerFullyLoaded", "BroadcastJoin", function(ply)
 	local passed = getJoinTime(ply:SteamID64())
 	joinTimes[ply:SteamID64()] = nil
 	spawnTimes[ply:SteamID64()] = SysTime()
-	print("join broadcase: forming table...")
+
 	local dat = {
 		Colors.Sky, "[Connect] ",
 		Color(200, 200, 200), "Player ",
@@ -215,7 +213,6 @@ hook.Add("PlayerFullyLoaded", "BroadcastJoin", function(ply)
 		Color(200, 200, 200), "s.",
 		"\n"
 	}
-	print("formed, broadcasting...")
 
 	net.Start("NewPlayerBroadcast")
 		net.WriteUInt(1, 4)
@@ -226,5 +223,52 @@ hook.Add("PlayerFullyLoaded", "BroadcastJoin", function(ply)
 
 	MsgC(unpack(dat))
 
-	hook.Run("AnnounceJoin", ply:Nick(), ply:SteamID64(), ply:IPAddress(), ply)
+	hook.Run("AnnounceJoin", ply:Nick(), ply:SteamID64(), ply, passed)
+end)
+
+hook.NHAdd("AnnounceJoin", "Discord", function(name, sid, ply, passed)
+	if not discord.Enabled then return end
+	if not discord.DB then return end
+
+	local tx = "Player %s has joined the server [%s] after %s."
+	tx = tx:format(name, game.GetServerID(), string.TimeParse(passed))
+
+	discord.QueueEmbed("joinleave", "Join/Leave",
+		Embed()
+			:SetText(tx)
+			:SetColor(70, 200, 70)
+		)
+end)
+
+hook.NHAdd("AnnounceConnect", "Discord", function(name, sid, ip)
+	if not discord.Enabled then return end
+	if not discord.DB then return end
+
+	local tx = "Player %s has started connecting to the server. [%s]"
+	tx = tx:format(name, game.GetServerID())
+
+	discord.QueueEmbed("joinleave", "Join/Leave",
+		Embed()
+			:SetText(tx)
+			:SetColor(230, 200, 70)
+		)
+end)
+
+hook.NHAdd("AnnounceLeave", "Discord", function(name, sid, reason, passed, injoin)
+	if not discord.Enabled then return end
+	if not discord.DB then return end
+
+	local tx = "Player %s has %s [%s]. (session: %s)."
+	tx = tx:format(
+		name,
+		injoin and "given up on connecting" or "left the server",
+		game.GetServerID(),
+		passed > 0 and string.TimeParse(passed) or "?"
+	)
+
+	discord.QueueEmbed("joinleave", "Join/Leave",
+		Embed()
+			:SetText(tx)
+			:SetColor(200, 70, 70)
+		)
 end)
