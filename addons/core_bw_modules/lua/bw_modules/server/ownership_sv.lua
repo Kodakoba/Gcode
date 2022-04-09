@@ -33,10 +33,12 @@ function BaseWars.Ents.NetworkAll(ply)
 	local sids = {}
 
 	for k,v in ipairs(ents.GetAll()) do
-		if not v.FPPOwnerID then continue end
+		local ow, id = v:CPPIGetOwner()
+		if not id then continue end
+
 		props[#props + 1] = v
-		sids[v.FPPOwnerID] = sids[v.FPPOwnerID] or {}
-		table.insert(sids[v.FPPOwnerID], v)
+		sids[id] = sids[id] or {}
+		table.insert(sids[id], v)
 	end
 
 
