@@ -51,11 +51,8 @@ hook.Add("CanTool", "FuckRopes", function(ply, tr, tool, tTbl)
 		local obj2 = tr.Entity
 
 		if obj:IsWorld() and obj2:IsWorld() then
-			print("both worlds")
 			return false
 		end
-
-		print(obj, obj2)
 	end
 
 	local amt = 0
