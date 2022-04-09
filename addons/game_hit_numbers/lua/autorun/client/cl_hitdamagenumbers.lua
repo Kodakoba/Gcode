@@ -180,7 +180,7 @@ end )
 
 -- Called when an indicator should be created for this player.
 net.Receive( "hdn_spawn", function()
-
+	if HDN.EnableSetting:GetValue() then return end
 	if not on then return end
 
 	-- Get damage type and amount.

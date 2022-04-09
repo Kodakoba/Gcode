@@ -318,7 +318,7 @@ end
 
 
 local function spawnIndicator(victim, dmgAmount, dmgType, dmgPosition, dmgForce, isCrit, target, reciever)
-	
+
 	net.Start("hdn_spawn", true)
 	
 	-- Damage amount.
