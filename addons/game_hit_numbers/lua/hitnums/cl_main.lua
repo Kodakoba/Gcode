@@ -164,7 +164,9 @@ function HDN.DrawEntityNumber(ent, dat, state)
 			hnPos = dat[1] and dat[1].pos
 				or ent:OBBCenter()
 		else
-			hnPos = ent:GetBonePosition(bone)
+			local matrix = ent:GetBoneMatrix(bone)
+			hnPos = matrix:GetTranslation()
+
 			hnPos[3] = hnPos[3] + 8
 		end
 	end
@@ -177,6 +179,11 @@ function HDN.DrawEntityNumber(ent, dat, state)
 	local tx = ("-%d"):format(dat.totalAnim)
 	local txW, txH = surface.GetTextSizeQuick(tx, HDN.FontMain)
 	local scale = 0.5
+
+	--[[local bsz = 5
+	cam.Start3D()
+	render.DrawWireframeBox(hnPos, angle_zero, Vector(-bsz, -bsz, -bsz), Vector(bsz, bsz, bsz), color_white, false)
+	cam.End3D()]]
 
 	if pixvis > 0.5 then
 		local vx, vy = vecToScreen(hnPos)
