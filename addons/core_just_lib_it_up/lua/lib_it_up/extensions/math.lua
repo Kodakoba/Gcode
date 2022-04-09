@@ -44,6 +44,10 @@ function math.Length(num) --length of number in base 10, kind of works for retar
 	return (ret > 14 and 0 or 1) + ret
 end
 
+function math.RemapClamp(val, lo, hi, lo2, hi2)
+	return lo2 + math.Clamp((val - lo) / (hi - lo), 0, 1) * (hi2 - lo2)
+end
+
 local temp = {}
 function math.Sort(...)
 	for i=1, select("#", ...) do
