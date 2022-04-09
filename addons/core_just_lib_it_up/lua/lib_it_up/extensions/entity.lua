@@ -240,6 +240,35 @@ function PLAYER:GetSubscribedTo()
 	return ret
 end
 
+local cache
+
+function ENTITY:BoneToIndex(name)
+	cache = cache or muldim:new()
+
+	local mdl = self:GetModel()
+	local boneIdx = cache:Get(mdl, name)
+
+	if boneIdx == false then
+		return false -- already tried to find and failed
+	end
+
+	if boneIdx == nil then -- never tried to find; collect all bone data
+		cache:Set(false, mdl, name)
+		for i=0, self:GetBoneCount() - 1 do
+			cache:Set(i, mdl, self:GetBoneName(i))
+		end
+	end
+
+	boneIdx = cache:Get(mdl, name)
+
+	if not boneIdx then
+		-- that ain't supposed ta happen
+		return false
+	end
+
+	return boneIdx
+end
+
 hook.Add("FinishMove", "EntitySubscriptions", function(pl, mv)
 	if not subs[pl] then return end
 

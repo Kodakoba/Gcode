@@ -107,7 +107,6 @@ end )
 
 
 local function spawnIndicator(text, col, pos, vel, ttl)
-
 	if not initialized then return end
 
 	local ind = {}
@@ -128,7 +127,6 @@ local function spawnIndicator(text, col, pos, vel, ttl)
 	ind.heightH = h/2
 
 	table.insert(indicators, ind)
-
 end
 
 
@@ -238,7 +236,7 @@ net.Receive( "hdn_spawn", function()
 		end
 
 		spawnIndicator(txt, indicatorColors.crit, pos, force + Vector(math.Rand(fxmin, fxmax), math.Rand(fymin, fymax), math.Rand(fzmin, fzmax) * 1.5), ttl)
-
+		hook.Run("HDN_Received", dmg, dmgtype, crit, pos, force)
 	end
 
 	-- Regular number indicator.
@@ -277,7 +275,7 @@ net.Receive( "hdn_spawn", function()
 		end
 
 		spawnIndicator(txt, col, pos, force + Vector(math.Rand(fxmin, fxmax), math.Rand(fymin, fymax), math.Rand(fzmin, fzmax) * 1.5), ttl)
-
+		hook.Run("HDN_Received", dmg, dmgtype, crit, pos, force)
 	end
 
 end )
@@ -442,4 +440,4 @@ hook.Add("PopulateToolMenu", "hdn_spawnMenu", function()
 
 end)
 
-MsgN("-- Hit Numbers loaded --")
+print("-- Hit Numbers loaded --")

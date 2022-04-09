@@ -183,7 +183,7 @@ end )
 
 
 -- Font face.
-local font_name = "coolvetica"
+local font_name = "BreezeSans Bold"
 local font_size = 192
 local font_weight = 800
 local font_underline = false
@@ -317,7 +317,7 @@ local function entIsProp(ent)
 end
 
 
-local function spawnIndicator(dmgAmount, dmgType, dmgPosition, dmgForce, isCrit, target, reciever)
+local function spawnIndicator(victim, dmgAmount, dmgType, dmgPosition, dmgForce, isCrit, target, reciever)
 	
 	net.Start("hdn_spawn", true)
 	
@@ -335,7 +335,7 @@ local function spawnIndicator(dmgAmount, dmgType, dmgPosition, dmgForce, isCrit,
 	
 	-- Force of damage.
 	net.WriteVector(dmgForce)
-	
+
 	-- Send indicator to receiver, else all players.
 	if reciever == nil then
 		if target == nil then
@@ -350,9 +350,9 @@ local function spawnIndicator(dmgAmount, dmgType, dmgPosition, dmgForce, isCrit,
 end
 
 
-local function onEntTakeDamage(target, dmginfo)
+local function onEntTakeDamage(target, dmginfo, took)
 	
-	if not on then return end
+	if not on or not took then return end
 	
 	local attacker = dmginfo:GetAttacker()
 	
@@ -427,12 +427,12 @@ local function onEntTakeDamage(target, dmginfo)
 			-- Create and send the indicator to players.
 			if showAll then
 				if targetIsPlayer then
-					spawnIndicator(dmgAmount, dmgType, pos, force, isCrit, target, nil)
+					spawnIndicator(target, dmgAmount, dmgType, pos, force, isCrit, target, nil)
 				else
-					spawnIndicator(dmgAmount, dmgType, pos, force, isCrit, nil, nil)
+					spawnIndicator(target, dmgAmount, dmgType, pos, force, isCrit, nil, nil)
 				end
 			else
-				spawnIndicator(dmgAmount, dmgType, pos, force, isCrit, target, attacker)
+				spawnIndicator(target, dmgAmount, dmgType, pos, force, isCrit, target, attacker)
 			end
 			
 		end
@@ -444,7 +444,7 @@ end
 
 local function loadSettings()
 	
-	if file.Exists('hitnumbers/settings.txt', 'DATA') then
+	--[[if file.Exists('hitnumbers/settings.txt', 'DATA') then
 		
 		local data = file.Read('hitnumbers/settings.txt', 'DATA')
 		
@@ -465,7 +465,7 @@ local function loadSettings()
 		
 		return true
 		
-	end
+	end]]
 	
 	-- No settings file exists.
 	return false
@@ -504,9 +504,7 @@ hook.Add( "ShutDown", "hdn_saveSettings", function()
 	
 end)
 
-
-hook.Add( "PlayerAuthed", "hdn_initializePlayer", function(pl)
-	
+function HDN_Init(ply)
 	net.Start("hdn_initPly")
 
 	net.WriteString(font_name)
@@ -518,16 +516,17 @@ hook.Add( "PlayerAuthed", "hdn_initializePlayer", function(pl)
 	net.WriteBit(font_additive)
 	net.WriteBit(font_outline)
 	
-	net.Send(pl)
-	
+	net.Send(ply)
+end
+
+hook.Add( "PlayerAuthed", "hdn_initializePlayer", function(pl)
+	HDN_Init(pl)
 end )
 
-hook.Add( "InitPostEntity", "hdn_postInitHook", function()
-	
-	-- Not a guarantee, but this should, in most cases, ensure that Hit Numbers is one of the last to hook to EntityTakeDamage
-	hook.Add( "EntityTakeDamage", "hdn_onEntDamage", onEntTakeDamage )
+HDN_Init(player.GetAll())
 
-end )
+
+hook.Add( "PostEntityTakeDamage", "hdn_onEntDamage", onEntTakeDamage )
 
 -- Load server settings.
 if not loadSettings() then
