@@ -20,7 +20,7 @@ hook.Add("CPPIAssignOwnership", "BWTrackOwner", function(ply, ent)
 	bwe.EntsArr:addExclusive(ent)
 
 	net.Start("BW_OwnershipChange")
-		net.WriteBoool(true)
+		net.WriteBool(true)
 		net.WriteUInt(ent:EntIndex(), 15)
 		net.WriteSteamID(ply:SteamID())
 	net.Broadcast()
