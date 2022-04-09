@@ -7,7 +7,7 @@ dt.LastAtk = {} -- i may be i may i may be slightly autistic
 dt.WantTrack = {}
 dt.DefaultCooldown = 0
 
-local avgDeviatThres = 20
+local avgDeviatThres = 10
 local closeThres = 5
 
 local passiveSamples = 15 -- pre-attack
@@ -179,5 +179,37 @@ hook.Add("ArcCW_FiredBullets", "NX_SAim", function(wep, bullet)
 
 	if IsPlayer(trOut.Entity) then
 		dt.WantTrack[wep:GetOwner()] = engine.TickCount()
+	end
+end)
+
+hook.Add("ArcCW_FiredBullets", "NX_SAim", function(wep, bullet)
+	local src = bullet.Src
+	local dir = wep:GetOwner():GetAngles():Forward()
+
+	trIn.start = src
+	trIn.endpos = src + dir * 1024
+
+	trIn.filter = wep:GetOwner()
+
+	util.TraceLine(trIn)
+
+	if IsPlayer(trOut.Entity) then
+		dt.WantTrack[wep:GetOwner()] = engine.TickCount()
+	end
+end)
+
+hook.Add("EntityFireBullets", "NX_SAim", function(ply, bullet)
+	local src = bullet.Src
+	local dir = ply:GetAngles():Forward()
+
+	trIn.start = src
+	trIn.endpos = src + dir * 1024
+
+	trIn.filter = ply
+
+	util.TraceLine(trIn)
+
+	if IsPlayer(trOut.Entity) then
+		dt.WantTrack[ply] = engine.TickCount()
 	end
 end)
