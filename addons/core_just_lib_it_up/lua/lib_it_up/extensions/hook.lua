@@ -13,8 +13,6 @@ end
 -- oh and also, the first arg to the callback is not the object you used for the ID
 -- so if you used a player as the ID, it won't be provided as the first arg to the callback like with hook.Add
 
-print("(( hook.lua refreshed; delete this print (testing autorefresh) ))")
-
 function hook.Object(hookname, hookobj, cb)
 	local id = "hookObject" .. newID()
 

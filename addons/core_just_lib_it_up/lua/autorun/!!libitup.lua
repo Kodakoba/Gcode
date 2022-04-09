@@ -16,6 +16,17 @@ AddCSLuaFile()
 
 ]]
 
+-- very hacky, yea?
+local is_dev = system.IsWindows() and file.Exists("bw.bat", "BASE_PATH")
+
+function game.IsDev()
+	return system.IsWindows()
+end
+
+function game.GetServerID()
+	return is_dev and "dev" or "live - EU"
+end
+
 __LibName = "libitup"
 
 PLAYER = FindMetaTable("Player")
