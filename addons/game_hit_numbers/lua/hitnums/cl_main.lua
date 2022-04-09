@@ -157,21 +157,24 @@ function HDN.DrawEntityNumber(ent, dat, state)
 	anim:LerpColor(colMain, HDN.Colors[keyD], 0.2, 0, 0.3)
 	anim:LerpColor(colOut, HDN.Colors[keyO], 0.2, 0, 0.3)
 
+	local pixvis
+
 	if not hnPos then
 		local bone = ent:BoneToIndex("ValveBiped.Bip01_Head1")
 
 		if not bone then
 			hnPos = dat[1] and dat[1].pos
 				or ent:OBBCenter()
+
+			pixvis = util.PixelVisible(hnPos, 8, dat.pixvis)
 		else
 			local matrix = ent:GetBoneMatrix(bone)
 			hnPos = matrix:GetTranslation()
+			pixvis = util.PixelVisible(hnPos, 8, dat.pixvis) -- pixvis the bone pos, not above it
 
 			hnPos[3] = hnPos[3] + 8
 		end
 	end
-
-	local pixvis = util.PixelVisible(hnPos, 8, dat.pixvis)
 
 	local x, y
 	local do2d = false
@@ -220,9 +223,7 @@ function HDN.DrawEntityNumber(ent, dat, state)
 			x = Lerp(fr, dat.lx, dat.sx)
 			y = Lerp(fr, dat.ly, dat.sy + amt * txH * scale * 0.875)
 		else
-			local vx, vy = vecToScreen(hnPos)
-			if not vx then return end
-			x, y = vx, vy
+			x, y = dat.sx, dat.sy + amt * txH * scale * 0.875
 		end
 
 		do2d = true
