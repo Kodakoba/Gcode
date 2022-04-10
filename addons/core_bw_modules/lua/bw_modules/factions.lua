@@ -103,7 +103,7 @@ hook.Add("FactionDisbanded", "PlayerInfoFill", function(fac)
 end)
 
 function facmeta:InRaid()
-	return raid.Participants[self]
+	return Raids.Participants[self]
 end
 
 function facmeta:RaidedCooldown()
