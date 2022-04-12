@@ -71,6 +71,7 @@ hook.Add("Think", "CountDownWarn", function()
 		table.remove(BaseWars.RestartWarnings, 1)
 
 		if not BaseWars.RestartWarnings[1] then
+			BaseWars.UTIL.RefundAll()
 			aowl.CountDown(30, "Restart", function() RunConsoleCommand("_restart") end)
 		end
 	end
