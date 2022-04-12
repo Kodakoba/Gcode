@@ -61,6 +61,8 @@ function PI:Initialize(id, is_sid64) -- we can't know that the id is a steamID64
 		return
 	end
 
+	self._Nick = "[unknown]"
+
 	if ply then self:SetPlayer(ply) end
 	self:SetSteamID(sid)
 	self:SetSteamID64(sid64)
