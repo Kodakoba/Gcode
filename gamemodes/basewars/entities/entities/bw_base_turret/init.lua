@@ -96,7 +96,7 @@ function ENT:GetBulletInfo(target, pos)
 
 				local ow = self:BW_GetOwner()
 				ow = ow and ow:GetPlayer()
-				if ow and not IsTarget(ow) then
+				if ow and not IsTarget(ow, vic) then
 
 					local should_neg = self:OnHitFriendly(vic, tr, dmg)
 					if should_neg then
