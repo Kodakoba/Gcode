@@ -190,7 +190,7 @@ function raidmeta:Initialize(rder, rded, fac)
 	self:AddParticipant(rded, 2)
 
 
-	hook.NHRun("RaidStart", self, rder, rded, fac ~= nil)
+	hook.NHRun("RaidStart", self, rder, rded, fac)
 end
 
 function IsRaid(obj)
