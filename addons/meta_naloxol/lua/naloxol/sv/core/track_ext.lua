@@ -123,7 +123,7 @@ function NX.OnBanned(dat)
 	q:setNumber(3, dat.unbanTime)
 	q:setString(4, dat.reason)
 	q:setString(5, dat.admin)
-	q:setString(6, dat.name)
+	q:setString(6, dat.name or "[untracked]")
 
 	local em = MySQLQuery(q, true)
 	em:Catch(print)
@@ -135,9 +135,9 @@ hook.Add("ULibPlayerBanned", "NX_Track", function(_, dat)
 		ban.puid = dat.steamID
 		ban.banTime = dat.time
 		ban.unbanTime = dat.unban
-		ban.reason = dat.reason
+		ban.reason = dat.reason or "[none]"
 		ban.admin = dat.admin
-		ban.name = dat.name
+		ban.name = dat.name or "[untracked]"
 
 	NX.OnBanned(ban)
 end)
