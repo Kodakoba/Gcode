@@ -133,8 +133,8 @@ end
 hook.Add("ULibPlayerBanned", "NX_Track", function(_, dat)
 	local ban = banStruct:new()
 		ban.puid = dat.steamID
-		ban.banTime = dat.time
-		ban.unbanTime = dat.unban
+		ban.banTime = tonumber(dat.time)
+		ban.unbanTime = tonumber(dat.unban)
 		ban.reason = dat.reason or "[none]"
 		ban.admin = dat.admin
 		ban.name = dat.name or "[untracked]"

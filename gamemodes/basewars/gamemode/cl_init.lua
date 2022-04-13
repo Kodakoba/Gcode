@@ -262,7 +262,7 @@ function CreatePlayerFrame(sb, ply)
 			mon = ply:GetMoney()
 			mon = BaseWars.NumberFormat(mon or 0)
 			time = ply:GetPlayTime()
-			col = col or team.GetColor(ply:Team())
+			col = col or team.GetColor(ply:Team()) or color_white
 		end
 
 		local newSz = Lerp(av.HovFrac or 0, avSz, av.HovSize)
