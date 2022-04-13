@@ -28,7 +28,7 @@ mysqloo.OnConnect(coroutine.wrap(function()
 
 	local banTbl = "nx_bans"
 	local arg = LibItUp.SQLArgList()
-		arg:AddArg("puid", "BIGINT NOT NULL PRIMARY KEY")
+		arg:AddArg("puid", "BIGINT NOT NULL")
 		arg:AddArg("banTime", "BIGINT NOT NULL")
 		arg:AddArg("unbanTime", "BIGINT NOT NULL")
 		arg:AddArg("admin", "MEDIUMTEXT")
