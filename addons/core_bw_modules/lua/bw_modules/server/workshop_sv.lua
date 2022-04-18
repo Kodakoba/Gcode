@@ -24,7 +24,7 @@ local BWAddons = {
 	"2131057232", -- arccw base(d on what)
 	-- "2710878169", -- arccw muzzleflashes
 	"2131058270", -- arccw cs+
-	"2175261690", -- arccw fa:s 1
+	"2795112951", -- arccw fa:s 1
 	"2131161276", -- arccw m9k "extras"
 	"2257255110", -- arccw GO
 	"2393318131", -- arccw fa:s 2
