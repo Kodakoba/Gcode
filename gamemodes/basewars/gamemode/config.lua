@@ -19,13 +19,15 @@ BaseWars.Config = {
 		Time = 5, PauseOnShot = 1,
 	},
 
-	Raid_BulletPropDamage = 1.25,
+	Raid_BulletPropDamage = 0.85,
 
 	BulletPropDamageMin = 0.75,
 	BulletPropDamageMax = 15,
 	BulletPropDamageTime = 10,
 
 	BulletPropPauseVulnOnShot = 1,
+
+	MaxPropHP = 750,
 
 	SpawnWeps = {
 		"weapon_physcannon",
