@@ -88,18 +88,24 @@ Antifa = Logger("Antifa", Color(200, 50, 50))
 
 function Antifa_OnAttemptedCrash(ply, dat)
 	if dat.ModelScale and tonumber(dat.ModelScale) ~= 1 then
-		Antifa("Player %s (%s) attempted to paste a modelscale-d dupe (%s).", ply, ply:SteamID64(), dat.ModelScale)
 
-		local ban = not ply:IsAdmin()
-		if tonumber(dat.ModelScale) > 2 then
-			Antifa("Modelscale above crash limit -- %s", ban and "banning" or "not banning (player is admin).")
-			if ban then
-				ULib.kickban( ply, 0, "[Antifa] Attempted crash (MS).", "Antifa" )
-			else
-				ply:PopupNotify(NOTIFY_ERROR, "Nice crash attempt retard")
+		if IsPlayer(ply) then
+			Antifa("Player %s (%s) attempted to paste a modelscale-d dupe (%s).", ply, ply:SteamID64(), dat.ModelScale)
+
+			local ban = not ply:IsAdmin()
+			if tonumber(dat.ModelScale) > 2 then
+				Antifa("Modelscale above crash limit -- %s", ban and "banning" or "not banning (player is admin).")
+				if ban then
+					ULib.kickban( ply, 0, "[Antifa] Attempted crash (MS).", "Antifa" )
+				else
+					ply:PopupNotify(NOTIFY_ERROR, "Nice crash attempt retard")
+				end
+
+				return false
 			end
-
-			return false
+		else
+			Antifa("Antifa_OnAttemptedCrash called without player. Modelscale: %s, Stack: %s", dat.ModelScale, debug.traceback())
+			return false -- !?
 		end
 
 		dat.ModelScale = nil -- just fix it
