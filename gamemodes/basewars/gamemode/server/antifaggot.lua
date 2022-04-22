@@ -86,7 +86,7 @@ end)
 
 Antifa = Logger("Antifa", Color(200, 50, 50))
 
-hook.Add("AdvDupe2_AttemptedCrash", "FuckYou", function(dat, ply)
+function Antifa_OnAttemptedCrash(ply, dat)
 	if dat.ModelScale and tonumber(dat.ModelScale) ~= 1 then
 		Antifa("Player %s (%s) attempted to paste a modelscale-d dupe (%s).", ply, ply:SteamID64(), dat.ModelScale)
 
@@ -104,4 +104,26 @@ hook.Add("AdvDupe2_AttemptedCrash", "FuckYou", function(dat, ply)
 
 		dat.ModelScale = nil -- just fix it
 	end
+end
+
+
+hook.Add("AdvDupe2_AttemptedCrash", "FuckYou", function(dat, ply)
+	return Antifa_OnAttemptedCrash(ply, dat)
+end)
+
+duplicator.OldDoGeneric = duplicator.OldDoGeneric or duplicator.DoGeneric
+
+function Antifa_DuplicatorDoGeneric(ent, dat, ...)
+	if dat and dat.ModelScale then
+		local cont = Antifa_OnAttemptedCrash(ply, dat)
+		if cont ~= nil then return end
+	end
+
+	return duplicator.OldDoGeneric(ent, dat, ...)
+end
+
+hook.Add("InitPostEntity", "Antifa_Dupes", function()
+	timer.Create("JustInCase_Dupe", 1, 30, function()
+		duplicator.OldDoGeneric = duplicator.OldDoGeneric or duplicator.DoGeneric
+	end)
 end)
