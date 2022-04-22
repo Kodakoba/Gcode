@@ -121,7 +121,7 @@ duplicator.OldDoGeneric = duplicator.OldDoGeneric or duplicator.DoGeneric
 
 function Antifa_DuplicatorDoGeneric(ent, dat, ...)
 	if dat and dat.ModelScale then
-		local cont = Antifa_OnAttemptedCrash(ply, dat)
+		local cont = Antifa_OnAttemptedCrash(nil, dat)
 		if cont ~= nil then return end
 	end
 
