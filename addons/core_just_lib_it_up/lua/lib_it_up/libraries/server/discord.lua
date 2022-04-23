@@ -148,8 +148,8 @@ hook.NHAdd("PlayerSay", "Discord", function(ply, msg)
 		isfunction(ULib[cmd]) --ulib has a very gay method of storing commands
 	then return end
 
+	msg = msg:gsub("@", "\\@")
 	discord.Send("chat", ply:Nick(), msg)
-
 end)
 
 Embed = {}
