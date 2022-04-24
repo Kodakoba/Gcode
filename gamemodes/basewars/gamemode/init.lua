@@ -297,7 +297,7 @@ function GM:Think()
 				return State
 			end
 
-			local Ents = ents.FindInSphere(s:GetPos(), 256)
+			local Ents = ents.FindInSphere(s:GetPos(), 128)
 
 			if #Ents < 2 then
 				continue
