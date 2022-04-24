@@ -4,7 +4,9 @@ LibItUp.SetIncluded()
 LibItUp.PlayerInfo = LibItUp.PlayerInfo or LibItUp.Emitter:callable()
 local PI = LibItUp.PlayerInfo
 PI.IsPlayerInfo = true
-PI.CleanupIn = 600 -- being absent for 5min = playerinfo is cleaned up
+
+PI.CleanupIn = 300 -- being absent for 5min = playerinfo is cleaned up
+-- keep in mind that this includes freeing base spots
 
 LibItUp.PlayerInfoTables = LibItUp.PlayerInfoTables or {
 	-- [info] = PI
