@@ -334,7 +334,7 @@ function ENT:ThinkFunc()
 	-- scan baddies; construct search arrays
 	local baddies, friends = {}, {}
 
-	for k,v in ipairs(plys) do
+	for k,v in pairs(plys) do
 		local ply = usingBase and k or v
 
 		if IsTarget(owPly, ply) then
