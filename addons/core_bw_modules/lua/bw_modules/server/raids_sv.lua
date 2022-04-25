@@ -272,7 +272,8 @@ hook.NHAdd("PlayerInitialSpawn", "BeginCooldown", function(ply)
 end)
 
 function PLAYER:GetRaid()
-	return raid.Participants[self]
+	local fac = self:GetFaction()
+	return raid.Participants[self] or (fac and raid.Participants[fac])
 end
 
 function PLAYER:IsRaided()

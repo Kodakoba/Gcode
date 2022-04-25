@@ -231,7 +231,11 @@ end
 local PINFO = LibItUp.PlayerInfo
 
 function PINFO:GetRaid()
-	return self._Raid and self._Raid:IsValid() and self._Raid
+	local rd = self._Raid and self._Raid:IsValid() and self._Raid
+	if rd then return rd end
+
+	rd = raid.Participants[self:SteamID64()]
+	return rd and rd:IsValid() and rd
 end
 
 function PINFO:SetRaid(rd)
