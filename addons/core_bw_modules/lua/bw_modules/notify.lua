@@ -23,8 +23,8 @@ local actions = {
 		chat.AddText(...)
 	end,
 
-	[NOTIFY_POPUP] = function(typ, str, ...)
-		notification.AddTimed(str, typ, 5)
+	[NOTIFY_POPUP] = function(typ, str, dur, ...)
+		notification.AddTimed(str, typ, dur or 5)
 		MsgC(str)
 	end
 }

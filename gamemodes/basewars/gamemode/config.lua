@@ -15,17 +15,14 @@ BaseWars.Config = {
 	ReFadeDelay = 0.75,
 
 	BulletProp = {
-		Min = 1, Max = 15,
+		Min = 10, Max = 50,
 		Time = 5, PauseOnShot = 1,
 	},
 
 	Raid_BulletPropDamage = 0.85,
 
-	BulletPropDamageMin = 0.75,
-	BulletPropDamageMax = 15,
-	BulletPropDamageTime = 10,
-
-	BulletPropPauseVulnOnShot = 1,
+	SpawnCDForBrokenProp = game.IsDev() and 0.1 or 2,
+	MaxSpawnCD = 30,
 
 	MaxPropHP = 750,
 
