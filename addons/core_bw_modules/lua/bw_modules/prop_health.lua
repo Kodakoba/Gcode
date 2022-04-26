@@ -107,7 +107,7 @@ hook.Add("BW_EntityShotDown", "StopPropblocking", function(ent, dmg)
 			poppedByMe = poppedByMe + 1
 		else
 			if sparked > 3 then continue end
-			par = "cball_bounce"
+			par = "cball_explode"
 
 			sparked = sparked + 1
 			sparkedByMe = sparkedByMe + 1
@@ -119,6 +119,7 @@ hook.Add("BW_EntityShotDown", "StopPropblocking", function(ent, dmg)
 		ef:SetOrigin(v:GetPos() + v:OBBCenter())
 		ef:SetNormal(VectorRand())
 		ef:SetEntity(v)
+		ef:SetScale(0)
 		util.Effect(par, ef)
 	end
 
