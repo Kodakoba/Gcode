@@ -17,6 +17,8 @@ function BaseWars.Ents.AssignOwner(eid, sid)
 
 	eidToOwner[eid] = sid
 
+	local t1 = CurTime()
+
 	prs[eid] = EventualEntity(eid):Then(function(self)
 		--[[print("eventual recv", eid, Entity(eid), self.nvm,
 			player.GetBySteamID(sid), Entity(eid), sid)]]
@@ -27,7 +29,7 @@ function BaseWars.Ents.AssignOwner(eid, sid)
 
 		if not ply then
 			errorNHf("BaseWars.Ents.AssignOwner: could not find player for steamid `%s` (ent: %s);" ..
-				"might cause issues", sid, ent)
+				"might cause issues (assign after %.1fs.)", sid, ent, CurTime() - t1)
 		end
 
 		hook.Run("EntityOwnershipChanged",
@@ -64,12 +66,15 @@ end)
 net.Receive("BW_OwnershipChange", function()
 	local add = net.ReadBool()
 	local eid = net.ReadUInt(15)
+	--print("client: read", add, eid)
+
 	if not add then
 		BaseWars.Ents.UnassignOwner(eid)
 		return
 	end
 
 	local sid = net.ReadSteamID()
+	--print("	on top:", sid)
 	BaseWars.Ents.AssignOwner(eid, sid)
 end)
 

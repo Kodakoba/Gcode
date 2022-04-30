@@ -1,3 +1,4 @@
+setfenv(1, _G)
 Factions = Factions or {}
 MODULE.Name = "FactionsSV"
 
@@ -65,8 +66,14 @@ function facmeta:_AddToMembers(what)
 
 	local new = not self.meminfo[pinfo]
 
-	self.memvals[#self.memvals + 1] = ply
-	self.meminfovals[#self.meminfovals + 1] = pinfo
+	if not table.HasValue(self.memvals, ply) then
+		self.memvals[#self.memvals + 1] = ply
+	end
+
+	if not table.HasValue(self.meminfovals, pinfo) then
+		self.meminfovals[#self.meminfovals + 1] = pinfo
+	end
+
 	pinfo._Faction = self
 	self.members[ply] = true
 	self.meminfo[pinfo] = true
@@ -123,6 +130,10 @@ function facmeta:Join(ply, pw, force)
 	ply:SetTeam(self:GetID())
 
 	self:Update(true)
+end
+
+function facmeta:RestoreMember(ply)
+	self:_AddToMembers(ply)
 end
 
 function facmeta:OnRaided()
@@ -598,6 +609,12 @@ net.Receive("Factions", function(_, ply)
 end)
 
 hook.NHAdd("PlayerInitialSpawn", "FactionNetwork", function(ply)
+	if ply:GetFaction() then
+		ply:GetFaction():RestoreMember(ply)
+	end
+end)
+
+hook.NHAdd("PlayerFullyLoaded", "FactionNetwork", function(ply)
 	Factions.FullUpdate()
 end)
 

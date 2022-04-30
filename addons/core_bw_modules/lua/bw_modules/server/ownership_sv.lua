@@ -1,4 +1,4 @@
-
+setfenv(1, _G)
 util.AddNetworkString("BW_OwnershipChange")
 util.AddNetworkString("BW_OwnershipChange_Mass")
 
@@ -10,6 +10,11 @@ local bwe = BaseWars.Ents
 hook.NHAdd("CPPIAssignOwnership", "BWTrackOwner", function(ply, ent)
 	if not ply:IsValid() then return end
 	if ent.CPPI_OwnerSID == ply:SteamID() then return end
+
+	if ent:EntIndex() == 0 then
+		--print("excuse me wtf?", ent:EntIndex(), ent, ply)
+		return
+	end
 
 	local old = ent.CPPI_OwnerSID
 	local id = ply:SteamID()
@@ -24,6 +29,8 @@ hook.NHAdd("CPPIAssignOwnership", "BWTrackOwner", function(ply, ent)
 		net.WriteUInt(ent:EntIndex(), 15)
 		net.WriteSteamID(ply:SteamID())
 	net.Broadcast()
+
+	-- print("server: write", true, ent:EntIndex(), ply:SteamID())
 
 	-- run a new hook because, again, fpp sucks
 	hook.Run("EntityOwnershipChanged", ply, ent, old)
@@ -122,7 +129,7 @@ end
 
 
 hook.NHAdd("EntityActuallyRemoved", "BWUntrackOwner", function(ent, entTable)
-	local owID = ent.FPPOwnerID -- fpp exclusive
+	local owID = ent.CPPI_OwnerSID -- fpp exclusive
 	if not owID then return end -- dafuq
 
 	untrackEnt(ent, owID)
