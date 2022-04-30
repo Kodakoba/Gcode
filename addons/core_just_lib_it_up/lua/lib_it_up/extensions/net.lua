@@ -55,7 +55,7 @@ function net.WriteSteamID(what)
 	local univ, y, acc_id = id:gsub("^STEAM_", ""):match("^(%d+):(%d+):(%d+)")
 
 	net.WriteUInt(tonumber(univ), 8)
-	net.WriteUInt(tonumber(y), 1) -- HOLY FUCK I HATE GMOD
+	net.WriteBool(tonumber(y) == 1) -- HOLY FUCK I HATE GMOD
 	net.WriteUInt(tonumber(acc_id), 31)
 end
 
@@ -63,7 +63,7 @@ function net.ReadSteamID()
 	local univ, y, acc_id
 
 	univ = net.ReadUInt(8)
-	y = net.ReadUInt(1)
+	y = net.ReadBool() and 1 or 0
 	acc_id = net.ReadUInt(31)
 
 	return ("STEAM_%d:%d:%d"):format(univ, y, acc_id)
