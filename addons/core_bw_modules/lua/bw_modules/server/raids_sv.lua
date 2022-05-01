@@ -79,6 +79,18 @@ local function Time()
 	return date
 end
 
+function raidmeta:GetStart()
+	return self.Start
+end
+
+function raidmeta:GetEnd()
+	return self.Start + Raids.RaidDuration
+end
+
+function raidmeta:GetLeft()
+	return self:GetEnd() - CurTime()
+end
+
 function raidmeta:AddParticipant(obj, side)
 	assert(isnumber(side))
 
@@ -502,7 +514,7 @@ end)
 
 hook.Add("Think", "RaidsThink", function()
 	for k,v in pairs(raid.OngoingRaids) do
-		if CurTime() - v.Start > raid.RaidDuration then
+		if v:GetLeft() <= 0 then
 			raid.Stop(v)
 		end
 	end
@@ -570,6 +582,7 @@ function raid.CanBlowtorch(ply, ent, wep, dmg)
 	if ent.AlwaysRaidable then return false end
 
 	if ow == GetPlayerInfo(ply) then
+		hook.Run("BW_ScaleBlowtorchRaidless", ply, ent, wep, dmg)
 		return true
 	end
 
@@ -582,7 +595,11 @@ function raid.CanBlowtorch(ply, ent, wep, dmg)
 		local can = hook.Run("BW_CanBlowtorch", ply, ent, wep, dmg) ~= false
 		return can -- raider -> raided allowed
 	else
-		return hook.Run("BW_CanBlowtorchRaidless", ply, ent, wep, dmg)
+		local can = hook.Run("BW_CanBlowtorchRaidless", ply, ent, wep, dmg)
+		if can then
+			hook.Run("BW_ScaleBlowtorchRaidless", ply, ent, wep, dmg)
+		end
+		return can
 	end
 
 end
@@ -664,12 +681,12 @@ local sidToDiscord = {
 	["STEAM_0:0:40277849"] = "276279540056195074"
 }
 
-function doRaidNotify(rd)
+function doRaidNotify(rd, start)
 	local rded = {}
 	local rders = {}
 
 	for k,v in pairs(rd:GetParticipants()) do
-		if IsPlayer(k) and k:IsBot() then return end -- dont notify debug raids
+		--if IsPlayer(k) and k:IsBot() then return end -- dont notify debug raids
 
 		if string.IsSteamID(k) and rd:IsRaided(k) then
 			if sidToDiscord[k] then
@@ -689,11 +706,30 @@ function doRaidNotify(rd)
 
 	end
 
-	local fmt = "%s started a raid on %s!"
-	discord.SendUnescaped("raids", "Raid Notifier",
-		fmt:format(table.concat(rders, ", "), table.concat(rded, ", ")))
+	print("doRaidNotify", start)
+
+	if start then
+		local fmt = "%s started a raid on %s!"
+
+		discord.SendUnescaped("raids", "Raid Notifier",
+			fmt:format(table.concat(rders, ", "), table.concat(rded, ", ")))
+
+	else
+		local fmt = "A raid between %s and %s ended after %ds."
+		fmt = fmt:format(
+			table.concat(rders, ", "),
+			table.concat(rded, ", "),
+			CurTime() - rd:GetStart()
+		)
+
+		discord.SendUnescaped("raids", "Raid Notifier", fmt)
+	end
 end
 
 hook.NHAdd("RaidStart", "DiscordNotify", function(rd, rder, rded, fac)
-	doRaidNotify(rd)
+	doRaidNotify(rd, true)
+end)
+
+hook.NHAdd("RaidStop", "DiscordNotify", function(rd, rder, rded, fac)
+	doRaidNotify(rd, false)
 end)
