@@ -173,7 +173,7 @@ if SERVER then
 
 		data = data:gsub("%c", "")
 
-		local ret = hook.Run("PlayerSay", ply, data, mode)
+		local ret = hook.Run("PlayerSay", ply, data, mode == CHATMODE_TEAM)
 
 		if ret == "" or ret == false then return end
 		if isstring(ret) then data = ret end
