@@ -136,7 +136,7 @@ DiscordReconnect()
 --matches everything after a !, ., / until a first space
 local cmdptrn = "^[%./!](%w+)%s?"
 
-hook.NHAdd("PlayerSay", "Discord", function(ply, msg)
+hook.NHAdd("PlayerSay", "Discord", function(ply, msg, isTeam)
 	if not discord.Enabled then return end
 	if not discord.DB then return end
 
@@ -149,6 +149,21 @@ hook.NHAdd("PlayerSay", "Discord", function(ply, msg)
 	then return end
 
 	msg = discord.Escape(msg)
+
+	if isTeam then
+		local fac = ply:GetFaction()
+		local names = {}
+		if fac then
+			for k,v in pairs(fac:GetMembers()) do
+				table.insert(names, discord.Escape(v:Nick()))
+			end
+		else
+			names[1] = "factionless"
+		end
+
+		msg = "**[TEAM: " .. table.concat(names, ", ") .. "]** " .. msg
+	end
+
 	discord.Send("chat", ply:Nick(), msg)
 end)
 
