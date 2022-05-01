@@ -197,8 +197,11 @@ function ENT:QueueRefine(ply, inv, item, slot, bulk)
 		end, GenerateErrorer("RefineryPromise"))
 	else
 
-		if slot > self.OreInput.MaxItems then print("slot higher than max", slot, self.OreInput.MaxItems) return end
-		if self.OreInput.Slots[slot] then print("there's already an item in that slot") return end
+		if slot > self.OreInput.MaxItems then
+			print("!? attempt insert at slot higher than max", slot, self.OreInput.MaxItems, ply, self)
+			return
+		end
+		if self.OreInput.Slots[slot] then return end
 
 		local ok, pr = xpcall(self.AddInputItem, GenerateErrorer("Refinery"),
 			self, inv, item, slot)
@@ -224,9 +227,7 @@ net.Receive("OreRefinery", function(len, ply)
 	if not ply:Alive() then return end
 
 	local ent = net.ReadEntity()
-	if ply:Distance(ent) > 192 then return end
-
-	local self = ent
+	if ply:Distance(ent) > 256 then return end
 
 	local inv = Inventory.Networking.ReadInventory(ply)
 	local item = Inventory.Networking.ReadItem(inv)
