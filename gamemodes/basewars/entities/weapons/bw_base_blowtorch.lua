@@ -177,7 +177,7 @@ function SWEP:PrimaryAttack()
 		local frac = hp / GetMaxHP(v)
 		v:SetColor( Color(255 * frac, 255 * frac, 255 * frac, v:GetColor().a) )
 
-		SetHP(v, hp)
+		BaseWars.DealDamage(v, dmg)
 	end
 end
 

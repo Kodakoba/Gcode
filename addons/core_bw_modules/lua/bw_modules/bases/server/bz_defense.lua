@@ -1,4 +1,3 @@
---
 local bz = BaseWars.Bases
 bz.NW.Residence = bz.NW.Residence or Networkable("bw_base_residence")
 
@@ -66,17 +65,41 @@ hook.Add("EntityOwnershipChanged", "PGTrackOwned", function(ply, ent)
 	end
 end)
 
+local function getDamageMult(ent)
+	local cfg = BaseWars.Config.BulletProp
+
+	local time = CurTime() - (ent._lastShot or ent:GetCreationTime())
+	local fr = math.min(ent._lastFr or 1, math.TimeFraction(cfg.Time, 0, time))
+	local recent_frac = Lerp(fr, cfg.Min, cfg.Max)
+
+
+	return fr, recent_frac
+end
+
+local function trackDamage(ent, fr)
+	local cfg = BaseWars.Config.BulletProp
+	local time = CurTime() - (ent._lastShot or ent:GetCreationTime())
+	ent._lastShot = CurTime() - time + cfg.PauseOnShot
+	ent._lastFr = fr
+end
+
 -- damage logic
+hook.Add("BW_ScaleBlowtorchRaidless", "Residence", function(ply, ent, wep, dmg)
+	local fr, recent_frac = getDamageMult(ent)
+
+	dmg:ScaleDamage(recent_frac * 5)
+	trackDamage(ent, fr)
+end)
+
 hook.Add("BW_CanBlowtorchRaidless", "ResidenceCheck", function(ply, ent, wep, dmg)
 	-- stuff on the street can be blowtorched
+
 	if not ent:BW_GetBase() then
-		-- 1x multiplier
 		return true
 	end
 
 	-- stuff in bases not claimed by the ent owner can be blowtorched
 	if not ent:BW_GetBase():IsEntityOwned(ent) then
-		dmg:ScaleDamage(5) --5x mult
 		return true
 	end
 end)
@@ -84,17 +107,11 @@ end)
 hook.Add("BW_CanDealEntityDamage", "ResidenceCheck", function(atk, ent, imfl, dmg)
 	-- stuff on the street can be shot down but only with a fraction of the damage
 
-	local cfg = BaseWars.Config.BulletProp
-
-	local time = CurTime() - (ent._lastShot or ent:GetCreationTime())
-	local fr = math.min(ent._lastFr or 1, math.TimeFraction(cfg.Time, 0, time))
-
-	local recent_frac = Lerp(fr, cfg.Min, cfg.Max)
+	local fr, recent_frac = getDamageMult(ent)
 
 	if not ent:BW_GetBase() then
 		dmg:ScaleDamage(recent_frac)
-		ent._lastShot = CurTime() - time + cfg.PauseOnShot
-		ent._lastFr = fr
+		trackDamage(ent, fr)
 		return true
 	end
 
@@ -109,7 +126,7 @@ hook.Add("BW_CanDealEntityDamage", "ResidenceCheck", function(atk, ent, imfl, dm
 			return true
 		end
 
-		dmg:ScaleDamage(0.5)
+		dmg:ScaleDamage(recent_frac / 4)
 		return true
 	end
 end)
