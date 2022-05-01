@@ -593,11 +593,16 @@ function raid.CanBlowtorch(ply, ent, wep, dmg)
 	if rd and rd2 and -- in raid?
 		rd == rd2 and rd:IsRaider(ply) and rd:IsRaided(ow) then
 		local can = hook.Run("BW_CanBlowtorch", ply, ent, wep, dmg) ~= false
+		if can then
+			hook.Run("BW_ScaleBlowtorchRaid", ply, ent, wep, dmg)
+			hook.Run("BW_ScaleBlowtorch", ply, ent, wep, dmg)
+		end
 		return can -- raider -> raided allowed
 	else
 		local can = hook.Run("BW_CanBlowtorchRaidless", ply, ent, wep, dmg)
 		if can then
 			hook.Run("BW_ScaleBlowtorchRaidless", ply, ent, wep, dmg)
+			hook.Run("BW_ScaleBlowtorch", ply, ent, wep, dmg)
 		end
 		return can
 	end

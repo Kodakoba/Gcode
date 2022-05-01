@@ -73,6 +73,10 @@ function GM:OnEntityCreated(ent)
 		local HP = (IsValid(ent:GetPhysicsObject()) and ent:GetPhysicsObject():GetMass() or 50) * BaseWars.Config.UniversalPropConstant
 		HP = math.Clamp(HP, 0, Class == "prop_physics" and BaseWars.Config.MaxPropHP or 50)
 
+		if bit.Has(ent:GetModelContents() or 0, CONTENTS_GRATE) then
+			HP = HP / 2
+		end
+
 		ent:SetHealth(HP)
 
 		ent.MaxHealth = math.Round(HP)
