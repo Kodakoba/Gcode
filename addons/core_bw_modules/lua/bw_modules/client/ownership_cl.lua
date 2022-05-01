@@ -19,7 +19,8 @@ function BaseWars.Ents.AssignOwner(eid, sid)
 
 	local t1 = CurTime()
 
-	prs[eid] = EventualEntity(eid):Then(function(self)
+	prs[eid] = EventualEntity(eid)
+	prs[eid]:Then(function(self)
 		--[[print("eventual recv", eid, Entity(eid), self.nvm,
 			player.GetBySteamID(sid), Entity(eid), sid)]]
 		if self.nvm then return end -- ???
@@ -35,6 +36,7 @@ function BaseWars.Ents.AssignOwner(eid, sid)
 		hook.Run("EntityOwnershipChanged",
 			ply, ent, sid)
 	end)
+
 end
 
 function BaseWars.Ents.UnassignOwner(eid)
@@ -43,6 +45,7 @@ function BaseWars.Ents.UnassignOwner(eid)
 
 	eidToOwner[eid] = nil
 
+	--print("Unassign owner:", eid)
 	if prs[eid] then
 		-- dont run the hook anymore if it didnt run yet
 		prs[eid].nvm = true
