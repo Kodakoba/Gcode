@@ -581,7 +581,6 @@ local function dooEet(pl, Ent, stuff)
 	local key = pl:ButtonDown(stuff.key)
 
 	if rev ~= key then -- reversed & not key down OR key down & not reversed
-		print("activating fade")
 		Ent:fadeActivate()
 	end
 
