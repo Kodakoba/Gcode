@@ -165,6 +165,8 @@ function an.OnLeave(name, sid64, reason)
 	end
 end
 
+local joinWait = {}
+
 hook.Add("CheckPassword", "BroadcastJoin", function( sid64, ip, pw1, pw2, name )
 	local sid = util.SteamIDFrom64( sid64 )
 	if pw1 and pw2 and #pw1 > 0 and pw1 ~= pw2 then
@@ -182,9 +184,18 @@ hook.Add("CheckPassword", "BroadcastJoin", function( sid64, ip, pw1, pw2, name )
 		return
 	end
 
-	an.OnJoin(name, sid64, ip)
+	joinWait[sid64] = true
+
+	timer.Simple(0, function()
+		if not joinWait[sid64] then return end
+		joinWait[sid64] = nil
+		an.OnJoin(name, sid64, ip)
+	end)
 end)
 
+hook.Add("PlayerRefusedJoin", "StopBroadcast", function(sid64)
+	joinWait[sid64] = nil
+end)
 
 
 gameevent.Listen( "player_disconnect" )

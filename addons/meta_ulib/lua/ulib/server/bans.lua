@@ -59,6 +59,7 @@ local function checkBan( steamid64, ip, password, clpassword, name )
 
 	local message = ULib.getBanMessage( steamid )
 	Msg(string.format("%s (%s)<%s> was kicked by ULib because they are on the ban list\n", name, steamid, ip))
+	hook.Run("PlayerRefusedJoin", steamid64, ip, banData, name)
 	return false, message
 end
 hook.Add( "CheckPassword", "ULibBanCheck", checkBan, HOOK_LOW )
