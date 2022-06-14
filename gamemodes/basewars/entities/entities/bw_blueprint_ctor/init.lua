@@ -136,4 +136,4 @@ net.Receive("BlueprintConstructor", function(_, ply)
 
 	ent:QueueCreation(tier, type)
 	ply:UI(ply.Inventory.Backpack)
-end)--deltatext: return future width without interpolating (might break shit?)
+end)
