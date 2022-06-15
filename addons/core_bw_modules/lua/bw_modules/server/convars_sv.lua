@@ -10,7 +10,9 @@ local function addGSLT()
 		return
 	end
 
-	RunConsoleCommand("sv_setsteamaccount", Settings.GetStored("GSLT", "74E5FAD9CD89DC9EB6072C344D75185E"))
+	if gslt ~= "" and gslt ~= "none" then
+		RunConsoleCommand("sv_setsteamaccount", gslt)
+	end
 end
 
 function fuckyou()
@@ -27,8 +29,9 @@ function fuckyou()
 
 	--RunConsoleCommand("sv_downloadurl", "https://vaati.net/Gachi/garrysmod")
 	--RunConsoleCommand("sv_downloadurl", "http://9840cbe192b59391.daemon.panel.gg/25017be5/")
-	RunConsoleCommand("sv_loadingurl", Settings.GetStored("LoadingURL",
-		"https://vaati.net/Gachi/loading.html"))
+	if Settings.GetStored("LoadingURL", false) then
+		RunConsoleCommand("sv_loadingurl", Settings.GetStored("LoadingURL"))
+	end
 end
 
 timer.Create("fuckyou", 30, 0, fuckyou)
