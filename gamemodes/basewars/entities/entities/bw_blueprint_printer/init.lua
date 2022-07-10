@@ -76,11 +76,11 @@ function ENT:ThinkFunc()
 	if self:GetNextFinish() < CurTime() then
 		if self:IsFull() then self:SetJammed(true) return end
 
+		local ret = self.Storage:NewItem("blank_bp")
+		ret:Then(function() self:SendInfo() end)
 		self.LastPrint = CurTime()
 		self:SetNextFinish(self.LastPrint + self.PrintTime / timeMult)
 
-		local ret = self.Storage:NewItem("blank_bp")
-		self:SendInfo()
 		--self:SendInfo()
 	end
 end
