@@ -1,6 +1,9 @@
 require("mysqloo")
+if not __MYSQL_INFO then
+	include("lib_it_up/libraries/server/mysql.lua")
+end
 
-local dat = {"92.205.3.81", "lode_user", "8Q7geFIU3eYrOe2C", "i8460963_wp1"}
+local dat = table.Copy(__MYSQL_INFO)
 
 local DATABASE_HOST = dat[1]
 local DATABASE_PORT = 3306
