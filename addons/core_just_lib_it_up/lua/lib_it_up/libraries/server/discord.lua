@@ -249,17 +249,23 @@ function discord.GetChannels(mode, cb)
 	return em
 end
 
+local complained = false
+
 function discord.Send(mode, name, txt)
 
 	local function callback(urls)
 
-		http.Post("https://vaati.net/Gachi/shit.php", {
+		if not complained then
+			errorNHf("discord lib requires a proxy or some other http client; rewrite me")
+			complained = true
+		end
+		--[[http.Post("https://vaati.net/Gachi/shit.php", {
 			name = name or "lodestar/generic",
 			api = "disrelay",
 			p = txt,
 			json = "y",
 			chan = util.TableToJSON(urls),
-		})
+		})]]
 
 	end
 
@@ -269,15 +275,18 @@ end
 function discord.SendUnescaped(mode, name, txt)
 
 	local function callback(urls)
-
-		http.Post("https://vaati.net/Gachi/shit.php", {
+		if not complained then
+			errorNHf("discord lib requires a proxy or some other http client; rewrite me")
+			complained = true
+		end
+		--[[http.Post("https://vaati.net/Gachi/shit.php", {
 			name = name or "lodestar/generic",
 			api = "disrelay",
 			p = txt,
 			json = "y",
 			chan = util.TableToJSON(urls),
 			noescape = "y",
-		})
+		})]]
 
 	end
 
@@ -296,13 +305,18 @@ function discord.SendEmbed(mode, name, t, cb, fail)
 	end
 
 	local function callback(urls)
-		http.Post("https://vaati.net/Gachi/shit.php", {
+		if not complained then
+			errorNHf("discord lib requires a proxy or some other http client; rewrite me")
+			complained = true
+		end
+
+		--[[http.Post("https://vaati.net/Gachi/shit.php", {
 			name = name or "lodestar/generic",
 			api = "disrelay",
 			json = "y",
 			chan = util.TableToJSON(urls),
 			embeds = util.TableToJSON(em),
-		}, cb or BlankFunc, fail or BlankFunc)
+		}, cb or BlankFunc, fail or BlankFunc)]]
 	end
 
 	discord.GetChannels(mode, callback)
@@ -366,7 +380,7 @@ function discord.Escape(str)
 	str = str:gsub("@everyone", "(at)everyone")
 		:gsub("@here", "(at)here")
 		:gsub("@", "\\@")
-
+		-- theres probably more shit im not aware because discord fucking sucks
 	return str
 end
 
