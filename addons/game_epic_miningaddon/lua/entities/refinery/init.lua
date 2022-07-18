@@ -124,22 +124,13 @@ function ENT:Think()
 		end
 	end
 
-	local prs = {}
-
 	for name, amt in pairs(fin_amt) do
-		local pr, what = self.OreOutput:NewItem(name, nil, {Amount = amt})
+		local new, stk, unstk = self.OreOutput:NewItem(name, nil, {Amount = amt})
 
-		if pr then
-			table.insert(prs, pr)
-		end
+		changed = changed or #new > 0 or #stk > 0
 	end
 
-	if #prs > 0 then
-		Promise.OnAll(prs):Then(function()
-			if IsValid(self) then self:SendInfo() end
-		end)
-
-	elseif changed then
+	if changed then
 		self:SendInfo()
 	end
 
@@ -173,28 +164,28 @@ function ENT:QueueRefine(ply, inv, item, slot, bulk)
 			if not ok then print("couldn't add input item to #" .. i) continue end
 
 			pr.slot = i
-			pr:Then(function()
+			--[[pr:Then(function()
 				if not IsValid(self) then return end
 
 				for k,v in ipairs(prs) do
 					self:TimeItem(i)
 				end
-			end)
-			prs[#prs + 1] = pr
+			end)]]
+
+			self:TimeItem(i)
+			--prs[#prs + 1] = pr
 
 			ins = ins + 1
 
 			item:SetAmount(item:GetAmount() - 1)
 		end
 
-		Promise.OnAll(prs):Then(function()
-			if not IsValid(self) then return end
-
+		--Promise.OnAll(prs):Then(function()
 			local plys = Filter(ents.FindInPVS(self), true):Filter(IsPlayer)
 			Inventory.Networking.NetworkInventory(plys, self.OreInput)
 			Inventory.Networking.UpdateInventory(ply, inv)
 			self.Status:Network()
-		end, GenerateErrorer("RefineryPromise"))
+		--end, GenerateErrorer("RefineryPromise"))
 	else
 
 		if slot > self.OreInput.MaxItems then

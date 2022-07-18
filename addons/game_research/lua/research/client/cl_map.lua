@@ -10,6 +10,7 @@ local DefaultZoom = 0.75
 
 function MAP:Init()
 	self.Scroll:Hide() -- we use searchlayout for the search bar only
+	self.SearchBar:SetPlaceholderText("not implemented")
 
 	local main = self
 
@@ -17,6 +18,7 @@ function MAP:Init()
 	map:Dock(FILL)
 
 	map.Paint = MAP.PaintMap
+	map.PaintOver = MAP.PaintOverMap
 	--map.OnMouseReleased = MAP.OnMapReleased
 	map.Think = MAP.MapThink
 
@@ -27,6 +29,7 @@ function MAP:Init()
 	canv:Center()
 
 	canv.Paint = MAP.PaintCanvas
+
 	canv.OnMousePressed = MAP.OnCanvasPressed
 	canv.OnMouseWheeled = MAP.OnCanvasWheeled
 
@@ -206,6 +209,7 @@ function MAP:SetTree(tree)
 			btn:SetSize(PerkSize, PerkSize)
 			btn:SetPos(cx + x - PerkSize / 2, cy + y - PerkSize / 2)
 			btn.OrigSize = { PerkSize, PerkSize }
+
 			btn.Anchor = {
 				btn.X / CanvasSize,
 				btn.Y / CanvasSize
@@ -213,10 +217,7 @@ function MAP:SetTree(tree)
 
 			btn.SizeAnchor = PerkSize / CanvasSize / 2
 
-			btn.OrigAnchor = {
-				btn.X / CanvasSize,
-				btn.Y / CanvasSize
-			}
+			btn.OrigAnchor = table.Copy(btn.Anchor)
 
 			btn:SetLevel(lv)
 			table.insert(self.TreeButtons[tree], btn)
@@ -232,6 +233,15 @@ function MAP:SetTree(tree)
 
 	local function move(an, fr)
 		local mvX, mvY = an.Parent.MvX, an.Parent.MvY
+
+		-- egh
+		an.Parent.Anchor[1] = Lerp(fr,
+			an.Parent.OrigAnchor[1] - (mvX / CanvasSize / self.Canvas.Zoom),
+			an.Parent.OrigAnchor[1])
+
+		an.Parent.Anchor[2] = Lerp(fr,
+			an.Parent.OrigAnchor[2] - (mvY / CanvasSize / self.Canvas.Zoom),
+			an.Parent.OrigAnchor[2])
 
 		an.pool = an.pool or mvY
 		an.lx = an.lx or 0
@@ -249,19 +259,10 @@ function MAP:SetTree(tree)
 		local addx, storex = math.modf(an.storex + mvBx)
 		an.storex = storex
 
-		if addy < 1 and addx < 1 then return end
+		if math.abs(addy) < 1 and math.abs(addx) < 1 then return end
 
 		an.Parent.X = an.Parent.X + addx
 		an.Parent.Y = an.Parent.Y + addy
-
-		-- egh
-		an.Parent.Anchor[1] = Lerp(fr,
-			an.Parent.OrigAnchor[1] - (mvX / CanvasSize / self.Canvas.Zoom),
-			an.Parent.OrigAnchor[1])
-
-		an.Parent.Anchor[2] = Lerp(fr,
-			an.Parent.OrigAnchor[2] - (mvY / CanvasSize / self.Canvas.Zoom),
-			an.Parent.OrigAnchor[2])
 	end
 
 	local function off(an)
@@ -416,6 +417,14 @@ function MAP:PaintMap(w, h)
 
 	surface.SetDrawColor(0, 0, 0)
 	self:DrawGradientBorder(w, h, 3, 3, nil, false)
+
+	local sx, sy = self:LocalToScreen(0, 0)
+
+	render.PushScissorRect(sx, sy, sx + w, sy + h)
+end
+
+function MAP:PaintOverMap()
+	render.PopScissorRect()
 end
 
 local col = {}

@@ -128,8 +128,6 @@ function IsPred()
 	return CLIENT and (CurTime() ~= UnPredictedCurTime() or GetPredictionPlayer():IsValid())
 end
 
-
-
 if SERVER then
 	PredTime = CurTime
 else
@@ -374,6 +372,9 @@ function CachedLocalPlayer()
 
 	return lp
 end
+
+CLP = CachedLocalPlayer
+LP = LocalPlayerG
 
 if CLIENT then
 	hook.Add("Think", "CacheLP", function()

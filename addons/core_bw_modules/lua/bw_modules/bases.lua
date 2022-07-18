@@ -1,3 +1,7 @@
+MODULE.Name = "Basezones"
+
+local loader = BaseWars.GetModuleLoader(nm)
+
 local function init(force)
 	local b = BaseWars.Bases and BaseWars.Bases.NW
 	local reload = not not b
@@ -83,6 +87,8 @@ local function init(force)
 			v:SetBase(nil)
 		end
 	end
+
+	loader()
 end
 
 if CLIENT then

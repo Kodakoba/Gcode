@@ -271,8 +271,6 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 		draw.EnableFilters()
 	end
 
-	
-
 	function pnl:PaintOver()
 		draw.DisableFilters()
 	end
@@ -364,7 +362,12 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 	local notEnoughColor = Color(220, 50, 50, 150)
 	local wayEnoughColor = Color(75, 125, 235, 180)
 	local barelyEnoughColor = Color(200, 180, 110, 150)
+
+	local lockOuter = Colors.Yellowish:Copy():MulHSV(1, 0.8, 0.6):SetAlpha(200)
+	local lockInner = Colors.Warning:Copy():MulHSV(1, 0.6, 0.75):SetAlpha(200)
 	--local notEvenCloseColor = Color(85, 85, 85)
+
+	local drawBtn = bclass.DrawButton
 
 	for _, dat in ipairs(its) do
 		local name, lv, price = dat.Name, dat.Level, dat.Price
@@ -408,19 +411,42 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 			draw.RoundedStencilBox(8, x + 3, y + 3, w - 6, h - 6, color_white)
 			surface.PopAlphaMult()
 		end
+
 		function btn:Mask(x, y, w, h)
-			surface.SetDrawColor(color_white:Unpack())
-			surface.DrawRect(x, y, w, h)
+			surface.PushAlphaMult(999)
+			draw.RoundedStencilBox(8, x, y, w, h, color_white)
+			surface.PopAlphaMult()
 		end
 
-		local drawBtn = btn.DrawButton
+		function btn:DrawLockedStripes(x, y, w, h, col)
+			if self.CanBuy then return end
 
-		function btn:DrawButton(...)
+			col:SetDraw()
+			local u = (-CurTime() / 90) % 1
+			local v = (-CurTime() / 90) % 1
+			local u1, v1 = u + 0.3, v - 0.15
+			draw.Stripes(x, y, w, h, u, v, u1, v1)
+		end
+
+		function btn:DrawButton(x, y, w, h)
 			local w, h = self:GetSize()
-			draw.BeginMask(self.Mask, self, ...)
-			draw.DeMask(self.Demask, self, ...)
-			draw.DrawOp()
-			drawBtn(self, ...)
+
+			draw.BeginMask()
+			-- 1: mask
+				self:Mask(x, y, w, h)
+			-- 2: demask
+			render.SetStencilReferenceValue(2)
+				self:Demask(x, y, w, h)
+
+			-- only draw @ mask (borders)
+			draw.DrawOp(1)
+			render.SetStencilCompareFunction(STENCIL_EQUAL)
+				drawBtn(self, x, y, w, h)
+				--self:DrawLockedStripes(x, y, w, h, lockOuter)
+
+			-- only draw @ unmask (center)
+			render.SetStencilReferenceValue(2)
+				self:DrawLockedStripes(x, y, w, h, lockInner)
 			draw.FinishMask()
 		end
 
@@ -442,6 +468,59 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 			end
 		end
 
+		local lastHovFrac = nil
+		local lastUpd = 0
+
+		btn.CanBuy = BaseWars.CanPurchase(CLP(), cat_name, dat.CatID)
+
+		function btn:Think()
+			if self.HoverFrac ~= lastHovFrac then
+				local sz = 60 + 8 * self.HoverFrac
+				sic:SetSize(sz, sz)
+				sic:CenterHorizontal()
+				sic.Y = self:GetTall() - sic:GetTall() - 4
+				lastHovFrac = self.HoverFrac
+			end
+
+			if CurTime() - lastUpd > 0.5 then
+				lastUpd = CurTime()
+				self.CanBuy = BaseWars.CanPurchase(CLP(), cat_name, dat.CatID)
+			end
+
+			if self:IsDown() and self.CanBuy then
+				self:RemoveLerp(self.Color)
+				self:RemoveLerp(self.drawColor)
+				self:SetColor(color_white, true)
+			else
+				self:LerpColor(self.Color, Colors.Button, 0.3, 0, 0.2)
+				self:LerpColor(self.drawColor, Colors.Button, 0.3, 0, 0.2)
+			end
+		end
+
+		function btn:OnHover()
+			self:To("HoverFrac", 1, 0.2, 0, 0.2)
+			local cl, new = self:AddCloud("description")
+
+			if new then
+				cl.Font = "OS22"
+				cl.MaxW = 450
+				cl.AlignLabel = 1
+				cl:AddSeparator(nil, 8, {2, 4})
+				moneytxCol.a = 255
+				cl:AddFormattedText(Language("Price", price), moneytxCol, "OSB20", 18, nil, 1)
+
+				if dat.GenerateCloudInfo then
+					dat.GenerateCloudInfo(cl, btn)
+				end
+
+				--cl:AddFormattedText(Language("Level", lv), leveltxCol, "OSB20", nil, nil, 1)
+				cl:SetRelPos(self:GetWide() / 2)
+				cl.ToY = -8
+
+				cl:SetText(name)
+			end
+		end
+
 		local shortNameCol = color_white:Copy()
 		local shortNameShadow = color_black:Copy()
 
@@ -458,88 +537,66 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 				shortNameCol, 1)
 
 			bclass.PaintOver(self, w, h)
+
+			if not self.CanBuy then
+				self.RaiseHeight = 0
+				self.Shadow.MaxSpread = 0
+				draw.RoundedBox(self.RBRadius, 0, 0, w, h, Colors.DarkGray:IAlpha(200))
+			else
+				self.RaiseHeight = 2
+				self.Shadow.MaxSpread = 1.1
+			end
+		end
+
+
+		function btn:ColorThink()
+			local enough = ply_money >= price
+			local way_enough = ply_money > price * 50
+			local barely_enough = ply_money < price * 3
+
+			local col, txcol
+
+			if enough then
+				txcol = Colors.Money
+
+				if way_enough then
+					col = wayEnoughColor
+				elseif barely_enough then
+					col = barelyEnoughColor
+					txcol = barelyEnoughColor
+				else
+					col = enoughColor
+				end
+
+			else
+				col = notEnoughColor
+				txcol = notEnoughColor
+			end
+
+			return col, txcol
+		end
+
+		do
+			local col, txcol = btn:ColorThink()
+			moneytxCol:Set(txcol or col)
+			curCol:Set(col)
 		end
 
 		function btn:PrePaint(w, h)
 			--b:Open()
-			
+
 			if BaseWars.SpawnMenu.Highlight[dat.ClassName] then
 				local fr = 1 - ((SysTime() / 1.3) % 1)
 				draw.LerpColor(fr, self.drawColor,
 					Colors.Purpleish, Colors.Button)
 			end
 
-			local enough, way_enough, barely_enough = ply_money >= price, ply_money > price * 50, ply_money < price * 3
-			--local enough_lv = ply_level >= lv
+			local col, txcol = self:ColorThink()
 
-			local col = curCol
-			local txcol = Colors.Money
+			self:LerpColor(moneytxCol, txcol or col, 0.3, 0, 0.3)
+			self:LerpColor(curCol, col, 0.3, 0, 0.3)
 
-			draw.LerpColor(1, curCol, enoughColor, barelyEnoughColor)
-
-			if enough then
-				txcol = Colors.Money
-
-				--if enough_lv then
-					if way_enough then
-						col = wayEnoughColor
-					elseif barely_enough then
-						col = barelyEnoughColor
-						txcol = barelyEnoughColor
-					else
-						col = enoughColor
-					end
-				--[[else
-					col = notEnoughColor
-				end]]
-
-			else
-				col = notEnoughColor -- enough_lv and notEnoughColor or notEvenCloseColor
-				txcol = notEnoughColor
-			end
-
-			moneytxCol:Set(txcol or col)
-			moneytxCol.a = 255
-
-			leveltxCol:Set(notEnoughColor) --enough_lv and Colors.Level or notEnoughColor)
-			leveltxCol.a = 255
-
-			draw.RoundedBox(8, 2, 2, w - 4, h - 4, col)
-		end
-
-		local lastHovFrac = nil
-
-		function btn:Think()
-			if self.HoverFrac ~= lastHovFrac then
-				local sz = 60 + 8 * self.HoverFrac
-				sic:SetSize(sz, sz)
-				sic:CenterHorizontal()
-				sic.Y = self:GetTall() - sic:GetTall() - 4
-				lastHovFrac = self.HoverFrac
-			end
-		end
-
-		function btn:OnHover()
-			self:To("HoverFrac", 1, 0.2, 0, 0.2)
-			local cl, new = self:AddCloud("description")
-
-			if new then
-				cl.Font = "OS22"
-				cl.MaxW = 450
-				cl.AlignLabel = 1
-				cl:AddSeparator(nil, 8, {2, 4})
-				cl:AddFormattedText(Language("Price", price), moneytxCol, "OSB20", 18, nil, 1)
-
-				if dat.GenerateCloudInfo then
-					dat.GenerateCloudInfo(cl, btn)
-				end
-
-				--cl:AddFormattedText(Language("Level", lv), leveltxCol, "OSB20", nil, nil, 1)
-				cl:SetRelPos(self:GetWide() / 2)
-				cl.ToY = -8
-
-				cl:SetText(name)
-			end
+			draw.RoundedBox(8, 2, 2, w - 4, h - 4, curCol)
 		end
 
 		function btn:OnUnhover()
@@ -549,19 +606,17 @@ local function createSubCategory(canv, cat_name, subcat_name, data)
 
 		function btn:DoClick()
 			BaseWars.SpawnMenu.Highlight[dat.ClassName] = nil
-	
-			self:SetColor(color_white, true)
-			self.Shadow.MaxSpread = 1.7
-			self.Shadow.Alpha = 255
 
-			self:LerpColor(self.Color, Colors.Button, 0.3, 0.07, 0.3, true)
-			self:LerpColor(self.drawColor, Colors.Button, 0.3, 0.07, 0.3, true)
-			self:MemberLerp(self.Shadow, "MaxSpread", 1.1, 0.3, 0.13, 0.3, true)
+			if self.CanBuy then
+				self.Shadow.MaxSpread = 1.7
+				self.Shadow.Alpha = 255
+
+				self:MemberLerp(self.Shadow, "MaxSpread", 1.1, 0.4, 0.13, 0.2, true)
+			end
 
 			RunConsoleCommand("basewars_spawn", cat_name, dat.CatID)
 			--self:LerpColor(self.drawColor, Colors.Button, 0.3, 0.15, 0.3)
 		end
-
 	end
 
 	local perf_layout = ics.PerformLayout --BWERGH

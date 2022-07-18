@@ -1,5 +1,8 @@
 LibItUp.SetIncluded()
-if not CLIENT then return end
+if not CLIENT then
+	Icon = Icon or Object:callable()
+	return
+end
 
 --[[
 	Icon:
@@ -109,6 +112,11 @@ function Icon:GetSize()
 	return w, h
 end
 
+function Icon:GetSizeSet()
+	if not self._SizeInitialized then return false end
+	return self:GetSize()
+end
+
 function Icon:GetWide()
 	return (self:GetSize())
 end
@@ -144,14 +152,18 @@ function Icon:PaintIcon(x, y, w, h, rot, xA, yA)
 	else
 		surface.SetMaterial(self.Material)
 
+		local dx, dy = x, y
+
 		if rot then
 			surface.DrawTexturedRectRotated(x, y, w, h, rot)
+			dx = x - w / 2
+			dy = y - h / 2
 		else
 			surface.DrawTexturedRect(x, y, w, h)
 		end
 
 		if self:GetDebug() then
-			surface.DrawOutlinedRect(x, y, w, h)
+			surface.DrawOutlinedRect(dx, dy, w, h)
 		end
 
 		if self:GetAutosize() and not self._SizeInitialized then
@@ -182,7 +194,13 @@ function Icon:_WHPreseveRatio(w, h)
 	local info = draw.GetMaterialInfo(mat)
 
 	if info then
-		local mw, mh = info.w, info.h
+		local mw, mh
+		if self._ratioSize then
+			mw, mh = unpack(self._ratioSize)
+		else
+			mw, mh = info.w, info.h
+		end
+
 		local sc = 1
 
 		if w and not h then
@@ -209,6 +227,16 @@ function Icon:_WHPreseveRatio(w, h)
 
 		return mw * sc, mh * sc
 	end
+end
+
+function Icon:SetRatioSize(w, h)
+	self._ratioSize = {w, h}
+	return self
+end
+
+function Icon:GetRatioSize()
+	if not self._ratioSize then return false end
+	return unpack(self._ratioSize)
 end
 
 function Icon:RatioSize(w, h)
@@ -289,7 +317,17 @@ function Icon:Copy()
 	local new = Icon(self.Material or self.URL, self.Name)
 	new:SetColor(self.Color)
 	new:SetFilter(self:GetFilter())
-	new:SetSize(self:GetSize())
+	new:SetPreserveRatio(self:GetPreserveRatio())
+	new:SetAlign(self:GetAlign())
+	new:SetAutoSize(self:GetAutoSize())
+
+	if self:GetSizeSet() then
+		new:SetSize(self:GetSize())
+	end
+
+	if self:GetRatioSize() then
+		new:SetRatioSize(self:GetRatioSize())
+	end
 
 	return new
 end
@@ -311,12 +349,15 @@ Icons.Electricity = Icon("https://i.imgur.com/poRxTau.png", "electricity.png")
 Icons.Clock64 = Icon("https://i.imgur.com/KW4Pbbd.png", "clk64.png")
 Icons.Clock = Icon("https://i.imgur.com/H455Xz3.png", "clk32_3.png")
 Icons.Coins = Icon("https://i.imgur.com/vzrqPxk.png", "coins_pound64.png")
+Icons.CoinAdd = Icon("https://i.imgur.com/cjrTOrv.png", "coin_add.png")
 Icons.Star = Icon("https://i.imgur.com/YYXglpb.png", "star.png")
+Icons.Reload = Icon("https://i.imgur.com/Kr2xpAj.png", "refresh.png")
 
 -- https://www.flaticon.com/free-icon/money_61584?term=money&page=1&position=16&page=1&position=16&related_id=61584&origin=tag
 Icons.Money64 = Icon("https://i.imgur.com/NVl7wuF.png", "moneybag_64.png")
 Icons.Money32 = Icon("https://i.imgur.com/lRpS2NE.png", "moneybag_32.png")
 Icons.Unsafe = Icon("https://i.imgur.com/Xq0xmuF.png", "unsafe.png")
 Icons.RadGradient = Icon("https://i.imgur.com/uk9gDB8.png", "radial2.png")
+Icons.Arrow = Icon("https://i.imgur.com/jFHSu7s.png", "arr_right.png")
 
 Icons.Lodestar = Icon("https://i.imgur.com/rkdDDb0.png", "ldstar128.png")

@@ -325,16 +325,14 @@ end
 function ENT:MineOut(orename, ply)
 	local ore = self.Ores[orename]
 
-	local pr, unstack = ply.Inventory.Backpack:NewItemNetwork(orename)
+	local new, stk, unstack = Inventory.GetTemporaryInventory(ply):NewItem(orename)
 
 	if unstack ~= 0 then
 		return
 	end
 
 	ore.amt = ore.amt - 1
-	pr:Then(function()
-		Inventory.Networking.NotifyItemChange(ply, INV_NOTIF_PICKEDUP, orename, 1)
-	end)
+	Inventory.Networking.NotifyItemChange(ply, INV_NOTIF_PICKEDUP, orename, 1)
 
 	if ore.amt <= 0 then
 		self.Ores[orename] = nil
@@ -346,6 +344,9 @@ function ENT:MineOut(orename, ply)
 		self:RespawnIn()
 		self:Remove()
 	end
+
+
+	return new and #new > 0 and new, stk and #stk > 0 and stk
 end
 
 function ENT:NetworkOres(init)

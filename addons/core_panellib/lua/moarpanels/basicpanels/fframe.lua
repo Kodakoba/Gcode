@@ -17,6 +17,28 @@ local close_hov = Color(235, 90, 90)
 local close_unhov = Color(205, 50, 50)
 
 PANEL.RBRadius = 4
+PANEL.HeaderSize = 32
+
+
+
+function PANEL:GetPositioned(pnl)
+	local l, t, r, b = self:GetDockPadding()
+
+	return { -- pos
+		l,
+		t,
+	}, { -- size
+		self:GetWide() - l - r,
+		self:GetTall() - t - b,
+	}
+end
+
+function PANEL:PositionPanel(pnl)
+	local pos, sz = self:GetPositioned()
+
+	pnl:SetPos(unpack(pos))
+	pnl:SetSize(unpack(sz))
+end
 
 function PANEL:Init()
 
@@ -57,13 +79,12 @@ function PANEL:Init()
 	self.m_bCloseButton = b
 	self.LabelFont = "OSB24"
 
-	self.HeaderSize = 32
 	self.BackgroundColor = Color(50, 50, 50)
 	self.HeaderColor = Colors.Header:Copy()
 
 	self.DimColor = Color(0, 0, 0, 220)
 
-	self:DockPadding(4, 32 + 4, 4, 4)
+	self:DockPadding(self.RBRadius, self.HeaderSize + self.RBRadius, self.RBRadius, self.RBRadius)
 	self.SizableNum = 3
 
 	self.SizableBoxX = 1

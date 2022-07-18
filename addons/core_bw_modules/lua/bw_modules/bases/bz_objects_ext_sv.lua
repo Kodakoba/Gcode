@@ -39,6 +39,24 @@ function bw.Base:AttemptClaim(by, ply)
 	return self:Claim(by)
 end
 
+function bw.Base:SaveData()
+	local json = util.TableToJSON(self:GetData())
+	local a, err = bw.SQL.SaveData(self:GetID(), json)
+
+	if err then
+		print("error:", err)
+		return
+	end
+end
+
+function bw.Base:AddData(k, v, defer)
+	self.Data[k] = v
+
+	if not defer then
+		self:SaveData()
+	end
+end
+
 function bw.Base:Claim(by)
 	self:_CheckValidity()
 
@@ -118,6 +136,13 @@ function bw.Base:Unclaim(temporarily)
 	end
 end
 
+function bw.Base:Spawn()
+	local dat = self:GetData()
+	if dat.AIEntrance then AIBases.SpawnBase(self) return end
+
+	if dat.BaseCore then self:SpawnCore() end
+end
+
 function bw.Base:SpawnCore()
 	local dat = self:GetData()
 	if not dat.BaseCore then return end
@@ -130,9 +155,9 @@ function bw.Base:SpawnCore()
 	Position: %s (valid: %s)\
 	Angle: %s (valid: %s)\
 	Model: %s (valid: %s)",
-	tostring(pos), isvector(pos),
-	tostring(ang), isangle(ang),
-	tostring(mdl), util.IsValidModel(mdl))
+			tostring(pos), isvector(pos),
+			tostring(ang), isangle(ang),
+			tostring(mdl), util.IsValidModel(mdl))
 	end
 
 	local prevCore = IsValid(self:GetBaseCore()) and self:GetBaseCore()
@@ -211,6 +236,12 @@ bw.Zone.ForceScanEnts = bw.Zone.RescanEnts
 ChainAccessor(bw.Zone, "Brush", "Brush")
 
 hook.Add("BWBasesLoaded", "BrushRescan", function()
+	for k,v in pairs(bw.Zones) do
+		v:RescanEnts()
+	end
+end)
+
+hook.Add("PermaPropsReloaded", "prop_dynamic fucks up with brushes", function(newEnts)
 	for k,v in pairs(bw.Zones) do
 		v:RescanEnts()
 	end

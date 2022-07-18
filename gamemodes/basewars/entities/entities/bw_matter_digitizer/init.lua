@@ -47,6 +47,7 @@ function ENT:OnRemove()
 	end
 end
 
+--[=[
 function ENT:RequestInVault(ply)
 	-- im pretty sure like all of this is redundant; i could just
 	-- use crossinv and hook onto pre/post, lol
@@ -74,8 +75,16 @@ function ENT:RequestInVault(ply)
 
 	local into = slot
 
-	inv:CrossInventoryMove(item, self.InVault, into):Then(function()
-		self.want[into] = slot
+	self._Allow = true
+	local ok = inv:CrossInventoryMove(item, self.InVault, into, ply)
+	self._Allow = false -- this sucks
+	if not ok then
+		errorNHf("crossinv gave shit? %s", ok)
+		return false
+	end
+
+
+	ok:Then(function()
 		self.Status:Set(into, 0)
 		self.Status:Network()
 		ply:UpdateInventory(inv)
@@ -84,10 +93,20 @@ function ENT:RequestInVault(ply)
 	end, function(...)
 		print("bad move wtf", ...)
 	end)
+end]=]
+
+function ENT:InVaultNewItem(myInv, itm, fromInv, slot, fromSlot, ply)
+	self.Status:Set(slot, 0)
+	self.Status:Network()
+	if IsValid(ply) then
+		ply:UpdateInventory(fromInv)
+		self:SendInfo(ply)
+	end
+	self:UpdateState()
 end
 
 function ENT:PoweredThink(pw)
-	local key = 0
+	local ch = false
 
 	for i=1, self.InVault.MaxItems do
 		local it = self.InVault:GetItemInSlot(i)
@@ -99,6 +118,7 @@ function ENT:PoweredThink(pw)
 		local have = self.Status:Get(i, 0)
 		local give = math.min(to - have, pw) -- this can be negative btw
 		self.Status:Set(i, have + give)
+		ch = true
 
 		if give > 0 then
 			if self.Status:Get(i) == to then
@@ -108,41 +128,87 @@ function ENT:PoweredThink(pw)
 		end
 
 		pw = pw - math.max(0, give)
-		if pw == 0 then return end
+		if pw == 0 then break end
+	end
+
+	if ch then
+		self.Status:Network()
 	end
 end
 
+--[==================================[
+		  allowing vault-take
+--]==================================]
+
 hook.Add("Vault_CanMoveTo", "Digitizer", function(vt, itm, from, slot)
 	local dig = from:GetOwner()
-	if not IsValid(dig) or not dig.IsMatterDigitizer then print("not dickitizer") return end
+	if not IsValid(dig) or not dig.IsMatterDigitizer then return end
 
 	local sl = itm:GetSlot()
-	if dig.Status:Get(sl, 0) >= itm:GetTotalTransferCost() then print("transfer full") return true end
+	if dig.Status:Get(sl, 0) >= itm:GetTotalTransferCost() then return true end
 end)
+
+local function findMDig(ply)
+	local subs = ply:GetSubscribedTo()
+
+	for k,v in ipairs(subs) do
+		if not v.IsMatterDigitizer then continue end
+		return v
+	end
+end
 
 hook.Add("Vault_CanMoveFrom", "Digitizer", function(inv, ply, itm, inv2, slot)
 	if not inv2.IsBackpack then return end
 
 	local subs = ply:GetSubscribedTo()
-	local found = false
 
-	for k,v in ipairs(subs) do
-		if not v.IsMatterDigitizer then continue end
-		found = v
-		break
-	end
-
+	local found = findMDig(ply)
 	if not found then return end
 
 	local cost = itm:GetTotalTransferCost() --it.AttemptSplit)
 	local grid = found:GetPowerGrid()
 
 	if not grid then return end
-	if not grid:TakePower(cost) then return end
+	if not grid:HasPower(cost) then return end
 
 	return true
 end)
 
+--[==================================[
+	  draining post-vault-take
+--]==================================]
+
+local function wth(ply, ent)
+	errorNHf("MDig managed to allow transfer but not take power...!? %s, %s", ply, ent)
+end
+
+hook.Add("Vault_CrossInventoryMovedFrom", "Digitizer", function(inv, itm)
+	local found = findMDig(inv:GetOwner())
+	if not found then return end -- moved not via mdig perhaps
+
+	local cost = itm:GetTotalTransferCost() --it.AttemptSplit)
+	local grid = found:GetPowerGrid()
+
+	if not grid then wth(ply, "no grid " .. tostring(ent)) return end
+
+	local a, b = grid:TakePower(cost)
+	if not a then wth(ply, "no power in grid " .. cost) return end
+end)
+
+hook.Add("Vault_CrossStackOut", "Digitizer", function(inv, itmFrom, itmTo, amt)
+	local found = findMDig(inv:GetOwner())
+	if not found then return end
+
+	local cost = itmFrom:GetTotalTransferCost(amt)
+	local grid = found:GetPowerGrid()
+
+	if not grid then wth(ply, "no grid " .. tostring(ent)) return end
+
+	local a, b = grid:TakePower(cost)
+	if not a then wth(ply, "no power in grid " .. cost) return end
+end)
+
+--[=[
 net.Receive("mdigitizer", function(len, ply)
 	if not ply:Alive() then return end
 
@@ -160,7 +226,7 @@ net.Receive("mdigitizer", function(len, ply)
 		ent:RequestFromVault(ply)]]
 	end
 end)
-
+]=]
 
 function ENT:OnFinalUpgrade()
 	self:BaseRecurseCall("OnFinalUpgrade")

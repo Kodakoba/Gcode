@@ -249,11 +249,12 @@ if SERVER then
 
 		if cd then
 			local in_cd = CurTime() < cd.NextWrite
+			print("in cd?", in_cd)
 
 			if in_cd then
 				-- cooldown still not up
 				cd.Violations = cd.Violations + 1
-
+				print("violated", ply)
 				if cd.Violations <= chathud.LetViolate then
 					-- lets you violate chat cooldown a few times before giving you a big cooldown
 					goto docd

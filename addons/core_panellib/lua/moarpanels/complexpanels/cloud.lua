@@ -524,8 +524,7 @@ function Cloud:AddPanel(p, num)
 end
 
 function Cloud:SetAbsPos(x, y)
-	-- does not work properly
-	print("reminder: Cloud:SetAbsPos does not work properly or something")
+	-- does not work properly i think
 	local sx, sy = self:ScreenToLocal(x, y)
 
 	self.OffsetX = sx
@@ -563,18 +562,24 @@ function Cloud:Think()
 	end
 
 	self:SetAlpha(self.Frac * 255)
+	self:Emit("Think")
 end
 
-function Cloud:FullInit()
-
+function Cloud:FullInit() -- i dont remember why this is here
 	self.FullInitted = true
-
 end
+
+function Cloud:SetAnimFrac(fr)
+	self:RemoveLerp("Frac")
+	self.Frac = fr
+	self:SetAlpha(fr * 255)
+	self:Think()
+end
+
+function Cloud:GetAnimFrac() return self.Frac end
 
 function Cloud:Popup(bool)
-
 	self.Active = (bool == nil and true) or bool
-
 end
 
 function Cloud:Bond--[[age]](pnl)

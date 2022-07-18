@@ -126,7 +126,7 @@ local itCol = Color(0, 0, 0)
 
 function PANEL:PaintRequirements(items, y, level)
 	local main = self.Main
-	local comp = ChainValid(main._comp)
+	local comp = ChainValid(self._comp)
 
 	local reqs = level:GetReqs()
 	local del = 0.15
@@ -163,7 +163,7 @@ function PANEL:PaintRequirements(items, y, level)
 			itCol:ModHSV(1, -0.15, 0.1)
 			itCol.a = fr * 255
 
-			col:Set(cnt >= amt and color_white or Colors.Reddish)
+			col:Set(cnt >= amt and Colors.Money or Colors.Reddish)
 			col.a = fr * 255
 
 			local tw, th = Inventory.Draw.DrawItemAmount(id, amt,
@@ -342,6 +342,7 @@ function PANEL:_AnimateRequirements(level, old)
 	end
 end
 
+local scale, scaleW = Scaler(1600, 900)
 
 function PANEL:_AnimateButton(level, old)
 	local main = self

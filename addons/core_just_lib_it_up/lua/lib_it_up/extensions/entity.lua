@@ -107,8 +107,14 @@ function ENTITY:Subscribe(ply, dist, onunsub, addtwice)
 
 	onunsub = onunsub or BlankFunc
 
-	if ent_subs[self] and ent_subs[self][ply] and not addtwice then return end  --prevent subscribing multiple times for the same entity
+	if ent_subs[self] and ent_subs[self][ply] and not addtwice then return false end  --prevent subscribing multiple times for the same entity
 																				--..unless you want to.
+
+	local epos = self:GetPos()
+
+	if ply:GetPos():Distance(epos) > dist then
+		return false
+	end
 
 	local sub_ply = subs[ply] or {}
 	subs[ply] = sub_ply
@@ -122,6 +128,8 @@ function ENTITY:Subscribe(ply, dist, onunsub, addtwice)
 	ent_subs[self] = sub_ent
 
 	sub_ent[ply] = ply
+
+	return true
 end
 
 function ENTITY:IsSubscribed(ply)
@@ -132,6 +140,43 @@ function ENTITY:IsSubscribed(ply)
 	end
 
 	return false
+end
+
+local function bgToChar(n)
+	if n < 10 then return string.char(48 + n) end -- '0'
+	return string.char(97 - 10 + n) -- 'a' - 10 + n
+end
+
+function ENTITY:GetBodygroupsSet()
+	local bgs = {}
+
+	for i=1, self:GetNumBodyGroups() do
+		bgs[i] = bgToChar(self:GetBodygroup(i - 1))
+	end
+
+	return table.concat(bgs)
+end
+
+local lookup = {}
+
+function ENTITY:SetBGName(name, val)
+	local bglk = lookup[self:GetModel()]
+	if not bglk then
+		local t = {}
+		lookup[self:GetModel()] = t
+		bglk = t
+
+		for k,v in ipairs(self:GetBodyGroups()) do
+			t[v.name] = v
+		end
+	end
+
+	local dat = bglk[name]
+	if dat then
+		self:SetBodygroup(dat.id, val)
+	else
+		errorNHf("unknown bodygroup: %s", name)
+	end
 end
 
 function ENTITY:Unsubscribe(ply)
@@ -379,3 +424,36 @@ end
 
 include("entity_dt.lua")
 AddCSLuaFile("entity_dt.lua")
+
+
+
+
+function ENTITY:ClientUse()
+
+end
+
+function ENTITY:SharedUse()
+
+end
+
+if SERVER then
+	util.AddNetworkString("SharedUse")
+
+	hook.Add("PlayerUse", "ThisWasLongOverdue", function(ply, ent)
+		if not ent.NetworkedUse then return end
+
+		ent:SharedUse()
+
+		net.Start("SharedUse")
+			net.WriteEntity(ent)
+		net.Send(ply)
+	end)
+else
+	net.Receive("SharedUse", function()
+		local e = net.ReadEntity()
+		if not IsValid(e) then error("WHY NOT YOU STUPID BASTARD") return end
+
+		e:SharedUse()
+		e:ClientUse()
+	end)
+end

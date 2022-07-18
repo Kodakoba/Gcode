@@ -14,6 +14,9 @@ ENT.Model = "models/grp/computers/supercomputer_01.mdl"
 ENT.Skin = 0
 ENT.ResearchComputer = true
 
+ENT.IdleConsumption = 10
+ENT.BusyConsumption = 100
+
 function ENT:DerivedDataTables()
 	self:NetworkVar("String", 0, "RSPerk")
 	self:NetworkVar("Int", 2, "RSLevel")
@@ -37,4 +40,17 @@ function ENT:DerivedDataTables()
 	self:NetworkVar("Bool", 1, "RSHalted")
 	self:NetworkVar("Float", 1, "RSTime")
 	self:NetworkVar("Float", 2, "RSProgress")
+end
+
+function ENT:IsResearching()
+	if self:GetRSPerk() == "" then return false end
+	return not self:FinishedResearching()
+end
+
+function ENT:FinishedResearching()
+	if CLIENT then
+		return self:GetResearchFrac() == 1
+	end
+
+	return self.Finished
 end

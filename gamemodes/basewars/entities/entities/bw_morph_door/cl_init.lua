@@ -1,43 +1,67 @@
 include("shared.lua")
 AddCSLuaFile("shared.lua")
 
-local sideData = "]\x00\x00\x01\x00\xd0<\x00\x00\x00\x00\x00\x00\x00;\x19J\xac\x0b\xd2\xbeXi#\xbf\xf1h\x96\xbe\\\xf9\x7fOS\xd4]\xdb\xec\xde\xff\x00[\x99\xeaY($b\xa6\xf1$h\xf6\xdd!\xe6\xca\x1dP\xc3D%\xa10\xc2\x9f\xad\xfc{4E\xc3\xd3\xe8\x98\x00\xa0\x88xc\xd3'\x89r\xdb\xf1\x00\xb1\xd0\x11	2\xf1@\xcez\x91\xfb:\xc7\xaa\xf9r\xf3\xe28|\xab\xb6.\x1d\x87Pe\x06onH\xa2\x98\x85\xd1\xf8\x13\xed7\x82s\xcb>@\xff\xfc\xcd\x9d\x99T\xba\xf6\xda\x8a\x13\x1aZ\
-h\xb2\x95j\xe1?uB\xce\xa6.\x8eYt\r\xdd1H\x8bF\xfewG\xa1\xf5^:\x9ex\xb8\xfd\xa75Rk\x1djRR\xe5\xc8\x1cLL\xd6`\"\xec\xa7\xbf\xbf\x02\xc6\x14\x9aoD\x18G\xd5\xab\x13\xeb\xab\xf2\xdaU\xde\xb9\xa9\xfc\xf0\x90`I\xbf\x7f\xd5\xff\xee\x95V3\x82\x97\x12\x06	\xc1\xbc\x1b\xe3[9\x16\x95\x08\x17\xec'<\xd6\xbfd\x1f\x18\x97pC\x84r\x03\xb2[_\
-\xd7\x16\x8b_\x0e\x83\xbb\xeb\xa3\x8e\xe7\x1d\xac:\x03|\x03|\xe4\xafL\xb8p\x04{l\xf7s\x81\xaf\xf8\x90\x83\x90\xd7r;\xc7\xb5C\xb7\xe6{\x17\xa0i\xb5\xea\x9cm~\xdf\x84\xb1\x91\x00\x0bJV\x89\x94\
-*\x05\x9fC\x0f\xe9>\xcd\xc8\xa4\xac\x11\x8c\x95~\x91\xafFU\xbb\x7f>\xfa\xc9\xff\xf8\x9b\xaf\xcb\xfb\x11\x1c Q\xf9|\xd0\x87\x91\xba/sa\xe9\xf6\xbb\x93\xe8\xbf\xbd\xd5\x91X}%=\x8c\x89xtQ\xce\xf8ds{\\\xee\
-\x83Z\xe3\xb2\xbd\xf4zU3\x84x\xdd	\x85\x8d\xbfX5\xd5G6)\xdb\xbb\xd6U\x8fU	\xe1\xd3\x0e\x04;VI=?\x10\xdc\xcf!\xe9\x95`c\x1cz\xc6\xa2\x96\xa4o\x98\xb8\x8a\x1d\xdc\x11\x9f\xb4\x80*\xa0\xc4\x03\x0c\xe1\xdc\xc2\xf8\xc4\x9c\x03\xd1@\xa5bk\xe7P\x0f\xfb\x99\xe0\x8a\x92\x94\"G\xfb\xc0^^\x8cB\xbb>\xa8\xf3\x11\x8dA\x89EM\rx\xd1\x99/\x93\xb2#P\xa3~\x03\xe3W\x9d\xfac_\r\xca\xde\xbch\x16\x8aN\x9e\xf7\x14z\xaf'u\xf6\xc6\xb1\x83\xd8\x17\x9b\xcfar3\x8b\xda\x0f\x82\xf5@``\xe68{\xf6cf\xf2\x98~G\xb8q>\xfe\x15B*\xf7\xf7\xa0!0|\xfc\x04$\xbd\xb2o\x9dt\xe7\x831I]73&\xce\x8a\xa1k\xe6,#\xb1\xf9-\xab'\xd8\xdf*\xc0B\x89\xc7X\x1f\xe1\xaa\xcfD\x92\xd1\xa3*\xb5\x1a\xf2\xf2s\x0e\xc8\x1e\x0b\xa9\xc5dFU\xaei\xb5\x8eY\x92\xa43\x96\xb1\xbf<;'\xa1\x05T\x81\xde\xf1_\xdfX\xa9^\xdb\x7f\x19F\xb0\xd4?\xd13}\xbe@'\xe5\x94\x8eZ\x9c\x9b\xaaVU\xfax\xcd\x16W&\x1a6\xd3\xc1\x9e\x15U\x07_\xc8}%\
-\xb7oF\x93\
-1`v(\xcbS\xac\x8c\xc9\x8c\xc9eC\x8a\xdf\x94\xed\xcd_\xbfj\xb34\xf80\xfe\x00\x94d\x97\xb6\xc5d\x80%\x1dA\xb2y\xa6\xf7\xca\x84\xf4\xd9w\x08\xfb\xee\xa4\xd1\x87D-\xcaN\x98b\x8aD%\xe5\x06\xb8H\xbauU\xf8;:K\xf3]\xbb\xa6\xee\xae\xa9\xd4\x931\
-\xa9\xdcB\xf4\xad\xb3\xc6(\x91\x900\xfe$)\xdfi\x0ca\xd8\x91\x93z6.\x0e;\xadf\xe0\xa4b1[\xa5\xac\x11P\xa3d\x0ee\xac\xbe&rr\x8cz\x8f\x9c\xa8\xc5\x978\x0c\x9e\x8ej@\x07\xd9\xb4\x92-\x16\xcf\x93r\x91\x03a\xac\xa8\xa3\x19KD(<Tf\xe3cq2\xbc\x86\x8ew\xb4\xe7\x96e\xcbw\xdf\xe2\xc4\x95\xb4S\xed\xc3\r\x90\xcdp\x19\x19\xf2}N\x87\xd6v\xc6\xff\xa0\x02\xd0\x0fXj3\xd3\xdb\x04v'"
-sideData = util.Decompress(sideData)
+local sideData = [[XQAAAQDQPAAAAAAAAAA7GUqsC9K+WGkjv/Folr5c+X9PU9Rd2+ze/wBbmepZKCRipvEkaPbd
+IebKHVDDRCWhMMKfrfx7NEXD0+iYAKCIeGPTJ4ly2/EAsdARCTLxQM56kfs6x6r5cvPiOHyr
+ti4dh1BlBm9uSKKYhdH4E+03gnPLPkD//M2dmVS69tqKExpaCmiylWrhP3VCzqYujll0Dd0x
+SItG/ndHofVeOp54uP2nNVJrHWpSUuXIHExM1mAi7Ke/vwLGFJpvRBhH1asT66vy2lXeuan8
+8JBgSb9/1f/ulVYzgpcSBgnBvBvjWzkWlQgX7Cc81r9kHxiXcEOEcgOyW18K1xaLXw6Du+uj
+jucdrDoDfAN85K9MuHAEe2z3c4Gv+JCDkNdyO8e1Q7fmexegabXqnG1+34SxkQALSlaJlAoq
+BZ9DD+k+zcikrBGMlX6Rr0ZVu38++sn/+Juvy/sRHCBR+XzQh5G6L3Nh6fa7k+i/vdWRWH0l
+PYyJeHRRzvhkc3tc7gqDWuOyvfR6VTOEeN0JhY2/WDXVRzYp27vWVY9VCeHTDgQ7Vkk9PxDc
+zyHplWBjHHrGopakb5i4ih3cEZ+0gCqgxAMM4dzC+MScA9FApWJr51AP+5ngipKUIkf7wF5e
+jEK7PqjzEY1BiUVNDXjRmS+TsiNQo34D41ed+mNfDcrevGgWik6e9xR6ryd19saxg9gXm89h
+cjOL2g+C9UBgYOY4e/ZjZvKYfke4cT7+FUIq9/egITB8/AQkvbJvnXTngzFJXTczJs6KoWvm
+LCOx+S2rJ9jfKsBCicdYH+Gqz0SS0aMqtRry8nMOyB4LqcVkRlWuabWOWZKkM5axvzw7J6EF
+VIHe8V/fWKle238ZRrDUP9Ezfb5AJ+WUjlqcm6pWVfp4zRZXJho208GeFVUHX8h9JQq3b0aT
+CjFgdijLU6yMyYzJZUOK35TtzV+/arM0+DD+AJRkl7bFZIAlHUGyeab3yoT02XcI++6k0YdE
+LcpOmGKKRCXlBrhIunVV+Ds6S/Ndu6burqnUkzEKqdxC9K2zxiiRkDD+JCnfaQxh2JGTejYu
+DjutZuCkYjFbpawRUKNkDmWsviZycox6j5yoxZc4DJ6OakAH2bSSLRbPk3KRA2GsqKMZS0Qo
+PFRm42NxMryGjne055Zly3ff4sSVtFPtww2QzXAZGfJ9TofWdsb/oALQD1hqM9PbBHYn]]
+sideData = util.Decompress(util.Base64Decode(sideData))
 
-local doorData = "]\x00\x00\x01\x00\x81\x0c\x00\x00\x00\x00\x00\x00\x00;\x19J\xac\x0b\xd2\xbeXi#\xbf\xf1h\x96\xbe\\\xf9\x7fOS\xd4]\xdb\xec\xde\xff\x00[\x99\xeaY($b\xa6\xf1$h\xf6\xdd!\xe6\xca\x1dP\xc3D%\xa10\xc2\x9f\xad\xfc{4E\xc3\xd3\xe8\x98\x00\xa0\x88xc\xd3'\xfbWj\xf6ZC\\\x0bHZ=\x87C\xcaR\xf4\x06a\xd4\xa3O%\x93\xe1\xacLj\xea.\xa6\xdf\x99\x0ff\xb4\x97oG\x0f\xc79\xa0\x02O\xa2\xe6\x0e9\xe4M#\x91S\x94\xbb \x04;\xf0l\xa3[Q\xbd\x98\xb4\x1b\xbd\x93\xc7\x00\xc8\x85\x12\xf4F5'J\x95\x0e\xec\"fi\xcb\xb1%1\x865\x96\xaa\x13\x1e|V\xafx\x05\xb0l\xf1\xbe\x8e\xc5\x1bx\x06\xcb\x8aT\xa7\xea\x0c\x0e\xd288\xbc?\xb37\xd6U\xb3\xb1\xbf\x1d\x8d\x879%%\x19\x12\xea\xf9Z\xe1\xda\xf8V\xf5\x88n\x81\xab\x05M\x1c\xb9\x9e\xcaz4$\x02\x98'\xa4\x03\xe1\x90\xcdK\xbe=\xd7\x81\"\xa6\x1e\xea\xa81]\xdcT\xe3\xe3\xc1\xbc2\xcfb\x97Q\x92\x9d\xbbpQO\xa59\x83\xbeN\x11\xd9Z\xa4\xb0\x9f\x8c`D\xe8\xb6\xeb\xb7\xacg\xc7th\xfe\xa8\xa4\x1b3\xba\xe8@K\xd5\xea\x1b\xaa'\xceC\xd4\xa5\xda\x00\x86bD\x84\xd2y]$\xe8g\xa6\x8f\xd5A\xe4\xe8\xc6<5\xe6w?\xa1\x0b\x0fb\x9a\x95h/\x12hX\xf7\xce\x9e\x84f\xda\xfe(+~\xb2\xc9m\x8bw\xf0\x8b\xc9\xd4L\x81h\xf1\x9ab3\xd0\xf6\x9eoN\xd4"
-doorData = util.Decompress(doorData)
+local doorData = [[XQAAAQCBDAAAAAAAAAA7GUqsC9K+WGkjv/Folr5c+X9PU9Rd2+ze/wBbmepZKCRipvEkaPbd
+IebKHVDDRCWhMMKfrfx7NEXD0+iYAKCIeGPTJ/tXavZaQ1wLSFo9h0PKUvQGYdSjTyWT4axM
+auoupt+ZD2a0l29HD8c5oAJPouYOOeRNI5FTlLsgBDvwbKNbUb2YtBu9k8cAyIUS9EY1J0qV
+DuwiZmnLsSUxhjWWqhMefFaveAWwbPG+jsUbeAbLilSn6gwO0jg4vD+zN9ZVs7G/HY2HOSUl
+GRLq+Vrh2vhW9YhugasFTRy5nsp6NCQCmCekA+GQzUu+PdeBIqYe6qgxXdxU4+PBvDLPYpdR
+kp27cFFPpTmDvk4R2VqksJ+MYETotuu3rGfHdGj+qKQbM7roQEvV6huqJ85D1KXaAIZiRITS
+eV0k6Gemj9VB5OjGPDXmdz+hCw9impVoLxJoWPfOnoRm2v4oK36yyW2Ld/CLydRMgWjxmmIz
+0Paeb07U]]
+
+doorData = util.Decompress(util.Base64Decode(doorData))
 
 local anim
+
+ENT.RenderGroup = RENDERGROUP_TRANSLUCENT
 
 function ENT:CLInit()
 	anim = anim or Animatable("MorphDoors")
 
 	local dist = self.Dists
-	self:SetRenderBounds(Vector(-self.BoxThickness, -dist[1], -dist[2]), Vector(self.BoxThickness, dist[1], dist[2]), Vector(4, 4, 4))
+	self:SetRenderBounds(
+		Vector(-self.BoxThickness, -dist[1], -dist[2]),
+		Vector(self.BoxThickness, dist[1], dist[2]),
+		Vector(4, 4, 4)
+	)
 
 	self.LeftClose = 0
 	self.RightClose = 0
+	self:DrawShadow(false)
 end
 
 function ENT:OnOpen()
 	anim = anim or Animatable("MorphDoors")
 
-	anim:MemberLerp(self, "LeftClose", 0, 0.3, 0, 0.3)
-	anim:MemberLerp(self, "RightClose", 0, 0.3, 0, 0.3)
+	anim:MemberLerp(self, "LeftClose", 0, 0.8, 0, 0.2)
+	anim:MemberLerp(self, "RightClose", 0, 0.8, 0, 0.2)
 end
 
 function ENT:OnClose()
 	anim = anim or Animatable("MorphDoors")
 
-	anim:MemberLerp(self, "LeftClose", 1, 0.3, 0, 0.3)
-	anim:MemberLerp(self, "RightClose", 1, 0.3, 0, 0.3)
+	anim:MemberLerp(self, "LeftClose", 1, 0.8, 0, 0.2)
+	anim:MemberLerp(self, "RightClose", 1, 0.8, 0, 0.2)
 end
 
 local cols = {
@@ -49,9 +73,10 @@ for k,v in pairs(cols) do
 	v.a = 50
 end
 
-function ENT:GenerateMesh(vectbl)
+function ENT:GenerateMesh()
 
 	self.DoorMeshes = {
+		Mesh(),
 		Mesh(),
 		Mesh(),
 		Mesh()
@@ -110,15 +135,6 @@ function ENT:GenerateMesh(vectbl)
 
 		else
 			local msh = mshes[3]
-			local ang = Angle(0, -90, 0)
-			local vec = Vector()
-
-
-			for _, tri in ipairs(v) do
-				local vec2 = Vector()
-				vec2:Set(tri.pos)
-				tri.pos = vec2
-			end
 
 			msh:BuildFromTriangles(v)
 		end
@@ -130,42 +146,123 @@ function ENT:GenerateMesh(vectbl)
 	for k,v in pairs(dtris) do
 		local msh = mshes[2]
 
+		msh:BuildFromTriangles(v)
+
 		for _, tri in ipairs(v) do
-			local vec2 = Vector()
-			vec2:Set(tri.pos)
-			tri.pos = vec2
+			tri.u = 1 - tri.u
+			tri.v = tri.v - 1
 		end
 
-		msh:BuildFromTriangles(v)
+		mshes[4]:BuildFromTriangles(v)
+	end
+end
+
+local t = {Mesh = Mesh(), Material = Material("color")}
+
+function ENT:GetRenderMesh()
+	t.Mesh = self:UpdateMesh()
+	return t
+end
+
+function ENT:UpdateMesh()
+	local op = self:GetInstalled()
+	if not op then
+		--if self.PackedMesh then return self.PackedMesh end
+		self.PackedMesh = Mesh()
+
+		local positions = {
+			Vector( -0.5, -0.5, -0.5 ),
+			Vector(  0.5, -0.5, -0.5 ),
+			Vector( -0.5,  0.5, -0.5 ),
+			Vector(  0.5,  0.5, -0.5 ),
+			Vector( -0.5, -0.5,  0.5 ),
+			Vector(  0.5, -0.5,  0.5 ),
+			Vector( -0.5,  0.5,  0.5 ),
+			Vector(  0.5,  0.5,  0.5 ),
+		}
+
+		local indices = {
+	        1, 7, 5,
+	        1, 3, 7,
+	        6, 4, 2,
+	        6, 8, 4,
+	        1, 6, 2,
+	        1, 5, 6,
+	        3, 8, 7,
+	        3, 4, 8,
+	        1, 4, 3,
+	        1, 2, 4,
+	        5, 8, 6,
+	        5, 7, 8,
+	    }
+
+		local verts = {}
+		local scale = 11.5
+	    for vert_i = 1, #indices do
+	        verts[vert_i] = {
+	            pos = positions[indices[vert_i]] * scale,
+	        }
+	    end
+
+	    self.PackedMesh:BuildFromTriangles( verts )
+	    return self.PackedMesh
+	else
+		if self.EmptyMesh then return self.EmptyMesh end
+		self.EmptyMesh = Mesh()
+		return self.EmptyMesh
 	end
 end
 
 local mat = Material( "models/debug/debugwhite" )
-local wf = Material( "models/wireframe" )
+local frameMat = Material( "phoenix_storms/stripes" )
+local sheetMat = Material("phoenix_storms/dome")
 
 local mtrx = Matrix()
 local shang = Angle()
 local scl = Vector(1, 1, 1)
+local magicOffset = Vector(0, 6.66, 0)
+local vReuse = {}
+
+local vCpy, leftClip, rightClip = Vector(), Vector(), Vector()
+
+function ENT:DrawTranslucent()
+	self:Draw()
+end
 
 function ENT:Draw()
 	self:DrawModel()
 
 	local pos = self:GetPos()
-
-	local verts, vertDist, all_hit = self:GetBounds()
-
-	local mins = Vector(-self.BoxThickness, -vertDist[2], vertDist[4])
-	local maxs = Vector(self.BoxThickness, vertDist[1], -vertDist[3])
-
-	OrderVectors(mins, maxs)
-
-	render.SetColorMaterial()
-	render.DrawQuad(verts[1], verts[3], verts[2], verts[4], cols[all_hit])
-
 	local ang = self:GetAngles()
-	render.DrawWireframeBox(pos, ang, mins, maxs, color_white)
 
-	if self.DoorMeshes then
+	local right = ang:Right()
+	vCpy:Set(right)
+
+	if not self.DoorMeshes then
+		local verts, vertDist, all_hit = self:GetBounds()
+
+		local mins = Vector(-self.BoxThickness, -vertDist[2], vertDist[4])
+		local maxs = Vector(self.BoxThickness, vertDist[1], -vertDist[3])
+		OrderVectors(mins, maxs)
+
+		render.SetColorMaterial()
+		render.DrawQuad(verts[1], verts[3], verts[2], verts[4], cols[all_hit])
+
+		render.DrawWireframeBox(pos, ang, mins, maxs, color_white)
+	else
+		cam.PushModelMatrix(self:GetWorldTransformMatrix())
+
+		local b1, b2 = self:GetBound1(), self:GetBound2()
+		local mins = b1
+		local maxs = b2
+		OrderVectors(mins, maxs)
+
+		self:SetRenderBounds( mins, maxs, vector_origin )
+
+		-- print(b1, b2)
+		vReuse[2], vReuse[3], vReuse[1], vReuse[4] = math.abs(b1.y), math.abs(b1.z), math.abs(b2.y), math.abs(b2.z)
+		local vertDist = vReuse
+
 		render.SetMaterial(mat)
 		mins.x = 0
 		maxs.x = 0
@@ -176,38 +273,26 @@ function ENT:Draw()
 		local boxDist = vertDist[3] + vertDist[4]
 		local sc = boxDist / 36.785
 
+		-- drawing the door frames
 		scl.x = 1
 		scl.z = sc
 		mtrx:SetScale(scl)
 
 		mins.z = mins.z / sc
 		mtrx:Translate(mins)
-		shang.p = 0
-		shang.y = 90
-		shang.r = 0
-		mtrx:Rotate(shang)
+
+		mtrx:RotateNumber(0, 90, 0)
+		rightClip:Set(mtrx:GetTranslation())
+
+		render.SetMaterial(frameMat)
 
 		cam.PushModelMatrix(mtrx)
 			self.DoorMeshes[3]:Draw()
 		cam.PopModelMatrix()
-
 
 		maxs.z = maxs.z / sc
 
-		mtrx:Reset()
-		mtrx:SetAngles(ang)
-		mtrx:SetTranslation(pos)
-		mtrx:SetScale(scl)
-
-		mtrx:Translate(maxs)
-		shang.y = -90
-		shang.r = 180
-		mtrx:Rotate(shang)
-
-
-		cam.PushModelMatrix(mtrx)
-			self.DoorMeshes[3]:Draw()
-		cam.PopModelMatrix()
+		--rightClip:Set(mtrx:GetTranslation())
 
 		mtrx:Reset()
 		mtrx:SetAngles(ang)
@@ -215,20 +300,19 @@ function ENT:Draw()
 		mtrx:SetScale(scl)
 
 		mtrx:Translate(maxs)
-		shang.y = -90
-		shang.r = 180
-		mtrx:Rotate(shang)
+		mtrx:RotateNumber(0, -90, 180)
 
+		leftClip:Set(mtrx:GetTranslation())
 
 		cam.PushModelMatrix(mtrx)
 			self.DoorMeshes[3]:Draw()
 		cam.PopModelMatrix()
 
-		shang.y = 90
-		shang.p = 180
-		shang.r = 0
 
-		scl.x = math.abs(self.RightClose * (vertDist[1] - 6.66) / 1.344)
+
+		-- drawing the doors
+		scl.x = math.abs((vertDist[1] - 6.66) / 1.344) -- wtf
+		pos:Sub(vCpy:CMul((1 - self.LeftClose) * vertDist[1]))
 
 		mtrx:Reset()
 
@@ -236,24 +320,31 @@ function ENT:Draw()
 		mtrx:Rotate(ang)
 
 		mtrx:Scale(scl)
-		mtrx:Translate(maxs - Vector(0, 6.66, 0))
-		mtrx:SetScale(Vector(1, 1, 1))	-- yuck
+		mtrx:Translate(maxs - magicOffset)
+		mtrx:SetScaleNumber(1, 1, 1)	-- yuck
 
-		mtrx:Rotate(shang)
+		mtrx:RotateNumber(180, 90, 0)
 
 		mtrx:Scale(scl)
 
+		render.SetMaterial(sheetMat)
 
-		shang.y = 90
-		shang.p = 0
+		local clip = render.EnableClipping( true )
 
-		render.SetMaterial(wf)
+		local normal = mtrx:GetForward()
+		local posDot = normal:Dot(leftClip)
 
+		render.PushCustomClipPlane(normal, posDot)
 		cam.PushModelMatrix(mtrx)
 			self.DoorMeshes[2]:Draw()
 		cam.PopModelMatrix()
+		render.PopCustomClipPlane()
 
-		scl.x = math.abs(self.LeftClose * (vertDist[2] - 6.66) / 1.344)
+		scl.x = math.abs((vertDist[2] - 6.66) / 1.344)
+
+		pos:Add(vCpy)
+		vCpy:Set(right)
+		pos:Add(vCpy:CMul((1 - self.RightClose) * vertDist[2]))
 
 		mtrx:Reset()
 
@@ -261,18 +352,28 @@ function ENT:Draw()
 		mtrx:Rotate(ang)
 
 		mtrx:Scale(scl)
-		mtrx:Translate(mins + Vector(0, 6.66, 0))
-		mtrx:SetScale(Vector(1, 1, 1))	-- yuck
 
-		mtrx:Rotate(shang)
+		mtrx:Translate(mins + magicOffset)-- + Vector(0, 0, 32))
+		mtrx:SetScale(Vector(1, 1, 1))	-- yuck
+		mtrx:RotateNumber(0, 90, 0)
+		--mtrx:RotateNumber(0, 180, 0)
 
 		mtrx:Scale(scl)
 
+		normal:Mul(-1)
+		posDot = normal:Dot(rightClip)
 
+		render.PushCustomClipPlane(normal, posDot)
 		cam.PushModelMatrix(mtrx)
-			self.DoorMeshes[2]:Draw()
+			self.DoorMeshes[4]:Draw()
+		cam.PopModelMatrix()
+		render.PopCustomClipPlane()
+
+		if not clip then render.EnableClipping(clip) end
 		cam.PopModelMatrix()
 	end
+
+
 end
 
 

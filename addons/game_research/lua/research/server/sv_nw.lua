@@ -3,13 +3,23 @@ local PIN = LibItUp.PlayerInfo
 
 
 
-hook.Add("Reserach_PerksFetched", "Network", function(ply, perks)
-	local nw = ply:GetPrivateNW()
+hook.Add("Research_PerksFetched", "Network", function(ply, perks)
+	ply:GetPInfo():NetworkResearch(perks)
+end)
 
-	for perk, lv in pairs(perks) do
+function PIN:NetworkResearch(perks)
+	local nw = self:GetPrivateNW()
+
+	for k,v in pairs(nw:GetNetworked()) do
+		if isstring(k) and k:match("^rs_") then
+			nw:Set(k, nil)
+		end
+	end
+
+	for perk, lv in pairs(perks or self:GetResearchedPerks()) do
 		nw:Set("rs_" .. perk, lv)
 	end
-end)
+end
 
 hook.Add("PlayerResearched", "Network", function(pin, perk, lv)
 	local nw = pin:GetPrivateNW()

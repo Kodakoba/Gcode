@@ -239,6 +239,7 @@ local function AddItem(cat, typ, class, name, price, mdl, lim)
 	ent = ent and ent.t or {}
 
 	t.ClassName = class
+	t.IsBWCatItem = true
 	t.Price = tonumber(price)
 	t.Model = mdl or ent.Model
 	--t.Level = lv
@@ -251,15 +252,16 @@ local function AddItem(cat, typ, class, name, price, mdl, lim)
 	local cat_t = sl[cat] or CreateCategory(cat)
 	local subcat_t = cat_t.Subcategories[typ] or CreateSubcategory(cat, typ)
 
-	cat_t.Items[#cat_t.Items + 1] = t
-	subcat_t.Items[#subcat_t.Items + 1] = t
+	local catKey = table.insert(cat_t.Items, t)
+	local subcatKey = table.insert(subcat_t.Items, t)
+
 	if curTier then
 		subcat_t.Tiers[curTier] = true
 	end
 
 	t.Category = cat
-	t.CatID = #cat_t.Items
-	t.SubcatID = #subcat_t.Items
+	t.CatID = catKey
+	t.SubcatID = subcatKey
 	t.Limit = lim or 5
 
 	if lim == nil and SERVER then
@@ -436,11 +438,14 @@ SetType("Consumables")
 SetCat("Defense")
 	SetType("Turrets - TESTING")
 		ReuseCat("bw_turret_ballistic", "Rifle Turret", m * 5, nil, 3)
+			.RequiresResearch = {turrets_tier = 1}
+
+		ReuseCat("bw_turret_sniper", "Sniper Turret", m * 50, "models/Combine_turrets/Floor_turret.mdl")
+			.RequiresResearch = {turrets_tier = 2}
 
 -- todo: "soon" items increment itemID fucking up networking
 	SetType("Turrets")
 		ReuseCat("", "soon", m * 25, "models/Combine_turrets/Floor_turret.mdl")
-		ReuseCat("", "Sniper Turret", m * 50, "models/Combine_turrets/Floor_turret.mdl")
 		ReuseCat("", "Rapid Rifle Turret", m * 250, "models/Combine_turrets/Floor_turret.mdl")
 		ReuseCat("", "Rapid Sniper Turret", b * 2, "models/Combine_turrets/Floor_turret.mdl")
 

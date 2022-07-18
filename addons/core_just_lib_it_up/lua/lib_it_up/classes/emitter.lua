@@ -77,6 +77,13 @@ function Emitter:Initialize()
 	end
 end
 
+function Emitter:__tostring()
+	local evs = {}
+	for k,v in pairs(self.__Events) do evs[#evs + 1] = k end
+
+	return ("Emitter [") .. table.concat(evs, ", ") .. "]"
+end
+
 function Emitter:OnExtend(new)
 	new.__Events = muldim:new()
 	recursiveParentCopy(new, self)
@@ -90,7 +97,7 @@ end
 Emitter.make = Emitter.Make
 
 function Emitter:On(event, name, cb, ...)
-	self.__Events = rawevent(self) or muldim:new()
+	self.__Events = self.__Events or muldim:new()
 	local events = self.__Events
 
 	local vararg
@@ -131,7 +138,7 @@ function Emitter:Once(event, name, cb, ...)
 end
 
 function Emitter:Emit(event, ...)
-	self.__Events = rawevent(self) or muldim:new()
+	self.__Events = self.__Events or muldim:new()
 
 	local events = self.__Events
 	if not events then return end

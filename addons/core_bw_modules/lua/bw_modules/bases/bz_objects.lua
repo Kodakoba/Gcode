@@ -16,6 +16,9 @@ ChainAccessor(bw.Zone, "ID", "ID")
 ChainAccessor(bw.Base, "Data", "Data")
 ChainAccessor(bw.Zone, "Data", "Data")
 
+Timerify(bw.Base)
+Timerify(bw.Zone)
+
 function bw.Zone:__tostring()
 	return ("BWZone [%d][%s]"):format(self:GetID(), self:GetName())
 end
@@ -277,7 +280,7 @@ function bw.Base:Initialize(id, json)
 		local t = json:FromJSON()
 		if t then
 			self.Data = t
-			self:SpawnCore()
+			self:Spawn()
 		end
 	end
 
@@ -292,6 +295,11 @@ function bw.Base:Initialize(id, json)
 
 end
 
+function bw.Base:GetAITier()
+	return self.Data.AIBaseTier
+end
+
+
 if SERVER then
 	ChainAccessor(bw.Base, "Entities", "Entities")
 	ChainAccessor(bw.Base, "Players", "Players")
@@ -302,7 +310,7 @@ ChainAccessor(bw.Zone, "Players", "Players")
 
 function bw.Base:EntityEnter(ent)
 	self:_CheckValidity()
-	local _, enter = hook.NHRun("EntityEnterBase", self, ent)
+	local _, enter = hook.NHAllRun("EntityEnterBase", self, ent)
 	if SERVER and enter == false then return end
 
 	self.Entities[ent] = ent:EntIndex()
@@ -318,13 +326,13 @@ function bw.Base:EntityEnter(ent)
 		ent:OnEnteredBase(self)
 	end
 
-	hook.NHRun("EntityEnteredBase", self, ent)
+	hook.NHAllRun("EntityEnteredBase", self, ent)
 end
 
 function bw.Base:EntityExit(ent)
 	self:_CheckValidity()
 
-	local _, exit = hook.NHRun("EntityExitBase", self, ent)
+	local _, exit = hook.NHAllRun("EntityExitBase", self, ent)
 
 	if SERVER and exit == false and not ent:IsRemoving() then return end
 
@@ -336,13 +344,13 @@ function bw.Base:EntityExit(ent)
 		self.Players[ent] = nil
 	end
 
+	hook.NHAllRun("EntityExitedBase", self, ent)
+
 	self:Emit("EntityExited", ent)
 	ent:Emit("ExitedBase", self)
 	if ent.OnExitedBase then
 		ent:OnExitedBase(self)
 	end
-
-	hook.NHRun("EntityExitedBase", self, ent)
 end
 
 
@@ -503,22 +511,21 @@ hook.Add("PostCleanupMap", "RespawnBaseZone", function()
 	end
 
 	for k,v in pairs(bw.Bases) do
-		v:SpawnCore()
+		v:KillAllTimers()
+		v:Spawn()
 	end
-
 
 	for k,v in pairs(bw.Zones) do
 		v:GetBrush():ForceScanEnts()
 	end
 end)
 
-
 include("bz_objects_ext_" .. Rlm(true) .. ".lua")
 include("areamark/_init.lua")
 include("bz_ownership_ext.lua")
 
 -- not deprecated, fuck you.
-IncludeCS("baseview/_init.lua")
+-- IncludeCS("baseview/_init.lua")
 IncludeCS("powergrid/_init.lua")
 
 -- subfolders in client/ aren't autoincluded

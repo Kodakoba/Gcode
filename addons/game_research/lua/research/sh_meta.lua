@@ -46,15 +46,35 @@ PInfoAlias("HasPerkLevel")
 PInfoAlias("Research")
 
 function Research.ResearchLevel(what, lv)
-	assert(Research.IsPerkLevel(lv))
+	assert(Research.IsPerkLevel(lv), "lv not a perk level")
 	local pin = GetPlayerInfoGuarantee(what)
 
 	local perk = lv:GetPerk():GetID()
 	assert(perk, "no perk?")
 
-	hook.Run("PlayerResearched", pin, lv:GetPerk(), lv)
-
 	if pin:GetPlayer() then
 		pin:GetPlayer():GetResearchedPerks()[perk] = lv:GetLevel()
 	end
+
+	hook.Run("PlayerResearched", pin, lv:GetPerk(), lv)
+end
+
+function Research.Unresearch(ply, lv)
+	assert(Research.IsPerkLevel(lv))
+
+	local pin = GetPlayerInfoGuarantee(ply)
+	local perk = lv:GetPerk():GetID()
+
+	assert(perk, "no perk?")
+
+	if pin:GetPlayer() then
+		pin:GetPlayer():GetResearchedPerks()[perk] = lv:GetLevel() - 1
+
+		if lv:GetLevel() - 1 == 0 then
+			pin:GetPlayer():GetResearchedPerks()[perk] = 0
+		end
+	end
+
+	Research.SaveResearch(pin)
+	pin:NetworkResearch()
 end

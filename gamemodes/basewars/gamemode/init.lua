@@ -73,10 +73,6 @@ function GM:OnEntityCreated(ent)
 		local HP = (IsValid(ent:GetPhysicsObject()) and ent:GetPhysicsObject():GetMass() or 50) * BaseWars.Config.UniversalPropConstant
 		HP = math.Clamp(HP, 0, Class == "prop_physics" and BaseWars.Config.MaxPropHP or 50)
 
-		if bit.Has(ent:GetModelContents() or 0, CONTENTS_GRATE) then
-			HP = HP / 2
-		end
-
 		ent:SetHealth(HP)
 
 		ent.MaxHealth = math.Round(HP)
@@ -137,19 +133,22 @@ end
 
 function GM:EntityTakeDamage(ent, dmginfo)
 	if ent.CanTakeDamage == false then return true end
+	if not IsValid(ent) then return end
 
-	local Player = ((IsValid(ent) and ent:IsPlayer()) and ent) or false
-	if dmginfo:IsDamageType(DMG_BURN) and not Player then return true end
+	local isPly = ent:IsPlayer()
+	local isNpc = ent:IsNextBot() or ent:IsNPC()
 
-	local Owner = IsValid(ent) and ent.CPPIGetOwner and ent:CPPIGetOwner()
-	Owner = (IsPlayer(Owner) and Owner) or false
+	if dmginfo:IsDamageType(DMG_BURN) and not (isPly or isNpc) then
+		ent:Extinguish()
+		return true
+	end
 
 	self.BaseClass:EntityTakeDamage(ent, dmginfo)
 
 	local Inflictor = dmginfo:GetInflictor()
 	local Attacker 	= dmginfo:GetAttacker()
 
-	if not ent:IsPlayer() then
+	if not isPly and not isNpc then
 		-- custom logic goes first
 		local ret = hook.Run("BW_CanDealEntityDamage", Attacker, ent, Inflictor, dmginfo)
 		if ret ~= nil then
@@ -172,7 +171,7 @@ function GM:EntityTakeDamage(ent, dmginfo)
 		return not raidRet
 	end
 
-	if ent:IsPlayer() then
+	if isPly then
 		if not Attacker:IsPlayer() and dmginfo:IsDamageType(DMG_CRUSH) and
 			(Attacker:IsWorld() or (IsValid(Attacker) and not Attacker:CreatedByMap())) then
 			dmginfo:SetDamage(0)
@@ -222,6 +221,22 @@ local function ScanEntities()
 
 	end
 end
+
+local mults = {
+	[HITGROUP_LEFTARM] = 4, [HITGROUP_RIGHTARM] = 4, -- 100% to anywhere on the body
+	[HITGROUP_LEFTLEG] = 3, [HITGROUP_RIGHTLEG] = 3, -- 75% to the legs
+}
+
+function GM:ScaleNPCDamage(npc, hg, dmg)
+	local ret = self.BaseClass.ScaleNPCDamage and self.BaseClass.ScaleNPCDamage(self, npc, hg, dmg)
+
+	if ret then return ret end
+
+	if mults[hg] then
+		dmg:ScaleDamage(mults[hg])
+	end
+end
+
 --[[
 function GM:PlayerShouldTakeDamage(ply, atk)
 

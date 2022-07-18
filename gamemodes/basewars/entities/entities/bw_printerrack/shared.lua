@@ -22,3 +22,31 @@ function ENT:DerivedDataTables()
 	self:GSAT(3, "Money", 0, "GetCapacity")
 	self:NetworkVar("String", 1, "Printers")
 end
+
+
+ENT.UsesModules = true
+ENT.CompatibleModules = {
+	overclocker = true,
+}
+
+function ENT:Mod_Compatible(ply, itm)
+	if self.CompatibleModules[itm:GetItemName()] then
+		for k,v in pairs(self.Modules:GetItems()) do
+			if v:GetItemName() == itm:GetItemName() then
+				return false -- can't install more than 2
+			end
+		end
+
+		return true
+	end
+
+	return false
+end
+
+function ENT:OnInstalledModule(slot, itm)
+	print("Rack: installed", itm)
+end
+
+function ENT:OnUninstalledModule(slot, itm)
+	print("Rack: uninstalled", itm)
+end

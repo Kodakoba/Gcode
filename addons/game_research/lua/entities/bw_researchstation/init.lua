@@ -21,13 +21,15 @@ function ENT:Init()
 	self.LastPwThink = CurTime()
 	self.TimeResearching = 0
 	self.NeedTime = 0
+
+	self:SetConsumption(self.IdleConsumption)
 end
 
 function ENT:Use(ply, a, b, c)
 	if ply ~= a or not IsPlayer(ply) then return end
 
 	net.Start("ResearchComputer")
-		net.WriteBool(false) -- not a promise response
+		net.WriteUInt(1, 4) -- 1: open menu
 		net.WriteEntity(self)
 	net.Send(ply)
 end
@@ -57,6 +59,8 @@ function ENT:FinishResearch()
 	self:SetRSPerk("")
 	self:SetRSLevel(0)
 	self:SetRSProgress(0)
+
+	self:EmitSound("grp/research/complete_oops.mp3", 85)
 end
 
 function ENT:RequestFinish(ply)
@@ -65,6 +69,83 @@ function ENT:RequestFinish(ply)
 
 	self:FinishResearch()
 	return true
+end
+
+function ENT:PlayBegin()
+	if self.PlayedBegin then return end
+	self.PlayedBegin = true
+
+	self:EmitSound("grp/research/begin.mp3", 75)
+
+	-- actually should begin at 3.05 but lets be safe
+	self:Timer("LoopBegin", 2.8, 1, function()
+
+		self.LoopSound = CreateSound(self, "grp/research/loop.mp3")
+		self:Timer("IHateSource", 28, "0", function()
+			self.LoopSound:Stop()
+			self.LoopSound:Play()
+		end)
+		self.LoopSound:Play()
+	end)
+end
+
+function ENT:StartResearch(perk, level)
+	self:SetRSPerk(perk:GetID())
+	self:SetRSLevel(level:GetLevel())
+	self:SetRSTime(CurTime())
+	self:SetRSProgress(0)
+	self:SetRSHalted(not self:IsPowered())
+
+	self.Finished = false
+	self.TimeResearching = 0
+	self.NeedTime = level:GetResearchTime()
+	self.PlayedBegin = false
+
+	if self:IsPowered() then
+		self:PlayBegin()
+	end
+
+	self:SetConsumption(self.BusyConsumption)
+end
+
+function ENT:KillSound()
+	if self.LoopSound then
+		self.LoopSound:Stop()
+		self:RemoveTimer("IHateSource")
+	end
+
+	self:StopSound("grp/research/begin.mp3")
+
+	self:RemoveTimer("LoopBegin")
+	self:EmitSound("grp/research/die_oops.mp3", 75)
+end
+
+function ENT:OnCompletedResearch()
+	self:KillSound()
+	self:SetConsumption(self.IdleConsumption)
+end
+
+function ENT:OnPower()
+	if not self.PlayedBegin and self:IsResearching() then
+		self:PlayBegin()
+	end
+
+	self:Think()
+end
+
+function ENT:OnUnpower()
+	if self:IsResearching() then
+		self:KillSound()
+		self.PlayedBegin = false
+	end
+
+	self:Think()
+end
+
+function ENT:OnRemove()
+	-- HOLY CHRIST BRO IF ITS "PARENTED" TO THE ENTITY THEN
+	-- WHY DOES REMOVING IT NOT STOP THE SOUND I HATE GMOD I HATE GMOD
+	if self.LoopSound then self.LoopSound:Stop() end
 end
 
 function ENT:Think()
@@ -102,6 +183,12 @@ function ENT:Think()
 		hasnext = true
 	end
 
+	local have = math.min(1, self.TimeResearching / self.NeedTime)
+
+	if have == 1 and not self.Finished then
+		self.Finished = true
+		self:OnCompletedResearch()
+	end
 	--[[printf("%s thinks we're %.1f%% there (%.1f -> %.1f)", Realm(),
 		self.TimeResearching / self.NeedTime * 100,
 		self.TimeResearching, self.NeedTime)]]
@@ -172,21 +259,14 @@ function ENT:RequestResearch(ply)
 	--]=========================]
 
 	print("dont forget to take the inventory items too")
-	self:SetRSPerk(perk:GetID())
-	self:SetRSLevel(level:GetLevel())
-	self:SetRSTime(CurTime())
-	self:SetRSProgress(0)
-	self:SetRSHalted(not self:IsPowered())
-
-	self.TimeResearching = 0
-	self.NeedTime = level:GetResearchTime()
+	self:StartResearch(perk, level)
 
 	return true
 end
 
 local function reply(pr, b)
 	net.Start("ResearchComputer")
-		net.WriteBool(true)
+		net.WriteUInt(0, 4) -- 0: reply promise
 		pr:Reply(b)
 	net.Send(pr.Owner)
 end
