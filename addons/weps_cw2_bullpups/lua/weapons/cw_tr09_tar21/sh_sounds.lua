@@ -1,0 +1,10 @@
+CustomizableWeaponry:addFireSound("CW_TAR21_FIRE", "weapons/cw_tr09_tar21/fire.wav", 1, 105, CHAN_STATIC)
+CustomizableWeaponry:addFireSound("CW_TAR21_SUPPRESSED", "weapons/cw_tr09_tar21/fire_suppressed.wav", 1, 105, CHAN_STATIC)
+
+CustomizableWeaponry:addReloadSound("CW_TAR21_CLOTH", "weapons/cw_tr09_tar21/cloth.wav")
+CustomizableWeaponry:addReloadSound("CW_TAR21_MAGRELEASE", "weapons/cw_tr09_tar21/magrelease.wav")
+CustomizableWeaponry:addReloadSound("CW_TAR21_MAGDRAW", "weapons/cw_tr09_tar21/magdraw.wav")
+CustomizableWeaponry:addReloadSound("CW_TAR21_MAGOUT", "weapons/cw_tr09_tar21/magout.wav")
+CustomizableWeaponry:addReloadSound("CW_TAR21_MAGIN", "weapons/cw_tr09_tar21/magin.wav")
+CustomizableWeaponry:addReloadSound("CW_TAR21_BOLTPULL", "weapons/cw_tr09_tar21/boltpull.wav")
+CustomizableWeaponry:addReloadSound("CW_TAR21_BOLTRELEASE", "weapons/cw_tr09_tar21/boltrelease.wav")
