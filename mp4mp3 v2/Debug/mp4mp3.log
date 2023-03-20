@@ -1,0 +1,27 @@
+﻿  mp4mp3.cpp
+ffmpeghandler.obj : error LNK2019: unresolved external symbol "public: __thiscall FFMPEGHandler::FFMPEGHandler(void)" (??0FFMPEGHandler@@QAE@XZ) referenced in function "void __cdecl `dynamic initializer for 'g_pHandler''(void)" (??__Eg_pHandler@@YAXXZ)
+ffmpeghandler.obj : error LNK2019: unresolved external symbol "public: __thiscall FFMPEGHandler::~FFMPEGHandler(void)" (??1FFMPEGHandler@@QAE@XZ) referenced in function "void __cdecl `dynamic atexit destructor for 'g_pHandler''(void)" (??__Fg_pHandler@@YAXXZ)
+mp4mp3.obj : error LNK2019: unresolved external symbol "public: __thiscall ffmpegcpp::Muxer::Muxer(char const *)" (??0Muxer@ffmpegcpp@@QAE@PBD@Z) referenced in function "void __cdecl videoH(void)" (?videoH@@YAXXZ)
+mp4mp3.obj : error LNK2019: unresolved external symbol "public: void __thiscall ffmpegcpp::Muxer::Close(void)" (?Close@Muxer@ffmpegcpp@@QAEXXZ) referenced in function "void __cdecl videoH(void)" (?videoH@@YAXXZ)
+mp4mp3.obj : error LNK2019: unresolved external symbol "public: __thiscall ffmpegcpp::Demuxer::Demuxer(char const *)" (??0Demuxer@ffmpegcpp@@QAE@PBD@Z) referenced in function "void __cdecl videoH(void)" (?videoH@@YAXXZ)
+mp4mp3.obj : error LNK2019: unresolved external symbol "public: void __thiscall ffmpegcpp::Demuxer::DecodeBestVideoStream(class ffmpegcpp::FrameSink *)" (?DecodeBestVideoStream@Demuxer@ffmpegcpp@@QAEXPAVFrameSink@2@@Z) referenced in function "void __cdecl videoH(void)" (?videoH@@YAXXZ)
+mp4mp3.obj : error LNK2019: unresolved external symbol "public: __thiscall ffmpegcpp::VideoCodec::VideoCodec(enum AVCodecID)" (??0VideoCodec@ffmpegcpp@@QAE@W4AVCodecID@@@Z) referenced in function "void __cdecl videoH(void)" (?videoH@@YAXXZ)
+mp4mp3.obj : error LNK2019: unresolved external symbol "public: __thiscall ffmpegcpp::VideoEncoder::VideoEncoder(class ffmpegcpp::VideoCodec *,class ffmpegcpp::Muxer *)" (??0VideoEncoder@ffmpegcpp@@QAE@PAVVideoCodec@1@PAVMuxer@1@@Z) referenced in function "void __cdecl videoH(void)" (?videoH@@YAXXZ)
+mp4mp3.obj : error LNK2019: unresolved external symbol "public: __thiscall ffmpegcpp::Filter::Filter(char const *,class ffmpegcpp::FrameSink *)" (??0Filter@ffmpegcpp@@QAE@PBDPAVFrameSink@1@@Z) referenced in function "void __cdecl videoH(void)" (?videoH@@YAXXZ)
+lib\avcodec.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+lib\avdevice.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+lib\avfilter.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+lib\avformat.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+lib\avutil.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+lib\libavcodec.dll.a : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+lib\libavdevice.dll.a : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+lib\libavfilter.dll.a : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+lib\libavformat.dll.a : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+lib\libavutil.dll.a : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+lib\libpostproc.dll.a : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+lib\libswresample.dll.a : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+lib\libswscale.dll.a : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+lib\postproc.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+lib\swresample.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+lib\swscale.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
+D:\mp4mp3\mp4mp3\Debug\mp4mp3.exe : fatal error LNK1120: 9 unresolved externals

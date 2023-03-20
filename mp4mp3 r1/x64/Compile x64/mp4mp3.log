@@ -1,0 +1,8 @@
+﻿  mp4mp3.cpp
+     Creating library D:\mp4mp3\mp4mp3\x64\Compile x64\mp4mp3.lib and object D:\mp4mp3\mp4mp3\x64\Compile x64\mp4mp3.exp
+  Generating code
+  2 of 602 functions ( 0.3%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    2 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  mp4mp3.vcxproj -> D:\mp4mp3\mp4mp3\x64\Compile x64\mp4mp3.exe

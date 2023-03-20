@@ -1,0 +1,24 @@
+﻿  ffmpeghandler.cpp
+  mp4mp3.cpp
+  SimpleInterface.cpp
+  The contents of <filesystem> are available only with C++17 or later.
+D:\mp4mp3\mp4mp3\SimpleInterface.cpp(75,20): warning C4018: '<': signed/unsigned mismatch
+D:\mp4mp3\mp4mp3\SimpleInterface.cpp(85,20): warning C4018: '<': signed/unsigned mismatch
+D:\mp4mp3\mp4mp3\SimpleInterface.cpp(201,21): warning C4018: '<': signed/unsigned mismatch
+D:\mp4mp3\mp4mp3\SimpleInterface.cpp(210,21): warning C4018: '<': signed/unsigned mismatch
+     Creating library D:\mp4mp3\mp4mp3\Release\mp4mp3.lib and object D:\mp4mp3\mp4mp3\Release\mp4mp3.exp
+SimpleInterface.obj : error LNK2001: unresolved external symbol "public: __thiscall ffmpegcpp::AudioCodec::AudioCodec(enum AVCodecID)" (??0AudioCodec@ffmpegcpp@@QAE@W4AVCodecID@@@Z)
+SimpleInterface.obj : error LNK2001: unresolved external symbol "public: char const * __thiscall ffmpegcpp::Demuxer::GetFileName(void)" (?GetFileName@Demuxer@ffmpegcpp@@QAEPBDXZ)
+SimpleInterface.obj : error LNK2001: unresolved external symbol "public: void __thiscall ffmpegcpp::Demuxer::DecodeBestVideoStream(class ffmpegcpp::FrameSink *)" (?DecodeBestVideoStream@Demuxer@ffmpegcpp@@QAEXPAVFrameSink@2@@Z)
+SimpleInterface.obj : error LNK2001: unresolved external symbol "public: void __thiscall ffmpegcpp::Demuxer::DecodeBestAudioStream(class ffmpegcpp::FrameSink *)" (?DecodeBestAudioStream@Demuxer@ffmpegcpp@@QAEXPAVFrameSink@2@@Z)
+SimpleInterface.obj : error LNK2001: unresolved external symbol "public: __thiscall ffmpegcpp::Demuxer::Demuxer(char const *)" (??0Demuxer@ffmpegcpp@@QAE@PBD@Z)
+SimpleInterface.obj : error LNK2001: unresolved external symbol "public: __thiscall ffmpegcpp::VideoEncoder::VideoEncoder(class ffmpegcpp::VideoCodec *,class ffmpegcpp::Muxer *)" (??0VideoEncoder@ffmpegcpp@@QAE@PAVVideoCodec@1@PAVMuxer@1@@Z)
+SimpleInterface.obj : error LNK2001: unresolved external symbol "public: __thiscall ffmpegcpp::AudioEncoder::AudioEncoder(class ffmpegcpp::AudioCodec *,class ffmpegcpp::Muxer *)" (??0AudioEncoder@ffmpegcpp@@QAE@PAVAudioCodec@1@PAVMuxer@1@@Z)
+SimpleInterface.obj : error LNK2001: unresolved external symbol "public: __thiscall ffmpegcpp::VideoCodec::VideoCodec(enum AVCodecID)" (??0VideoCodec@ffmpegcpp@@QAE@W4AVCodecID@@@Z)
+SimpleInterface.obj : error LNK2001: unresolved external symbol "public: __thiscall ffmpegcpp::Filter::Filter(char const *,class ffmpegcpp::FrameSink *)" (??0Filter@ffmpegcpp@@QAE@PBDPAVFrameSink@1@@Z)
+SimpleInterface.obj : error LNK2001: unresolved external symbol "public: struct AVCodec * __thiscall ffmpegcpp::Muxer::GetDefaultAudioFormat(void)" (?GetDefaultAudioFormat@Muxer@ffmpegcpp@@QAEPAUAVCodec@@XZ)
+SimpleInterface.obj : error LNK2001: unresolved external symbol "public: struct AVCodec * __thiscall ffmpegcpp::Muxer::GetDefaultVideoFormat(void)" (?GetDefaultVideoFormat@Muxer@ffmpegcpp@@QAEPAUAVCodec@@XZ)
+SimpleInterface.obj : error LNK2001: unresolved external symbol "public: void __thiscall ffmpegcpp::Muxer::Close(void)" (?Close@Muxer@ffmpegcpp@@QAEXXZ)
+SimpleInterface.obj : error LNK2001: unresolved external symbol "public: __thiscall ffmpegcpp::Muxer::~Muxer(void)" (??1Muxer@ffmpegcpp@@QAE@XZ)
+SimpleInterface.obj : error LNK2001: unresolved external symbol "public: __thiscall ffmpegcpp::Muxer::Muxer(char const *)" (??0Muxer@ffmpegcpp@@QAE@PBD@Z)
+D:\mp4mp3\mp4mp3\Release\mp4mp3.exe : fatal error LNK1120: 14 unresolved externals

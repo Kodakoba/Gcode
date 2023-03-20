@@ -1,0 +1,11 @@
+
+* required libraries
+
+3rd party:
+
+- lame
+
+own:
+
+- lameplus
+- wave
